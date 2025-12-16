@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athlete Academy - Dashboard ✨</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html { scroll-behavior: smooth; }
+        
+        :root {
+            --burgundy: #874B46;
+            --burgundy-dark: #6a3a36;
+            --burgundy-light: #a06b66;
+            --black: #231F20;
+            --white: #ffffff;
+            --off-white: #f5f0f1;
+            --grey: #6B6B6B;
+            --light-grey: #e8e4e5;
+            --bronze: #CD7F32;
+            --copper: #B87333;
+            --silver: #A8A9AD;
+            --gold: #D4AF37;
+            --gradient-burgundy: linear-gradient(135deg, #874B46 0%, #6a3a36 100%);
+            --gradient-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            --gradient-bg: linear-gradient(135deg, #fef5f1 0%, #ece5e3 100%);
+        }
+        
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--gradient-bg); 
+            min-height: 100vh; 
+            color: var(--black);
+            overflow-x: hidden;
+        }
+        
+        /* Keyframe Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 6px 20px rgba(212,175,55,0.4); }
+            50% { box-shadow: 0 6px 30px rgba(212,175,55,0.7); }
+        }
+        
+        /* Header with glassmorphism */
+        .header { 
+            background: rgba(135, 75, 70, 0.95); 
+            backdrop-filter: blur(10px);
+            padding: 1.25rem 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border-bottom: 2px solid rgba(212,175,55,0.3);
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem;
+            animation: slideInLeft 0.6s ease-out;
+        }
+        .logo-icon { 
+            width: 50px; 
+            height: 50px; 
+            background: var(--gradient-gold); 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(212,175,55,0.4);
+            animation: float 3s ease-in-out infinite;
+        }
+        .logo h1 { 
+            font-size: 1.4rem; 
+            font-weight: 700; 
+            color: var(--white);
+            letter-spacing: -0.5px;
+        }
+        .logo span { 
+            background: var(--gradient-gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Athlete Selector */
+        .athlete-selector { display: flex; align-items: center; gap: 1rem; }
+        .athlete-selector label { color: var(--white); font-size: 0.9rem; }
+        .athlete-selector select { padding: 0.5rem 1rem; border-radius: 8px; border: none; font-size: 1rem; min-width: 200px; }
+        
+        /* Header Navigation */
+        .header-nav { display: flex; align-items: center; gap: 1rem; }
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--gradient-gold);
+            color: var(--black);
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(212,175,55,0.3);
+        }
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(212,175,55,0.5);
+        }
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(135,75,70,0.4);
+        }
+        
+        /* Loading/Error States */
+        .loading { text-align: center; padding: 4rem 2rem; }
+        .loading-spinner { width: 50px; height: 50px; border: 4px solid var(--light-grey); border-top-color: var(--burgundy); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-message { background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin: 2rem; text-align: center; }
+        .no-data { text-align: center; padding: 4rem 2rem; color: var(--grey); }
+        
+        /* Authentication Screen */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f0f1 0%, #e8e4e5 100%);
+        }
+        .auth-card {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .auth-logo {
+            width: 80px;
+            height: 80px;
+            background: var(--burgundy);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem;
+        }
+        .auth-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--black);
+            margin-bottom: 0.5rem;
+        }
+        .auth-subtitle {
+            color: var(--grey);
+            margin-bottom: 2rem;
+        }
+        .privacy-notice {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: var(--grey);
+            margin-top: 2rem;
+            text-align: left;
+        }
+        .privacy-notice strong {
+            color: var(--black);
+        }
+        
+        /* Main Content */
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Athlete Header Card */
+        .athlete-header { 
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            border-radius: 20px; 
+            padding: 2rem 2.5rem; 
+            margin-bottom: 1.5rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 1.5rem; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .athlete-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at 30% 0%, rgba(212,175,55,0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 100%, rgba(135,75,70,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .athlete-info { position: relative; z-index: 1; }
+        .athlete-info h2 { 
+            font-size: 2.2rem; 
+            color: var(--white); 
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .athlete-info p { 
+            color: rgba(255,255,255,0.6); 
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .athlete-stats {
+            display: flex;
+            gap: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        .stat-item .stat-label {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .training-age-display { 
+            text-align: center; 
+            padding: 2rem 3rem; 
+            border-radius: 20px; 
+            min-width: 180px;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: scaleIn 0.8s ease-out;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+        }
+        .training-age-display:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 25px 70px rgba(0,0,0,0.3);
+        }
+        .training-age-display .label { 
+            font-size: 0.8rem; 
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        .training-age-display .score { 
+            font-size: 4.5rem; 
+            font-weight: 900;
+            line-height: 1;
+            text-shadow: 0 6px 25px rgba(0,0,0,0.3);
+        }
+        .training-age-display .level { 
+            font-size: 1.1rem; 
+            font-weight: 700; 
+            margin-top: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+        }
+        
+        /* Level-specific Training Age styles */
+        .training-age-display.level-building { 
+            background: linear-gradient(135deg, #8B8B8B, #6B6B6B);
+            border: 3px solid rgba(255,255,255,0.3);
+            color: white;
+        }
+        .training-age-display.level-building .label { color: rgba(255,255,255,0.8); }
+        .training-age-display.level-building .level { color: rgba(255,255,255,0.9); }
+        
+        .training-age-display.level-approaching { 
+            background: linear-gradient(135deg, #CD7F32, #A66828);
+            border: 3px solid rgba(255,255,255,0.3);
+            color: white;
+        }
+        .training-age-display.level-approaching .label { color: rgba(255,255,255,0.8); }
+        .training-age-display.level-approaching .level { color: rgba(255,255,255,0.9); }
+        
+        .training-age-display.level-achieving { 
+            background: linear-gradient(135deg, #E8E8E8, #C0C0C0);
+            border: 3px solid rgba(192,192,192,0.8);
+            color: #333;
+            box-shadow: 0 0 20px rgba(192,192,192,0.4);
+        }
+        .training-age-display.level-achieving .label { color: #555; }
+        .training-age-display.level-achieving .score { color: #333; }
+        .training-age-display.level-achieving .level { color: #444; }
+        
+        .training-age-display.level-mastering { 
+            background: linear-gradient(135deg, #FFD700, #D4AF37);
+            border: 3px solid rgba(255,215,0,0.8);
+            color: #333;
+            box-shadow: 0 0 25px rgba(212,175,55,0.5);
+        }
+        .training-age-display.level-mastering .label { color: #5a4a00; }
+        .training-age-display.level-mastering .score { color: #333; }
+        .training-age-display.level-mastering .level { color: #5a4a00; }
+        
+        .training-age-display.level-leading { 
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            border: 4px solid var(--gold);
+            box-shadow: 0 0 30px rgba(212,175,55,0.5), inset 0 0 40px rgba(212,175,55,0.1);
+        }
+        .training-age-display.level-leading .label { color: var(--gold); }
+        .training-age-display.level-leading .score {
+            background: linear-gradient(180deg, #FFD700, #D4AF37, #B8962E);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .training-age-display.level-leading .level {
+            color: var(--gold);
+        }
+        
+        /* Level Colors - Building, Approaching, Achieving, Mastering, Leading */
+        .level-building { background: linear-gradient(135deg, #8B8B8B, #6B6B6B); color: white; }
+        .level-approaching { background: linear-gradient(135deg, #CD7F32, #A66828); color: white; }
+        .level-achieving { background: linear-gradient(135deg, #C0C0C0, #A8A8A8); color: var(--black); }
+        .level-mastering { background: linear-gradient(135deg, #FFD700, #D4AF37); color: var(--black); }
+        .level-leading { background: linear-gradient(135deg, #2C2C2C, #1a1a1a); color: #E5E4E2; border: 4px solid var(--gold); box-shadow: 0 0 20px rgba(212,175,55,0.4); }
+        
+        /* Grid Layout */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        @media (max-width: 1000px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        
+        /* Cards */
+        .card { 
+            background: rgba(255,255,255,0.95); 
+            backdrop-filter: blur(10px);
+            border-radius: 20px; 
+            padding: 2rem; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.5);
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+        .card:hover {
+            box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+            transform: translateY(-5px);
+        }
+        .card.full-width { grid-column: 1 / -1; }
+        .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .card-title .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .card-title .dot.psych { background: var(--burgundy); }
+        .card-title .dot.phys { background: var(--black); }
+        .card-title .dot.health { background: var(--grey); }
+        
+        /* Radar Chart */
+        .radar-container { height: 350px; }
+        
+        /* Header Pillar Boxes */
+        .header-pillars {
+            display: flex;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        .header-pillar-box {
+            text-align: center;
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            min-width: 110px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .header-pillar-box:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+        }
+        .header-pillar-score {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .header-pillar-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+            margin-top: 0.35rem;
+            font-weight: 600;
+        }
+        .header-pillar-level {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        /* Header pillar color schemes */
+        .header-pillar-box.building { 
+            background: linear-gradient(135deg, rgba(139,139,139,0.9), rgba(107,107,107,0.9)); 
+            color: white;
+        }
+        .header-pillar-box.building .header-pillar-level { background: rgba(255,255,255,0.2); }
+        .header-pillar-box.approaching { 
+            background: linear-gradient(135deg, rgba(205,127,50,0.95), rgba(166,104,40,0.95)); 
+            color: white;
+        }
+        .header-pillar-box.approaching .header-pillar-level { background: rgba(255,255,255,0.2); }
+        .header-pillar-box.achieving { 
+            background: linear-gradient(135deg, rgba(220,220,220,0.95), rgba(192,192,192,0.95)); 
+            color: #333;
+        }
+        .header-pillar-box.achieving .header-pillar-level { background: rgba(0,0,0,0.1); }
+        .header-pillar-box.mastering { 
+            background: linear-gradient(135deg, rgba(255,215,0,0.95), rgba(212,175,55,0.95)); 
+            color: #333;
+        }
+        .header-pillar-box.mastering .header-pillar-level { background: rgba(0,0,0,0.1); }
+        .header-pillar-box.leading { 
+            background: linear-gradient(135deg, #2C2C2C, #1a1a1a); 
+            color: #E5E4E2;
+            border: 2px solid #D4AF37;
+            box-shadow: 0 0 15px rgba(212,175,55,0.3);
+        }
+        .header-pillar-box.leading .header-pillar-level { background: rgba(212,175,55,0.3); color: #D4AF37; }
+        
+        /* Insights Grid */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        @media (max-width: 600px) {
+            .insights-grid { grid-template-columns: 1fr; }
+            .header-pillars { flex-wrap: wrap; justify-content: center; }
+        }
+        .insight-box {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            border-radius: 16px;
+            background: var(--off-white);
+            position: relative;
+            overflow: hidden;
+        }
+        .insight-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+        .strength-insight::before { background: linear-gradient(90deg, #D4AF37, #FFD700); }
+        .growth-insight::before { background: linear-gradient(90deg, #4CAF50, #8BC34A); }
+        .next-insight::before { background: linear-gradient(90deg, #874B46, #A66858); }
+        
+        .insight-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .insight-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--grey);
+            margin-bottom: 0.5rem;
+        }
+        .insight-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--black);
+            margin-bottom: 0.25rem;
+        }
+        .insight-message {
+            font-size: 0.8rem;
+            color: var(--grey);
+            font-style: italic;
+        }
+        
+        /* Pillar Summary - keeping for reference but moving to header */
+        .pillar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .pillar-box { 
+            text-align: center; 
+            padding: 1.5rem 1rem; 
+            border-radius: 16px; 
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .pillar-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .pillar-box .score { 
+            font-size: 2.5rem; 
+            font-weight: 800; 
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+        .pillar-box .label { 
+            font-size: 0.8rem; 
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        .pillar-box .level-indicator {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        /* Pillar color schemes based on score */
+        .pillar-box.building { 
+            background: linear-gradient(135deg, #9a9a9a 0%, #7a7a7a 100%); 
+            color: white;
+        }
+        .pillar-box.building .level-indicator { background: rgba(255,255,255,0.2); }
+        .pillar-box.approaching { 
+            background: linear-gradient(135deg, #CD7F32 0%, #A66828 100%); 
+            color: white;
+        }
+        .pillar-box.approaching .level-indicator { background: rgba(255,255,255,0.2); }
+        .pillar-box.achieving { 
+            background: linear-gradient(135deg, #E8E8E8 0%, #C0C0C0 100%); 
+            color: #333;
+        }
+        .pillar-box.achieving .level-indicator { background: rgba(0,0,0,0.1); }
+        .pillar-box.mastering { 
+            background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%); 
+            color: #333;
+        }
+        .pillar-box.mastering .level-indicator { background: rgba(0,0,0,0.1); }
+        .pillar-box.leading { 
+            background: linear-gradient(135deg, #2C2C2C 0%, #1a1a1a 100%); 
+            color: #E5E4E2;
+            border: 4px solid #D4AF37;
+            box-shadow: 0 0 20px rgba(212,175,55,0.4);
+        }
+        .pillar-box.leading .level-indicator { background: rgba(212,175,55,0.3); color: #D4AF37; }
+        
+        /* Badge Progress */
+        .badge-row { display: flex; justify-content: center; gap: 1rem; margin-bottom: 0.75rem; }
+        .badge-item { 
+            font-size: 3rem; 
+            opacity: 0.3; 
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            filter: grayscale(100%);
+        }
+        .badge-item.achieved { 
+            opacity: 1; 
+            transform: scale(1.15); 
+            filter: grayscale(0%);
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+        .badge-item:hover {
+            transform: scale(1.3);
+            opacity: 1;
+            filter: grayscale(0%);
+        }
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1.15); }
+            50% { transform: scale(1.2); }
+        }
+        /* Tooltip on hover */
+        .badge-item::after {
+            content: attr(data-title);
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .badge-item:hover::after {
+            opacity: 1;
+        }
+        .next-level { text-align: center; font-size: 0.85rem; color: var(--grey); }
+        
+        /* Component Lists */
+        .component-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .component-row { display: flex; align-items: center; gap: 1rem; cursor: pointer; transition: background 0.2s; padding: 0.25rem; border-radius: 8px; }
+        .component-row:hover { background: rgba(0,0,0,0.03); }
+        .component-name { flex: 0 0 140px; font-size: 0.85rem; }
+        .raw-value { display: block; font-size: 0.7rem; color: var(--grey); font-weight: normal; margin-top: 2px; }
+        .component-bar { flex: 1; height: 24px; background: var(--light-grey); border-radius: 12px; overflow: hidden; position: relative; }
+        .component-fill { height: 100%; border-radius: 12px; transition: width 0.5s ease; }
+        .component-fill.bronze { background: linear-gradient(90deg, var(--bronze), #e8a862); }
+        .component-fill.copper { background: linear-gradient(90deg, var(--copper), #d4956b); }
+        .component-fill.silver { background: linear-gradient(90deg, var(--silver), #c8c9cd); }
+        .component-fill.gold { background: linear-gradient(90deg, var(--gold), #e8c964); }
+        .component-fill.platinum { background: linear-gradient(90deg, var(--black), #444); }
+        .component-score { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; font-weight: 600; }
+        
+        /* Growth Indicators */
+        .growth-indicator { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 0.2rem; 
+            font-size: 0.7rem; 
+            font-weight: 600;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+        }
+        .growth-indicator.positive { color: #2e7d32; background: rgba(46,125,50,0.1); }
+        .growth-indicator.negative { color: #c62828; background: rgba(198,40,40,0.1); }
+        .growth-indicator.neutral { color: #757575; background: rgba(117,117,117,0.1); }
+        .growth-arrow { font-size: 0.65rem; }
+        
+        /* Timeline Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--grey);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .modal-close:hover { background: var(--light-grey); }
+        .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .modal-subtitle { font-size: 0.85rem; color: var(--grey); margin-bottom: 1.5rem; }
+        .modal-chart { height: 250px; margin-bottom: 1.5rem; }
+        .modal-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .modal-stat { text-align: center; padding: 1rem; background: var(--off-white); border-radius: 10px; }
+        .modal-stat-value { font-size: 1.25rem; font-weight: 700; color: var(--black); }
+        .modal-stat-label { font-size: 0.7rem; color: var(--grey); text-transform: uppercase; letter-spacing: 0.5px; }
+        .modal-stat.highlight { background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(255,215,0,0.1)); border: 1px solid rgba(212,175,55,0.3); }
+        
+        /* Your Biggest Gains Card */
+        .gains-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        @media (max-width: 600px) { .gains-grid { grid-template-columns: 1fr; } }
+        .gain-item {
+            background: var(--off-white);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            border-left: 4px solid #4CAF50;
+        }
+        .gain-metric { font-size: 0.75rem; color: var(--grey); text-transform: uppercase; letter-spacing: 0.5px; }
+        .gain-value { font-size: 1.5rem; font-weight: 700; color: #2e7d32; margin: 0.25rem 0; }
+        .gain-detail { font-size: 0.8rem; color: var(--grey); }
+        
+        /* Strength Grid - Updated for 6 patterns */
+        .strength-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        @media (max-width: 800px) { .strength-grid { grid-template-columns: repeat(2, 1fr); } }
+        .strength-item { background: var(--off-white); border-radius: 12px; padding: 1.25rem 1rem; text-align: left; }
+        .strength-item .pattern-name { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--black); text-align: center; }
+        .strength-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0.5rem; border-radius: 8px; }
+        .strength-row.tech-row { background: rgba(135,75,70,0.1); }
+        .strength-row.str-row { background: rgba(212,175,55,0.15); }
+        .strength-row.str-row.locked { background: rgba(107,107,107,0.1); }
+        .strength-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; width: 45px; }
+        .strength-label.tech { color: var(--burgundy); }
+        .strength-label.str { color: var(--gold); }
+        .strength-label.locked { color: var(--grey); }
+        .strength-level { font-size: 0.85rem; font-weight: 600; min-width: 20px; }
+        .strength-exercise { font-size: 0.8rem; color: var(--grey); flex: 1; }
+        .strength-exercise.current { color: var(--black); font-weight: 500; }
+        .strength-load { font-size: 0.8rem; font-weight: 600; color: var(--gold); }
+        .lock-icon { color: var(--grey); font-size: 0.75rem; }
+        
+        /* Strength Legend */
+        .strength-legend { display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; font-size: 0.75rem; color: var(--grey); flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+        .legend-box { width: 16px; height: 16px; border-radius: 4px; }
+        .legend-box.tech { background: rgba(135,75,70,0.3); }
+        .legend-box.str { background: rgba(212,175,55,0.3); }
+        
+        /* Portal Link */
+        .portal-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--burgundy), #6a3b37);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .portal-link:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(135,75,70,0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Screen (shown initially) -->
+    <div id="authScreen" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">🏆</div>
+            <h1 class="auth-title">Athlete Academy</h1>
+            <p class="auth-subtitle">Track your athletic development, measure your progress</p>
+            
+            <!-- Google Sign-In Button -->
+            <div id="g_id_onload"
+                 data-client_id="701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="outline"
+                 data-text="sign_in_with"
+                 data-shape="rectangular"
+                 data-logo_alignment="left">
+            </div>
+            
+            <div class="privacy-notice">
+                <strong>Privacy Notice:</strong> This system tracks your athletic development. 
+                Only you and your teacher can see your data. Sign in with your school Google account.
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading State -->
+    <div id="loadingState" class="loading" style="display:none;">
+        <div class="loading-spinner"></div>
+        <p id="loadingMessage">Loading your profile...</p>
+        <p style="font-size: 0.85rem; color: #6B6B6B; margin-top: 0.5rem;">Fetching data from Google Sheets...</p>
+    </div>
+    
+    <!-- Main Content Wrapper (hidden until authenticated) -->
+    <div id="mainContent" style="display:none;">
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🏅</div>
+            <h1>Athlete <span>Academy</span></h1>
+        </div>
+        <nav class="header-nav">
+            <a href="portal.html" class="nav-btn">🏋️ Strength Portal</a>
+        </nav>
+        <div class="athlete-selector" style="display:none;">
+            <!-- Removed athlete selector - no longer needed -->
+        </div>
+    </header>
+    
+    <div id="errorState" class="error-message" style="display:none;"></div>
+    <div id="noDataState" class="no-data" style="display:none;">No athlete data available.</div>
+    
+    <main id="dashboardContent" class="container" style="display:block;">
+        <!-- Athlete Header -->
+        <div class="athlete-header">
+            <div class="athlete-info">
+                <h2 id="athleteName">-</h2>
+                <p id="athleteMeta">-</p>
+            </div>
+            <div class="header-pillars">
+                <div class="header-pillar-box" id="headerPsychBox">
+                    <div class="header-pillar-score" id="headerPsychScore">-</div>
+                    <div class="header-pillar-label">Psychology</div>
+                    <div class="header-pillar-level" id="headerPsychLevel">-</div>
+                </div>
+                <div class="header-pillar-box" id="headerPhysBox">
+                    <div class="header-pillar-score" id="headerPhysScore">-</div>
+                    <div class="header-pillar-label">Physiology</div>
+                    <div class="header-pillar-level" id="headerPhysLevel">-</div>
+                </div>
+                <div class="header-pillar-box" id="headerHealthBox">
+                    <div class="header-pillar-score" id="headerHealthScore">-</div>
+                    <div class="header-pillar-label">Health</div>
+                    <div class="header-pillar-level" id="headerHealthLevel">-</div>
+                </div>
+            </div>
+            <div id="trainingAgeBox" class="training-age-display level-building">
+                <div class="label">Training Age</div>
+                <div class="score" id="trainingAgeScore">-</div>
+                <div class="level" id="trainingAgeLevel">-</div>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Radar Chart -->
+            <div class="card">
+                <div class="card-title">Performance Profile</div>
+                <div class="radar-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Personal Insights -->
+            <div class="card">
+                <div class="card-title">Personal Insights</div>
+                <div class="insights-grid">
+                    <div class="insight-box strength-insight">
+                        <div class="insight-icon">💪</div>
+                        <div class="insight-label">YOUR STRENGTH</div>
+                        <div class="insight-value" id="insightStrength">-</div>
+                        <div class="insight-message" id="insightStrengthMsg">-</div>
+                    </div>
+                    <div class="insight-box growth-insight">
+                        <div class="insight-icon">🌱</div>
+                        <div class="insight-label">GROWTH FOCUS</div>
+                        <div class="insight-value" id="insightGrowth">-</div>
+                        <div class="insight-message" id="insightGrowthMsg">-</div>
+                    </div>
+                    <div class="insight-box next-insight">
+                        <div class="insight-icon">🎯</div>
+                        <div class="insight-label">NEXT STEP</div>
+                        <div class="insight-value" id="insightNext">-</div>
+                        <div class="insight-message" id="insightNextMsg">-</div>
+                    </div>
+                </div>
+                
+                <!-- Badge Progress -->
+                <div class="card-title" style="margin-top:1.5rem;">Level Progress</div>
+                <div class="badge-row" id="badgeRow">
+                    <div class="badge-item building" data-title="Building (0.0-1.0)">🎖️</div>
+                    <div class="badge-item approaching" data-title="Approaching (1.0-2.0)">🥉</div>
+                    <div class="badge-item achieving" data-title="Achieving (2.0-3.0)">🥈</div>
+                    <div class="badge-item mastering" data-title="Mastering (3.0-4.0)">🥇</div>
+                    <div class="badge-item leading" data-title="Leading (4.0-5.0)">👑</div>
+                </div>
+                <div class="next-level" id="nextLevel">-</div>
+            </div>
+            
+            <!-- Psychology Components -->
+            <div class="card">
+                <div class="card-title"><span class="dot psych"></span> Psychology Components</div>
+                <div class="component-list" id="psychComponents"></div>
+            </div>
+            
+            <!-- Physiology Components -->
+            <div class="card">
+                <div class="card-title"><span class="dot phys"></span> Physiology Components</div>
+                <div class="component-list" id="physComponents"></div>
+            </div>
+            
+            <!-- Foundation Strength (6 patterns) -->
+            <div class="card full-width">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Foundation Strength Patterns</span>
+                    <a href="portal.html" class="portal-link">🏋️ Open Strength Portal →</a>
+                </div>
+                <div class="strength-grid" id="strengthGrid"></div>
+                <div class="strength-legend">
+                    <div class="legend-item"><div class="legend-box tech"></div> Technique (1-5) → Current Exercise</div>
+                    <div class="legend-item"><div class="legend-box str"></div> Strength Tier (1-5) → Load @ Level 3 Exercise</div>
+                </div>
+            </div>
+            
+            <!-- Health & Skills -->
+            <div class="card">
+                <div class="card-title"><span class="dot health"></span> Health & Skills Components</div>
+                <div class="component-list" id="healthComponents"></div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Timeline Modal -->
+    <div id="timelineModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeTimelineModal()">&times;</button>
+            <div class="modal-title" id="modalTitle">Metric</div>
+            <div class="modal-subtitle" id="modalSubtitle">-</div>
+            <div class="modal-chart">
+                <canvas id="timelineChartCanvas"></canvas>
+            </div>
+            <div class="modal-stats">
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modalFirst">-</div>
+                    <div class="modal-stat-label">First Test</div>
+                </div>
+                <div class="modal-stat highlight">
+                    <div class="modal-stat-value" id="modalLatest">-</div>
+                    <div class="modal-stat-label">Latest</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modalChange">-</div>
+                    <div class="modal-stat-label">Change</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ========== CONFIGURATION - UPDATE THESE VALUES ==========
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwpAG85T75_9CD6vGF2tc93t1OEDsGPP_MvOMEdv544Rs5BFu2BO3WSGfUH2sxYUBcS/exec';
+        const GOOGLE_CLIENT_ID = '701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com';
+        
+        // Authentication state
+        let userEmail = null;
+        let currentAthlete = null;
+        let configData = {};
+        let radarChart = null;
+        
+        // ========== GOOGLE SIGN-IN AUTHENTICATION ==========
+        
+        // Check if already authenticated from another page
+        window.addEventListener('DOMContentLoaded', function() {
+            const storedEmail = sessionStorage.getItem('userEmail');
+            if (storedEmail) {
+                console.log('Found stored session:', storedEmail);
+                userEmail = storedEmail;
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('loadingState').style.display = 'block';
+                loadAthleteData();
+            }
+        });
+        
+        function handleCredentialResponse(response) {
+            try {
+                // Decode JWT token to get email
+                const payload = parseJwt(response.credential);
+                userEmail = payload.email;
+                
+                // Store email in session for cross-page persistence
+                sessionStorage.setItem('userEmail', userEmail);
+                
+                console.log('User signed in:', userEmail);
+                
+                // Hide auth screen, show loading
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('loadingState').style.display = 'block';
+                
+                // Load athlete data
+                loadAthleteData();
+            } catch (error) {
+                console.error('Authentication error:', error);
+                alert('Authentication failed. Please try again.');
+            }
+        }
+        
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
+        
+        async function loadAthleteData() {
+            try {
+                // Check cache first (5 minute expiry)
+                const cacheKey = `athleteData_${userEmail}`;
+                const cacheTimeKey = `athleteData_time_${userEmail}`;
+                const cachedData = sessionStorage.getItem(cacheKey);
+                const cacheTime = sessionStorage.getItem(cacheTimeKey);
+                const now = Date.now();
+                const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+                
+                if (cachedData && cacheTime && (now - parseInt(cacheTime)) < CACHE_DURATION) {
+                    console.log('Using cached data');
+                    const data = JSON.parse(cachedData);
+                    currentAthlete = data.athlete;
+                    configData = data.config || {};
+                    
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    renderDashboard();
+                    return;
+                }
+                
+                // Fetch fresh data
+                console.log('Fetching fresh data from Google Sheets...');
+                const url = `${APPS_SCRIPT_URL}?email=${encodeURIComponent(userEmail)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (!data.authenticated) {
+                    throw new Error(data.error || 'Authentication failed - athlete not found');
+                }
+                
+                // Cache the data
+                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                sessionStorage.setItem(cacheTimeKey, now.toString());
+                
+                currentAthlete = data.athlete;
+                configData = data.config || {};
+                
+                console.log('Athlete data loaded:', currentAthlete.Name);
+                
+                // Hide loading, show main content
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                
+                // Render the dashboard
+                renderDashboard();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loadingState').style.display = 'none';
+                alert('Error: ' + error.message + '\n\nPlease make sure:\n1. Your email is in the Athletes sheet\n2. The Apps Script is properly deployed\n3. You\'re using your school Google account');
+                document.getElementById('authScreen').style.display = 'flex';
+            }
+        }
+        
+        function refreshData() {
+            // Clear cache
+            const cacheKey = `athleteData_${userEmail}`;
+            const cacheTimeKey = `athleteData_time_${userEmail}`;
+            sessionStorage.removeItem(cacheKey);
+            sessionStorage.removeItem(cacheTimeKey);
+            
+            // Show loading
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('loadingState').style.display = 'block';
+            
+            // Reload data
+            loadAthleteData();
+        }
+        
+        // 6 Movement patterns with 1-5 progressions and load tiers
+        // Strength testing at Level 3 for all patterns
+        const MOVEMENT_PATTERNS = [
+            { 
+                name: 'Squat', 
+                key: 'Squat',
+                testLevel: 3,
+                exercises: {
+                    0: '—',
+                    1: 'BW Squat',
+                    2: 'Goblet Squat',
+                    3: 'Back Squat',
+                    4: 'Front Squat',
+                    5: ['Pistol', 'Squat Clean']
+                },
+                loadTiers: { M: [40, 55, 70, 85, 100], F: [25, 35, 45, 55, 70] }
+            },
+            { 
+                name: 'Hinge', 
+                key: 'Hinge',
+                testLevel: 3,
+                exercises: {
+                    0: '—',
+                    1: 'BW Hinge',
+                    2: 'KB Deadlift',
+                    3: 'Hex Bar DL',
+                    4: 'BB Deadlift',
+                    5: ['Single Leg RDL', 'Power Clean']
+                },
+                loadTiers: { M: [50, 70, 90, 110, 130], F: [35, 45, 60, 75, 90] }
+            },
+            { 
+                name: 'Push', 
+                key: 'Push',
+                testLevel: 3,
+                exercises: {
+                    0: '—',
+                    1: 'Floor Push Up',
+                    2: 'DB Bench',
+                    3: 'BB Bench (empty)',
+                    4: 'BB Bench (loaded)',
+                    5: ['Single Arm DB', 'Plyo Push Up']
+                },
+                loadTiers: { M: [30, 40, 50, 65, 80], F: [17.5, 25, 32.5, 40, 50] }
+            },
+            { 
+                name: 'Pull', 
+                key: 'Pull',
+                testLevel: 3,
+                exercises: {
+                    0: '—',
+                    1: 'Banded Row',
+                    2: 'Horizontal Pull',
+                    3: 'DB Row',
+                    4: 'Pull Up',
+                    5: ['Weighted Pull Up', 'Clean Pull']
+                },
+                loadTiers: { M: [12, 16, 20, 24, 32], F: [8, 10, 14, 18, 24] }
+            },
+            { 
+                name: 'Lunge', 
+                key: 'Lunge',
+                testLevel: 3,
+                exercises: {
+                    0: '—',
+                    1: 'BW Lunge',
+                    2: 'DB Lunge',
+                    3: 'BB Lunge',
+                    4: 'Rear Foot Elevated',
+                    5: ['Lateral Lunge', 'Split Jerk']
+                },
+                loadTiers: { M: [20, 35, 50, 65, 80], F: [15, 22.5, 32.5, 42.5, 55] }
+            },
+            { 
+                name: 'Press', 
+                key: 'Press',
+                testLevel: 3,
+                exercises: {
+                    0: '—',
+                    1: 'Band OH Press',
+                    2: 'DB Press',
+                    3: 'BB Press',
+                    4: 'Push Press',
+                    5: ['Single Arm OH', 'Jerk']
+                },
+                loadTiers: { M: [20, 27.5, 35, 42.5, 50], F: [12.5, 17.5, 22.5, 27.5, 35] }
+            }
+        ];
+        
+        // ========== DASHBOARD RENDERING ==========
+        function renderDashboard() {
+            // Update athlete header
+            document.getElementById('athleteName').textContent = currentAthlete.Name || '-';
+            document.getElementById('athleteMeta').textContent = `Grade ${currentAthlete.Grade || '-'}`;
+            
+            // Calculate and display scores
+            const scores = calculateAllScores();
+            displayTrainingAge(scores);
+            displayPillars(scores);
+            displayRadarChart(scores);
+            displayComponents();
+        }
+        
+        // ========== DATA LOADING ==========
+        
+        // ========== UTILITY FUNCTIONS ==========
+        function getLevel(score) {
+            if (score < 1) return { name: 'Building', class: 'level-building', index: 0 };
+            if (score < 2) return { name: 'Approaching', class: 'level-approaching', index: 1 };
+            if (score < 3) return { name: 'Achieving', class: 'level-achieving', index: 2 };
+            if (score < 4) return { name: 'Mastering', class: 'level-mastering', index: 3 };
+            return { name: 'Leading', class: 'level-leading', index: 4 };
+        }
+        
+        function getPillarClass(score) {
+            if (score < 1) return 'building';
+            if (score < 2) return 'approaching';
+            if (score < 3) return 'achieving';
+            if (score < 4) return 'mastering';
+            return 'leading';
+        }
+        
+        function getLevelName(score) {
+            if (score < 1) return 'Building';
+            if (score < 2) return 'Approaching';
+            if (score < 3) return 'Achieving';
+            if (score < 4) return 'Mastering';
+            return 'Leading';
+        }
+        
+        function getBarClass(score, max = 5) {
+            const normalized = (score / max) * 5;
+            if (normalized < 1) return 'bronze';
+            if (normalized < 2) return 'copper';
+            if (normalized < 3) return 'silver';
+            if (normalized < 4) return 'gold';
+            return 'platinum';
+        }
+        
+        // ========== CONVERSION FUNCTIONS ==========
+        function convertBroadJump(cm, gender) {
+            if (!cm || cm <= 0) return 0;
+            const thresholds = gender === 'M' ? [160, 180, 200, 220, 240] : [130, 145, 155, 165, 180];
+            if (cm < thresholds[0]) return 1;
+            if (cm < thresholds[1]) return 2;
+            if (cm < thresholds[2]) return 3;
+            if (cm < thresholds[3]) return 4;
+            if (cm < thresholds[4]) return 4;
+            return 5;
+        }
+        
+        function convertSprint(sec, gender) {
+            if (!sec || sec <= 0) return 0;
+            const thresholds = gender === 'M' ? [6.5, 6.0, 5.5, 5.0, 4.8] : [7.5, 7.0, 6.5, 6.0, 5.7];
+            if (sec > thresholds[0]) return 1;
+            if (sec > thresholds[1]) return 2;
+            if (sec > thresholds[2]) return 3;
+            if (sec > thresholds[3]) return 4;
+            if (sec > thresholds[4]) return 4;
+            return 5;
+        }
+        
+        function convertAgility(sec, gender) {
+            if (!sec || sec <= 0) return 0;
+            // Based on NFL Combine data (WR avg: 4.15s, elite: <4.0s) adapted for high school (14-18 years)
+            // Youth adjustment: +0.8s slower than NFL due to development, training age, technique
+            // Female adjustment: +0.5s slower than males
+            const thresholds = gender === 'M' ? [6.2, 5.7, 5.2, 4.8, 4.4] : [6.8, 6.3, 5.8, 5.3, 4.9];
+            if (sec > thresholds[0]) return 1; // Building
+            if (sec > thresholds[1]) return 2; // Approaching
+            if (sec > thresholds[2]) return 3; // Achieving
+            if (sec > thresholds[3]) return 4; // Mastering
+            if (sec > thresholds[4]) return 4; // Top of Mastering
+            return 5; // Elite
+        }
+        
+        function convertCooper(meters, gender) {
+            if (!meters || meters <= 0) return 0;
+            const thresholds = gender === 'M' ? [1600, 2000, 2400, 2800, 3000] : [1200, 1600, 2000, 2400, 2600];
+            if (meters < thresholds[0]) return 1;
+            if (meters < thresholds[1]) return 2;
+            if (meters < thresholds[2]) return 3;
+            if (meters < thresholds[3]) return 4;
+            if (meters < thresholds[4]) return 4;
+            return 5;
+        }
+        
+        function calculateVO2max(meters) {
+            return (meters - 504.9) / 44.73;
+        }
+        
+        // ========== RENDER FUNCTIONS ==========
+        function renderDashboard() {
+            const a = currentAthlete;
+            
+            // Get strength data from nested object
+            const strengthData = a.strength || {};
+            
+            // Calculate pillar scores FIRST
+            const psychScores = calculatePsychology(a);
+            const physScores = calculatePhysiology(a, strengthData);
+            const healthScores = calculateHealth(a);
+            
+            const psychAvg = average(Object.values(psychScores));
+            const physAvg = average(Object.values(physScores));
+            const healthAvg = average(Object.values(healthScores));
+            
+            // Header info
+            document.getElementById('athleteName').textContent = a.Name || 'Unknown';
+            document.getElementById('athleteMeta').textContent = `Grade ${a.Grade || '?'}`;
+            
+            // Header pillar boxes
+            document.getElementById('headerPsychScore').textContent = psychAvg.toFixed(1);
+            document.getElementById('headerPhysScore').textContent = physAvg.toFixed(1);
+            document.getElementById('headerHealthScore').textContent = healthAvg.toFixed(1);
+            
+            document.getElementById('headerPsychBox').className = 'header-pillar-box ' + getPillarClass(psychAvg);
+            document.getElementById('headerPhysBox').className = 'header-pillar-box ' + getPillarClass(physAvg);
+            document.getElementById('headerHealthBox').className = 'header-pillar-box ' + getPillarClass(healthAvg);
+            
+            document.getElementById('headerPsychLevel').textContent = getLevelName(psychAvg);
+            document.getElementById('headerPhysLevel').textContent = getLevelName(physAvg);
+            document.getElementById('headerHealthLevel').textContent = getLevelName(healthAvg);
+            
+            // Training Age (weighted) - calculate BEFORE using
+            const trainingAge = (psychAvg * 0.35) + (physAvg * 0.35) + (healthAvg * 0.30);
+            const level = getLevel(trainingAge);
+            
+            // Personal Insights (now trainingAge is defined)
+            renderInsights(psychAvg, physAvg, healthAvg, trainingAge, strengthData);
+            
+            // Update display
+            document.getElementById('trainingAgeScore').textContent = trainingAge.toFixed(1);
+            document.getElementById('trainingAgeLevel').textContent = level.name;
+            const taBox = document.getElementById('trainingAgeBox');
+            taBox.className = 'training-age-display ' + level.class;
+            
+            // Render components
+            renderPsychComponents(a, psychScores);
+            renderPhysComponents(a, physScores);
+            renderHealthComponents(a, healthScores);
+            renderStrengthGrid(strengthData, a.Gender);
+            updateBadges(trainingAge);
+            
+            // Radar chart
+            renderRadarChart(psychAvg, physAvg, healthAvg, psychScores, physScores, healthScores);
+        }
+        
+        function calculatePsychology(a) {
+            const psych = a.psych || {};
+            return {
+                'Grit': parseFloat(psych.Grit) || 0,
+                'Mindset': parseFloat(psych.Mindset) || 0,
+                'Focus & Engagement': parseFloat(psych.Focus_Engagement) || 0,
+                'Effort & Work Ethic': parseFloat(psych.Effort_Work_Ethic) || 0,
+                'Coachability': parseFloat(psych.Coachability) || 0,
+                'Mental Toughness': parseFloat(psych.Mental_Toughness) || 0
+            };
+        }
+        
+        function calculatePhysiology(a, strengthData) {
+            const gender = a.Gender;
+            const perf = a.performance || {};
+            const mobility = a.mobility || {};
+            
+            // Strength composite (Tech + Str averaged across patterns)
+            let strengthScore = 0;
+            let strengthCount = 0;
+            
+            MOVEMENT_PATTERNS.forEach(p => {
+                const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
+                const strVal = strengthData[p.key + '_Str'];
+                const str = (strVal === '—' || strVal === '' || strVal === null) ? 0 : parseFloat(strVal) || 0;
+                
+                // Tech: 0-5 → normalize to 5 (already on 5 scale)
+                if (tech > 0) {
+                    strengthScore += tech;
+                    strengthCount++;
+                }
+                // Str: 1-5 (only count if unlocked and has value)
+                if (str > 0) {
+                    strengthScore += str;
+                    strengthCount++;
+                }
+            });
+            const strengthAvg = strengthCount > 0 ? strengthScore / strengthCount : 0;
+            
+            // Performance tests
+            const broadJump = convertBroadJump(parseFloat(perf.Broad_Jump_cm), gender);
+            const sprint = convertSprint(parseFloat(perf['40m_sec'] || perf.Sprint_40m_sec || perf._40m_sec), gender);
+            const agility = convertAgility(parseFloat(perf['5_10_5_sec'] || perf.Agility_5_10_5_sec || perf._5_10_5_sec), gender);
+            const cooper = convertCooper(parseFloat(perf.Cooper_m), gender);
+            
+            // Mobility (normalized to 5)
+            const asl = ((parseFloat(mobility.ASL) || 0) / 3) * 5;
+            const trunk = ((parseFloat(mobility.Trunk_Stability) || 0) / 3) * 5;
+            const shoulder = ((parseFloat(mobility.Shoulder_Mobility) || 0) / 3) * 5;
+            const mobilityAvg = average([asl, trunk, shoulder]);
+            
+            return {
+                'Strength': strengthAvg,
+                'Broad Jump': broadJump,
+                '40m Sprint': sprint,
+                'Agility (5-10-5)': agility,
+                'Cooper Test': cooper,
+                'Mobility': mobilityAvg
+            };
+        }
+        
+        function calculateHealth(a) {
+            const recovery = a.recovery || {};
+            return {
+                'Recovery': parseFloat(recovery.Recovery_Score) || 0,
+                'Movement Quality': parseFloat(recovery.Movement_Quality || recovery.Movement_Technique) || 0
+            };
+        }
+        
+        function average(arr) {
+            const valid = arr.filter(v => v > 0);
+            return valid.length > 0 ? valid.reduce((a, b) => a + b, 0) / valid.length : 0;
+        }
+        
+        function renderComponents(containerId, scores, rawValues = {}, historyData = {}, dataType = '') {
+            const container = document.getElementById(containerId);
+            container.innerHTML = Object.entries(scores).map(([name, score]) => {
+                const pct = Math.min((score / 5) * 100, 100);
+                const barClass = getBarClass(score);
+                const raw = rawValues[name] || '';
+                
+                // Get metric key for history lookup
+                const metricKey = historyData.keyMap ? historyData.keyMap[name] : null;
+                const history = historyData.history || [];
+                const growth = metricKey ? calculateGrowth(history, metricKey) : null;
+                const growthHtml = growth ? renderGrowthIndicator(growth, historyData.higherIsBetter !== false) : '';
+                
+                // Click handler for timeline (only if we have history data)
+                const clickAttr = metricKey && history.length > 1 
+                    ? `onclick="openTimelineModal('${name}', '${metricKey}', '${dataType}')"` 
+                    : '';
+                const clickClass = metricKey && history.length > 1 ? 'clickable' : '';
+                
+                return `
+                    <div class="component-row ${clickClass}" ${clickAttr}>
+                        <div class="component-name">
+                            ${name}${growthHtml}
+                            ${raw ? `<span class="raw-value">${raw}</span>` : ''}
+                        </div>
+                        <div class="component-bar">
+                            <div class="component-fill ${barClass}" style="width:${pct}%"></div>
+                            <span class="component-score">${score.toFixed(1)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderPsychComponents(a, scores) {
+            const history = a.psych_history || [];
+            const historyData = {
+                history: history,
+                keyMap: {
+                    'Grit': 'Grit',
+                    'Mindset': 'Mindset',
+                    'Focus & Engagement': 'Focus_Engagement',
+                    'Effort & Work Ethic': 'Effort_Work_Ethic',
+                    'Coachability': 'Coachability',
+                    'Mental Toughness': 'Mental_Toughness'
+                },
+                higherIsBetter: true
+            };
+            renderComponents('psychComponents', scores, {}, historyData, 'psych');
+        }
+        
+        function renderPhysComponents(a, scores) {
+            const perf = a.performance || {};
+            const history = a.performance_history || [];
+            
+            const rawValues = {
+                'Broad Jump': perf.Broad_Jump_cm ? `${perf.Broad_Jump_cm} cm` : '',
+                '40m Sprint': (perf['40m_sec'] || perf.Sprint_40m_sec || perf._40m_sec) ? `${perf['40m_sec'] || perf.Sprint_40m_sec || perf._40m_sec} sec` : '',
+                'Agility (5-10-5)': (perf['5_10_5_sec'] || perf.Agility_5_10_5_sec || perf._5_10_5_sec) ? `${perf['5_10_5_sec'] || perf.Agility_5_10_5_sec || perf._5_10_5_sec} sec` : '',
+                'Cooper Test': perf.Cooper_m ? `${perf.Cooper_m}m | VO₂max: ${calculateVO2max(perf.Cooper_m).toFixed(1)}` : ''
+            };
+            
+            const historyData = {
+                history: history,
+                keyMap: {
+                    'Strength': null, // Strength is calculated, not in history
+                    'Broad Jump': 'Broad_Jump_cm',
+                    '40m Sprint': '40m_sec',
+                    'Agility (5-10-5)': '5_10_5_sec',
+                    'Cooper Test': 'Cooper_m',
+                    'Mobility': null // Mobility is in separate history
+                },
+                higherIsBetter: {
+                    'Broad Jump': true,
+                    '40m Sprint': false, // Lower is better
+                    'Agility (5-10-5)': false, // Lower is better
+                    'Cooper Test': true,
+                }
+            };
+            
+            // Custom render for physiology to handle different "higher is better" per metric
+            const container = document.getElementById('physComponents');
+            container.innerHTML = Object.entries(scores).map(([name, score]) => {
+                const pct = Math.min((score / 5) * 100, 100);
+                const barClass = getBarClass(score);
+                const raw = rawValues[name] || '';
+                
+                const metricKey = historyData.keyMap[name];
+                const growth = metricKey ? calculateGrowth(history, metricKey) : null;
+                const higherIsBetter = historyData.higherIsBetter[name] !== false;
+                const growthHtml = growth ? renderGrowthIndicator(growth, higherIsBetter) : '';
+                
+                const clickAttr = metricKey && history.length > 1 
+                    ? `onclick="openTimelineModal('${name}', '${metricKey}', 'performance')"` 
+                    : '';
+                const clickClass = metricKey && history.length > 1 ? 'clickable' : '';
+                
+                return `
+                    <div class="component-row ${clickClass}" ${clickAttr}>
+                        <div class="component-name">
+                            ${name}${growthHtml}
+                            ${raw ? `<span class="raw-value">${raw}</span>` : ''}
+                        </div>
+                        <div class="component-bar">
+                            <div class="component-fill ${barClass}" style="width:${pct}%"></div>
+                            <span class="component-score">${score.toFixed(1)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderHealthComponents(a, scores) {
+            const history = a.recovery_history || [];
+            const historyData = {
+                history: history,
+                keyMap: {
+                    'Recovery': 'Recovery_Score',
+                    'Movement Quality': 'Movement_Technique'
+                },
+                higherIsBetter: true
+            };
+            renderComponents('healthComponents', scores, {}, historyData, 'recovery');
+        }
+        
+        function renderStrengthGrid(strengthData, gender) {
+            const container = document.getElementById('strengthGrid');
+            
+            container.innerHTML = MOVEMENT_PATTERNS.map(p => {
+                const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
+                const strVal = strengthData[p.key + '_Str'];
+                const unlocked = tech >= p.testLevel;
+                
+                // Get current exercise based on tech level
+                let currentExercise = p.exercises[Math.min(tech, 5)] || p.exercises[0];
+                if (Array.isArray(currentExercise)) {
+                    currentExercise = currentExercise.join(' / ');
+                }
+                
+                // Test exercise is always at testLevel (Level 3)
+                const testExercise = p.exercises[p.testLevel];
+                
+                // Get load tiers for gender
+                const tiers = p.loadTiers[gender] || p.loadTiers['M'];
+                
+                // Parse strength value and get load
+                let strDisplay = '—';
+                let loadDisplay = '';
+                let strClass = 'locked';
+                
+                if (unlocked) {
+                    strClass = '';
+                    if (strVal && strVal !== '—' && !isNaN(parseFloat(strVal))) {
+                        const tierNum = parseInt(strVal);
+                        strDisplay = tierNum;
+                        if (tierNum >= 1 && tierNum <= 5) {
+                            const load = tiers[tierNum - 1];
+                            loadDisplay = `${load}${tierNum === 5 ? '+' : ''}kg`;
+                        }
+                    } else {
+                        strDisplay = '—';
+                        loadDisplay = 'Not tested';
+                    }
+                }
+                
+                return `
+                    <div class="strength-item">
+                        <div class="pattern-name">${p.name}</div>
+                        <div class="strength-row tech-row">
+                            <span class="strength-label tech">TECH</span>
+                            <span class="strength-level">${tech}/5</span>
+                            <span class="strength-exercise ${tech > 0 ? 'current' : ''}">${currentExercise}</span>
+                        </div>
+                        <div class="strength-row str-row ${strClass}">
+                            <span class="strength-label ${unlocked ? 'str' : 'locked'}">STR</span>
+                            ${unlocked ? `
+                                <span class="strength-level">${strDisplay}/5</span>
+                                <span class="strength-exercise">${testExercise}</span>
+                                <span class="strength-load">${loadDisplay}</span>
+                            ` : `
+                                <span class="lock-icon">🔒</span>
+                                <span class="strength-exercise">Unlock at Tech ${p.testLevel}</span>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function updateBadges(trainingAge) {
+            const badges = document.querySelectorAll('.badge-item');
+            const thresholds = [1, 2, 3, 4, 5];
+            
+            badges.forEach((badge, i) => {
+                if (trainingAge >= thresholds[i]) {
+                    badge.classList.add('achieved');
+                } else {
+                    badge.classList.remove('achieved');
+                }
+            });
+            
+            // Calculate next level message
+            if (trainingAge >= 5) {
+                document.getElementById('nextLevel').textContent = '🎉 Perfect score achieved!';
+            } else if (trainingAge >= 4) {
+                const toGo = (5 - trainingAge).toFixed(1);
+                document.getElementById('nextLevel').textContent = `👑 Leading! ${toGo} to perfect 5.0`;
+            } else if (trainingAge >= 3) {
+                const toGo = (4 - trainingAge).toFixed(1);
+                document.getElementById('nextLevel').textContent = `${toGo} points to Leading`;
+            } else if (trainingAge >= 2) {
+                const toGo = (3 - trainingAge).toFixed(1);
+                document.getElementById('nextLevel').textContent = `${toGo} points to Mastering`;
+            } else if (trainingAge >= 1) {
+                const toGo = (2 - trainingAge).toFixed(1);
+                document.getElementById('nextLevel').textContent = `${toGo} points to Achieving`;
+            } else {
+                const toGo = (1 - trainingAge).toFixed(1);
+                document.getElementById('nextLevel').textContent = `${toGo} points to Approaching`;
+            }
+        }
+        
+        function renderInsights(psychAvg, physAvg, healthAvg, trainingAge, strengthData) {
+            // Find strongest pillar
+            const pillars = [
+                { name: 'Psychology', score: psychAvg },
+                { name: 'Physiology', score: physAvg },
+                { name: 'Health & Skills', score: healthAvg }
+            ];
+            
+            const sorted = [...pillars].sort((a, b) => b.score - a.score);
+            const strongest = sorted[0];
+            const growthArea = sorted[sorted.length - 1];
+            
+            // Strength insight
+            document.getElementById('insightStrength').textContent = strongest.name;
+            const strengthMessages = [
+                "Keep building here!",
+                "Showing real progress!",
+                "Strong foundation!",
+                "Excellent work!",
+                "Leading the way!"
+            ];
+            const strengthMsgIndex = Math.min(Math.floor(strongest.score), 4);
+            document.getElementById('insightStrengthMsg').textContent = strengthMessages[strengthMsgIndex];
+            
+            // Growth insight
+            document.getElementById('insightGrowth').textContent = growthArea.name;
+            const growthMessages = [
+                "Starting your journey",
+                "Building momentum",
+                "Making strides",
+                "Almost there!",
+                "Keep pushing!"
+            ];
+            const growthMsgIndex = Math.min(Math.floor(growthArea.score), 4);
+            document.getElementById('insightGrowthMsg').textContent = growthMessages[growthMsgIndex];
+            
+            // Next step insight
+            let nextStep = '';
+            let nextMsg = '';
+            
+            // Check for patterns not yet unlocked for strength testing
+            let patternsToUnlock = [];
+            MOVEMENT_PATTERNS.forEach(p => {
+                const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
+                if (tech < p.testLevel) {
+                    patternsToUnlock.push({ name: p.name, needed: p.testLevel - tech });
+                }
+            });
+            
+            // Check for strength tests not done
+            let strengthTestsNeeded = [];
+            MOVEMENT_PATTERNS.forEach(p => {
+                const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
+                const str = strengthData[p.key + '_Str'];
+                if (tech >= p.testLevel && (!str || str === '—')) {
+                    strengthTestsNeeded.push(p.name);
+                }
+            });
+            
+            // Calculate points to next level
+            const levelThresholds = [1, 2, 3, 4, 5];
+            const levelNames = ['Approaching', 'Achieving', 'Mastering', 'Leading', 'Perfect'];
+            let nextLevelName = '';
+            let pointsToNext = 0;
+            
+            for (let i = 0; i < levelThresholds.length; i++) {
+                if (trainingAge < levelThresholds[i]) {
+                    nextLevelName = levelNames[i];
+                    pointsToNext = levelThresholds[i] - trainingAge;
+                    break;
+                }
+            }
+            
+            // Determine next step
+            if (patternsToUnlock.length > 0) {
+                const closest = patternsToUnlock.sort((a, b) => a.needed - b.needed)[0];
+                nextStep = `Unlock ${closest.name}`;
+                nextMsg = `${closest.needed} tech level${closest.needed > 1 ? 's' : ''} to go`;
+            } else if (strengthTestsNeeded.length > 0) {
+                nextStep = `Test ${strengthTestsNeeded[0]}`;
+                nextMsg = "Ready for strength test!";
+            } else if (pointsToNext > 0) {
+                nextStep = `${pointsToNext.toFixed(1)} to ${nextLevelName}`;
+                nextMsg = "Keep up the momentum!";
+            } else {
+                nextStep = "Perfect Score!";
+                nextMsg = "You've reached the top!";
+            }
+            
+            document.getElementById('insightNext').textContent = nextStep;
+            document.getElementById('insightNextMsg').textContent = nextMsg;
+        }
+        
+        function renderRadarChart(psychAvg, physAvg, healthAvg, psychScores, physScores, healthScores) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            if (radarChart) radarChart.destroy();
+            
+            // Store sub-scores for tooltips
+            const subScores = {
+                'Psychology': psychScores,
+                'Physiology': physScores,
+                'Health & Skills': healthScores
+            };
+            
+            const labels = ['Psychology', 'Physiology', 'Health & Skills'];
+            const values = [psychAvg, physAvg, healthAvg];
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Score',
+                        data: values,
+                        backgroundColor: 'rgba(135, 75, 70, 0.2)',
+                        borderColor: 'rgba(135, 75, 70, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(135, 75, 70, 1)',
+                        pointBorderColor: 'rgba(135, 75, 70, 1)',
+                        pointRadius: 6,
+                        pointHoverRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: { stepSize: 1, display: false },
+                            grid: { color: 'rgba(0,0,0,0.1)' },
+                            angleLines: { color: 'rgba(0,0,0,0.1)' },
+                            pointLabels: { 
+                                font: { size: 12, weight: 'bold' },
+                                color: '#231F20'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(35, 31, 32, 0.95)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                title: function(context) {
+                                    const label = context[0].label;
+                                    const value = context[0].raw.toFixed(1);
+                                    return `${label}: ${value}/5`;
+                                },
+                                label: function(context) {
+                                    const pillar = context.label;
+                                    const scores = subScores[pillar];
+                                    if (!scores) return '';
+                                    
+                                    const lines = ['───────────────'];
+                                    Object.entries(scores).forEach(([name, score]) => {
+                                        const bar = '█'.repeat(Math.round(score)) + '░'.repeat(5 - Math.round(score));
+                                        lines.push(`${bar} ${score.toFixed(1)} ${name}`);
+                                    });
+                                    return lines;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ========== TIMELINE MODAL ==========
+        let timelineChart = null;
+        
+        function openTimelineModal(metricName, metricKey, dataType) {
+            const a = currentAthlete;
+            const history = a[dataType + '_history'] || [];
+            
+            if (history.length === 0) {
+                alert('No historical data available for this metric.');
+                return;
+            }
+            
+            // Extract data for this metric
+            const dataPoints = history
+                .filter(entry => entry[metricKey] !== undefined && entry[metricKey] !== null && entry[metricKey] !== '')
+                .map(entry => ({
+                    date: entry.Date,
+                    value: parseFloat(entry[metricKey]) || 0
+                }));
+            
+            if (dataPoints.length === 0) {
+                alert('No data points found for this metric.');
+                return;
+            }
+            
+            // Determine if lower is better for this metric
+            const lowerIsBetter = ['_40m_sec', '_5_10_5_sec', 'Sprint_40m_sec', 'Agility_5_10_5_sec'].includes(metricKey);
+            
+            // Calculate stats
+            const first = dataPoints[0];
+            const latest = dataPoints[dataPoints.length - 1];
+            const change = latest.value - first.value;
+            const best = Math.max(...dataPoints.map(d => d.value));
+            
+            // Determine if change is positive (improvement)
+            const isImprovement = lowerIsBetter ? change < 0 : change > 0;
+            
+            // Update modal content
+            document.getElementById('modalTitle').textContent = metricName;
+            document.getElementById('modalSubtitle').textContent = `${dataPoints.length} entries from ${first.date} to ${latest.date}`;
+            
+            document.getElementById('modalFirst').textContent = first.value.toFixed(1);
+            document.getElementById('modalLatest').textContent = latest.value.toFixed(1);
+            document.getElementById('modalChange').textContent = (change >= 0 ? '+' : '') + change.toFixed(1);
+            document.getElementById('modalChange').style.color = isImprovement ? '#2e7d32' : '#c62828';
+            
+            // Draw chart
+            const ctx = document.getElementById('timelineChartCanvas').getContext('2d');
+            if (timelineChart) timelineChart.destroy();
+            
+            timelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dataPoints.map(d => d.date),
+                    datasets: [{
+                        label: metricName,
+                        data: dataPoints.map(d => d.value),
+                        borderColor: '#874B46',
+                        backgroundColor: 'rgba(135, 75, 70, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: dataPoints.map((d, i) => 
+                            i === dataPoints.length - 1 ? '#D4AF37' : '#874B46'
+                        ),
+                        pointRadius: dataPoints.map((d, i) => 
+                            i === dataPoints.length - 1 ? 8 : 4
+                        ),
+                        pointBorderWidth: 2,
+                        pointBorderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(35, 31, 32, 0.95)',
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+            
+            // Show modal
+            document.getElementById('timelineModal').classList.add('active');
+        }
+        
+        function closeTimelineModal() {
+            document.getElementById('timelineModal').classList.remove('active');
+            if (timelineChart) {
+                timelineChart.destroy();
+                timelineChart = null;
+            }
+        }
+        
+        // Close modal on overlay click
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'timelineModal') {
+                closeTimelineModal();
+            }
+        });
+        
+        // ========== GROWTH CALCULATIONS ==========
+        function calculateGrowth(history, metricKey) {
+            if (!history || history.length < 2) return null;
+            
+            const validEntries = history.filter(e => 
+                e[metricKey] !== undefined && e[metricKey] !== null && e[metricKey] !== ''
+            );
+            
+            if (validEntries.length < 2) return null;
+            
+            const first = parseFloat(validEntries[0][metricKey]) || 0;
+            const latest = parseFloat(validEntries[validEntries.length - 1][metricKey]) || 0;
+            
+            return {
+                first: first,
+                latest: latest,
+                change: latest - first,
+                percentChange: first !== 0 ? ((latest - first) / first) * 100 : 0
+            };
+        }
+        
+        function renderGrowthIndicator(growth, higherIsBetter = true) {
+            if (!growth || growth.change === 0) {
+                return '<span class="growth-indicator neutral"><span class="growth-arrow">→</span> 0</span>';
+            }
+            
+            const isPositive = higherIsBetter ? growth.change > 0 : growth.change < 0;
+            const arrow = growth.change > 0 ? '↑' : '↓';
+            const displayChange = Math.abs(growth.change).toFixed(1);
+            
+            return `<span class="growth-indicator ${isPositive ? 'positive' : 'negative'}">
+                <span class="growth-arrow">${arrow}</span> ${displayChange}
+            </span>`;
+        }
+        
+        // 🎉 WOW FACTOR - Celebration confetti
+        function celebrateDashboard() {
+            // Small celebration when dashboard loads
+            setTimeout(() => {
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { y: 0.7 },
+                    colors: ['#874B46', '#D4AF37', '#CD7F32']
+                });
+            }, 800);
+        }
+        
+        // Trigger celebration after athlete data loads
+        const originalDisplayAthleteData = displayAthleteData;
+        if (typeof displayAthleteData === 'function') {
+            displayAthleteData = function(data) {
+                originalDisplayAthleteData(data);
+                celebrateDashboard();
+            };
+        }
+        
+        // Auth system handles initialization - no DOMContentLoaded needed
+    </script>
+    </div> <!-- Close mainContent wrapper -->
+</body>
+</html>
