@@ -2166,6 +2166,48 @@
         </div>
     </div>
 
+    <!-- Weight Increase Confirmation Modal -->
+    <div class="sloth-modal" id="weightIncreaseModal">
+        <div class="sloth-content" style="max-width: 400px;">
+            <div class="sloth-emoji">💪</div>
+            <div class="sloth-title">Increasing Weight</div>
+            <div class="sloth-message" style="margin-bottom: 20px;">
+                You're about to lift <strong>more than last time</strong><br>
+                <span style="color: rgba(255,255,255,0.5);"><span id="weightIncreaseFrom"></span>kg</span>
+                <span style="color: #22c55e; margin: 0 10px;">→</span>
+                <span style="color: #22c55e; font-weight: 700;"><span id="weightIncreaseTo"></span>kg</span>
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 25px;">
+                <div style="color: rgba(255,255,255,0.8); margin-bottom: 15px; font-weight: 600;">Can you:</div>
+                
+                <label style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; cursor: pointer;">
+                    <input type="checkbox" class="weight-check" onchange="updateWeightConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
+                    <span style="color: rgba(255,255,255,0.9); font-size: 0.95rem;">Complete all reps - no half reps or skipping</span>
+                </label>
+                
+                <label style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; cursor: pointer;">
+                    <input type="checkbox" class="weight-check" onchange="updateWeightConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
+                    <span style="color: rgba(255,255,255,0.9); font-size: 0.95rem;">Keep your form solid from first rep to last</span>
+                </label>
+                
+                <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer;">
+                    <input type="checkbox" class="weight-check" onchange="updateWeightConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
+                    <span style="color: rgba(255,255,255,0.9); font-size: 0.95rem;">Finish feeling strong, not completely wiped out</span>
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button onclick="cancelWeightIncrease()" style="flex: 1; padding: 14px 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: rgba(255,255,255,0.7); border-radius: 10px; font-size: 0.95rem; cursor: pointer;">
+                    Stay at <span id="weightStayAt"></span>kg
+                </button>
+                <button id="confirmWeightBtn" onclick="confirmWeightIncrease()" disabled style="flex: 1; padding: 14px 20px; border: none; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; opacity: 0.5;">
+                    I've got this
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
@@ -2442,6 +2484,18 @@
                 return data.success ? data.lastSession : null;
             } catch (error) {
                 console.error('Error fetching last session:', error);
+                return null;
+            }
+        }
+
+        async function fetchLastSessionByType(email, sessionType) {
+            try {
+                const url = `${APPS_SCRIPT_URL}?action=getLastSessionByType&email=${encodeURIComponent(email)}&sessionType=${sessionType}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                return data.success ? data.lastSession : null;
+            } catch (error) {
+                console.error('Error fetching last session by type:', error);
                 return null;
             }
         }
@@ -2960,8 +3014,11 @@
                 document.getElementById('totalSessions').textContent = totalSessions;
                 document.getElementById('totalReps').textContent = totalReps;
 
+                // Fetch last session of same type to show "Last time" data
+                const lastSameTypeSession = await fetchLastSessionByType(currentUser.email, currentSessionType);
+                
                 // Build workout blocks based on session type
-                buildWorkoutBlocks(currentStrength, currentSessionType);
+                buildWorkoutBlocks(currentStrength, currentSessionType, lastSameTypeSession);
 
                 // Hide loading, show "Start Session" state
                 document.getElementById('workoutLoading').style.display = 'none';
@@ -2976,8 +3033,29 @@
             }
         }
 
-        function buildWorkoutBlocks(strength, sessionType) {
+        function buildWorkoutBlocks(strength, sessionType, lastSession) {
             workoutBlocks = [];
+            
+            // Parse last session exercises to find previous weights
+            let lastExercises = {};
+            if (lastSession && lastSession.exercises) {
+                try {
+                    const parsed = typeof lastSession.exercises === 'string' 
+                        ? JSON.parse(lastSession.exercises) 
+                        : lastSession.exercises;
+                    parsed.forEach(ex => {
+                        if (ex.pattern) {
+                            lastExercises[ex.pattern] = {
+                                weight: ex.weight,
+                                sets: ex.sets,
+                                reps: ex.reps
+                            };
+                        }
+                    });
+                } catch (e) {
+                    console.error('Error parsing last session exercises:', e);
+                }
+            }
             
             // Session A: Squat, Push, Lunge (3 patterns)
             // Session B: Hinge, Pull, Press (3 patterns)
@@ -3086,6 +3164,25 @@
                 // Reps: 5 for readyToTest (same as test), 8 for others
                 const reps = trainingState === 'readyToTest' ? 5 : 8;
                 
+                // Get last session data for this pattern
+                const lastData = lastExercises[patternName];
+                let lastTimeInfo = null;
+                let suggestedWeight = workingWeight;
+                
+                if (lastData && lastData.weight && lastData.weight !== 'bodyweight') {
+                    const lastWeight = parseFloat(lastData.weight) || 0;
+                    lastTimeInfo = {
+                        weight: lastWeight,
+                        sets: lastData.sets,
+                        reps: lastData.reps
+                    };
+                    
+                    // Auto-progress: if they completed all sets last time, suggest +2.5kg
+                    if (trainingState === 'loaded' && lastData.sets >= 3 && lastWeight > 0) {
+                        suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
+                    }
+                }
+                
                 workoutBlocks.push({
                     type: 'primary',
                     title: `💪 PRIMARY LIFT ${index + 1}`,
@@ -3099,7 +3196,8 @@
                         patternName: patternName,
                         sets: 3,
                         reps: reps,
-                        weight: workingWeight,
+                        weight: suggestedWeight,
+                        lastTime: lastTimeInfo,
                         trainingState: trainingState,
                         completed: [false, false, false]
                     }]
@@ -3150,6 +3248,25 @@
                 // Reps: 5 for readyToTest (same as test), 10 for others
                 const reps = trainingState === 'readyToTest' ? 5 : 10;
                 
+                // Get last session data for this pattern
+                const lastData = lastExercises[patternName];
+                let lastTimeInfo = null;
+                let suggestedWeight = workingWeight;
+                
+                if (lastData && lastData.weight && lastData.weight !== 'bodyweight') {
+                    const lastWeight = parseFloat(lastData.weight) || 0;
+                    lastTimeInfo = {
+                        weight: lastWeight,
+                        sets: lastData.sets,
+                        reps: lastData.reps
+                    };
+                    
+                    // Auto-progress: if they completed all sets last time, suggest +2.5kg
+                    if (trainingState === 'loaded' && lastData.sets >= 3 && lastWeight > 0) {
+                        suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
+                    }
+                }
+                
                 workoutBlocks.push({
                     type: 'accessory',
                     title: `🎯 ACCESSORY ${index + 1}`,
@@ -3163,7 +3280,8 @@
                         patternName: patternName,
                         sets: 3,
                         reps: reps,
-                        weight: workingWeight,
+                        weight: suggestedWeight,
+                        lastTime: lastTimeInfo,
                         trainingState: trainingState,
                         completed: [false, false, false]
                     }]
@@ -3436,6 +3554,20 @@
             // Weight control (for loaded OR readyToTest with weight)
             if (exercise.weight > 0) {
                 const weightLabel = exercise.trainingState === 'loaded' ? 'Working Weight (70%)' : 'Practice Weight (Tier 1)';
+                
+                // Show "Last time" info if available
+                let lastTimeHtml = '';
+                if (exercise.lastTime && exercise.lastTime.weight) {
+                    lastTimeHtml = `
+                        <div style="background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 10px 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <span style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">📊 Last time:</span>
+                            <span style="color: #a78bfa; font-weight: 600;">${exercise.lastTime.weight}kg</span>
+                            <span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">× ${exercise.lastTime.sets} sets</span>
+                        </div>
+                    `;
+                }
+                
+                html += lastTimeHtml;
                 html += `
                     <div class="block-weight-control">
                         <button class="block-weight-btn" onclick="adjustBlockWeight(${exIndex}, -2.5)">−</button>
@@ -3634,11 +3766,75 @@
             updateTimer();
         }
 
+        // Track which exercises have been confirmed for increase (per session)
+        const confirmedIncreases = new Set();
+        
         function adjustBlockWeight(exIndex, delta) {
             const block = workoutBlocks[currentBlockIndex];
             const exercise = block.exercises[exIndex];
-            exercise.weight = Math.max(0, (exercise.weight || 0) + delta);
+            const currentWeight = exercise.weight || 0;
+            const newWeight = Math.max(0, currentWeight + delta);
+            const lastWeight = exercise.lastTime?.weight || 0;
+            
+            // Check if increasing above last time's weight (and not already confirmed)
+            const exerciseKey = `${currentBlockIndex}-${exIndex}`;
+            if (delta > 0 && newWeight > lastWeight && lastWeight > 0 && !confirmedIncreases.has(exerciseKey)) {
+                showWeightIncreaseModal(exIndex, lastWeight, newWeight, exerciseKey);
+                return;
+            }
+            
+            // Apply weight change
+            exercise.weight = newWeight;
             document.getElementById(`weight-${exIndex}`).textContent = exercise.weight + ' kg';
+        }
+        
+        function showWeightIncreaseModal(exIndex, lastWeight, newWeight, exerciseKey) {
+            const modal = document.getElementById('weightIncreaseModal');
+            document.getElementById('weightIncreaseFrom').textContent = lastWeight;
+            document.getElementById('weightIncreaseTo').textContent = newWeight;
+            document.getElementById('weightStayAt').textContent = lastWeight;
+            
+            // Store for confirm/cancel
+            modal.dataset.exIndex = exIndex;
+            modal.dataset.newWeight = newWeight;
+            modal.dataset.lastWeight = lastWeight;
+            modal.dataset.exerciseKey = exerciseKey;
+            
+            // Reset checkboxes
+            document.querySelectorAll('.weight-check').forEach(cb => cb.checked = false);
+            document.getElementById('confirmWeightBtn').disabled = true;
+            document.getElementById('confirmWeightBtn').style.opacity = '0.5';
+            
+            modal.classList.add('active');
+        }
+        
+        function updateWeightConfirmBtn() {
+            const allChecked = document.querySelectorAll('.weight-check:checked').length === 3;
+            const btn = document.getElementById('confirmWeightBtn');
+            btn.disabled = !allChecked;
+            btn.style.opacity = allChecked ? '1' : '0.5';
+        }
+        
+        function confirmWeightIncrease() {
+            const modal = document.getElementById('weightIncreaseModal');
+            const exIndex = parseInt(modal.dataset.exIndex);
+            const newWeight = parseFloat(modal.dataset.newWeight);
+            const exerciseKey = modal.dataset.exerciseKey;
+            
+            // Mark as confirmed so they can adjust freely now
+            confirmedIncreases.add(exerciseKey);
+            
+            // Apply weight change
+            const block = workoutBlocks[currentBlockIndex];
+            const exercise = block.exercises[exIndex];
+            exercise.weight = newWeight;
+            document.getElementById(`weight-${exIndex}`).textContent = exercise.weight + ' kg';
+            
+            modal.classList.remove('active');
+        }
+        
+        function cancelWeightIncrease() {
+            document.getElementById('weightIncreaseModal').classList.remove('active');
         }
 
         function prevBlock() {
