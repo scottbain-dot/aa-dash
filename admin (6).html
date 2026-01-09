@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athlete Academy - Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2234;
+            --bg-hover: #243049;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --border-color: rgba(255,255,255,0.08);
+            --border-light: rgba(255,255,255,0.12);
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Top Navigation Bar */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.98) 0%, rgba(17, 24, 39, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+        }
+
+        .logo span {
+            color: var(--accent-amber);
+        }
+
+        .session-control {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--bg-card);
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .session-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .session-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .session-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .session-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .session-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            transform: scale(1.05);
+        }
+
+        .session-btn:active {
+            transform: scale(0.95);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 64px;
+            padding: 24px;
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-value.green { color: var(--accent-green); }
+        .stat-value.amber { color: var(--accent-amber); }
+        .stat-value.red { color: var(--accent-red); }
+        .stat-value.blue { color: var(--accent-blue); }
+
+        /* Search and Filter Bar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .filter-btn.ready {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .filter-btn.ready.active {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .filter-btn.behind {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .filter-btn.behind.active {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        /* Student Table */
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .student-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .student-table th {
+            text-align: left;
+            padding: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .student-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .student-table tbody tr {
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .student-table tbody tr:hover {
+            background: var(--bg-hover);
+        }
+
+        .student-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .student-email {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .pattern-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .tech-level {
+            color: var(--accent-blue);
+        }
+
+        .str-tier {
+            color: var(--accent-amber);
+        }
+
+        .str-tier.none {
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-badge.ready {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green);
+        }
+
+        .status-badge.testing {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-amber);
+        }
+
+        .status-badge.behind {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        .status-badge.good {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        /* Student Detail Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+            z-index: 10;
+        }
+
+        .modal-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-back:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-title span {
+            color: var(--text-muted);
+            font-weight: 400;
+            font-size: 0.9rem;
+            margin-left: 8px;
+        }
+
+        .modal-body {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            grid-column: 1;
+        }
+
+        .progress-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .progress-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-pattern {
+            font-weight: 600;
+            width: 70px;
+            color: var(--text-primary);
+        }
+
+        .progress-bar-container {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-values {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Quick Update Section */
+        .update-section {
+            grid-column: 2;
+            grid-row: 1 / 3;
+        }
+
+        .update-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .update-row {
+            margin-bottom: 20px;
+        }
+
+        .update-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .pattern-select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+        }
+
+        .pattern-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .level-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .level-btn {
+            flex: 1;
+            padding: 12px 8px;
+            border-radius: 10px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .level-btn:hover {
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .level-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .level-btn.active.tech {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .level-btn.active.str {
+            background: var(--accent-amber);
+            border-color: var(--accent-amber);
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-green), #16a34a);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 20px;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .save-btn:active {
+            transform: translateY(0);
+        }
+
+        .save-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Notes Section */
+        .notes-section {
+            grid-column: 1;
+        }
+
+        .notes-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .notes-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .note-item {
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--accent-purple);
+        }
+
+        .note-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .note-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .note-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .note-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: inherit;
+            resize: none;
+            min-height: 80px;
+        }
+
+        .note-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        .add-note-btn {
+            margin-top: 12px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--accent-purple);
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-purple);
+            font-size: 0.9rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-note-btn:hover {
+            background: var(--accent-purple);
+            color: white;
+        }
+
+        /* Attendance Info */
+        .info-row {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .info-item span {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            color: var(--text-secondary);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-weight: 500;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 4000;
+        }
+
+        .toast.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), var(--bg-card));
+        }
+
+        .toast.error {
+            border-color: var(--accent-red);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), var(--bg-card));
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modal-body {
+                grid-template-columns: 1fr;
+            }
+
+            .update-section {
+                grid-column: 1;
+                grid-row: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-bar {
+                padding: 0 16px;
+                flex-wrap: wrap;
+                height: auto;
+                padding: 12px 16px;
+                gap: 12px;
+            }
+
+            .session-control {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                justify-content: center;
+            }
+
+            .student-table {
+                font-size: 0.85rem;
+            }
+
+            .student-table th,
+            .student-table td {
+                padding: 10px 8px;
+            }
+
+            .pattern-cell {
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading athletes...</div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <nav class="top-bar">
+        <div class="logo">
+            <span class="logo-icon">🏆</span>
+            <div>Athlete Academy <span>Admin</span></div>
+        </div>
+
+        <div class="session-control">
+            <span class="session-label">Session Unlocked:</span>
+            <div class="session-display">
+                <button class="session-btn" onclick="adjustSession(-1)">−</button>
+                <div class="session-number" id="currentSession">1</div>
+                <button class="session-btn" onclick="adjustSession(1)">+</button>
+            </div>
+        </div>
+
+        <div class="user-info">
+            <span class="user-name" id="userName">Teacher</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Total Students</div>
+                <div class="stat-value blue" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Ready to Test</div>
+                <div class="stat-value green" id="statReady">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Needs Attention</div>
+                <div class="stat-value red" id="statBehind">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Progress</div>
+                <div class="stat-value amber" id="statAvg">0%</div>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" placeholder="Search by name or email..." id="searchInput" oninput="filterStudents()">
+            </div>
+            <div class="filter-group">
+                <button class="filter-btn active" onclick="setFilter('all')" id="filterAll">All</button>
+                <button class="filter-btn ready" onclick="setFilter('ready')" id="filterReady">🎯 Ready to Test</button>
+                <button class="filter-btn behind" onclick="setFilter('behind')" id="filterBehind">⚠️ Needs Help</button>
+            </div>
+        </div>
+
+        <!-- Student Table -->
+        <div class="table-container">
+            <table class="student-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Squat</th>
+                        <th>Push</th>
+                        <th>Pull</th>
+                        <th>Hinge</th>
+                        <th>Lunge</th>
+                        <th>Press</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-state-icon">🔍</div>
+                <div>No students found matching your criteria</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Student Detail Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <button class="modal-back" onclick="closeModal()">
+                    ← Back
+                </button>
+                <div class="modal-title" id="modalTitle">Student Name <span>Grade 9</span></div>
+            </div>
+            <div class="modal-body">
+                <!-- Progress Section -->
+                <div class="progress-section">
+                    <div class="section-title">📊 Progress Overview</div>
+                    <div class="progress-grid" id="progressGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="info-row">
+                        <div class="info-item">📅 Sessions: <span id="modalSessions">0/10</span></div>
+                        <div class="info-item">🏋️ Last Active: <span id="modalLastActive">--</span></div>
+                    </div>
+                </div>
+
+                <!-- Quick Update Section -->
+                <div class="update-section">
+                    <div class="section-title">📝 Quick Update</div>
+                    <div class="update-card">
+                        <div class="update-row">
+                            <div class="update-label">Pattern</div>
+                            <select class="pattern-select" id="updatePattern" onchange="updatePatternSelection()">
+                                <option value="Squat">Squat</option>
+                                <option value="Push">Push</option>
+                                <option value="Pull">Pull</option>
+                                <option value="Hinge">Hinge</option>
+                                <option value="Lunge">Lunge</option>
+                                <option value="Press">Press</option>
+                            </select>
+                        </div>
+                        <div class="update-row">
+                            <div class="update-label">Technique Level</div>
+                            <div class="level-buttons" id="techButtons">
+                                <button class="level-btn tech" onclick="setTech(0)">0</button>
+                                <button class="level-btn tech" onclick="setTech(1)">1</button>
+                                <button class="level-btn tech" onclick="setTech(2)">2</button>
+                                <button class="level-btn tech" onclick="setTech(3)">3</button>
+                                <button class="level-btn tech" onclick="setTech(4)">4</button>
+                                <button class="level-btn tech" onclick="setTech(5)">5</button>
+                            </div>
+                        </div>
+                        <div class="update-row">
+                            <div class="update-label">Strength Tier</div>
+                            <div class="level-buttons" id="strButtons">
+                                <button class="level-btn str" onclick="setStr(0)">--</button>
+                                <button class="level-btn str" onclick="setStr(1)">T1</button>
+                                <button class="level-btn str" onclick="setStr(2)">T2</button>
+                                <button class="level-btn str" onclick="setStr(3)">T3</button>
+                                <button class="level-btn str" onclick="setStr(4)">T4</button>
+                                <button class="level-btn str" onclick="setStr(5)">T5</button>
+                            </div>
+                        </div>
+                        <button class="save-btn" id="saveBtn" onclick="saveUpdates()">
+                            💾 Save Changes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Notes Section -->
+                <div class="notes-section">
+                    <div class="section-title">💬 Notes</div>
+                    <div class="notes-card">
+                        <div class="notes-list" id="notesList">
+                            <!-- Populated by JS -->
+                        </div>
+                        <textarea class="note-input" id="noteInput" placeholder="Add a note about this student..."></textarea>
+                        <button class="add-note-btn" onclick="addNote()">+ Add Note</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrY9yeBWySYpzmkaMFtPEpv81LHf3OzhuBkxtRbVvJsY8GRPczMGdAbKisM55_MSD2/exec';
+        
+        // ============================================
+        // STATE
+        // ============================================
+        let allStudents = [];
+        let filteredStudents = [];
+        let currentFilter = 'all';
+        let currentSession = 1;
+        let selectedStudent = null;
+        let pendingUpdates = {};
+
+        const PATTERNS = ['Squat', 'Push', 'Pull', 'Hinge', 'Lunge', 'Press'];
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSession();
+            loadStudents();
+        });
+
+        // ============================================
+        // DATA LOADING
+        // ============================================
+        async function loadStudents() {
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getAllStudents`);
+                const data = await response.json();
+                
+                if (data.success && data.students) {
+                    allStudents = data.students;
+                    filteredStudents = [...allStudents];
+                    renderTable();
+                    updateStats();
+                } else {
+                    showToast('Error loading students', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading students:', error);
+                showToast('Failed to load students', 'error');
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        async function loadSession() {
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getConfig&key=CurrentSession`);
+                const data = await response.json();
+                if (data.success && data.value) {
+                    currentSession = parseInt(data.value) || 1;
+                    document.getElementById('currentSession').textContent = currentSession;
+                }
+            } catch (error) {
+                console.error('Error loading session:', error);
+            }
+        }
+
+        // ============================================
+        // SESSION CONTROL
+        // ============================================
+        async function adjustSession(delta) {
+            const newSession = Math.max(1, Math.min(10, currentSession + delta));
+            if (newSession === currentSession) return;
+
+            currentSession = newSession;
+            document.getElementById('currentSession').textContent = currentSession;
+
+            try {
+                await fetch(`${APPS_SCRIPT_URL}?action=setConfig&key=CurrentSession&value=${currentSession}`);
+                showToast(`Session ${currentSession} unlocked!`, 'success');
+            } catch (error) {
+                console.error('Error saving session:', error);
+                showToast('Failed to save session', 'error');
+            }
+        }
+
+        // ============================================
+        // TABLE RENDERING
+        // ============================================
+        function renderTable() {
+            const tbody = document.getElementById('studentTableBody');
+            const emptyState = document.getElementById('emptyState');
+
+            if (filteredStudents.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            tbody.innerHTML = filteredStudents.map(student => {
+                const status = getStudentStatus(student);
+                return `
+                    <tr onclick="openStudentModal('${student.Athlete_ID}')">
+                        <td>
+                            <div class="student-name">${student.Name || 'Unknown'}</div>
+                            <div class="student-email">${student.Email || ''}</div>
+                        </td>
+                        ${PATTERNS.map(p => `
+                            <td class="pattern-cell">
+                                <span class="tech-level">${student[p + '_Tech'] || 0}</span>/<span class="str-tier ${student[p + '_Str'] ? '' : 'none'}">${student[p + '_Str'] ? 'T' + student[p + '_Str'] : '--'}</span>
+                            </td>
+                        `).join('')}
+                        <td><span class="status-badge ${status.class}">${status.icon} ${status.text}</span></td>
+                        <td><button class="view-btn" onclick="event.stopPropagation(); openStudentModal('${student.Athlete_ID}')">View</button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getStudentStatus(student) {
+            let readyToTest = 0;
+            let totalTech = 0;
+            let totalStr = 0;
+
+            PATTERNS.forEach(p => {
+                const tech = parseInt(student[p + '_Tech']) || 0;
+                const str = parseInt(student[p + '_Str']) || 0;
+                totalTech += tech;
+                totalStr += str;
+                
+                // Ready to test: has tech level 2+ but no strength score
+                if (tech >= 2 && !str) {
+                    readyToTest++;
+                }
+            });
+
+            if (readyToTest >= 2) {
+                return { class: 'testing', icon: '🎯', text: 'Ready to Test' };
+            } else if (totalTech < 6) {
+                return { class: 'behind', icon: '⚠️', text: 'Needs Help' };
+            } else if (totalStr >= 4) {
+                return { class: 'good', icon: '💪', text: 'Strong' };
+            } else {
+                return { class: 'ready', icon: '✓', text: 'On Track' };
+            }
+        }
+
+        // ============================================
+        // STATS
+        // ============================================
+        function updateStats() {
+            const total = allStudents.length;
+            let readyCount = 0;
+            let behindCount = 0;
+            let totalProgress = 0;
+
+            allStudents.forEach(student => {
+                const status = getStudentStatus(student);
+                if (status.class === 'testing') readyCount++;
+                if (status.class === 'behind') behindCount++;
+
+                // Calculate progress: tech levels (0-5 each, 6 patterns = 30 max) + strength tiers (0-6 each, 6 patterns = 36 max)
+                let studentProgress = 0;
+                PATTERNS.forEach(p => {
+                    studentProgress += (parseInt(student[p + '_Tech']) || 0);
+                    studentProgress += (parseInt(student[p + '_Str']) || 0);
+                });
+                totalProgress += studentProgress;
+            });
+
+            const maxProgress = total * (30 + 36); // 30 for tech, 36 for strength
+            const avgProgress = total > 0 ? Math.round((totalProgress / maxProgress) * 100) : 0;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statReady').textContent = readyCount;
+            document.getElementById('statBehind').textContent = behindCount;
+            document.getElementById('statAvg').textContent = avgProgress + '%';
+        }
+
+        // ============================================
+        // SEARCH & FILTER
+        // ============================================
+        function filterStudents() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            
+            filteredStudents = allStudents.filter(student => {
+                // Search filter
+                const matchesSearch = !search || 
+                    (student.Name && student.Name.toLowerCase().includes(search)) ||
+                    (student.Email && student.Email.toLowerCase().includes(search));
+
+                // Status filter
+                if (!matchesSearch) return false;
+                
+                if (currentFilter === 'all') return true;
+                
+                const status = getStudentStatus(student);
+                if (currentFilter === 'ready') return status.class === 'testing';
+                if (currentFilter === 'behind') return status.class === 'behind';
+                
+                return true;
+            });
+
+            renderTable();
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).classList.add('active');
+            
+            filterStudents();
+        }
+
+        // ============================================
+        // STUDENT MODAL
+        // ============================================
+        function openStudentModal(athleteId) {
+            selectedStudent = allStudents.find(s => s.Athlete_ID == athleteId);
+            if (!selectedStudent) return;
+
+            pendingUpdates = {};
+            
+            // Update modal title
+            document.getElementById('modalTitle').innerHTML = `${selectedStudent.Name || 'Unknown'} <span>${selectedStudent.Grade || ''}</span>`;
+            
+            // Render progress grid
+            renderProgressGrid();
+            
+            // Update info
+            document.getElementById('modalSessions').textContent = `${selectedStudent.Total_Sessions || 0}/10`;
+            document.getElementById('modalLastActive').textContent = selectedStudent.Last_Session_Date || '--';
+            
+            // Render notes
+            renderNotes();
+            
+            // Reset pattern selection
+            document.getElementById('updatePattern').value = 'Squat';
+            updatePatternSelection();
+            
+            // Show modal
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('modalOverlay').classList.remove('active');
+            selectedStudent = null;
+        }
+
+        function renderProgressGrid() {
+            const grid = document.getElementById('progressGrid');
+            grid.innerHTML = PATTERNS.map(p => {
+                const tech = parseInt(selectedStudent[p + '_Tech']) || 0;
+                const str = parseInt(selectedStudent[p + '_Str']) || 0;
+                const progress = ((tech / 5) * 50) + ((str / 5) * 50); // 50% for tech, 50% for strength (5 tiers max)
+                
+                return `
+                    <div class="progress-row" onclick="selectPattern('${p}')" style="cursor: pointer;">
+                        <div class="progress-pattern">${p}</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="progress-values">
+                            <span class="tech-level">${tech}</span>/<span class="str-tier ${str ? '' : 'none'}">${str ? 'T' + str : '--'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function selectPattern(pattern) {
+            document.getElementById('updatePattern').value = pattern;
+            updatePatternSelection();
+        }
+
+        function updatePatternSelection() {
+            const pattern = document.getElementById('updatePattern').value;
+            const tech = parseInt(selectedStudent[pattern + '_Tech']) || 0;
+            const str = parseInt(selectedStudent[pattern + '_Str']) || 0;
+
+            // Update tech buttons
+            document.querySelectorAll('#techButtons .level-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === tech);
+            });
+
+            // Update strength buttons
+            document.querySelectorAll('#strButtons .level-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === str);
+            });
+        }
+
+        function setTech(level) {
+            const pattern = document.getElementById('updatePattern').value;
+            selectedStudent[pattern + '_Tech'] = level;
+            pendingUpdates[pattern + '_Tech'] = level;
+            
+            document.querySelectorAll('#techButtons .level-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === level);
+            });
+            
+            renderProgressGrid();
+        }
+
+        function setStr(tier) {
+            const pattern = document.getElementById('updatePattern').value;
+            selectedStudent[pattern + '_Str'] = tier;
+            pendingUpdates[pattern + '_Str'] = tier;
+            
+            document.querySelectorAll('#strButtons .level-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === tier);
+            });
+            
+            renderProgressGrid();
+        }
+
+        async function saveUpdates() {
+            if (Object.keys(pendingUpdates).length === 0) {
+                showToast('No changes to save', 'error');
+                return;
+            }
+
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                // Use GET with URL params (simpler for Apps Script CORS)
+                const params = new URLSearchParams({
+                    action: 'updateStudent',
+                    athleteId: selectedStudent.Athlete_ID,
+                    updates: JSON.stringify(pendingUpdates)
+                });
+                
+                const response = await fetch(`${APPS_SCRIPT_URL}?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Changes saved!', 'success');
+                    pendingUpdates = {};
+                    
+                    // Update local data
+                    for (const [key, value] of Object.entries(data.updatedValues || pendingUpdates)) {
+                        selectedStudent[key] = value;
+                    }
+                    
+                    renderProgressGrid();
+                    renderTable();
+                    updateStats();
+                } else {
+                    showToast('Failed to save: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error saving:', error);
+                showToast('Failed to save changes', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Save Changes';
+            }
+        }
+
+        // ============================================
+        // NOTES
+        // ============================================
+        function renderNotes() {
+            const notesList = document.getElementById('notesList');
+            const notes = selectedStudent.Notes ? JSON.parse(selectedStudent.Notes) : [];
+            
+            if (notes.length === 0) {
+                notesList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem;">No notes yet</div>';
+                return;
+            }
+
+            notesList.innerHTML = notes.map((note, index) => `
+                <div class="note-item">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div class="note-date">${note.date}</div>
+                        <button onclick="deleteNote(${index})" style="background: none; border: none; color: var(--accent-red); cursor: pointer; font-size: 1rem; padding: 0; opacity: 0.7;" title="Delete note">✕</button>
+                    </div>
+                    <div class="note-text">${note.text}</div>
+                </div>
+            `).join('');
+        }
+        
+        async function deleteNote(index) {
+            if (!confirm('Delete this note?')) return;
+            
+            const notes = selectedStudent.Notes ? JSON.parse(selectedStudent.Notes) : [];
+            notes.splice(index, 1);
+            
+            try {
+                const params = new URLSearchParams({
+                    action: 'updateStudent',
+                    athleteId: selectedStudent.Athlete_ID,
+                    updates: JSON.stringify({ Notes: JSON.stringify(notes) })
+                });
+                
+                const response = await fetch(`${APPS_SCRIPT_URL}?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    selectedStudent.Notes = JSON.stringify(notes);
+                    renderNotes();
+                    showToast('Note deleted', 'success');
+                } else {
+                    showToast('Failed to delete note', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting note:', error);
+                showToast('Failed to delete note', 'error');
+            }
+        }
+
+        async function addNote() {
+            const input = document.getElementById('noteInput');
+            const text = input.value.trim();
+            
+            if (!text) {
+                showToast('Please enter a note', 'error');
+                return;
+            }
+
+            const notes = selectedStudent.Notes ? JSON.parse(selectedStudent.Notes) : [];
+            notes.unshift({
+                date: new Date().toLocaleDateString(),
+                text: text
+            });
+
+            try {
+                const params = new URLSearchParams({
+                    action: 'updateStudent',
+                    athleteId: selectedStudent.Athlete_ID,
+                    updates: JSON.stringify({ Notes: JSON.stringify(notes) })
+                });
+                
+                const response = await fetch(`${APPS_SCRIPT_URL}?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    selectedStudent.Notes = JSON.stringify(notes);
+                    renderNotes();
+                    input.value = '';
+                    showToast('Note added!', 'success');
+                } else {
+                    showToast('Failed to add note', 'error');
+                }
+            } catch (error) {
+                console.error('Error adding note:', error);
+                showToast('Failed to add note', 'error');
+            }
+        }
+
+        // ============================================
+        // UTILITIES
+        // ============================================
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast active ' + type;
+            
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 3000);
+        }
+
+        function logout() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
