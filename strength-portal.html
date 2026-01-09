@@ -2479,7 +2479,8 @@
                 // Add gender to currentStrength for use in 3T level
                 currentStrength = { ...strength, Gender: gender };
                 renderProgressGrid(strength);
-                updateSelectedPattern();
+                // Select first pattern properly (calculates correct level)
+                selectPattern(0);
             } else {
                 console.log('loadPortal - NO strength data found');
             }
