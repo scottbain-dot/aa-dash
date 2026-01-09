@@ -2979,16 +2979,17 @@
         function buildWorkoutBlocks(strength, sessionType) {
             workoutBlocks = [];
             
-            // Session A: Squat + Push primary, Lunge + Pull accessory
-            // Session B: Hinge + Pull primary, Press + Squat accessory
+            // Session A: Squat, Push, Lunge (3 patterns)
+            // Session B: Hinge, Pull, Press (3 patterns)
+            // No overlap - each pattern appears once per A/B cycle
             let primaryPatterns, accessoryPatterns;
             
             if (sessionType === 'A') {
                 primaryPatterns = ['Squat', 'Push'];
-                accessoryPatterns = ['Lunge', 'Pull'];
+                accessoryPatterns = ['Lunge'];
             } else {
                 primaryPatterns = ['Hinge', 'Pull'];
-                accessoryPatterns = ['Press', 'Squat'];
+                accessoryPatterns = ['Press'];
             }
 
             // Block 1: Warm-up
@@ -3205,8 +3206,14 @@
             });
 
             // Technique Practice block - show patterns that still need technique work
+            // EXCLUDE patterns already in this workout session
+            const workoutPatternNames = [...primaryPatterns, ...accessoryPatterns];
+            
             const techniquePracticeExercises = [];
             patterns.forEach(pattern => {
+                // Skip if this pattern is already in the workout
+                if (workoutPatternNames.includes(pattern.name)) return;
+                
                 const techLevel = parseInt(strength?.[pattern.name + '_Tech']) || 0;
                 const strTier = parseInt(strength?.[pattern.name + '_Str']) || 0;
                 const hasStrength = strTier > 0;
@@ -3232,12 +3239,15 @@
                 }
             });
 
-            if (techniquePracticeExercises.length > 0) {
+            // Limit to max 2 technique practice exercises
+            const limitedTechPractice = techniquePracticeExercises.slice(0, 2);
+
+            if (limitedTechPractice.length > 0) {
                 workoutBlocks.push({
                     type: 'technique',
                     title: '🎯 TECHNIQUE PRACTICE',
                     subtitle: 'Work on your next levels',
-                    exercises: techniquePracticeExercises.map(ex => ({
+                    exercises: limitedTechPractice.map(ex => ({
                         name: `${ex.patternName}: ${ex.name}`,
                         level: ex.level,
                         patternKey: ex.patternKey,
