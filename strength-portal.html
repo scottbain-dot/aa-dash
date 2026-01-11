@@ -4379,13 +4379,10 @@
                     // Clear cache to get fresh data next time
                     athleteDataCache = null;
                     
-                    // Reset after delay
-                    setTimeout(() => {
-                        sessionStartTime = null;
-                        document.getElementById('sessionTimer').style.display = 'none';
-                        document.getElementById('workoutBlockContainer').style.display = 'none';
-                        loadWorkoutPlan(); // Reload for next session
-                    }, 3000);
+                    // Show Session Complete state instead of resetting
+                    sessionStartTime = null;
+                    document.getElementById('sessionTimer').style.display = 'none';
+                    showSessionCompleteState(currentSessionType, totalRepsSession, duration, exercisesCompleted);
                     
                 } else {
                     throw new Error(result.error || 'Save failed');
@@ -4400,6 +4397,103 @@
         // ============================================
         // WORKOUT HISTORY
         // ============================================
+        
+        function showSessionCompleteState(sessionType, totalReps, duration, exercises) {
+            const container = document.getElementById('workoutBlockContainer');
+            container.style.display = 'block';
+            
+            container.innerHTML = `
+                <div class="session-complete-card" style="
+                    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.05));
+                    border: 2px solid rgba(34, 197, 94, 0.3);
+                    border-radius: 20px;
+                    padding: 40px;
+                    text-align: center;
+                ">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🎉</div>
+                    <h2 style="color: #22c55e; font-size: 1.8rem; margin-bottom: 10px;">Session ${sessionType} Complete!</h2>
+                    <p style="color: rgba(255,255,255,0.6); font-size: 1.1rem; margin-bottom: 30px;">Great work today</p>
+                    
+                    <div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 30px;">
+                        <div>
+                            <div style="font-size: 2.5rem; font-weight: 700; color: #22c55e;">${totalReps}</div>
+                            <div style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">Reps</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2.5rem; font-weight: 700; color: #22c55e;">${duration}</div>
+                            <div style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">Minutes</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2.5rem; font-weight: 700; color: #22c55e;">${exercises.length}</div>
+                            <div style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">Exercises</div>
+                        </div>
+                    </div>
+                    
+                    <div style="
+                        background: rgba(0,0,0,0.2);
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-bottom: 30px;
+                        text-align: left;
+                    ">
+                        <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 15px; font-weight: 600;">📋 Exercises Logged:</div>
+                        ${exercises.map(ex => `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <span style="color: rgba(255,255,255,0.8);">${ex.name}</span>
+                                <span style="color: #22c55e;">${ex.sets} sets @ ${ex.weight}${ex.weight !== 'bodyweight' ? 'kg' : ''}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div style="
+                        background: rgba(59, 130, 246, 0.1);
+                        border: 1px solid rgba(59, 130, 246, 0.3);
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-bottom: 25px;
+                    ">
+                        <div style="color: #60a5fa; font-size: 0.95rem;">
+                            <strong>📅 Next session:</strong> Session ${sessionType === 'A' ? 'B' : 'A'} will be unlocked in your next class
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="repeatSession()" style="
+                            padding: 14px 28px;
+                            background: rgba(255,255,255,0.1);
+                            border: 1px solid rgba(255,255,255,0.2);
+                            color: white;
+                            border-radius: 10px;
+                            font-size: 0.95rem;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                            🔄 Repeat Session ${sessionType}
+                        </button>
+                        <button onclick="showWorkoutHistory()" style="
+                            padding: 14px 28px;
+                            background: rgba(59, 130, 246, 0.2);
+                            border: 1px solid rgba(59, 130, 246, 0.3);
+                            color: #60a5fa;
+                            border-radius: 10px;
+                            font-size: 0.95rem;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='rgba(59, 130, 246, 0.3)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.2)'">
+                            📊 View History
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function repeatSession() {
+            // Reset and reload the same session type
+            document.getElementById('workoutBlockContainer').style.display = 'none';
+            document.getElementById('sessionNotStarted').style.display = 'block';
+            buildWorkoutBlocks(currentStrength, currentSessionType, null);
+        }
+
         async function showWorkoutHistory() {
             document.getElementById('historyModal').classList.add('active');
             document.getElementById('historyList').innerHTML = '<div class="no-history">Loading history...</div>';
@@ -4413,11 +4507,11 @@
             
             let html = '';
             history.forEach(item => {
-                const date = new Date(item.date);
                 html += `
                     <div class="history-item">
-                        <div class="history-date">${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                        <div class="history-session">Session ${item.sessionType} (#${item.sessionNumber})</div>
+                        <div class="history-date">${item.date}</div>
+                        <div class="history-session">Session ${item.type} (#${item.number})</div>
+                        <div class="history-duration">${item.duration || '?'} minutes</div>
                         ${item.notes ? `<div class="history-notes">"${item.notes}"</div>` : ''}
                     </div>
                 `;
