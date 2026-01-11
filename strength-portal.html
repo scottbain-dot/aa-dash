@@ -1170,17 +1170,49 @@
             border: 1px solid rgba(255,255,255,0.05);
         }
 
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
         .history-date {
             font-size: 0.8rem;
             color: rgba(255,255,255,0.5);
-            margin-bottom: 8px;
+        }
+
+        .history-duration {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
         }
 
         .history-session {
             font-size: 1rem;
             font-weight: 600;
             color: white;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .history-exercises {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+
+        .history-exercise-item {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .history-exercise-item:last-child {
+            border-bottom: none;
         }
 
         .history-notes {
@@ -3313,9 +3345,24 @@
                 document.getElementById('sessionBadge').textContent = `Session ${currentSessionNumber}${currentSessionType}`;
                 document.getElementById('nextSessionType').textContent = `${currentSessionNumber}${currentSessionType}`;
 
-                // Update stats counter
-                const totalSessions = currentStrength?.Total_Sessions || 0;
-                const totalReps = currentStrength?.Total_Reps || 0;
+                // Calculate stats from workout history
+                const history = await fetchWorkoutHistory(currentUser.athleteId, 100);
+                let totalSessions = history.length;
+                let totalReps = 0;
+                history.forEach(session => {
+                    if (session.exercises) {
+                        try {
+                            const exercises = typeof session.exercises === 'string' ? JSON.parse(session.exercises) : session.exercises;
+                            if (Array.isArray(exercises)) {
+                                exercises.forEach(ex => {
+                                    totalReps += (ex.sets || 0) * (ex.reps || 0);
+                                });
+                            }
+                        } catch (e) {
+                            // Ignore parse errors
+                        }
+                    }
+                });
                 document.getElementById('totalSessions').textContent = totalSessions;
                 document.getElementById('totalReps').textContent = totalReps;
 
@@ -4542,11 +4589,32 @@
             
             let html = '';
             history.forEach(item => {
+                // Parse exercises if available
+                let exerciseHtml = '';
+                if (item.exercises) {
+                    try {
+                        const exercises = typeof item.exercises === 'string' ? JSON.parse(item.exercises) : item.exercises;
+                        if (Array.isArray(exercises) && exercises.length > 0) {
+                            exerciseHtml = '<div class="history-exercises">';
+                            exercises.forEach(ex => {
+                                const weightStr = ex.weight && ex.weight !== 'bodyweight' ? `${ex.weight}kg` : 'BW';
+                                exerciseHtml += `<div class="history-exercise-item">${ex.name}: ${ex.sets}×${ex.reps || '?'} @ ${weightStr}</div>`;
+                            });
+                            exerciseHtml += '</div>';
+                        }
+                    } catch (e) {
+                        console.error('Error parsing exercises:', e);
+                    }
+                }
+                
                 html += `
                     <div class="history-item">
-                        <div class="history-date">${item.date}</div>
+                        <div class="history-header">
+                            <div class="history-date">${item.date}</div>
+                            <div class="history-duration">${item.duration || '?'} min</div>
+                        </div>
                         <div class="history-session">Session ${item.type} (#${item.number})</div>
-                        <div class="history-duration">${item.duration || '?'} minutes</div>
+                        ${exerciseHtml}
                         ${item.notes ? `<div class="history-notes">"${item.notes}"</div>` : ''}
                     </div>
                 `;
