@@ -228,6 +228,22 @@
             font-size: 0.9rem;
         }
 
+        .logout-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
         .back-btn {
             display: inline-flex;
             align-items: center;
@@ -1374,6 +1390,75 @@
         }
 
         /* Sloth Modal */
+        /* Sloth Reminder Popup */
+        .sloth-popup {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .sloth-popup.active {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sloth-popup-content {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            max-width: 400px;
+        }
+
+        .sloth-popup-icon {
+            font-size: 2.5rem;
+            animation: slothSway 2s ease-in-out infinite;
+        }
+
+        @keyframes slothSway {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .sloth-popup-text {
+            flex: 1;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.9);
+            line-height: 1.4;
+        }
+
+        .sloth-popup-text strong {
+            color: #fbbf24;
+        }
+
+        .sloth-popup-close {
+            padding: 8px 16px;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .sloth-popup-close:hover {
+            background: rgba(245, 158, 11, 0.3);
+        }
+
+        /* Legacy sloth classes for weight increase modal */
         .sloth-modal {
             display: none;
             position: fixed;
@@ -1437,6 +1522,23 @@
             padding: 15px;
             background: rgba(255,255,255,0.05);
             border-radius: 10px;
+        }
+
+        .sloth-dismiss-btn {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .sloth-dismiss-btn:hover {
+            background: rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.9);
         }
 
         /* Start Session Button */
@@ -1961,6 +2063,7 @@
                 <div class="header-right">
                     <div class="user-info">
                         <span class="user-name" id="userName">Athlete</span>
+                        <button onclick="logout()" class="logout-btn" title="Sign out">↪</button>
                     </div>
                     <a href="index.html" class="back-btn">← Back to Dashboard</a>
                 </div>
@@ -2149,20 +2252,15 @@
         </div>
     </div>
 
-    <!-- Sloth Slowdown Modal -->
-    <div class="sloth-modal" id="slothModal">
-        <div class="sloth-content">
-            <div class="sloth-emoji">🦥</div>
-            <div class="sloth-title">Whoa there, speedy!</div>
-            <div class="sloth-message">
-                Good strength training takes time.<br>
-                Rest between sets. Focus on form.<br>
-                Quality over speed!
+    <!-- Sloth Reminder Popup (simplified) -->
+    <div class="sloth-popup" id="slothModal">
+        <div class="sloth-popup-content">
+            <div class="sloth-popup-icon">🦥</div>
+            <div class="sloth-popup-text">
+                <strong>Take your time!</strong><br>
+                Rest 90-120s between sets for best results.
             </div>
-            <div class="sloth-timer" id="slothTimer">00:00</div>
-            <div class="sloth-tip">
-                💡 <strong>Tip:</strong> Rest 90-120 seconds between sets for optimal strength gains.
-            </div>
+            <button class="sloth-popup-close" onclick="dismissSlothModal()">Got it</button>
         </div>
     </div>
 
@@ -2406,11 +2504,12 @@
             currentUser = {
                 email: payload.email,
                 name: payload.name,
-                picture: payload.picture
+                picture: payload.picture,
+                loginTime: Date.now()
             };
 
-            // Save to sessionStorage for persistence across refresh
-            sessionStorage.setItem('athleteUser', JSON.stringify(currentUser));
+            // Save to localStorage for persistence across refresh and browser close
+            localStorage.setItem('athleteUser', JSON.stringify(currentUser));
 
             console.log('Signed in as:', currentUser.email);
             
@@ -2422,26 +2521,50 @@
 
         // Check for existing session on page load
         function checkExistingSession() {
-            const savedUser = sessionStorage.getItem('athleteUser');
+            const savedUser = localStorage.getItem('athleteUser');
             if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                console.log('Restored session for:', currentUser.email);
-                document.getElementById('loadingContainer').classList.add('active');
-                document.getElementById('loadingText').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
-                loadPortal();
-                return true;
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    
+                    // Check if login is less than 7 days old
+                    const loginAge = Date.now() - (currentUser.loginTime || 0);
+                    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+                    
+                    if (loginAge > maxAge) {
+                        // Session expired, clear and require new login
+                        localStorage.removeItem('athleteUser');
+                        currentUser = null;
+                        return false;
+                    }
+                    
+                    console.log('Restored session for:', currentUser.email);
+                    document.getElementById('loadingContainer').classList.add('active');
+                    document.getElementById('loadingText').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
+                    loadPortal();
+                    return true;
+                } catch (e) {
+                    localStorage.removeItem('athleteUser');
+                    return false;
+                }
             }
             return false;
         }
 
+        // Logout function
+        function logout() {
+            localStorage.removeItem('athleteUser');
+            athleteDataCache = null;
+            currentUser = null;
+            location.reload();
+        }
+
         // Run session check when page loads
         window.addEventListener('load', function() {
-            // Small delay to let Google Sign-In initialize
-            setTimeout(() => {
-                if (!currentUser) {
-                    checkExistingSession();
-                }
-            }, 500);
+            // Check immediately for existing session
+            if (!checkExistingSession()) {
+                // No existing session, Google Sign-In button will show
+                console.log('No existing session, showing login');
+            }
         });
 
         // ============================================
@@ -3070,46 +3193,20 @@
                 accessoryPatterns = ['Press'];
             }
 
-            // Block 1: Warm-up
+            // Block 1: Warm-up (condensed single card)
             workoutBlocks.push({
                 type: 'warmup',
                 title: '🔥 WARM-UP',
-                subtitle: '10-15 minutes',
+                subtitle: '8-10 minutes',
                 exercises: [
                     { 
-                        name: 'General Warm Up', 
-                        instructions: [
-                            '5 minutes',
-                            'Slowly raise heart rate',
-                            'Light jog, bike, or row'
-                        ],
-                        sets: 1,
-                        reps: 0,
-                        completed: [false]
-                    },
-                    {
-                        name: 'World\'s Greatest Stretch',
-                        instructions: [
-                            '3-5 reps each side',
-                            'Lunge, rotate, reach'
-                        ],
-                        sets: 1,
-                        reps: 0,
-                        completed: [false]
-                    },
-                    {
-                        name: 'Plyos',
-                        instructions: [
-                            'See Mr. Bain for guidance'
-                        ],
-                        sets: 1,
-                        reps: 0,
-                        completed: [false]
-                    },
-                    {
-                        name: 'Prehab',
-                        instructions: [
-                            'See Mr. Bain for guidance'
+                        name: 'Complete Warm-Up Routine', 
+                        isWarmupCard: true,
+                        warmupItems: [
+                            { icon: '🏃', name: 'General Warm-Up', detail: '3-5 min light cardio' },
+                            { icon: '🌍', name: 'World\'s Greatest Stretch', detail: '5 reps each side' },
+                            { icon: '⚡', name: 'Plyos', detail: 'See Mr. Bain' },
+                            { icon: '🛡️', name: 'Prehab', detail: 'See Mr. Bain' }
                         ],
                         sets: 1,
                         reps: 0,
@@ -3292,32 +3389,33 @@
             workoutBlocks.push({
                 type: 'core',
                 title: '🧘 CORE',
-                subtitle: '2-3 sets each',
+                subtitle: '2 sets each',
                 exercises: [
                     {
                         name: 'Plank Hold',
                         video: 'https://www.youtube.com/embed/ao5nY7lb088',
                         instructions: [
-                            'Hold for 30-60 seconds',
                             'Keep body in straight line',
                             'Engage core, squeeze glutes',
                             'Don\'t let hips sag or pike up'
                         ],
                         sets: 2,
-                        reps: 1,
+                        reps: 0,
+                        duration: 45, // seconds
+                        isTimeBased: true,
                         completed: [false, false]
                     },
                     {
                         name: 'Dead Bug',
                         video: 'https://www.youtube.com/embed/-VykQ1HD0Vw',
                         instructions: [
-                            '10 reps each side',
                             'Keep lower back pressed to floor',
                             'Extend opposite arm and leg',
                             'Controlled movement, no rushing'
                         ],
                         sets: 2,
                         reps: 10,
+                        repsNote: 'each side',
                         completed: [false, false]
                     }
                 ]
@@ -3363,17 +3461,14 @@
             if (limitedTechPractice.length > 0) {
                 workoutBlocks.push({
                     type: 'technique',
-                    title: '🎯 TECHNIQUE PRACTICE',
-                    subtitle: 'Work on your next levels',
+                    title: '📚 TECHNIQUE PRACTICE',
+                    subtitle: 'Work towards your next level',
                     exercises: limitedTechPractice.map(ex => ({
-                        name: `${ex.patternName}: ${ex.name}`,
+                        name: ex.name,
+                        patternName: ex.patternName,
                         level: ex.level,
                         patternKey: ex.patternKey,
-                        instructions: [
-                            `Currently at Level ${ex.techLevel}`,
-                            `Working towards Level ${ex.level}`,
-                            'Film and submit when ready'
-                        ],
+                        currentTech: ex.techLevel,
                         sets: 1,
                         reps: 0,
                         completed: [false],
@@ -3476,24 +3571,117 @@
         function renderExerciseInBlock(block, exercise, exIndex) {
             let html = '';
             
+            // Special warm-up card rendering
+            if (exercise.isWarmupCard) {
+                html += `
+                    <div class="warmup-card" style="
+                        background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(234, 88, 12, 0.1));
+                        border: 1px solid rgba(249, 115, 22, 0.3);
+                        border-radius: 16px;
+                        padding: 20px;
+                        margin-bottom: 15px;
+                    ">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            ${exercise.warmupItems.map(item => `
+                                <div style="
+                                    background: rgba(0,0,0,0.2);
+                                    border-radius: 12px;
+                                    padding: 14px;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 12px;
+                                ">
+                                    <div style="font-size: 1.5rem;">${item.icon}</div>
+                                    <div>
+                                        <div style="font-weight: 600; color: #fb923c; font-size: 0.9rem;">${item.name}</div>
+                                        <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">${item.detail}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                // Single checkbox for entire warmup
+                html += `
+                    <div class="sets-grid" style="justify-content: center;">
+                        <div class="set-item" style="min-width: 150px;">
+                            <div class="set-checkbox ${exercise.completed[0] ? 'checked' : ''}" 
+                                 onclick="toggleSet(${exIndex}, 0)">
+                            </div>
+                            <div class="set-label">Warm-up Complete</div>
+                        </div>
+                    </div>
+                `;
+                return html;
+            }
+            
             // Special handling for technique practice links
             if (exercise.linkToAssessment) {
                 const patternIndex = patterns.findIndex(p => p.key === exercise.patternKey);
                 html += `
-                    <div class="technique-link-card" onclick="scrollToAssessmentAndSelect(${patternIndex})" style="
-                        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1));
-                        border: 2px solid rgba(59, 130, 246, 0.3);
+                    <div class="technique-practice-card" style="
+                        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.15));
+                        border: 1px solid rgba(139, 92, 246, 0.3);
                         border-radius: 16px;
                         padding: 20px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        text-align: center;
-                    " onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.6)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='rgba(59, 130, 246, 0.3)'; this.style.transform='translateY(0)';">
-                        <div style="font-size: 2rem; margin-bottom: 10px;">🎬</div>
-                        <div style="font-size: 1.1rem; font-weight: 600; color: #3b82f6; margin-bottom: 5px;">Level ${exercise.level}</div>
-                        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">Tap to view exercise & criteria</div>
+                        margin-bottom: 12px;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <div style="
+                                width: 50px; 
+                                height: 50px; 
+                                background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                                border-radius: 12px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 1.3rem;
+                            ">🎯</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 1.05rem; color: white;">${exercise.patternName}</div>
+                                <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Level ${exercise.currentTech} → Level ${exercise.level}</div>
+                            </div>
+                        </div>
+                        <div style="
+                            background: rgba(0,0,0,0.2);
+                            border-radius: 10px;
+                            padding: 12px 15px;
+                            margin-bottom: 15px;
+                            font-size: 0.95rem;
+                            color: rgba(255,255,255,0.8);
+                        ">
+                            <strong style="color: #a78bfa;">${exercise.name}</strong>
+                        </div>
+                        <button onclick="scrollToAssessmentAndSelect(${patternIndex})" style="
+                            width: 100%;
+                            padding: 12px;
+                            background: rgba(139, 92, 246, 0.2);
+                            border: 1px solid rgba(139, 92, 246, 0.4);
+                            border-radius: 10px;
+                            color: #a78bfa;
+                            font-weight: 600;
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='rgba(139, 92, 246, 0.3)'" onmouseout="this.style.background='rgba(139, 92, 246, 0.2)'">
+                            View Exercise & Criteria →
+                        </button>
                     </div>
                 `;
+                
+                // Add completion checkbox
+                html += `
+                    <div class="sets-grid" style="justify-content: center;">
+                        <div class="set-item">
+                            <div class="set-checkbox ${exercise.completed[0] ? 'checked' : ''}" 
+                                 onclick="toggleSet(${exIndex}, 0)">
+                            </div>
+                            <div class="set-label">Practiced</div>
+                        </div>
+                    </div>
+                `;
+                return html;
             }
             // Video thumbnail (clickable link to YouTube) or instructions
             else if (exercise.video) {
@@ -3531,7 +3719,7 @@
             } else if (exercise.trainingState === 'readyToTest') {
                 // Green prominent badge at top
                 topBadge = `<div style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 12px 20px; border-radius: 12px; font-size: 0.95rem; font-weight: 600; margin-bottom: 15px; text-align: center; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);">
-                    ✅ READY TO TEST - See Mr. Bain before practicing!
+                    ✅ READY TO TEST — Practice the movement first. Speak to Mr. Bain when you're ready to test.
                 </div>`;
             }
 
@@ -3544,7 +3732,10 @@
                 <div class="block-exercise-info">
                     <div class="block-exercise-name">${exercise.name}</div>
                     <div class="block-exercise-details">
-                        ${exercise.sets} ${exercise.sets === 1 ? 'set' : 'sets'} × ${exercise.reps || 'complete'}${exercise.reps ? ' reps' : ''}
+                        ${exercise.isTimeBased 
+                            ? `${exercise.sets} ${exercise.sets === 1 ? 'set' : 'sets'} × ${exercise.duration} seconds`
+                            : `${exercise.sets} ${exercise.sets === 1 ? 'set' : 'sets'} × ${exercise.reps || 'complete'}${exercise.reps ? ' reps' : ''}${exercise.repsNote ? ' ' + exercise.repsNote : ''}`
+                        }
                     </div>
                     ${exercise.patternName ? `<div class="block-exercise-pattern">${exercise.patternName} Pattern • Level ${block.techLevel}</div>` : ''}
                     ${stateBadge}
@@ -3554,6 +3745,10 @@
             // Weight control (for loaded OR readyToTest with weight)
             if (exercise.weight > 0) {
                 const weightLabel = exercise.trainingState === 'loaded' ? 'Working Weight (70%)' : 'Practice Weight (Tier 1)';
+                
+                // Check if this is a dumbbell exercise (DB in name)
+                const isDumbbell = exercise.name.toLowerCase().includes('dumbbell') || exercise.name.toLowerCase().includes('db ');
+                const weightNote = isDumbbell ? '<div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 4px;">per dumbbell</div>' : '';
                 
                 // Show "Last time" info if available
                 let lastTimeHtml = '';
@@ -3574,6 +3769,7 @@
                         <div>
                             <div class="block-weight-display" id="weight-${exIndex}">${exercise.weight} kg</div>
                             <div class="block-weight-label">${weightLabel}</div>
+                            ${weightNote}
                         </div>
                         <button class="block-weight-btn" onclick="adjustBlockWeight(${exIndex}, 2.5)">+</button>
                     </div>
@@ -3590,7 +3786,10 @@
                              onclick="toggleSet(${exIndex}, ${i})">
                         </div>
                         <div class="set-label">Set ${i + 1}</div>
-                        ${exercise.reps ? `<div class="set-reps">${exercise.reps} reps</div>` : ''}
+                        ${exercise.isTimeBased 
+                            ? `<div class="set-reps">${exercise.duration}s</div>`
+                            : (exercise.reps ? `<div class="set-reps">${exercise.reps} reps${exercise.repsNote ? ' ' + exercise.repsNote : ''}</div>` : '')
+                        }
                     </div>
                 `;
             }
@@ -3727,10 +3926,9 @@
             if (isBlockComplete && blockStartTime) {
                 const blockDuration = Date.now() - blockStartTime;
                 
-                // If completed too fast (under 60 seconds) and it's not warmup, show sloth
+                // If completed too fast (under 60 seconds) and it's not warmup, show sloth reminder
                 if (blockDuration < MIN_BLOCK_DURATION && block.type !== 'warmup' && !slothPauseActive) {
                     showBlockSlothModal();
-                    return;
                 }
             }
             
@@ -3738,32 +3936,19 @@
         }
         
         function showBlockSlothModal() {
-            slothPauseActive = true;
+            // Just show the popup as a reminder, don't block
             const modal = document.getElementById('slothModal');
             modal.classList.add('active');
             
-            let remaining = SLOTH_PAUSE_DURATION;
+            // Auto-dismiss after 4 seconds
+            setTimeout(() => {
+                modal.classList.remove('active');
+                slothPauseActive = false;
+                blockStartTime = null;
+            }, 4000);
             
-            const updateTimer = () => {
-                if (remaining <= 0) {
-                    modal.classList.remove('active');
-                    slothPauseActive = false;
-                    blockStartTime = null;
-                    showToast('Take your time on the next block!', 'info');
-                    renderCurrentBlock();
-                    return;
-                }
-                
-                const mins = Math.floor(remaining / 60000);
-                const secs = Math.floor((remaining % 60000) / 1000);
-                document.getElementById('slothTimer').textContent = 
-                    `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                
-                remaining -= 1000;
-                setTimeout(updateTimer, 1000);
-            };
-            
-            updateTimer();
+            // Still render the block
+            renderCurrentBlock();
         }
 
         // Track which exercises have been confirmed for increase (per session)
@@ -3874,40 +4059,29 @@
             const elapsed = Date.now() - sessionStartTime;
             const remaining = MIN_SESSION_DURATION - elapsed;
 
-            if (remaining > 0) {
-                // Show sloth modal
+            if (remaining > 0 && !slothShown) {
+                // Show sloth popup as a reminder (but don't block)
                 showSlothModal(remaining);
-                return;
+                slothShown = true;
             }
 
-            // Time requirement met
+            // Always allow completion
             completeWorkout();
         }
 
         function showSlothModal(remainingMs) {
             const modal = document.getElementById('slothModal');
             modal.classList.add('active');
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                modal.classList.remove('active');
+            }, 5000);
+        }
 
-            // Update countdown
-            const updateSlothTimer = () => {
-                const now = Date.now();
-                const remaining = MIN_SESSION_DURATION - (now - sessionStartTime);
-                
-                if (remaining <= 0) {
-                    modal.classList.remove('active');
-                    showToast('You can now complete your session!', 'success');
-                    return;
-                }
-
-                const mins = Math.floor(remaining / 60000);
-                const secs = Math.floor((remaining % 60000) / 1000);
-                document.getElementById('slothTimer').textContent = 
-                    `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                
-                setTimeout(updateSlothTimer, 1000);
-            };
-
-            updateSlothTimer();
+        function dismissSlothModal() {
+            // Close the popup
+            document.getElementById('slothModal').classList.remove('active');
         }
 
         async function completeWorkout() {
