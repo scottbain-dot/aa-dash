@@ -2505,6 +2505,7 @@
 
         // Workout session tracking
         let sessionStartTime = null;
+        let isSaving = false;
         let sessionTimer = null;
         let exerciseData = []; // Tracks exercises with completion status and weights
         const MIN_SESSION_DURATION = 20 * 60 * 1000; // 20 minutes in ms (for final completion)
@@ -4313,6 +4314,12 @@
         }
 
         async function completeWorkout(sessionRpe) {
+            // Prevent double-clicks
+            if (isSaving) {
+                return;
+            }
+            isSaving = true;
+            
             // Close sloth modal if open
             document.getElementById('slothModal').classList.remove('active');
 
@@ -4395,6 +4402,7 @@
             } catch (error) {
                 console.error('Error completing workout:', error);
                 showToast('Error saving session. Please try again.', 'error');
+                isSaving = false;
             }
         }
 
@@ -4492,9 +4500,28 @@
         }
         
         function repeatSession() {
-            // Reset and reload the same session type
+            // Reset all state for a fresh session
+            isSaving = false;
+            sessionStartTime = null;
+            slothShown = false;
+            currentBlockIndex = 0;
+            
+            // Stop any existing timer
+            if (sessionTimer) {
+                clearInterval(sessionTimer);
+                sessionTimer = null;
+            }
+            
+            // Reset timer display
+            document.getElementById('timerDisplay').textContent = '00:00';
+            document.getElementById('sessionTimer').style.display = 'none';
+            
+            // Hide completion state, show pre-session state
             document.getElementById('workoutBlockContainer').style.display = 'none';
             document.getElementById('sessionNotStarted').style.display = 'block';
+            document.getElementById('completeSessionBtn').style.display = 'none';
+            
+            // Rebuild workout blocks fresh
             buildWorkoutBlocks(currentStrength, currentSessionType, null);
         }
 
