@@ -984,7 +984,7 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyE7_ks2QVzjkBHMOhwCyfIAO4RAWg-2McEUxGJF4KfxEYV6zkhy6cUljdcE6dVGz9s/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxg8voUoN0Lpffv_fQIcI7igALEksa0MSUscvNMS0HLWLY3Oi_9IqQbUwwSw1JzJ0HK/exec';
         
         // Cache settings
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -1090,53 +1090,176 @@
         }
 
         function renderDashboard(data) {
-            const { athlete, strength, performance } = data;
+            const athlete = data.athlete;
+            const psych = athlete?.psych || {};
+            const strength = athlete?.strength || {};
+            const performance = athlete?.performance || {};
+            const mobility = athlete?.mobility || {};
+            const recovery = athlete?.recovery || {};
             
-            // Calculate pillar averages
-            const psychologyMetrics = ['Coachability', 'Resilience', 'Focus', 'Teamwork', 'Leadership'];
-            const physiologyMetrics = ['Coordination', 'Speed', 'Power', 'Endurance', 'Flexibility'];
-            const healthMetrics = ['Sleep', 'Nutrition', 'Hydration', 'Recovery', 'Stress'];
+            console.log('Rendering dashboard with:', { psych, strength, performance, mobility, recovery });
             
-            const calcAverage = (metrics) => {
-                let sum = 0, count = 0;
-                metrics.forEach(m => {
-                    const key = m.toLowerCase().replace(' ', '_');
-                    if (performance && performance[key]) {
-                        sum += parseFloat(performance[key]) || 0;
-                        count++;
-                    }
-                });
-                return count > 0 ? (sum / count).toFixed(1) : '-';
-            };
+            // ============================================
+            // CALCULATE PILLAR SCORES
+            // ============================================
+            
+            // PSYCHOLOGY (35%) - from Psych_Assessments (1-5 scale)
+            const psychMetrics = ['Mindset', 'Focus_Engagement', 'Effort_Work_Ethic', 'Coachability', 'Mental_Toughness'];
+            let psychSum = 0, psychCount = 0;
+            psychMetrics.forEach(m => {
+                const val = parseFloat(psych[m]);
+                if (val && val > 0) { psychSum += val; psychCount++; }
+            });
+            const psychScore = psychCount > 0 ? (psychSum / psychCount) : 0;
+            
+            // PHYSIOLOGY (35%) - Strength + Performance + Mobility
+            // Strength: 6 patterns × (Tech 0-5 + Str 0-5) = max 60, normalize to 5
+            const patterns = ['Squat', 'Push', 'Pull', 'Hinge', 'Lunge', 'Press'];
+            let strengthSum = 0;
+            patterns.forEach(p => {
+                strengthSum += (parseFloat(strength[p + '_Tech']) || 0);
+                strengthSum += (parseFloat(strength[p + '_Str']) || 0);
+            });
+            const strengthScore = (strengthSum / 60) * 5; // Normalize to 0-5
+            
+            // Mobility: ASL, Trunk_Stability, Shoulder_Mobility (0-3 scale, normalize to 5)
+            const mobilityMetrics = ['ASL', 'Trunk_Stability', 'Shoulder_Mobility'];
+            let mobSum = 0, mobCount = 0;
+            mobilityMetrics.forEach(m => {
+                const val = parseFloat(mobility[m]);
+                if (val >= 0) { mobSum += val; mobCount++; }
+            });
+            const mobilityScore = mobCount > 0 ? ((mobSum / mobCount) / 3) * 5 : 0; // Normalize 0-3 to 0-5
+            
+            // Performance: Raw times need tier conversion (placeholder - just check if data exists)
+            let perfScore = 0;
+            if (performance.Broad_Jump_cm || performance['40m_sec'] || performance['5_10_5_sec'] || performance.Cooper_m) {
+                // Simple: if they have performance data, give them a baseline score
+                // TODO: Implement proper tier conversion for times
+                perfScore = 2.5; // Placeholder
+            }
+            
+            // Combined Physiology = weighted average of strength, mobility, performance
+            const physioScore = strengthSum > 0 ? 
+                (strengthScore * 0.6 + mobilityScore * 0.2 + perfScore * 0.2) : 0;
+            
+            // HEALTH & SKILLS (30%) - from Recovery sheet
+            const healthMetrics = ['Recovery_Score', 'Movement_Technique', 'Nutrition'];
+            let healthSum = 0, healthCount = 0;
+            healthMetrics.forEach(m => {
+                const val = parseFloat(recovery[m]);
+                if (val && val > 0) { healthSum += val; healthCount++; }
+            });
+            const healthScore = healthCount > 0 ? (healthSum / healthCount) : 0;
+            
+            // ============================================
+            // CALCULATE TRAINING AGE
+            // ============================================
+            // Weighted: Psychology 35%, Physiology 35%, Health 30%
+            const trainingAge = (psychScore * 0.35) + (physioScore * 0.35) + (healthScore * 0.30);
+            
+            console.log('Scores:', { psychScore, physioScore, healthScore, trainingAge });
 
-            // Update stat cards
-            document.getElementById('statPsychology').textContent = calcAverage(psychologyMetrics);
-            document.getElementById('statPhysiology').textContent = calcAverage(physiologyMetrics);
-            document.getElementById('statHealth').textContent = calcAverage(healthMetrics);
-
-            // Training Age
-            const trainingAge = performance?.training_age || athlete?.training_age || 0;
-            const years = Math.floor(trainingAge);
-            const months = Math.round((trainingAge - years) * 12);
+            // ============================================
+            // UPDATE DISPLAY
+            // ============================================
             
-            document.getElementById('trainingAge').textContent = trainingAge.toFixed(1);
-            document.getElementById('ageYears').textContent = years;
-            document.getElementById('ageMonths').textContent = months;
+            // Update stat cards (show as X.X format)
+            document.getElementById('statPsychology').textContent = psychScore > 0 ? psychScore.toFixed(1) : '-';
+            document.getElementById('statPhysiology').textContent = physioScore > 0 ? physioScore.toFixed(1) : '-';
+            document.getElementById('statHealth').textContent = healthScore > 0 ? healthScore.toFixed(1) : '-';
+
+            // Training Age display
+            document.getElementById('trainingAge').textContent = trainingAge > 0 ? trainingAge.toFixed(1) : '0.0';
+            
+            // Years/Months breakdown (Training Age 1-5 maps to development stages)
+            const level = Math.min(5, Math.max(1, Math.ceil(trainingAge) || 1));
+            document.getElementById('ageYears').textContent = level;
+            document.getElementById('ageMonths').textContent = Math.round((trainingAge % 1) * 10);
 
             // Level Progress
-            const level = Math.min(5, Math.max(1, Math.ceil(trainingAge)));
             updateLevelProgress(level);
 
             // Insights
-            generateInsights(performance, strength);
+            generateInsights(psych, strength, recovery);
 
-            // Render component grids
-            renderComponentGrid('psychologyComponents', psychologyMetrics, performance);
-            renderComponentGrid('physiologyComponents', physiologyMetrics, performance);
-            renderComponentGrid('healthComponents', healthMetrics, performance);
+            // Render component grids with actual metrics
+            renderPsychologyComponents(psych);
+            renderPhysiologyComponents(strength, mobility, performance);
+            renderHealthComponents(recovery);
 
             // Render strength cards
             renderStrengthCards(strength);
+        }
+
+        function renderPsychologyComponents(psych) {
+            const container = document.getElementById('psychologyComponents');
+            const metrics = [
+                { key: 'Mindset', label: 'Mindset' },
+                { key: 'Focus_Engagement', label: 'Focus' },
+                { key: 'Effort_Work_Ethic', label: 'Effort' },
+                { key: 'Coachability', label: 'Coachability' },
+                { key: 'Mental_Toughness', label: 'Mental Toughness' }
+            ];
+            
+            container.innerHTML = metrics.map(m => {
+                const value = psych[m.key] || '-';
+                return `
+                    <div class="component-card">
+                        <div class="component-name">${m.label}</div>
+                        <div class="component-score">${value}</div>
+                        <div class="component-change neutral">1-5</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPhysiologyComponents(strength, mobility, performance) {
+            const container = document.getElementById('physiologyComponents');
+            
+            // Strength summary
+            const patterns = ['Squat', 'Push', 'Pull', 'Hinge', 'Lunge', 'Press'];
+            let techTotal = 0, strTotal = 0;
+            patterns.forEach(p => {
+                techTotal += parseFloat(strength[p + '_Tech']) || 0;
+                strTotal += parseFloat(strength[p + '_Str']) || 0;
+            });
+            
+            const items = [
+                { label: 'Strength Tech', value: techTotal, scale: '/30' },
+                { label: 'Strength Tier', value: strTotal, scale: '/30' },
+                { label: 'ASL', value: mobility.ASL || '-', scale: '0-3' },
+                { label: 'Trunk Stability', value: mobility.Trunk_Stability || '-', scale: '0-3' },
+                { label: 'Shoulder', value: mobility.Shoulder_Mobility || '-', scale: '0-3' }
+            ];
+            
+            container.innerHTML = items.map(item => `
+                <div class="component-card">
+                    <div class="component-name">${item.label}</div>
+                    <div class="component-score">${item.value}</div>
+                    <div class="component-change neutral">${item.scale}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderHealthComponents(recovery) {
+            const container = document.getElementById('healthComponents');
+            const metrics = [
+                { key: 'Recovery_Score', label: 'Recovery' },
+                { key: 'Movement_Technique', label: 'Movement Tech' },
+                { key: 'Nutrition', label: 'Nutrition' }
+            ];
+            
+            container.innerHTML = metrics.map(m => {
+                const value = recovery[m.key] || '-';
+                return `
+                    <div class="component-card">
+                        <div class="component-name">${m.label}</div>
+                        <div class="component-score">${value}</div>
+                        <div class="component-change neutral">1-5</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function updateLevelProgress(currentLevel) {
@@ -1157,66 +1280,42 @@
             document.getElementById('levelLabel').textContent = levelNames[currentLevel - 1] || 'Unknown';
         }
 
-        function generateInsights(performance, strength) {
-            // Find top strength (highest score)
+        function generateInsights(psych, strength, recovery) {
+            // Find top strength (highest psych score)
             let topMetric = { name: 'N/A', score: 0 };
-            let lowMetric = { name: 'N/A', score: 10 };
+            let lowMetric = { name: 'N/A', score: 6 };
             
-            if (performance) {
-                Object.entries(performance).forEach(([key, value]) => {
-                    if (key !== 'email' && key !== 'training_age' && !key.includes('_date')) {
-                        const score = parseFloat(value) || 0;
-                        if (score > topMetric.score) {
-                            topMetric = { name: key.replace('_', ' '), score };
-                        }
-                        if (score < lowMetric.score && score > 0) {
-                            lowMetric = { name: key.replace('_', ' '), score };
-                        }
-                    }
-                });
-            }
+            // Check psych metrics
+            const psychMetrics = ['Mindset', 'Focus_Engagement', 'Effort_Work_Ethic', 'Coachability', 'Mental_Toughness'];
+            psychMetrics.forEach(key => {
+                const score = parseFloat(psych[key]) || 0;
+                if (score > topMetric.score) {
+                    topMetric = { name: key.replace(/_/g, ' '), score };
+                }
+                if (score > 0 && score < lowMetric.score) {
+                    lowMetric = { name: key.replace(/_/g, ' '), score };
+                }
+            });
 
-            document.getElementById('topStrength').textContent = topMetric.name.charAt(0).toUpperCase() + topMetric.name.slice(1);
-            document.getElementById('growthFocus').textContent = lowMetric.name.charAt(0).toUpperCase() + lowMetric.name.slice(1);
+            document.getElementById('topStrength').textContent = topMetric.name;
+            document.getElementById('growthFocus').textContent = lowMetric.score < 6 ? lowMetric.name : 'N/A';
             
             // Next step based on strength levels
-            if (strength) {
-                const techLevels = ['squat_tech', 'push_tech', 'pull_tech', 'hinge_tech', 'lunge_tech', 'press_tech'];
-                let lowestTech = { pattern: '', level: 6 };
-                
-                techLevels.forEach(tech => {
-                    const level = parseInt(strength[tech]) || 0;
-                    if (level < lowestTech.level) {
-                        lowestTech = { pattern: tech.replace('_tech', ''), level };
-                    }
-                });
-                
-                if (lowestTech.level < 6) {
-                    document.getElementById('nextStep').textContent = `Level up ${lowestTech.pattern}`;
-                } else {
-                    document.getElementById('nextStep').textContent = 'Maintain & refine';
-                }
-            }
-        }
-
-        function renderComponentGrid(containerId, metrics, performance) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
+            const patterns = ['Squat', 'Push', 'Pull', 'Hinge', 'Lunge', 'Press'];
+            let lowestTech = { pattern: '', level: 6 };
             
-            metrics.forEach(metric => {
-                const key = metric.toLowerCase().replace(' ', '_');
-                const value = performance?.[key] || '-';
-                
-                const card = document.createElement('div');
-                card.className = 'component-card';
-                card.innerHTML = `
-                    <div class="component-name">${metric}</div>
-                    <div class="component-score">${value}</div>
-                    <div class="component-change neutral">-</div>
-                `;
-                card.onclick = () => showMetricDetail(metric, performance);
-                container.appendChild(card);
+            patterns.forEach(p => {
+                const level = parseInt(strength[p + '_Tech']) || 0;
+                if (level < lowestTech.level) {
+                    lowestTech = { pattern: p, level };
+                }
             });
+            
+            if (lowestTech.level < 6) {
+                document.getElementById('nextStep').textContent = `Level up ${lowestTech.pattern} (Tech ${lowestTech.level})`;
+            } else {
+                document.getElementById('nextStep').textContent = 'Maintain & refine';
+            }
         }
 
         function renderStrengthCards(strength) {
@@ -1224,18 +1323,18 @@
             container.innerHTML = '';
             
             const patterns = [
-                { key: 'squat', name: 'Squat', exercises: ['Wall Sit', 'Goblet Squat', 'Back Squat', 'Front Squat', 'Olympic Squat'] },
-                { key: 'push', name: 'Push', exercises: ['Wall Push-up', 'Knee Push-up', 'Push-up', 'Decline Push-up', 'Archer Push-up'] },
-                { key: 'pull', name: 'Pull', exercises: ['Dead Hang', 'Flex Hang', 'Negative Pull-up', 'Pull-up', 'Weighted Pull-up'] },
-                { key: 'hinge', name: 'Hinge', exercises: ['Hip Hinge', 'Kettlebell Deadlift', 'Romanian DL', 'Trap Bar DL', 'Conventional DL'] },
-                { key: 'lunge', name: 'Lunge', exercises: ['Split Squat', 'Reverse Lunge', 'Walking Lunge', 'Bulgarian Split', 'Jumping Lunge'] },
-                { key: 'press', name: 'Press', exercises: ['Pike Push-up', 'DB Press', 'BB Press', 'Push Press', 'Strict Press'] }
+                { key: 'Squat', name: 'Squat', exercises: ['Bodyweight Squat', 'Goblet Squat', 'Back Squat', 'Front Squat', 'Pistol Squat'] },
+                { key: 'Push', name: 'Push', exercises: ['Push-Up', 'DB Bench Press', 'Barbell Bench', 'Incline Bench', 'Dips'] },
+                { key: 'Pull', name: 'Pull', exercises: ['Inverted Row', 'Inverted Row', 'Pull-Up', 'Weighted Pull-Up', 'Muscle-Up'] },
+                { key: 'Hinge', name: 'Hinge', exercises: ['Bodyweight Hinge', 'KB Deadlift', 'Barbell Deadlift', 'Romanian DL', 'Hang Clean'] },
+                { key: 'Lunge', name: 'Lunge', exercises: ['Bodyweight Lunge', 'DB Lunge', 'Barbell Lunge', 'Walking Lunge', 'Split Squat'] },
+                { key: 'Press', name: 'Press', exercises: ['Bodyweight Press', 'DB Press', 'Barbell Press', 'Push Press', 'Jerk'] }
             ];
 
             patterns.forEach(pattern => {
-                const techLevel = parseInt(strength?.[`${pattern.key}_tech`]) || 1;
-                const weight = strength?.[`${pattern.key}_weight`] || '-';
-                const exercise = pattern.exercises[techLevel - 1] || pattern.exercises[0];
+                const techLevel = parseInt(strength?.[`${pattern.key}_Tech`]) || 0;
+                const strTier = parseInt(strength?.[`${pattern.key}_Str`]) || 0;
+                const exercise = pattern.exercises[Math.max(0, techLevel - 1)] || pattern.exercises[0];
                 
                 const card = document.createElement('div');
                 card.className = 'strength-card';
@@ -1249,12 +1348,12 @@
                     </div>
                     <div class="strength-stats">
                         <div class="strength-stat">
-                            <div class="strength-stat-label">Weight</div>
-                            <div class="strength-stat-value">${weight !== '-' ? weight + 'kg' : '-'}</div>
+                            <div class="strength-stat-label">Tech Level</div>
+                            <div class="strength-stat-value">${techLevel}/5</div>
                         </div>
                         <div class="strength-stat">
-                            <div class="strength-stat-label">Tier</div>
-                            <div class="strength-stat-value">${techLevel >= 3 ? Math.ceil(techLevel / 2) : '-'}</div>
+                            <div class="strength-stat-label">Strength Tier</div>
+                            <div class="strength-stat-value">${strTier > 0 ? 'T' + strTier : '-'}</div>
                         </div>
                     </div>
                 `;
