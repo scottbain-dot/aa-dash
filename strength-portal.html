@@ -3296,6 +3296,7 @@
                         weight: suggestedWeight,
                         lastTime: lastTimeInfo,
                         trainingState: trainingState,
+                        isDumbbell: exercise.name.toLowerCase().includes('dumbbell') || exercise.name.toLowerCase().includes('db '),
                         completed: [false, false, false]
                     }]
                 });
@@ -3380,6 +3381,7 @@
                         weight: suggestedWeight,
                         lastTime: lastTimeInfo,
                         trainingState: trainingState,
+                        isDumbbell: exercise.name.toLowerCase().includes('dumbbell') || exercise.name.toLowerCase().includes('db '),
                         completed: [false, false, false]
                     }]
                 });
@@ -3746,9 +3748,24 @@
             if (exercise.weight > 0) {
                 const weightLabel = exercise.trainingState === 'loaded' ? 'Working Weight (70%)' : 'Practice Weight (Tier 1)';
                 
-                // Check if this is a dumbbell exercise (DB in name)
-                const isDumbbell = exercise.name.toLowerCase().includes('dumbbell') || exercise.name.toLowerCase().includes('db ');
-                const weightNote = isDumbbell ? '<div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 4px;">per dumbbell</div>' : '';
+                // Use stored isDumbbell flag
+                const isDumbbell = exercise.isDumbbell;
+                
+                // For dumbbells: tier weight is TOTAL, so show per-hand calculation
+                let weightDisplayHtml;
+                if (isDumbbell) {
+                    const perHand = exercise.weight / 2;
+                    weightDisplayHtml = `
+                        <div class="block-weight-display" id="weight-${exIndex}">${perHand} kg <span style="font-size: 0.7em; opacity: 0.7;">each hand</span></div>
+                        <div class="block-weight-label">${weightLabel}</div>
+                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 4px;">${exercise.weight}kg total (2 × ${perHand}kg)</div>
+                    `;
+                } else {
+                    weightDisplayHtml = `
+                        <div class="block-weight-display" id="weight-${exIndex}">${exercise.weight} kg</div>
+                        <div class="block-weight-label">${weightLabel}</div>
+                    `;
+                }
                 
                 // Show "Last time" info if available
                 let lastTimeHtml = '';
@@ -3765,13 +3782,11 @@
                 html += lastTimeHtml;
                 html += `
                     <div class="block-weight-control">
-                        <button class="block-weight-btn" onclick="adjustBlockWeight(${exIndex}, -2.5)">−</button>
+                        <button class="block-weight-btn" onclick="adjustBlockWeight(${exIndex}, ${isDumbbell ? -2 : -2.5})">−</button>
                         <div>
-                            <div class="block-weight-display" id="weight-${exIndex}">${exercise.weight} kg</div>
-                            <div class="block-weight-label">${weightLabel}</div>
-                            ${weightNote}
+                            ${weightDisplayHtml}
                         </div>
-                        <button class="block-weight-btn" onclick="adjustBlockWeight(${exIndex}, 2.5)">+</button>
+                        <button class="block-weight-btn" onclick="adjustBlockWeight(${exIndex}, ${isDumbbell ? 2 : 2.5})">+</button>
                     </div>
                 `;
             }
@@ -3968,9 +3983,9 @@
                 return;
             }
             
-            // Apply weight change
+            // Apply weight change and re-render block
             exercise.weight = newWeight;
-            document.getElementById(`weight-${exIndex}`).textContent = exercise.weight + ' kg';
+            renderCurrentBlock();
         }
         
         function showWeightIncreaseModal(exIndex, lastWeight, newWeight, exerciseKey) {
@@ -4013,7 +4028,9 @@
             const block = workoutBlocks[currentBlockIndex];
             const exercise = block.exercises[exIndex];
             exercise.weight = newWeight;
-            document.getElementById(`weight-${exIndex}`).textContent = exercise.weight + ' kg';
+            
+            modal.classList.remove('active');
+            renderCurrentBlock();
             
             modal.classList.remove('active');
         }
