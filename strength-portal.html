@@ -190,9 +190,9 @@
         }
 
         .header-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #231F20;
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1a1a1a;
         }
 
         .header-right {
@@ -236,44 +236,45 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background: #874B46;
-            color: #231F20;
+            color: #fff;
             text-decoration: none;
-            border-radius: 10px;
-            font-weight: 500;
-            font-size: 0.9rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
             transition: all 0.3s ease;
             border: none;
+            box-shadow: 0 4px 12px rgba(135, 75, 70, 0.3);
         }
 
         .back-btn:hover {
             background: #6a3a36;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(135, 75, 70, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(135, 75, 70, 0.4);
         }
 
         /* White Card Base */
         .glass-card {
             background: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.06);
+            border: 1px solid #e0e0e0;
             border-radius: 20px;
             padding: 25px;
             margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
         /* Section Title */
         .section-title {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            color: #231F20;
+            color: #1a1a1a;
             margin-bottom: 8px;
         }
 
         .section-subtitle {
-            color: #6B6B6B;
-            font-size: 0.9rem;
+            color: #666;
+            font-size: 0.95rem;
             margin-bottom: 25px;
         }
 
@@ -299,38 +300,39 @@
 
         .progress-card {
             background: #fff;
-            border: 1px solid rgba(0,0,0,0.1);
+            border: 2px solid #e0e0e0;
             border-radius: 15px;
             padding: 20px 15px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
         .progress-card:hover {
             border-color: #D4AF37;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
 
         .progress-card.active {
             border-color: #D4AF37;
-            border-width: 2px;
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+            border-width: 3px;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+            background: linear-gradient(135deg, #fffdf5, #fff);
         }
 
         .progress-pattern {
-            font-size: 0.8rem;
-            font-weight: 600;
+            font-size: 0.85rem;
+            font-weight: 700;
             color: #874B46;
             margin-bottom: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
 
         .progress-level {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 800;
             color: #231F20;
         }
@@ -1729,39 +1731,41 @@
         .workout-block {
             background: #fff;
             border-radius: 16px;
-            padding: 20px;
-            border: 1px solid rgba(0,0,0,0.08);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 25px;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
         .block-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
         }
 
         .block-nav-btn {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background: #fff;
-            border: 1px solid rgba(0,0,0,0.15);
-            border-radius: 10px;
-            color: #231F20;
-            font-size: 0.9rem;
-            font-weight: 500;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            color: #1a1a1a;
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
 
         .block-nav-btn:hover:not(:disabled) {
-            background: #f5f0f1;
+            background: #874B46;
+            color: #fff;
             border-color: #874B46;
+            box-shadow: 0 4px 12px rgba(135, 75, 70, 0.3);
         }
 
         .block-nav-btn:disabled {
@@ -1774,15 +1778,16 @@
         }
 
         .block-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #231F20;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1a1a1a;
             margin-bottom: 5px;
         }
 
         .block-subtitle {
-            font-size: 0.85rem;
-            color: #999;
+            font-size: 0.9rem;
+            color: #888;
+            font-weight: 500;
         }
 
         .block-progress-dots {
