@@ -2434,17 +2434,17 @@
                 
                 <label style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; cursor: pointer;">
                     <input type="checkbox" class="weight-check" onchange="updateWeightConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
-                    <span style="color: rgba(255,255,255,0.9); font-size: 0.95rem;">Complete all reps - no half reps or skipping</span>
+                    <span style="color: #333; font-size: 0.95rem;">Complete all reps - no half reps or skipping</span>
                 </label>
                 
                 <label style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; cursor: pointer;">
                     <input type="checkbox" class="weight-check" onchange="updateWeightConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
-                    <span style="color: rgba(255,255,255,0.9); font-size: 0.95rem;">Keep your form solid from first rep to last</span>
+                    <span style="color: #333; font-size: 0.95rem;">Keep your form solid from first rep to last</span>
                 </label>
                 
                 <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer;">
                     <input type="checkbox" class="weight-check" onchange="updateWeightConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
-                    <span style="color: rgba(255,255,255,0.9); font-size: 0.95rem;">Finish feeling strong, not completely wiped out</span>
+                    <span style="color: #333; font-size: 0.95rem;">Finish feeling strong, not completely wiped out</span>
                 </label>
             </div>
             
@@ -3259,16 +3259,16 @@
         function renderCriteria(isLocked = false) {
             const criteriaList = document.getElementById('criteriaList');
             if (!selectedPattern.criteria || isLocked) {
-                criteriaList.innerHTML = isLocked ? '<p style="color: rgba(255,255,255,0.4); font-style: italic;">Complete previous levels to view criteria</p>' : '';
+                criteriaList.innerHTML = isLocked ? '<p style="color: #888; font-style: italic;">Complete previous levels to view criteria</p>' : '';
                 return;
             }
             
             criteriaList.innerHTML = selectedPattern.criteria.map((c, i) => `
-                <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eee;">
                     <input type="checkbox" id="criteria${i}" style="width: 20px; height: 20px; accent-color: #22c55e; cursor: pointer; flex-shrink: 0; margin-top: 2px;">
                     <label for="criteria${i}" style="cursor: pointer;">
-                        <span style="color: rgba(255,255,255,0.9); font-weight: 500;">${c.text}</span>
-                        ${c.note ? `<span style="color: #555; font-size: 0.85rem;"> — ${c.note}</span>` : ''}
+                        <span style="color: #1a1a1a; font-weight: 600;">${c.text}</span>
+                        ${c.note ? `<span style="color: #666; font-size: 0.9rem;"> — ${c.note}</span>` : ''}
                     </label>
                 </div>
             `).join('');
