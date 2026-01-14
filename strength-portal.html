@@ -2532,6 +2532,7 @@
         let blockStartTime = null; // Track when current block was started
         let slothPauseActive = false;
         let slothShown = false;
+        let isSaving = false; // Prevent double-click on complete
 
         // Session control - reads from Config sheet via API
         let maxAvailableSession = 1; // Will be fetched from config
@@ -2795,9 +2796,9 @@
             }
         }
 
-        async function fetchLastSession(email) {
+        async function fetchLastSession(athleteId) {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getLastSession&email=${encodeURIComponent(email)}`;
+                const url = `${APPS_SCRIPT_URL}?action=getLastSession&athleteId=${encodeURIComponent(athleteId)}&email=${encodeURIComponent(athleteId)}`;
                 const response = await fetch(url);
                 const data = await response.json();
                 return data.success ? data.lastSession : null;
@@ -2807,9 +2808,9 @@
             }
         }
 
-        async function fetchLastSessionByType(email, sessionType) {
+        async function fetchLastSessionByType(athleteId, sessionType) {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getLastSessionByType&email=${encodeURIComponent(email)}&sessionType=${sessionType}`;
+                const url = `${APPS_SCRIPT_URL}?action=getLastSessionByType&athleteId=${encodeURIComponent(athleteId)}&email=${encodeURIComponent(athleteId)}&sessionType=${sessionType}`;
                 const response = await fetch(url);
                 const data = await response.json();
                 return data.success ? data.lastSession : null;
@@ -2819,11 +2820,14 @@
             }
         }
 
-        async function fetchWorkoutHistory(email, limit = 10) {
+        async function fetchWorkoutHistory(athleteId, limit = 10) {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getWorkoutHistory&email=${encodeURIComponent(email)}&limit=${limit}`;
+                // Send as both athleteId AND email so Apps Script works either way
+                const url = `${APPS_SCRIPT_URL}?action=getWorkoutHistory&athleteId=${encodeURIComponent(athleteId)}&email=${encodeURIComponent(athleteId)}&limit=${limit}`;
+                console.log('Fetching history for athleteId:', athleteId);
                 const response = await fetch(url);
                 const data = await response.json();
+                console.log('History response:', data);
                 return data.success ? data.history : [];
             } catch (error) {
                 console.error('Error fetching history:', error);
@@ -4336,6 +4340,13 @@
         }
 
         async function completeWorkout(sessionRpe) {
+            // Prevent double-click
+            if (isSaving) {
+                console.log('Already saving, ignoring click');
+                return;
+            }
+            isSaving = true;
+            
             // Close sloth modal if open
             document.getElementById('slothModal').classList.remove('active');
 
@@ -4418,6 +4429,7 @@
             } catch (error) {
                 console.error('Error completing workout:', error);
                 showToast('Error saving session. Please try again.', 'error');
+                isSaving = false; // Reset so user can retry
             }
         }
 
@@ -4515,9 +4527,34 @@
         }
         
         function repeatSession() {
-            // Reset and reload the same session type
+            // Reset all session state
+            sessionStartTime = null;
+            slothShown = false;
+            isSaving = false; // Reset save protection
+            
+            // Stop any running timer
+            if (sessionTimer) {
+                clearInterval(sessionTimer);
+                sessionTimer = null;
+            }
+            
+            // Reset timer display
+            document.getElementById('timerDisplay').textContent = '00:00';
+            document.getElementById('sessionTimer').style.display = 'none';
+            
+            // Hide complete button
+            const completeBtn = document.querySelector('.complete-btn');
+            if (completeBtn) completeBtn.style.display = 'none';
+            
+            // Clear notes
+            const notesField = document.getElementById('workoutNotes');
+            if (notesField) notesField.value = '';
+            
+            // Hide workout container, show session start screen
             document.getElementById('workoutBlockContainer').style.display = 'none';
             document.getElementById('sessionNotStarted').style.display = 'block';
+            
+            // Rebuild the workout blocks fresh
             buildWorkoutBlocks(currentStrength, currentSessionType, null);
         }
 
