@@ -2830,7 +2830,11 @@
                 const url = `${APPS_SCRIPT_URL}?action=getLastSession&athleteId=${encodeURIComponent(athleteId)}&email=${encodeURIComponent(athleteId)}`;
                 const response = await fetch(url);
                 const data = await response.json();
-                return data.success ? data.lastSession : null;
+                // Apps Script returns session directly, check if it has valid data
+                if (data && data.sessionNumber && data.sessionNumber > 0) {
+                    return data;
+                }
+                return null;
             } catch (error) {
                 console.error('Error fetching last session:', error);
                 return null;
