@@ -3346,23 +3346,14 @@
 
             try {
                 // Get available session from config (set by teacher in admin panel)
-                maxAvailableSession = await fetchCurrentSession();
+                // This IS the session they should do, not a cap
+                const unlockedSession = await fetchCurrentSession();
                 
-                // Get last session to determine next session
-                const lastSession = await fetchLastSession(currentUser.athleteId);
-                
-                // Determine next session number
-                let nextSessionNumber = 1;
-                if (lastSession && lastSession.sessionNumber) {
-                    nextSessionNumber = (parseInt(lastSession.sessionNumber) || 0) + 1;
-                }
-                
-                // Cap at available session (can't go beyond what teacher has unlocked)
-                currentSessionNumber = Math.min(nextSessionNumber, maxAvailableSession);
-                
-                // Alternate between A and B sessions
-                currentSessionType = currentSessionNumber % 2 === 1 ? 'A' : 'B';
-                currentSession = currentSessionNumber;
+                // Calculate session number and type from unlocked value
+                // 1→1A, 2→1B, 3→2A, 4→2B, 5→3A, etc.
+                currentSessionNumber = Math.ceil(unlockedSession / 2);
+                currentSessionType = unlockedSession % 2 === 1 ? 'A' : 'B';
+                maxAvailableSession = unlockedSession;
 
                 // Update UI
                 document.getElementById('sessionBadge').textContent = `Session ${currentSessionNumber}${currentSessionType}`;
@@ -3520,10 +3511,8 @@
                         reps: lastData.reps
                     };
                     
-                    // Auto-progress: if they completed all sets last time, suggest +2.5kg
-                    if (trainingState === 'loaded' && lastData.sets >= 3 && lastWeight > 0) {
-                        suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
-                    }
+                    // Student-driven progression: start at last weight, they decide to increase via checklist
+                    suggestedWeight = Math.max(workingWeight, lastWeight);
                 }
                 
                 workoutBlocks.push({
@@ -3605,10 +3594,8 @@
                         reps: lastData.reps
                     };
                     
-                    // Auto-progress: if they completed all sets last time, suggest +2.5kg
-                    if (trainingState === 'loaded' && lastData.sets >= 3 && lastWeight > 0) {
-                        suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
-                    }
+                    // Student-driven progression: start at last weight, they decide to increase via checklist
+                    suggestedWeight = Math.max(workingWeight, lastWeight);
                 }
                 
                 workoutBlocks.push({
