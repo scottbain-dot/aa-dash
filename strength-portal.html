@@ -3666,26 +3666,19 @@
                 if (workoutPatternNames.includes(pattern.name)) return;
                 
                 const techLevel = parseInt(strength?.[pattern.name + '_Tech']) || 0;
-                const strTier = parseInt(strength?.[pattern.name + '_Str']) || 0;
-                const hasStrength = strTier > 0;
                 
-                // Only include if not at max level (5) and not in testing state
+                // Always include if not at max level (5) - practice the next level
                 if (techLevel < 5) {
-                    const isReadyToTest = techLevel >= 2 && !hasStrength;
-                    
-                    if (!isReadyToTest) {
-                        // They're working on next level
-                        const nextLevel = techLevel + 1;
-                        const exercise = pattern.exercises[nextLevel];
-                        if (exercise) {
-                            techniquePracticeExercises.push({
-                                patternKey: pattern.key,
-                                patternName: pattern.name,
-                                name: exercise.name,
-                                level: nextLevel,
-                                techLevel: techLevel
-                            });
-                        }
+                    const nextLevel = techLevel + 1;
+                    const exercise = pattern.exercises[nextLevel];
+                    if (exercise) {
+                        techniquePracticeExercises.push({
+                            patternKey: pattern.key,
+                            patternName: pattern.name,
+                            name: exercise.name,
+                            level: nextLevel,
+                            techLevel: techLevel
+                        });
                     }
                 }
             });
