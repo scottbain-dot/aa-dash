@@ -3408,18 +3408,22 @@
             try {
                 // Get available session from config (set by teacher in admin panel)
                 maxAvailableSession = await fetchCurrentSession();
+                console.log('📋 Max available session from config:', maxAvailableSession);
                 
                 // Get last session to determine next session
                 const lastSession = await fetchLastSession(currentUser.athleteId);
+                console.log('📋 Last session for student:', lastSession);
                 
                 // Determine next session number
                 let nextSessionNumber = 1;
                 if (lastSession && lastSession.sessionNumber) {
                     nextSessionNumber = (parseInt(lastSession.sessionNumber) || 0) + 1;
                 }
+                console.log('📋 Next session number (before cap):', nextSessionNumber);
                 
                 // Cap at available session (can't go beyond what teacher has unlocked)
                 currentSessionNumber = Math.min(nextSessionNumber, maxAvailableSession);
+                console.log('📋 Current session number (after cap):', currentSessionNumber);
                 
                 // Alternate between A and B sessions
                 currentSessionType = currentSessionNumber % 2 === 1 ? 'A' : 'B';
