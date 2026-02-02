@@ -2928,11 +2928,31 @@
         async function fetchWorkoutHistory(email, limit = 10) {
             try {
                 const url = `${APPS_SCRIPT_URL}?action=getWorkoutHistory&email=${encodeURIComponent(email)}&limit=${limit}`;
+                console.log('📋 History fetch URL:', url);
                 const response = await fetch(url);
-                const data = await response.json();
-                return data.success ? data.history : [];
+                console.log('📋 History response status:', response.status);
+                const text = await response.text();
+                console.log('📋 History raw response:', text.substring(0, 500));
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch(e) {
+                    console.error('📋 History JSON parse error:', e, 'Raw text:', text.substring(0, 200));
+                    return [];
+                }
+                
+                console.log('📋 History parsed data:', data);
+                
+                // Handle different possible response structures
+                if (data.success && data.history) return data.history;
+                if (data.history) return data.history;
+                if (Array.isArray(data)) return data;
+                
+                console.warn('📋 Unexpected history format:', Object.keys(data));
+                return [];
             } catch (error) {
-                console.error('Error fetching history:', error);
+                console.error('📋 History fetch error:', error);
                 return [];
             }
         }
@@ -3422,17 +3442,34 @@
                 const lastSession = await fetchLastSession(currentUser.athleteId);
                 console.log('📋 Last session for student:', lastSession);
                 
-                // Default to the unlocked session - that's where the class is at
-                currentSessionNumber = maxAvailableSession;
-                console.log('📋 Using unlocked session:', currentSessionNumber);
+                // Session numbering: admin unlocks session PAIRS (1, 2, 3...)
+                // Each pair has an A and a B workout
+                // Admin unlock 5 = up to session 5A & 5B (10 workouts total)
+                // Internal counter 1→1A, 2→1B, 3→2A, 4→2B, 5→3A, 6→3B...
+                // maxAvailableSession from admin = the pair number (e.g. 5)
+                // Total available internal sessions = maxAvailableSession * 2
+                const totalAvailableInternal = maxAvailableSession * 2;
+                
+                // Default to the latest unlocked session (last A of the pair)
+                // e.g. admin=5 → internal 9 → display "5A"
+                let currentInternalSession = totalAvailableInternal - 1; // -1 for A (0-indexed: even=A, odd=B)
+                currentSessionNumber = currentInternalSession;
+                
+                // Convert internal to display
+                const displayNum = Math.ceil((currentInternalSession + 1) / 2); // 1-based pair number
+                currentSessionType = (currentInternalSession % 2 === 0) ? 'A' : 'B';
+                currentSession = currentInternalSession;
+                
+                console.log('📋 Admin unlocked pair:', maxAvailableSession, '→ internal:', currentInternalSession, '→ display:', displayNum + currentSessionType);
                 
                 // Alternate between A and B sessions
                 currentSessionType = currentSessionNumber % 2 === 1 ? 'A' : 'B';
                 currentSession = currentSessionNumber;
 
-                // Update UI
-                document.getElementById('sessionBadge').textContent = `Session ${currentSessionNumber}${currentSessionType}`;
-                document.getElementById('nextSessionType').textContent = `${currentSessionNumber}${currentSessionType}`;
+                // Update UI with correct display number
+                const displayLabel = displayNum + currentSessionType;
+                document.getElementById('sessionBadge').textContent = `Session ${displayLabel}`;
+                document.getElementById('nextSessionType').textContent = displayLabel;
                 
                 // Render session selector buttons
                 renderSessionSelector();
@@ -3706,7 +3743,10 @@
             // Core block - Progressive by session number
             // Sessions 1A, 2B: Plank + Dead Bug (foundational)
             // Sessions 3A onwards: Sit Up + Hip Extension
-            const useAdvancedCore = currentSessionNumber >= 3;
+            // Core progression: pair 1-2 = Plank + Dead Bug, pair 3+ = Sit Up + Hip Extension
+            // Internal 0=1A, 1=1B, 2=2A, 3=2B, 4=3A, 5=3B...
+            const currentPairNum = Math.ceil((currentSessionNumber + 1) / 2);
+            const useAdvancedCore = currentPairNum >= 3;
             
             const coreExercise1 = useAdvancedCore ? {
                 name: 'Sit Up',
@@ -3839,9 +3879,15 @@
             const container = document.getElementById('sessionButtons');
             if (!container) return;
             
+            // Each admin-unlocked session = a pair (A + B)
+            // Show all individual sessions: 1A, 1B, 2A, 2B, 3A, 3B...
+            const totalAvailableInternal = maxAvailableSession * 2;
+            
             let html = '';
-            for (let i = 1; i <= maxAvailableSession; i++) {
-                const type = i % 2 === 1 ? 'A' : 'B';
+            for (let i = 0; i < totalAvailableInternal; i++) {
+                const pairNum = Math.ceil((i + 1) / 2);
+                const type = (i % 2 === 0) ? 'A' : 'B';
+                const label = pairNum + type;
                 const isCurrent = i === currentSessionNumber;
                 html += `<button onclick="switchToSession(${i})" style="
                     padding: 8px 16px;
@@ -3856,19 +3902,22 @@
                     transition: all 0.2s;
                 " onmouseover="if(!${isCurrent})this.style.borderColor='#874B46'" 
                    onmouseout="if(!${isCurrent})this.style.borderColor='#ddd'"
-                >${i}${type}</button>`;
+                >${label}</button>`;
             }
             container.innerHTML = html;
         }
         
-        async function switchToSession(sessionNum) {
-            currentSessionNumber = sessionNum;
-            currentSessionType = sessionNum % 2 === 1 ? 'A' : 'B';
-            currentSession = sessionNum;
+        async function switchToSession(internalNum) {
+            currentSessionNumber = internalNum;
+            currentSessionType = (internalNum % 2 === 0) ? 'A' : 'B';
+            currentSession = internalNum;
+            
+            const pairNum = Math.ceil((internalNum + 1) / 2);
+            const displayLabel = pairNum + currentSessionType;
             
             // Update UI
-            document.getElementById('sessionBadge').textContent = `Session ${currentSessionNumber}${currentSessionType}`;
-            document.getElementById('nextSessionType').textContent = `${currentSessionNumber}${currentSessionType}`;
+            document.getElementById('sessionBadge').textContent = `Session ${displayLabel}`;
+            document.getElementById('nextSessionType').textContent = displayLabel;
             
             // Clear any saved session state
             clearSessionStorage();
@@ -3882,7 +3931,7 @@
             // Re-render selector to show new current
             renderSessionSelector();
             
-            showToast(`Switched to Session ${currentSessionNumber}${currentSessionType}`, 'success');
+            showToast(`Switched to Session ${displayLabel}`, 'success');
         }
 
         function startSession() {
@@ -4669,7 +4718,7 @@
                         action: 'saveWorkout',
                         email: currentUser.athleteId,
                         sessionType: currentSessionType,
-                        sessionNumber: currentSessionNumber,
+                        sessionNumber: Math.ceil((currentSessionNumber + 1) / 2),
                         exercisesCompleted: JSON.stringify(exercisesCompleted),
                         notes: notes,
                         duration: duration,
@@ -4827,13 +4876,26 @@
                 console.log('📋 History response:', history);
                 
                 if (!history || history.length === 0) {
+                    // Try to get raw response for debugging
+                    let debugInfo = '';
+                    try {
+                        const debugUrl = `${APPS_SCRIPT_URL}?action=getWorkoutHistory&email=${encodeURIComponent(currentUser.athleteId)}&limit=5`;
+                        const debugResp = await fetch(debugUrl);
+                        const debugText = await debugResp.text();
+                        debugInfo = `<div style="margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 8px; font-size: 0.7rem; color: #999; text-align: left; word-break: break-all;">
+                            <strong>Debug:</strong><br>
+                            ID: ${currentUser.athleteId}<br>
+                            Response: ${debugText.substring(0, 300)}
+                        </div>`;
+                    } catch(e) {
+                        debugInfo = `<div style="margin-top: 10px; font-size: 0.7rem; color: #999;">Fetch error: ${e.message}</div>`;
+                    }
+                    
                     document.getElementById('historyList').innerHTML = `
                         <div class="no-history">
                             <div style="font-size: 2rem; margin-bottom: 10px;">📭</div>
                             No workout history yet.<br>Complete your first session to see it here!
-                            <div style="margin-top: 15px; font-size: 0.8rem; color: #999;">
-                                Athlete ID: ${currentUser.athleteId || 'unknown'}
-                            </div>
+                            ${debugInfo}
                         </div>
                     `;
                     return;
