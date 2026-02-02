@@ -3916,8 +3916,9 @@
             clearSessionStorage();
             
             // Reset all UI states back to "not started"
-            document.getElementById('workoutBlockContainer').style.display = 'none';
-            document.getElementById('workoutBlockContainer').innerHTML = '';
+            const container = document.getElementById('workoutBlockContainer');
+            container.style.display = 'none';
+            container.innerHTML = '<div class="workout-block" id="currentBlock"></div>';
             document.getElementById('sessionTimer').style.display = 'none';
             document.getElementById('completeSessionBtn').style.display = 'none';
             document.getElementById('sessionNotStarted').style.display = 'block';
@@ -4869,9 +4870,10 @@
             // Clear saved session
             clearSessionStorage();
             
-            // Reset all UI states
-            document.getElementById('workoutBlockContainer').style.display = 'none';
-            document.getElementById('workoutBlockContainer').innerHTML = '';
+            // Reset UI - restore the currentBlock div inside container
+            const container = document.getElementById('workoutBlockContainer');
+            container.style.display = 'none';
+            container.innerHTML = '<div class="workout-block" id="currentBlock"></div>';
             document.getElementById('sessionTimer').style.display = 'none';
             document.getElementById('completeSessionBtn').style.display = 'none';
             document.getElementById('sessionNotStarted').style.display = 'block';
