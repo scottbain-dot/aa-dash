@@ -3901,12 +3901,26 @@
             const pairNum = Math.floor(internalNum / 2) + 1;
             const displayLabel = pairNum + currentSessionType;
             
-            // Update UI
+            // Update UI badge
             document.getElementById('sessionBadge').textContent = `Session ${displayLabel}`;
             document.getElementById('nextSessionType').textContent = displayLabel;
             
+            // Stop any running timer
+            if (sessionTimer) {
+                clearInterval(sessionTimer);
+                sessionTimer = null;
+            }
+            sessionStartTime = null;
+            
             // Clear any saved session state
             clearSessionStorage();
+            
+            // Reset all UI states back to "not started"
+            document.getElementById('workoutBlockContainer').style.display = 'none';
+            document.getElementById('workoutBlockContainer').innerHTML = '';
+            document.getElementById('sessionTimer').style.display = 'none';
+            document.getElementById('completeSessionBtn').style.display = 'none';
+            document.getElementById('sessionNotStarted').style.display = 'block';
             
             // Fetch last session of this type for "last time" data
             const lastSameTypeSession = await fetchLastSessionByType(currentUser.athleteId, currentSessionType);
@@ -4845,10 +4859,24 @@
         }
         
         function repeatSession() {
-            // Reset and reload the same session type
+            // Stop any running timer
+            if (sessionTimer) {
+                clearInterval(sessionTimer);
+                sessionTimer = null;
+            }
+            sessionStartTime = null;
+            
+            // Clear saved session
             clearSessionStorage();
+            
+            // Reset all UI states
             document.getElementById('workoutBlockContainer').style.display = 'none';
+            document.getElementById('workoutBlockContainer').innerHTML = '';
+            document.getElementById('sessionTimer').style.display = 'none';
+            document.getElementById('completeSessionBtn').style.display = 'none';
             document.getElementById('sessionNotStarted').style.display = 'block';
+            
+            // Rebuild fresh workout blocks
             buildWorkoutBlocks(currentStrength, currentSessionType, null);
         }
 
