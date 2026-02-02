@@ -2379,6 +2379,14 @@
                         <button class="start-session-btn" onclick="startSession()">
                             <span>▶️</span> Start Session
                         </button>
+                        
+                        <!-- Session selector for previous sessions -->
+                        <div id="sessionSelector" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e5e0df;">
+                            <div style="font-size: 0.85rem; color: #888; margin-bottom: 12px;">Or select a different session:</div>
+                            <div id="sessionButtons" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+                                <!-- Filled dynamically -->
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Workout Block Container (hidden until session started) -->
@@ -3414,16 +3422,9 @@
                 const lastSession = await fetchLastSession(currentUser.athleteId);
                 console.log('📋 Last session for student:', lastSession);
                 
-                // Determine next session number
-                let nextSessionNumber = 1;
-                if (lastSession && lastSession.sessionNumber) {
-                    nextSessionNumber = (parseInt(lastSession.sessionNumber) || 0) + 1;
-                }
-                console.log('📋 Next session number (before cap):', nextSessionNumber);
-                
-                // Cap at available session (can't go beyond what teacher has unlocked)
-                currentSessionNumber = Math.min(nextSessionNumber, maxAvailableSession);
-                console.log('📋 Current session number (after cap):', currentSessionNumber);
+                // Default to the unlocked session - that's where the class is at
+                currentSessionNumber = maxAvailableSession;
+                console.log('📋 Using unlocked session:', currentSessionNumber);
                 
                 // Alternate between A and B sessions
                 currentSessionType = currentSessionNumber % 2 === 1 ? 'A' : 'B';
@@ -3432,6 +3433,9 @@
                 // Update UI
                 document.getElementById('sessionBadge').textContent = `Session ${currentSessionNumber}${currentSessionType}`;
                 document.getElementById('nextSessionType').textContent = `${currentSessionNumber}${currentSessionType}`;
+                
+                // Render session selector buttons
+                renderSessionSelector();
 
                 // Update stats counter
                 const totalSessions = currentStrength?.Total_Sessions || 0;
@@ -3829,6 +3833,56 @@
                 title: '✅ SESSION COMPLETE',
                 subtitle: 'Great work!'
             });
+        }
+
+        function renderSessionSelector() {
+            const container = document.getElementById('sessionButtons');
+            if (!container) return;
+            
+            let html = '';
+            for (let i = 1; i <= maxAvailableSession; i++) {
+                const type = i % 2 === 1 ? 'A' : 'B';
+                const isCurrent = i === currentSessionNumber;
+                html += `<button onclick="switchToSession(${i})" style="
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    border: 2px solid ${isCurrent ? '#874B46' : '#ddd'};
+                    background: ${isCurrent ? '#874B46' : '#fff'};
+                    color: ${isCurrent ? '#fff' : '#555'};
+                    font-weight: ${isCurrent ? '700' : '500'};
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    font-family: inherit;
+                    transition: all 0.2s;
+                " onmouseover="if(!${isCurrent})this.style.borderColor='#874B46'" 
+                   onmouseout="if(!${isCurrent})this.style.borderColor='#ddd'"
+                >${i}${type}</button>`;
+            }
+            container.innerHTML = html;
+        }
+        
+        async function switchToSession(sessionNum) {
+            currentSessionNumber = sessionNum;
+            currentSessionType = sessionNum % 2 === 1 ? 'A' : 'B';
+            currentSession = sessionNum;
+            
+            // Update UI
+            document.getElementById('sessionBadge').textContent = `Session ${currentSessionNumber}${currentSessionType}`;
+            document.getElementById('nextSessionType').textContent = `${currentSessionNumber}${currentSessionType}`;
+            
+            // Clear any saved session state
+            clearSessionStorage();
+            
+            // Fetch last session of this type for "last time" data
+            const lastSameTypeSession = await fetchLastSessionByType(currentUser.athleteId, currentSessionType);
+            
+            // Rebuild workout blocks
+            buildWorkoutBlocks(currentStrength, currentSessionType, lastSameTypeSession);
+            
+            // Re-render selector to show new current
+            renderSessionSelector();
+            
+            showToast(`Switched to Session ${currentSessionNumber}${currentSessionType}`, 'success');
         }
 
         function startSession() {
@@ -4767,26 +4821,75 @@
             document.getElementById('historyModal').classList.add('active');
             document.getElementById('historyList').innerHTML = '<div class="no-history">Loading history...</div>';
             
-            const history = await fetchWorkoutHistory(currentUser.athleteId, 10);
-            
-            if (history.length === 0) {
-                document.getElementById('historyList').innerHTML = '<div class="no-history">No workout history yet. Complete your first session!</div>';
-                return;
-            }
-            
-            let html = '';
-            history.forEach(item => {
-                html += `
-                    <div class="history-item">
-                        <div class="history-date">${item.date}</div>
-                        <div class="history-session">Session ${item.type} (#${item.number})</div>
-                        <div class="history-duration">${item.duration || '?'} minutes</div>
-                        ${item.notes ? `<div class="history-notes">"${item.notes}"</div>` : ''}
+            try {
+                console.log('📋 Fetching history for:', currentUser.athleteId);
+                const history = await fetchWorkoutHistory(currentUser.athleteId, 20);
+                console.log('📋 History response:', history);
+                
+                if (!history || history.length === 0) {
+                    document.getElementById('historyList').innerHTML = `
+                        <div class="no-history">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">📭</div>
+                            No workout history yet.<br>Complete your first session to see it here!
+                            <div style="margin-top: 15px; font-size: 0.8rem; color: #999;">
+                                Athlete ID: ${currentUser.athleteId || 'unknown'}
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                history.forEach(item => {
+                    // Parse exercises if they're a string
+                    let exerciseList = '';
+                    if (item.exercises) {
+                        let exercises = item.exercises;
+                        if (typeof exercises === 'string') {
+                            try { exercises = JSON.parse(exercises); } catch(e) { exercises = []; }
+                        }
+                        if (Array.isArray(exercises) && exercises.length > 0) {
+                            exerciseList = `
+                                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
+                                    ${exercises.map(ex => `
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; padding: 2px 0; color: #666;">
+                                            <span>${ex.name || 'Unknown'}</span>
+                                            <span style="color: #874B46; font-weight: 600;">${ex.sets || '?'}×${ex.reps || '?'} ${ex.weight && ex.weight !== 'bodyweight' ? '@ ' + ex.weight + (String(ex.weight).includes('reps') ? '' : 'kg') : ''}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    html += `
+                        <div class="history-item">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <div class="history-date">${item.date || 'Unknown date'}</div>
+                                ${item.rpe ? `<div style="background: rgba(135,75,70,0.1); color: #874B46; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">RPE ${item.rpe}/10</div>` : ''}
+                            </div>
+                            <div class="history-session">Session ${item.number || '?'}${item.type || ''}</div>
+                            <div style="display: flex; gap: 15px; margin-top: 4px;">
+                                <span style="font-size: 0.85rem; color: #888;">⏱ ${item.duration || '?'} min</span>
+                                ${item.totalReps ? `<span style="font-size: 0.85rem; color: #888;">💪 ${item.totalReps} reps</span>` : ''}
+                            </div>
+                            ${item.notes ? `<div class="history-notes" style="margin-top: 6px; font-style: italic; color: #999; font-size: 0.85rem;">"${item.notes}"</div>` : ''}
+                            ${exerciseList}
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('historyList').innerHTML = html;
+            } catch (error) {
+                console.error('📋 History error:', error);
+                document.getElementById('historyList').innerHTML = `
+                    <div class="no-history">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">⚠️</div>
+                        Error loading history<br>
+                        <span style="font-size: 0.8rem; color: #999;">${error.message}</span>
                     </div>
                 `;
-            });
-            
-            document.getElementById('historyList').innerHTML = html;
+            }
         }
 
         function closeHistoryModal() {
