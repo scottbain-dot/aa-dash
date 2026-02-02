@@ -1178,46 +1178,17 @@
             border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
         .history-date {
             font-size: 0.8rem;
             color: #555;
-        }
-
-        .history-duration {
-            font-size: 0.8rem;
-            color: #888;
+            margin-bottom: 8px;
         }
 
         .history-session {
             font-size: 1rem;
             font-weight: 600;
             color: #231F20;
-            margin-bottom: 10px;
-        }
-
-        .history-exercises {
-            background: rgba(0,0,0,0.03);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-        }
-
-        .history-exercise-item {
-            font-size: 0.85rem;
-            color: #333;
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .history-exercise-item:last-child {
-            border-bottom: none;
+            margin-bottom: 5px;
         }
 
         .history-notes {
@@ -2538,7 +2509,7 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby631f9BK6umgW2C4kA1Uew4Mdi8ebWzL-olpb0Co7OEheeAPA3LrxDyJbqQ2Xpabrs/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyafbQFsPI5ModpQyvPg0eTPnFuIjUgeoqtaNZXUlyNhUqQNT9qfjYl9xEAAIPXe5uE/exec';
         
         // Cache settings
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -2561,7 +2532,6 @@
         let blockStartTime = null; // Track when current block was started
         let slothPauseActive = false;
         let slothShown = false;
-        let isSaving = false; // Prevent double-click on complete
 
         // Session control - reads from Config sheet via API
         let maxAvailableSession = 1; // Will be fetched from config
@@ -2572,6 +2542,104 @@
         let currentSession = 1; // Which session they're on
 
         // Movement patterns data - DO NOT MODIFY exercise names, videos, or criteria without explicit approval
+
+        // ============================================
+        // SESSION PERSISTENCE (survives page refresh)
+        // ============================================
+        const SESSION_STORAGE_KEY = 'sp_active_session';
+        
+        function saveSessionToStorage() {
+            if (!sessionStartTime) return;
+            try {
+                const state = {
+                    sessionStartTime: sessionStartTime,
+                    currentBlockIndex: currentBlockIndex,
+                    currentSessionType: currentSessionType,
+                    currentSessionNumber: currentSessionNumber,
+                    slothShown: slothShown,
+                    athleteId: currentUser?.athleteId,
+                    // Save completion state + weight adjustments for every exercise in every block
+                    blockStates: workoutBlocks.map(block => ({
+                        type: block.type,
+                        exercises: block.exercises ? block.exercises.map(ex => ({
+                            completed: [...ex.completed],
+                            weight: ex.weight
+                        })) : null
+                    })),
+                    savedAt: Date.now()
+                };
+                localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
+            } catch(e) {
+                console.warn('Could not save session state:', e);
+            }
+        }
+        
+        function loadSessionFromStorage() {
+            try {
+                const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+                if (!raw) return null;
+                const state = JSON.parse(raw);
+                
+                // Expire after 3 hours (session can't be that long)
+                if (Date.now() - state.savedAt > 3 * 60 * 60 * 1000) {
+                    clearSessionStorage();
+                    return null;
+                }
+                return state;
+            } catch(e) {
+                clearSessionStorage();
+                return null;
+            }
+        }
+        
+        function clearSessionStorage() {
+            try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch(e) {}
+        }
+        
+        function restoreSessionState(saved) {
+            // Restore timing and position
+            sessionStartTime = saved.sessionStartTime;
+            currentBlockIndex = saved.currentBlockIndex;
+            slothShown = saved.slothShown || false;
+            
+            // Restore completion + weight states onto the already-built workoutBlocks
+            if (saved.blockStates && saved.blockStates.length === workoutBlocks.length) {
+                saved.blockStates.forEach((savedBlock, bIdx) => {
+                    const block = workoutBlocks[bIdx];
+                    if (savedBlock.exercises && block.exercises) {
+                        savedBlock.exercises.forEach((savedEx, eIdx) => {
+                            if (block.exercises[eIdx]) {
+                                // Restore checkbox states
+                                if (savedEx.completed) {
+                                    block.exercises[eIdx].completed = savedEx.completed;
+                                }
+                                // Restore weight adjustments
+                                if (savedEx.weight !== undefined && savedEx.weight !== null) {
+                                    block.exercises[eIdx].weight = savedEx.weight;
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Restore UI to active session state
+            document.getElementById('sessionNotStarted').style.display = 'none';
+            document.getElementById('workoutBlockContainer').style.display = 'block';
+            document.getElementById('sessionTimer').style.display = 'flex';
+            document.getElementById('completeSessionBtn').style.display = 'none';
+            
+            // Restart timer display
+            updateTimer();
+            sessionTimer = setInterval(updateTimer, 1000);
+            
+            // Render current block
+            renderCurrentBlock();
+            
+            showToast('♻️ Session restored — keep going!', 'success');
+        }
+
+        // Movement patterns data
         const patterns = [
             { 
                 key: 'Squat', 
@@ -2698,7 +2766,7 @@
                     { text: 'Controlled descent', note: 'Back to shoulders with control' },
                     { text: 'Feet stay planted', note: 'No stepping (unless push press)' }
                 ],
-                loadTiers: { M: [8, 16, 24, 32, 36], F: [4, 12, 18, 24, 28] }
+                loadTiers: { M: [6, 14, 24, 32, 36], F: [4, 10, 18, 24, 28] }
             }
         ];
 
@@ -2825,25 +2893,21 @@
             }
         }
 
-        async function fetchLastSession(athleteId) {
+        async function fetchLastSession(email) {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getLastSession&athleteId=${encodeURIComponent(athleteId)}&email=${encodeURIComponent(athleteId)}`;
+                const url = `${APPS_SCRIPT_URL}?action=getLastSession&email=${encodeURIComponent(email)}`;
                 const response = await fetch(url);
                 const data = await response.json();
-                // Apps Script returns session directly, check if it has valid data
-                if (data && data.sessionNumber && data.sessionNumber > 0) {
-                    return data;
-                }
-                return null;
+                return data.success ? data.lastSession : null;
             } catch (error) {
                 console.error('Error fetching last session:', error);
                 return null;
             }
         }
 
-        async function fetchLastSessionByType(athleteId, sessionType) {
+        async function fetchLastSessionByType(email, sessionType) {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getLastSessionByType&athleteId=${encodeURIComponent(athleteId)}&email=${encodeURIComponent(athleteId)}&sessionType=${sessionType}`;
+                const url = `${APPS_SCRIPT_URL}?action=getLastSessionByType&email=${encodeURIComponent(email)}&sessionType=${sessionType}`;
                 const response = await fetch(url);
                 const data = await response.json();
                 return data.success ? data.lastSession : null;
@@ -2853,14 +2917,11 @@
             }
         }
 
-        async function fetchWorkoutHistory(athleteId, limit = 10) {
+        async function fetchWorkoutHistory(email, limit = 10) {
             try {
-                // Send as both athleteId AND email so Apps Script works either way
-                const url = `${APPS_SCRIPT_URL}?action=getWorkoutHistory&athleteId=${encodeURIComponent(athleteId)}&email=${encodeURIComponent(athleteId)}&limit=${limit}`;
-                console.log('Fetching history for athleteId:', athleteId);
+                const url = `${APPS_SCRIPT_URL}?action=getWorkoutHistory&email=${encodeURIComponent(email)}&limit=${limit}`;
                 const response = await fetch(url);
                 const data = await response.json();
-                console.log('History response:', data);
                 return data.success ? data.history : [];
             } catch (error) {
                 console.error('Error fetching history:', error);
@@ -3346,31 +3407,31 @@
 
             try {
                 // Get available session from config (set by teacher in admin panel)
-                // This IS the session they should do, not a cap
-                const unlockedSession = await fetchCurrentSession();
+                maxAvailableSession = await fetchCurrentSession();
                 
-                // Calculate session number and type from unlocked value
-                // 1→1A, 2→1B, 3→2A, 4→2B, 5→3A, etc.
-                currentSessionNumber = Math.ceil(unlockedSession / 2);
-                currentSessionType = unlockedSession % 2 === 1 ? 'A' : 'B';
-                maxAvailableSession = unlockedSession;
+                // Get last session to determine next session
+                const lastSession = await fetchLastSession(currentUser.athleteId);
+                
+                // Determine next session number
+                let nextSessionNumber = 1;
+                if (lastSession && lastSession.sessionNumber) {
+                    nextSessionNumber = (parseInt(lastSession.sessionNumber) || 0) + 1;
+                }
+                
+                // Cap at available session (can't go beyond what teacher has unlocked)
+                currentSessionNumber = Math.min(nextSessionNumber, maxAvailableSession);
+                
+                // Alternate between A and B sessions
+                currentSessionType = currentSessionNumber % 2 === 1 ? 'A' : 'B';
+                currentSession = currentSessionNumber;
 
                 // Update UI
                 document.getElementById('sessionBadge').textContent = `Session ${currentSessionNumber}${currentSessionType}`;
                 document.getElementById('nextSessionType').textContent = `${currentSessionNumber}${currentSessionType}`;
 
-                // Load stats from workout history
-                const history = await fetchWorkoutHistory(currentUser.athleteId, 100);
-                const totalSessions = history.length;
-                let totalReps = 0;
-                history.forEach(session => {
-                    try {
-                        const exercises = JSON.parse(session.exercises || '[]');
-                        exercises.forEach(ex => {
-                            totalReps += (ex.sets || 0) * (ex.reps || 1);
-                        });
-                    } catch (e) {}
-                });
+                // Update stats counter
+                const totalSessions = currentStrength?.Total_Sessions || 0;
+                const totalReps = currentStrength?.Total_Reps || 0;
                 document.getElementById('totalSessions').textContent = totalSessions;
                 document.getElementById('totalReps').textContent = totalReps;
 
@@ -3380,9 +3441,19 @@
                 // Build workout blocks based on session type
                 buildWorkoutBlocks(currentStrength, currentSessionType, lastSameTypeSession);
 
-                // Hide loading, show "Start Session" state
-                document.getElementById('workoutLoading').style.display = 'none';
-                document.getElementById('sessionNotStarted').style.display = 'block';
+                // Check for a saved session (page refresh recovery)
+                const savedSession = loadSessionFromStorage();
+                if (savedSession && savedSession.athleteId === currentUser.athleteId 
+                    && savedSession.currentSessionNumber === currentSessionNumber) {
+                    // Restore the in-progress session
+                    document.getElementById('workoutLoading').style.display = 'none';
+                    restoreSessionState(savedSession);
+                } else {
+                    // No saved session - show normal "Start Session" state
+                    if (savedSession) clearSessionStorage(); // stale session from different context
+                    document.getElementById('workoutLoading').style.display = 'none';
+                    document.getElementById('sessionNotStarted').style.display = 'block';
+                }
 
             } catch (error) {
                 console.error('Error loading workout plan:', error);
@@ -3465,7 +3536,7 @@
                 const loadTiers = gender === 'F' ? pattern.loadTiers.F : pattern.loadTiers.M;
                 const actual5RM = strengthTier > 0 ? loadTiers[strengthTier - 1] : 0;
                 
-                // Exercise level: use their current level (minimum 1)
+                // Exercise level: use their completed level (minimum 1)
                 const exerciseLevel = Math.max(techLevel, 1);
                 const exercise = pattern.exercises[exerciseLevel];
                 
@@ -3511,8 +3582,10 @@
                         reps: lastData.reps
                     };
                     
-                    // Student-driven progression: start at last weight, they decide to increase via checklist
-                    suggestedWeight = Math.max(workingWeight, lastWeight);
+                    // Auto-progress: if they completed all sets last time, suggest +2.5kg
+                    if (trainingState === 'loaded' && lastData.sets >= 3 && lastWeight > 0) {
+                        suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
+                    }
                 }
                 
                 workoutBlocks.push({
@@ -3550,7 +3623,7 @@
                 const loadTiers = gender === 'F' ? pattern.loadTiers.F : pattern.loadTiers.M;
                 const actual5RM = strengthTier > 0 ? loadTiers[strengthTier - 1] : 0;
                 
-                // Exercise level: use their current level (minimum 1)
+                // Exercise level: use their completed level (minimum 1)
                 const exerciseLevel = Math.max(techLevel, 1);
                 const exercise = pattern.exercises[exerciseLevel];
                 
@@ -3594,8 +3667,10 @@
                         reps: lastData.reps
                     };
                     
-                    // Student-driven progression: start at last weight, they decide to increase via checklist
-                    suggestedWeight = Math.max(workingWeight, lastWeight);
+                    // Auto-progress: if they completed all sets last time, suggest +2.5kg
+                    if (trainingState === 'loaded' && lastData.sets >= 3 && lastWeight > 0) {
+                        suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
+                    }
                 }
                 
                 workoutBlocks.push({
@@ -3620,40 +3695,72 @@
                 });
             });
 
-            // Core block
+            // Core block - Progressive by session number
+            // Sessions 1A, 2B: Plank + Dead Bug (foundational)
+            // Sessions 3A onwards: Sit Up + Hip Extension
+            const useAdvancedCore = currentSessionNumber >= 3;
+            
+            const coreExercise1 = useAdvancedCore ? {
+                name: 'Sit Up',
+                video: 'https://www.youtube.com/embed/f9Yi_74xF_c',
+                instructions: [
+                    'Feet flat on the floor, knees bent',
+                    'Hands behind head or across chest',
+                    'Curl up fully, controlled descent'
+                ],
+                sets: 3,
+                reps: 10,
+                isTimeBased: false,
+                completed: [false, false, false]
+            } : {
+                name: 'Plank Hold',
+                video: 'https://www.youtube.com/embed/ao5nY7lb088',
+                instructions: [
+                    'Keep body in straight line',
+                    'Engage core, squeeze glutes',
+                    'Don\'t let hips sag or pike up'
+                ],
+                sets: 2,
+                reps: 0,
+                duration: 45,
+                isTimeBased: true,
+                completed: [false, false],
+                nextExercise: 'Sit Up (from Session 3)'
+            };
+            
+            const coreExercise2 = useAdvancedCore ? {
+                name: 'Hip Extension',
+                video: 'https://www.youtube.com/embed/yNvAeCrTFuk',
+                instructions: [
+                    'Lie face down on a bench, hips at edge',
+                    'Lift legs to horizontal, squeeze glutes',
+                    'Controlled lower, don\'t hyperextend'
+                ],
+                sets: 3,
+                reps: 8,
+                isTimeBased: false,
+                completed: [false, false, false]
+            } : {
+                name: 'Dead Bug',
+                video: 'https://www.youtube.com/embed/-VykQ1HD0Vw',
+                instructions: [
+                    'Keep lower back pressed to floor',
+                    'Extend opposite arm and leg',
+                    'Controlled movement, no rushing'
+                ],
+                sets: 2,
+                reps: 10,
+                repsNote: 'each side',
+                isTimeBased: false,
+                completed: [false, false],
+                nextExercise: 'Hip Extension (from Session 3)'
+            };
+            
             workoutBlocks.push({
                 type: 'core',
                 title: '🧘 CORE',
-                subtitle: '2 sets each',
-                exercises: [
-                    {
-                        name: 'Plank Hold',
-                        video: 'https://www.youtube.com/embed/ao5nY7lb088',
-                        instructions: [
-                            'Keep body in straight line',
-                            'Engage core, squeeze glutes',
-                            'Don\'t let hips sag or pike up'
-                        ],
-                        sets: 2,
-                        reps: 0,
-                        duration: 45, // seconds
-                        isTimeBased: true,
-                        completed: [false, false]
-                    },
-                    {
-                        name: 'Dead Bug',
-                        video: 'https://www.youtube.com/embed/-VykQ1HD0Vw',
-                        instructions: [
-                            'Keep lower back pressed to floor',
-                            'Extend opposite arm and leg',
-                            'Controlled movement, no rushing'
-                        ],
-                        sets: 2,
-                        reps: 10,
-                        repsNote: 'each side',
-                        completed: [false, false]
-                    }
-                ]
+                subtitle: coreExercise1.sets + ' sets each',
+                exercises: [coreExercise1, coreExercise2]
             });
 
             // Technique Practice block - show patterns that still need technique work
@@ -3666,19 +3773,26 @@
                 if (workoutPatternNames.includes(pattern.name)) return;
                 
                 const techLevel = parseInt(strength?.[pattern.name + '_Tech']) || 0;
+                const strTier = parseInt(strength?.[pattern.name + '_Str']) || 0;
+                const hasStrength = strTier > 0;
                 
-                // Always include if not at max level (5) - practice the next level
+                // Only include if not at max level (5) and not in testing state
                 if (techLevel < 5) {
-                    const nextLevel = techLevel + 1;
-                    const exercise = pattern.exercises[nextLevel];
-                    if (exercise) {
-                        techniquePracticeExercises.push({
-                            patternKey: pattern.key,
-                            patternName: pattern.name,
-                            name: exercise.name,
-                            level: nextLevel,
-                            techLevel: techLevel
-                        });
+                    const isReadyToTest = techLevel >= 2 && !hasStrength;
+                    
+                    if (!isReadyToTest) {
+                        // They're working on next level
+                        const nextLevel = techLevel + 1;
+                        const exercise = pattern.exercises[nextLevel];
+                        if (exercise) {
+                            techniquePracticeExercises.push({
+                                patternKey: pattern.key,
+                                patternName: pattern.name,
+                                name: exercise.name,
+                                level: nextLevel,
+                                techLevel: techLevel
+                            });
+                        }
                     }
                 }
             });
@@ -3740,6 +3854,9 @@
 
             // Render first block
             renderCurrentBlock();
+
+            // Save to localStorage
+            saveSessionToStorage();
 
             showToast('Session started! Take your time.', 'success');
         }
@@ -3904,12 +4021,43 @@
                 
                 // Add completion checkbox
                 html += `
+                    <div style="margin-top: 12px; margin-bottom: 8px;">
+                        <div style="font-size: 0.8rem; color: #874B46; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📝 Record Your Practice</div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.75rem; color: #666; display: block; margin-bottom: 4px;">Sets</label>
+                                <input type="number" id="techSets-${exIndex}" value="2" min="1" max="5" style="
+                                    width: 100%;
+                                    padding: 10px;
+                                    border: 2px solid #e0e0e0;
+                                    border-radius: 8px;
+                                    font-size: 1rem;
+                                    font-weight: 600;
+                                    text-align: center;
+                                    font-family: inherit;
+                                ">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.75rem; color: #666; display: block; margin-bottom: 4px;">Reps per set</label>
+                                <input type="number" id="techReps-${exIndex}" value="8" min="1" max="30" style="
+                                    width: 100%;
+                                    padding: 10px;
+                                    border: 2px solid #e0e0e0;
+                                    border-radius: 8px;
+                                    font-size: 1rem;
+                                    font-weight: 600;
+                                    text-align: center;
+                                    font-family: inherit;
+                                ">
+                            </div>
+                        </div>
+                    </div>
                     <div class="sets-grid" style="justify-content: center;">
                         <div class="set-item">
                             <div class="set-checkbox ${exercise.completed[0] ? 'checked' : ''}" 
                                  onclick="toggleSet(${exIndex}, 0)">
                             </div>
-                            <div class="set-label">Practiced</div>
+                            <div class="set-label">Done</div>
                         </div>
                     </div>
                 `;
@@ -3939,6 +4087,14 @@
                         </ul>
                     </div>
                 `;
+                // Show progression hint if this core exercise has a next step
+                if (exercise.nextExercise) {
+                    html += `
+                        <div style="background: rgba(135, 75, 70, 0.06); border: 1px dashed rgba(135, 75, 70, 0.3); border-radius: 10px; padding: 10px 15px; margin-bottom: 10px; font-size: 0.8rem; color: #874B46;">
+                            📈 <strong>Next progression:</strong> ${exercise.nextExercise} — keep building consistency here first
+                        </div>
+                    `;
+                }
             }
 
             // Exercise info with training state badge
@@ -3975,7 +4131,36 @@
             `;
 
             // Weight control (for loaded OR readyToTest with weight)
-            if (exercise.weight > 0) {
+            // Skip weight display for rep-based patterns (Pull) - show rep target instead
+            const patternDef = exercise.patternName ? patterns.find(p => p.name === exercise.patternName) : null;
+            const isRepBasedPattern = patternDef && patternDef.testType === 'reps';
+            
+            if (isRepBasedPattern && exercise.weight > 0) {
+                // Rep-based pattern (Pull): show rep target, not weight
+                const gender = currentStrength?.Gender || 'M';
+                const loadTiers = gender === 'F' ? patternDef.loadTiers.F : patternDef.loadTiers.M;
+                const strTier = parseInt(currentStrength?.[exercise.patternName + '_Str']) || 0;
+                const currentTierReps = strTier > 0 ? loadTiers[strTier - 1] : loadTiers[0];
+                
+                let lastTimeHtml = '';
+                if (exercise.lastTime && exercise.lastTime.weight) {
+                    lastTimeHtml = `
+                        <div style="background: #f5f5f5; border: 1px solid #ddd; border-radius: 10px; padding: 10px 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <span style="color: #333; font-size: 0.9rem;">📊 Last time:</span>
+                            <span style="color: #874B46; font-weight: 700;">${exercise.lastTime.weight} reps</span>
+                            <span style="color: #555; font-size: 0.85rem;">× ${exercise.lastTime.sets} sets</span>
+                        </div>
+                    `;
+                }
+                
+                html += lastTimeHtml;
+                html += `
+                    <div style="text-align: center; padding: 15px; background: rgba(135, 75, 70, 0.05); border-radius: 12px; margin-bottom: 15px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #874B46;">Tier ${strTier > 0 ? strTier : 1}: ${currentTierReps} reps</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-top: 4px;">Aim for ${exercise.reps} reps × ${exercise.sets} sets (bodyweight)</div>
+                    </div>
+                `;
+            } else if (exercise.weight > 0) {
                 const weightLabel = exercise.trainingState === 'loaded' ? 'Working Weight (70%)' : 'Practice Weight (Tier 1)';
                 
                 // Use stored isDumbbell flag
@@ -4178,6 +4363,7 @@
             }
             
             renderCurrentBlock();
+            saveSessionToStorage();
         }
         
         function showBlockSlothModal() {
@@ -4216,6 +4402,7 @@
             // Apply weight change and re-render block
             exercise.weight = newWeight;
             renderCurrentBlock();
+            saveSessionToStorage();
         }
         
         function showWeightIncreaseModal(exIndex, lastWeight, newWeight, exerciseKey) {
@@ -4261,8 +4448,7 @@
             
             modal.classList.remove('active');
             renderCurrentBlock();
-            
-            modal.classList.remove('active');
+            saveSessionToStorage();
         }
         
         function cancelWeightIncrease() {
@@ -4273,6 +4459,7 @@
             if (currentBlockIndex > 0) {
                 currentBlockIndex--;
                 renderCurrentBlock();
+                saveSessionToStorage();
             }
         }
 
@@ -4280,12 +4467,14 @@
             if (currentBlockIndex < workoutBlocks.length - 1) {
                 currentBlockIndex++;
                 renderCurrentBlock();
+                saveSessionToStorage();
             }
         }
 
         function goToBlock(index) {
             currentBlockIndex = index;
             renderCurrentBlock();
+            saveSessionToStorage();
         }
 
         function isBlockComplete(blockIndex) {
@@ -4362,13 +4551,6 @@
         }
 
         async function completeWorkout(sessionRpe) {
-            // Prevent double-click
-            if (isSaving) {
-                console.log('Already saving, ignoring click');
-                return;
-            }
-            isSaving = true;
-            
             // Close sloth modal if open
             document.getElementById('slothModal').classList.remove('active');
 
@@ -4376,20 +4558,39 @@
             let totalRepsSession = 0;
             const exercisesCompleted = [];
             
-            workoutBlocks.forEach(block => {
+            workoutBlocks.forEach((block, blockIdx) => {
                 if (block.exercises) {
-                    block.exercises.forEach(ex => {
+                    block.exercises.forEach((ex, exIdx) => {
                         const completedSets = ex.completed.filter(c => c).length;
                         const repsPerSet = ex.reps || 1;
                         totalRepsSession += completedSets * repsPerSet;
                         
                         if (completedSets > 0) {
+                            // Check if this is a technique practice exercise - grab recorded sets/reps
+                            let loggedSets = completedSets;
+                            let loggedReps = repsPerSet;
+                            let loggedWeight = ex.weight || 'bodyweight';
+                            
+                            if (ex.linkToAssessment) {
+                                const techSetsInput = document.getElementById(`techSets-${exIdx}`);
+                                const techRepsInput = document.getElementById(`techReps-${exIdx}`);
+                                if (techSetsInput) loggedSets = parseInt(techSetsInput.value) || 2;
+                                if (techRepsInput) loggedReps = parseInt(techRepsInput.value) || 8;
+                                loggedWeight = 'bodyweight';
+                            }
+                            
+                            // For rep-based patterns (Pull), store reps as weight field  
+                            const patternDef = ex.patternName ? patterns.find(p => p.name === ex.patternName) : null;
+                            if (patternDef && patternDef.testType === 'reps') {
+                                loggedWeight = loggedReps + ' reps';
+                            }
+                            
                             exercisesCompleted.push({
                                 name: ex.name,
                                 pattern: ex.patternName || 'Core',
-                                sets: completedSets,
-                                reps: repsPerSet,
-                                weight: ex.weight || 'bodyweight'
+                                sets: loggedSets,
+                                reps: loggedReps,
+                                weight: loggedWeight
                             });
                         }
                     });
@@ -4439,6 +4640,9 @@
                     // Clear cache to get fresh data next time
                     athleteDataCache = null;
                     
+                    // Clear saved session - workout is done
+                    clearSessionStorage();
+                    
                     // Show Session Complete state instead of resetting
                     sessionStartTime = null;
                     document.getElementById('sessionTimer').style.display = 'none';
@@ -4451,7 +4655,6 @@
             } catch (error) {
                 console.error('Error completing workout:', error);
                 showToast('Error saving session. Please try again.', 'error');
-                isSaving = false; // Reset so user can retry
             }
         }
 
@@ -4501,7 +4704,7 @@
                         ${exercises.map(ex => `
                             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 <span style="color: #444;">${ex.name}</span>
-                                <span style="color: #22c55e;">${ex.sets} sets @ ${ex.weight}${ex.weight !== 'bodyweight' ? 'kg' : ''}</span>
+                                <span style="color: #22c55e;">${ex.sets} sets @ ${typeof ex.weight === 'string' && (ex.weight.includes('reps') || ex.weight === 'bodyweight') ? ex.weight : ex.weight + 'kg'}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -4549,39 +4752,10 @@
         }
         
         function repeatSession() {
-            // Reset all session state
-            sessionStartTime = null;
-            slothShown = false;
-            isSaving = false; // Reset save protection
-            workoutBlocks = []; // Clear workout blocks array
-            currentBlockIndex = 0; // Reset block index
-            
-            // Stop any running timer
-            if (sessionTimer) {
-                clearInterval(sessionTimer);
-                sessionTimer = null;
-            }
-            
-            // Reset timer display
-            document.getElementById('timerDisplay').textContent = '00:00';
-            document.getElementById('sessionTimer').style.display = 'none';
-            
-            // Hide complete button
-            const completeBtn = document.querySelector('.complete-btn');
-            if (completeBtn) completeBtn.style.display = 'none';
-            
-            // Clear notes
-            const notesField = document.getElementById('workoutNotes');
-            if (notesField) notesField.value = '';
-            
-            // Reset workout container HTML (clear completion summary)
-            document.getElementById('workoutBlockContainer').innerHTML = '<div class="workout-block" id="currentBlock"></div>';
-            
-            // Hide workout container, show session start screen
+            // Reset and reload the same session type
+            clearSessionStorage();
             document.getElementById('workoutBlockContainer').style.display = 'none';
             document.getElementById('sessionNotStarted').style.display = 'block';
-            
-            // Rebuild the workout blocks fresh
             buildWorkoutBlocks(currentStrength, currentSessionType, null);
         }
 
@@ -4598,32 +4772,11 @@
             
             let html = '';
             history.forEach(item => {
-                // Parse exercises if available
-                let exerciseHtml = '';
-                if (item.exercises) {
-                    try {
-                        const exercises = typeof item.exercises === 'string' ? JSON.parse(item.exercises) : item.exercises;
-                        if (Array.isArray(exercises) && exercises.length > 0) {
-                            exerciseHtml = '<div class="history-exercises">';
-                            exercises.forEach(ex => {
-                                const weightStr = ex.weight && ex.weight !== 'bodyweight' ? `${ex.weight}kg` : 'BW';
-                                exerciseHtml += `<div class="history-exercise-item">${ex.name}: ${ex.sets}×${ex.reps || '?'} @ ${weightStr}</div>`;
-                            });
-                            exerciseHtml += '</div>';
-                        }
-                    } catch (e) {
-                        console.error('Error parsing exercises:', e);
-                    }
-                }
-                
                 html += `
                     <div class="history-item">
-                        <div class="history-header">
-                            <div class="history-date">${item.date}</div>
-                            <div class="history-duration">${item.duration || '?'} min</div>
-                        </div>
+                        <div class="history-date">${item.date}</div>
                         <div class="history-session">Session ${item.type} (#${item.number})</div>
-                        ${exerciseHtml}
+                        <div class="history-duration">${item.duration || '?'} minutes</div>
                         ${item.notes ? `<div class="history-notes">"${item.notes}"</div>` : ''}
                     </div>
                 `;
