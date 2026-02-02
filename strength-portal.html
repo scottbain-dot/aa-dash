@@ -2517,7 +2517,7 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyafbQFsPI5ModpQyvPg0eTPnFuIjUgeoqtaNZXUlyNhUqQNT9qfjYl9xEAAIPXe5uE/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQTdxeIrNAZZPZ6QJB7ZBNuSb_lgasWeNtLWmbKBMiu7gEOyYGk_T5otw9J2bfrpGw/exec';
         
         // Cache settings
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -3455,10 +3455,6 @@
                 currentSession = currentInternalSession;
                 
                 console.log('📋 Admin unlocked workout:', maxAvailableSession, '→ internal:', currentInternalSession, '→ display:', displayNum + currentSessionType);
-                
-                // Alternate between A and B sessions
-                currentSessionType = currentSessionNumber % 2 === 1 ? 'A' : 'B';
-                currentSession = currentSessionNumber;
 
                 // Update UI with correct display number
                 const displayLabel = displayNum + currentSessionType;
