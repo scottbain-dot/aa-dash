@@ -278,47 +278,47 @@
             margin-bottom: 25px;
         }
 
-        /* Progress Overview */
+        /* Progress Overview - Compact */
         .progress-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 8px;
+            margin-bottom: 15px;
         }
 
         @media (max-width: 900px) {
             .progress-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(6, 1fr);
             }
         }
 
         @media (max-width: 500px) {
             .progress-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
             }
         }
 
         .progress-card {
             background: #fff;
             border: 2px solid #e0e0e0;
-            border-radius: 15px;
-            padding: 20px 15px;
+            border-radius: 12px;
+            padding: 12px 8px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
 
         .progress-card:hover {
             border-color: #874B46;
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(135,75,70,0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(135,75,70,0.15);
         }
 
         .progress-card.active {
             border-color: #874B46;
-            border-width: 3px;
-            box-shadow: 0 6px 20px rgba(135,75,70,0.25);
+            border-width: 2px;
+            box-shadow: 0 4px 15px rgba(135,75,70,0.2);
         }
 
         .progress-card.testing {
@@ -338,24 +338,24 @@
         }
 
         .progress-pattern {
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: #874B46;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         .progress-level {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             font-weight: 800;
             color: #1a1a1a;
         }
 
         .progress-label {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             color: #666;
-            margin-top: 5px;
+            margin-top: 2px;
             font-weight: 500;
         }
 
@@ -811,9 +811,8 @@
         /* WORKOUT SECTION - IMPROVED */
         /* ============================================ */
         .workout-section {
-            margin-top: 40px;
-            padding-top: 40px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 0;
+            padding-top: 0;
         }
 
         .workout-card {
@@ -2222,113 +2221,26 @@
                 </div>
             </header>
 
-            <!-- Movement Assessment Card -->
-            <div class="glass-card" id="movementAssessment">
-                <h2 class="section-title">📹 Movement Assessment</h2>
-                <p class="section-subtitle">Track your progress, develop your skills</p>
-
-                <!-- Progress Overview -->
-                <h3 style="color: #444; font-size: 0.9rem; margin-bottom: 15px;">📊 Your Progress</h3>
-                <div class="progress-grid" id="progressGrid">
-                    <!-- Filled by JavaScript -->
-                </div>
-
-                <!-- Demo Section -->
-                <div class="demo-section">
-                    <!-- Video Demo Card -->
-                    <div class="demo-card">
-                        <div class="demo-title">📹 Exercise Demo</div>
-                        <div id="patternName" style="color: #D4AF37; font-weight: 600; margin-bottom: 15px;">Squat</div>
-                        
-                        <div class="level-selector">
-                            <button class="level-btn" onclick="changeLevel(-1)">◄</button>
-                            <div class="level-display">
-                                <div class="level-number">Level <span id="currentLevel">1</span></div>
-                                <div class="level-name" id="exerciseName">Bodyweight Squat</div>
-                            </div>
-                            <button class="level-btn" onclick="changeLevel(1)">►</button>
+            <!-- ============================================ -->
+            <!-- UNIFIED WORKOUT SECTION -->
+            <!-- ============================================ -->
+            <section class="workout-section" id="workoutSection" style="margin-top: 0; padding-top: 0; border-top: none;">
+                <div class="workout-card">
+                    
+                    <!-- Compact Progress Tiles -->
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <div style="font-size: 0.85rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">📊 My Progress</div>
                         </div>
-
-                        <div class="video-placeholder" id="videoPlaceholder">
-                            <span>🎬</span>
-                            <p>Select a pattern to view demo</p>
-                        </div>
-
-                        <div class="warning-box" id="level5Warning" style="display: none;">
-                            <h4>⚠️ Level 5 - Olympic Lifts</h4>
-                            <p><strong>Instructor supervision required.</strong><br>
-                            Level 5 Olympic lifting variations (Power Clean, Squat Clean, Split Jerk, Clean Pull) must be taught and cleared by a qualified instructor before attempting.</p>
-                        </div>
-                    </div>
-
-                    <!-- Tips Card - For technique levels only -->
-                    <div class="demo-card" id="filmingTipsCard">
-                        <div class="demo-title">📱 Filming Tips</div>
-                        <ul class="tips-list">
-                            <li>
-                                <span class="tip-icon">📐</span>
-                                <span>Film from the <strong>side angle</strong> - full body visible</span>
-                            </li>
-                            <li>
-                                <span class="tip-icon">🔢</span>
-                                <span>Perform <strong>5 clear reps</strong> with controlled tempo</span>
-                            </li>
-                            <li>
-                                <span class="tip-icon">💡</span>
-                                <span>Good lighting, clear background, phone horizontal</span>
-                            </li>
-                        </ul>
-
-                        <div class="criteria-section">
-                            <div class="criteria-header">
-                                <span class="criteria-title">✓ Form Criteria</span>
-                                <span class="criteria-status">Pass: 5/6 on all reps</span>
-                            </div>
-                            <div id="criteriaList" style="color: #333; font-size: 0.9rem;">
-                                <!-- Filled by JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Strength Test Info Card - For 3T level only -->
-                    <div class="demo-card" id="strengthTestCard" style="display: none;">
-                        <div class="demo-title">🏋️ Strength Test Info</div>
-                        <div id="strengthTestContent">
+                        <div class="progress-grid" id="progressGrid" style="margin-bottom: 0; gap: 10px;">
                             <!-- Filled by JavaScript -->
                         </div>
                     </div>
-                </div>
 
-                <!-- Submission Checklist - Only for technique levels -->
-                <div class="checklist" id="submissionChecklist">
-                    <div class="checklist-title">🎯 Ready to Submit?</div>
-                    <div class="checklist-item">
-                        <input type="checkbox" id="check1">
-                        <label for="check1">I can perform 5 reps hitting all criteria</label>
+                    <!-- Pattern Detail Panel (expandable - hidden by default) -->
+                    <div id="patternDetailPanel" style="display: none; margin-bottom: 20px;">
+                        <!-- Filled dynamically when a progress tile is tapped -->
                     </div>
-                    <div class="checklist-item">
-                        <input type="checkbox" id="check2">
-                        <label for="check2">I have filmed from the correct angle</label>
-                    </div>
-                    <div class="checklist-item">
-                        <input type="checkbox" id="check3">
-                        <label for="check3">My full body is visible throughout</label>
-                    </div>
-                </div>
-
-                <a href="https://fis.instructure.com" target="_blank" class="submit-btn" id="submitBtn">
-                    📤 Submit Video on Canvas
-                </a>
-                <p class="submit-btn-note" id="submitBtnNote">Opens Canvas in new tab for video upload</p>
-            </div>
-
-            <!-- Strength Testing is now integrated into Level 3T in Exercise Demo -->
-
-            <!-- ============================================ -->
-            <!-- WORKOUT SECTION - VISUAL BLOCKS -->
-            <!-- ============================================ -->
-            <section class="workout-section" id="workoutSection">
-                <div class="workout-card">
                     <div class="workout-header">
                         <div class="workout-title">
                             🏋️ Your Personal Workout Plan
@@ -2556,6 +2468,13 @@
         // ============================================
         const SESSION_STORAGE_KEY = 'sp_active_session';
         
+        function getStrengthHash() {
+            // Create a simple hash of strength data to detect admin changes
+            if (!currentStrength) return '';
+            const keys = patterns.map(p => `${p.name}_Tech,${p.name}_Str`).flat();
+            return keys.map(k => `${k}=${currentStrength[k] || 0}`).join('|');
+        }
+        
         function saveSessionToStorage() {
             if (!sessionStartTime) return;
             try {
@@ -2566,6 +2485,7 @@
                     currentSessionNumber: currentSessionNumber,
                     slothShown: slothShown,
                     athleteId: currentUser?.athleteId,
+                    strengthHash: getStrengthHash(),
                     // Save completion state + weight adjustments for every exercise in every block
                     blockStates: workoutBlocks.map(block => ({
                         type: block.type,
@@ -2800,6 +2720,7 @@
         // ============================================
         // GOOGLE SIGN-IN
         // ============================================
+        
         function handleCredentialResponse(response) {
             const payload = JSON.parse(atob(response.credential.split('.')[1]));
             
@@ -2982,9 +2903,6 @@
                 // Add gender to currentStrength for use in 3T level
                 currentStrength = { ...strength, Gender: gender };
                 renderProgressGrid(strength);
-                // Select first pattern properly (calculates correct level)
-                // Use setTimeout to ensure DOM is updated
-                setTimeout(() => selectPattern(0), 0);
             } else {
                 console.log('loadPortal - NO strength data found');
             }
@@ -2998,417 +2916,254 @@
             const container = document.getElementById('progressGrid');
             console.log('progressGrid container:', container);
             container.innerHTML = '';
+            const gender = strength?.Gender || currentStrength?.Gender || 'M';
 
             patterns.forEach((pattern, index) => {
-                // API returns Squat_Tech, Push_Tech, etc. (capitalized)
                 const techKey = pattern.name + '_Tech';
                 const strKey = pattern.name + '_Str';
                 const techLevel = parseInt(strength?.[techKey]) || 0;
                 const strengthTier = parseInt(strength?.[strKey]) || 0;
                 
-                // Determine display state
                 const hasStrength = strengthTier > 0;
                 const isReadyToTest = techLevel >= 2 && !hasStrength;
+                const isRepBased = pattern.testType === 'reps';
                 
                 const card = document.createElement('div');
-                card.className = `progress-card ${index === 0 ? 'active' : ''}`;
-                card.onclick = () => selectPattern(index);
+                card.className = 'progress-card';
+                card.onclick = () => togglePatternDetail(index);
                 
                 if (isReadyToTest) {
-                    // Special TESTING box - burgundy theme
-                    card.style.cssText = 'background: linear-gradient(135deg, #874B46, #6a3a36); border-color: #874B46; box-shadow: 0 4px 15px rgba(135, 75, 70, 0.3);';
+                    // Ready to test - burgundy
+                    card.style.cssText = 'background: linear-gradient(135deg, #874B46, #6a3a36); border-color: #874B46;';
                     card.innerHTML = `
                         <div class="progress-pattern" style="color: #D4AF37;">${pattern.name.toUpperCase()}</div>
-                        <div class="progress-level" style="color: #fff; font-size: 1.5rem;">⚡</div>
-                        <div class="progress-label" style="color: #D4AF37; font-weight: 600;">TESTING</div>
+                        <div class="progress-level" style="color: #fff; font-size: 1.4rem;">⚡</div>
+                        <div class="progress-label" style="color: #D4AF37; font-weight: 600;">TEST</div>
+                    `;
+                } else if (hasStrength) {
+                    // Tested - show tech level + tier/weight
+                    const loadTiers = gender === 'F' ? pattern.loadTiers.F : pattern.loadTiers.M;
+                    const tierWeight = loadTiers[strengthTier - 1] || 0;
+                    const tierLabel = isRepBased ? `T${strengthTier} · ${tierWeight} reps` : `T${strengthTier} · ${tierWeight}kg`;
+                    
+                    card.innerHTML = `
+                        <div class="progress-pattern">${pattern.name.toUpperCase()}</div>
+                        <div class="progress-level" style="font-size: 1.6rem;">${techLevel} <span style="color: #22c55e; font-size: 0.8rem;">✓</span></div>
+                        <div class="progress-label" style="color: #874B46; font-weight: 600; font-size: 0.65rem;">${tierLabel}</div>
                     `;
                 } else {
-                    // Show COMPLETED tech level (what's stored in the sheet)
+                    // Normal tech level
                     card.innerHTML = `
                         <div class="progress-pattern">${pattern.name.toUpperCase()}</div>
                         <div class="progress-level">${techLevel}</div>
-                        <div class="progress-label">Tech Level</div>
+                        <div class="progress-label">Tech Lvl</div>
                     `;
                 }
                 container.appendChild(card);
             });
         }
 
-        function selectPattern(index) {
-            selectedPattern = patterns[index];
-            const techKey = selectedPattern.name + '_Tech';
-            const strKey = selectedPattern.name + '_Str';
+        const PRACTICES_TO_FILM_GLOBAL = 3;
+
+        function updateProgressTilesWithPractice(allHistory) {
+            // Count practices per pattern - match specific next-level exercise name
+            const practiceCounts = {};
+            const nextExerciseNames = {};
+            patterns.forEach(pattern => {
+                practiceCounts[pattern.name] = 0;
+                const techLevel = parseInt(currentStrength?.[pattern.name + '_Tech']) || 0;
+                const nextLevel = techLevel + 1;
+                const nextEx = pattern.exercises[nextLevel];
+                nextExerciseNames[pattern.name] = nextEx ? nextEx.name : null;
+            });
+            
+            if (allHistory && allHistory.length > 0) {
+                allHistory.forEach(session => {
+                    try {
+                        let exercises = session.exercises;
+                        if (typeof exercises === 'string') exercises = JSON.parse(exercises);
+                        if (Array.isArray(exercises)) {
+                            const practicedInSession = new Set();
+                            exercises.forEach(ex => {
+                                if (ex.pattern && nextExerciseNames[ex.pattern] && ex.name === nextExerciseNames[ex.pattern]) {
+                                    practicedInSession.add(ex.pattern);
+                                }
+                            });
+                            practicedInSession.forEach(p => practiceCounts[p]++);
+                        }
+                    } catch(e) {}
+                });
+            }
+            
+            // Practice counts from all sessions
+            // No baseline inflation needed - count is accurate for next-level practices
+            
+            // Update each tile's subtitle with practice info
+            const cards = document.querySelectorAll('.progress-card');
+            cards.forEach((card, index) => {
+                const pattern = patterns[index];
+                const techLevel = parseInt(currentStrength?.[pattern.name + '_Tech']) || 0;
+                const strTier = parseInt(currentStrength?.[pattern.name + '_Str']) || 0;
+                const hasStrength = strTier > 0;
+                const isReadyToTest = techLevel >= 2 && !hasStrength;
+                
+                // Practice info only shown in the workout technique block, not on tiles
+            });
+        }
+
+        let expandedPatternIndex = -1;
+
+        function togglePatternDetail(index) {
+            const panel = document.getElementById('patternDetailPanel');
+            
+            // Toggle off if same tile tapped
+            if (expandedPatternIndex === index) {
+                panel.style.display = 'none';
+                expandedPatternIndex = -1;
+                document.querySelectorAll('.progress-card').forEach(c => c.classList.remove('active'));
+                return;
+            }
+            
+            expandedPatternIndex = index;
+            document.querySelectorAll('.progress-card').forEach((c, i) => c.classList.toggle('active', i === index));
+            
+            const pattern = patterns[index];
+            const techKey = pattern.name + '_Tech';
+            const strKey = pattern.name + '_Str';
             const techLevel = parseInt(currentStrength?.[techKey]) || 0;
             const strengthTier = parseInt(currentStrength?.[strKey]) || 0;
             const hasStrength = strengthTier > 0;
+            const gender = currentStrength?.Gender || 'M';
+            const isReadyToTest = techLevel >= 2 && !hasStrength;
             
-            // Determine what level to show
-            if (techLevel >= 2 && !hasStrength) {
-                // Ready to test (passed Level 2, no strength score yet)
-                selectedLevel = 'TEST';
+            // Determine display level - show CURRENT level (what they've achieved)
+            let displayLevel;
+            if (isReadyToTest) {
+                displayLevel = 'TEST';
             } else if (techLevel >= 5) {
-                // Max level reached
-                selectedLevel = 5;
+                displayLevel = 5;
+            } else if (techLevel === 0) {
+                // Haven't passed anything yet - show level 1 as what they're working on
+                displayLevel = 1;
             } else {
-                // Show the NEXT level they're working toward
-                selectedLevel = techLevel + 1;
+                // Show current achieved level
+                displayLevel = techLevel;
             }
+            
+            let html = `<div style="background: #fff; border: 2px solid #e0e0e0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">`;
+            html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">`;
+            html += `<div style="font-size: 1.1rem; font-weight: 700; color: #1a1a1a;">${pattern.name} Pattern</div>`;
+            html += `<button onclick="togglePatternDetail(${index})" style="background: #f5f0f1; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1rem; color: #666;">✕</button>`;
+            html += `</div>`;
+            
+            if (displayLevel === 'TEST') {
+                // Strength Test Info
+                const loadTiers = gender === 'F' ? pattern.loadTiers.F : pattern.loadTiers.M;
+                const isRepBased = pattern.testType === 'reps';
+                const testExercise = pattern.exercises[2]; // Level 2 is the test exercise
+                
+                html += `<div style="background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; font-weight: 600;">⚡ Ready to Test!</div>`;
+                
+                // Show Level 2 exercise video
+                if (testExercise && testExercise.video) {
+                    const videoId = testExercise.video.split('/embed/')[1];
+                    html += `<div style="font-size: 0.9rem; font-weight: 600; color: #231F20; margin-bottom: 8px;">${testExercise.name}</div>`;
+                    html += `<div style="border-radius: 10px; overflow: hidden; margin-bottom: 15px; aspect-ratio: 16/9; max-width: 400px; background: #000;">`;
+                    html += `<div id="detailVidWrapper-${index}" style="width: 100%; height: 100%; cursor: pointer; position: relative;" onclick="playVideo(this, '${videoId}')">`;
+                    html += `<img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    html += `<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 56px; height: 56px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><span style="color: #fff; font-size: 22px; margin-left: 3px;">▶</span></div>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                }
+                
+                html += `<div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.85rem; color: #666;">⚠️ Supervision required — Request a slot from Mr. Bain</div>`;
+                
+                html += `<div style="margin-bottom: 12px;"><div style="font-weight: 600; color: #874B46; font-size: 0.85rem; margin-bottom: 8px;">📋 PROTOCOL</div>`;
+                if (isRepBased) {
+                    html += `<div style="font-size: 0.85rem; color: #444; line-height: 1.7;">1. Start with bodyweight<br>2. Perform as many clean reps as possible<br>3. Stop when technique breaks<br><em style="color: #888;">This is a max rep test</em></div>`;
+                } else {
+                    html += `<div style="font-size: 0.85rem; color: #444; line-height: 1.7;">1. Warm up with light sets<br>2. Start Tier 1 → 5 clean reps<br>3. Rest 2-3 min if successful<br>4. Move to next tier<br>5. Stop when technique breaks<br><em style="color: #888;">This is a technique test, not a max lift</em></div>`;
+                }
+                html += `</div>`;
+                
+                // Load tiers
+                if (!isRepBased) {
+                    html += `<div style="margin-bottom: 12px;"><div style="font-weight: 600; color: #D4AF37; font-size: 0.85rem; margin-bottom: 8px;">🏋️ LOAD TIERS (${gender})</div>`;
+                    html += `<div style="display: flex; gap: 6px; flex-wrap: wrap;">`;
+                    loadTiers.forEach((w, i) => {
+                        html += `<div style="text-align: center; padding: 6px 12px; background: #f5f0f1; border-radius: 8px; min-width: 50px;"><div style="font-size: 0.65rem; color: #888;">T${i+1}</div><div style="font-weight: 700; color: #1a1a1a;">${w}</div></div>`;
+                    });
+                    html += `</div>`;
+                    html += `<div style="font-size: 0.75rem; color: #888; margin-top: 6px;">T1 = competent • T3 = strong • Higher tiers not expected</div></div>`;
+                }
+                
+                // Always show criteria even for test state
+                html += `<div style="margin-bottom: 12px;">`;
+                html += `<div style="font-weight: 600; color: #874B46; font-size: 0.85rem; margin-bottom: 8px;">✓ Form Criteria</div>`;
+                pattern.criteria.forEach(c => {
+                    html += `<div style="display: flex; gap: 8px; padding: 4px 0; font-size: 0.85rem;"><span style="color: #22c55e;">•</span><span style="color: #444;">${c.text} <span style="color: #888;">— ${c.note}</span></span></div>`;
+                });
+                html += `</div>`;
+            } else {
+                // Normal level view - show exercise, video, criteria
+                const exercise = pattern.exercises[displayLevel];
+                const isCompleted = displayLevel <= techLevel;
+                
+                if (exercise) {
+                    html += `<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">`;
+                    html += `<div style="font-size: 0.85rem; color: #888;">Level ${displayLevel}</div>`;
+                    html += `<div style="font-size: 1rem; font-weight: 600; color: #231F20;">${exercise.name}</div>`;
+                    if (isCompleted) {
+                        html += `<span style="background: rgba(34,197,94,0.15); color: #22c55e; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">✓ Passed</span>`;
+                    }
+                    html += `</div>`;
+                    
+                    // Video
+                    if (exercise.video) {
+                        const videoId = exercise.video.split('/embed/')[1];
+                        html += `<div style="border-radius: 10px; overflow: hidden; margin-bottom: 12px; aspect-ratio: 16/9; max-width: 400px; background: #000;">`;
+                        html += `<div id="detailVidWrapper-${index}" style="width: 100%; height: 100%; cursor: pointer; position: relative;" onclick="playVideo(this, '${videoId}')">`;
+                        html += `<img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" style="width: 100%; height: 100%; object-fit: cover;">`;
+                        html += `<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 56px; height: 56px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><span style="color: #fff; font-size: 22px; margin-left: 3px;">▶</span></div>`;
+                        html += `</div>`;
+                        html += `</div>`;
+                    }
+                    
+                    // Always show criteria as a reference
+                    html += `<div style="margin-bottom: 12px;">`;
+                    html += `<div style="font-weight: 600; color: #874B46; font-size: 0.85rem; margin-bottom: 8px;">✓ Form Criteria</div>`;
+                    pattern.criteria.forEach(c => {
+                        html += `<div style="display: flex; gap: 8px; padding: 4px 0; font-size: 0.85rem;"><span style="color: #22c55e;">•</span><span style="color: #444;">${c.text} <span style="color: #888;">— ${c.note}</span></span></div>`;
+                    });
+                    html += `</div>`;
+                }
+            }
+            
+            html += `</div>`;
+            panel.innerHTML = html;
+            panel.style.display = 'block';
+        }
 
-            // Update active state
-            document.querySelectorAll('.progress-card').forEach((card, i) => {
-                card.classList.toggle('active', i === index);
-            });
-
-            updateSelectedPattern();
+        function selectPattern(index) {
+            togglePatternDetail(index);
         }
         
         function scrollToAssessmentAndSelect(patternIndex) {
-            // Scroll to the Movement Assessment section
-            const assessmentSection = document.getElementById('movementAssessment');
-            if (assessmentSection) {
-                assessmentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Scroll to the progress tiles area
+            const grid = document.getElementById('progressGrid');
+            if (grid) {
+                grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-            
-            // Select the pattern after a short delay to allow scroll
-            setTimeout(() => {
-                selectPattern(patternIndex);
-            }, 300);
+            setTimeout(() => togglePatternDetail(patternIndex), 300);
         }
 
         function updateSelectedPattern() {
-            const techKey = selectedPattern.name + '_Tech';
-            const strKey = selectedPattern.name + '_Str';
-            const completedLevel = parseInt(currentStrength?.[techKey]) || 0;
-            const strengthTier = parseInt(currentStrength?.[strKey]) || 0;
-            const gender = currentStrength?.Gender || 'M'; // Default to M if not set
-            
-            document.getElementById('patternName').textContent = selectedPattern.name;
-            document.getElementById('currentLevel').textContent = selectedLevel;
-            
-            // Handle TEST (Strength Test) level
-            if (selectedLevel === 'TEST') {
-                renderTestLevel(completedLevel, strengthTier, gender);
-                return;
-            }
-            
-            // Get exercise from new structure (exercises is object with level keys)
-            const exercise = selectedPattern.exercises[selectedLevel];
-            
-            // Determine if this level is completed, current target, or locked
-            const isCompleted = selectedLevel <= completedLevel;
-            const isCurrentTarget = selectedLevel === completedLevel + 1;
-            const isLocked = selectedLevel > completedLevel + 1;
-            
-            // Build exercise name with badge - only show CURRENT TARGET, never COMPLETED
-            // (because we're showing what they're working ON, not what they've done)
-            let exerciseDisplay = exercise ? exercise.name : '—';
-            if (isCurrentTarget) {
-                exerciseDisplay += ' <span style="background: #874B46; color: #fff; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; margin-left: 8px;">CURRENT TARGET</span>';
-            } else if (isLocked) {
-                exerciseDisplay += ' <span style="background: #6b7280; color: #231F20; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; margin-left: 8px;">🔒 LOCKED</span>';
-            } else if (selectedLevel === 5 && completedLevel >= 5) {
-                exerciseDisplay += ' <span style="background: #22c55e; color: #231F20; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; margin-left: 8px;">✓ MASTERED</span>';
-            }
-            document.getElementById('exerciseName').innerHTML = exerciseDisplay;
-            
-            // Update video placeholder
-            const videoPlaceholder = document.getElementById('videoPlaceholder');
-            
-            if (isLocked) {
-                // Show locked message instead of video
-                videoPlaceholder.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #555;">
-                        <span style="font-size: 3rem; margin-bottom: 15px;">🔒</span>
-                        <p style="font-size: 1.1rem; font-weight: 600; color: #444;">Level ${selectedLevel} Locked</p>
-                        <p style="font-size: 0.9rem; margin-top: 8px;">Complete Level ${completedLevel + 1} first to unlock</p>
-                        <p style="font-size: 0.85rem; margin-top: 15px; color: rgba(255,255,255,0.4);">Your current level: <strong>${completedLevel}</strong></p>
-                    </div>
-                `;
-            } else if (exercise && exercise.video) {
-                const videoId = exercise.video.replace('https://www.youtube.com/embed/', '');
-                const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
-                
-                videoPlaceholder.innerHTML = `
-                    <a href="${watchUrl}" target="_blank" style="display: block; width: 100%; height: 100%; position: relative;">
-                        <img src="${thumbnailUrl}" alt="${exercise.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <span style="color: #231F20; font-size: 24px; margin-left: 4px;">▶</span>
-                        </div>
-                        <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #231F20; padding: 5px 10px; border-radius: 5px; font-size: 0.75rem;">Watch on YouTube ↗</div>
-                        ${isCompleted ? '<div style="position: absolute; top: 10px; left: 10px; background: #22c55e; color: #231F20; padding: 5px 12px; border-radius: 5px; font-size: 0.75rem; font-weight: 600;">✓ Level Completed</div>' : ''}
-                    </a>
-                `;
-            } else {
-                videoPlaceholder.innerHTML = `
-                    <span>🎬</span>
-                    <p>Video coming soon</p>
-                `;
-            }
-            
-            // Show/hide level 5 warning (only if not locked)
-            document.getElementById('level5Warning').style.display = (selectedLevel === 5 && !isLocked) ? 'block' : 'none';
-            
-            // Render form criteria for this pattern (hide if locked)
-            renderCriteria(isLocked);
-            
-            // Show filming tips and submission for technique levels, hide strength test card
-            document.getElementById('filmingTipsCard').style.display = 'block';
-            document.getElementById('strengthTestCard').style.display = 'none';
-            document.getElementById('submissionChecklist').style.display = 'block';
-            document.getElementById('submitBtn').style.display = 'inline-flex';
-            document.getElementById('submitBtnNote').style.display = 'block';
-        }
-        
-        function renderTestLevel(completedLevel, strengthTier, gender) {
-            // TEST uses Level 2 exercise
-            const testExercise = selectedPattern.exercises[2];
-            const loadTiers = gender === 'F' ? selectedPattern.loadTiers.F : selectedPattern.loadTiers.M;
-            const isLocked = completedLevel < 2; // Unlocks after passing Level 2
-            const isTested = strengthTier > 0;
-            const isRepBased = selectedPattern.testType === 'reps';
-            const unit = isRepBased ? ' reps' : 'kg';
-            
-            // Convert tier number to actual weight/reps value
-            const actualWeight = isTested && strengthTier > 0 ? loadTiers[strengthTier - 1] : 0;
-            
-            // Change the level display to "TEST" with special styling
-            document.getElementById('currentLevel').innerHTML = '<span style="color: #f59e0b;">TEST</span>';
-            
-            // Update exercise name display with special test styling
-            let exerciseDisplay = `<span style="color: #f59e0b;">🏋️</span> ${testExercise.name}`;
-            if (isTested) {
-                exerciseDisplay += ` <span style="background: linear-gradient(135deg, #22c55e, #16a34a); color: #231F20; font-size: 0.7rem; padding: 4px 10px; border-radius: 10px; margin-left: 8px; box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);">🏆 ${actualWeight}${unit}</span>`;
-            } else if (isLocked) {
-                exerciseDisplay += ' <span style="background: #6b7280; color: #231F20; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; margin-left: 8px;">🔒 LOCKED</span>';
-            } else {
-                exerciseDisplay += ' <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #231F20; font-size: 0.7rem; padding: 4px 10px; border-radius: 10px; margin-left: 8px; animation: pulse 2s infinite;">⚡ READY TO TEST</span>';
-            }
-            document.getElementById('exerciseName').innerHTML = exerciseDisplay;
-            
-            // Update video placeholder
-            const videoPlaceholder = document.getElementById('videoPlaceholder');
-            
-            if (isLocked) {
-                videoPlaceholder.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, rgba(107,114,128,0.2), rgba(75,85,99,0.2)); border-radius: 12px;">
-                        <span style="font-size: 4rem; margin-bottom: 15px; filter: grayscale(100%);">🏋️</span>
-                        <p style="font-size: 1.2rem; font-weight: 600; color: #444;">Strength Test Locked</p>
-                        <p style="font-size: 0.9rem; margin-top: 8px; color: #555;">Pass Level 2 technique first</p>
-                        <div style="margin-top: 20px; padding: 10px 20px; background: #f5f0f1; border-radius: 20px;">
-                            <span style="color: #444;">Current: Level ${completedLevel}</span>
-                        </div>
-                    </div>
-                `;
-            } else {
-                const videoId = testExercise.video.replace('https://www.youtube.com/embed/', '');
-                const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
-                
-                // Add golden/amber border for test level
-                videoPlaceholder.innerHTML = `
-                    <a href="${watchUrl}" target="_blank" style="display: block; width: 100%; height: 100%; position: relative; border-radius: 12px; overflow: hidden; ${!isTested ? 'box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), inset 0 0 0 3px rgba(245, 158, 11, 0.5);' : 'box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), inset 0 0 0 3px rgba(34, 197, 94, 0.5);'}">
-                        <img src="${thumbnailUrl}" alt="${testExercise.name}" style="width: 100%; height: 100%; object-fit: cover;">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70px; height: 70px; background: ${isTested ? 'rgba(34, 197, 94, 0.9)' : 'rgba(245, 158, 11, 0.9)'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                            <span style="color: #231F20; font-size: 28px; margin-left: 4px;">▶</span>
-                        </div>
-                        <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #231F20; padding: 5px 10px; border-radius: 5px; font-size: 0.75rem;">Watch on YouTube ↗</div>
-                        ${isTested ? `
-                            <div style="position: absolute; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #22c55e, #16a34a); color: #231F20; padding: 8px; text-align: center; font-weight: 600; font-size: 0.85rem;">
-                                🏆 TESTED: ${actualWeight}${unit}
-                            </div>
-                        ` : `
-                            <div style="position: absolute; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #f59e0b, #d97706); color: #231F20; padding: 8px; text-align: center; font-weight: 600; font-size: 0.85rem;">
-                                ⚡ ${isRepBased ? 'MAX REPS TEST' : '5 REP MAX TEST'}
-                            </div>
-                        `}
-                    </a>
-                `;
-            }
-            
-            // Hide level 5 warning
-            document.getElementById('level5Warning').style.display = 'none';
-            
-            // Hide filming tips, show strength test card
-            document.getElementById('filmingTipsCard').style.display = 'none';
-            document.getElementById('strengthTestCard').style.display = 'block';
-            
-            // Hide submission checklist and button for 3T
-            document.getElementById('submissionChecklist').style.display = 'none';
-            document.getElementById('submitBtn').style.display = 'none';
-            document.getElementById('submitBtnNote').style.display = 'none';
-            
-            // Render strength test content in the right panel
-            const strengthTestContent = document.getElementById('strengthTestContent');
-            
-            if (isLocked) {
-                strengthTestContent.innerHTML = `
-                    <div style="text-align: center; padding: 20px; color: #555;">
-                        <div style="font-size: 3rem; margin-bottom: 15px; filter: grayscale(100%);">🔒</div>
-                        <p>Complete Level 2 technique to unlock</p>
-                    </div>
-                `;
-            } else if (isTested) {
-                // Tier is stored directly, no need to calculate
-                let achievedTier = strengthTier;
-                
-                strengthTestContent.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <div style="font-size: 3.5rem; margin-bottom: 10px;">🏆</div>
-                        <div style="font-size: 2.5rem; font-weight: 800; color: #22c55e; text-shadow: 0 2px 10px rgba(34, 197, 94, 0.3);">${actualWeight}${unit}</div>
-                        <div style="color: #444; margin-top: 5px; font-size: 0.9rem;">${isRepBased ? 'Max Reps Achieved' : '5 Rep Max Achieved'}</div>
-                    </div>
-                    
-                    <div style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05)); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 12px; padding: 15px;">
-                        <h4 style="color: #22c55e; font-size: 0.9rem; margin-bottom: 12px; text-transform: uppercase; text-align: center; letter-spacing: 1px;">🎯 Tier ${achievedTier} Achieved</h4>
-                        <div style="display: grid; grid-template-columns: repeat(${loadTiers.length}, 1fr); gap: 6px;">
-                            ${loadTiers.map((w, i) => {
-                                const tierNum = i + 1;
-                                const isAchieved = tierNum <= achievedTier;
-                                const isCurrentTier = tierNum === achievedTier;
-                                return `
-                                    <div style="text-align: center; padding: 8px 4px; background: ${isCurrentTier ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(22, 163, 74, 0.3))' : isAchieved ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.03)'}; border-radius: 8px; border: ${isCurrentTier ? '2px solid #22c55e' : '1px solid rgba(255,255,255,0.1)'}; ${isCurrentTier ? 'box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);' : ''}">
-                                        <div style="font-size: 0.65rem; color: ${isAchieved ? '#22c55e' : 'rgba(255,255,255,0.4)'}; margin-bottom: 2px;">${tierNum}</div>
-                                        <div style="font-size: 0.95rem; font-weight: 600; color: ${isAchieved ? '#22c55e' : 'rgba(255,255,255,0.5)'};">${w}</div>
-                                        ${isCurrentTier ? '<div style="font-size: 0.6rem; color: #22c55e; margin-top: 2px;">★</div>' : ''}
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 15px; font-size: 0.8rem; color: rgba(255,255,255,0.4); text-align: center;">
-                        Retest after more training sessions
-                    </div>
-                `;
-            } else {
-                // Ready to test - show protocol with amber/gold theme
-                // Pattern-specific cues
-                const testCues = {
-                    'Squat': {
-                        setup: ['Feet shoulder-width', 'Weight held close to chest', 'Stay tall and braced'],
-                        stopIf: ['Knees collapsing inward or heels lifting', 'Rounding or arching through the back', 'Squat depth getting shorter each rep']
-                    },
-                    'Push': {
-                        setup: ['Feet flat, shoulders set on bench', 'Dumbbells over chest', 'Controlled lowering every rep'],
-                        stopIf: ['Shoulders lifting or shifting on bench', 'Uneven pressing or elbows flaring wide', 'Bouncing weights off chest']
-                    },
-                    'Pull': {
-                        setup: ['Body straight from shoulders to heels', 'Pull chest to the bar', 'Control every rep'],
-                        stopIf: ['Hips sagging or body bending', 'Chin reaching first instead of chest', 'Shoulders shrugging toward ears']
-                    },
-                    'Hinge': {
-                        setup: ['Feet hip-width, KB between feet', 'Push hips back, chest tall', 'Brace before lifting'],
-                        stopIf: ['Back rounding or over-arching', 'Hips shooting up faster than shoulders', 'KB drifting away from body']
-                    },
-                    'Lunge': {
-                        setup: ['Tall posture, eyes forward', 'Step under control', 'Front foot stays flat'],
-                        stopIf: ['Front knee collapsing inward', 'Trunk twisting or falling forward', 'Loss of balance or rushed reps']
-                    },
-                    'Press': {
-                        setup: ['Feet under hips, glutes tight', 'Weights at shoulder height', 'Brace before pressing'],
-                        stopIf: ['Lower back arching or ribs flaring', 'Head pushing forward', 'One arm locking out before the other']
-                    }
-                };
-                
-                const cues = testCues[selectedPattern.name] || { setup: [], stopIf: [] };
-                
-                strengthTestContent.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 10px;">
-                        <div style="font-size: 2rem; margin-bottom: 5px;">⚡</div>
-                        <div style="font-size: 1rem; font-weight: 600; color: #f59e0b;">Ready to Test!</div>
-                    </div>
-                    
-                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">
-                        <span style="font-size: 1.1rem;">⚠️</span>
-                        <span style="font-size: 0.85rem; color: #fca5a5; line-height: 1.3;">
-                            <strong>Supervision required</strong> – Request a slot from Mr. Bain
-                        </span>
-                    </div>
-                    
-                    <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05)); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 10px; padding: 12px; margin-bottom: 10px;">
-                        <h4 style="color: #f59e0b; font-size: 0.75rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Protocol</h4>
-                        ${isRepBased ? `
-                        <ol style="margin: 0; padding-left: 16px; color: #444; font-size: 0.8rem; line-height: 1.6;">
-                            <li>Set up in position</li>
-                            <li>Complete max reps with good form</li>
-                            <li>Stop when technique breaks</li>
-                            <li>Record total reps completed</li>
-                        </ol>
-                        ` : `
-                        <ol style="margin: 0; padding-left: 16px; color: #444; font-size: 0.8rem; line-height: 1.6;">
-                            <li>Warm up with light sets</li>
-                            <li>Start Tier 1 → 5 clean reps</li>
-                            <li>Rest 2-3 min if successful</li>
-                            <li>Move to next tier</li>
-                            <li>Stop when technique breaks</li>
-                        </ol>
-                        `}
-                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(245, 158, 11, 0.2); font-size: 0.75rem; color: #555; font-style: italic;">
-                            This is a technique test, not a max lift.
-                        </div>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-                        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 8px; padding: 10px;">
-                            <h4 style="color: #22c55e; font-size: 0.7rem; margin-bottom: 6px; text-transform: uppercase;">✓ Set-up</h4>
-                            <ul style="margin: 0; padding-left: 14px; color: #444; font-size: 0.75rem; line-height: 1.5;">
-                                ${cues.setup.map(c => `<li>${c}</li>`).join('')}
-                            </ul>
-                        </div>
-                        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 10px;">
-                            <h4 style="color: #ef4444; font-size: 0.7rem; margin-bottom: 6px; text-transform: uppercase;">✗ Stop if</h4>
-                            <ul style="margin: 0; padding-left: 14px; color: #444; font-size: 0.75rem; line-height: 1.5;">
-                                ${cues.stopIf.map(c => `<li>${c}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05)); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 10px; padding: 12px;">
-                        <h4 style="color: #f59e0b; font-size: 0.75rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">💪 ${isRepBased ? 'Rep Tiers' : 'Load Tiers'}</h4>
-                        <div style="display: grid; grid-template-columns: repeat(${loadTiers.length}, 1fr); gap: 4px;">
-                            ${loadTiers.map((w, i) => `
-                                <div style="text-align: center; padding: 6px 2px; background: rgba(245, 158, 11, 0.1); border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.2);">
-                                    <div style="font-size: 0.6rem; color: #f59e0b;">${i + 1}</div>
-                                    <div style="font-size: 0.85rem; font-weight: 600; color: #231F20;">${w}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div style="margin-top: 8px; font-size: 0.7rem; color: #555; text-align: center;">
-                            T1 = competent • T3 = strong • Higher tiers not expected
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        
-        function renderCriteria(isLocked = false) {
-            const criteriaList = document.getElementById('criteriaList');
-            if (!selectedPattern.criteria || isLocked) {
-                criteriaList.innerHTML = isLocked ? '<p style="color: #888; font-style: italic;">Complete previous levels to view criteria</p>' : '';
-                return;
-            }
-            
-            criteriaList.innerHTML = selectedPattern.criteria.map((c, i) => `
-                <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eee;">
-                    <input type="checkbox" id="criteria${i}" style="width: 20px; height: 20px; accent-color: #22c55e; cursor: pointer; flex-shrink: 0; margin-top: 2px;">
-                    <label for="criteria${i}" style="cursor: pointer;">
-                        <span style="color: #1a1a1a; font-weight: 600;">${c.text}</span>
-                        ${c.note ? `<span style="color: #666; font-size: 0.9rem;"> — ${c.note}</span>` : ''}
-                    </label>
-                </div>
-            `).join('');
+            // Legacy stub — assessment detail now handled by togglePatternDetail
         }
 
-        function changeLevel(delta) {
-            // Level order: 1, 2, TEST, 3, 4, 5
-            const levelOrder = [1, 2, 'TEST', 3, 4, 5];
-            const currentIndex = levelOrder.indexOf(selectedLevel);
-            const newIndex = Math.max(0, Math.min(levelOrder.length - 1, currentIndex + delta));
-            selectedLevel = levelOrder[newIndex];
-            updateSelectedPattern();
-        }
-
+        function renderTestLevel() {}
+        function renderCriteria() {}
+        function changeLevel(delta) {}
         // ============================================
         // WORKOUT PLAN - VISUAL BLOCKS
         // ============================================
@@ -3465,27 +3220,54 @@
                 renderSessionSelector();
 
                 // Update stats counter
-                const totalSessions = currentStrength?.Total_Sessions || 0;
-                const totalReps = currentStrength?.Total_Reps || 0;
+                // Fetch session stats from workout history
+                console.log('📊 Fetching stats for athleteId:', currentUser.athleteId);
+                const allHistory = await fetchWorkoutHistory(currentUser.athleteId, 100);
+                console.log('📊 Stats history returned:', allHistory.length, 'sessions');
+                const totalSessions = allHistory.length;
+                let totalReps = 0;
+                allHistory.forEach(session => {
+                    // Try to count reps from exercises JSON
+                    try {
+                        let exercises = session.exercises;
+                        if (typeof exercises === 'string') exercises = JSON.parse(exercises);
+                        if (Array.isArray(exercises)) {
+                            exercises.forEach(ex => {
+                                const sets = parseInt(ex.sets) || 0;
+                                const reps = parseInt(ex.reps) || 0;
+                                totalReps += sets * reps;
+                            });
+                        }
+                    } catch(e) {}
+                });
                 document.getElementById('totalSessions').textContent = totalSessions;
                 document.getElementById('totalReps').textContent = totalReps;
+
+                // Update progress tiles with practice counts from history
+                updateProgressTilesWithPractice(allHistory);
 
                 // Fetch last session of same type to show "Last time" data
                 const lastSameTypeSession = await fetchLastSessionByType(currentUser.athleteId, currentSessionType);
                 
                 // Build workout blocks based on session type
-                buildWorkoutBlocks(currentStrength, currentSessionType, lastSameTypeSession);
+                buildWorkoutBlocks(currentStrength, currentSessionType, lastSameTypeSession, allHistory);
 
                 // Check for a saved session (page refresh recovery)
                 const savedSession = loadSessionFromStorage();
                 if (savedSession && savedSession.athleteId === currentUser.athleteId 
-                    && savedSession.currentSessionNumber === currentSessionNumber) {
+                    && savedSession.currentSessionNumber === currentSessionNumber
+                    && savedSession.strengthHash === getStrengthHash()) {
                     // Restore the in-progress session
                     document.getElementById('workoutLoading').style.display = 'none';
                     restoreSessionState(savedSession);
                 } else {
-                    // No saved session - show normal "Start Session" state
-                    if (savedSession) clearSessionStorage(); // stale session from different context
+                    // No saved session, or data changed since save - start fresh
+                    if (savedSession) {
+                        if (savedSession.strengthHash !== getStrengthHash()) {
+                            console.log('⚠️ Strength data changed since last save — starting fresh');
+                        }
+                        clearSessionStorage();
+                    }
                     document.getElementById('workoutLoading').style.display = 'none';
                     document.getElementById('sessionNotStarted').style.display = 'block';
                 }
@@ -3499,9 +3281,48 @@
             }
         }
 
-        function buildWorkoutBlocks(strength, sessionType, lastSession) {
+        function buildWorkoutBlocks(strength, sessionType, lastSession, allHistory) {
             workoutBlocks = [];
             
+            // Count practices per pattern from workout history
+            // Only count sessions where they practiced the SPECIFIC exercise for their next level
+            // e.g. at tech level 2 for Squat, count sessions with "Back Squat" (level 3 exercise)
+            const practiceCounts = {};
+            const nextExerciseNames = {};
+            patterns.forEach(pattern => {
+                practiceCounts[pattern.name] = 0;
+                const techLevel = parseInt(strength?.[pattern.name + '_Tech']) || 0;
+                const nextLevel = techLevel + 1;
+                const nextEx = pattern.exercises[nextLevel];
+                nextExerciseNames[pattern.name] = nextEx ? nextEx.name : null;
+            });
+            
+            if (allHistory && allHistory.length > 0) {
+                allHistory.forEach(session => {
+                    try {
+                        let exercises = session.exercises;
+                        if (typeof exercises === 'string') exercises = JSON.parse(exercises);
+                        if (Array.isArray(exercises)) {
+                            const practicedInSession = new Set();
+                            exercises.forEach(ex => {
+                                // Match by exact exercise name for the next level
+                                if (ex.pattern && nextExerciseNames[ex.pattern] && ex.name === nextExerciseNames[ex.pattern]) {
+                                    practicedInSession.add(ex.pattern);
+                                }
+                            });
+                            practicedInSession.forEach(p => practiceCounts[p]++);
+                        }
+                    } catch(e) {}
+                });
+            }
+            console.log('📊 Practice counts (next-level exercise):', practiceCounts, 'Looking for:', nextExerciseNames);
+            
+            // Baseline: students who passed levels 1 & 2 already did those practices.
+            // But they still need fresh practices for the NEXT level they're working toward.
+            // The practice count from history only tracks 'technique' type exercises,
+            // which are the next-level movements in the technique practice block.
+            // So we DON'T inflate the count here - the history count is accurate for next-level practices.
+            // Only override if somehow old data counted non-technique exercises.
             // Parse last session exercises to find previous weights
             let lastExercises = {};
             if (lastSession && lastSession.exercises) {
@@ -3586,8 +3407,9 @@
                     // Has passed Level 2 AND has strength score = loaded training
                     trainingState = 'loaded';
                     if (isRepBased) {
-                        // Pull: use fixed starting weight (8kg M, 5kg F)
-                        workingWeight = gender === 'F' ? 5 : 8;
+                        // Pull: workingWeight is used as a flag to show rep display
+                        // Set to tier max so the display can reference it
+                        workingWeight = actual5RM; // actual5RM = tier reps for rep-based
                     } else {
                         workingWeight = Math.round(actual5RM * 0.7 / 2.5) * 2.5;
                     }
@@ -3601,8 +3423,13 @@
                 }
                 // else techLevel < 2 = technique focus (default)
                 
-                // Reps: 5 for readyToTest (same as test), 8 for others
-                const reps = trainingState === 'readyToTest' ? 5 : 8;
+                // Reps: for rep-based loaded, use 70% of tier max; otherwise 8 (or 5 for test)
+                let reps;
+                if (isRepBased && trainingState === 'loaded' && actual5RM > 0) {
+                    reps = Math.round(actual5RM * 0.7);
+                } else {
+                    reps = trainingState === 'readyToTest' ? 5 : 8;
+                }
                 
                 // Get last session data for this pattern
                 const lastData = lastExercises[patternName];
@@ -3622,6 +3449,8 @@
                         suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
                     }
                 }
+                
+                console.log(`💪 PRIMARY ${patternName}: techLevel=${techLevel}, strTier=${strengthTier}, actual5RM=${actual5RM}, workingWt=${workingWeight}, suggestedWt=${suggestedWeight}, state=${trainingState}, exercise=${exercise?.name}, lastData=`, lastData);
                 
                 workoutBlocks.push({
                     type: 'primary',
@@ -3672,8 +3501,8 @@
                 if (techLevel >= 2 && strengthTier > 0) {
                     trainingState = 'loaded';
                     if (isRepBased) {
-                        // Pull: use fixed starting weight (8kg M, 5kg F)
-                        workingWeight = gender === 'F' ? 5 : 8;
+                        // Pull: workingWeight is used as a flag to show rep display
+                        workingWeight = actual5RM;
                     } else {
                         // Accessory at 56% of 5RM (80% of 70%)
                         workingWeight = Math.round(actual5RM * 0.56 / 2.5) * 2.5;
@@ -3686,8 +3515,13 @@
                     }
                 }
                 
-                // Reps: 5 for readyToTest (same as test), 10 for others
-                const reps = trainingState === 'readyToTest' ? 5 : 10;
+                // Reps: for rep-based loaded, use 70% of tier max; otherwise 10 (or 5 for test)
+                let reps;
+                if (isRepBased && trainingState === 'loaded' && actual5RM > 0) {
+                    reps = Math.round(actual5RM * 0.7);
+                } else {
+                    reps = trainingState === 'readyToTest' ? 5 : 10;
+                }
                 
                 // Get last session data for this pattern
                 const lastData = lastExercises[patternName];
@@ -3707,6 +3541,8 @@
                         suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
                     }
                 }
+                
+                console.log(`🎯 ACCESSORY ${patternName}: techLevel=${techLevel}, strTier=${strengthTier}, actual5RM=${actual5RM}, workingWt=${workingWeight}, suggestedWt=${suggestedWeight}, state=${trainingState}, exercise=${exercise?.name}, lastData=`, lastData);
                 
                 workoutBlocks.push({
                     type: 'accessory',
@@ -3803,6 +3639,7 @@
             // Technique Practice block - show patterns that still need technique work
             // EXCLUDE patterns already in this workout session
             const workoutPatternNames = [...primaryPatterns, ...accessoryPatterns];
+            const PRACTICES_TO_FILM = 3; // Sessions before "ready to film" unlocks
             
             const techniquePracticeExercises = [];
             patterns.forEach(pattern => {
@@ -3822,12 +3659,18 @@
                         const nextLevel = techLevel + 1;
                         const exercise = pattern.exercises[nextLevel];
                         if (exercise) {
+                            const practices = practiceCounts[pattern.name] || 0;
+                            const readyToFilm = practices >= PRACTICES_TO_FILM;
                             techniquePracticeExercises.push({
                                 patternKey: pattern.key,
                                 patternName: pattern.name,
                                 name: exercise.name,
+                                video: exercise.video,
                                 level: nextLevel,
-                                techLevel: techLevel
+                                techLevel: techLevel,
+                                practices: practices,
+                                readyToFilm: readyToFilm,
+                                criteria: pattern.criteria
                             });
                         }
                     }
@@ -3840,14 +3683,19 @@
             if (limitedTechPractice.length > 0) {
                 workoutBlocks.push({
                     type: 'technique',
-                    title: '📚 TECHNIQUE PRACTICE',
-                    subtitle: 'Work towards your next level',
+                    title: '📹 MOVEMENT PRACTICE',
+                    subtitle: 'Build your skills, unlock your next level',
                     exercises: limitedTechPractice.map(ex => ({
                         name: ex.name,
+                        video: ex.video,
                         patternName: ex.patternName,
                         level: ex.level,
                         patternKey: ex.patternKey,
                         currentTech: ex.techLevel,
+                        practices: ex.practices,
+                        readyToFilm: ex.readyToFilm,
+                        practicesNeeded: PRACTICES_TO_FILM,
+                        criteria: ex.criteria,
                         sets: 1,
                         reps: 0,
                         completed: [false],
@@ -4074,89 +3922,91 @@
             // Special handling for technique practice links
             if (exercise.linkToAssessment) {
                 const patternIndex = patterns.findIndex(p => p.key === exercise.patternKey);
+                const practices = exercise.practices || 0;
+                const needed = exercise.practicesNeeded || 3;
+                const readyToFilm = exercise.readyToFilm;
+                const progressPct = Math.min(100, Math.round((practices / needed) * 100));
+                
+                // Header with pattern name + progress
                 html += `
-                    <div class="technique-practice-card" style="
-                        background: linear-gradient(135deg, rgba(135, 75, 70, 0.08), rgba(135, 75, 70, 0.12));
-                        border: 2px solid rgba(135, 75, 70, 0.3);
-                        border-radius: 16px;
-                        padding: 20px;
-                        margin-bottom: 12px;
-                    ">
-                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                            <div style="
-                                width: 50px; 
-                                height: 50px; 
-                                background: linear-gradient(135deg, #874B46, #6a3a36);
-                                border-radius: 12px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-size: 1.3rem;
-                            ">🎯</div>
+                    <div style="margin-bottom: 15px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
                             <div>
-                                <div style="font-weight: 700; font-size: 1.1rem; color: #1a1a1a;">${exercise.patternName}</div>
-                                <div style="color: #555; font-size: 0.9rem; font-weight: 500;">Level ${exercise.currentTech} → Level ${exercise.level}</div>
+                                <div style="font-weight: 700; font-size: 1.15rem; color: #1a1a1a;">${exercise.patternName}</div>
+                                <div style="color: #888; font-size: 0.85rem;">Level ${exercise.currentTech} → Level ${exercise.level} · <strong style="color: #874B46;">${exercise.name}</strong></div>
+                            </div>
+                            <div style="text-align: center; min-width: 55px;">
+                                <div style="font-size: 1.4rem; font-weight: 800; color: ${readyToFilm ? '#22c55e' : '#874B46'};">${readyToFilm ? '📹' : practices + '/' + needed}</div>
+                                <div style="font-size: 0.65rem; color: #888;">${readyToFilm ? 'FILM!' : 'practices'}</div>
                             </div>
                         </div>
-                        <div style="
-                            background: #fff;
-                            border: 1px solid #e0e0e0;
-                            border-radius: 10px;
-                            padding: 12px 15px;
-                            margin-bottom: 15px;
-                            font-size: 1rem;
-                            color: #1a1a1a;
-                        ">
-                            <strong style="color: #874B46;">${exercise.name}</strong>
+                        <div style="background: #e5e0df; border-radius: 6px; height: 6px; overflow: hidden;">
+                            <div style="background: ${readyToFilm ? '#22c55e' : '#874B46'}; height: 100%; width: ${progressPct}%; border-radius: 6px; transition: width 0.3s;"></div>
                         </div>
-                        <button onclick="scrollToAssessmentAndSelect(${patternIndex})" style="
-                            width: 100%;
-                            padding: 12px;
-                            background: #874B46;
-                            border: none;
-                            border-radius: 10px;
-                            color: #fff;
-                            font-weight: 600;
-                            font-size: 0.95rem;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            box-shadow: 0 2px 8px rgba(135, 75, 70, 0.3);
-                        " onmouseover="this.style.background='#6a3a36'" onmouseout="this.style.background='#874B46'">
-                            View Exercise & Criteria →
-                        </button>
                     </div>
                 `;
                 
-                // Add completion checkbox
+                // Video demo
+                if (exercise.video) {
+                    const videoId = exercise.video.split('/embed/')[1];
+                    html += `
+                        <div style="border-radius: 12px; overflow: hidden; margin-bottom: 15px; aspect-ratio: 16/9; max-width: 450px; margin-left: auto; margin-right: auto; background: #000;">
+                            <div id="techVidWrapper-${exIndex}" style="width: 100%; height: 100%; cursor: pointer; position: relative;" onclick="playVideo(this, '${videoId}')">
+                                <img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" style="width: 100%; height: 100%; object-fit: cover;">
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 56px; height: 56px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <span style="color: #fff; font-size: 22px; margin-left: 3px;">▶</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (readyToFilm) {
+                    // FILM READY STATE - show criteria + filming tips + submit
+                    html += `
+                        <div style="background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05)); border: 2px solid rgba(34,197,94,0.3); border-radius: 14px; padding: 18px; margin-bottom: 15px;">
+                            <div style="font-weight: 700; color: #16a34a; font-size: 1rem; margin-bottom: 12px; text-align: center;">📹 Ready to Film!</div>
+                            <div style="font-size: 0.85rem; color: #555; margin-bottom: 12px;">You've practiced this movement ${practices} times. Film yourself to progress to Level ${exercise.level}.</div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <div style="font-weight: 600; color: #874B46; font-size: 0.8rem; margin-bottom: 6px;">✓ FORM CRITERIA <span style="color: #22c55e; font-weight: 400;">Pass 5/6 on all reps</span></div>
+                                ${(exercise.criteria || []).map(c => `<div style="display: flex; gap: 6px; padding: 3px 0; font-size: 0.82rem;"><span style="color: #22c55e;">•</span><span style="color: #444;">${c.text}</span></div>`).join('')}
+                            </div>
+                            
+                            <div style="background: #fff; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.82rem; color: #555;">
+                                📐 Side angle, full body · 🔢 5 clear reps · 💡 Good lighting, horizontal
+                            </div>
+                            
+                            <a href="https://fis.instructure.com/courses/15541/assignments/113375" target="_blank" style="display: block; text-align: center; padding: 12px; background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(34,197,94,0.3);">
+                                📤 Submit Video on Canvas
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    // PRACTICE STATE - show what to focus on
+                    html += `
+                        <div style="background: rgba(135,75,70,0.06); border: 1px solid rgba(135,75,70,0.15); border-radius: 12px; padding: 14px; margin-bottom: 15px;">
+                            <div style="font-size: 0.85rem; color: #555; line-height: 1.6;">
+                                Practice this movement <strong>${needed - practices} more time${needed - practices !== 1 ? 's' : ''}</strong> to unlock filming. Focus on form:
+                            </div>
+                            <div style="margin-top: 8px;">
+                                ${(exercise.criteria || []).slice(0, 3).map(c => `<div style="font-size: 0.8rem; color: #666; padding: 2px 0;">• ${c.text}</div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Record practice + completion checkbox
                 html += `
-                    <div style="margin-top: 12px; margin-bottom: 8px;">
-                        <div style="font-size: 0.8rem; color: #874B46; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📝 Record Your Practice</div>
+                    <div style="margin-top: 10px;">
                         <div style="display: flex; gap: 10px; margin-bottom: 12px;">
                             <div style="flex: 1;">
                                 <label style="font-size: 0.75rem; color: #666; display: block; margin-bottom: 4px;">Sets</label>
-                                <input type="number" id="techSets-${exIndex}" value="2" min="1" max="5" style="
-                                    width: 100%;
-                                    padding: 10px;
-                                    border: 2px solid #e0e0e0;
-                                    border-radius: 8px;
-                                    font-size: 1rem;
-                                    font-weight: 600;
-                                    text-align: center;
-                                    font-family: inherit;
-                                ">
+                                <input type="number" id="techSets-${exIndex}" value="2" min="1" max="5" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; font-weight: 600; text-align: center; font-family: inherit;">
                             </div>
                             <div style="flex: 1;">
                                 <label style="font-size: 0.75rem; color: #666; display: block; margin-bottom: 4px;">Reps per set</label>
-                                <input type="number" id="techReps-${exIndex}" value="8" min="1" max="30" style="
-                                    width: 100%;
-                                    padding: 10px;
-                                    border: 2px solid #e0e0e0;
-                                    border-radius: 8px;
-                                    font-size: 1rem;
-                                    font-weight: 600;
-                                    text-align: center;
-                                    font-family: inherit;
-                                ">
+                                <input type="number" id="techReps-${exIndex}" value="8" min="1" max="30" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; font-weight: 600; text-align: center; font-family: inherit;">
                             </div>
                         </div>
                     </div>
@@ -4698,7 +4548,8 @@
                                 pattern: ex.patternName || 'Core',
                                 sets: loggedSets,
                                 reps: loggedReps,
-                                weight: loggedWeight
+                                weight: loggedWeight,
+                                type: ex.linkToAssessment ? 'technique' : 'workout'
                             });
                         }
                     });
