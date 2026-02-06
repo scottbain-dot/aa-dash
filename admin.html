@@ -907,6 +907,62 @@
                 font-size: 0.75rem;
             }
         }
+        /* ── Insights Panel ── */
+        .insights-panel { margin: 0 24px 20px; display: none; }
+        .insights-panel.active { display: block; }
+        .insights-toggle {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            color: var(--text-primary); padding: 10px 18px; border-radius: 10px;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            margin: 0 24px 12px; transition: all 0.2s; font-family: inherit;
+        }
+        .insights-toggle:hover { background: var(--bg-hover); }
+        .insights-toggle .arrow { transition: transform 0.2s; font-size: 0.7rem; }
+        .insights-toggle.open .arrow { transform: rotate(90deg); }
+        .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .insight-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 16px; max-height: 280px; overflow-y: auto;
+        }
+        .insight-card::-webkit-scrollbar { width: 4px; }
+        .insight-card::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        .insight-title {
+            font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .insight-title .count { background: var(--bg-hover); padding: 2px 8px; border-radius: 8px; font-size: 0.7rem; }
+        .insight-title.amber { color: var(--accent-amber); }
+        .insight-title.red { color: var(--accent-red); }
+        .insight-title.green { color: var(--accent-green); }
+        .insight-title.blue { color: var(--accent-blue); }
+        .insight-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 8px; margin: 0 -8px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer; transition: background 0.15s; border-radius: 4px;
+        }
+        .insight-row:hover { background: var(--bg-hover); }
+        .insight-row:last-child { border-bottom: none; }
+        .insight-name { font-size: 0.8rem; font-weight: 600; }
+        .insight-detail { font-size: 0.7rem; color: var(--text-muted); }
+        .insight-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+        .insight-tag { font-size: 0.6rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+        .insight-tag.amber { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+        .insight-tag.red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+        .insight-tag.green { background: rgba(34,197,94,0.15); color: var(--accent-green); }
+        .insight-empty { font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 8px 0; }
+        .level-filter { display: flex; gap: 4px; margin-bottom: 10px; }
+        .level-filter-btn {
+            flex: 1; padding: 6px 0; border-radius: 6px; border: 1px solid var(--border-light);
+            background: transparent; color: var(--text-secondary); font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; transition: all 0.15s; font-family: inherit; text-align: center;
+        }
+        .level-filter-btn:hover { background: var(--bg-hover); }
+        .level-filter-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+        @media (max-width: 768px) { .insights-grid { grid-template-columns: 1fr; } }
+
     </style>
 </head>
 <body>
@@ -958,6 +1014,17 @@
                 <div class="stat-label">Avg Progress</div>
                 <div class="stat-value amber" id="statAvg">0%</div>
             </div>
+        </div>
+
+        <!-- Insights Toggle -->
+        <button class="insights-toggle" id="insightsToggle" onclick="toggleInsights()">
+            <span class="arrow">▶</span> 📋 Teacher Insights
+            <span id="insightsBadge" style="background: var(--accent-amber); color: #000; padding: 2px 8px; border-radius: 8px; font-size: 0.7rem; display: none;">0</span>
+        </button>
+
+        <!-- Insights Panel -->
+        <div class="insights-panel" id="insightsPanel">
+            <div class="insights-grid" id="insightsGrid"></div>
         </div>
 
         <!-- Toolbar -->
@@ -1086,7 +1153,7 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyE7_ks2QVzjkBHMOhwCyfIAO4RAWg-2McEUxGJF4KfxEYV6zkhy6cUljdcE6dVGz9s/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWqNLpNchDNUZJ5VOSseGsoAIuOGeaPjISq9O9NCQZSEwKI3IQm7dfPBnTff41uOR1/exec';
         
         // ============================================
         // STATE
@@ -1121,6 +1188,7 @@
                     filteredStudents = [...allStudents];
                     renderTable();
                     updateStats();
+                    renderInsights();
                 } else {
                     showToast('Error loading students', 'error');
                 }
@@ -1420,16 +1488,19 @@
                 
                 if (data.success) {
                     showToast('Changes saved!', 'success');
-                    pendingUpdates = {};
                     
-                    // Update local data
-                    for (const [key, value] of Object.entries(data.updatedValues || pendingUpdates)) {
+                    // Update local data with confirmed saved values from server
+                    const saved = data.savedValues || pendingUpdates;
+                    for (const [key, value] of Object.entries(saved)) {
                         selectedStudent[key] = value;
                     }
+                    
+                    pendingUpdates = {};
                     
                     renderProgressGrid();
                     renderTable();
                     updateStats();
+                    renderInsights();
                 } else {
                     showToast('Failed to save: ' + (data.error || 'Unknown error'), 'error');
                 }
@@ -1530,6 +1601,120 @@
             } catch (error) {
                 console.error('Error adding note:', error);
                 showToast('Failed to add note', 'error');
+            }
+        }
+
+        // ============================================
+        // INSIGHTS
+        // ============================================
+        function toggleInsights() {
+            const panel = document.getElementById('insightsPanel');
+            const toggle = document.getElementById('insightsToggle');
+            panel.classList.toggle('active');
+            toggle.classList.toggle('open');
+        }
+
+        function renderInsights() {
+            const grid = document.getElementById('insightsGrid');
+            const badge = document.getElementById('insightsBadge');
+
+            // 1. Ready to test — tech >= 2 but no strength tier
+            const readyToTest = [];
+            allStudents.forEach(s => {
+                const pats = PATTERNS.filter(p => (parseInt(s[p + '_Tech']) || 0) >= 2 && !(parseInt(s[p + '_Str']) || 0));
+                if (pats.length > 0) readyToTest.push({ student: s, patterns: pats });
+            });
+            readyToTest.sort((a, b) => b.patterns.length - a.patterns.length);
+
+            // 2. Behind — no levels on 4+ patterns
+            const noLevels = [];
+            allStudents.forEach(s => {
+                const pats = PATTERNS.filter(p => (parseInt(s[p + '_Tech']) || 0) === 0);
+                if (pats.length >= 4) noLevels.push({ student: s, patterns: pats });
+            });
+            noLevels.sort((a, b) => b.patterns.length - a.patterns.length);
+
+            // 3. Below Level — rendered by filterBelowLevel()
+
+            // 4. All tested
+            const stars = allStudents.filter(s => PATTERNS.every(p => (parseInt(s[p + '_Str']) || 0) > 0));
+
+            // Badge
+            const actionCount = readyToTest.length + noLevels.length;
+            badge.style.display = actionCount > 0 ? 'inline' : 'none';
+            badge.textContent = actionCount;
+
+            grid.innerHTML = `
+                <div class="insight-card">
+                    <div class="insight-title amber">⚡ Ready to Test <span class="count">${readyToTest.length}</span></div>
+                    ${readyToTest.length === 0 ? '<div class="insight-empty">No students ready to test</div>' : readyToTest.map(r => `
+                        <div class="insight-row" onclick="openStudentModal('${r.student.Athlete_ID}')">
+                            <div class="insight-name">${r.student.Name || 'Unknown'}</div>
+                            <div class="insight-tags">${r.patterns.map(p => `<span class="insight-tag amber">${p}</span>`).join('')}</div>
+                        </div>`).join('')}
+                </div>
+                <div class="insight-card">
+                    <div class="insight-title red">🔴 Behind — No Levels (4+) <span class="count">${noLevels.length}</span></div>
+                    ${noLevels.length === 0 ? '<div class="insight-empty">All students have levels</div>' : noLevels.map(r => `
+                        <div class="insight-row" onclick="openStudentModal('${r.student.Athlete_ID}')">
+                            <div><div class="insight-name">${r.student.Name || 'Unknown'}</div><div class="insight-detail">${r.patterns.length}/6 at zero</div></div>
+                            <div class="insight-tags">${r.patterns.map(p => `<span class="insight-tag red">${p}</span>`).join('')}</div>
+                        </div>`).join('')}
+                </div>
+                <div class="insight-card">
+                    <div class="insight-title blue">📉 Below Level <span class="count" id="belowLevelCount">0</span></div>
+                    <div class="level-filter">
+                        <button class="level-filter-btn" onclick="filterBelowLevel(1)">< 1</button>
+                        <button class="level-filter-btn active" onclick="filterBelowLevel(2)">< 2</button>
+                        <button class="level-filter-btn" onclick="filterBelowLevel(3)">< 3</button>
+                        <button class="level-filter-btn" onclick="filterBelowLevel(4)">< 4</button>
+                        <button class="level-filter-btn" onclick="filterBelowLevel(5)">< 5</button>
+                    </div>
+                    <div id="belowLevelList"></div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-title green">⭐ All Tested <span class="count">${stars.length}</span></div>
+                    ${stars.length === 0 ? '<div class="insight-empty">No students fully tested yet</div>' : stars.map(s => {
+                        const avg = (PATTERNS.reduce((sum, p) => sum + (parseInt(s[p + '_Str']) || 0), 0) / 6).toFixed(1);
+                        return `<div class="insight-row" onclick="openStudentModal('${s.Athlete_ID}')">
+                            <div class="insight-name">${s.Name || 'Unknown'}</div>
+                            <div class="insight-tags"><span class="insight-tag green">Avg T${avg}</span></div>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+
+            // Trigger default filter
+            filterBelowLevel(2);
+        }
+
+        function filterBelowLevel(targetLevel) {
+            // Update active button
+            document.querySelectorAll('.level-filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.trim() === '< ' + targetLevel);
+            });
+
+            // Find students with ANY pattern below target tech level
+            const below = [];
+            allStudents.forEach(s => {
+                const pats = PATTERNS.filter(p => (parseInt(s[p + '_Tech']) || 0) < targetLevel);
+                if (pats.length > 0) below.push({ student: s, patterns: pats });
+            });
+            below.sort((a, b) => b.patterns.length - a.patterns.length);
+
+            document.getElementById('belowLevelCount').textContent = below.length;
+            const list = document.getElementById('belowLevelList');
+
+            if (below.length === 0) {
+                list.innerHTML = '<div class="insight-empty">All students at level ' + targetLevel + '+</div>';
+            } else {
+                list.innerHTML = below.map(r => `
+                    <div class="insight-row" onclick="openStudentModal('${r.student.Athlete_ID}')">
+                        <div><div class="insight-name">${r.student.Name || 'Unknown'}</div><div class="insight-detail">${r.patterns.length} pattern${r.patterns.length > 1 ? 's' : ''} below ${targetLevel}</div></div>
+                        <div class="insight-tags">${r.patterns.map(p => {
+                            const lvl = parseInt(r.student[p + '_Tech']) || 0;
+                            return '<span class="insight-tag red">' + p + ' (' + lvl + ')</span>';
+                        }).join('')}</div>
+                    </div>`).join('');
             }
         }
 
