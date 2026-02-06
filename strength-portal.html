@@ -2503,9 +2503,11 @@
             
             const name = (exerciseName || '').toLowerCase();
             let availableWeights;
+            let isDumbbell = false;
             
             if (name.includes('dumbbell') || name.includes('db ')) {
                 availableWeights = AVAILABLE_WEIGHTS.dumbbell;
+                isDumbbell = true;
             } else if (name.includes('kettlebell') || name.includes('kb ') || name.includes('goblet')) {
                 availableWeights = AVAILABLE_WEIGHTS.kettlebell;
             } else if (name.includes('barbell') || name.includes('bb ') || name.includes('hex bar') || name.includes('back squat') || name.includes('front squat') || name.includes('bench press') || name.includes('deadlift')) {
@@ -2515,19 +2517,24 @@
                 return Math.round(weight / 2.5) * 2.5;
             }
             
+            // For dumbbells: round the PER-HAND weight, then double for total
+            // This ensures we get weights that actually exist (e.g., 8kg each hand = 16kg total)
+            let weightToRound = isDumbbell ? weight / 2 : weight;
+            
             // Find nearest available weight
             let closest = availableWeights[0];
-            let minDiff = Math.abs(weight - closest);
+            let minDiff = Math.abs(weightToRound - closest);
             
             for (const w of availableWeights) {
-                const diff = Math.abs(weight - w);
+                const diff = Math.abs(weightToRound - w);
                 if (diff < minDiff) {
                     minDiff = diff;
                     closest = w;
                 }
             }
             
-            return closest;
+            // For dumbbells, return the total (per-hand × 2)
+            return isDumbbell ? closest * 2 : closest;
         }
 
         // Current user
