@@ -2422,6 +2422,54 @@
         </div>
     </div>
 
+    <!-- Progression Prompt Modal -->
+    <div class="sloth-modal" id="progressionModal" style="display: none;">
+        <div class="sloth-content" style="max-width: 420px;">
+            <div class="sloth-emoji">📈</div>
+            <div class="sloth-title">Ready to Progress?</div>
+            <div id="progressionMessage" class="sloth-message" style="margin-bottom: 15px;">
+                <!-- Filled dynamically -->
+            </div>
+            
+            <div style="background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 1.3rem;">
+                    <span style="color: #555;" id="progressionFrom"></span>
+                    <span style="color: #22c55e; font-size: 1.5rem;">→</span>
+                    <span style="color: #22c55e; font-weight: 700;" id="progressionTo"></span>
+                </div>
+                <div style="color: #666; font-size: 0.85rem; margin-top: 8px; text-align: center;" id="progressionReason"></div>
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 20px;">
+                <div style="color: #444; margin-bottom: 12px; font-weight: 600; font-size: 0.9rem;">Before you progress, confirm:</div>
+                
+                <label style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; cursor: pointer;">
+                    <input type="checkbox" class="progression-check" onchange="updateProgressionConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
+                    <span style="color: #333; font-size: 0.9rem;">I can complete all reps with solid form at this weight</span>
+                </label>
+                
+                <label style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; cursor: pointer;">
+                    <input type="checkbox" class="progression-check" onchange="updateProgressionConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
+                    <span style="color: #333; font-size: 0.9rem;">I'll still have 1-2 reps left in the tank after each set</span>
+                </label>
+                
+                <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer;">
+                    <input type="checkbox" class="progression-check" onchange="updateProgressionConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
+                    <span style="color: #333; font-size: 0.9rem;">I'm feeling strong and ready to push today</span>
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button onclick="declineProgression()" style="flex: 1; padding: 14px 16px; border: 1px solid #ddd; background: #f5f5f5; color: #444; border-radius: 10px; font-size: 0.9rem; cursor: pointer;">
+                    Stay at current
+                </button>
+                <button id="confirmProgressionBtn" onclick="acceptProgression()" disabled style="flex: 1; padding: 14px 16px; border: none; background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; opacity: 0.5;">
+                    Let's go! 💪
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
@@ -2435,6 +2483,52 @@
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
         let athleteDataCache = null;
         let cacheTimestamp = 0;
+
+        // ============================================
+        // AVAILABLE WEIGHTS (snap to real equipment)
+        // ============================================
+        const AVAILABLE_WEIGHTS = {
+            dumbbell: [4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40],
+            kettlebell: [4, 8, 12, 16, 20, 24, 28, 32],
+            barbell: [] // Generated as 2.5kg increments from 20kg bar
+        };
+        // Generate barbell weights: 20kg bar + plates in 2.5kg increments up to 150kg
+        for (let w = 20; w <= 150; w += 2.5) {
+            AVAILABLE_WEIGHTS.barbell.push(w);
+        }
+
+        // Detect equipment type from exercise name and round to nearest available weight
+        function roundToAvailableWeight(weight, exerciseName) {
+            if (!weight || weight <= 0 || weight === 'bodyweight') return weight;
+            
+            const name = (exerciseName || '').toLowerCase();
+            let availableWeights;
+            
+            if (name.includes('dumbbell') || name.includes('db ')) {
+                availableWeights = AVAILABLE_WEIGHTS.dumbbell;
+            } else if (name.includes('kettlebell') || name.includes('kb ') || name.includes('goblet')) {
+                availableWeights = AVAILABLE_WEIGHTS.kettlebell;
+            } else if (name.includes('barbell') || name.includes('bb ') || name.includes('hex bar') || name.includes('back squat') || name.includes('front squat') || name.includes('bench press') || name.includes('deadlift')) {
+                availableWeights = AVAILABLE_WEIGHTS.barbell;
+            } else {
+                // Default to 2.5kg rounding for unknown equipment
+                return Math.round(weight / 2.5) * 2.5;
+            }
+            
+            // Find nearest available weight
+            let closest = availableWeights[0];
+            let minDiff = Math.abs(weight - closest);
+            
+            for (const w of availableWeights) {
+                const diff = Math.abs(weight - w);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closest = w;
+                }
+            }
+            
+            return closest;
+        }
 
         // Current user
         let currentUser = null;
@@ -2700,6 +2794,104 @@
 
         let selectedPattern = patterns[0];
         let selectedLevel = 1;
+        
+        // ============================================
+        // PROGRESSION SYSTEM
+        // ============================================
+        // Tracks pending progression prompts to show after workout loads
+        let pendingProgressionPrompts = [];
+        
+        // Progression rules per pattern type
+        const PROGRESSION_RULES = {
+            // Barbell compounds: +2.5kg after 1 successful session
+            'Squat': { increment: 2.5, sessionsRequired: 1, type: 'weight' },
+            'Hinge': { increment: 2.5, sessionsRequired: 1, type: 'weight' },
+            'Push': { increment: 2.5, sessionsRequired: 1, type: 'weight' },
+            // Dumbbell accessories: +2kg after 1 successful session
+            'Lunge': { increment: 2, sessionsRequired: 1, type: 'weight' },
+            // Press: +2kg after 2 successful sessions (harder to progress)
+            'Press': { increment: 2, sessionsRequired: 2, type: 'weight' },
+            // Pull: +1 rep after 1 successful session
+            'Pull': { increment: 1, sessionsRequired: 1, type: 'reps' }
+        };
+        
+        // Count consecutive successful sessions at a specific weight/rep for a pattern
+        function countConsecutiveSuccessfulSessions(allHistory, patternName, sessionType, targetWeight) {
+            // Filter to sessions of the same type (A or B) that include this pattern
+            const relevantSessions = allHistory
+                .filter(s => s.sessionType === sessionType)
+                .sort((a, b) => new Date(b.date) - new Date(a.date)); // Most recent first
+            
+            let consecutiveCount = 0;
+            
+            for (const session of relevantSessions) {
+                try {
+                    let exercises = session.exercises;
+                    if (typeof exercises === 'string') exercises = JSON.parse(exercises);
+                    if (!Array.isArray(exercises)) continue;
+                    
+                    const patternEx = exercises.find(ex => ex.pattern === patternName);
+                    if (!patternEx) continue;
+                    
+                    const sessionWeight = parseFloat(patternEx.weight) || 0;
+                    const sessionSets = parseInt(patternEx.sets) || 0;
+                    
+                    // Check if they completed all sets at this weight
+                    if (sessionWeight === targetWeight && sessionSets >= 3) {
+                        consecutiveCount++;
+                    } else {
+                        // Chain broken - different weight or didn't complete sets
+                        break;
+                    }
+                } catch (e) {
+                    console.warn('Error parsing session for progression check:', e);
+                    continue;
+                }
+            }
+            
+            return consecutiveCount;
+        }
+        
+        // Check if student is eligible for progression and build prompt data
+        function checkProgressionEligibility(patternName, exerciseName, lastData, allHistory, sessionType, isRepBased) {
+            if (!lastData || !lastData.weight) return null;
+            
+            const rules = PROGRESSION_RULES[patternName];
+            if (!rules) return null;
+            
+            const lastWeight = parseFloat(lastData.weight) || 0;
+            const lastSets = parseInt(lastData.sets) || 0;
+            
+            // Must have completed 3+ sets last time
+            if (lastSets < 3 || lastWeight <= 0) return null;
+            
+            // Count consecutive successful sessions at this weight
+            const consecutiveSessions = countConsecutiveSuccessfulSessions(
+                allHistory, patternName, sessionType, lastWeight
+            );
+            
+            console.log(`📈 ${patternName} progression check: ${consecutiveSessions} consecutive sessions at ${lastWeight}kg (need ${rules.sessionsRequired})`);
+            
+            // Check if they've met the required sessions
+            if (consecutiveSessions >= rules.sessionsRequired) {
+                const newValue = isRepBased 
+                    ? Math.round(lastWeight) + rules.increment  // For Pull, lastWeight is actually reps
+                    : roundToAvailableWeight(lastWeight + rules.increment, exerciseName);
+                
+                return {
+                    patternName,
+                    exerciseName,
+                    currentValue: isRepBased ? Math.round(lastWeight) : lastWeight,
+                    newValue,
+                    increment: rules.increment,
+                    type: rules.type,
+                    consecutiveSessions,
+                    sessionsRequired: rules.sessionsRequired
+                };
+            }
+            
+            return null;
+        }
 
         // ============================================
         // PARTICLES
@@ -3411,7 +3603,7 @@
                         // Set to tier max so the display can reference it
                         workingWeight = actual5RM; // actual5RM = tier reps for rep-based
                     } else {
-                        workingWeight = Math.round(actual5RM * 0.7 / 2.5) * 2.5;
+                        workingWeight = roundToAvailableWeight(actual5RM * 0.7, exercise.name);
                     }
                 } else if (techLevel >= 2 && strengthTier === 0) {
                     // Has passed Level 2 but no strength score = ready to test
@@ -3435,6 +3627,7 @@
                 const lastData = lastExercises[patternName];
                 let lastTimeInfo = null;
                 let suggestedWeight = workingWeight;
+                let progressionEligible = null;
                 
                 if (lastData && lastData.weight && lastData.weight !== 'bodyweight') {
                     const lastWeight = parseFloat(lastData.weight) || 0;
@@ -3444,13 +3637,18 @@
                         reps: lastData.reps
                     };
                     
-                    // Auto-progress: if they completed all sets last time, suggest +2.5kg
+                    // Check if eligible for progression (don't auto-apply, just flag it)
                     if (trainingState === 'loaded' && lastData.sets >= 3 && lastWeight > 0) {
-                        suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
+                        progressionEligible = checkProgressionEligibility(
+                            patternName, exercise.name, lastData, allHistory, sessionType, isRepBased
+                        );
+                        
+                        // Keep them at last weight (don't auto-bump) - they'll be prompted
+                        suggestedWeight = lastWeight;
                     }
                 }
                 
-                console.log(`💪 PRIMARY ${patternName}: techLevel=${techLevel}, strTier=${strengthTier}, actual5RM=${actual5RM}, workingWt=${workingWeight}, suggestedWt=${suggestedWeight}, state=${trainingState}, exercise=${exercise?.name}, lastData=`, lastData);
+                console.log(`💪 PRIMARY ${patternName}: techLevel=${techLevel}, strTier=${strengthTier}, actual5RM=${actual5RM}, workingWt=${workingWeight}, suggestedWt=${suggestedWeight}, state=${trainingState}, exercise=${exercise?.name}, progressionEligible=`, progressionEligible);
                 
                 workoutBlocks.push({
                     type: 'primary',
@@ -3469,7 +3667,8 @@
                         lastTime: lastTimeInfo,
                         trainingState: trainingState,
                         isDumbbell: exercise.name.toLowerCase().includes('dumbbell') || exercise.name.toLowerCase().includes('db '),
-                        completed: [false, false, false]
+                        completed: [false, false, false],
+                        progressionEligible: progressionEligible
                     }]
                 });
             });
@@ -3505,7 +3704,7 @@
                         workingWeight = actual5RM;
                     } else {
                         // Accessory at 56% of 5RM (80% of 70%)
-                        workingWeight = Math.round(actual5RM * 0.56 / 2.5) * 2.5;
+                        workingWeight = roundToAvailableWeight(actual5RM * 0.56, exercise.name);
                     }
                 } else if (techLevel >= 2 && strengthTier === 0) {
                     trainingState = 'readyToTest';
@@ -3527,6 +3726,7 @@
                 const lastData = lastExercises[patternName];
                 let lastTimeInfo = null;
                 let suggestedWeight = workingWeight;
+                let progressionEligible = null;
                 
                 if (lastData && lastData.weight && lastData.weight !== 'bodyweight') {
                     const lastWeight = parseFloat(lastData.weight) || 0;
@@ -3536,13 +3736,18 @@
                         reps: lastData.reps
                     };
                     
-                    // Auto-progress: if they completed all sets last time, suggest +2.5kg
+                    // Check if eligible for progression (don't auto-apply, just flag it)
                     if (trainingState === 'loaded' && lastData.sets >= 3 && lastWeight > 0) {
-                        suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
+                        progressionEligible = checkProgressionEligibility(
+                            patternName, exercise.name, lastData, allHistory, sessionType, isRepBased
+                        );
+                        
+                        // Keep them at last weight (don't auto-bump) - they'll be prompted
+                        suggestedWeight = lastWeight;
                     }
                 }
                 
-                console.log(`🎯 ACCESSORY ${patternName}: techLevel=${techLevel}, strTier=${strengthTier}, actual5RM=${actual5RM}, workingWt=${workingWeight}, suggestedWt=${suggestedWeight}, state=${trainingState}, exercise=${exercise?.name}, lastData=`, lastData);
+                console.log(`🎯 ACCESSORY ${patternName}: techLevel=${techLevel}, strTier=${strengthTier}, actual5RM=${actual5RM}, workingWt=${workingWeight}, suggestedWt=${suggestedWeight}, state=${trainingState}, exercise=${exercise?.name}, progressionEligible=`, progressionEligible);
                 
                 workoutBlocks.push({
                     type: 'accessory',
@@ -3561,7 +3766,8 @@
                         lastTime: lastTimeInfo,
                         trainingState: trainingState,
                         isDumbbell: exercise.name.toLowerCase().includes('dumbbell') || exercise.name.toLowerCase().includes('db '),
-                        completed: [false, false, false]
+                        completed: [false, false, false],
+                        progressionEligible: progressionEligible
                     }]
                 });
             });
@@ -4152,6 +4358,31 @@
                     `;
                 }
                 
+                // Show progression prompt if eligible
+                let progressionPromptHtml = '';
+                if (exercise.progressionEligible && !exercise.progressionDeclined) {
+                    const prog = exercise.progressionEligible;
+                    const isReps = prog.type === 'reps';
+                    progressionPromptHtml = `
+                        <div style="background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.05)); border: 2px solid rgba(34,197,94,0.4); border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center;">
+                            <div style="font-size: 1.1rem; font-weight: 700; color: #16a34a; margin-bottom: 8px;">📈 Ready to Progress!</div>
+                            <div style="color: #333; font-size: 0.9rem; margin-bottom: 12px;">
+                                You've completed <strong>${prog.currentValue}${isReps ? ' reps' : 'kg'}</strong> for 
+                                ${prog.consecutiveSessions} session${prog.consecutiveSessions > 1 ? 's' : ''} in a row
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <button onclick="triggerProgressionPrompt(${exIndex})" style="padding: 10px 20px; background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                                    Try ${prog.newValue}${isReps ? ' reps' : 'kg'} today! 💪
+                                </button>
+                                <button onclick="declineProgressionInline(${exIndex})" style="padding: 10px 16px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 0.85rem;">
+                                    Stay at ${prog.currentValue}${isReps ? ' reps' : 'kg'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += progressionPromptHtml;
                 html += lastTimeHtml;
                 html += `
                     <div class="block-weight-control">
@@ -4411,6 +4642,116 @@
         
         function cancelWeightIncrease() {
             document.getElementById('weightIncreaseModal').classList.remove('active');
+        }
+        
+        // ============================================
+        // PROGRESSION PROMPT HANDLERS
+        // ============================================
+        let currentProgressionPrompt = null;
+        let progressionCallback = null;
+        
+        function showProgressionPrompt(promptData, onAccept, onDecline) {
+            currentProgressionPrompt = promptData;
+            progressionCallback = { onAccept, onDecline };
+            
+            const modal = document.getElementById('progressionModal');
+            const isReps = promptData.type === 'reps';
+            
+            // Set the message
+            document.getElementById('progressionMessage').innerHTML = `
+                You've crushed <strong>${promptData.exerciseName}</strong> at 
+                <strong>${promptData.currentValue}${isReps ? ' reps' : 'kg'}</strong> 
+                for ${promptData.consecutiveSessions} session${promptData.consecutiveSessions > 1 ? 's' : ''} in a row!
+            `;
+            
+            // Set the from/to values
+            document.getElementById('progressionFrom').textContent = promptData.currentValue + (isReps ? ' reps' : 'kg');
+            document.getElementById('progressionTo').textContent = promptData.newValue + (isReps ? ' reps' : 'kg');
+            
+            // Set the reason
+            const reasonText = promptData.sessionsRequired > 1 
+                ? `+${promptData.increment}${isReps ? ' rep' : 'kg'} after ${promptData.sessionsRequired} successful sessions`
+                : `+${promptData.increment}${isReps ? ' rep' : 'kg'} — small steps, big gains!`;
+            document.getElementById('progressionReason').textContent = reasonText;
+            
+            // Reset checkboxes
+            document.querySelectorAll('.progression-check').forEach(cb => cb.checked = false);
+            document.getElementById('confirmProgressionBtn').disabled = true;
+            document.getElementById('confirmProgressionBtn').style.opacity = '0.5';
+            
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+        
+        function updateProgressionConfirmBtn() {
+            const checkboxes = document.querySelectorAll('.progression-check');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const btn = document.getElementById('confirmProgressionBtn');
+            btn.disabled = !allChecked;
+            btn.style.opacity = allChecked ? '1' : '0.5';
+        }
+        
+        function acceptProgression() {
+            const modal = document.getElementById('progressionModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+            
+            if (progressionCallback && progressionCallback.onAccept) {
+                progressionCallback.onAccept(currentProgressionPrompt.newValue);
+            }
+            currentProgressionPrompt = null;
+            progressionCallback = null;
+        }
+        
+        function declineProgression() {
+            const modal = document.getElementById('progressionModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+            
+            if (progressionCallback && progressionCallback.onDecline) {
+                progressionCallback.onDecline(currentProgressionPrompt.currentValue);
+            }
+            currentProgressionPrompt = null;
+            progressionCallback = null;
+        }
+        
+        // Inline progression prompt handlers (for the banner in the workout block)
+        function triggerProgressionPrompt(exIndex) {
+            const block = workoutBlocks[currentBlockIndex];
+            const exercise = block.exercises[exIndex];
+            
+            if (!exercise.progressionEligible) return;
+            
+            showProgressionPrompt(
+                exercise.progressionEligible,
+                (newValue) => {
+                    // Accept: update weight/reps and re-render
+                    if (exercise.progressionEligible.type === 'reps') {
+                        exercise.reps = newValue;
+                    } else {
+                        exercise.weight = newValue;
+                    }
+                    exercise.progressionAccepted = true;
+                    exercise.progressionEligible = null; // Clear so banner doesn't show again
+                    renderCurrentBlock();
+                    saveSessionToStorage();
+                    showToast('Let\'s go! Weight updated 💪', 'success');
+                },
+                (currentValue) => {
+                    // Decline: mark as declined so banner hides
+                    exercise.progressionDeclined = true;
+                    renderCurrentBlock();
+                    saveSessionToStorage();
+                }
+            );
+        }
+        
+        function declineProgressionInline(exIndex) {
+            const block = workoutBlocks[currentBlockIndex];
+            const exercise = block.exercises[exIndex];
+            exercise.progressionDeclined = true;
+            renderCurrentBlock();
+            saveSessionToStorage();
         }
 
         function prevBlock() {
