@@ -3896,8 +3896,8 @@
             if (limitedTechPractice.length > 0) {
                 workoutBlocks.push({
                     type: 'technique',
-                    title: '📹 MOVEMENT PRACTICE',
-                    subtitle: 'Build your skills, unlock your next level',
+                    title: '🎯 MOVEMENT PRACTICE',
+                    subtitle: 'Build your skills with quality reps',
                     exercises: limitedTechPractice.map(ex => ({
                         name: ex.name,
                         video: ex.video,
@@ -4136,11 +4136,8 @@
             if (exercise.linkToAssessment) {
                 const patternIndex = patterns.findIndex(p => p.key === exercise.patternKey);
                 const practices = exercise.practices || 0;
-                const needed = exercise.practicesNeeded || 3;
-                const readyToFilm = exercise.readyToFilm;
-                const progressPct = Math.min(100, Math.round((practices / needed) * 100));
                 
-                // Header with pattern name + progress
+                // Header with pattern name + practice count
                 html += `
                     <div style="margin-bottom: 15px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
@@ -4149,12 +4146,9 @@
                                 <div style="color: #888; font-size: 0.85rem;">Level ${exercise.currentTech} → Level ${exercise.level} · <strong style="color: #874B46;">${exercise.name}</strong></div>
                             </div>
                             <div style="text-align: center; min-width: 55px;">
-                                <div style="font-size: 1.4rem; font-weight: 800; color: ${readyToFilm ? '#22c55e' : '#874B46'};">${readyToFilm ? '📹' : practices + '/' + needed}</div>
-                                <div style="font-size: 0.65rem; color: #888;">${readyToFilm ? 'FILM!' : 'practices'}</div>
+                                <div style="font-size: 1.4rem; font-weight: 800; color: #874B46;">${practices}</div>
+                                <div style="font-size: 0.65rem; color: #888;">practices</div>
                             </div>
-                        </div>
-                        <div style="background: #e5e0df; border-radius: 6px; height: 6px; overflow: hidden;">
-                            <div style="background: ${readyToFilm ? '#22c55e' : '#874B46'}; height: 100%; width: ${progressPct}%; border-radius: 6px; transition: width 0.3s;"></div>
                         </div>
                     </div>
                 `;
@@ -4174,40 +4168,17 @@
                     `;
                 }
                 
-                if (readyToFilm) {
-                    // FILM READY STATE - show criteria + filming tips + submit
-                    html += `
-                        <div style="background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05)); border: 2px solid rgba(34,197,94,0.3); border-radius: 14px; padding: 18px; margin-bottom: 15px;">
-                            <div style="font-weight: 700; color: #16a34a; font-size: 1rem; margin-bottom: 12px; text-align: center;">📹 Ready to Film!</div>
-                            <div style="font-size: 0.85rem; color: #555; margin-bottom: 12px;">You've practiced this movement ${practices} times. Film yourself to progress to Level ${exercise.level}.</div>
-                            
-                            <div style="margin-bottom: 12px;">
-                                <div style="font-weight: 600; color: #874B46; font-size: 0.8rem; margin-bottom: 6px;">✓ FORM CRITERIA <span style="color: #22c55e; font-weight: 400;">Pass 5/6 on all reps</span></div>
-                                ${(exercise.criteria || []).map(c => `<div style="display: flex; gap: 6px; padding: 3px 0; font-size: 0.82rem;"><span style="color: #22c55e;">•</span><span style="color: #444;">${c.text}</span></div>`).join('')}
-                            </div>
-                            
-                            <div style="background: #fff; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.82rem; color: #555;">
-                                📐 Side angle, full body · 🔢 5 clear reps · 💡 Good lighting, horizontal
-                            </div>
-                            
-                            <a href="https://fis.instructure.com/courses/15541/assignments/113375" target="_blank" style="display: block; text-align: center; padding: 12px; background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(34,197,94,0.3);">
-                                📤 Submit Video on Canvas
-                            </a>
+                // Practice focus - show form criteria
+                html += `
+                    <div style="background: rgba(135,75,70,0.06); border: 1px solid rgba(135,75,70,0.15); border-radius: 12px; padding: 14px; margin-bottom: 15px;">
+                        <div style="font-size: 0.85rem; color: #555; line-height: 1.6; margin-bottom: 8px;">
+                            <strong>Focus on quality reps.</strong> Check these form cues:
                         </div>
-                    `;
-                } else {
-                    // PRACTICE STATE - show what to focus on
-                    html += `
-                        <div style="background: rgba(135,75,70,0.06); border: 1px solid rgba(135,75,70,0.15); border-radius: 12px; padding: 14px; margin-bottom: 15px;">
-                            <div style="font-size: 0.85rem; color: #555; line-height: 1.6;">
-                                Practice this movement <strong>${needed - practices} more time${needed - practices !== 1 ? 's' : ''}</strong> to unlock filming. Focus on form:
-                            </div>
-                            <div style="margin-top: 8px;">
-                                ${(exercise.criteria || []).slice(0, 3).map(c => `<div style="font-size: 0.8rem; color: #666; padding: 2px 0;">• ${c.text}</div>`).join('')}
-                            </div>
+                        <div>
+                            ${(exercise.criteria || []).slice(0, 4).map(c => `<div style="font-size: 0.8rem; color: #666; padding: 2px 0;">• ${c.text}</div>`).join('')}
                         </div>
-                    `;
-                }
+                    </div>
+                `;
                 
                 // Record practice + completion checkbox
                 html += `
