@@ -953,14 +953,6 @@
         .insight-tag.red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
         .insight-tag.green { background: rgba(34,197,94,0.15); color: var(--accent-green); }
         .insight-empty { font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 8px 0; }
-        .level-filter { display: flex; gap: 4px; margin-bottom: 10px; }
-        .level-filter-btn {
-            flex: 1; padding: 6px 0; border-radius: 6px; border: 1px solid var(--border-light);
-            background: transparent; color: var(--text-secondary); font-size: 0.75rem; font-weight: 600;
-            cursor: pointer; transition: all 0.15s; font-family: inherit; text-align: center;
-        }
-        .level-filter-btn:hover { background: var(--bg-hover); }
-        .level-filter-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
         @media (max-width: 768px) { .insights-grid { grid-template-columns: 1fr; } }
 
     </style>
@@ -1153,7 +1145,7 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWqNLpNchDNUZJ5VOSseGsoAIuOGeaPjISq9O9NCQZSEwKI3IQm7dfPBnTff41uOR1/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzoyT7zqrOhEf3LAsflbRB73OO2-RaHdnCz5f676xuO9Odc6wFUQpo0aE3XX6Qt-Bk0/exec';
         
         // ============================================
         // STATE
@@ -1217,7 +1209,7 @@
         // SESSION CONTROL
         // ============================================
         async function adjustSession(delta) {
-            const newSession = Math.max(1, Math.min(10, currentSession + delta));
+            const newSession = Math.max(1, Math.min(20, currentSession + delta));
             if (newSession === currentSession) return;
 
             currentSession = newSession;
@@ -1488,14 +1480,12 @@
                 
                 if (data.success) {
                     showToast('Changes saved!', 'success');
+                    pendingUpdates = {};
                     
-                    // Update local data with confirmed saved values from server
-                    const saved = data.savedValues || pendingUpdates;
-                    for (const [key, value] of Object.entries(saved)) {
+                    // Update local data
+                    for (const [key, value] of Object.entries(data.updatedValues || pendingUpdates)) {
                         selectedStudent[key] = value;
                     }
-                    
-                    pendingUpdates = {};
                     
                     renderProgressGrid();
                     renderTable();
@@ -1634,7 +1624,10 @@
             });
             noLevels.sort((a, b) => b.patterns.length - a.patterns.length);
 
-            // 3. Below Level — rendered by filterBelowLevel()
+            // 3. Low sessions
+            const lowSessions = allStudents
+                .filter(s => (parseInt(s.Total_Sessions) || 0) < Math.max(1, currentSession - 2))
+                .sort((a, b) => (parseInt(a.Total_Sessions) || 0) - (parseInt(b.Total_Sessions) || 0));
 
             // 4. All tested
             const stars = allStudents.filter(s => PATTERNS.every(p => (parseInt(s[p + '_Str']) || 0) > 0));
@@ -1662,15 +1655,12 @@
                         </div>`).join('')}
                 </div>
                 <div class="insight-card">
-                    <div class="insight-title blue">📉 Below Level <span class="count" id="belowLevelCount">0</span></div>
-                    <div class="level-filter">
-                        <button class="level-filter-btn" onclick="filterBelowLevel(1)">< 1</button>
-                        <button class="level-filter-btn active" onclick="filterBelowLevel(2)">< 2</button>
-                        <button class="level-filter-btn" onclick="filterBelowLevel(3)">< 3</button>
-                        <button class="level-filter-btn" onclick="filterBelowLevel(4)">< 4</button>
-                        <button class="level-filter-btn" onclick="filterBelowLevel(5)">< 5</button>
-                    </div>
-                    <div id="belowLevelList"></div>
+                    <div class="insight-title blue">📉 Low Sessions <span class="count">${lowSessions.length}</span></div>
+                    ${lowSessions.length === 0 ? '<div class="insight-empty">All students keeping up</div>' : lowSessions.map(s => `
+                        <div class="insight-row" onclick="openStudentModal('${s.Athlete_ID}')">
+                            <div class="insight-name">${s.Name || 'Unknown'}</div>
+                            <div class="insight-tags"><span class="insight-tag red">${s.Total_Sessions || 0} sessions</span></div>
+                        </div>`).join('')}
                 </div>
                 <div class="insight-card">
                     <div class="insight-title green">⭐ All Tested <span class="count">${stars.length}</span></div>
@@ -1682,40 +1672,6 @@
                         </div>`;
                     }).join('')}
                 </div>`;
-
-            // Trigger default filter
-            filterBelowLevel(2);
-        }
-
-        function filterBelowLevel(targetLevel) {
-            // Update active button
-            document.querySelectorAll('.level-filter-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.textContent.trim() === '< ' + targetLevel);
-            });
-
-            // Find students with ANY pattern below target tech level
-            const below = [];
-            allStudents.forEach(s => {
-                const pats = PATTERNS.filter(p => (parseInt(s[p + '_Tech']) || 0) < targetLevel);
-                if (pats.length > 0) below.push({ student: s, patterns: pats });
-            });
-            below.sort((a, b) => b.patterns.length - a.patterns.length);
-
-            document.getElementById('belowLevelCount').textContent = below.length;
-            const list = document.getElementById('belowLevelList');
-
-            if (below.length === 0) {
-                list.innerHTML = '<div class="insight-empty">All students at level ' + targetLevel + '+</div>';
-            } else {
-                list.innerHTML = below.map(r => `
-                    <div class="insight-row" onclick="openStudentModal('${r.student.Athlete_ID}')">
-                        <div><div class="insight-name">${r.student.Name || 'Unknown'}</div><div class="insight-detail">${r.patterns.length} pattern${r.patterns.length > 1 ? 's' : ''} below ${targetLevel}</div></div>
-                        <div class="insight-tags">${r.patterns.map(p => {
-                            const lvl = parseInt(r.student[p + '_Tech']) || 0;
-                            return '<span class="insight-tag red">' + p + ' (' + lvl + ')</span>';
-                        }).join('')}</div>
-                    </div>`).join('');
-            }
         }
 
         // ============================================
