@@ -2422,54 +2422,6 @@
         </div>
     </div>
 
-    <!-- Progression Prompt Modal -->
-    <div class="sloth-modal" id="progressionModal" style="display: none;">
-        <div class="sloth-content" style="max-width: 420px;">
-            <div class="sloth-emoji">📈</div>
-            <div class="sloth-title">Ready to Progress?</div>
-            <div id="progressionMessage" class="sloth-message" style="margin-bottom: 15px;">
-                <!-- Filled dynamically -->
-            </div>
-            
-            <div style="background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 1.3rem;">
-                    <span style="color: #555;" id="progressionFrom"></span>
-                    <span style="color: #22c55e; font-size: 1.5rem;">→</span>
-                    <span style="color: #22c55e; font-weight: 700;" id="progressionTo"></span>
-                </div>
-                <div style="color: #666; font-size: 0.85rem; margin-top: 8px; text-align: center;" id="progressionReason"></div>
-            </div>
-            
-            <div style="text-align: left; margin-bottom: 20px;">
-                <div style="color: #444; margin-bottom: 12px; font-weight: 600; font-size: 0.9rem;">Before you progress, confirm:</div>
-                
-                <label style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; cursor: pointer;">
-                    <input type="checkbox" class="progression-check" onchange="updateProgressionConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
-                    <span style="color: #333; font-size: 0.9rem;">I can complete all reps with solid form at this weight</span>
-                </label>
-                
-                <label style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; cursor: pointer;">
-                    <input type="checkbox" class="progression-check" onchange="updateProgressionConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
-                    <span style="color: #333; font-size: 0.9rem;">I'll still have 1-2 reps left in the tank after each set</span>
-                </label>
-                
-                <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer;">
-                    <input type="checkbox" class="progression-check" onchange="updateProgressionConfirmBtn()" style="width: 20px; height: 20px; margin-top: 2px; accent-color: #22c55e;">
-                    <span style="color: #333; font-size: 0.9rem;">I'm feeling strong and ready to push today</span>
-                </label>
-            </div>
-            
-            <div style="display: flex; gap: 12px;">
-                <button onclick="declineProgression()" style="flex: 1; padding: 14px 16px; border: 1px solid #ddd; background: #f5f5f5; color: #444; border-radius: 10px; font-size: 0.9rem; cursor: pointer;">
-                    Stay at current
-                </button>
-                <button id="confirmProgressionBtn" onclick="acceptProgression()" disabled style="flex: 1; padding: 14px 16px; border: none; background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; opacity: 0.5;">
-                    Let's go! 💪
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
@@ -2477,65 +2429,12 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWqNLpNchDNUZJ5VOSseGsoAIuOGeaPjISq9O9NCQZSEwKI3IQm7dfPBnTff41uOR1/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzoyT7zqrOhEf3LAsflbRB73OO2-RaHdnCz5f676xuO9Odc6wFUQpo0aE3XX6Qt-Bk0/exec';
         
         // Cache settings
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
         let athleteDataCache = null;
         let cacheTimestamp = 0;
-
-        // ============================================
-        // AVAILABLE WEIGHTS (snap to real equipment)
-        // ============================================
-        const AVAILABLE_WEIGHTS = {
-            dumbbell: [4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40],
-            kettlebell: [4, 8, 12, 16, 20, 24, 28, 32],
-            barbell: [] // Generated as 2.5kg increments from 20kg bar
-        };
-        // Generate barbell weights: 20kg bar + plates in 2.5kg increments up to 150kg
-        for (let w = 20; w <= 150; w += 2.5) {
-            AVAILABLE_WEIGHTS.barbell.push(w);
-        }
-
-        // Detect equipment type from exercise name and round to nearest available weight
-        function roundToAvailableWeight(weight, exerciseName) {
-            if (!weight || weight <= 0 || weight === 'bodyweight') return weight;
-            
-            const name = (exerciseName || '').toLowerCase();
-            let availableWeights;
-            let isDumbbell = false;
-            
-            if (name.includes('dumbbell') || name.includes('db ')) {
-                availableWeights = AVAILABLE_WEIGHTS.dumbbell;
-                isDumbbell = true;
-            } else if (name.includes('kettlebell') || name.includes('kb ') || name.includes('goblet')) {
-                availableWeights = AVAILABLE_WEIGHTS.kettlebell;
-            } else if (name.includes('barbell') || name.includes('bb ') || name.includes('hex bar') || name.includes('back squat') || name.includes('front squat') || name.includes('bench press') || name.includes('deadlift')) {
-                availableWeights = AVAILABLE_WEIGHTS.barbell;
-            } else {
-                // Default to 2.5kg rounding for unknown equipment
-                return Math.round(weight / 2.5) * 2.5;
-            }
-            
-            // For dumbbells: round the PER-HAND weight, then double for total
-            // This ensures we get weights that actually exist (e.g., 8kg each hand = 16kg total)
-            let weightToRound = isDumbbell ? weight / 2 : weight;
-            
-            // Find nearest available weight
-            let closest = availableWeights[0];
-            let minDiff = Math.abs(weightToRound - closest);
-            
-            for (const w of availableWeights) {
-                const diff = Math.abs(weightToRound - w);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    closest = w;
-                }
-            }
-            
-            // For dumbbells, return the total (per-hand × 2)
-            return isDumbbell ? closest * 2 : closest;
-        }
 
         // Current user
         let currentUser = null;
@@ -2801,104 +2700,6 @@
 
         let selectedPattern = patterns[0];
         let selectedLevel = 1;
-        
-        // ============================================
-        // PROGRESSION SYSTEM
-        // ============================================
-        // Tracks pending progression prompts to show after workout loads
-        let pendingProgressionPrompts = [];
-        
-        // Progression rules per pattern type
-        const PROGRESSION_RULES = {
-            // Barbell compounds: +2.5kg after 1 successful session
-            'Squat': { increment: 2.5, sessionsRequired: 1, type: 'weight' },
-            'Hinge': { increment: 2.5, sessionsRequired: 1, type: 'weight' },
-            'Push': { increment: 2.5, sessionsRequired: 1, type: 'weight' },
-            // Dumbbell accessories: +2kg after 1 successful session
-            'Lunge': { increment: 2, sessionsRequired: 1, type: 'weight' },
-            // Press: +2kg after 2 successful sessions (harder to progress)
-            'Press': { increment: 2, sessionsRequired: 2, type: 'weight' },
-            // Pull: +1 rep after 1 successful session
-            'Pull': { increment: 1, sessionsRequired: 1, type: 'reps' }
-        };
-        
-        // Count consecutive successful sessions at a specific weight/rep for a pattern
-        function countConsecutiveSuccessfulSessions(allHistory, patternName, sessionType, targetWeight) {
-            // Filter to sessions of the same type (A or B) that include this pattern
-            const relevantSessions = allHistory
-                .filter(s => s.sessionType === sessionType)
-                .sort((a, b) => new Date(b.date) - new Date(a.date)); // Most recent first
-            
-            let consecutiveCount = 0;
-            
-            for (const session of relevantSessions) {
-                try {
-                    let exercises = session.exercises;
-                    if (typeof exercises === 'string') exercises = JSON.parse(exercises);
-                    if (!Array.isArray(exercises)) continue;
-                    
-                    const patternEx = exercises.find(ex => ex.pattern === patternName);
-                    if (!patternEx) continue;
-                    
-                    const sessionWeight = parseFloat(patternEx.weight) || 0;
-                    const sessionSets = parseInt(patternEx.sets) || 0;
-                    
-                    // Check if they completed all sets at this weight
-                    if (sessionWeight === targetWeight && sessionSets >= 3) {
-                        consecutiveCount++;
-                    } else {
-                        // Chain broken - different weight or didn't complete sets
-                        break;
-                    }
-                } catch (e) {
-                    console.warn('Error parsing session for progression check:', e);
-                    continue;
-                }
-            }
-            
-            return consecutiveCount;
-        }
-        
-        // Check if student is eligible for progression and build prompt data
-        function checkProgressionEligibility(patternName, exerciseName, lastData, allHistory, sessionType, isRepBased) {
-            if (!lastData || !lastData.weight) return null;
-            
-            const rules = PROGRESSION_RULES[patternName];
-            if (!rules) return null;
-            
-            const lastWeight = parseFloat(lastData.weight) || 0;
-            const lastSets = parseInt(lastData.sets) || 0;
-            
-            // Must have completed 3+ sets last time
-            if (lastSets < 3 || lastWeight <= 0) return null;
-            
-            // Count consecutive successful sessions at this weight
-            const consecutiveSessions = countConsecutiveSuccessfulSessions(
-                allHistory, patternName, sessionType, lastWeight
-            );
-            
-            console.log(`📈 ${patternName} progression check: ${consecutiveSessions} consecutive sessions at ${lastWeight}kg (need ${rules.sessionsRequired})`);
-            
-            // Check if they've met the required sessions
-            if (consecutiveSessions >= rules.sessionsRequired) {
-                const newValue = isRepBased 
-                    ? Math.round(lastWeight) + rules.increment  // For Pull, lastWeight is actually reps
-                    : roundToAvailableWeight(lastWeight + rules.increment, exerciseName);
-                
-                return {
-                    patternName,
-                    exerciseName,
-                    currentValue: isRepBased ? Math.round(lastWeight) : lastWeight,
-                    newValue,
-                    increment: rules.increment,
-                    type: rules.type,
-                    consecutiveSessions,
-                    sessionsRequired: rules.sessionsRequired
-                };
-            }
-            
-            return null;
-        }
 
         // ============================================
         // PARTICLES
@@ -3234,46 +3035,81 @@
             const hasStrength = strengthTier > 0;
             const gender = currentStrength?.Gender || 'M';
             const isReadyToTest = techLevel >= 2 && !hasStrength;
+            const isRepBased = pattern.testType === 'reps';
             
-            // Determine display level - show CURRENT level (what they've achieved)
-            let displayLevel;
-            if (isReadyToTest) {
-                displayLevel = 'TEST';
-            } else if (techLevel >= 5) {
-                displayLevel = 5;
-            } else if (techLevel === 0) {
-                // Haven't passed anything yet - show level 1 as what they're working on
-                displayLevel = 1;
-            } else {
-                // Show current achieved level
-                displayLevel = techLevel;
-            }
+            // Current level = what they've achieved (or 1 if nothing)
+            const currentLevel = techLevel > 0 ? techLevel : 1;
+            // Next level = what they're working toward
+            const nextLevel = Math.min(techLevel + 1, 5);
+            const hasNextLevel = techLevel < 5;
+            
+            const currentExercise = pattern.exercises[currentLevel];
+            const nextExercise = hasNextLevel ? pattern.exercises[nextLevel] : null;
             
             let html = `<div style="background: #fff; border: 2px solid #e0e0e0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">`;
+            
+            // Header
             html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">`;
             html += `<div style="font-size: 1.1rem; font-weight: 700; color: #1a1a1a;">${pattern.name} Pattern</div>`;
             html += `<button onclick="togglePatternDetail(${index})" style="background: #f5f0f1; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1rem; color: #666;">✕</button>`;
             html += `</div>`;
             
-            if (displayLevel === 'TEST') {
-                // Strength Test Info
-                const loadTiers = gender === 'F' ? pattern.loadTiers.F : pattern.loadTiers.M;
-                const isRepBased = pattern.testType === 'reps';
-                const testExercise = pattern.exercises[2]; // Level 2 is the test exercise
+            // Tab buttons - only show if not at max level
+            if (hasNextLevel) {
+                html += `<div style="display: flex; gap: 8px; margin-bottom: 16px;">`;
+                html += `<button id="tabCurrent-${index}" onclick="switchPatternTab(${index}, 'current')" style="flex: 1; padding: 10px 16px; border-radius: 10px; border: 2px solid #e0e0e0; background: #fff; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">`;
+                html += `✓ Current Level ${currentLevel}`;
+                html += `</button>`;
+                html += `<button id="tabNext-${index}" onclick="switchPatternTab(${index}, 'next')" style="flex: 1; padding: 10px 16px; border-radius: 10px; border: 2px solid #874B46; background: linear-gradient(135deg, #874B46, #6a3a36); color: #fff; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">`;
+                html += `📹 Next: Level ${nextLevel}`;
+                html += `</button>`;
+                html += `</div>`;
+            }
+            
+            // ============ CURRENT LEVEL CONTENT ============
+            html += `<div id="contentCurrent-${index}" style="display: none;">`;
+            
+            if (techLevel === 0) {
+                html += `<div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 12px; margin-bottom: 12px; font-size: 0.85rem; color: #92400e;">You haven't passed any levels yet. Start with Level 1 below!</div>`;
+            }
+            
+            if (currentExercise) {
+                html += `<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">`;
+                html += `<div style="font-size: 0.85rem; color: #888;">Level ${currentLevel}</div>`;
+                html += `<div style="font-size: 1rem; font-weight: 600; color: #231F20;">${currentExercise.name}</div>`;
+                if (techLevel > 0) {
+                    html += `<span style="background: rgba(34,197,94,0.15); color: #22c55e; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">✓ Passed</span>`;
+                }
+                html += `</div>`;
                 
-                html += `<div style="background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; font-weight: 600;">⚡ Ready to Test!</div>`;
-                
-                // Show Level 2 exercise video
-                if (testExercise && testExercise.video) {
-                    const videoId = testExercise.video.split('/embed/')[1];
-                    html += `<div style="font-size: 0.9rem; font-weight: 600; color: #231F20; margin-bottom: 8px;">${testExercise.name}</div>`;
-                    html += `<div style="border-radius: 10px; overflow: hidden; margin-bottom: 15px; aspect-ratio: 16/9; max-width: 400px; background: #000;">`;
-                    html += `<div id="detailVidWrapper-${index}" style="width: 100%; height: 100%; cursor: pointer; position: relative;" onclick="playVideo(this, '${videoId}')">`;
+                // Video
+                if (currentExercise.video) {
+                    const videoId = currentExercise.video.split('/embed/')[1];
+                    html += `<div style="border-radius: 10px; overflow: hidden; margin-bottom: 12px; aspect-ratio: 16/9; max-width: 400px; background: #000;">`;
+                    html += `<div id="currentVidWrapper-${index}" style="width: 100%; height: 100%; cursor: pointer; position: relative;" onclick="playVideo(this, '${videoId}')">`;
                     html += `<img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" style="width: 100%; height: 100%; object-fit: cover;">`;
                     html += `<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 56px; height: 56px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><span style="color: #fff; font-size: 22px; margin-left: 3px;">▶</span></div>`;
-                    html += `</div>`;
-                    html += `</div>`;
+                    html += `</div></div>`;
                 }
+                
+                // Criteria
+                html += `<div style="margin-bottom: 12px;">`;
+                html += `<div style="font-weight: 600; color: #874B46; font-size: 0.85rem; margin-bottom: 8px;">✓ Form Criteria</div>`;
+                pattern.criteria.forEach(c => {
+                    html += `<div style="display: flex; gap: 8px; padding: 4px 0; font-size: 0.85rem;"><span style="color: #22c55e;">•</span><span style="color: #444;">${c.text} <span style="color: #888;">— ${c.note}</span></span></div>`;
+                });
+                html += `</div>`;
+            }
+            html += `</div>`; // End current content
+            
+            // ============ NEXT LEVEL CONTENT ============
+            html += `<div id="contentNext-${index}" style="display: block;">`;
+            
+            if (isReadyToTest) {
+                // Ready to do strength test
+                const loadTiers = gender === 'F' ? pattern.loadTiers.F : pattern.loadTiers.M;
+                
+                html += `<div style="background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; font-weight: 600;">⚡ Ready for Strength Test!</div>`;
                 
                 html += `<div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.85rem; color: #666;">⚠️ Supervision required — Request a slot from Mr. Bain</div>`;
                 
@@ -3285,62 +3121,99 @@
                 }
                 html += `</div>`;
                 
-                // Load tiers
                 if (!isRepBased) {
                     html += `<div style="margin-bottom: 12px;"><div style="font-weight: 600; color: #D4AF37; font-size: 0.85rem; margin-bottom: 8px;">🏋️ LOAD TIERS (${gender})</div>`;
                     html += `<div style="display: flex; gap: 6px; flex-wrap: wrap;">`;
                     loadTiers.forEach((w, i) => {
                         html += `<div style="text-align: center; padding: 6px 12px; background: #f5f0f1; border-radius: 8px; min-width: 50px;"><div style="font-size: 0.65rem; color: #888;">T${i+1}</div><div style="font-weight: 700; color: #1a1a1a;">${w}</div></div>`;
                     });
-                    html += `</div>`;
-                    html += `<div style="font-size: 0.75rem; color: #888; margin-top: 6px;">T1 = competent • T3 = strong • Higher tiers not expected</div></div>`;
+                    html += `</div></div>`;
+                }
+            } else if (hasNextLevel && nextExercise) {
+                // Working toward next technique level - FILM THIS
+                html += `<div style="background: linear-gradient(135deg, #874B46, #6a3a36); color: #fff; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; font-weight: 600;">📹 Film This Movement to Progress</div>`;
+                
+                html += `<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">`;
+                html += `<div style="font-size: 0.85rem; color: #888;">Level ${nextLevel}</div>`;
+                html += `<div style="font-size: 1rem; font-weight: 600; color: #231F20;">${nextExercise.name}</div>`;
+                html += `</div>`;
+                
+                // Video
+                if (nextExercise.video) {
+                    const videoId = nextExercise.video.split('/embed/')[1];
+                    html += `<div style="border-radius: 10px; overflow: hidden; margin-bottom: 12px; aspect-ratio: 16/9; max-width: 400px; background: #000;">`;
+                    html += `<div id="nextVidWrapper-${index}" style="width: 100%; height: 100%; cursor: pointer; position: relative;" onclick="playVideo(this, '${videoId}')">`;
+                    html += `<img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    html += `<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 56px; height: 56px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><span style="color: #fff; font-size: 22px; margin-left: 3px;">▶</span></div>`;
+                    html += `</div></div>`;
                 }
                 
-                // Always show criteria even for test state
+                // Form criteria - what they need to demonstrate
                 html += `<div style="margin-bottom: 12px;">`;
-                html += `<div style="font-weight: 600; color: #874B46; font-size: 0.85rem; margin-bottom: 8px;">✓ Form Criteria</div>`;
+                html += `<div style="font-weight: 600; color: #874B46; font-size: 0.85rem; margin-bottom: 8px;">✓ Form Criteria (Must Demonstrate All)</div>`;
                 pattern.criteria.forEach(c => {
-                    html += `<div style="display: flex; gap: 8px; padding: 4px 0; font-size: 0.85rem;"><span style="color: #22c55e;">•</span><span style="color: #444;">${c.text} <span style="color: #888;">— ${c.note}</span></span></div>`;
+                    html += `<div style="display: flex; gap: 8px; padding: 4px 0; font-size: 0.85rem;"><span style="color: #874B46;">☐</span><span style="color: #444;"><strong>${c.text}</strong> <span style="color: #888;">— ${c.note}</span></span></div>`;
                 });
                 html += `</div>`;
-            } else {
-                // Normal level view - show exercise, video, criteria
-                const exercise = pattern.exercises[displayLevel];
-                const isCompleted = displayLevel <= techLevel;
                 
-                if (exercise) {
-                    html += `<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">`;
-                    html += `<div style="font-size: 0.85rem; color: #888;">Level ${displayLevel}</div>`;
-                    html += `<div style="font-size: 1rem; font-weight: 600; color: #231F20;">${exercise.name}</div>`;
-                    if (isCompleted) {
-                        html += `<span style="background: rgba(34,197,94,0.15); color: #22c55e; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">✓ Passed</span>`;
-                    }
-                    html += `</div>`;
-                    
-                    // Video
-                    if (exercise.video) {
-                        const videoId = exercise.video.split('/embed/')[1];
-                        html += `<div style="border-radius: 10px; overflow: hidden; margin-bottom: 12px; aspect-ratio: 16/9; max-width: 400px; background: #000;">`;
-                        html += `<div id="detailVidWrapper-${index}" style="width: 100%; height: 100%; cursor: pointer; position: relative;" onclick="playVideo(this, '${videoId}')">`;
-                        html += `<img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" style="width: 100%; height: 100%; object-fit: cover;">`;
-                        html += `<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 56px; height: 56px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><span style="color: #fff; font-size: 22px; margin-left: 3px;">▶</span></div>`;
-                        html += `</div>`;
-                        html += `</div>`;
-                    }
-                    
-                    // Always show criteria as a reference
-                    html += `<div style="margin-bottom: 12px;">`;
-                    html += `<div style="font-weight: 600; color: #874B46; font-size: 0.85rem; margin-bottom: 8px;">✓ Form Criteria</div>`;
-                    pattern.criteria.forEach(c => {
-                        html += `<div style="display: flex; gap: 8px; padding: 4px 0; font-size: 0.85rem;"><span style="color: #22c55e;">•</span><span style="color: #444;">${c.text} <span style="color: #888;">— ${c.note}</span></span></div>`;
-                    });
-                    html += `</div>`;
-                }
+                // Filming instructions
+                html += `<div style="background: rgba(135, 75, 70, 0.08); border: 1px solid rgba(135, 75, 70, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 12px;">`;
+                html += `<div style="font-weight: 700; color: #874B46; font-size: 0.85rem; margin-bottom: 10px;">📱 How to Film Your Submission</div>`;
+                html += `<div style="font-size: 0.85rem; color: #444; line-height: 1.8;">`;
+                html += `<strong>1. Setup:</strong> Film from the SIDE angle (profile view)<br>`;
+                html += `<strong>2. Reps:</strong> Perform 5 quality reps with full range of motion<br>`;
+                html += `<strong>3. Lighting:</strong> Make sure you're clearly visible<br>`;
+                html += `<strong>4. Phone:</strong> Hold horizontal (landscape mode)<br>`;
+                html += `<strong>5. Focus:</strong> Show your FULL BODY in frame<br>`;
+                html += `</div></div>`;
+                
+                // Pass requirements
+                html += `<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px; margin-bottom: 12px;">`;
+                html += `<div style="font-weight: 600; color: #16a34a; font-size: 0.85rem; margin-bottom: 6px;">✓ To Pass Level ${nextLevel}</div>`;
+                html += `<div style="font-size: 0.85rem; color: #166534;">Demonstrate ALL ${pattern.criteria.length} criteria above on every rep. 5 clean reps required.</div>`;
+                html += `</div>`;
+                
+                // Submit button
+                html += `<a href="https://fis.instructure.com/courses/15541/assignments/113375" target="_blank" style="display: block; background: linear-gradient(135deg, #874B46, #6a3a36); color: #fff; text-align: center; padding: 14px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 0.95rem;">📤 Submit Video on Canvas</a>`;
+                
+            } else if (!hasNextLevel) {
+                // Max level reached
+                html += `<div style="background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; padding: 16px; border-radius: 12px; text-align: center;">`;
+                html += `<div style="font-size: 1.5rem; margin-bottom: 6px;">🏆</div>`;
+                html += `<div style="font-weight: 700; font-size: 1rem;">Maximum Level Achieved!</div>`;
+                html += `<div style="font-size: 0.85rem; opacity: 0.9; margin-top: 4px;">Level 5 - ${pattern.exercises[5]?.name || 'Master'}</div>`;
+                html += `</div>`;
             }
             
-            html += `</div>`;
+            html += `</div>`; // End next content
+            
+            html += `</div>`; // End main container
             panel.innerHTML = html;
             panel.style.display = 'block';
+            
+            // Default to showing "Next" tab (most actionable) unless max level
+            if (hasNextLevel) {
+                switchPatternTab(index, 'next');
+            }
+        }
+        
+        function switchPatternTab(index, tab) {
+            const currentContent = document.getElementById(`contentCurrent-${index}`);
+            const nextContent = document.getElementById(`contentNext-${index}`);
+            const currentBtn = document.getElementById(`tabCurrent-${index}`);
+            const nextBtn = document.getElementById(`tabNext-${index}`);
+            
+            if (tab === 'current') {
+                currentContent.style.display = 'block';
+                nextContent.style.display = 'none';
+                currentBtn.style.cssText = 'flex: 1; padding: 10px 16px; border-radius: 10px; border: 2px solid #874B46; background: linear-gradient(135deg, #874B46, #6a3a36); color: #fff; font-weight: 600; font-size: 0.85rem; cursor: pointer;';
+                nextBtn.style.cssText = 'flex: 1; padding: 10px 16px; border-radius: 10px; border: 2px solid #e0e0e0; background: #fff; color: #333; font-weight: 600; font-size: 0.85rem; cursor: pointer;';
+            } else {
+                currentContent.style.display = 'none';
+                nextContent.style.display = 'block';
+                currentBtn.style.cssText = 'flex: 1; padding: 10px 16px; border-radius: 10px; border: 2px solid #e0e0e0; background: #fff; color: #333; font-weight: 600; font-size: 0.85rem; cursor: pointer;';
+                nextBtn.style.cssText = 'flex: 1; padding: 10px 16px; border-radius: 10px; border: 2px solid #874B46; background: linear-gradient(135deg, #874B46, #6a3a36); color: #fff; font-weight: 600; font-size: 0.85rem; cursor: pointer;';
+            }
         }
 
         function selectPattern(index) {
@@ -3610,7 +3483,7 @@
                         // Set to tier max so the display can reference it
                         workingWeight = actual5RM; // actual5RM = tier reps for rep-based
                     } else {
-                        workingWeight = roundToAvailableWeight(actual5RM * 0.7, exercise.name);
+                        workingWeight = Math.round(actual5RM * 0.7 / 2.5) * 2.5;
                     }
                 } else if (techLevel >= 2 && strengthTier === 0) {
                     // Has passed Level 2 but no strength score = ready to test
@@ -3634,7 +3507,6 @@
                 const lastData = lastExercises[patternName];
                 let lastTimeInfo = null;
                 let suggestedWeight = workingWeight;
-                let progressionEligible = null;
                 
                 if (lastData && lastData.weight && lastData.weight !== 'bodyweight') {
                     const lastWeight = parseFloat(lastData.weight) || 0;
@@ -3644,18 +3516,13 @@
                         reps: lastData.reps
                     };
                     
-                    // Check if eligible for progression (don't auto-apply, just flag it)
+                    // Auto-progress: if they completed all sets last time, suggest +2.5kg
                     if (trainingState === 'loaded' && lastData.sets >= 3 && lastWeight > 0) {
-                        progressionEligible = checkProgressionEligibility(
-                            patternName, exercise.name, lastData, allHistory, sessionType, isRepBased
-                        );
-                        
-                        // Keep them at last weight (don't auto-bump) - they'll be prompted
-                        suggestedWeight = lastWeight;
+                        suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
                     }
                 }
                 
-                console.log(`💪 PRIMARY ${patternName}: techLevel=${techLevel}, strTier=${strengthTier}, actual5RM=${actual5RM}, workingWt=${workingWeight}, suggestedWt=${suggestedWeight}, state=${trainingState}, exercise=${exercise?.name}, progressionEligible=`, progressionEligible);
+                console.log(`💪 PRIMARY ${patternName}: techLevel=${techLevel}, strTier=${strengthTier}, actual5RM=${actual5RM}, workingWt=${workingWeight}, suggestedWt=${suggestedWeight}, state=${trainingState}, exercise=${exercise?.name}, lastData=`, lastData);
                 
                 workoutBlocks.push({
                     type: 'primary',
@@ -3674,8 +3541,7 @@
                         lastTime: lastTimeInfo,
                         trainingState: trainingState,
                         isDumbbell: exercise.name.toLowerCase().includes('dumbbell') || exercise.name.toLowerCase().includes('db '),
-                        completed: [false, false, false],
-                        progressionEligible: progressionEligible
+                        completed: [false, false, false]
                     }]
                 });
             });
@@ -3711,7 +3577,7 @@
                         workingWeight = actual5RM;
                     } else {
                         // Accessory at 56% of 5RM (80% of 70%)
-                        workingWeight = roundToAvailableWeight(actual5RM * 0.56, exercise.name);
+                        workingWeight = Math.round(actual5RM * 0.56 / 2.5) * 2.5;
                     }
                 } else if (techLevel >= 2 && strengthTier === 0) {
                     trainingState = 'readyToTest';
@@ -3733,7 +3599,6 @@
                 const lastData = lastExercises[patternName];
                 let lastTimeInfo = null;
                 let suggestedWeight = workingWeight;
-                let progressionEligible = null;
                 
                 if (lastData && lastData.weight && lastData.weight !== 'bodyweight') {
                     const lastWeight = parseFloat(lastData.weight) || 0;
@@ -3743,18 +3608,13 @@
                         reps: lastData.reps
                     };
                     
-                    // Check if eligible for progression (don't auto-apply, just flag it)
+                    // Auto-progress: if they completed all sets last time, suggest +2.5kg
                     if (trainingState === 'loaded' && lastData.sets >= 3 && lastWeight > 0) {
-                        progressionEligible = checkProgressionEligibility(
-                            patternName, exercise.name, lastData, allHistory, sessionType, isRepBased
-                        );
-                        
-                        // Keep them at last weight (don't auto-bump) - they'll be prompted
-                        suggestedWeight = lastWeight;
+                        suggestedWeight = Math.max(workingWeight, lastWeight + 2.5);
                     }
                 }
                 
-                console.log(`🎯 ACCESSORY ${patternName}: techLevel=${techLevel}, strTier=${strengthTier}, actual5RM=${actual5RM}, workingWt=${workingWeight}, suggestedWt=${suggestedWeight}, state=${trainingState}, exercise=${exercise?.name}, progressionEligible=`, progressionEligible);
+                console.log(`🎯 ACCESSORY ${patternName}: techLevel=${techLevel}, strTier=${strengthTier}, actual5RM=${actual5RM}, workingWt=${workingWeight}, suggestedWt=${suggestedWeight}, state=${trainingState}, exercise=${exercise?.name}, lastData=`, lastData);
                 
                 workoutBlocks.push({
                     type: 'accessory',
@@ -3773,8 +3633,7 @@
                         lastTime: lastTimeInfo,
                         trainingState: trainingState,
                         isDumbbell: exercise.name.toLowerCase().includes('dumbbell') || exercise.name.toLowerCase().includes('db '),
-                        completed: [false, false, false],
-                        progressionEligible: progressionEligible
+                        completed: [false, false, false]
                     }]
                 });
             });
@@ -3896,8 +3755,8 @@
             if (limitedTechPractice.length > 0) {
                 workoutBlocks.push({
                     type: 'technique',
-                    title: '🎯 MOVEMENT PRACTICE',
-                    subtitle: 'Build your skills with quality reps',
+                    title: '📹 MOVEMENT PRACTICE',
+                    subtitle: 'Build your skills, unlock your next level',
                     exercises: limitedTechPractice.map(ex => ({
                         name: ex.name,
                         video: ex.video,
@@ -4136,8 +3995,11 @@
             if (exercise.linkToAssessment) {
                 const patternIndex = patterns.findIndex(p => p.key === exercise.patternKey);
                 const practices = exercise.practices || 0;
+                const needed = exercise.practicesNeeded || 3;
+                const readyToFilm = exercise.readyToFilm;
+                const progressPct = Math.min(100, Math.round((practices / needed) * 100));
                 
-                // Header with pattern name + practice count
+                // Header with pattern name + progress
                 html += `
                     <div style="margin-bottom: 15px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
@@ -4146,9 +4008,12 @@
                                 <div style="color: #888; font-size: 0.85rem;">Level ${exercise.currentTech} → Level ${exercise.level} · <strong style="color: #874B46;">${exercise.name}</strong></div>
                             </div>
                             <div style="text-align: center; min-width: 55px;">
-                                <div style="font-size: 1.4rem; font-weight: 800; color: #874B46;">${practices}</div>
-                                <div style="font-size: 0.65rem; color: #888;">practices</div>
+                                <div style="font-size: 1.4rem; font-weight: 800; color: ${readyToFilm ? '#22c55e' : '#874B46'};">${readyToFilm ? '📹' : practices + '/' + needed}</div>
+                                <div style="font-size: 0.65rem; color: #888;">${readyToFilm ? 'FILM!' : 'practices'}</div>
                             </div>
+                        </div>
+                        <div style="background: #e5e0df; border-radius: 6px; height: 6px; overflow: hidden;">
+                            <div style="background: ${readyToFilm ? '#22c55e' : '#874B46'}; height: 100%; width: ${progressPct}%; border-radius: 6px; transition: width 0.3s;"></div>
                         </div>
                     </div>
                 `;
@@ -4168,17 +4033,40 @@
                     `;
                 }
                 
-                // Practice focus - show form criteria
-                html += `
-                    <div style="background: rgba(135,75,70,0.06); border: 1px solid rgba(135,75,70,0.15); border-radius: 12px; padding: 14px; margin-bottom: 15px;">
-                        <div style="font-size: 0.85rem; color: #555; line-height: 1.6; margin-bottom: 8px;">
-                            <strong>Focus on quality reps.</strong> Check these form cues:
+                if (readyToFilm) {
+                    // FILM READY STATE - show criteria + filming tips + submit
+                    html += `
+                        <div style="background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05)); border: 2px solid rgba(34,197,94,0.3); border-radius: 14px; padding: 18px; margin-bottom: 15px;">
+                            <div style="font-weight: 700; color: #16a34a; font-size: 1rem; margin-bottom: 12px; text-align: center;">📹 Ready to Film!</div>
+                            <div style="font-size: 0.85rem; color: #555; margin-bottom: 12px;">You've practiced this movement ${practices} times. Film yourself to progress to Level ${exercise.level}.</div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <div style="font-weight: 600; color: #874B46; font-size: 0.8rem; margin-bottom: 6px;">✓ FORM CRITERIA <span style="color: #22c55e; font-weight: 400;">Pass 5/6 on all reps</span></div>
+                                ${(exercise.criteria || []).map(c => `<div style="display: flex; gap: 6px; padding: 3px 0; font-size: 0.82rem;"><span style="color: #22c55e;">•</span><span style="color: #444;">${c.text}</span></div>`).join('')}
+                            </div>
+                            
+                            <div style="background: #fff; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.82rem; color: #555;">
+                                📐 Side angle, full body · 🔢 5 clear reps · 💡 Good lighting, horizontal
+                            </div>
+                            
+                            <a href="https://fis.instructure.com/courses/15541/assignments/113375" target="_blank" style="display: block; text-align: center; padding: 12px; background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(34,197,94,0.3);">
+                                📤 Submit Video on Canvas
+                            </a>
                         </div>
-                        <div>
-                            ${(exercise.criteria || []).slice(0, 4).map(c => `<div style="font-size: 0.8rem; color: #666; padding: 2px 0;">• ${c.text}</div>`).join('')}
+                    `;
+                } else {
+                    // PRACTICE STATE - show what to focus on
+                    html += `
+                        <div style="background: rgba(135,75,70,0.06); border: 1px solid rgba(135,75,70,0.15); border-radius: 12px; padding: 14px; margin-bottom: 15px;">
+                            <div style="font-size: 0.85rem; color: #555; line-height: 1.6;">
+                                Practice this movement <strong>${needed - practices} more time${needed - practices !== 1 ? 's' : ''}</strong> to unlock filming. Focus on form:
+                            </div>
+                            <div style="margin-top: 8px;">
+                                ${(exercise.criteria || []).slice(0, 3).map(c => `<div style="font-size: 0.8rem; color: #666; padding: 2px 0;">• ${c.text}</div>`).join('')}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
                 
                 // Record practice + completion checkbox
                 html += `
@@ -4336,31 +4224,6 @@
                     `;
                 }
                 
-                // Show progression prompt if eligible
-                let progressionPromptHtml = '';
-                if (exercise.progressionEligible && !exercise.progressionDeclined) {
-                    const prog = exercise.progressionEligible;
-                    const isReps = prog.type === 'reps';
-                    progressionPromptHtml = `
-                        <div style="background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.05)); border: 2px solid rgba(34,197,94,0.4); border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center;">
-                            <div style="font-size: 1.1rem; font-weight: 700; color: #16a34a; margin-bottom: 8px;">📈 Ready to Progress!</div>
-                            <div style="color: #333; font-size: 0.9rem; margin-bottom: 12px;">
-                                You've completed <strong>${prog.currentValue}${isReps ? ' reps' : 'kg'}</strong> for 
-                                ${prog.consecutiveSessions} session${prog.consecutiveSessions > 1 ? 's' : ''} in a row
-                            </div>
-                            <div style="display: flex; gap: 10px; justify-content: center;">
-                                <button onclick="triggerProgressionPrompt(${exIndex})" style="padding: 10px 20px; background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
-                                    Try ${prog.newValue}${isReps ? ' reps' : 'kg'} today! 💪
-                                </button>
-                                <button onclick="declineProgressionInline(${exIndex})" style="padding: 10px 16px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 0.85rem;">
-                                    Stay at ${prog.currentValue}${isReps ? ' reps' : 'kg'}
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                html += progressionPromptHtml;
                 html += lastTimeHtml;
                 html += `
                     <div class="block-weight-control">
@@ -4620,116 +4483,6 @@
         
         function cancelWeightIncrease() {
             document.getElementById('weightIncreaseModal').classList.remove('active');
-        }
-        
-        // ============================================
-        // PROGRESSION PROMPT HANDLERS
-        // ============================================
-        let currentProgressionPrompt = null;
-        let progressionCallback = null;
-        
-        function showProgressionPrompt(promptData, onAccept, onDecline) {
-            currentProgressionPrompt = promptData;
-            progressionCallback = { onAccept, onDecline };
-            
-            const modal = document.getElementById('progressionModal');
-            const isReps = promptData.type === 'reps';
-            
-            // Set the message
-            document.getElementById('progressionMessage').innerHTML = `
-                You've crushed <strong>${promptData.exerciseName}</strong> at 
-                <strong>${promptData.currentValue}${isReps ? ' reps' : 'kg'}</strong> 
-                for ${promptData.consecutiveSessions} session${promptData.consecutiveSessions > 1 ? 's' : ''} in a row!
-            `;
-            
-            // Set the from/to values
-            document.getElementById('progressionFrom').textContent = promptData.currentValue + (isReps ? ' reps' : 'kg');
-            document.getElementById('progressionTo').textContent = promptData.newValue + (isReps ? ' reps' : 'kg');
-            
-            // Set the reason
-            const reasonText = promptData.sessionsRequired > 1 
-                ? `+${promptData.increment}${isReps ? ' rep' : 'kg'} after ${promptData.sessionsRequired} successful sessions`
-                : `+${promptData.increment}${isReps ? ' rep' : 'kg'} — small steps, big gains!`;
-            document.getElementById('progressionReason').textContent = reasonText;
-            
-            // Reset checkboxes
-            document.querySelectorAll('.progression-check').forEach(cb => cb.checked = false);
-            document.getElementById('confirmProgressionBtn').disabled = true;
-            document.getElementById('confirmProgressionBtn').style.opacity = '0.5';
-            
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
-        }
-        
-        function updateProgressionConfirmBtn() {
-            const checkboxes = document.querySelectorAll('.progression-check');
-            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            const btn = document.getElementById('confirmProgressionBtn');
-            btn.disabled = !allChecked;
-            btn.style.opacity = allChecked ? '1' : '0.5';
-        }
-        
-        function acceptProgression() {
-            const modal = document.getElementById('progressionModal');
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
-            
-            if (progressionCallback && progressionCallback.onAccept) {
-                progressionCallback.onAccept(currentProgressionPrompt.newValue);
-            }
-            currentProgressionPrompt = null;
-            progressionCallback = null;
-        }
-        
-        function declineProgression() {
-            const modal = document.getElementById('progressionModal');
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
-            
-            if (progressionCallback && progressionCallback.onDecline) {
-                progressionCallback.onDecline(currentProgressionPrompt.currentValue);
-            }
-            currentProgressionPrompt = null;
-            progressionCallback = null;
-        }
-        
-        // Inline progression prompt handlers (for the banner in the workout block)
-        function triggerProgressionPrompt(exIndex) {
-            const block = workoutBlocks[currentBlockIndex];
-            const exercise = block.exercises[exIndex];
-            
-            if (!exercise.progressionEligible) return;
-            
-            showProgressionPrompt(
-                exercise.progressionEligible,
-                (newValue) => {
-                    // Accept: update weight/reps and re-render
-                    if (exercise.progressionEligible.type === 'reps') {
-                        exercise.reps = newValue;
-                    } else {
-                        exercise.weight = newValue;
-                    }
-                    exercise.progressionAccepted = true;
-                    exercise.progressionEligible = null; // Clear so banner doesn't show again
-                    renderCurrentBlock();
-                    saveSessionToStorage();
-                    showToast('Let\'s go! Weight updated 💪', 'success');
-                },
-                (currentValue) => {
-                    // Decline: mark as declined so banner hides
-                    exercise.progressionDeclined = true;
-                    renderCurrentBlock();
-                    saveSessionToStorage();
-                }
-            );
-        }
-        
-        function declineProgressionInline(exIndex) {
-            const block = workoutBlocks[currentBlockIndex];
-            const exercise = block.exercises[exIndex];
-            exercise.progressionDeclined = true;
-            renderCurrentBlock();
-            saveSessionToStorage();
         }
 
         function prevBlock() {
