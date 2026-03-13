@@ -252,6 +252,7 @@
                 <div id="googleSignIn"></div>
                 <div class="demo-btn">
                     <button onclick="demoLogin()">🧪 Test Without Login</button>
+                    <button onclick="demoLoginActive()" style="margin-top: 8px; background: rgba(255,255,255,0.3); color: white; border: none; padding: 10px 24px; border-radius: 20px; font-size: 0.85rem; cursor: pointer;">🧪 Demo with Active Challenge</button>
                 </div>
             </div>
         </div>
@@ -654,10 +655,23 @@ function demoLogin() {
     }, 500);
 }
 
+function demoLoginActive() {
+    DEMO_MODE = true;
+    currentUser = { email: 'demo@fis.edu', name: 'Demo Student' };
+    physiologyScores = DEMO_PHYSIOLOGY;
+    currentChallenge = JSON.parse(JSON.stringify(DEMO_CHALLENGE));
+    showScreen('loadingScreen');
+    setTimeout(() => {
+        document.getElementById('headerUser').textContent = currentUser.name;
+        showScreen('appScreen');
+        showActiveView();
+    }, 500);
+}
+
 function initGoogleSignIn() {
     if (typeof google !== 'undefined' && google.accounts) {
         google.accounts.id.initialize({
-            client_id: '761245051498-tptgfgo1ib49s01frtslltm4p6h03fvl.apps.googleusercontent.com',
+            client_id: '701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com',
             callback: handleCredential,
             auto_select: true
         });
@@ -676,11 +690,11 @@ function handleCredential(response) {
 
 async function loadAthleteData() {
     try {
-        const url = `${ATHLETE_API}?email=${encodeURIComponent(currentUser.email)}`;
+        const url = `${ATHLETE_API}?action=getAthleteData&email=${encodeURIComponent(currentUser.email)}`;
         const response = await fetch(url);
         const data = await response.json();
         
-        if (data.athlete) {
+        if ((data.authenticated || data.success) && data.athlete) {
             athleteData = data.athlete;
             physiologyScores = extractPhysiologyScores(data.athlete);
         }
@@ -693,15 +707,70 @@ async function loadAthleteData() {
     }
 }
 
+// Conversion functions matching index.html
+function convertBroadJump(cm, gender) {
+    if (!cm || cm <= 0) return 0;
+    const t = gender === 'M' ? [160, 180, 200, 220, 240] : [130, 145, 155, 165, 180];
+    if (cm < t[0]) return 1; if (cm < t[1]) return 2; if (cm < t[2]) return 3;
+    if (cm < t[3]) return 4; if (cm < t[4]) return 4; return 5;
+}
+function convertSprint(sec, gender) {
+    if (!sec || sec <= 0) return 0;
+    const t = gender === 'M' ? [6.5, 6.0, 5.5, 5.0, 4.8] : [7.5, 7.0, 6.5, 6.0, 5.7];
+    if (sec > t[0]) return 1; if (sec > t[1]) return 2; if (sec > t[2]) return 3;
+    if (sec > t[3]) return 4; if (sec > t[4]) return 4; return 5;
+}
+function convertAgility(sec, gender) {
+    if (!sec || sec <= 0) return 0;
+    const t = gender === 'M' ? [5.5, 5.1, 4.8, 4.5, 4.2] : [6.0, 5.6, 5.3, 5.0, 4.7];
+    if (sec > t[0]) return 1; if (sec > t[1]) return 2; if (sec > t[2]) return 3;
+    if (sec > t[3]) return 4; if (sec > t[4]) return 4; return 5;
+}
+function convertCooper(meters, gender) {
+    if (!meters || meters <= 0) return 0;
+    const t = gender === 'M' ? [1600, 2000, 2400, 2800, 3000] : [1200, 1600, 2000, 2400, 2600];
+    if (meters < t[0]) return 1; if (meters < t[1]) return 2; if (meters < t[2]) return 3;
+    if (meters < t[3]) return 4; if (meters < t[4]) return 4; return 5;
+}
+
 function extractPhysiologyScores(athlete) {
-    // Extract scores from athlete data - adjust based on actual API response
+    const gender = athlete.Gender || 'M';
+    const perf = athlete.performance || {};
+    const strength = athlete.strength || {};
+    const mobility = athlete.mobility || {};
+
+    // Strength composite (same logic as index.html)
+    const patterns = ['Squat', 'Hinge', 'Push', 'Pull', 'Lunge', 'Press'];
+    let strengthScore = 0, strengthCount = 0;
+    patterns.forEach(p => {
+        const tech = parseFloat(strength[p + '_Tech']) || 0;
+        const strVal = strength[p + '_Str'];
+        const str = (strVal === '—' || strVal === '' || strVal === null) ? 0 : parseFloat(strVal) || 0;
+        if (tech > 0) { strengthScore += tech; strengthCount++; }
+        if (str > 0) { strengthScore += str; strengthCount++; }
+    });
+    const strengthAvg = strengthCount > 0 ? strengthScore / strengthCount : 0;
+
+    // Performance conversions
+    const broadJump = convertBroadJump(parseFloat(perf.Broad_Jump_cm), gender);
+    const sprint = convertSprint(parseFloat(perf['40m_sec']), gender);
+    const agility = convertAgility(parseFloat(perf['5_10_5_sec']), gender);
+    const cooper = convertCooper(parseFloat(perf.Cooper_m), gender);
+
+    // Mobility (normalize 0-3 to 0-5)
+    const asl = ((parseFloat(mobility.ASL) || 0) / 3) * 5;
+    const trunk = ((parseFloat(mobility.Trunk_Stability) || 0) / 3) * 5;
+    const shoulder = ((parseFloat(mobility.Shoulder_Mobility) || 0) / 3) * 5;
+    const vals = [asl, trunk, shoulder].filter(v => v > 0);
+    const mobilityAvg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+
     return {
-        'Strength': { score: athlete.strengthScore || 2.0, raw: '' },
-        'Broad Jump': { score: athlete.broadJumpScore || 3.0, raw: athlete.performance?.Broad_Jump ? `${athlete.performance.Broad_Jump} cm` : '' },
-        '40m Sprint': { score: athlete.sprintScore || 3.0, raw: athlete.performance?.Sprint_40m ? `${athlete.performance.Sprint_40m} sec` : '' },
-        'Agility': { score: athlete.agilityScore || 3.0, raw: athlete.performance?.Agility_505 ? `${athlete.performance.Agility_505} sec` : '' },
-        'Cooper Test': { score: athlete.cooperScore || 3.0, raw: athlete.performance?.Cooper_Distance ? `${athlete.performance.Cooper_Distance}m` : '' },
-        'Mobility': { score: athlete.mobilityScore || 3.0, raw: '' }
+        'Strength': { score: strengthAvg, raw: '' },
+        'Broad Jump': { score: broadJump, raw: perf.Broad_Jump_cm ? `${perf.Broad_Jump_cm} cm` : '' },
+        '40m Sprint': { score: sprint, raw: perf['40m_sec'] ? `${perf['40m_sec']} sec` : '' },
+        'Agility': { score: agility, raw: perf['5_10_5_sec'] ? `${perf['5_10_5_sec']} sec` : '' },
+        'Cooper Test': { score: cooper, raw: perf.Cooper_m ? `${perf.Cooper_m}m` : '' },
+        'Mobility': { score: mobilityAvg, raw: '' }
     };
 }
 
@@ -715,14 +784,16 @@ async function loadGritChallenge() {
     }
     
     try {
-        const url = `${GRIT_API}?action=getChallenge&email=${encodeURIComponent(currentUser.email)}`;
+        const url = `${GRIT_API}?action=getGritChallenge&email=${encodeURIComponent(currentUser.email)}`;
         const response = await fetch(url);
         const data = await response.json();
         
-        if (data.challenge) {
+        if (data.success && data.challenge) {
             currentChallenge = data.challenge;
             if (currentChallenge.status === 'pending') {
                 showPendingView();
+            } else if (currentChallenge.status === 'complete') {
+                showActiveView();
             } else {
                 showActiveView();
             }
@@ -817,7 +888,7 @@ function renderFitnessScores() {
         return `
             <div class="score-card ${lowClass}" onclick="selectFocus('${item.id}', '${item.name}')">
                 <div class="score-name">${item.name}</div>
-                <div class="score-bar-container">
+                <div class="score-bar-wrap">
                     <div class="score-bar" style="width: ${pct}%"></div>
                 </div>
                 <div class="score-value">${item.score.toFixed(1)}</div>
@@ -922,30 +993,30 @@ async function submitChallenge() {
         status: 'active'
     };
     
-    if (DEMO_MODE) {
-        showToast('Challenge started!');
-        showActiveView();
-        return;
-    }
-    
-    // Save to API
+    showToast('Challenge started!');
+    showActiveView();
+    await persistChallenge();
+}
+
+// ============ API PERSISTENCE ============
+async function persistChallenge() {
+    if (DEMO_MODE || !currentChallenge) return;
     try {
         const response = await fetch(GRIT_API, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
-                action: 'saveChallenge',
+                action: 'saveGritChallenge',
                 email: currentUser.email,
                 challenge: currentChallenge
             })
         });
         const data = await response.json();
-        showToast('Challenge started!');
-        showActiveView();
+        if (!data.success) {
+            console.error('Save failed:', data.error);
+        }
     } catch (e) {
-        console.error('Error saving:', e);
-        showToast('Challenge started!');
-        showActiveView();
+        console.error('Error saving challenge:', e);
     }
 }
 
@@ -1122,13 +1193,15 @@ function saveSession() {
         completed: true,
         what, excuse, overcome, learned
     };
-    
+
     closeModal('sessionModal');
     renderActiveView();
-    
+
     // Show upload prompt
     document.getElementById('completeTitle').textContent = `Session ${currentSessionNum} Complete!`;
     openModal('completeModal');
+
+    persistChallenge();
 }
 
 function openFinalModal() {
@@ -1166,12 +1239,14 @@ function submitFinal() {
         lesson: document.getElementById('finalLesson').value.trim()
     };
     currentChallenge.status = 'complete';
-    
+
     closeModal('finalModal');
     renderActiveView();
-    
+
     document.getElementById('completeTitle').textContent = 'Challenge Complete! 🏆';
     openModal('completeModal');
+
+    persistChallenge();
 }
 
 // ============ TIME LOG ============
@@ -1187,12 +1262,14 @@ function addTimeLog() {
     
     currentChallenge.homeLogs = currentChallenge.homeLogs || [];
     currentChallenge.homeLogs.push({ date, mins, note: note || 'Practice' });
-    
+
     document.getElementById('logMins').value = '';
     document.getElementById('logNote').value = '';
-    
+
     renderActiveView();
     showToast('Time logged!');
+
+    persistChallenge();
 }
 
 // ============ UPDATE MODAL ============
@@ -1204,11 +1281,13 @@ function openUpdateModal() {
 function saveUpdate() {
     const val = document.getElementById('updateValue').value.trim();
     if (!val) return;
-    
+
     currentChallenge.current = val;
     closeModal('updateModal');
     renderActiveView();
     showToast('Updated!');
+
+    persistChallenge();
 }
 
 // ============ MODAL HELPERS ============
