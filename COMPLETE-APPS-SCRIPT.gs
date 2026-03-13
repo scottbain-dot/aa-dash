@@ -1,210 +1,1094 @@
-// ============================================
-// APPS SCRIPT BACKEND - Grit Challenge Functions
-// ============================================
-// These functions should be added to the existing Apps Script project
-// that serves the Strength Portal API endpoint:
-// https://script.google.com/macros/s/AKfycbzoyT7zqrOhEf3LAsflbRB73OO2-RaHdnCz5f676xuO9Odc6wFUQpo0aE3XX6Qt-Bk0/exec
-//
-// The existing doGet/doPost handlers need to be updated to route
-// the new actions: getGritChallenge, saveGritChallenge
+// ========================================
+// ATHLETE ACADEMY - APPS SCRIPT FOR TAB-BASED DATA
+// WITH WORKOUT SYSTEM + ADMIN PANEL + GRIT CHALLENGE
+// ========================================
 
-// ============================================
-// SHEET CONFIGURATION
-// ============================================
-const GRIT_SHEET_NAME = 'GritChallenges';
+function doGet(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const action = e.parameter.action;
 
-// Expected columns in GritChallenges sheet:
-// A: Email
-// B: ChallengeJSON (stringified challenge object)
-// C: LastUpdated (timestamp)
-// D: Status (active/complete/pending)
+    // ===== ADMIN PANEL ACTIONS =====
+    if (action === 'getAllStudents') {
+      return getAllStudents(ss);
+    }
 
-function getGritSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(GRIT_SHEET_NAME);
-  if (!sheet) {
-    sheet = ss.insertSheet(GRIT_SHEET_NAME);
-    sheet.appendRow(['Email', 'ChallengeJSON', 'LastUpdated', 'Status']);
-    sheet.getRange('1:1').setFontWeight('bold');
+    if (action === 'getConfig') {
+      return getConfig(ss, e.parameter.key);
+    }
+
+    if (action === 'setConfig') {
+      return setConfig(ss, e.parameter.key, e.parameter.value);
+    }
+
+    if (action === 'updateStudent') {
+      const athleteId = e.parameter.athleteId;
+      const updates = JSON.parse(e.parameter.updates || '{}');
+      return updateStudent(athleteId, updates);
+    }
+
+    // ===== WORKOUT SYSTEM ACTIONS =====
+    if (action === 'saveWorkout') {
+      const email = e.parameter.email;
+      const sessionType = e.parameter.sessionType;
+      const exercisesCompleted = e.parameter.exercisesCompleted;
+      const notes = e.parameter.notes || '';
+      const durationMinutes = parseInt(e.parameter.durationMinutes) || 45;
+      const result = saveWorkout(email, sessionType, exercisesCompleted, notes, durationMinutes);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'getLastSession') {
+      const athleteId = e.parameter.athleteId || e.parameter.email;
+      const lastSession = getLastSession(athleteId);
+      return ContentService.createTextOutput(JSON.stringify(lastSession))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'getLastSessionByType') {
+      const athleteId = e.parameter.athleteId || e.parameter.email;
+      const sessionType = e.parameter.sessionType;
+      const lastSession = getLastSessionByType(athleteId, sessionType);
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        lastSession: lastSession
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'getWorkoutHistory') {
+      const athleteId = e.parameter.athleteId || e.parameter.email;
+      const limit = parseInt(e.parameter.limit) || 10;
+      const history = getWorkoutHistory(athleteId, limit);
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        history: history
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'getNextWeights') {
+      const athleteId = e.parameter.athleteId || e.parameter.email;
+      const weights = getNextWeights(athleteId);
+      return ContentService.createTextOutput(JSON.stringify(weights))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'getAthleteData') {
+      const email = e.parameter.email;
+      return handleStudentRequest(ss, email);
+    }
+
+    // ===== GRIT CHALLENGE ACTIONS =====
+    if (action === 'getGritChallenge') {
+      var gritResult = handleGetGritChallenge(ss, e.parameter.email);
+      return ContentService.createTextOutput(JSON.stringify(gritResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'getGritAdminData') {
+      var gritAdminResult = handleGetGritAdminData(ss);
+      return ContentService.createTextOutput(JSON.stringify(gritAdminResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ===== EXISTING DASHBOARD LOGIC =====
+    if (e.parameter.admin === 'true') {
+      return handleAdminRequest(ss);
+    }
+
+    return handleStudentRequest(ss, e.parameter.email);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: error.toString(),
+      stack: error.stack,
+      authenticated: false
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// ========================================
+// doPost - Handle POST requests
+// ========================================
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+
+    if (data.action === 'saveWorkout') {
+      var result = saveWorkout(
+        data.email,
+        data.sessionType,
+        data.exercisesCompleted,
+        data.notes || '',
+        data.duration || 45,
+        data.rpe || null
+      );
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (data.action === 'updateStudent') {
+      return updateStudent(data.athleteId, data.updates);
+    }
+
+    // ===== GRIT CHALLENGE SAVE =====
+    if (data.action === 'saveGritChallenge') {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var gritResult = handleSaveGritChallenge(ss, data.email, data.challenge);
+      return ContentService.createTextOutput(JSON.stringify(gritResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (data.athleteId && data.updates) {
+      return updateStudent(data.athleteId, data.updates);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: 'Unknown POST action'
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// ========================================
+// GRIT CHALLENGE FUNCTIONS
+// Uses existing Grit_Journal tab with added columns:
+//   Challenge_JSON, Challenge_Status, Challenge_Updated
+// ========================================
+
+// Helper: look up Athlete_ID from email
+function lookupAthleteIdByEmail(ss, email) {
+  var athletesSheet = ss.getSheetByName('Athletes');
+  if (!athletesSheet) return null;
+
+  var data = athletesSheet.getDataRange().getValues();
+  var headers = data[0];
+  var emailCol = headers.indexOf('Email');
+  var idCol = headers.indexOf('Athlete_ID');
+  if (emailCol === -1 || idCol === -1) return null;
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][emailCol] && data[i][emailCol].toString().toLowerCase() === email.toLowerCase()) {
+      return data[i][idCol];
+    }
+  }
+  return null;
+}
+
+// Ensure Grit_Journal has the challenge columns
+function ensureGritChallengeColumns(ss) {
+  var sheet = ss.getSheetByName('Grit_Journal');
+  if (!sheet) {
+    // Create the sheet with all needed columns
+    sheet = ss.insertSheet('Grit_Journal');
+    sheet.getRange('A1:F1').setValues([['Athlete_ID', 'Date', 'Grit_Assignment', 'Challenge_JSON', 'Challenge_Status', 'Challenge_Updated']]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    return sheet;
+  }
+
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+  // Add missing columns
+  var needed = ['Challenge_JSON', 'Challenge_Status', 'Challenge_Updated'];
+  for (var n = 0; n < needed.length; n++) {
+    if (headers.indexOf(needed[n]) === -1) {
+      var newCol = sheet.getLastColumn() + 1;
+      sheet.getRange(1, newCol).setValue(needed[n]);
+    }
+  }
+
   return sheet;
 }
 
-// ============================================
 // GET: Load a student's Grit Challenge
-// ============================================
 // Called via: ?action=getGritChallenge&email=student@fis.edu
-function handleGetGritChallenge(email) {
+function handleGetGritChallenge(ss, email) {
   try {
-    const sheet = getGritSheet();
-    const data = sheet.getDataRange().getValues();
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) {
+      return { success: true, challenge: null };
+    }
 
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0].toString().toLowerCase() === email.toLowerCase()) {
-        const challengeJSON = data[i][1];
-        if (challengeJSON) {
-          const challenge = JSON.parse(challengeJSON);
-          return {
-            success: true,
-            challenge: challenge
-          };
+    var sheet = ensureGritChallengeColumns(ss);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idCol = headers.indexOf('Athlete_ID');
+    var jsonCol = headers.indexOf('Challenge_JSON');
+
+    if (idCol === -1 || jsonCol === -1) {
+      return { success: true, challenge: null };
+    }
+
+    // Find the row with challenge data for this athlete
+    // Search from bottom up to get most recent if multiple rows
+    for (var i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][idCol]).trim() == String(athleteId).trim()) {
+        var challengeJSON = data[i][jsonCol];
+        if (challengeJSON && String(challengeJSON).trim() !== '') {
+          try {
+            var challenge = JSON.parse(challengeJSON);
+            return { success: true, challenge: challenge };
+          } catch (parseErr) {
+            // Malformed JSON, skip
+          }
         }
       }
     }
 
-    // No challenge found for this student
-    return {
-      success: true,
-      challenge: null
-    };
+    return { success: true, challenge: null };
+
   } catch (error) {
-    return {
-      success: false,
-      error: 'Error loading Grit challenge: ' + error.message
-    };
+    return { success: false, error: 'Error loading Grit challenge: ' + error.message };
   }
 }
 
-// ============================================
 // POST: Save/Update a student's Grit Challenge
-// ============================================
 // Called via POST with body:
 // { action: 'saveGritChallenge', email: 'student@fis.edu', challenge: {...} }
-function handleSaveGritChallenge(email, challenge) {
+function handleSaveGritChallenge(ss, email, challenge) {
   try {
-    const sheet = getGritSheet();
-    const data = sheet.getDataRange().getValues();
-    const challengeJSON = JSON.stringify(challenge);
-    const now = new Date().toISOString();
-    const status = challenge.status || 'active';
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) {
+      return { success: false, error: 'No athlete found for email: ' + email };
+    }
 
-    // Look for existing row
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0].toString().toLowerCase() === email.toLowerCase()) {
-        // Update existing row
-        sheet.getRange(i + 1, 2).setValue(challengeJSON);
-        sheet.getRange(i + 1, 3).setValue(now);
-        sheet.getRange(i + 1, 4).setValue(status);
+    var sheet = ensureGritChallengeColumns(ss);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idCol = headers.indexOf('Athlete_ID');
+    var jsonCol = headers.indexOf('Challenge_JSON');
+    var statusCol = headers.indexOf('Challenge_Status');
+    var updatedCol = headers.indexOf('Challenge_Updated');
+
+    var challengeJSON = JSON.stringify(challenge);
+    var now = new Date();
+    var status = challenge.status || 'active';
+
+    // Look for existing row with challenge data for this athlete
+    for (var i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][idCol]).trim() == String(athleteId).trim()) {
+        var existingJSON = data[i][jsonCol];
+        if (existingJSON && String(existingJSON).trim() !== '') {
+          // Update this row
+          sheet.getRange(i + 1, jsonCol + 1).setValue(challengeJSON);
+          if (statusCol >= 0) sheet.getRange(i + 1, statusCol + 1).setValue(status);
+          if (updatedCol >= 0) sheet.getRange(i + 1, updatedCol + 1).setValue(now);
+          return { success: true, updated: true };
+        }
+      }
+    }
+
+    // No existing challenge row — find any row for this athlete to update,
+    // or create a new row
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idCol]).trim() == String(athleteId).trim()) {
+        // Update the first row found for this athlete
+        sheet.getRange(i + 1, jsonCol + 1).setValue(challengeJSON);
+        if (statusCol >= 0) sheet.getRange(i + 1, statusCol + 1).setValue(status);
+        if (updatedCol >= 0) sheet.getRange(i + 1, updatedCol + 1).setValue(now);
         return { success: true, updated: true };
       }
     }
 
-    // New row
-    sheet.appendRow([email, challengeJSON, now, status]);
+    // No row at all for this athlete — create new
+    var newRow = [];
+    for (var h = 0; h < headers.length; h++) {
+      if (headers[h] === 'Athlete_ID') newRow.push(athleteId);
+      else if (headers[h] === 'Date') newRow.push(now);
+      else if (headers[h] === 'Challenge_JSON') newRow.push(challengeJSON);
+      else if (headers[h] === 'Challenge_Status') newRow.push(status);
+      else if (headers[h] === 'Challenge_Updated') newRow.push(now);
+      else newRow.push('');
+    }
+    sheet.appendRow(newRow);
     return { success: true, updated: false };
+
   } catch (error) {
-    return {
-      success: false,
-      error: 'Error saving Grit challenge: ' + error.message
-    };
+    return { success: false, error: 'Error saving Grit challenge: ' + error.message };
   }
 }
 
-// ============================================
-// GET: Load all Grit Challenges (for admin)
-// ============================================
+// GET: Load all Grit Challenges (for admin panel)
 // Called via: ?action=getGritAdminData
-function handleGetGritAdminData() {
+function handleGetGritAdminData(ss) {
   try {
-    const sheet = getGritSheet();
-    const data = sheet.getDataRange().getValues();
-    const challenges = [];
+    var sheet = ensureGritChallengeColumns(ss);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idCol = headers.indexOf('Athlete_ID');
+    var jsonCol = headers.indexOf('Challenge_JSON');
+    var statusCol = headers.indexOf('Challenge_Status');
+    var updatedCol = headers.indexOf('Challenge_Updated');
 
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] && data[i][1]) {
+    // Also load athlete names/emails for display
+    var athletesSheet = ss.getSheetByName('Athletes');
+    var athleteMap = {};
+    if (athletesSheet) {
+      var aData = athletesSheet.getDataRange().getValues();
+      var aHeaders = aData[0];
+      var aIdCol = aHeaders.indexOf('Athlete_ID');
+      var aEmailCol = aHeaders.indexOf('Email');
+      var aNameCol = aHeaders.indexOf('Name');
+      var aFirstCol = aHeaders.indexOf('First_Name');
+      var aLastCol = aHeaders.indexOf('Last_Name');
+      for (var a = 1; a < aData.length; a++) {
+        var aid = aData[a][aIdCol];
+        if (!aid) continue;
+        var aName = '';
+        if (aNameCol >= 0 && aData[a][aNameCol]) {
+          aName = aData[a][aNameCol];
+        } else if (aFirstCol >= 0) {
+          aName = aData[a][aFirstCol] + ' ' + (aLastCol >= 0 ? aData[a][aLastCol] || '' : '');
+        }
+        athleteMap[String(aid).trim()] = {
+          name: aName.trim(),
+          email: aEmailCol >= 0 ? aData[a][aEmailCol] : ''
+        };
+      }
+    }
+
+    var challenges = [];
+    // Track which athletes we've already added (use last row = most recent)
+    var seen = {};
+
+    for (var i = data.length - 1; i >= 1; i--) {
+      var rowId = String(data[i][idCol] || '').trim();
+      if (!rowId || seen[rowId]) continue;
+
+      var jsonVal = jsonCol >= 0 ? data[i][jsonCol] : '';
+      if (!jsonVal || String(jsonVal).trim() === '') continue;
+
+      try {
+        var challenge = JSON.parse(jsonVal);
+        var athleteInfo = athleteMap[rowId] || {};
+        challenges.push({
+          athleteId: rowId,
+          name: athleteInfo.name || '',
+          email: athleteInfo.email || '',
+          challenge: challenge,
+          status: statusCol >= 0 ? data[i][statusCol] : '',
+          lastUpdated: updatedCol >= 0 ? data[i][updatedCol] : ''
+        });
+        seen[rowId] = true;
+      } catch (parseErr) {
+        // Skip malformed
+      }
+    }
+
+    return { success: true, challenges: challenges };
+
+  } catch (error) {
+    return { success: false, error: 'Error loading admin data: ' + error.message };
+  }
+}
+
+
+// ========================================
+// ADMIN PANEL FUNCTIONS
+// ========================================
+
+// Get all students with their strength data + session counts from Workout_Logs
+function getAllStudents(ss) {
+  try {
+    const athletesSheet = ss.getSheetByName('Athletes');
+    const strengthSheet = ss.getSheetByName('Strength');
+    const logsSheet = ss.getSheetByName('Workout_Logs');
+
+    if (!athletesSheet) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: 'Athletes sheet not found'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Get athletes data
+    const athletesData = athletesSheet.getDataRange().getValues();
+    const athletesHeaders = athletesData[0];
+
+    // Get strength data if sheet exists
+    var strengthData = [];
+    var strengthHeaders = [];
+    if (strengthSheet) {
+      strengthData = strengthSheet.getDataRange().getValues();
+      strengthHeaders = strengthData[0];
+    }
+
+    // Count sessions per athlete from Workout_Logs
+    var sessionCounts = {};
+    var lastSessionDates = {};
+    if (logsSheet && logsSheet.getLastRow() > 1) {
+      var logsData = logsSheet.getDataRange().getValues();
+      for (var i = 1; i < logsData.length; i++) {
+        var logId = String(logsData[i][0]).trim();
+        if (!logId) continue;
+        if (!sessionCounts[logId]) {
+          sessionCounts[logId] = 0;
+          lastSessionDates[logId] = null;
+        }
+        sessionCounts[logId]++;
         try {
-          const challenge = JSON.parse(data[i][1]);
-          challenges.push({
-            email: data[i][0],
-            challenge: challenge,
-            lastUpdated: data[i][2],
-            status: data[i][3]
-          });
-        } catch (e) {
-          // Skip malformed rows
+          var logDate = new Date(logsData[i][1]);
+          if (!isNaN(logDate.getTime())) {
+            if (!lastSessionDates[logId] || logDate > lastSessionDates[logId]) {
+              lastSessionDates[logId] = logDate;
+            }
+          }
+        } catch(e) {}
+      }
+    }
+
+    // Build student list
+    var students = [];
+    for (var i = 1; i < athletesData.length; i++) {
+      var row = athletesData[i];
+      var athleteId = row[athletesHeaders.indexOf('Athlete_ID')];
+      if (!athleteId) continue;
+
+      var nameCol = athletesHeaders.indexOf('Name');
+      var firstNameCol = athletesHeaders.indexOf('First_Name');
+      var lastNameCol = athletesHeaders.indexOf('Last_Name');
+      var name = '';
+      if (nameCol >= 0 && row[nameCol]) {
+        name = row[nameCol];
+      } else if (firstNameCol >= 0) {
+        name = row[firstNameCol] + ' ' + (lastNameCol >= 0 ? row[lastNameCol] || '' : '');
+      }
+
+      var student = {
+        Athlete_ID: athleteId,
+        Name: name.trim(),
+        Email: row[athletesHeaders.indexOf('Email')] || '',
+        Grade: row[athletesHeaders.indexOf('Grade')] || row[athletesHeaders.indexOf('Year_Group')] || '',
+        Gender: row[athletesHeaders.indexOf('Gender')] || ''
+      };
+
+      // Find matching strength data
+      var strengthRow = null;
+      if (strengthData.length > 1) {
+        var strIdCol = strengthHeaders.indexOf('Athlete_ID');
+        for (var j = 1; j < strengthData.length; j++) {
+          if (strengthData[j][strIdCol] == athleteId) {
+            strengthRow = strengthData[j];
+            break;
+          }
+        }
+      }
+
+      // Add strength fields
+      var patterns = ['Squat', 'Push', 'Pull', 'Hinge', 'Lunge', 'Press'];
+      for (var p = 0; p < patterns.length; p++) {
+        var pat = patterns[p];
+        if (strengthRow) {
+          var techIdx = strengthHeaders.indexOf(pat + '_Tech');
+          var strIdx = strengthHeaders.indexOf(pat + '_Str');
+          student[pat + '_Tech'] = techIdx >= 0 ? (strengthRow[techIdx] || 0) : 0;
+          student[pat + '_Str'] = strIdx >= 0 ? (strengthRow[strIdx] || 0) : 0;
+        } else {
+          student[pat + '_Tech'] = 0;
+          student[pat + '_Str'] = 0;
+        }
+      }
+
+      // Add notes from Strength sheet
+      if (strengthRow) {
+        var notesIdx = strengthHeaders.indexOf('Notes');
+        if (notesIdx >= 0) student.Notes = strengthRow[notesIdx] || '';
+      }
+
+      // Session count from Workout_Logs
+      var strId = String(athleteId).trim();
+      student.Total_Sessions = sessionCounts[strId] || 0;
+      student.Last_Session_Date = lastSessionDates[strId] ?
+        Utilities.formatDate(lastSessionDates[strId], ss.getSpreadsheetTimeZone(), 'MMM dd, yyyy') : '';
+
+      students.push(student);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      students: students
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Get config value (e.g., CurrentSession)
+function getConfig(ss, key) {
+  try {
+    var configSheet = ss.getSheetByName('Config');
+    if (!configSheet) {
+      configSheet = ss.insertSheet('Config');
+      configSheet.getRange('A1:B1').setValues([['Key', 'Value']]);
+      configSheet.getRange('A2:B2').setValues([['CurrentSession', '1']]);
+    }
+
+    var data = configSheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] === key) {
+        return ContentService.createTextOutput(JSON.stringify({
+          success: true,
+          key: key,
+          value: data[i][1]
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    var defaultValue = '';
+    if (key === 'CurrentSession') defaultValue = '1';
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      key: key,
+      value: defaultValue
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Set config value
+function setConfig(ss, key, value) {
+  try {
+    var configSheet = ss.getSheetByName('Config');
+    if (!configSheet) {
+      configSheet = ss.insertSheet('Config');
+      configSheet.getRange('A1:B1').setValues([['Key', 'Value']]);
+    }
+
+    var data = configSheet.getDataRange().getValues();
+    var found = false;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] === key) {
+        configSheet.getRange(i + 1, 2).setValue(value);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      var lastRow = configSheet.getLastRow();
+      configSheet.getRange(lastRow + 1, 1, 1, 2).setValues([[key, value]]);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      key: key,
+      value: value
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Update student data — returns saved values for confirmation
+function updateStudent(athleteId, updates) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var strengthSheet = ss.getSheetByName('Strength');
+
+    if (!strengthSheet) {
+      strengthSheet = ss.insertSheet('Strength');
+      strengthSheet.getRange('A1:N1').setValues([[
+        'Athlete_ID', 'Date',
+        'Squat_Tech', 'Squat_Str',
+        'Push_Tech', 'Push_Str',
+        'Pull_Tech', 'Pull_Str',
+        'Hinge_Tech', 'Hinge_Str',
+        'Lunge_Tech', 'Lunge_Str',
+        'Press_Tech', 'Press_Str'
+      ]]);
+    }
+
+    // Validate fields
+    var validFields = [
+      'Squat_Tech', 'Squat_Str', 'Push_Tech', 'Push_Str',
+      'Pull_Tech', 'Pull_Str', 'Hinge_Tech', 'Hinge_Str',
+      'Lunge_Tech', 'Lunge_Str', 'Press_Tech', 'Press_Str',
+      'Notes', 'Date'
+    ];
+
+    var data = strengthSheet.getDataRange().getValues();
+    var headers = data[0];
+    var idCol = headers.indexOf('Athlete_ID');
+
+    // Find the student row
+    var studentRow = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][idCol] == athleteId) {
+        studentRow = i + 1;
+        break;
+      }
+    }
+
+    if (studentRow === -1) {
+      studentRow = strengthSheet.getLastRow() + 1;
+      strengthSheet.getRange(studentRow, idCol + 1).setValue(athleteId);
+      var dateCol = headers.indexOf('Date');
+      if (dateCol >= 0) {
+        strengthSheet.getRange(studentRow, dateCol + 1).setValue(new Date());
+      }
+    }
+
+    // Apply updates and track what was saved
+    var savedValues = {};
+    for (var field in updates) {
+      if (updates.hasOwnProperty(field)) {
+        var value = updates[field];
+        var colIdx = headers.indexOf(field);
+
+        // Validate tech/str values are in range
+        if (field.indexOf('_Tech') >= 0) {
+          value = Math.max(0, Math.min(5, parseInt(value) || 0));
+        }
+        if (field.indexOf('_Str') >= 0) {
+          value = Math.max(0, Math.min(5, parseInt(value) || 0));
+        }
+
+        if (colIdx >= 0) {
+          strengthSheet.getRange(studentRow, colIdx + 1).setValue(value);
+          savedValues[field] = value;
+        } else if (validFields.indexOf(field) >= 0) {
+          // Column doesn't exist but field is valid — add it
+          var newCol = strengthSheet.getLastColumn() + 1;
+          strengthSheet.getRange(1, newCol).setValue(field);
+          strengthSheet.getRange(studentRow, newCol).setValue(value);
+          savedValues[field] = value;
+          headers.push(field);
         }
       }
     }
 
-    return {
+    // Update the Date column to track when last modified
+    var dateCol = headers.indexOf('Date');
+    if (dateCol >= 0) {
+      strengthSheet.getRange(studentRow, dateCol + 1).setValue(new Date());
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
       success: true,
-      challenges: challenges
-    };
+      athleteId: athleteId,
+      updated: Object.keys(savedValues),
+      savedValues: savedValues
+    })).setMimeType(ContentService.MimeType.JSON);
+
   } catch (error) {
-    return {
-      success: false,
-      error: 'Error loading admin data: ' + error.message
-    };
-  }
-}
-
-// ============================================
-// ROUTING - Add these cases to existing doGet/doPost
-// ============================================
-
-// Add to existing doGet(e) function:
-//
-//   case 'getGritChallenge':
-//     result = handleGetGritChallenge(e.parameter.email);
-//     break;
-//   case 'getGritAdminData':
-//     result = handleGetGritAdminData();
-//     break;
-
-// Add to existing doPost(e) function:
-//
-//   case 'saveGritChallenge':
-//     result = handleSaveGritChallenge(payload.email, payload.challenge);
-//     break;
-
-// ============================================
-// STANDALONE doGet/doPost (if deploying separately)
-// ============================================
-// If these are added to the EXISTING Apps Script, only the handler
-// functions and routing cases above are needed. The doGet/doPost
-// below are provided as reference for what the routing looks like.
-
-/*
-function doGet(e) {
-  const action = e.parameter.action;
-  let result;
-
-  switch (action) {
-    case 'getGritChallenge':
-      result = handleGetGritChallenge(e.parameter.email);
-      break;
-    case 'getGritAdminData':
-      result = handleGetGritAdminData();
-      break;
-    default:
-      result = { success: false, error: 'Unknown action: ' + action };
-  }
-
-  return ContentService.createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  let payload;
-  try {
-    payload = JSON.parse(e.postData.contents);
-  } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
-      error: 'Invalid JSON payload'
+      error: error.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
+}
 
-  let result;
-  switch (payload.action) {
-    case 'saveGritChallenge':
-      result = handleSaveGritChallenge(payload.email, payload.challenge);
-      break;
-    default:
-      result = { success: false, error: 'Unknown action: ' + payload.action };
+
+// ========================================
+// EXISTING DASHBOARD FUNCTIONS
+// ========================================
+
+function handleStudentRequest(ss, userEmail) {
+  if (!userEmail) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: 'No email provided',
+      authenticated: false
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
   }
 
-  return ContentService.createTextOutput(JSON.stringify(result))
+  var athletesSheet = ss.getSheetByName('Athletes');
+  if (!athletesSheet) {
+    throw new Error('Athletes sheet not found');
+  }
+
+  var data = athletesSheet.getDataRange().getValues();
+  var headers = data[0];
+  var emailColIndex = headers.indexOf('Email');
+
+  if (emailColIndex === -1) {
+    throw new Error('Email column not found');
+  }
+
+  var athleteRow = null;
+  var athleteId = null;
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][emailColIndex] && data[i][emailColIndex].toLowerCase() === userEmail.toLowerCase()) {
+      athleteRow = data[i];
+      athleteId = data[i][0];
+      break;
+    }
+  }
+
+  if (!athleteRow) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: 'No athlete found with this email',
+      authenticated: false,
+      email: userEmail
+    }))
     .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var athlete = buildAthleteObject(ss, athleteRow, headers, athleteId);
+
+  return ContentService.createTextOutput(JSON.stringify({
+    authenticated: true,
+    athlete: athlete
+  }))
+  .setMimeType(ContentService.MimeType.JSON);
 }
-*/
+
+function handleAdminRequest(ss) {
+  var athletesSheet = ss.getSheetByName('Athletes');
+  if (!athletesSheet) {
+    throw new Error('Athletes sheet not found');
+  }
+
+  var data = athletesSheet.getDataRange().getValues();
+  var headers = data[0];
+  var athletes = [];
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0]) {
+      var athleteId = data[i][0];
+      var athlete = buildAthleteObject(ss, data[i], headers, athleteId);
+      athletes.push(athlete);
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({
+    authenticated: true,
+    admin: true,
+    athletes: athletes
+  }))
+  .setMimeType(ContentService.MimeType.JSON);
+}
+
+function buildAthleteObject(ss, athleteRow, headers, athleteId) {
+  var athlete = {};
+  headers.forEach(function(header, index) {
+    athlete[header] = athleteRow[index];
+  });
+
+  // Psychology data
+  var psychData = getLatestAssessment(ss, 'Psych_Assessments', athleteId);
+  var gritData = getLatestAssessment(ss, 'Grit_Journal', athleteId);
+
+  if (psychData || gritData) {
+    athlete.psych = {};
+
+    if (gritData && gritData.scores.Grit_Assignment) {
+      athlete.psych.Grit = gritData.scores.Grit_Assignment;
+    }
+
+    if (psychData) {
+      athlete.psych.Mindset = psychData.scores.Mindset;
+      athlete.psych.Focus_Engagement = psychData.scores.Focus_Engagement;
+      athlete.psych.Effort_Work_Ethic = psychData.scores.Effort_Work_Ethic;
+      athlete.psych.Coachability = psychData.scores.Coachability;
+      athlete.psych.Mental_Toughness = psychData.scores.Mental_Toughness;
+    }
+
+    var psychHistory = psychData ? psychData.history : [];
+    var gritHistory = gritData ? gritData.history : [];
+    athlete.psych_history = psychHistory.concat(gritHistory).sort(function(a, b) {
+      return new Date(b.Date) - new Date(a.Date);
+    });
+  } else {
+    athlete.psych = {};
+    athlete.psych_history = [];
+  }
+
+  // Strength data
+  var strengthData = getLatestAssessment(ss, 'Strength', athleteId);
+  if (strengthData) {
+    athlete.strength = strengthData.scores;
+    athlete.strength_history = strengthData.history;
+  } else {
+    athlete.strength = {};
+    athlete.strength_history = [];
+  }
+
+  // Performance data
+  var performanceData = getLatestAssessment(ss, 'Performance', athleteId);
+  if (performanceData) {
+    athlete.performance = performanceData.scores;
+    athlete.performance_history = performanceData.history;
+  } else {
+    athlete.performance = {};
+    athlete.performance_history = [];
+  }
+
+  // Mobility data
+  var mobilityData = getLatestAssessment(ss, 'Mobility', athleteId);
+  if (mobilityData) {
+    athlete.mobility = mobilityData.scores;
+    athlete.mobility_history = mobilityData.history;
+  } else {
+    athlete.mobility = {};
+    athlete.mobility_history = [];
+  }
+
+  // Recovery data
+  var recoveryData = getLatestAssessment(ss, 'Recovery', athleteId);
+  if (recoveryData) {
+    athlete.recovery = recoveryData.scores;
+    athlete.recovery_history = recoveryData.history;
+  } else {
+    athlete.recovery = {};
+    athlete.recovery_history = [];
+  }
+
+  return athlete;
+}
+
+function getLatestAssessment(ss, sheetName, athleteId) {
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return null;
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return null;
+
+  var headers = data[0];
+  var idColIndex = headers.indexOf('Athlete_ID');
+  var dateColIndex = headers.indexOf('Date');
+
+  if (idColIndex === -1) return null;
+
+  var athleteEntries = [];
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][idColIndex] == athleteId) {
+      var entry = {};
+      headers.forEach(function(header, index) {
+        entry[header] = data[i][index];
+      });
+      athleteEntries.push(entry);
+    }
+  }
+
+  if (athleteEntries.length === 0) return null;
+
+  if (dateColIndex !== -1) {
+    athleteEntries.sort(function(a, b) {
+      return new Date(b.Date) - new Date(a.Date);
+    });
+  }
+
+  return {
+    scores: athleteEntries[0],
+    history: athleteEntries
+  };
+}
+
+
+// ========================================
+// WORKOUT SYSTEM FUNCTIONS
+// ========================================
+
+function saveWorkout(athleteId, sessionType, exercisesCompleted, notes, durationMinutes, rpe) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logsSheet = ss.getSheetByName('Workout_Logs');
+
+  if (!logsSheet) {
+    throw new Error('Workout_Logs sheet not found. Please create it first.');
+  }
+
+  var data = logsSheet.getDataRange().getValues();
+  var lastSessionNumber = 0;
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === String(athleteId).trim()) {
+      var sessionNum = parseInt(data[i][3]) || 0;
+      if (sessionNum > lastSessionNumber) {
+        lastSessionNumber = sessionNum;
+      }
+    }
+  }
+
+  var newSessionNumber = lastSessionNumber + 1;
+  var sessionDate = new Date();
+
+  logsSheet.appendRow([
+    athleteId,
+    sessionDate,
+    sessionType,
+    newSessionNumber,
+    exercisesCompleted,
+    notes || '',
+    durationMinutes || 45,
+    'TRUE',
+    rpe || ''
+  ]);
+
+  return {
+    success: true,
+    sessionNumber: newSessionNumber,
+    message: 'Workout saved successfully!'
+  };
+}
+
+function getLastSession(athleteId) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logsSheet = ss.getSheetByName('Workout_Logs');
+
+  if (!logsSheet) {
+    return { type: null, number: 0 };
+  }
+
+  var data = logsSheet.getDataRange().getValues();
+  var lastSession = null;
+  var lastDate = null;
+  var searchId = String(athleteId).trim();
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === searchId) {
+      var sessionDate;
+      try {
+        sessionDate = new Date(data[i][1]);
+        if (isNaN(sessionDate.getTime())) sessionDate = new Date(0);
+      } catch(e) {
+        sessionDate = new Date(0);
+      }
+      if (!lastDate || sessionDate > lastDate) {
+        lastDate = sessionDate;
+        lastSession = {
+          type: data[i][2],
+          number: data[i][3],
+          date: data[i][1],
+          exercises: data[i][4],
+          sessionNumber: data[i][3]
+        };
+      }
+    }
+  }
+
+  if (!lastSession) {
+    return { type: null, number: 0, sessionNumber: 0 };
+  }
+  return lastSession;
+}
+
+function getLastSessionByType(athleteId, sessionType) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logsSheet = ss.getSheetByName('Workout_Logs');
+  if (!logsSheet) return null;
+
+  var data = logsSheet.getDataRange().getValues();
+  var lastSession = null;
+  var lastDate = null;
+  var searchId = String(athleteId).trim();
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === searchId && String(data[i][2]).trim() === sessionType) {
+      var sessionDate;
+      try {
+        sessionDate = new Date(data[i][1]);
+        if (isNaN(sessionDate.getTime())) sessionDate = new Date(0);
+      } catch(e) {
+        sessionDate = new Date(0);
+      }
+      if (!lastDate || sessionDate > lastDate) {
+        lastDate = sessionDate;
+        lastSession = {
+          type: data[i][2],
+          number: data[i][3],
+          date: data[i][1],
+          exercises: data[i][4]
+        };
+      }
+    }
+  }
+  return lastSession;
+}
+
+function getWorkoutHistory(athleteId, limit) {
+  limit = limit || 10;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logsSheet = ss.getSheetByName('Workout_Logs');
+  if (!logsSheet) return [];
+
+  var data = logsSheet.getDataRange().getValues();
+  var sessions = [];
+  var timeZone = ss.getSpreadsheetTimeZone();
+  var searchId = String(athleteId).trim();
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === searchId) {
+      var dateStr = '';
+      try {
+        var d = new Date(data[i][1]);
+        if (!isNaN(d.getTime())) {
+          dateStr = Utilities.formatDate(d, timeZone, 'MMM dd, yyyy');
+        } else {
+          dateStr = String(data[i][1]);
+        }
+      } catch(e) {
+        dateStr = String(data[i][1]);
+      }
+
+      sessions.push({
+        date: dateStr,
+        type: data[i][2] || '',
+        number: data[i][3] || 0,
+        exercises: data[i][4] || '',
+        notes: data[i][5] || '',
+        duration: data[i][6] || 0,
+        completed: data[i][7] || '',
+        rpe: data[i][8] || ''
+      });
+    }
+  }
+
+  sessions.sort(function(a, b) { return b.number - a.number; });
+  return sessions.slice(0, limit);
+}
+
+function getNextWeights(athleteId) {
+  var lastSession = getLastSession(athleteId);
+  if (!lastSession.type || !lastSession.exercises) {
+    return {};
+  }
+
+  var PROGRESSION = {
+    'Squat': 2.5,
+    'Hinge': 2.5,
+    'Push': 2.0,
+    'Pull': 2.0,
+    'Lunge': 1.5,
+    'Press': 1.0
+  };
+
+  try {
+    var exercises = JSON.parse(lastSession.exercises);
+    var nextWeights = {};
+    for (var pattern in exercises) {
+      if (exercises.hasOwnProperty(pattern)) {
+        var data = exercises[pattern];
+        if (data.weight && data.weight > 0) {
+          var progression = PROGRESSION[pattern] || 0;
+          nextWeights[pattern] = data.weight + progression;
+        }
+      }
+    }
+    return nextWeights;
+  } catch (e) {
+    Logger.log('Error parsing exercises JSON: ' + e);
+    return {};
+  }
+}
