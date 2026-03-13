@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grit Challenge | Athlete Academy</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --burgundy: #874B46; --burgundy-dark: #6a3a36; --burgundy-light: #a06b66;
+            --gold: #D4AF37; --gold-light: #f5e6b3;
+            --black: #1a1a1a; --white: #ffffff; --off-white: #f8f6f5;
+            --grey: #555555; --light-grey: #e0dede;
+            --green: #22c55e; --green-dark: #16a34a;
+            --amber: #f59e0b; --blue: #2563eb;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--off-white); color: var(--black); min-height: 100vh; line-height: 1.6; }
+        
+        /* Welcome */
+        .welcome-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--burgundy-dark), var(--burgundy)); padding: 40px 20px; text-align: center; }
+        .welcome-icon { font-size: 80px; margin-bottom: 20px; }
+        .welcome-title { font-size: 2.2rem; font-weight: 800; color: white; margin-bottom: 12px; }
+        .welcome-subtitle { font-size: 1.1rem; color: rgba(255,255,255,0.9); margin-bottom: 40px; max-width: 400px; }
+        .sign-in-container { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 30px 40px; }
+        .demo-btn { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); }
+        .demo-btn button { background: var(--gold); color: var(--black); border: none; padding: 14px 32px; border-radius: 30px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        
+        /* Header */
+        .header { background: linear-gradient(135deg, var(--burgundy-dark), var(--burgundy)); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .header-icon { font-size: 1.6rem; }
+        .header-title { font-size: 1.1rem; font-weight: 700; color: white; }
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .header-user { color: rgba(255,255,255,0.9); font-size: 0.95rem; }
+        .header-link { color: var(--gold); text-decoration: none; font-size: 0.9rem; }
+        .help-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: 700; }
+        
+        /* Container */
+        .main-container { max-width: 900px; margin: 0 auto; padding: 24px; }
+        
+        /* Cards */
+        .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .card-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+        .card-subtitle { font-size: 0.95rem; color: var(--grey); margin-bottom: 20px; }
+        
+        /* Choice Cards */
+        .choice-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .choice-card { border: 3px solid var(--light-grey); border-radius: 14px; padding: 24px; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .choice-card:hover { border-color: var(--burgundy-light); }
+        .choice-card.selected { border-color: var(--burgundy); background: rgba(135,75,70,0.05); }
+        .choice-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .choice-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+        .choice-desc { font-size: 0.9rem; color: var(--grey); }
+        
+        /* Score Cards */
+        .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+        .score-card { border: 2px solid var(--light-grey); border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: all 0.2s; position: relative; }
+        .score-card:hover { border-color: var(--burgundy-light); }
+        .score-card.selected { border-color: var(--burgundy); background: rgba(135,75,70,0.05); }
+        .score-card.low-score { border-color: var(--amber); background: rgba(245,158,11,0.05); }
+        .score-card.low-score::after { content: 'Room to grow'; position: absolute; top: 6px; right: 6px; font-size: 0.6rem; background: var(--amber); color: white; padding: 2px 6px; border-radius: 8px; }
+        .score-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; }
+        .score-bar-wrap { height: 8px; background: var(--light-grey); border-radius: 4px; margin-bottom: 6px; }
+        .score-bar { height: 100%; background: var(--burgundy); border-radius: 4px; }
+        .score-value { font-size: 1.3rem; font-weight: 800; color: var(--burgundy); }
+        .score-raw { font-size: 0.8rem; color: var(--grey); }
+        
+        /* Forms */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+        .form-hint { font-size: 0.85rem; color: var(--grey); margin-bottom: 8px; }
+        .form-input, .form-textarea { width: 100%; padding: 14px 16px; border: 2px solid var(--light-grey); border-radius: 10px; font-size: 1rem; font-family: inherit; }
+        .form-input:focus, .form-textarea:focus { outline: none; border-color: var(--burgundy); }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        
+        /* Level Selector */
+        .level-selector { display: flex; gap: 8px; margin-bottom: 12px; }
+        .level-btn { flex: 1; padding: 12px 8px; border: 2px solid var(--light-grey); border-radius: 10px; background: white; cursor: pointer; text-align: center; }
+        .level-btn:hover { border-color: var(--burgundy-light); }
+        .level-btn.selected { border-color: var(--burgundy); background: rgba(135,75,70,0.08); }
+        .level-num { font-size: 1.3rem; font-weight: 800; color: var(--burgundy); }
+        .level-label { font-size: 0.7rem; color: var(--grey); }
+        .level-feedback { padding: 12px; border-radius: 8px; font-size: 0.9rem; background: var(--off-white); color: var(--grey); }
+        .level-feedback.good { background: rgba(34,197,94,0.1); color: var(--green-dark); }
+        .level-feedback.warning { background: rgba(245,158,11,0.1); color: #b45309; }
+        
+        /* Excuses */
+        .excuse-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .excuse-input { flex: 1; padding: 12px; border: 2px solid var(--light-grey); border-radius: 8px; font-size: 0.95rem; }
+        .excuse-input:focus { outline: none; border-color: var(--burgundy); }
+        .excuse-remove { background: none; border: none; color: #999; cursor: pointer; font-size: 1.2rem; padding: 0 8px; }
+        .add-btn { background: none; border: 2px dashed var(--light-grey); border-radius: 8px; padding: 10px; width: 100%; color: var(--grey); cursor: pointer; font-size: 0.9rem; margin-bottom: 16px; }
+        .add-btn:hover { border-color: var(--burgundy); color: var(--burgundy); }
+        .commitment-box { background: linear-gradient(135deg, var(--burgundy), var(--burgundy-dark)); border-radius: 12px; padding: 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; color: white; }
+        .commitment-box input { width: 22px; height: 22px; accent-color: var(--gold); }
+        .commitment-box label { font-weight: 600; cursor: pointer; }
+        
+        /* Timeline */
+        .timeline-container { background: white; border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+        .timeline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .timeline-title { font-size: 1.1rem; font-weight: 700; }
+        .timeline-scroll { overflow-x: auto; }
+        .timeline { display: flex; gap: 8px; min-width: max-content; }
+        .timeline-item { width: 100px; flex-shrink: 0; text-align: center; }
+        .timeline-date { font-size: 0.7rem; color: var(--grey); margin-bottom: 6px; }
+        .timeline-card { background: var(--off-white); border: 2px solid var(--light-grey); border-radius: 12px; padding: 12px 8px; cursor: pointer; min-height: 85px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .timeline-card:hover { border-color: var(--burgundy-light); }
+        .timeline-card.complete { border-color: var(--green); background: rgba(34,197,94,0.08); }
+        .timeline-card.current { border-color: var(--burgundy); box-shadow: 0 0 0 3px rgba(135,75,70,0.2); background: white; }
+        .timeline-card.locked { opacity: 0.5; cursor: default; }
+        .timeline-card.measure { border-top: 3px solid var(--gold); }
+        .timeline-card.holiday { background: rgba(59,130,246,0.08); border-color: var(--blue); border-style: dashed; }
+        .timeline-card.due { background: var(--burgundy); border-color: var(--burgundy); }
+        .timeline-num { font-size: 1.2rem; font-weight: 800; color: var(--burgundy); }
+        .timeline-card.complete .timeline-num { color: var(--green); }
+        .timeline-card.due .timeline-num { color: white; }
+        .timeline-label { font-size: 0.65rem; color: var(--grey); margin-top: 4px; }
+        .timeline-card.due .timeline-label { color: rgba(255,255,255,0.9); }
+        .timeline-status { font-size: 1rem; margin-top: 4px; }
+        
+        /* Progress Card */
+        .progress-card { background: linear-gradient(135deg, var(--black), #2d2d2d); border-radius: 16px; padding: 24px; color: white; margin-bottom: 16px; }
+        .progress-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .progress-goal-name { font-size: 1.3rem; font-weight: 700; }
+        .progress-tier { font-size: 0.8rem; opacity: 0.6; margin-top: 4px; }
+        .progress-update-btn { background: rgba(255,255,255,0.15); border: none; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
+        .progress-numbers { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .progress-num { text-align: center; }
+        .progress-num-value { font-size: 1.8rem; font-weight: 800; }
+        .progress-num-label { font-size: 0.75rem; opacity: 0.7; }
+        .progress-num.start .progress-num-value { opacity: 0.5; }
+        .progress-num.current .progress-num-value { color: var(--gold); }
+        .progress-num.target .progress-num-value { color: var(--green); }
+        .progress-arrow { font-size: 1.5rem; opacity: 0.3; }
+        .progress-bar-wrap { background: rgba(255,255,255,0.15); border-radius: 8px; height: 10px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--burgundy-light), var(--gold)); border-radius: 8px; }
+        .progress-pct { text-align: center; margin-top: 10px; font-size: 0.9rem; opacity: 0.8; }
+        
+        /* Time Card */
+        .time-card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+        .time-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .time-title { font-weight: 700; }
+        .time-subtitle { font-size: 0.85rem; color: var(--grey); }
+        .time-progress { display: flex; align-items: center; gap: 12px; }
+        .time-amount { font-size: 1.5rem; font-weight: 800; color: var(--burgundy); }
+        .time-of { font-size: 0.85rem; color: var(--grey); }
+        .time-bar { flex: 1; height: 10px; background: var(--light-grey); border-radius: 5px; }
+        .time-bar-fill { height: 100%; background: var(--green); border-radius: 5px; }
+        .time-add-row { display: flex; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--light-grey); flex-wrap: wrap; }
+        .time-add-row .form-group { margin-bottom: 0; flex: 1; min-width: 100px; }
+        .time-add-row .form-input { padding: 10px 12px; font-size: 0.9rem; }
+        .time-add-row .form-label { font-size: 0.8rem; margin-bottom: 4px; }
+        .time-add-btn { background: var(--burgundy); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; align-self: flex-end; }
+        
+        /* Canvas Card */
+        .canvas-card { background: linear-gradient(135deg, #1a365d, var(--blue)); border-radius: 14px; padding: 18px 24px; color: white; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .canvas-title { font-weight: 700; }
+        .canvas-subtitle { font-size: 0.85rem; opacity: 0.9; }
+        .canvas-btn { background: white; color: #1a365d; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        
+        /* Next Action */
+        .next-action { background: linear-gradient(135deg, var(--burgundy), var(--burgundy-dark)); border-radius: 16px; padding: 24px; color: white; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .next-action-label { font-size: 0.8rem; opacity: 0.8; margin-bottom: 4px; }
+        .next-action-title { font-size: 1.2rem; font-weight: 700; }
+        .next-action-btn { background: white; color: var(--burgundy); border: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 28px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; border: none; font-family: inherit; }
+        .btn-primary { background: linear-gradient(135deg, var(--burgundy), var(--burgundy-dark)); color: white; }
+        .btn-secondary { background: var(--light-grey); color: var(--black); }
+        .btn-success { background: linear-gradient(135deg, var(--green), var(--green-dark)); color: white; }
+        .btn-block { width: 100%; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-row { display: flex; gap: 12px; margin-top: 24px; }
+        
+        /* Toggle */
+        .toggle-link { background: none; border: none; color: var(--burgundy); font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 0; font-family: inherit; }
+        .toggle-content { background: var(--off-white); border-radius: 10px; padding: 16px; margin-top: 8px; display: none; }
+        .toggle-content.show { display: block; }
+        
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal { background: white; border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { background: linear-gradient(135deg, var(--burgundy-dark), var(--burgundy)); padding: 18px 24px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 1.1rem; font-weight: 700; }
+        .modal-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--light-grey); display: flex; gap: 12px; justify-content: flex-end; }
+        .modal-success { text-align: center; padding: 32px 24px; }
+        .modal-success-icon { font-size: 4rem; margin-bottom: 16px; }
+        .modal-success-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+        .modal-success-text { color: var(--grey); margin-bottom: 20px; }
+        
+        /* Assess */
+        .assess-options { display: flex; flex-direction: column; gap: 8px; }
+        .assess-option { border: 2px solid var(--light-grey); border-radius: 10px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+        .assess-option:hover { border-color: var(--burgundy-light); }
+        .assess-option.selected { border-color: var(--burgundy); background: rgba(135,75,70,0.05); }
+        .assess-num { width: 30px; height: 30px; background: var(--light-grey); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+        .assess-option.selected .assess-num { background: var(--burgundy); color: white; }
+        
+        /* Step Progress */
+        .step-progress { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
+        .step-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--light-grey); }
+        .step-dot.active { background: var(--burgundy); }
+        .step-dot.complete { background: var(--green); }
+        
+        /* Toast */
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--black); color: white; padding: 14px 28px; border-radius: 10px; font-size: 1rem; opacity: 0; transition: all 0.3s; z-index: 2000; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        
+        /* Screens */
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .setup-step { display: none; }
+        .setup-step.active { display: block; }
+        
+        /* Loading */
+        .loading-container { text-align: center; padding: 80px 20px; }
+        .spinner { width: 50px; height: 50px; border: 4px solid var(--light-grey); border-top-color: var(--burgundy); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Home Sessions */
+        .home-sessions { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--light-grey); }
+        .home-session-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--light-grey); font-size: 0.9rem; }
+        .home-session-date { color: var(--grey); min-width: 80px; }
+        .home-session-note { flex: 1; margin: 0 12px; }
+        .home-session-mins { font-weight: 600; color: var(--burgundy); }
+        
+        @media (max-width: 768px) {
+            .main-container { padding: 16px; }
+            .choice-cards { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: 1fr 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .next-action { flex-direction: column; gap: 16px; text-align: center; }
+            .progress-numbers { flex-wrap: wrap; justify-content: center; gap: 16px; }
+            .progress-arrow { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- WELCOME SCREEN -->
+    <div id="welcomeScreen" class="screen active">
+        <div class="welcome-screen">
+            <div class="welcome-icon">🔥</div>
+            <h1 class="welcome-title">Grit Challenge</h1>
+            <p class="welcome-subtitle">Choose something hard. Stick with it. Grow as an athlete.</p>
+            <div class="sign-in-container">
+                <div id="googleSignIn"></div>
+                <div class="demo-btn">
+                    <button onclick="demoLogin()">🧪 Test Without Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- LOADING SCREEN -->
+    <div id="loadingScreen" class="screen">
+        <div class="header">
+            <div class="header-left"><span class="header-icon">🔥</span><span class="header-title">Grit Challenge</span></div>
+        </div>
+        <div class="loading-container"><div class="spinner"></div><p>Loading...</p></div>
+    </div>
+    
+    <!-- MAIN APP -->
+    <div id="appScreen" class="screen">
+        <div class="header">
+            <div class="header-left"><span class="header-icon">🔥</span><span class="header-title">Grit Challenge</span></div>
+            <div class="header-right">
+                <span class="header-user" id="headerUser"></span>
+                <a href="index.html" class="header-link">← Dashboard</a>
+                <button class="help-btn" onclick="openModal('helpModal')">?</button>
+            </div>
+        </div>
+        
+        <div class="main-container">
+            <!-- SETUP VIEW -->
+            <div id="setupView" style="display: none;">
+                <!-- Step 1 -->
+                <div id="step1" class="setup-step active">
+                    <div class="step-progress"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+                    <div class="card">
+                        <div class="card-title">What will you work on?</div>
+                        <div class="card-subtitle">Pick the type of challenge that suits you.</div>
+                        <div class="choice-cards">
+                            <div class="choice-card" id="choiceFitness" onclick="selectType('fitness')">
+                                <div class="choice-icon">🏆</div>
+                                <div class="choice-title">Fitness Test</div>
+                                <div class="choice-desc">Improve one of your official fitness test scores</div>
+                            </div>
+                            <div class="choice-card" id="choicePersonal" onclick="selectType('personal')">
+                                <div class="choice-icon">🎯</div>
+                                <div class="choice-title">Personal Challenge</div>
+                                <div class="choice-desc">Work on a skill or goal that matters to you</div>
+                            </div>
+                        </div>
+                        <button class="toggle-link" onclick="togglePanel('scoringInfo')">ℹ️ How will I be scored?</button>
+                        <div class="toggle-content" id="scoringInfo">
+                            <div style="margin-bottom: 10px;"><strong>Mindset:</strong> Did you choose something hard?</div>
+                            <div style="margin-bottom: 10px;"><strong>Mental Toughness:</strong> Did you push through when you wanted to quit?</div>
+                            <div><strong>Grit:</strong> Did you show up and do the work for all 8 sessions?</div>
+                        </div>
+                        <button class="btn btn-primary btn-block" id="step1Btn" disabled onclick="goToStep(2)" style="margin-top: 20px;">Continue →</button>
+                    </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div id="step2" class="setup-step">
+                    <div class="step-progress"><div class="step-dot complete"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+                    <div class="card">
+                        <div class="card-title" id="step2Title">Pick your focus</div>
+                        <div class="card-subtitle" id="step2Subtitle">What will you improve?</div>
+                        <div id="fitnessOptions" style="display: none;"><div class="score-grid" id="scoreGrid"></div></div>
+                        <div id="personalOptions" style="display: none;">
+                            <div class="score-grid" id="personalGrid"></div>
+                            <div class="form-group" id="customDescGroup" style="display: none; margin-top: 20px;">
+                                <label class="form-label">Describe your challenge</label>
+                                <textarea class="form-textarea" id="customDesc" placeholder="What specifically will you work on?"></textarea>
+                            </div>
+                        </div>
+                        <button class="toggle-link" onclick="togglePanel('examplesPanel')" style="margin-top: 16px;">💡 Need ideas? See example sessions</button>
+                        <div class="toggle-content" id="examplesPanel"><div id="examplesList" style="font-size: 0.9rem;"></div></div>
+                        <div class="btn-row">
+                            <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+                            <button class="btn btn-primary" id="step2Btn" disabled onclick="goToStep(3)">Continue →</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div id="step3" class="setup-step">
+                    <div class="step-progress"><div class="step-dot complete"></div><div class="step-dot complete"></div><div class="step-dot active"></div><div class="step-dot"></div></div>
+                    <div class="card">
+                        <div class="card-title">Set your goal</div>
+                        <div class="card-subtitle">Where are you now and where do you want to be?</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Where I am NOW</label>
+                                <input type="text" class="form-input" id="baselineInput" placeholder="e.g. 220 cm, 5:30, Level 2">
+                                <div class="form-hint">You'll measure this in Session 1</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Where I want to BE</label>
+                                <input type="text" class="form-input" id="targetInput" placeholder="e.g. 245 cm, 4:45, Level 4">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">How will you measure it?</label>
+                            <input type="text" class="form-input" id="measureInput" placeholder="e.g. 3 max jumps, best one counts">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">How hard is this goal?</label>
+                            <div class="form-hint">Be honest. You should aim for 3 or 4.</div>
+                            <div class="level-selector">
+                                <div class="level-btn" onclick="selectLevel(1)"><div class="level-num">1</div><div class="level-label">Easy</div></div>
+                                <div class="level-btn" onclick="selectLevel(2)"><div class="level-num">2</div><div class="level-label">Stretch</div></div>
+                                <div class="level-btn" onclick="selectLevel(3)"><div class="level-num">3</div><div class="level-label">Hard</div></div>
+                                <div class="level-btn" onclick="selectLevel(4)"><div class="level-num">4</div><div class="level-label">V. Hard</div></div>
+                                <div class="level-btn" onclick="selectLevel(5)"><div class="level-num">5</div><div class="level-label">Extreme</div></div>
+                            </div>
+                            <div class="level-feedback" id="levelFeedback">Pick a difficulty level above.</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Why does this matter to you?</label>
+                            <textarea class="form-textarea" id="whyInput" placeholder="1-2 sentences about why you chose this"></textarea>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn btn-secondary" onclick="goToStep(2)">← Back</button>
+                            <button class="btn btn-primary" onclick="goToStep(4)">Continue →</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 4 -->
+                <div id="step4" class="setup-step">
+                    <div class="step-progress"><div class="step-dot complete"></div><div class="step-dot complete"></div><div class="step-dot complete"></div><div class="step-dot active"></div></div>
+                    <div class="card">
+                        <div class="card-title">Name your excuses</div>
+                        <div class="card-subtitle">What might stop you? Be honest — list them now so you can beat them later.</div>
+                        <div style="background: var(--off-white); border-radius: 10px; padding: 14px; margin-bottom: 16px; font-size: 0.9rem; color: var(--grey);">
+                            <strong style="color: var(--burgundy);">Common ones:</strong> "Too tired" • "Too much homework" • "Bad weather" • "Not seeing progress"
+                        </div>
+                        <div id="excusesList">
+                            <div class="excuse-row"><input type="text" class="excuse-input" placeholder="I might not finish because..."></div>
+                            <div class="excuse-row"><input type="text" class="excuse-input" placeholder="Another reason..."></div>
+                        </div>
+                        <button class="add-btn" onclick="addExcuse()">+ Add another</button>
+                        <div class="commitment-box" onclick="toggleCommit()">
+                            <input type="checkbox" id="commitCheck">
+                            <label for="commitCheck">I see my excuses. I'm doing it anyway. 💪</label>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn btn-secondary" onclick="goToStep(3)">← Back</button>
+                            <button class="btn btn-success" id="submitBtn" disabled onclick="submitChallenge()">✓ Start My Challenge</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PENDING VIEW -->
+            <div id="pendingView" style="display: none;">
+                <div class="card" style="text-align: center; padding: 48px;">
+                    <div style="font-size: 4rem; margin-bottom: 16px;">⏳</div>
+                    <div class="card-title">Challenge Submitted!</div>
+                    <p style="color: var(--grey); margin: 12px 0 24px;">Waiting for Mr. Bain to review your plan.</p>
+                    <div style="background: var(--off-white); border-radius: 12px; padding: 20px; text-align: left; max-width: 400px; margin: 0 auto;">
+                        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 8px;" id="pendingFocus"></div>
+                        <div style="color: var(--grey);" id="pendingGoal"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ACTIVE VIEW -->
+            <div id="activeView" style="display: none;">
+                <div class="next-action" id="nextAction">
+                    <div><div class="next-action-label">👆 YOUR NEXT STEP</div><div class="next-action-title" id="nextActionTitle">Complete Session 1</div></div>
+                    <button class="next-action-btn" onclick="openCurrentSession()">Let's Go →</button>
+                </div>
+                
+                <div class="progress-card">
+                    <div class="progress-top">
+                        <div><div class="progress-goal-name" id="progressGoal">Broad Jump</div><div class="progress-tier" id="progressTier">Fitness Test</div></div>
+                        <button class="progress-update-btn" onclick="openModal('updateModal')">📊 Update</button>
+                    </div>
+                    <div class="progress-numbers">
+                        <div class="progress-num start"><div class="progress-num-value" id="progStart">220</div><div class="progress-num-label">Start</div></div>
+                        <div class="progress-arrow">→</div>
+                        <div class="progress-num current"><div class="progress-num-value" id="progCurrent">232</div><div class="progress-num-label">Now</div></div>
+                        <div class="progress-arrow">→</div>
+                        <div class="progress-num target"><div class="progress-num-value" id="progTarget">245</div><div class="progress-num-label">Goal</div></div>
+                    </div>
+                    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progBar" style="width: 48%;"></div></div>
+                    <div class="progress-pct" id="progPct">48% of the way there</div>
+                </div>
+                
+                <div class="timeline-container">
+                    <div class="timeline-header"><div class="timeline-title">📅 Your Challenge Timeline</div></div>
+                    <div class="timeline-scroll"><div class="timeline" id="timeline"></div></div>
+                    <div class="home-sessions" id="homeSessions"></div>
+                </div>
+                
+                <div class="canvas-card">
+                    <div><div class="canvas-title">📤 Upload Evidence to Canvas</div><div class="canvas-subtitle">Videos, photos, and documents</div></div>
+                    <a href="#" class="canvas-btn" onclick="openCanvas(); return false;">Open Canvas →</a>
+                </div>
+                
+                <div class="time-card">
+                    <div class="time-header">
+                        <div><div class="time-title">⏱️ Time Outside Class</div><div class="time-subtitle">Target: 3 hours total (30 min/week)</div></div>
+                        <div class="time-progress"><div class="time-amount" id="timeTotal">0</div><div class="time-of">/ 180 min</div></div>
+                    </div>
+                    <div class="time-bar"><div class="time-bar-fill" id="timeBar" style="width: 0%;"></div></div>
+                    <div class="time-add-row">
+                        <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="logDate"></div>
+                        <div class="form-group"><label class="form-label">Minutes</label><input type="number" class="form-input" id="logMins" placeholder="30"></div>
+                        <div class="form-group" style="flex: 2;"><label class="form-label">What did you do?</label><input type="text" class="form-input" id="logNote" placeholder="Brief note"></div>
+                        <button class="time-add-btn" onclick="addTimeLog()">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- MODALS -->
+    <div class="modal-overlay" id="sessionModal">
+        <div class="modal">
+            <div class="modal-header"><div class="modal-title" id="sessionModalTitle">Session 1</div><button class="modal-close" onclick="closeModal('sessionModal')">✕</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">What did you do?</label><textarea class="form-textarea" id="sessionWhat" placeholder="Describe your session..."></textarea></div>
+                <div class="form-group"><label class="form-label">What excuse almost stopped you?</label><textarea class="form-textarea" id="sessionExcuse" style="min-height: 60px;"></textarea></div>
+                <div class="form-group"><label class="form-label">What made you do it anyway?</label><textarea class="form-textarea" id="sessionOvercome" style="min-height: 60px;"></textarea></div>
+                <div class="form-group"><label class="form-label">What did you learn?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('sessionModal')">Cancel</button><button class="btn btn-success" onclick="saveSession()">✓ Complete</button></div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="completeModal">
+        <div class="modal" style="max-width: 420px;">
+            <div class="modal-body">
+                <div class="modal-success">
+                    <div class="modal-success-icon">🎉</div>
+                    <div class="modal-success-title" id="completeTitle">Session Complete!</div>
+                    <div class="modal-success-text">Don't forget to upload your evidence to Canvas.</div>
+                    <button class="btn btn-primary" onclick="openCanvasAndClose()" style="margin-bottom: 10px;">📤 Upload to Canvas</button><br>
+                    <button class="btn btn-secondary" onclick="closeModal('completeModal')">I'll do it later</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="finalModal">
+        <div class="modal">
+            <div class="modal-header"><div class="modal-title">Session 8: Final Reflection</div><button class="modal-close" onclick="closeModal('finalModal')">✕</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">📊 Your final measurement</label><input type="text" class="form-input" id="finalMeasure" placeholder="What's your final result?"></div>
+                <div class="form-group"><label class="form-label">Did you reach your goal?</label><textarea class="form-textarea" id="finalReached" placeholder="Yes/No and why..."></textarea></div>
+                <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--light-grey);">
+                <div class="form-group">
+                    <label class="form-label">🧠 Rate your Mental Toughness</label>
+                    <div class="form-hint">Be honest — only you know the truth.</div>
+                    <div class="assess-options" id="assessOptions">
+                        <div class="assess-option" onclick="selectAssess(1)"><div class="assess-num">1</div><div>Excuses won most of the time</div></div>
+                        <div class="assess-option" onclick="selectAssess(2)"><div class="assess-num">2</div><div>I gave in to excuses sometimes</div></div>
+                        <div class="assess-option" onclick="selectAssess(3)"><div class="assess-num">3</div><div>I fought excuses and mostly won</div></div>
+                        <div class="assess-option" onclick="selectAssess(4)"><div class="assess-num">4</div><div>I beat excuses consistently</div></div>
+                        <div class="assess-option" onclick="selectAssess(5)"><div class="assess-num">5</div><div>I was relentless — every excuse beaten</div></div>
+                    </div>
+                </div>
+                <div class="form-group"><label class="form-label">Describe a moment you almost quit</label><textarea class="form-textarea" id="finalQuit" placeholder="What happened? What did you choose?"></textarea></div>
+                <div class="form-group"><label class="form-label">What did this teach you about yourself?</label><textarea class="form-textarea" id="finalLesson"></textarea></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('finalModal')">Cancel</button><button class="btn btn-success" onclick="submitFinal()">🏁 Complete Challenge</button></div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="updateModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header"><div class="modal-title">Update Measurement</div><button class="modal-close" onclick="closeModal('updateModal')">✕</button></div>
+            <div class="modal-body"><div class="form-group"><label class="form-label">Current level</label><input type="text" class="form-input" id="updateValue"></div></div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('updateModal')">Cancel</button><button class="btn btn-success" onclick="saveUpdate()">Save</button></div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal">
+            <div class="modal-header"><div class="modal-title">Help</div><button class="modal-close" onclick="closeModal('helpModal')">✕</button></div>
+            <div class="modal-body">
+                <h3 style="margin-bottom: 8px; color: var(--burgundy);">What is the Grit Challenge?</h3>
+                <p style="margin-bottom: 16px; color: var(--grey);">You pick one thing to work on for 8 sessions. Session 1 is measuring your start. Sessions 2-7 are improving. Session 8 is your final test.</p>
+                <h3 style="margin-bottom: 8px; color: var(--burgundy);">Key Dates</h3>
+                <p style="margin-bottom: 16px; color: var(--grey);">Session 1: March 25 → Session 8: May 19<br>Due date: May 22 (everything on Canvas)</p>
+                <h3 style="margin-bottom: 8px; color: var(--burgundy);">Time Outside Class</h3>
+                <p style="margin-bottom: 16px; color: var(--grey);">30 minutes per week = 3 hours total over the 6 weeks.</p>
+                <h3 style="margin-bottom: 8px; color: var(--burgundy);">Evidence</h3>
+                <p style="color: var(--grey);">Upload all videos and photos to Canvas. Your reflections are saved here in the portal.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+    
+    <script>
+// ============ CONFIG ============
+const ATHLETE_API = 'https://script.google.com/macros/s/AKfycbxg8voUoN0Lpffv_fQIcI7igALEksa0MSUscvNMS0HLWLY3Oi_9IqQbUwwSw1JzJ0HK/exec';
+const GRIT_API = 'https://script.google.com/macros/s/AKfycbzoyT7zqrOhEf3LAsflbRB73OO2-RaHdnCz5f676xuO9Odc6wFUQpo0aE3XX6Qt-Bk0/exec';
+const CANVAS_URL = 'https://fis.instructure.com/courses/YOUR_COURSE/assignments/YOUR_ASSIGNMENT';
+
+// Timeline dates
+const TIMELINE = [
+    { date: 'Wed 25 Mar', label: 'Measure', type: 'measure', session: 1 },
+    { date: '30 Mar - 12 Apr', label: 'Spring Break', type: 'holiday', session: null },
+    { date: 'Wed 15 Apr', label: 'Session 2', type: 'session', session: 2 },
+    { date: 'Mon 20 Apr', label: 'Session 3', type: 'session', session: 3 },
+    { date: 'Wed 22 Apr', label: 'Session 4', type: 'session', session: 4 },
+    { date: 'Mon 27 Apr', label: 'Session 5', type: 'session', session: 5 },
+    { date: 'Tue 5 May', label: 'Session 6', type: 'session', session: 6 },
+    { date: 'Wed 13 May', label: 'Session 7', type: 'session', session: 7 },
+    { date: 'Tue 19 May', label: 'Final Test', type: 'measure', session: 8 },
+    { date: 'Thu 22 May', label: 'DUE', type: 'due', session: null }
+];
+
+const PERSONAL_OPTIONS = [
+    { id: 'sport', name: 'Sport Skill', icon: '🎯' },
+    { id: 'movement', name: 'Movement', icon: '🤸' },
+    { id: 'endurance', name: 'Endurance', icon: '🏃' },
+    { id: 'mobility', name: 'Mobility', icon: '🧘' },
+    { id: 'custom', name: 'Custom', icon: '✨' }
+];
+
+const LEVEL_FEEDBACK = {
+    1: { text: "This won't challenge you much. Aim higher!", class: "warning" },
+    2: { text: "Getting there, but push yourself more.", class: "warning" },
+    3: { text: "Good! This will require real effort.", class: "good" },
+    4: { text: "Excellent! This is ambitious.", class: "good" },
+    5: { text: "Extreme! Make sure it's realistic.", class: "" }
+};
+
+const EXAMPLES = {
+    broadjump: "Session 1: Measure baseline (3 jumps, best counts)\nSession 2: Hip/ankle mobility work\nSession 3: Box jumps, squat jumps\nSession 4: Arm swing timing drills\nSession 5: Approach variations\nSession 6: Max effort practice\nSession 7: Fine-tune technique\nSession 8: Final test",
+    strength: "Session 1: Film current level, analyze\nSession 2: Mobility for that pattern\nSession 3: High rep practice (4x8)\nSession 4: Progress to next level\nSession 5: Add load progressively\nSession 6: Volume day (5x5)\nSession 7: Final practice\nSession 8: Film submission + test",
+    cooper: "Session 1: Run Cooper test, record distance\nSession 2: Easy pace work + intervals\nSession 3: Tempo run (moderate effort)\nSession 4: Interval training\nSession 5: Long slow run\nSession 6: Race pace practice\nSession 7: Easy + prepare\nSession 8: Final Cooper test",
+    default: "Session 1: Test & measure starting point\nSession 2: Work on biggest weakness\nSession 3: Build consistency\nSession 4: Increase difficulty\nSession 5: Refine technique\nSession 6: Push your limits\nSession 7: Prepare for test\nSession 8: Final measurement"
+};
+
+// ============ STATE ============
+let currentUser = null;
+let athleteData = null;
+let physiologyScores = null;
+let currentChallenge = null;
+let selectedType = null;
+let selectedFocus = null;
+let selectedLevel = null;
+let selectedAssess = null;
+let currentSessionNum = null;
+let planningSession = null;
+let DEMO_MODE = false;
+
+// Demo data
+const DEMO_PHYSIOLOGY = {
+    'Strength': { score: 2.0, raw: '' },
+    'Broad Jump': { score: 4.0, raw: '220 cm' },
+    '40m Sprint': { score: 4.0, raw: '5.48 sec' },
+    'Agility': { score: 2.0, raw: '5.42 sec' },
+    'Cooper Test': { score: 5.0, raw: '3460m' },
+    'Mobility': { score: 4.4, raw: '' }
+};
+
+const DEMO_CHALLENGE = {
+    type: 'fitness',
+    focusId: 'broadjump',
+    focusName: 'Broad Jump',
+    baseline: '220 cm',
+    target: '245 cm',
+    current: '232 cm',
+    measureMethod: '3 max jumps, best counts',
+    level: 4,
+    why: 'Want to improve explosive power for basketball',
+    excuses: ['Tired after school', 'Homework'],
+    sessions: [
+        { completed: true, what: 'Measured baseline - 220cm', excuse: 'None', overcome: '-', learned: 'Need better arm swing' },
+        { completed: true, what: 'Box jumps, squat jumps', excuse: 'Tired', overcome: 'Started anyway', learned: 'Warming up helps' },
+        { completed: true, what: 'Arm swing drills', excuse: 'Wanted to skip', overcome: 'Thought about goal', learned: 'Timing matters' },
+        { completed: false, plan: 'Approach work' },
+        { completed: false, plan: '' },
+        { completed: false, plan: '' },
+        { completed: false, plan: '' },
+        { completed: false, plan: '' }
+    ],
+    homeLogs: [
+        { date: '2026-03-28', mins: 25, note: 'Box jumps at home' },
+        { date: '2026-04-02', mins: 30, note: 'Mobility and jumps' }
+    ],
+    status: 'active'
+};
+
+// ============ INIT ============
+window.onload = function() {
+    initGoogleSignIn();
+};
+
+function demoLogin() {
+    DEMO_MODE = true;
+    currentUser = { email: 'demo@fis.edu', name: 'Demo Student' };
+    physiologyScores = DEMO_PHYSIOLOGY;
+    showScreen('loadingScreen');
+    setTimeout(() => {
+        currentChallenge = null; // Start fresh
+        document.getElementById('headerUser').textContent = currentUser.name;
+        showScreen('appScreen');
+        showSetupView();
+    }, 500);
+}
+
+function initGoogleSignIn() {
+    if (typeof google !== 'undefined' && google.accounts) {
+        google.accounts.id.initialize({
+            client_id: '761245051498-tptgfgo1ib49s01frtslltm4p6h03fvl.apps.googleusercontent.com',
+            callback: handleCredential,
+            auto_select: true
+        });
+        google.accounts.id.renderButton(document.getElementById('googleSignIn'), {
+            theme: 'filled_black', size: 'large', shape: 'pill', width: 280
+        });
+    }
+}
+
+function handleCredential(response) {
+    const payload = JSON.parse(atob(response.credential.split('.')[1]));
+    currentUser = { email: payload.email, name: payload.name };
+    showScreen('loadingScreen');
+    loadAthleteData();
+}
+
+async function loadAthleteData() {
+    try {
+        const url = `${ATHLETE_API}?email=${encodeURIComponent(currentUser.email)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.athlete) {
+            athleteData = data.athlete;
+            physiologyScores = extractPhysiologyScores(data.athlete);
+        }
+        
+        loadGritChallenge();
+    } catch (e) {
+        console.error('Error loading athlete data:', e);
+        physiologyScores = DEMO_PHYSIOLOGY;
+        loadGritChallenge();
+    }
+}
+
+function extractPhysiologyScores(athlete) {
+    // Extract scores from athlete data - adjust based on actual API response
+    return {
+        'Strength': { score: athlete.strengthScore || 2.0, raw: '' },
+        'Broad Jump': { score: athlete.broadJumpScore || 3.0, raw: athlete.performance?.Broad_Jump ? `${athlete.performance.Broad_Jump} cm` : '' },
+        '40m Sprint': { score: athlete.sprintScore || 3.0, raw: athlete.performance?.Sprint_40m ? `${athlete.performance.Sprint_40m} sec` : '' },
+        'Agility': { score: athlete.agilityScore || 3.0, raw: athlete.performance?.Agility_505 ? `${athlete.performance.Agility_505} sec` : '' },
+        'Cooper Test': { score: athlete.cooperScore || 3.0, raw: athlete.performance?.Cooper_Distance ? `${athlete.performance.Cooper_Distance}m` : '' },
+        'Mobility': { score: athlete.mobilityScore || 3.0, raw: '' }
+    };
+}
+
+async function loadGritChallenge() {
+    document.getElementById('headerUser').textContent = currentUser.name.split(' ')[0];
+    showScreen('appScreen');
+    
+    if (DEMO_MODE) {
+        showSetupView();
+        return;
+    }
+    
+    try {
+        const url = `${GRIT_API}?action=getChallenge&email=${encodeURIComponent(currentUser.email)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.challenge) {
+            currentChallenge = data.challenge;
+            if (currentChallenge.status === 'pending') {
+                showPendingView();
+            } else {
+                showActiveView();
+            }
+        } else {
+            showSetupView();
+        }
+    } catch (e) {
+        console.error('Error loading challenge:', e);
+        showSetupView();
+    }
+}
+
+// ============ SCREENS ============
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function showSetupView() {
+    document.getElementById('setupView').style.display = 'block';
+    document.getElementById('pendingView').style.display = 'none';
+    document.getElementById('activeView').style.display = 'none';
+    goToStep(1);
+}
+
+function showPendingView() {
+    document.getElementById('setupView').style.display = 'none';
+    document.getElementById('pendingView').style.display = 'block';
+    document.getElementById('activeView').style.display = 'none';
+    
+    document.getElementById('pendingFocus').textContent = currentChallenge.focusName;
+    document.getElementById('pendingGoal').textContent = `${currentChallenge.baseline} → ${currentChallenge.target}`;
+}
+
+function showActiveView() {
+    document.getElementById('setupView').style.display = 'none';
+    document.getElementById('pendingView').style.display = 'none';
+    document.getElementById('activeView').style.display = 'block';
+    
+    renderActiveView();
+}
+
+// ============ SETUP STEPS ============
+function goToStep(num) {
+    document.querySelectorAll('.setup-step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`step${num}`).classList.add('active');
+    
+    if (num === 2) {
+        renderStep2();
+    }
+}
+
+function selectType(type) {
+    selectedType = type;
+    document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById(type === 'fitness' ? 'choiceFitness' : 'choicePersonal').classList.add('selected');
+    document.getElementById('step1Btn').disabled = false;
+}
+
+function renderStep2() {
+    if (selectedType === 'fitness') {
+        document.getElementById('fitnessOptions').style.display = 'block';
+        document.getElementById('personalOptions').style.display = 'none';
+        document.getElementById('step2Title').textContent = 'Pick your focus';
+        document.getElementById('step2Subtitle').textContent = 'Your current scores — pick one to improve:';
+        renderFitnessScores();
+    } else {
+        document.getElementById('fitnessOptions').style.display = 'none';
+        document.getElementById('personalOptions').style.display = 'block';
+        document.getElementById('step2Title').textContent = 'What will you work on?';
+        document.getElementById('step2Subtitle').textContent = 'Choose a category:';
+        renderPersonalOptions();
+    }
+}
+
+function renderFitnessScores() {
+    const grid = document.getElementById('scoreGrid');
+    const scores = physiologyScores || DEMO_PHYSIOLOGY;
+    
+    const items = [
+        { id: 'strength', name: 'Strength', ...scores['Strength'] },
+        { id: 'broadjump', name: 'Broad Jump', ...scores['Broad Jump'] },
+        { id: 'sprint', name: '40m Sprint', ...scores['40m Sprint'] },
+        { id: 'agility', name: 'Agility', ...scores['Agility'] },
+        { id: 'cooper', name: 'Cooper Test', ...scores['Cooper Test'] },
+        { id: 'mobility', name: 'Mobility', ...scores['Mobility'] }
+    ];
+    
+    grid.innerHTML = items.map(item => {
+        const pct = (item.score / 5) * 100;
+        const lowClass = item.score < 3 ? 'low-score' : '';
+        return `
+            <div class="score-card ${lowClass}" onclick="selectFocus('${item.id}', '${item.name}')">
+                <div class="score-name">${item.name}</div>
+                <div class="score-bar-container">
+                    <div class="score-bar" style="width: ${pct}%"></div>
+                </div>
+                <div class="score-value">${item.score.toFixed(1)}</div>
+                ${item.raw ? `<div class="score-raw">${item.raw}</div>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function renderPersonalOptions() {
+    const grid = document.getElementById('personalGrid');
+    grid.innerHTML = PERSONAL_OPTIONS.map(opt => `
+        <div class="score-card" onclick="selectFocus('${opt.id}', '${opt.name}')">
+            <div style="font-size: 2rem; margin-bottom: 8px;">${opt.icon}</div>
+            <div class="score-name">${opt.name}</div>
+        </div>
+    `).join('');
+}
+
+function selectFocus(id, name) {
+    selectedFocus = { id, name };
+    document.querySelectorAll('.score-card').forEach(c => c.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    document.getElementById('step2Btn').disabled = false;
+    
+    // Show custom description field if needed
+    if (id === 'custom') {
+        document.getElementById('customDescGroup').style.display = 'block';
+    } else {
+        document.getElementById('customDescGroup').style.display = 'none';
+    }
+    
+    // Update examples
+    const examples = EXAMPLES[id] || EXAMPLES.default;
+    document.getElementById('examplesList').innerHTML = examples.split('\n').map(e => `<div style="padding: 4px 0; border-bottom: 1px solid var(--light-grey);">${e}</div>`).join('');
+}
+
+function selectLevel(level) {
+    selectedLevel = level;
+    document.querySelectorAll('.level-btn').forEach((b, i) => {
+        b.classList.toggle('selected', i === level - 1);
+    });
+    
+    const fb = LEVEL_FEEDBACK[level];
+    const el = document.getElementById('levelFeedback');
+    el.textContent = fb.text;
+    el.className = 'level-feedback ' + fb.class;
+}
+
+function togglePanel(id) {
+    document.getElementById(id).classList.toggle('show');
+}
+
+function addExcuse() {
+    const row = document.createElement('div');
+    row.className = 'excuse-row';
+    row.innerHTML = `
+        <input type="text" class="excuse-input" placeholder="Another reason...">
+        <button class="excuse-remove" onclick="this.parentElement.remove()">✕</button>
+    `;
+    document.getElementById('excusesList').appendChild(row);
+}
+
+function toggleCommit() {
+    const cb = document.getElementById('commitCheck');
+    cb.checked = !cb.checked;
+    document.getElementById('submitBtn').disabled = !cb.checked;
+}
+
+async function submitChallenge() {
+    const baseline = document.getElementById('baselineInput').value.trim();
+    const target = document.getElementById('targetInput').value.trim();
+    const measure = document.getElementById('measureInput').value.trim();
+    const why = document.getElementById('whyInput').value.trim();
+    const customDesc = document.getElementById('customDesc')?.value.trim() || '';
+    
+    if (!baseline || !target) {
+        showToast('Please fill in your start and goal');
+        return;
+    }
+    
+    const excuses = Array.from(document.querySelectorAll('.excuse-input'))
+        .map(i => i.value.trim()).filter(e => e);
+    
+    const focusName = selectedFocus.id === 'custom' && customDesc 
+        ? customDesc 
+        : selectedFocus.name;
+    
+    currentChallenge = {
+        type: selectedType,
+        focusId: selectedFocus.id,
+        focusName: focusName,
+        baseline,
+        target,
+        current: baseline,
+        measureMethod: measure,
+        level: selectedLevel || 3,
+        why,
+        excuses,
+        sessions: [{},{},{},{},{},{},{},{}],
+        homeLogs: [],
+        status: 'active'
+    };
+    
+    if (DEMO_MODE) {
+        showToast('Challenge started!');
+        showActiveView();
+        return;
+    }
+    
+    // Save to API
+    try {
+        const response = await fetch(GRIT_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'saveChallenge',
+                email: currentUser.email,
+                challenge: currentChallenge
+            })
+        });
+        const data = await response.json();
+        showToast('Challenge started!');
+        showActiveView();
+    } catch (e) {
+        console.error('Error saving:', e);
+        showToast('Challenge started!');
+        showActiveView();
+    }
+}
+
+// ============ ACTIVE VIEW ============
+function renderActiveView() {
+    const c = currentChallenge;
+    
+    // Progress
+    document.getElementById('progressGoal').textContent = c.focusName;
+    document.getElementById('progressTier').textContent = c.type === 'fitness' ? 'Fitness Test' : 'Personal Challenge';
+    document.getElementById('progStart').textContent = c.baseline;
+    document.getElementById('progCurrent').textContent = c.current;
+    document.getElementById('progTarget').textContent = c.target;
+    
+    // Calculate progress percentage
+    const start = parseFloat(c.baseline) || 0;
+    const curr = parseFloat(c.current) || start;
+    const targ = parseFloat(c.target) || 100;
+    let pct = 0;
+    if (targ !== start) {
+        pct = Math.round(Math.min(100, Math.max(0, ((curr - start) / (targ - start)) * 100)));
+    }
+    document.getElementById('progBar').style.width = `${pct}%`;
+    document.getElementById('progPct').textContent = `${pct}% of the way there`;
+    
+    // Timeline
+    renderTimeline();
+    
+    // Time logs
+    renderTimeLogs();
+    
+    // Next action
+    updateNextAction();
+    
+    // Set today's date for log
+    document.getElementById('logDate').valueAsDate = new Date();
+}
+
+function renderTimeline() {
+    const sessions = currentChallenge.sessions || [];
+    const completedCount = sessions.filter(s => s.completed).length;
+    
+    const timeline = document.getElementById('timeline');
+    timeline.innerHTML = TIMELINE.map((item, i) => {
+        let cardClass = 'timeline-card';
+        let content = '';
+        let onclick = '';
+        
+        if (item.type === 'holiday') {
+            cardClass += ' holiday';
+            content = `<div class="timeline-num">🏖️</div><div class="timeline-label">Optional<br>practice</div>`;
+        } else if (item.type === 'due') {
+            cardClass += ' due';
+            content = `<div class="timeline-num">📤</div><div class="timeline-label">Submit<br>to Canvas</div>`;
+        } else if (item.type === 'measure') {
+            cardClass += ' measure';
+            const sess = sessions[item.session - 1] || {};
+            const done = sess.completed;
+            const isCurrent = !done && item.session === completedCount + 1;
+            
+            if (done) cardClass += ' complete';
+            else if (isCurrent) cardClass += ' current';
+            else if (item.session > completedCount + 1) cardClass += ' locked';
+            
+            const status = done ? '✓' : isCurrent ? '▶' : '🔒';
+            content = `<div class="timeline-num">${item.session}</div><div class="timeline-label">${item.label}</div><div class="timeline-status">${status}</div>`;
+            
+            if (!done && item.session <= completedCount + 1) {
+                onclick = `onclick="openSession(${item.session})"`;
+            }
+        } else {
+            const sess = sessions[item.session - 1] || {};
+            const done = sess.completed;
+            const isCurrent = !done && item.session === completedCount + 1;
+            
+            if (done) cardClass += ' complete';
+            else if (isCurrent) cardClass += ' current';
+            else if (item.session > completedCount + 1) cardClass += ' locked';
+            
+            const status = done ? '✓' : isCurrent ? '▶' : '🔒';
+            content = `<div class="timeline-num">${item.session}</div><div class="timeline-label">${item.label.replace('Session ', 'S')}</div><div class="timeline-status">${status}</div>`;
+            
+            onclick = `onclick="openSession(${item.session})"`;
+        }
+        
+        return `
+            <div class="timeline-item">
+                <div class="timeline-date">${item.date}</div>
+                <div class="${cardClass}" ${onclick}>${content}</div>
+            </div>
+        `;
+    }).join('');
+    
+    // Home sessions
+    const homeLogs = currentChallenge.homeLogs || [];
+    const homeDiv = document.getElementById('homeSessions');
+    
+    if (homeLogs.length > 0) {
+        homeDiv.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">🏠 Home Sessions</div>
+            ${homeLogs.map(l => `
+                <div class="home-session-item">
+                    <span class="home-session-date">${l.date}</span>
+                    <span class="home-session-note">${l.note}</span>
+                    <span class="home-session-mins">${l.mins} min</span>
+                </div>
+            `).join('')}
+        `;
+    } else {
+        homeDiv.innerHTML = '';
+    }
+}
+
+function renderTimeLogs() {
+    const logs = currentChallenge.homeLogs || [];
+    const total = logs.reduce((sum, l) => sum + (l.mins || 0), 0);
+    const pct = Math.min(100, (total / 180) * 100);
+    
+    document.getElementById('timeTotal').textContent = total;
+    document.getElementById('timeBar').style.width = `${pct}%`;
+}
+
+function updateNextAction() {
+    const sessions = currentChallenge.sessions || [];
+    const completedCount = sessions.filter(s => s.completed).length;
+    
+    if (completedCount >= 8) {
+        document.getElementById('nextAction').style.display = 'none';
+        return;
+    }
+    
+    const nextSession = completedCount + 1;
+    const timelineItem = TIMELINE.find(t => t.session === nextSession);
+    
+    document.getElementById('nextActionTitle').textContent = `Complete Session ${nextSession}${timelineItem ? ` (${timelineItem.date})` : ''}`;
+}
+
+function openCurrentSession() {
+    const sessions = currentChallenge.sessions || [];
+    const completedCount = sessions.filter(s => s.completed).length;
+    openSession(completedCount + 1);
+}
+
+// ============ SESSION MODALS ============
+function openSession(num) {
+    currentSessionNum = num;
+    
+    if (num === 8) {
+        openFinalModal();
+        return;
+    }
+    
+    document.getElementById('sessionModalTitle').textContent = `Session ${num}`;
+    document.getElementById('sessionWhat').value = '';
+    document.getElementById('sessionExcuse').value = '';
+    document.getElementById('sessionOvercome').value = '';
+    document.getElementById('sessionLearned').value = '';
+    
+    openModal('sessionModal');
+}
+
+function saveSession() {
+    const what = document.getElementById('sessionWhat').value.trim();
+    const excuse = document.getElementById('sessionExcuse').value.trim();
+    const overcome = document.getElementById('sessionOvercome').value.trim();
+    const learned = document.getElementById('sessionLearned').value.trim();
+    
+    if (!what) {
+        showToast('Please describe what you did');
+        return;
+    }
+    
+    currentChallenge.sessions[currentSessionNum - 1] = {
+        completed: true,
+        what, excuse, overcome, learned
+    };
+    
+    closeModal('sessionModal');
+    renderActiveView();
+    
+    // Show upload prompt
+    document.getElementById('completeTitle').textContent = `Session ${currentSessionNum} Complete!`;
+    openModal('completeModal');
+}
+
+function openFinalModal() {
+    selectedAssess = null;
+    document.querySelectorAll('.assess-option').forEach(o => o.classList.remove('selected'));
+    document.getElementById('finalMeasure').value = '';
+    document.getElementById('finalReached').value = '';
+    document.getElementById('finalQuit').value = '';
+    document.getElementById('finalLesson').value = '';
+    openModal('finalModal');
+}
+
+function selectAssess(level) {
+    selectedAssess = level;
+    document.querySelectorAll('.assess-option').forEach((o, i) => {
+        o.classList.toggle('selected', i === level - 1);
+    });
+}
+
+function submitFinal() {
+    const measure = document.getElementById('finalMeasure').value.trim();
+    
+    if (!measure || !selectedAssess) {
+        showToast('Please complete all fields');
+        return;
+    }
+    
+    currentChallenge.current = measure;
+    currentChallenge.sessions[7] = {
+        completed: true,
+        finalMeasure: measure,
+        reached: document.getElementById('finalReached').value.trim(),
+        mentalToughness: selectedAssess,
+        almostQuit: document.getElementById('finalQuit').value.trim(),
+        lesson: document.getElementById('finalLesson').value.trim()
+    };
+    currentChallenge.status = 'complete';
+    
+    closeModal('finalModal');
+    renderActiveView();
+    
+    document.getElementById('completeTitle').textContent = 'Challenge Complete! 🏆';
+    openModal('completeModal');
+}
+
+// ============ TIME LOG ============
+function addTimeLog() {
+    const date = document.getElementById('logDate').value;
+    const mins = parseInt(document.getElementById('logMins').value);
+    const note = document.getElementById('logNote').value.trim();
+    
+    if (!date || !mins) {
+        showToast('Enter date and minutes');
+        return;
+    }
+    
+    currentChallenge.homeLogs = currentChallenge.homeLogs || [];
+    currentChallenge.homeLogs.push({ date, mins, note: note || 'Practice' });
+    
+    document.getElementById('logMins').value = '';
+    document.getElementById('logNote').value = '';
+    
+    renderActiveView();
+    showToast('Time logged!');
+}
+
+// ============ UPDATE MODAL ============
+function openUpdateModal() {
+    document.getElementById('updateValue').value = currentChallenge.current;
+    openModal('updateModal');
+}
+
+function saveUpdate() {
+    const val = document.getElementById('updateValue').value.trim();
+    if (!val) return;
+    
+    currentChallenge.current = val;
+    closeModal('updateModal');
+    renderActiveView();
+    showToast('Updated!');
+}
+
+// ============ MODAL HELPERS ============
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+function openHelp() {
+    openModal('helpModal');
+}
+
+function openCanvas() {
+    window.open(CANVAS_URL, '_blank');
+}
+
+function openCanvasAndClose() {
+    openCanvas();
+    closeModal('completeModal');
+}
+
+// ============ TOAST ============
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+    </script>
+</body>
+</html>
