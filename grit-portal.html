@@ -825,17 +825,18 @@ function renderChoiceFitnessScores() {
     const scores = physiologyScores || DEMO_PHYSIOLOGY;
     if (!scores) { container.innerHTML = ''; return; }
     const items = [
-        { label: 'Strength', score: scores['Strength']?.score },
-        { label: 'Broad Jump', score: scores['Broad Jump']?.score },
-        { label: 'Sprint', score: scores['40m Sprint']?.score },
-        { label: 'Agility', score: scores['Agility']?.score },
-        { label: 'Cooper', score: scores['Cooper Test']?.score },
-        { label: 'Mobility', score: scores['Mobility']?.score }
+        { label: 'Strength', score: scores['Strength']?.score, raw: scores['Strength']?.raw },
+        { label: 'Broad Jump', score: scores['Broad Jump']?.score, raw: scores['Broad Jump']?.raw },
+        { label: 'Sprint', score: scores['40m Sprint']?.score, raw: scores['40m Sprint']?.raw },
+        { label: 'Agility', score: scores['Agility']?.score, raw: scores['Agility']?.raw },
+        { label: 'Cooper', score: scores['Cooper Test']?.score, raw: scores['Cooper Test']?.raw },
+        { label: 'Mobility', score: scores['Mobility']?.score, raw: scores['Mobility']?.raw }
     ];
     container.innerHTML = items.map(i => {
         const s = i.score != null ? i.score : 0;
         const pct = (s / 5) * 100;
-        return `<div class="cs-row"><span class="cs-label">${i.label}</span><span class="cs-val">${s.toFixed(1)}</span><div class="cs-bar"><div class="cs-fill" style="width:${pct}%"></div></div></div>`;
+        const tip = i.raw ? `title="${i.label}: ${i.raw}"` : '';
+        return `<div class="cs-row" ${tip}><span class="cs-label">${i.label}</span><span class="cs-val">${s.toFixed(1)}</span><div class="cs-bar"><div class="cs-fill" style="width:${pct}%"></div></div></div>`;
     }).join('');
 }
 
