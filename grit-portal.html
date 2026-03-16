@@ -52,6 +52,13 @@
         .choice-icon { font-size: 2.5rem; margin-bottom: 12px; }
         .choice-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
         .choice-desc { font-size: 0.9rem; color: var(--grey); }
+        .choice-scores { margin-top: 12px; text-align: left; }
+        .choice-scores .cs-row { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--grey); margin-bottom: 3px; }
+        .choice-scores .cs-label { width: 72px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .choice-scores .cs-val { width: 24px; flex-shrink: 0; font-weight: 700; color: var(--black); text-align: right; }
+        .choice-scores .cs-bar { flex: 1; height: 6px; background: var(--light-grey); border-radius: 3px; overflow: hidden; }
+        .choice-scores .cs-fill { height: 100%; border-radius: 3px; background: var(--burgundy); transition: width 0.3s; }
+        .choice-scores .cs-loading { font-size: 0.75rem; color: var(--grey); font-style: italic; text-align: center; padding: 8px 0; }
         
         /* Score Cards */
         .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
@@ -289,8 +296,9 @@
                         <div class="choice-cards">
                             <div class="choice-card" id="choiceFitness" onclick="selectType('fitness')">
                                 <div class="choice-icon">🏆</div>
-                                <div class="choice-title">Fitness Test</div>
-                                <div class="choice-desc">Improve one of your official fitness test scores</div>
+                                <div class="choice-title">Fitness</div>
+                                <div class="choice-desc">Improve one of your official fitness scores</div>
+                                <div class="choice-scores" id="choiceFitnessScores"><div class="cs-loading">Loading scores...</div></div>
                             </div>
                             <div class="choice-card" id="choicePersonal" onclick="selectType('personal')">
                                 <div class="choice-icon">🎯</div>
@@ -423,7 +431,7 @@
                 
                 <div class="progress-card">
                     <div class="progress-top">
-                        <div><div class="progress-goal-name" id="progressGoal">Broad Jump</div><div class="progress-tier" id="progressTier">Fitness Test</div></div>
+                        <div><div class="progress-goal-name" id="progressGoal">Broad Jump</div><div class="progress-tier" id="progressTier">Fitness</div></div>
                         <button class="progress-update-btn" onclick="openModal('updateModal')">📊 Update</button>
                     </div>
                     <div class="progress-numbers">
@@ -812,10 +820,30 @@ function showScreen(id) {
     document.getElementById(id).classList.add('active');
 }
 
+function renderChoiceFitnessScores() {
+    const container = document.getElementById('choiceFitnessScores');
+    const scores = physiologyScores || DEMO_PHYSIOLOGY;
+    if (!scores) { container.innerHTML = ''; return; }
+    const items = [
+        { label: 'Strength', score: scores['Strength']?.score },
+        { label: 'Broad Jump', score: scores['Broad Jump']?.score },
+        { label: 'Sprint', score: scores['40m Sprint']?.score },
+        { label: 'Agility', score: scores['Agility']?.score },
+        { label: 'Cooper', score: scores['Cooper Test']?.score },
+        { label: 'Mobility', score: scores['Mobility']?.score }
+    ];
+    container.innerHTML = items.map(i => {
+        const s = i.score != null ? i.score : 0;
+        const pct = (s / 5) * 100;
+        return `<div class="cs-row"><span class="cs-label">${i.label}</span><span class="cs-val">${s.toFixed(1)}</span><div class="cs-bar"><div class="cs-fill" style="width:${pct}%"></div></div></div>`;
+    }).join('');
+}
+
 function showSetupView() {
     document.getElementById('setupView').style.display = 'block';
     document.getElementById('pendingView').style.display = 'none';
     document.getElementById('activeView').style.display = 'none';
+    renderChoiceFitnessScores();
     goToStep(1);
 }
 
@@ -1026,7 +1054,7 @@ function renderActiveView() {
     
     // Progress
     document.getElementById('progressGoal').textContent = c.focusName;
-    document.getElementById('progressTier').textContent = c.type === 'fitness' ? 'Fitness Test' : 'Personal Challenge';
+    document.getElementById('progressTier').textContent = c.type === 'fitness' ? 'Fitness' : 'Personal Challenge';
     document.getElementById('progStart').textContent = c.baseline;
     document.getElementById('progCurrent').textContent = c.current;
     document.getElementById('progTarget').textContent = c.target;
