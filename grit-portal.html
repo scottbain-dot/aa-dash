@@ -63,10 +63,8 @@
         /* Score Cards */
         .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
         .score-card { border: 2px solid var(--light-grey); border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: all 0.2s; position: relative; }
-        .score-card:hover { border-color: var(--burgundy-light); }
+        .score-card:hover { border-color: var(--burgundy-light); transform: scale(1.03); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .score-card.selected { border-color: var(--burgundy); background: rgba(135,75,70,0.05); }
-        .score-card.low-score { border-color: var(--amber); background: rgba(245,158,11,0.05); }
-        .score-card.low-score::after { content: 'Room to grow'; position: absolute; top: 6px; right: 6px; font-size: 0.6rem; background: var(--amber); color: white; padding: 2px 6px; border-radius: 8px; }
         .score-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; }
         .score-bar-wrap { height: 8px; background: var(--light-grey); border-radius: 4px; margin-bottom: 6px; }
         .score-bar { height: 100%; background: var(--burgundy); border-radius: 4px; }
@@ -476,12 +474,7 @@
     <div class="modal-overlay" id="sessionModal">
         <div class="modal">
             <div class="modal-header"><div class="modal-title" id="sessionModalTitle">Session 1</div><button class="modal-close" onclick="closeModal('sessionModal')">✕</button></div>
-            <div class="modal-body">
-                <div class="form-group"><label class="form-label">What did you do?</label><textarea class="form-textarea" id="sessionWhat" placeholder="Describe your session..."></textarea></div>
-                <div class="form-group"><label class="form-label">What excuse almost stopped you?</label><textarea class="form-textarea" id="sessionExcuse" style="min-height: 60px;"></textarea></div>
-                <div class="form-group"><label class="form-label">What made you do it anyway?</label><textarea class="form-textarea" id="sessionOvercome" style="min-height: 60px;"></textarea></div>
-                <div class="form-group"><label class="form-label">What did you learn?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>
-            </div>
+            <div class="modal-body" id="sessionModalBody"></div>
             <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('sessionModal')">Cancel</button><button class="btn btn-success" onclick="saveSession()">✓ Complete</button></div>
         </div>
     </div>
@@ -913,9 +906,8 @@ function renderFitnessScores() {
     
     grid.innerHTML = items.map(item => {
         const pct = (item.score / 5) * 100;
-        const lowClass = item.score < 3 ? 'low-score' : '';
         return `
-            <div class="score-card ${lowClass}" onclick="selectFocus('${item.id}', '${item.name}')">
+            <div class="score-card" onclick="selectFocus('${item.id}', '${item.name}')">
                 <div class="score-name">${item.name}</div>
                 <div class="score-bar-wrap">
                     <div class="score-bar" style="width: ${pct}%"></div>
@@ -1199,11 +1191,21 @@ function openSession(num) {
     }
     
     document.getElementById('sessionModalTitle').textContent = `Session ${num}`;
-    document.getElementById('sessionWhat').value = '';
-    document.getElementById('sessionExcuse').value = '';
-    document.getElementById('sessionOvercome').value = '';
-    document.getElementById('sessionLearned').value = '';
-    
+    const body = document.getElementById('sessionModalBody');
+    if (num === 1) {
+        body.innerHTML = `
+            <div class="form-group"><label class="form-label">What did you measure? What's your baseline?</label><textarea class="form-textarea" id="sessionWhat" placeholder="Describe what you measured..."></textarea></div>
+            <div class="form-group"><label class="form-label">What's your plan for the next session?</label><textarea class="form-textarea" id="sessionExcuse" style="min-height: 60px;"></textarea></div>
+            <div class="form-group"><label class="form-label">What excuse might try to stop you?</label><textarea class="form-textarea" id="sessionOvercome" style="min-height: 60px;"></textarea></div>
+            <div class="form-group"><label class="form-label">How will you beat it?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>`;
+    } else {
+        body.innerHTML = `
+            <div class="form-group"><label class="form-label">What did you do?</label><textarea class="form-textarea" id="sessionWhat" placeholder="Describe your session..."></textarea></div>
+            <div class="form-group"><label class="form-label">What excuse almost stopped you?</label><textarea class="form-textarea" id="sessionExcuse" style="min-height: 60px;"></textarea></div>
+            <div class="form-group"><label class="form-label">What made you do it anyway?</label><textarea class="form-textarea" id="sessionOvercome" style="min-height: 60px;"></textarea></div>
+            <div class="form-group"><label class="form-label">What did you learn?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>`;
+    }
+
     openModal('sessionModal');
 }
 
@@ -1214,7 +1216,7 @@ function saveSession() {
     const learned = document.getElementById('sessionLearned').value.trim();
     
     if (!what) {
-        showToast('Please describe what you did');
+        showToast(currentSessionNum === 1 ? 'Please describe what you measured' : 'Please describe what you did');
         return;
     }
     
