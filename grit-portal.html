@@ -354,20 +354,46 @@
                     <div class="card">
                         <div class="card-title">Set your goal</div>
                         <div class="card-subtitle">Where are you now and where do you want to be?</div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Where I am NOW</label>
-                                <input type="text" class="form-input" id="baselineInput" placeholder="e.g. 220 cm, 5:30, Level 2">
-                                <div class="form-hint">You'll measure this in Session 1</div>
+                        <!-- Standard baseline/target (hidden for Strength) -->
+                        <div id="standardGoalFields">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Where I am NOW</label>
+                                    <input type="text" class="form-input" id="baselineInput" placeholder="e.g. 220 cm, 5:30, Level 2">
+                                    <div class="form-hint">You'll measure this in Session 1</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Where I want to BE</label>
+                                    <input type="text" class="form-input" id="targetInput" placeholder="e.g. 245 cm, 4:45, Level 4">
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Where I want to BE</label>
-                                <input type="text" class="form-input" id="targetInput" placeholder="e.g. 245 cm, 4:45, Level 4">
+                                <label class="form-label">How will you measure it?</label>
+                                <input type="text" class="form-input" id="measureInput" placeholder="e.g. 3 max jumps, best one counts">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">How will you measure it?</label>
-                            <input type="text" class="form-input" id="measureInput" placeholder="e.g. 3 max jumps, best one counts">
+                        <!-- Strength-specific fields -->
+                        <div id="strengthGoalFields" style="display: none;">
+                            <div class="form-group">
+                                <label class="form-label">Exercise(s)</label>
+                                <input type="text" class="form-input" id="strengthExercise" placeholder="e.g. Goblet Squat, DB Bench Press">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Current weight (kg)</label>
+                                    <input type="number" class="form-input" id="strengthCurrentWeight" placeholder="0" min="0" step="0.5">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Goal weight (kg)</label>
+                                    <input type="number" class="form-input" id="strengthGoalWeight" placeholder="0" min="0" step="0.5">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Reps</label>
+                                <input type="number" class="form-input" id="strengthReps" placeholder="5" min="5" step="1">
+                                <div class="form-hint">Minimum 5 reps — we don't test single rep maxes at this stage.</div>
+                                <div id="strengthRepsError" style="display: none; color: #dc2626; font-size: 0.85rem; margin-top: 4px;">Please enter at least 5 reps.</div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">How hard is this goal?</label>
@@ -387,11 +413,11 @@
                         </div>
                         <div class="btn-row">
                             <button class="btn btn-secondary" onclick="goToStep(2)">← Back</button>
-                            <button class="btn btn-primary" onclick="goToStep(4)">Continue →</button>
+                            <button class="btn btn-primary" onclick="validateStep3()">Continue →</button>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Step 4 -->
                 <div id="step4" class="setup-step">
                     <div class="step-progress"><div class="step-dot complete"></div><div class="step-dot complete"></div><div class="step-dot complete"></div><div class="step-dot active"></div></div>
@@ -441,9 +467,9 @@
                 <div class="progress-card">
                     <div class="progress-top">
                         <div><div class="progress-goal-name" id="progressGoal">Broad Jump</div><div class="progress-tier" id="progressTier">Fitness</div></div>
-                        <button class="progress-update-btn" onclick="openModal('updateModal')">📊 Update</button>
+                        <button class="progress-update-btn" onclick="openUpdateModal()">📊 Update</button>
                     </div>
-                    <div class="progress-numbers">
+                    <div class="progress-numbers" id="progressNumbers">
                         <div class="progress-num start"><div class="progress-num-value" id="progStart">220</div><div class="progress-num-label">Start</div></div>
                         <div class="progress-arrow">→</div>
                         <div class="progress-num current"><div class="progress-num-value" id="progCurrent">232</div><div class="progress-num-label">Now</div></div>
@@ -508,7 +534,7 @@
         <div class="modal">
             <div class="modal-header"><div class="modal-title">Session 8: Final Reflection</div><button class="modal-close" onclick="closeModal('finalModal')">✕</button></div>
             <div class="modal-body">
-                <div class="form-group"><label class="form-label">📊 Your final measurement</label><input type="text" class="form-input" id="finalMeasure" placeholder="What's your final result?"></div>
+                <div class="form-group" id="finalMeasureGroup"><label class="form-label">📊 Your final measurement</label><input type="text" class="form-input" id="finalMeasure" placeholder="What's your final result?"></div>
                 <div class="form-group"><label class="form-label">Did you reach your goal?</label><textarea class="form-textarea" id="finalReached" placeholder="Yes/No and why..."></textarea></div>
                 <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--light-grey);">
                 <div class="form-group">
@@ -532,7 +558,7 @@
     <div class="modal-overlay" id="updateModal">
         <div class="modal" style="max-width: 400px;">
             <div class="modal-header"><div class="modal-title">Update Measurement</div><button class="modal-close" onclick="closeModal('updateModal')">✕</button></div>
-            <div class="modal-body"><div class="form-group"><label class="form-label">Current level</label><input type="text" class="form-input" id="updateValue"></div></div>
+            <div class="modal-body" id="updateModalBody"><div class="form-group"><label class="form-label">Current level</label><input type="text" class="form-input" id="updateValue"></div></div>
             <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('updateModal')">Cancel</button><button class="btn btn-success" onclick="saveUpdate()">Save</button></div>
         </div>
     </div>
@@ -1057,12 +1083,23 @@ function showActiveView() {
 }
 
 // ============ SETUP STEPS ============
+function isStrengthChallenge() {
+    return selectedType === 'fitness' && selectedFocus && selectedFocus.id === 'strength';
+}
+
 function goToStep(num) {
     document.querySelectorAll('.setup-step').forEach(s => s.classList.remove('active'));
     document.getElementById(`step${num}`).classList.add('active');
-    
+
     if (num === 2) {
         renderStep2();
+    }
+    if (num === 3) {
+        const isStrength = isStrengthChallenge();
+        document.getElementById('standardGoalFields').style.display = isStrength ? 'none' : 'block';
+        document.getElementById('strengthGoalFields').style.display = isStrength ? 'block' : 'none';
+        // Clear reps error when entering step
+        document.getElementById('strengthRepsError').style.display = 'none';
     }
 }
 
@@ -1156,6 +1193,21 @@ function selectLevel(level) {
     el.className = 'level-feedback ' + fb.class;
 }
 
+function validateStep3() {
+    if (isStrengthChallenge()) {
+        const reps = parseInt(document.getElementById('strengthReps').value);
+        const errorEl = document.getElementById('strengthRepsError');
+        if (!reps || reps < 5) {
+            errorEl.style.display = 'block';
+            document.getElementById('strengthReps').style.borderColor = '#dc2626';
+            return;
+        }
+        errorEl.style.display = 'none';
+        document.getElementById('strengthReps').style.borderColor = '';
+    }
+    goToStep(4);
+}
+
 function togglePanel(id) {
     document.getElementById(id).classList.toggle('show');
 }
@@ -1177,24 +1229,43 @@ function toggleCommit() {
 }
 
 async function submitChallenge() {
-    const baseline = document.getElementById('baselineInput').value.trim();
-    const target = document.getElementById('targetInput').value.trim();
-    const measure = document.getElementById('measureInput').value.trim();
     const why = document.getElementById('whyInput').value.trim();
     const customDesc = document.getElementById('customDesc')?.value.trim() || '';
-    
+    const isStrength = isStrengthChallenge();
+
+    let baseline, target, measure;
+
+    if (isStrength) {
+        const exercise = document.getElementById('strengthExercise').value.trim();
+        const currentWeight = parseFloat(document.getElementById('strengthCurrentWeight').value);
+        const goalWeight = parseFloat(document.getElementById('strengthGoalWeight').value);
+        const reps = parseInt(document.getElementById('strengthReps').value);
+
+        if (!exercise || isNaN(currentWeight) || isNaN(goalWeight) || !reps || reps < 5) {
+            showToast('Please fill in all strength fields (minimum 5 reps)');
+            return;
+        }
+        baseline = String(currentWeight);
+        target = String(goalWeight);
+        measure = `${reps} reps`;
+    } else {
+        baseline = document.getElementById('baselineInput').value.trim();
+        target = document.getElementById('targetInput').value.trim();
+        measure = document.getElementById('measureInput').value.trim();
+    }
+
     if (!baseline || !target) {
         showToast('Please fill in your start and goal');
         return;
     }
-    
+
     const excuses = Array.from(document.querySelectorAll('.excuse-input'))
         .map(i => i.value.trim()).filter(e => e);
-    
-    const focusName = selectedFocus.id === 'custom' && customDesc 
-        ? customDesc 
+
+    const focusName = selectedFocus.id === 'custom' && customDesc
+        ? customDesc
         : selectedFocus.name;
-    
+
     currentChallenge = {
         type: selectedType,
         focusId: selectedFocus.id,
@@ -1210,6 +1281,11 @@ async function submitChallenge() {
         homeLogs: [],
         status: 'active'
     };
+
+    if (isStrength) {
+        currentChallenge.strengthExercise = document.getElementById('strengthExercise').value.trim();
+        currentChallenge.strengthReps = parseInt(document.getElementById('strengthReps').value);
+    }
     
     showToast('Challenge started!');
     showActiveView();
@@ -1239,26 +1315,58 @@ async function persistChallenge() {
 }
 
 // ============ ACTIVE VIEW ============
+function isActiveStrength() {
+    return currentChallenge && currentChallenge.type === 'fitness' && currentChallenge.focusId === 'strength';
+}
+
 function renderActiveView() {
     const c = currentChallenge;
-    
+    const strengthMode = isActiveStrength();
+
     // Progress
     document.getElementById('progressGoal').textContent = c.focusName;
     document.getElementById('progressTier').textContent = c.type === 'fitness' ? 'Fitness' : 'Personal Challenge';
-    document.getElementById('progStart').textContent = c.baseline;
-    document.getElementById('progCurrent').textContent = c.current;
-    document.getElementById('progTarget').textContent = c.target;
-    
-    // Calculate progress percentage
-    const start = parseFloat(c.baseline) || 0;
-    const curr = parseFloat(c.current) || start;
-    const targ = parseFloat(c.target) || 100;
-    let pct = 0;
-    if (targ !== start) {
-        pct = Math.round(Math.min(100, Math.max(0, ((curr - start) / (targ - start)) * 100)));
+
+    const progressNumbers = document.getElementById('progressNumbers');
+
+    if (strengthMode) {
+        const reps = c.strengthReps || 5;
+        const exercise = c.strengthExercise || 'Strength';
+        const startW = parseFloat(c.baseline) || 0;
+        const currW = parseFloat(c.current) || startW;
+        const goalW = parseFloat(c.target) || 0;
+        let pct = 0;
+        if (goalW !== startW) {
+            pct = Math.round(Math.min(100, Math.max(0, ((currW - startW) / (goalW - startW)) * 100)));
+        }
+        progressNumbers.innerHTML = `
+            <div style="width: 100%; text-align: center;">
+                <div style="font-size: 1.05rem; opacity: 0.8; margin-bottom: 8px;">${exercise}</div>
+                <div style="font-size: 1.3rem; font-weight: 700;">${startW}kg × ${reps} reps → ${goalW}kg × ${reps} reps</div>
+                <div style="font-size: 1rem; color: var(--gold); margin-top: 6px;">Now: ${currW}kg × ${reps} reps</div>
+            </div>
+        `;
+        document.getElementById('progBar').style.width = `${pct}%`;
+        document.getElementById('progPct').textContent = `${pct}% of the way there`;
+    } else {
+        progressNumbers.innerHTML = `
+            <div class="progress-num start"><div class="progress-num-value" id="progStart">${c.baseline}</div><div class="progress-num-label">Start</div></div>
+            <div class="progress-arrow">→</div>
+            <div class="progress-num current"><div class="progress-num-value" id="progCurrent">${c.current}</div><div class="progress-num-label">Now</div></div>
+            <div class="progress-arrow">→</div>
+            <div class="progress-num target"><div class="progress-num-value" id="progTarget">${c.target}</div><div class="progress-num-label">Goal</div></div>
+        `;
+        // Calculate progress percentage
+        const start = parseFloat(c.baseline) || 0;
+        const curr = parseFloat(c.current) || start;
+        const targ = parseFloat(c.target) || 100;
+        let pct = 0;
+        if (targ !== start) {
+            pct = Math.round(Math.min(100, Math.max(0, ((curr - start) / (targ - start)) * 100)));
+        }
+        document.getElementById('progBar').style.width = `${pct}%`;
+        document.getElementById('progPct').textContent = `${pct}% of the way there`;
     }
-    document.getElementById('progBar').style.width = `${pct}%`;
-    document.getElementById('progPct').textContent = `${pct}% of the way there`;
     
     // Timeline
     renderTimeline();
@@ -1432,15 +1540,25 @@ function openSession(num) {
     document.getElementById('sessionModalTitle').textContent = `Session ${num}`;
     const body = document.getElementById('sessionModalBody');
     const ideasHTML = getSessionIdeasHTML(num);
+    const strengthActive = isActiveStrength();
+    const strengthWeightField = strengthActive ? `
+        <div class="form-group">
+            <label class="form-label">What weight are you lifting now? (kg)</label>
+            <input type="number" class="form-input" id="sessionStrengthWeight" placeholder="0" min="0" step="0.5">
+            <div class="form-hint">Minimum ${currentChallenge.strengthReps || 5} reps — we don't test single rep maxes at this stage.</div>
+        </div>` : '';
+
     if (num === 1) {
         body.innerHTML = `
             <div class="form-group"><label class="form-label">What did you measure? What's your baseline?</label><textarea class="form-textarea" id="sessionWhat" placeholder="Describe what you measured..."></textarea></div>
+            ${strengthWeightField}
             <div class="form-group"><label class="form-label">What's your plan for the next session?</label><textarea class="form-textarea" id="sessionExcuse" style="min-height: 60px;"></textarea></div>
             <div class="form-group"><label class="form-label">What excuse might try to stop you?</label><textarea class="form-textarea" id="sessionOvercome" style="min-height: 60px;"></textarea></div>
             <div class="form-group"><label class="form-label">How will you beat it?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>
             ${ideasHTML}`;
     } else {
         body.innerHTML = `
+            ${strengthWeightField}
             <div class="form-group"><label class="form-label">What did you do?</label><textarea class="form-textarea" id="sessionWhat" placeholder="Describe your session..."></textarea></div>
             <div class="form-group"><label class="form-label">What excuse almost stopped you?</label><textarea class="form-textarea" id="sessionExcuse" style="min-height: 60px;"></textarea></div>
             <div class="form-group"><label class="form-label">What made you do it anyway?</label><textarea class="form-textarea" id="sessionOvercome" style="min-height: 60px;"></textarea></div>
@@ -1456,12 +1574,20 @@ function saveSession() {
     const excuse = document.getElementById('sessionExcuse').value.trim();
     const overcome = document.getElementById('sessionOvercome').value.trim();
     const learned = document.getElementById('sessionLearned').value.trim();
-    
+
     if (!what) {
         showToast(currentSessionNum === 1 ? 'Please describe what you measured' : 'Please describe what you did');
         return;
     }
-    
+
+    // Update current weight for strength challenges
+    if (isActiveStrength()) {
+        const weightEl = document.getElementById('sessionStrengthWeight');
+        if (weightEl && weightEl.value) {
+            currentChallenge.current = weightEl.value.trim();
+        }
+    }
+
     currentChallenge.sessions[currentSessionNum - 1] = {
         completed: true,
         what, excuse, overcome, learned
@@ -1480,6 +1606,21 @@ function saveSession() {
 function openFinalModal() {
     selectedAssess = null;
     document.querySelectorAll('.assess-option').forEach(o => o.classList.remove('selected'));
+
+    // Render strength-specific final measurement field
+    const measureGroup = document.getElementById('finalMeasureGroup');
+    if (isActiveStrength()) {
+        const reps = currentChallenge.strengthReps || 5;
+        measureGroup.innerHTML = `
+            <label class="form-label">📊 Your final weight (kg)</label>
+            <input type="number" class="form-input" id="finalMeasure" placeholder="0" min="0" step="0.5">
+            <div class="form-hint">At ${reps} reps — same rep count as your goal.</div>`;
+    } else {
+        measureGroup.innerHTML = `
+            <label class="form-label">📊 Your final measurement</label>
+            <input type="text" class="form-input" id="finalMeasure" placeholder="What's your final result?">`;
+    }
+
     document.getElementById('finalMeasure').value = '';
     document.getElementById('finalReached').value = '';
     document.getElementById('finalQuit').value = '';
@@ -1547,7 +1688,18 @@ function addTimeLog() {
 
 // ============ UPDATE MODAL ============
 function openUpdateModal() {
-    document.getElementById('updateValue').value = currentChallenge.current;
+    const body = document.getElementById('updateModalBody');
+    if (isActiveStrength()) {
+        const reps = currentChallenge.strengthReps || 5;
+        body.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">What weight are you lifting now? (kg)</label>
+                <input type="number" class="form-input" id="updateValue" value="${currentChallenge.current}" min="0" step="0.5">
+                <div class="form-hint">At ${reps} reps — minimum 5 reps, no single rep maxes.</div>
+            </div>`;
+    } else {
+        body.innerHTML = `<div class="form-group"><label class="form-label">Current level</label><input type="text" class="form-input" id="updateValue" value="${currentChallenge.current}"></div>`;
+    }
     openModal('updateModal');
 }
 
