@@ -545,28 +545,30 @@
         .gain-detail { font-size: 0.8rem; color: var(--grey); }
         
         /* Strength Summary Bar */
-        .strength-summary { display: flex; justify-content: center; gap: 2rem; background: var(--burgundy); color: white; border-radius: 10px; padding: 10px 20px; margin-bottom: 1rem; font-size: 0.82rem; font-weight: 600; flex-wrap: wrap; }
+        .strength-summary { display: flex; justify-content: center; gap: 2rem; background: #f5e6b3; color: var(--black); border-radius: 10px; padding: 7px 20px; margin-bottom: 1rem; font-size: 0.8rem; font-weight: 600; flex-wrap: wrap; }
         .strength-summary span { white-space: nowrap; }
 
         /* Strength Grid - 6 pattern cards */
         .strength-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
         @media (max-width: 800px) { .strength-grid { grid-template-columns: repeat(2, 1fr); } }
-        .strength-item { background: var(--off-white); border-radius: 12px; padding: 1rem; text-align: left; }
-        .strength-item.muted { opacity: 0.5; }
-        .strength-item .pattern-name { font-size: 1rem; font-weight: 700; margin-bottom: 2px; color: var(--black); }
-        .strength-item .exercise-name { font-size: 0.8rem; color: var(--grey); margin-bottom: 8px; }
-        .strength-dots { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
-        .strength-dots .dot-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; width: 30px; letter-spacing: 0.5px; }
+        .strength-item { background: var(--off-white); border-radius: 12px; padding: 1.15rem 1.1rem; text-align: left; }
+        .strength-item.muted { opacity: 0.45; }
+        .strength-item .pattern-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 1px; color: var(--black); }
+        .strength-item .exercise-name { font-size: 0.75rem; color: var(--grey); margin-bottom: 10px; }
+        .strength-dots { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+        .strength-dots .dot-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; width: 28px; letter-spacing: 0.5px; }
         .strength-dots .dot-label.tech { color: var(--burgundy); }
         .strength-dots .dot-label.str { color: var(--gold); }
-        .strength-dots .dots { font-size: 0.85rem; letter-spacing: 1px; }
+        .strength-dots .dots { font-size: 0.75rem; letter-spacing: 1px; }
         .strength-dots .dots.tech { color: var(--burgundy); }
         .strength-dots .dots.str { color: var(--gold); }
-        .strength-dots .str-locked { font-size: 0.7rem; color: var(--grey); font-style: italic; }
-        .strength-chart-area { margin-top: 8px; }
-        .strength-chart-label { font-size: 0.7rem; color: var(--grey); text-align: center; font-style: italic; margin-top: 4px; }
-        .strength-progress { font-size: 0.78rem; font-weight: 600; color: var(--burgundy-dark); text-align: center; margin-top: 4px; }
-        .strength-muted-label { font-size: 0.8rem; color: var(--grey); text-align: center; margin-top: 12px; font-style: italic; }
+        .strength-dots .str-locked { font-size: 0.65rem; color: var(--grey); font-style: italic; }
+        .strength-chart-area { margin-top: 10px; }
+        .strength-chart-label { font-size: 0.65rem; color: #aaa; text-align: center; font-style: italic; margin-top: 2px; }
+        .strength-progress { font-size: 0.78rem; font-weight: 700; text-align: center; margin-top: 3px; }
+        .strength-progress.has-gain { color: var(--burgundy-dark); }
+        .strength-progress.no-gain { color: #999; }
+        .strength-muted-label { font-size: 0.75rem; color: #aaa; text-align: center; margin-top: 12px; font-style: italic; }
         
         /* Portal Link */
         .portal-link {
@@ -1403,33 +1405,31 @@
                 return `<span class="dots ${filledClass}">${out}</span>`;
             }
 
-            // Helper: render mini SVG line chart
+            // Helper: render mini SVG line chart — compact, clean
             function renderMiniChart(weights) {
                 if (weights.length === 0) return '';
+                const chartH = 50;
+                const chartW = 120;
+                const padding = 6;
                 if (weights.length === 1) {
-                    // Single point — just show a dot
-                    return `<svg width="100%" height="60" viewBox="0 0 120 60" preserveAspectRatio="none">
-                        <circle cx="60" cy="30" r="3" fill="var(--burgundy)" />
+                    return `<svg width="100%" height="${chartH}" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="none">
+                        <circle cx="60" cy="25" r="2.5" fill="var(--burgundy)" />
                     </svg>`;
                 }
                 const minW = Math.min(...weights.map(w => w.weight));
                 const maxW = Math.max(...weights.map(w => w.weight));
                 const range = maxW - minW || 1;
-                const padding = 6;
-                const chartW = 120;
-                const chartH = 60;
-                const points = weights.map((w, i) => {
-                    const x = padding + (i / (weights.length - 1)) * (chartW - padding * 2);
-                    const y = chartH - padding - ((w.weight - minW) / range) * (chartH - padding * 2);
-                    return `${x},${y}`;
-                });
-                return `<svg width="100%" height="60" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="none">
-                    <polyline points="${points.join(' ')}" fill="none" stroke="var(--burgundy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    ${weights.map((w, i) => {
-                        const x = padding + (i / (weights.length - 1)) * (chartW - padding * 2);
-                        const y = chartH - padding - ((w.weight - minW) / range) * (chartH - padding * 2);
-                        return `<circle cx="${x}" cy="${y}" r="2.5" fill="var(--burgundy)" />`;
-                    }).join('')}
+                const coords = weights.map((w, i) => ({
+                    x: padding + (i / (weights.length - 1)) * (chartW - padding * 2),
+                    y: chartH - padding - ((w.weight - minW) / range) * (chartH - padding * 2)
+                }));
+                const points = coords.map(c => `${c.x},${c.y}`).join(' ');
+                const first = coords[0];
+                const last = coords[coords.length - 1];
+                return `<svg width="100%" height="${chartH}" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="none">
+                    <polyline points="${points}" fill="none" stroke="var(--burgundy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7" />
+                    <circle cx="${first.x}" cy="${first.y}" r="2.5" fill="var(--burgundy)" />
+                    <circle cx="${last.x}" cy="${last.y}" r="2.5" fill="var(--burgundy)" />
                 </svg>`;
             }
 
@@ -1478,9 +1478,10 @@
                 if (weights.length > 0) {
                     const firstW = weights[0].weight;
                     const lastW = weights[weights.length - 1].weight;
+                    const gainClass = lastW > firstW ? 'has-gain' : 'no-gain';
                     chartArea = `<div class="strength-chart-area">
                         ${renderMiniChart(weights)}
-                        <div class="strength-progress">${firstW}kg → ${lastW}kg</div>
+                        <div class="strength-progress ${gainClass}">${firstW}kg → ${lastW}kg</div>
                     </div>`;
                 } else {
                     chartArea = `<div class="strength-chart-area">
