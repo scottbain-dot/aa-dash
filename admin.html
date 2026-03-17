@@ -2066,6 +2066,7 @@
                 allGritStudents = [];
 
                 results.forEach((result, i) => {
+                    console.log(`[Grit Debug] Student ${studentEmails[i]} raw API response:`, JSON.stringify(result));
                     if (!result || !result.success) return;
                     let challenge = null;
                     try {
