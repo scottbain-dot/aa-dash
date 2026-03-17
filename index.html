@@ -1066,7 +1066,7 @@
             // Calculate pillar scores FIRST
             const psychScores = calculatePsychology(a);
             const physScores = calculatePhysiology(a, strengthData);
-            const healthScores = calculateHealth(a);
+            const healthScores = calculateHealth(a, strengthData);
             
             const psychAvg = average(Object.values(psychScores));
             const physAvg = average(Object.values(physScores));
@@ -1129,27 +1129,22 @@
             const perf = a.performance || {};
             const mobility = a.mobility || {};
             
-            // Strength composite (Tech + Str averaged across patterns)
-            let strengthScore = 0;
-            let strengthCount = 0;
-            
+            // Strength composite: per-pattern sub-score averaged across all 6 patterns
+            let strengthTotal = 0;
             MOVEMENT_PATTERNS.forEach(p => {
                 const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
                 const strVal = strengthData[p.key + '_Str'];
                 const str = (strVal === '—' || strVal === '' || strVal === null) ? 0 : parseFloat(strVal) || 0;
-                
-                // Tech: 0-5 → normalize to 5 (already on 5 scale)
-                if (tech > 0) {
-                    strengthScore += tech;
-                    strengthCount++;
-                }
-                // Str: 1-5 (only count if unlocked and has value)
-                if (str > 0) {
-                    strengthScore += str;
-                    strengthCount++;
+
+                if (tech > 0 && str > 0) {
+                    strengthTotal += (tech + str) / 2;
+                } else if (tech > 0) {
+                    strengthTotal += tech;
+                } else if (str > 0) {
+                    strengthTotal += str;
                 }
             });
-            const strengthAvg = strengthCount > 0 ? strengthScore / strengthCount : 0;
+            const strengthAvg = strengthTotal / 6;
             
             // Performance tests - using exact column names from sheet
             const broadJump = convertBroadJump(parseFloat(perf.Broad_Jump_cm), gender);
@@ -1173,11 +1168,17 @@
             };
         }
         
-        function calculateHealth(a) {
+        function calculateHealth(a, strengthData) {
             const recovery = a.recovery || {};
+            // Movement Technique derived from Tech scores across all 6 patterns
+            let techTotal = 0;
+            MOVEMENT_PATTERNS.forEach(p => {
+                techTotal += parseFloat(strengthData[p.key + '_Tech']) || 0;
+            });
+            const movementTech = techTotal / 6;
             return {
                 'Recovery': parseFloat(recovery.Recovery_Score) || 0,
-                'Movement Technique': parseFloat(recovery.Movement_Technique) || 0,
+                'Movement Technique': movementTech,
                 'Nutrition': parseFloat(recovery.Nutrition) || 0
             };
         }
