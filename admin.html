@@ -2053,13 +2053,35 @@
         let filteredGritStudents = [];
 
         async function loadGritData() {
+            console.log('[Grit Debug] loadGritData() called. allStudents count:', allStudents.length);
             try {
-                // Load all students first to get emails/names, then load grit data for each
+                // If allStudents hasn't loaded yet, wait for it
+                if (allStudents.length === 0) {
+                    console.log('[Grit Debug] allStudents is empty, waiting for student data...');
+                    await new Promise(resolve => {
+                        const check = setInterval(() => {
+                            if (allStudents.length > 0) { clearInterval(check); resolve(); }
+                        }, 200);
+                        // Timeout after 10s to avoid infinite wait
+                        setTimeout(() => { clearInterval(check); resolve(); }, 10000);
+                    });
+                    console.log('[Grit Debug] allStudents now has', allStudents.length, 'students');
+                }
+
                 const studentEmails = allStudents.map(s => s.Email).filter(Boolean);
+                console.log('[Grit Debug] Fetching grit data for', studentEmails.length, 'students');
+
+                if (studentEmails.length === 0) {
+                    console.warn('[Grit Debug] No student emails found — cannot load grit data');
+                    document.getElementById('gritContainer').innerHTML =
+                        '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>No students loaded — try refreshing the page</div></div>';
+                    return;
+                }
+
                 const gritPromises = studentEmails.map(email =>
                     fetch(`${APPS_SCRIPT_URL}?action=getGritChallenge&email=${encodeURIComponent(email)}`)
                         .then(r => r.json())
-                        .catch(() => null)
+                        .catch(err => { console.error('[Grit Debug] Fetch failed for', email, err); return null; })
                 );
 
                 const results = await Promise.all(gritPromises);
@@ -2070,13 +2092,13 @@
                     if (!result || !result.success) return;
                     let challenge = null;
                     try {
-                        const json = result.challengeJson || result.challenge_json || result.Challenge_JSON;
+                        const json = result.challenge || result.challengeJson || result.challenge_json || result.Challenge_JSON;
                         if (typeof json === 'string' && json.trim()) {
                             challenge = JSON.parse(json);
                         } else if (typeof json === 'object' && json) {
                             challenge = json;
                         }
-                    } catch (e) { /* skip parse errors */ }
+                    } catch (e) { console.error('[Grit Debug] JSON parse error for', studentEmails[i], e); }
                     if (!challenge) return;
 
                     const student = allStudents.find(s => s.Email === studentEmails[i]);
@@ -2092,6 +2114,7 @@
                     });
                 });
 
+                console.log('[Grit Debug] Loaded', allGritStudents.length, 'students with grit challenges');
                 filteredGritStudents = [...allGritStudents];
                 gritDataLoaded = true;
                 renderGritPanel();
