@@ -162,11 +162,10 @@
         .time-add-row .form-label { font-size: 0.8rem; margin-bottom: 4px; }
         .time-add-btn { background: var(--burgundy); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; align-self: flex-end; }
         
-        /* Canvas Card */
-        .canvas-card { background: linear-gradient(135deg, #1a365d, var(--blue)); border-radius: 14px; padding: 18px 24px; color: white; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .canvas-title { font-weight: 700; }
-        .canvas-subtitle { font-size: 0.85rem; opacity: 0.9; }
-        .canvas-btn { background: white; color: #1a365d; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        /* Evidence Card */
+        .evidence-card { background: linear-gradient(135deg, #1a365d, var(--blue)); border-radius: 14px; padding: 18px 24px; color: white; margin-bottom: 16px; }
+        .evidence-title { font-weight: 700; margin-bottom: 4px; }
+        .evidence-subtitle { font-size: 0.85rem; opacity: 0.9; }
         
         /* Next Action */
         .next-action { background: linear-gradient(135deg, var(--burgundy), var(--burgundy-dark)); border-radius: 16px; padding: 24px; color: white; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
@@ -488,9 +487,9 @@
                     <div class="home-sessions" id="homeSessions"></div>
                 </div>
                 
-                <div class="canvas-card">
-                    <div><div class="canvas-title">📤 Upload Evidence to Canvas</div><div class="canvas-subtitle">Videos, photos, and documents</div></div>
-                    <a href="#" class="canvas-btn" onclick="openCanvas(); return false;">Open Canvas →</a>
+                <div class="evidence-card">
+                    <div class="evidence-title">📁 Add Your Evidence</div>
+                    <div class="evidence-subtitle">Add your evidence — photos, videos, or notes — to the Google Drive folder your teacher shared with you. Do this after every session.</div>
                 </div>
                 
                 <div class="time-card">
@@ -524,9 +523,8 @@
                 <div class="modal-success">
                     <div class="modal-success-icon">🎉</div>
                     <div class="modal-success-title" id="completeTitle">Session Complete!</div>
-                    <div class="modal-success-text">Don't forget to upload your evidence to Canvas.</div>
-                    <button class="btn btn-primary" onclick="openCanvasAndClose()" style="margin-bottom: 10px;">📤 Upload to Canvas</button><br>
-                    <button class="btn btn-secondary" onclick="closeModal('completeModal')">I'll do it later</button>
+                    <div class="modal-success-text">Remember to add your evidence to the Google Drive folder shared by your teacher.</div>
+                    <button class="btn btn-primary" onclick="closeModal('completeModal')">Got it</button>
                 </div>
             </div>
         </div>
@@ -555,11 +553,11 @@
                 <h3 style="margin-bottom: 8px; color: var(--burgundy);">What is the Grit Challenge?</h3>
                 <p style="margin-bottom: 16px; color: var(--grey);">You pick one thing to work on for 8 sessions. Session 1 is measuring your start. Sessions 2-7 are improving. Session 8 is your final test.</p>
                 <h3 style="margin-bottom: 8px; color: var(--burgundy);">Key Dates</h3>
-                <p style="margin-bottom: 16px; color: var(--grey);">Session 1: March 25 → Session 8: May 19<br>Due date: May 22 (everything on Canvas)</p>
+                <p style="margin-bottom: 16px; color: var(--grey);">Session 1: March 25 → Session 8: May 19<br>Make sure your Google Drive folder is complete by Thursday 22 May.</p>
                 <h3 style="margin-bottom: 8px; color: var(--burgundy);">Time Outside Class</h3>
                 <p style="margin-bottom: 16px; color: var(--grey);">30 minutes per week = 3 hours total over the 6 weeks.</p>
                 <h3 style="margin-bottom: 8px; color: var(--burgundy);">Evidence</h3>
-                <p style="color: var(--grey);">Upload all videos and photos to Canvas. Your reflections are saved here in the portal.</p>
+                <p style="color: var(--grey);">Add all videos, photos, and notes to the Google Drive folder your teacher shared with you. Your reflections are saved here in the portal.</p>
             </div>
         </div>
     </div>
@@ -570,7 +568,6 @@
 // ============ CONFIG ============
 const ATHLETE_API = 'https://script.google.com/macros/s/AKfycbxg8voUoN0Lpffv_fQIcI7igALEksa0MSUscvNMS0HLWLY3Oi_9IqQbUwwSw1JzJ0HK/exec';
 const GRIT_API = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
-const CANVAS_URL = 'https://fis.instructure.com/courses/YOUR_COURSE/assignments/YOUR_ASSIGNMENT';
 
 // Timeline dates
 const TIMELINE = [
@@ -1380,7 +1377,7 @@ function renderTimeline() {
             content = `<div class="timeline-num">🏖️</div><div class="timeline-label">Optional<br>practice</div>`;
         } else if (item.type === 'due') {
             cardClass += ' due';
-            content = `<div class="timeline-num">📤</div><div class="timeline-label">Submit<br>to Canvas</div>`;
+            content = `<div class="timeline-num">📁</div><div class="timeline-label">Evidence<br>due</div>`;
         } else if (item.type === 'measure') {
             cardClass += ' measure';
             const sess = sessions[item.session - 1] || {};
@@ -1857,14 +1854,6 @@ function openHelp() {
     openModal('helpModal');
 }
 
-function openCanvas() {
-    window.open(CANVAS_URL, '_blank');
-}
-
-function openCanvasAndClose() {
-    openCanvas();
-    closeModal('completeModal');
-}
 
 // ============ TOAST ============
 function showToast(msg) {
