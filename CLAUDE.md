@@ -166,7 +166,7 @@ Always divide by 6 — unassessed patterns count as zero and pull the score down
 | Tue 5 May | Session 6 |
 | Wed 13 May | Session 7 |
 | Tue 19 May | Session 8: Final test |
-| Thu 22 May | **DUE** — All evidence on Canvas |
+| Thu 22 May | **DUE** — All evidence in Google Drive folder |
 
 ### Challenge Types
 
@@ -293,12 +293,12 @@ Content is category-specific based on the student's chosen challenge type. See f
 
 ---
 
-## Canvas Assignment
+## Evidence Submission
 
 - Evidence due: Thursday 22 May
-- Students upload photos, videos, screenshots of practice and progress
-- Canvas URL placeholder must be replaced with real assignment link before student use
-- Canvas assignment text and Grit rubric exist separately (see below)
+- Students add photos, videos, screenshots of practice and progress to a shared Google Drive folder
+- The Google Drive folder link is posted in the Canvas assignment — the portal itself does not link to Canvas or Google Drive
+- Students are reminded after each session to add evidence to their teacher's shared folder
 
 ---
 
@@ -340,7 +340,7 @@ Content is category-specific based on the student's chosen challenge type. See f
 ## Remaining Work
 
 ### Immediate (before students use it today)
-- Replace Canvas URL placeholder with real assignment link
+- Verify evidence reminder references Google Drive folder (not Canvas upload)
 - Verify completed session read-only view is working
 - Verify session planning data saves and reloads correctly after page refresh
 - Verify Strength custom setup (exercise/weight/reps) is working
