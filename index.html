@@ -544,31 +544,29 @@
         .gain-value { font-size: 1.5rem; font-weight: 700; color: #2e7d32; margin: 0.25rem 0; }
         .gain-detail { font-size: 0.8rem; color: var(--grey); }
         
-        /* Strength Grid - Updated for 6 patterns */
+        /* Strength Summary Bar */
+        .strength-summary { display: flex; justify-content: center; gap: 2rem; background: var(--burgundy); color: white; border-radius: 10px; padding: 10px 20px; margin-bottom: 1rem; font-size: 0.82rem; font-weight: 600; flex-wrap: wrap; }
+        .strength-summary span { white-space: nowrap; }
+
+        /* Strength Grid - 6 pattern cards */
         .strength-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
         @media (max-width: 800px) { .strength-grid { grid-template-columns: repeat(2, 1fr); } }
-        .strength-item { background: var(--off-white); border-radius: 12px; padding: 1.25rem 1rem; text-align: left; }
-        .strength-item .pattern-name { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--black); text-align: center; }
-        .strength-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0.5rem; border-radius: 8px; }
-        .strength-row.tech-row { background: rgba(135,75,70,0.1); }
-        .strength-row.str-row { background: rgba(212,175,55,0.15); }
-        .strength-row.str-row.locked { background: rgba(107,107,107,0.1); }
-        .strength-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; width: 45px; }
-        .strength-label.tech { color: var(--burgundy); }
-        .strength-label.str { color: var(--gold); }
-        .strength-label.locked { color: var(--grey); }
-        .strength-level { font-size: 0.85rem; font-weight: 600; min-width: 20px; }
-        .strength-exercise { font-size: 0.8rem; color: var(--grey); flex: 1; }
-        .strength-exercise.current { color: var(--black); font-weight: 500; }
-        .strength-load { font-size: 0.8rem; font-weight: 600; color: var(--gold); }
-        .lock-icon { color: var(--grey); font-size: 0.75rem; }
-        
-        /* Strength Legend */
-        .strength-legend { display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; font-size: 0.75rem; color: var(--grey); flex-wrap: wrap; }
-        .legend-item { display: flex; align-items: center; gap: 0.5rem; }
-        .legend-box { width: 16px; height: 16px; border-radius: 4px; }
-        .legend-box.tech { background: rgba(135,75,70,0.3); }
-        .legend-box.str { background: rgba(212,175,55,0.3); }
+        .strength-item { background: var(--off-white); border-radius: 12px; padding: 1rem; text-align: left; }
+        .strength-item.muted { opacity: 0.5; }
+        .strength-item .pattern-name { font-size: 1rem; font-weight: 700; margin-bottom: 2px; color: var(--black); }
+        .strength-item .exercise-name { font-size: 0.8rem; color: var(--grey); margin-bottom: 8px; }
+        .strength-dots { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+        .strength-dots .dot-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; width: 30px; letter-spacing: 0.5px; }
+        .strength-dots .dot-label.tech { color: var(--burgundy); }
+        .strength-dots .dot-label.str { color: var(--gold); }
+        .strength-dots .dots { font-size: 0.85rem; letter-spacing: 1px; }
+        .strength-dots .dots.tech { color: var(--burgundy); }
+        .strength-dots .dots.str { color: var(--gold); }
+        .strength-dots .str-locked { font-size: 0.7rem; color: var(--grey); font-style: italic; }
+        .strength-chart-area { margin-top: 8px; }
+        .strength-chart-label { font-size: 0.7rem; color: var(--grey); text-align: center; font-style: italic; margin-top: 4px; }
+        .strength-progress { font-size: 0.78rem; font-weight: 600; color: var(--burgundy-dark); text-align: center; margin-top: 4px; }
+        .strength-muted-label { font-size: 0.8rem; color: var(--grey); text-align: center; margin-top: 12px; font-style: italic; }
         
         /* Portal Link */
         .portal-link {
@@ -738,11 +736,8 @@
                     <span>Foundation Strength Patterns</span>
                     <a href="strength-portal.html" class="portal-link">🏋️ Open Strength Portal →</a>
                 </div>
+                <div class="strength-summary" id="strengthSummary" style="display:none;"></div>
                 <div class="strength-grid" id="strengthGrid"></div>
-                <div class="strength-legend">
-                    <div class="legend-item"><div class="legend-box tech"></div> Technique (1-5) → Current Exercise</div>
-                    <div class="legend-item"><div class="legend-box str"></div> Strength Tier (1-5) → Load @ Level 3 Exercise</div>
-                </div>
             </div>
             
             <!-- Health & Skills -->
@@ -1106,7 +1101,7 @@
             renderPsychComponents(a, psychScores);
             renderPhysComponents(a, physScores);
             renderHealthComponents(a, healthScores);
-            renderStrengthGrid(strengthData, a.Gender);
+            renderStrengthGrid(strengthData, a.Gender, currentUser.email);
             updateBadges(trainingAge);
             
             // Radar chart
@@ -1313,67 +1308,177 @@
             renderComponents('healthComponents', scores, {}, historyData, 'recovery');
         }
         
-        function renderStrengthGrid(strengthData, gender) {
+        async function renderStrengthGrid(strengthData, gender, email) {
             const container = document.getElementById('strengthGrid');
-            
+            const summaryBar = document.getElementById('strengthSummary');
+
+            // Fetch workout history in parallel with rendering static parts
+            let workoutHistory = [];
+            try {
+                const res = await fetch(`${APPS_SCRIPT_URL}?action=getWorkoutHistory&email=${encodeURIComponent(email)}&limit=50`);
+                const data = await res.json();
+                if (data.success && data.history) workoutHistory = data.history;
+            } catch (e) {
+                console.error('Failed to load workout history:', e);
+            }
+
+            // Parse workout history into per-pattern weight arrays
+            // Each session has exercises JSON: [{name, sets, reps, weight}, ...]
+            const patternWeights = {};
+            MOVEMENT_PATTERNS.forEach(p => { patternWeights[p.key] = []; });
+
+            workoutHistory.sort((a, b) => (a.number || 0) - (b.number || 0));
+            workoutHistory.forEach(session => {
+                let exercises = session.exercises;
+                if (!exercises) return;
+                if (typeof exercises === 'string') {
+                    try { exercises = JSON.parse(exercises); } catch(e) { return; }
+                }
+                if (!Array.isArray(exercises)) return;
+                exercises.forEach(ex => {
+                    if (!ex.name || !ex.weight) return;
+                    const w = parseFloat(ex.weight);
+                    if (isNaN(w) || w <= 0) return; // skip bodyweight
+                    // Match exercise to pattern by checking if pattern name appears in exercise name
+                    const exName = ex.name.toLowerCase();
+                    for (const p of MOVEMENT_PATTERNS) {
+                        // Check pattern name or key in exercise name
+                        if (exName.includes(p.key.toLowerCase()) || exName.includes(p.name.toLowerCase())) {
+                            patternWeights[p.key].push({ session: session.number || 0, weight: w });
+                            break;
+                        }
+                    }
+                });
+            });
+
+            // Build summary bar
+            const totalSessions = workoutHistory.length;
+            let patternsLoaded = 0;
+            let biggestGain = { pattern: '', gain: 0 };
+            MOVEMENT_PATTERNS.forEach(p => {
+                const weights = patternWeights[p.key];
+                if (weights.length > 0) {
+                    patternsLoaded++;
+                    const first = weights[0].weight;
+                    const last = weights[weights.length - 1].weight;
+                    const gain = last - first;
+                    if (gain > biggestGain.gain) {
+                        biggestGain = { pattern: p.name, gain: gain };
+                    }
+                }
+            });
+
+            if (totalSessions > 0) {
+                summaryBar.style.display = 'flex';
+                summaryBar.innerHTML = `
+                    <span>${totalSessions} session${totalSessions !== 1 ? 's' : ''} completed</span>
+                    <span>${patternsLoaded} of 6 patterns loaded</span>
+                    ${biggestGain.gain > 0 ? `<span>Strongest gain: ${biggestGain.pattern} +${biggestGain.gain}kg</span>` : ''}
+                `;
+            }
+
+            // Helper: render filled/empty dots
+            function renderDots(value, max, filledClass) {
+                const v = Math.round(Math.min(Math.max(value, 0), max));
+                let out = '';
+                for (let i = 0; i < max; i++) {
+                    out += i < v ? '●' : '○';
+                }
+                return `<span class="dots ${filledClass}">${out}</span>`;
+            }
+
+            // Helper: render mini SVG line chart
+            function renderMiniChart(weights) {
+                if (weights.length === 0) return '';
+                if (weights.length === 1) {
+                    // Single point — just show a dot
+                    return `<svg width="100%" height="60" viewBox="0 0 120 60" preserveAspectRatio="none">
+                        <circle cx="60" cy="30" r="3" fill="var(--burgundy)" />
+                    </svg>`;
+                }
+                const minW = Math.min(...weights.map(w => w.weight));
+                const maxW = Math.max(...weights.map(w => w.weight));
+                const range = maxW - minW || 1;
+                const padding = 6;
+                const chartW = 120;
+                const chartH = 60;
+                const points = weights.map((w, i) => {
+                    const x = padding + (i / (weights.length - 1)) * (chartW - padding * 2);
+                    const y = chartH - padding - ((w.weight - minW) / range) * (chartH - padding * 2);
+                    return `${x},${y}`;
+                });
+                return `<svg width="100%" height="60" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="none">
+                    <polyline points="${points.join(' ')}" fill="none" stroke="var(--burgundy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    ${weights.map((w, i) => {
+                        const x = padding + (i / (weights.length - 1)) * (chartW - padding * 2);
+                        const y = chartH - padding - ((w.weight - minW) / range) * (chartH - padding * 2);
+                        return `<circle cx="${x}" cy="${y}" r="2.5" fill="var(--burgundy)" />`;
+                    }).join('')}
+                </svg>`;
+            }
+
+            // Render cards
             container.innerHTML = MOVEMENT_PATTERNS.map(p => {
                 const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
                 const strVal = strengthData[p.key + '_Str'];
+                const str = (strVal && strVal !== '—' && !isNaN(parseFloat(strVal))) ? parseInt(strVal) : 0;
                 const unlocked = tech >= p.testLevel;
-                
-                // Get current exercise based on tech level
+                const weights = patternWeights[p.key];
+                const hasData = tech > 0 || weights.length > 0;
+
+                // Current exercise name
                 let currentExercise = p.exercises[Math.min(tech, 5)] || p.exercises[0];
-                if (Array.isArray(currentExercise)) {
-                    currentExercise = currentExercise.join(' / ');
-                }
-                
-                // Test exercise is always at testLevel (Level 3)
-                const testExercise = p.exercises[p.testLevel];
-                
-                // Get load tiers for gender
-                const tiers = p.loadTiers[gender] || p.loadTiers['M'];
-                
-                // Parse strength value and get load
-                let strDisplay = '—';
-                let loadDisplay = '';
-                let strClass = 'locked';
-                
-                if (unlocked) {
-                    strClass = '';
-                    if (strVal && strVal !== '—' && !isNaN(parseFloat(strVal))) {
-                        const tierNum = parseInt(strVal);
-                        strDisplay = tierNum;
-                        if (tierNum >= 1 && tierNum <= 5) {
-                            const load = tiers[tierNum - 1];
-                            loadDisplay = `${load}${tierNum === 5 ? '+' : ''}kg`;
-                        }
-                    } else {
-                        strDisplay = '—';
-                        loadDisplay = 'Not tested';
-                    }
-                }
-                
-                return `
-                    <div class="strength-item">
+                if (Array.isArray(currentExercise)) currentExercise = currentExercise.join(' / ');
+
+                if (!hasData) {
+                    return `<div class="strength-item muted">
                         <div class="pattern-name">${p.name}</div>
-                        <div class="strength-row tech-row">
-                            <span class="strength-label tech">TECH</span>
-                            <span class="strength-level">${tech}/5</span>
-                            <span class="strength-exercise ${tech > 0 ? 'current' : ''}">${currentExercise}</span>
-                        </div>
-                        <div class="strength-row str-row ${strClass}">
-                            <span class="strength-label ${unlocked ? 'str' : 'locked'}">STR</span>
-                            ${unlocked ? `
-                                <span class="strength-level">${strDisplay}/5</span>
-                                <span class="strength-exercise">${testExercise}</span>
-                                <span class="strength-load">${loadDisplay}</span>
-                            ` : `
-                                <span class="lock-icon">🔒</span>
-                                <span class="strength-exercise">Unlock at Tech ${p.testLevel}</span>
-                            `}
-                        </div>
-                    </div>
-                `;
+                        <div class="exercise-name">${currentExercise}</div>
+                        <div class="strength-muted-label">Not yet assessed</div>
+                    </div>`;
+                }
+
+                // Tech dots
+                const techDots = `<div class="strength-dots">
+                    <span class="dot-label tech">Tech</span>
+                    ${renderDots(tech, 5, 'tech')}
+                </div>`;
+
+                // Str dots or locked message
+                let strDots;
+                if (unlocked) {
+                    strDots = `<div class="strength-dots">
+                        <span class="dot-label str">Str</span>
+                        ${str > 0 ? renderDots(str, 5, 'str') : renderDots(0, 5, 'str')}
+                    </div>`;
+                } else {
+                    strDots = `<div class="strength-dots">
+                        <span class="str-locked">Str unlocks at Tech ${p.testLevel}</span>
+                    </div>`;
+                }
+
+                // Chart area
+                let chartArea = '';
+                if (weights.length > 0) {
+                    const firstW = weights[0].weight;
+                    const lastW = weights[weights.length - 1].weight;
+                    chartArea = `<div class="strength-chart-area">
+                        ${renderMiniChart(weights)}
+                        <div class="strength-progress">${firstW}kg → ${lastW}kg</div>
+                    </div>`;
+                } else {
+                    chartArea = `<div class="strength-chart-area">
+                        <div class="strength-chart-label">Building foundation — no load yet</div>
+                    </div>`;
+                }
+
+                return `<div class="strength-item">
+                    <div class="pattern-name">${p.name}</div>
+                    <div class="exercise-name">${currentExercise}</div>
+                    ${techDots}
+                    ${strDots}
+                    ${chartArea}
+                </div>`;
             }).join('');
         }
         
