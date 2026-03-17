@@ -375,12 +375,12 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">Current weight (kg)</label>
-                                    <input type="number" class="form-input" id="strengthCurrentWeight" placeholder="0" min="0" step="0.5">
+                                    <label class="form-label">Starting weight or reps</label>
+                                    <input type="text" class="form-input" id="strengthCurrentWeight" placeholder="e.g. 20kg or 15 reps">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Goal weight (kg)</label>
-                                    <input type="number" class="form-input" id="strengthGoalWeight" placeholder="0" min="0" step="0.5">
+                                    <label class="form-label">Goal weight or reps</label>
+                                    <input type="text" class="form-input" id="strengthGoalWeight" placeholder="e.g. 20kg or 15 reps">
                                 </div>
                             </div>
                             <div class="form-group">
@@ -533,7 +533,7 @@
     </div>
     
     <div class="modal-overlay" id="updateModal">
-        <div class="modal" style="max-width: 400px;">
+        <div class="modal" style="max-width: 480px;">
             <div class="modal-header"><div class="modal-title">Update Measurement</div><button class="modal-close" onclick="closeModal('updateModal')">✕</button></div>
             <div class="modal-body" id="updateModalBody"><div class="form-group"><label class="form-label">Current level</label><input type="text" class="form-input" id="updateValue"></div></div>
             <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('updateModal')">Cancel</button><button class="btn btn-success" onclick="saveUpdate()">Save</button></div>
@@ -1143,16 +1143,16 @@ async function submitChallenge() {
 
     if (isStrength) {
         const exercise = document.getElementById('strengthExercise').value.trim();
-        const currentWeight = parseFloat(document.getElementById('strengthCurrentWeight').value);
-        const goalWeight = parseFloat(document.getElementById('strengthGoalWeight').value);
+        const currentWeight = document.getElementById('strengthCurrentWeight').value.trim();
+        const goalWeight = document.getElementById('strengthGoalWeight').value.trim();
         const reps = parseInt(document.getElementById('strengthReps').value);
 
-        if (!exercise || isNaN(currentWeight) || isNaN(goalWeight) || !reps || reps < 5) {
+        if (!exercise || !currentWeight || !goalWeight || !reps || reps < 5) {
             showToast('Please fill in all strength fields (minimum 5 reps)');
             return;
         }
-        baseline = String(currentWeight);
-        target = String(goalWeight);
+        baseline = currentWeight;
+        target = goalWeight;
         measure = `${reps} reps`;
     } else {
         baseline = document.getElementById('baselineInput').value.trim();
@@ -1245,11 +1245,12 @@ function renderActiveView() {
         if (goalW !== startW) {
             pct = Math.round(Math.min(100, Math.max(0, ((currW - startW) / (goalW - startW)) * 100)));
         }
+        pct = Math.max(0, pct); // clamp negative
         progressNumbers.innerHTML = `
             <div style="width: 100%; text-align: center;">
                 <div style="font-size: 1.05rem; opacity: 0.8; margin-bottom: 8px;">${exercise}</div>
-                <div style="font-size: 1.3rem; font-weight: 700;">${startW}kg × ${reps} reps → ${goalW}kg × ${reps} reps</div>
-                <div style="font-size: 1rem; color: var(--gold); margin-top: 6px;">Now: ${currW}kg × ${reps} reps</div>
+                <div style="font-size: 1.3rem; font-weight: 700;">${c.baseline} × ${reps} reps → ${c.target} × ${reps} reps</div>
+                <div style="font-size: 1rem; color: var(--gold); margin-top: 6px;">Now: ${c.current} × ${reps} reps</div>
             </div>
         `;
         document.getElementById('progBar').style.width = `${pct}%`;
@@ -1467,9 +1468,9 @@ function openSession(num) {
     // Strength weight check-in field — shown in sessions 2-7 only (not session 1, which is the baseline)
     const strengthWeightField = (strengthActive && num > 1) ? `
         <div class="form-group">
-            <label class="form-label">What weight are you lifting now? (kg)</label>
-            <input type="number" class="form-input" id="sessionStrengthWeight" placeholder="0" min="0" step="0.5">
-            <div class="form-hint">Minimum ${currentChallenge.strengthReps || 5} reps — we don't test single rep maxes at this stage.</div>
+            <label class="form-label">What weight or reps are you at now?</label>
+            <input type="text" class="form-input" id="sessionStrengthWeight" placeholder="e.g. 20kg or 15 reps">
+            <div class="form-hint">Same format as your goal — at ${currentChallenge.strengthReps || 5} reps minimum.</div>
         </div>` : '';
 
     // Session 1: baseline measurement + planning questions
@@ -1482,9 +1483,9 @@ function openSession(num) {
         const reps = currentChallenge.strengthReps || 5;
         firstQuestion = `<div class="form-group">
             <label class="form-label">Your baseline</label>
-            <div style="background: var(--off-white); border: 2px solid var(--light-grey); border-radius: 10px; padding: 14px 16px; font-size: 1rem; font-weight: 600; color: var(--black);">${exercise} — ${weight}kg × ${reps} reps</div>
+            <div style="background: var(--off-white); border: 2px solid var(--light-grey); border-radius: 10px; padding: 14px 16px; font-size: 1rem; font-weight: 600; color: var(--black);">${exercise} — ${weight} × ${reps} reps</div>
             <div class="form-hint">If this is wrong, update it in your challenge settings.</div>
-            <input type="hidden" id="sessionBaseline" value="${exercise} — ${weight}kg × ${reps} reps">
+            <input type="hidden" id="sessionBaseline" value="${exercise} — ${weight} × ${reps} reps">
         </div>`;
     } else if (num === 1) {
         firstQuestion = `<div class="form-group"><label class="form-label">What did you measure? What's your baseline?</label><textarea class="form-textarea" id="sessionBaseline" placeholder="Describe what you measured and the result..."></textarea></div>`;
@@ -1554,7 +1555,7 @@ function viewSession(num) {
         const exercise = currentChallenge.strengthExercise || 'Strength exercise';
         const weight = currentChallenge.baseline || '0';
         const reps = currentChallenge.strengthReps || 5;
-        primaryValue = `${exercise} — ${weight}kg × ${reps} reps`;
+        primaryValue = `${exercise} — ${weight} × ${reps} reps`;
     } else if (num === 1) {
         primaryLabel = 'What did you measure? What\'s your baseline?';
         primaryValue = saved.baseline || saved.what || '';
@@ -1569,7 +1570,7 @@ function viewSession(num) {
 
     // Show weight field in read-only view for Strength sessions 2-7 only (not session 1)
     const weightHTML = (strengthActive && num > 1 && currentChallenge.current)
-        ? `<div class="form-group"><label class="form-label">Weight lifted (kg)</label><div class="readonly-field">${currentChallenge.current}</div></div>`
+        ? `<div class="form-group"><label class="form-label">Current value</label><div class="readonly-field">${currentChallenge.current}</div></div>`
         : '';
 
     const field = (label, value) => value
@@ -1678,9 +1679,9 @@ function openFinalModal() {
         const reps = currentChallenge.strengthReps || 5;
         remeasureField = `
             <div class="form-group">
-                <label class="form-label">How did you re-measure? What was your final weight? (kg)</label>
-                <input type="number" class="form-input" id="finalRemeasure" placeholder="0" min="0" step="0.5">
-                <div class="form-hint">At ${reps} reps — same rep count as your goal.</div>
+                <label class="form-label">How did you re-measure? What was your final result?</label>
+                <input type="text" class="form-input" id="finalRemeasure" placeholder="e.g. 25kg or 20 reps">
+                <div class="form-hint">Same format as your goal — at ${reps} reps.</div>
             </div>`;
     } else {
         remeasureField = `
@@ -1770,15 +1771,36 @@ function addTimeLog() {
 // ============ UPDATE MODAL ============
 function openUpdateModal() {
     const body = document.getElementById('updateModalBody');
+    const titleEl = document.querySelector('#updateModal .modal-title');
     if (isActiveStrength()) {
-        const reps = currentChallenge.strengthReps || 5;
+        titleEl.textContent = 'Edit Strength Goal';
+        const c = currentChallenge;
         body.innerHTML = `
             <div class="form-group">
-                <label class="form-label">What weight are you lifting now? (kg)</label>
-                <input type="number" class="form-input" id="updateValue" value="${currentChallenge.current}" min="0" step="0.5">
-                <div class="form-hint">At ${reps} reps — minimum 5 reps, no single rep maxes.</div>
+                <label class="form-label">Exercise(s)</label>
+                <input type="text" class="form-input" id="editStrengthExercise" value="${(c.strengthExercise || '').replace(/"/g, '&quot;')}">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Starting weight or reps</label>
+                    <input type="text" class="form-input" id="editStrengthBaseline" value="${(c.baseline || '').replace(/"/g, '&quot;')}" placeholder="e.g. 20kg or 15 reps">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Goal weight or reps</label>
+                    <input type="text" class="form-input" id="editStrengthTarget" value="${(c.target || '').replace(/"/g, '&quot;')}" placeholder="e.g. 20kg or 15 reps">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Reps</label>
+                <input type="number" class="form-input" id="editStrengthReps" value="${c.strengthReps || 5}" min="5" step="1">
+                <div class="form-hint">Minimum 5 reps — we don't test single rep maxes at this stage.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">What weight or reps are you at now?</label>
+                <input type="text" class="form-input" id="updateValue" value="${(c.current || '').replace(/"/g, '&quot;')}" placeholder="e.g. 20kg or 15 reps">
             </div>`;
     } else {
+        titleEl.textContent = 'Update Measurement';
         body.innerHTML = `<div class="form-group"><label class="form-label">Current level</label><input type="text" class="form-input" id="updateValue" value="${currentChallenge.current}"></div>`;
     }
     openModal('updateModal');
@@ -1787,6 +1809,24 @@ function openUpdateModal() {
 function saveUpdate() {
     const val = document.getElementById('updateValue').value.trim();
     if (!val) return;
+
+    if (isActiveStrength()) {
+        const exercise = document.getElementById('editStrengthExercise').value.trim();
+        const baseline = document.getElementById('editStrengthBaseline').value.trim();
+        const target = document.getElementById('editStrengthTarget').value.trim();
+        const reps = parseInt(document.getElementById('editStrengthReps').value);
+
+        if (!exercise || !baseline || !target || !reps || reps < 5) {
+            showToast('Please fill in all fields (minimum 5 reps)');
+            return;
+        }
+
+        currentChallenge.strengthExercise = exercise;
+        currentChallenge.baseline = baseline;
+        currentChallenge.target = target;
+        currentChallenge.strengthReps = reps;
+        currentChallenge.focusName = 'Strength';
+    }
 
     currentChallenge.current = val;
     closeModal('updateModal');
