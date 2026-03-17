@@ -1101,7 +1101,7 @@
             renderPsychComponents(a, psychScores);
             renderPhysComponents(a, physScores);
             renderHealthComponents(a, healthScores);
-            renderStrengthGrid(strengthData, a.Gender, currentUser.email);
+            renderStrengthGrid(strengthData, a.Gender, a.Athlete_ID || currentUser.email);
             updateBadges(trainingAge);
             
             // Radar chart
@@ -1308,22 +1308,24 @@
             renderComponents('healthComponents', scores, {}, historyData, 'recovery');
         }
         
-        async function renderStrengthGrid(strengthData, gender, email) {
+        async function renderStrengthGrid(strengthData, gender, athleteId) {
             const container = document.getElementById('strengthGrid');
             const summaryBar = document.getElementById('strengthSummary');
 
-            // Fetch workout history in parallel with rendering static parts
+            // Fetch workout history using Athlete_ID (matches Workout_Logs first column)
             let workoutHistory = [];
             try {
-                const res = await fetch(`${APPS_SCRIPT_URL}?action=getWorkoutHistory&email=${encodeURIComponent(email)}&limit=50`);
+                const res = await fetch(`${APPS_SCRIPT_URL}?action=getWorkoutHistory&athleteId=${encodeURIComponent(athleteId)}&limit=50`);
                 const data = await res.json();
+                console.log('Workout history response:', data);
                 if (data.success && data.history) workoutHistory = data.history;
             } catch (e) {
                 console.error('Failed to load workout history:', e);
             }
 
             // Parse workout history into per-pattern weight arrays
-            // Each session has exercises JSON: [{name, sets, reps, weight}, ...]
+            // Each exercise object has: { name, pattern, sets, reps, weight, type }
+            // weight can be: a number (kg), "bodyweight", or "X reps" — only keep numeric kg values
             const patternWeights = {};
             MOVEMENT_PATTERNS.forEach(p => { patternWeights[p.key] = []; });
 
@@ -1336,16 +1338,30 @@
                 }
                 if (!Array.isArray(exercises)) return;
                 exercises.forEach(ex => {
-                    if (!ex.name || !ex.weight) return;
-                    const w = parseFloat(ex.weight);
-                    if (isNaN(w) || w <= 0) return; // skip bodyweight
-                    // Match exercise to pattern by checking if pattern name appears in exercise name
-                    const exName = ex.name.toLowerCase();
+                    if (!ex.weight) return;
+                    // Skip non-numeric weights: "bodyweight", "12 reps", etc.
+                    const weightStr = String(ex.weight);
+                    if (weightStr === 'bodyweight' || weightStr.includes('reps')) return;
+                    const w = parseFloat(weightStr);
+                    if (isNaN(w) || w <= 0) return;
+
+                    // Match exercise to pattern using the pattern field first, then fall back to name matching
+                    const patternName = ex.pattern || '';
+                    let matched = false;
                     for (const p of MOVEMENT_PATTERNS) {
-                        // Check pattern name or key in exercise name
-                        if (exName.includes(p.key.toLowerCase()) || exName.includes(p.name.toLowerCase())) {
+                        if (patternName === p.key || patternName === p.name) {
                             patternWeights[p.key].push({ session: session.number || 0, weight: w });
+                            matched = true;
                             break;
+                        }
+                    }
+                    if (!matched && ex.name) {
+                        const exName = ex.name.toLowerCase();
+                        for (const p of MOVEMENT_PATTERNS) {
+                            if (exName.includes(p.key.toLowerCase()) || exName.includes(p.name.toLowerCase())) {
+                                patternWeights[p.key].push({ session: session.number || 0, weight: w });
+                                break;
+                            }
                         }
                     }
                 });
