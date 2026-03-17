@@ -679,25 +679,6 @@ const SESSION_IDEAS = {
                 'Taper in the last few days — arrive at the test fresh, not tired',
                 'Nail your pacing from the first minute — going out too fast is the most common mistake'
             ]
-        },
-        mobility: {
-            early: [
-                'Measure your range — a specific position, a distance, an angle — so you can track change',
-                'Find the position that feels hardest and spend the most time there',
-                'Identify whether your limit is tightness, weakness, or control — they need different approaches',
-                'Don\u2019t just stretch — move through the range so your body learns to use it'
-            ],
-            middle: [
-                'Add light load to the stretch once you\u2019re warm — passive stretching only goes so far',
-                'Work the range through movement, not just static holds',
-                'Spend at least 10 minutes on your target area every home session',
-                'Push slightly further than last time — small increments add up'
-            ],
-            later: [
-                'Re-measure the same way you did in Session 1 — same position, same conditions',
-                'Test your mobility inside a real movement, not just an isolated stretch',
-                'Use your final sessions to consolidate the range you\u2019ve built, not push further'
-            ]
         }
     },
     personal: {
@@ -833,8 +814,7 @@ const DEMO_PHYSIOLOGY = {
     'Broad Jump': { score: 4.0, raw: '220 cm' },
     '40m Sprint': { score: 4.0, raw: '5.48 sec' },
     'Agility': { score: 2.0, raw: '5.42 sec' },
-    'Cooper Test': { score: 5.0, raw: '3460m' },
-    'Mobility': { score: 4.4, raw: '' }
+    'Cooper Test': { score: 5.0, raw: '3460m' }
 };
 
 const DEMO_CHALLENGE = {
@@ -965,7 +945,6 @@ function extractPhysiologyScores(athlete) {
     const gender = athlete.Gender || 'M';
     const perf = athlete.performance || {};
     const strength = athlete.strength || {};
-    const mobility = athlete.mobility || {};
 
     // Strength composite (same logic as index.html)
     const patterns = ['Squat', 'Hinge', 'Push', 'Pull', 'Lunge', 'Press'];
@@ -985,20 +964,12 @@ function extractPhysiologyScores(athlete) {
     const agility = convertAgility(parseFloat(perf['5_10_5_sec']), gender);
     const cooper = convertCooper(parseFloat(perf.Cooper_m), gender);
 
-    // Mobility (normalize 0-3 to 0-5)
-    const asl = ((parseFloat(mobility.ASL) || 0) / 3) * 5;
-    const trunk = ((parseFloat(mobility.Trunk_Stability) || 0) / 3) * 5;
-    const shoulder = ((parseFloat(mobility.Shoulder_Mobility) || 0) / 3) * 5;
-    const vals = [asl, trunk, shoulder].filter(v => v > 0);
-    const mobilityAvg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-
     return {
         'Strength': { score: strengthAvg, raw: '' },
         'Broad Jump': { score: broadJump, raw: perf.Broad_Jump_cm ? `${perf.Broad_Jump_cm} cm` : '' },
         '40m Sprint': { score: sprint, raw: perf['40m_sec'] ? `${perf['40m_sec']} sec` : '' },
         'Agility': { score: agility, raw: perf['5_10_5_sec'] ? `${perf['5_10_5_sec']} sec` : '' },
-        'Cooper Test': { score: cooper, raw: perf.Cooper_m ? `${perf.Cooper_m}m` : '' },
-        'Mobility': { score: mobilityAvg, raw: '' }
+        'Cooper Test': { score: cooper, raw: perf.Cooper_m ? `${perf.Cooper_m}m` : '' }
     };
 }
 
@@ -1049,8 +1020,7 @@ function renderChoiceFitnessScores() {
         { label: 'Broad Jump', score: scores['Broad Jump']?.score, raw: scores['Broad Jump']?.raw },
         { label: 'Sprint', score: scores['40m Sprint']?.score, raw: scores['40m Sprint']?.raw },
         { label: 'Agility', score: scores['Agility']?.score, raw: scores['Agility']?.raw },
-        { label: 'Cooper', score: scores['Cooper Test']?.score, raw: scores['Cooper Test']?.raw },
-        { label: 'Mobility', score: scores['Mobility']?.score, raw: scores['Mobility']?.raw }
+        { label: 'Cooper', score: scores['Cooper Test']?.score, raw: scores['Cooper Test']?.raw }
     ];
     container.innerHTML = items.map(i => {
         const s = i.score != null ? i.score : 0;
@@ -1128,8 +1098,7 @@ function renderFitnessScores() {
         { id: 'broadjump', name: 'Broad Jump', ...scores['Broad Jump'] },
         { id: 'sprint', name: '40m Sprint', ...scores['40m Sprint'] },
         { id: 'agility', name: 'Agility', ...scores['Agility'] },
-        { id: 'cooper', name: 'Cooper Test', ...scores['Cooper Test'] },
-        { id: 'mobility', name: 'Mobility', ...scores['Mobility'] }
+        { id: 'cooper', name: 'Cooper Test', ...scores['Cooper Test'] }
     ];
     
     grid.innerHTML = items.map(item => {
