@@ -549,9 +549,21 @@
         .strength-summary span { white-space: nowrap; }
 
         /* Strength Grid - 6 pattern cards */
-        .strength-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .strength-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; align-items: start; }
         @media (max-width: 800px) { .strength-grid { grid-template-columns: repeat(2, 1fr); } }
-        .strength-item { background: var(--off-white); border-radius: 12px; padding: 1.15rem 1.1rem; text-align: left; }
+
+        .strength-item {
+            background: var(--off-white);
+            border-radius: 12px;
+            padding: 1.15rem 1.1rem;
+            text-align: left;
+            transition: box-shadow 0.25s ease, transform 0.25s ease;
+            overflow: hidden;
+        }
+        .strength-item:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
         .strength-item.muted { opacity: 0.45; }
         .strength-item .pattern-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 1px; color: var(--black); }
         .strength-item .exercise-name { font-size: 0.75rem; color: var(--grey); margin-bottom: 10px; }
@@ -562,12 +574,26 @@
         .strength-dots .dots { font-size: 0.75rem; letter-spacing: 1px; }
         .strength-dots .dots.tech { color: var(--burgundy); }
         .strength-dots .dots.str { color: var(--gold); }
-        .strength-dots .str-locked { font-size: 0.65rem; color: var(--grey); font-style: italic; }
-        .strength-chart-area { margin-top: 10px; }
-        .strength-chart-label { font-size: 0.65rem; color: #aaa; text-align: center; font-style: italic; margin-top: 2px; }
-        .strength-progress { font-size: 0.78rem; font-weight: 700; text-align: center; margin-top: 3px; }
-        .strength-progress.has-gain { color: var(--burgundy-dark); }
-        .strength-progress.no-gain { color: #999; }
+
+        /* Weight headline — always visible at bottom of default card */
+        .strength-weight-headline { font-size: 0.78rem; font-weight: 700; text-align: center; margin-top: 10px; }
+        .strength-weight-headline.has-gain { color: var(--burgundy-dark); }
+        .strength-weight-headline.no-gain { color: #999; }
+
+        /* Chart area: hidden by default, revealed on hover */
+        .strength-chart-area {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, opacity 0.3s ease 0.05s;
+            margin-top: 0;
+        }
+        .strength-item:hover .strength-chart-area {
+            max-height: 70px;
+            opacity: 1;
+            margin-top: 10px;
+        }
+
         .strength-muted-label { font-size: 0.75rem; color: #aaa; text-align: center; margin-top: 12px; font-style: italic; }
         
         /* Portal Link */
@@ -1405,31 +1431,25 @@
                 return `<span class="dots ${filledClass}">${out}</span>`;
             }
 
-            // Helper: render mini SVG line chart — compact, clean
+            // Helper: render mini SVG line chart — clean line from first to last point only
             function renderMiniChart(weights) {
-                if (weights.length === 0) return '';
+                if (weights.length < 2) return '';
                 const chartH = 50;
                 const chartW = 120;
                 const padding = 6;
-                if (weights.length === 1) {
-                    return `<svg width="100%" height="${chartH}" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="none">
-                        <circle cx="60" cy="25" r="2.5" fill="var(--burgundy)" />
-                    </svg>`;
-                }
-                const minW = Math.min(...weights.map(w => w.weight));
-                const maxW = Math.max(...weights.map(w => w.weight));
+                const firstW = weights[0].weight;
+                const lastW = weights[weights.length - 1].weight;
+                const minW = Math.min(firstW, lastW);
+                const maxW = Math.max(firstW, lastW);
                 const range = maxW - minW || 1;
-                const coords = weights.map((w, i) => ({
-                    x: padding + (i / (weights.length - 1)) * (chartW - padding * 2),
-                    y: chartH - padding - ((w.weight - minW) / range) * (chartH - padding * 2)
-                }));
-                const points = coords.map(c => `${c.x},${c.y}`).join(' ');
-                const first = coords[0];
-                const last = coords[coords.length - 1];
+                const firstY = chartH - padding - ((firstW - minW) / range) * (chartH - padding * 2);
+                const lastY = chartH - padding - ((lastW - minW) / range) * (chartH - padding * 2);
+                const firstX = padding;
+                const lastX = chartW - padding;
                 return `<svg width="100%" height="${chartH}" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="none">
-                    <polyline points="${points}" fill="none" stroke="var(--burgundy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7" />
-                    <circle cx="${first.x}" cy="${first.y}" r="2.5" fill="var(--burgundy)" />
-                    <circle cx="${last.x}" cy="${last.y}" r="2.5" fill="var(--burgundy)" />
+                    <line x1="${firstX}" y1="${firstY}" x2="${lastX}" y2="${lastY}" stroke="var(--burgundy)" stroke-width="1.5" stroke-linecap="round" opacity="0.7" />
+                    <circle cx="${firstX}" cy="${firstY}" r="2.5" fill="var(--burgundy)" />
+                    <circle cx="${lastX}" cy="${lastY}" r="2.5" fill="var(--burgundy)" />
                 </svg>`;
             }
 
@@ -1438,7 +1458,6 @@
                 const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
                 const strVal = strengthData[p.key + '_Str'];
                 const str = (strVal && strVal !== '—' && !isNaN(parseFloat(strVal))) ? parseInt(strVal) : 0;
-                const unlocked = tech >= p.testLevel;
                 const weights = patternWeights[p.key];
                 const hasData = tech > 0 || weights.length > 0;
 
@@ -1460,33 +1479,23 @@
                     ${renderDots(tech, 5, 'tech')}
                 </div>`;
 
-                // Str dots or locked message
-                let strDots;
-                if (unlocked) {
-                    strDots = `<div class="strength-dots">
-                        <span class="dot-label str">Str</span>
-                        ${str > 0 ? renderDots(str, 5, 'str') : renderDots(0, 5, 'str')}
-                    </div>`;
-                } else {
-                    strDots = `<div class="strength-dots">
-                        <span class="str-locked">Str unlocks at Tech ${p.testLevel}</span>
-                    </div>`;
-                }
+                // Str dots — always show if str data exists
+                const strDots = str > 0 ? `<div class="strength-dots">
+                    <span class="dot-label str">Str</span>
+                    ${renderDots(str, 5, 'str')}
+                </div>` : '';
 
-                // Chart area
+                // Weight headline (always visible) and chart area (hover only)
+                let weightHeadline = '';
                 let chartArea = '';
-                if (weights.length > 0) {
+                if (weights.length > 1) {
                     const firstW = weights[0].weight;
                     const lastW = weights[weights.length - 1].weight;
                     const gainClass = lastW > firstW ? 'has-gain' : 'no-gain';
-                    chartArea = `<div class="strength-chart-area">
-                        ${renderMiniChart(weights)}
-                        <div class="strength-progress ${gainClass}">${firstW}kg → ${lastW}kg</div>
-                    </div>`;
-                } else {
-                    chartArea = `<div class="strength-chart-area">
-                        <div class="strength-chart-label">Building foundation — no load yet</div>
-                    </div>`;
+                    weightHeadline = `<div class="strength-weight-headline ${gainClass}">${firstW}kg → ${lastW}kg</div>`;
+                    chartArea = `<div class="strength-chart-area">${renderMiniChart(weights)}</div>`;
+                } else if (weights.length === 1) {
+                    weightHeadline = `<div class="strength-weight-headline no-gain">${weights[0].weight}kg</div>`;
                 }
 
                 return `<div class="strength-item">
@@ -1494,6 +1503,7 @@
                     <div class="exercise-name">${currentExercise}</div>
                     ${techDots}
                     ${strDots}
+                    ${weightHeadline}
                     ${chartArea}
                 </div>`;
             }).join('');
