@@ -140,6 +140,14 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ===== PSYCH SCORES UPDATE =====
+    if (data.action === 'updatePsychScores') {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var psychResult = handleUpdatePsychScores(ss, data.email, data.mindset, data.mentalToughness, data.grit);
+      return ContentService.createTextOutput(JSON.stringify(psychResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (data.athleteId && data.updates) {
       return updateStudent(data.athleteId, data.updates);
     }
@@ -389,6 +397,137 @@ function handleGetGritAdminData(ss) {
   }
 }
 
+
+// ========================================
+// PSYCH SCORES UPDATE
+// POST: { action: 'updatePsychScores', email, mindset, mentalToughness, grit }
+// Writes Mindset, Mental_Toughness, Grit to Psych_Assessments
+// ========================================
+
+function handleUpdatePsychScores(ss, email, mindset, mentalToughness, grit) {
+  try {
+    if (!email) {
+      return { success: false, error: 'No email provided' };
+    }
+
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) {
+      return { success: false, error: 'No athlete found for email: ' + email };
+    }
+
+    var sheet = ss.getSheetByName('Psych_Assessments');
+    if (!sheet) {
+      return { success: false, error: 'Psych_Assessments sheet not found' };
+    }
+
+    // Validate scores are 1–5
+    function validateScore(val) {
+      var n = parseInt(val);
+      if (isNaN(n) || n < 1 || n > 5) return null;
+      return n;
+    }
+
+    var scores = {};
+    if (mindset !== undefined && mindset !== null) {
+      var v = validateScore(mindset);
+      if (v === null) return { success: false, error: 'Mindset must be 1–5' };
+      scores['Mindset'] = v;
+    }
+    if (mentalToughness !== undefined && mentalToughness !== null) {
+      var v = validateScore(mentalToughness);
+      if (v === null) return { success: false, error: 'Mental Toughness must be 1–5' };
+      scores['Mental_Toughness'] = v;
+    }
+    if (grit !== undefined && grit !== null) {
+      var v = validateScore(grit);
+      if (v === null) return { success: false, error: 'Grit must be 1–5' };
+      scores['Grit'] = v;
+    }
+
+    if (Object.keys(scores).length === 0) {
+      return { success: false, error: 'No scores provided' };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idCol = headers.indexOf('Athlete_ID');
+    var dateCol = headers.indexOf('Date');
+
+    if (idCol === -1) {
+      return { success: false, error: 'Athlete_ID column not found in Psych_Assessments' };
+    }
+
+    // Today's date string for comparison
+    var today = new Date();
+    var todayStr = Utilities.formatDate(today, ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+
+    // Find the most recent row for this athlete
+    var mostRecentRow = -1;
+    var mostRecentDate = null;
+    var isTodayRow = false;
+
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idCol]).trim() == String(athleteId).trim()) {
+        var rowDate = null;
+        if (dateCol >= 0 && data[i][dateCol]) {
+          try {
+            rowDate = new Date(data[i][dateCol]);
+            if (isNaN(rowDate.getTime())) rowDate = null;
+          } catch (e) {
+            rowDate = null;
+          }
+        }
+
+        if (rowDate) {
+          var rowDateStr = Utilities.formatDate(rowDate, ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+          if (rowDateStr === todayStr) {
+            // Found a row for today — update it
+            mostRecentRow = i + 1;
+            isTodayRow = true;
+            break;
+          }
+          if (!mostRecentDate || rowDate > mostRecentDate) {
+            mostRecentDate = rowDate;
+            mostRecentRow = i + 1;
+          }
+        } else if (mostRecentRow === -1) {
+          mostRecentRow = i + 1;
+        }
+      }
+    }
+
+    if (isTodayRow && mostRecentRow > 0) {
+      // Update existing today row — only write the provided fields
+      for (var field in scores) {
+        var colIdx = headers.indexOf(field);
+        if (colIdx >= 0) {
+          sheet.getRange(mostRecentRow, colIdx + 1).setValue(scores[field]);
+        }
+      }
+      return { success: true };
+    }
+
+    // Append a new row for today
+    var newRow = [];
+    for (var h = 0; h < headers.length; h++) {
+      if (headers[h] === 'Athlete_ID') {
+        newRow.push(athleteId);
+      } else if (headers[h] === 'Date') {
+        newRow.push(today);
+      } else if (scores[headers[h]] !== undefined) {
+        newRow.push(scores[headers[h]]);
+      } else {
+        newRow.push('');
+      }
+    }
+    sheet.appendRow(newRow);
+
+    return { success: true };
+
+  } catch (error) {
+    return { success: false, error: 'Error updating psych scores: ' + error.message };
+  }
+}
 
 // ========================================
 // ADMIN PANEL FUNCTIONS
