@@ -79,6 +79,8 @@
         .form-input, .form-textarea { width: 100%; padding: 14px 16px; border: 2px solid var(--light-grey); border-radius: 10px; font-size: 1rem; font-family: inherit; }
         .form-input:focus, .form-textarea:focus { outline: none; border-color: var(--burgundy); }
         .form-textarea { min-height: 80px; resize: vertical; }
+        .readonly-field { padding: 12px 16px; background: var(--off-white); border: 1px solid var(--light-grey); border-radius: 10px; font-size: 0.95rem; line-height: 1.5; color: var(--black); white-space: pre-wrap; }
+        .view-only-badge { display: inline-block; background: var(--light-grey); color: var(--grey); font-size: 0.8rem; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         
         /* Level Selector */
@@ -1392,22 +1394,28 @@ function renderTimeline() {
             const status = done ? '✓' : isCurrent ? '▶' : '🔒';
             content = `<div class="timeline-num">${item.session}</div><div class="timeline-label">${item.label}</div><div class="timeline-status">${status}</div>`;
             
-            if (!done && item.session <= completedCount + 1) {
+            if (done) {
+                onclick = `onclick="viewSession(${item.session})"`;
+            } else if (item.session <= completedCount + 1) {
                 onclick = `onclick="openSession(${item.session})"`;
             }
         } else {
             const sess = sessions[item.session - 1] || {};
             const done = sess.completed;
             const isCurrent = !done && item.session === completedCount + 1;
-            
+
             if (done) cardClass += ' complete';
             else if (isCurrent) cardClass += ' current';
             else if (item.session > completedCount + 1) cardClass += ' locked';
-            
+
             const status = done ? '✓' : isCurrent ? '▶' : '🔒';
             content = `<div class="timeline-num">${item.session}</div><div class="timeline-label">${item.label.replace('Session ', 'S')}</div><div class="timeline-status">${status}</div>`;
-            
-            onclick = `onclick="openSession(${item.session})"`;
+
+            if (done) {
+                onclick = `onclick="viewSession(${item.session})"`;
+            } else {
+                onclick = `onclick="openSession(${item.session})"`;
+            }
         }
         
         return `
@@ -1525,6 +1533,10 @@ function openSession(num) {
         return;
     }
 
+    // Restore editable footer (may have been swapped by viewSession)
+    const footer = document.querySelector('#sessionModal .modal-footer');
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('sessionModal')">Cancel</button><button class="btn btn-success" onclick="saveSession()">✓ Complete</button>`;
+
     document.getElementById('sessionModalTitle').textContent = `Session ${num}`;
     const body = document.getElementById('sessionModalBody');
     const ideasHTML = getSessionIdeasHTML(num);
@@ -1551,7 +1563,112 @@ function openSession(num) {
         <div class="form-group"><label class="form-label">How will you beat it?</label><textarea class="form-textarea" id="sessionCounter" style="min-height: 60px;"></textarea></div>
         ${ideasHTML}`;
 
+    // Pre-populate fields if session has saved data.
+    // Old field names (what, excuse, overcome, learned) are mapped to new ones:
+    //   what → baseline (S1) or goal (S2-7)
+    //   excuse → obstacle
+    //   overcome → counter
+    //   learned → (no direct equivalent, not mapped)
+    const saved = (currentChallenge.sessions || [])[num - 1];
+    if (saved) {
+        if (num === 1) {
+            const el = document.getElementById('sessionBaseline');
+            if (el) el.value = saved.baseline || saved.what || '';
+        } else {
+            const el = document.getElementById('sessionGoal');
+            if (el) el.value = saved.goal || saved.what || '';
+        }
+        const planEl = document.getElementById('sessionPlan');
+        if (planEl) planEl.value = saved.plan || '';
+        const measureEl = document.getElementById('sessionMeasure');
+        if (measureEl) measureEl.value = saved.measure || '';
+        const obstacleEl = document.getElementById('sessionObstacle');
+        if (obstacleEl) obstacleEl.value = saved.obstacle || saved.excuse || '';
+        const counterEl = document.getElementById('sessionCounter');
+        if (counterEl) counterEl.value = saved.counter || saved.overcome || '';
+        if (strengthActive) {
+            const weightEl = document.getElementById('sessionStrengthWeight');
+            if (weightEl && currentChallenge.current) weightEl.value = currentChallenge.current;
+        }
+    }
+
     openModal('sessionModal');
+}
+
+function viewSession(num) {
+    if (num === 8) {
+        viewFinalSession();
+        return;
+    }
+
+    const saved = (currentChallenge.sessions || [])[num - 1];
+    if (!saved) return;
+
+    document.getElementById('sessionModalTitle').textContent = `Session ${num}`;
+    const body = document.getElementById('sessionModalBody');
+
+    // Build read-only view. Handle old field names (what, excuse, overcome) and new ones.
+    const primaryLabel = num === 1 ? 'What did you measure? What\'s your baseline?' : 'What do you want to achieve in this session?';
+    const primaryValue = num === 1 ? (saved.baseline || saved.what || '') : (saved.goal || saved.what || '');
+    const plan = saved.plan || '';
+    const measure = saved.measure || '';
+    const obstacle = saved.obstacle || saved.excuse || '';
+    const counter = saved.counter || saved.overcome || '';
+
+    const strengthActive = isActiveStrength();
+    const weightHTML = strengthActive && currentChallenge.current
+        ? `<div class="form-group"><label class="form-label">Weight lifted (kg)</label><div class="readonly-field">${currentChallenge.current}</div></div>`
+        : '';
+
+    const field = (label, value) => value
+        ? `<div class="form-group"><label class="form-label">${label}</label><div class="readonly-field">${value.replace(/</g, '&lt;').replace(/\n/g, '<br>')}</div></div>`
+        : '';
+
+    body.innerHTML = `
+        <div class="view-only-badge">View only</div>
+        ${field(primaryLabel, primaryValue)}
+        ${weightHTML}
+        ${field('What will you actually do? Be specific.', plan)}
+        ${field('How will you know if it worked?', measure)}
+        ${field('What excuse might try to stop you?', obstacle)}
+        ${field('How will you beat it?', counter)}`;
+
+    // Swap footer to Close-only
+    const footer = document.querySelector('#sessionModal .modal-footer');
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('sessionModal')">Close</button>`;
+
+    openModal('sessionModal');
+}
+
+function viewFinalSession() {
+    const saved = (currentChallenge.sessions || [])[7];
+    if (!saved) return;
+
+    const body = document.getElementById('finalModalBody');
+
+    const remeasure = saved.finalRemeasure || saved.finalMeasure || '';
+    const changed = saved.changed || saved.reached || '';
+    const difference = saved.difference || '';
+    const differently = saved.differently || saved.almostQuit || '';
+    const proud = saved.proud || saved.lesson || '';
+
+    const field = (label, value) => value
+        ? `<div class="form-group"><label class="form-label">${label}</label><div class="readonly-field">${value.replace(/</g, '&lt;').replace(/\n/g, '<br>')}</div></div>`
+        : '';
+
+    body.innerHTML = `
+        <div class="view-only-badge">View only</div>
+        ${field('Final measurement', remeasure)}
+        ${field('What changed most over the 8 sessions?', changed)}
+        ${field('What made the biggest difference to your progress?', difference)}
+        ${field('What would you do differently?', differently)}
+        ${field('What are you most proud of?', proud)}`;
+
+    // Swap footer to Close-only
+    const footer = document.querySelector('#finalModal .modal-footer');
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('finalModal')">Close</button>`;
+
+    openModal('finalModal');
 }
 
 function saveSession() {
@@ -1596,6 +1713,10 @@ function saveSession() {
 }
 
 function openFinalModal() {
+    // Restore editable footer (may have been swapped by viewFinalSession)
+    const footer = document.querySelector('#finalModal .modal-footer');
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('finalModal')">Cancel</button><button class="btn btn-success" onclick="submitFinal()">🏁 Complete Challenge</button>`;
+
     const body = document.getElementById('finalModalBody');
     const strengthActive = isActiveStrength();
 
@@ -1623,6 +1744,22 @@ function openFinalModal() {
         <div class="form-group"><label class="form-label">What made the biggest difference to your progress?</label><textarea class="form-textarea" id="finalDifference" placeholder="A habit, a technique, a mindset shift..."></textarea></div>
         <div class="form-group"><label class="form-label">What would you do differently?</label><textarea class="form-textarea" id="finalDifferently" placeholder="If you could start again..."></textarea></div>
         <div class="form-group"><label class="form-label">What are you most proud of?</label><textarea class="form-textarea" id="finalProud"></textarea></div>`;
+
+    // Pre-populate if session 8 has saved data.
+    // Old field names: finalMeasure → finalRemeasure, reached/almostQuit/lesson → no direct map
+    const saved = (currentChallenge.sessions || [])[7];
+    if (saved) {
+        const remEl = document.getElementById('finalRemeasure');
+        if (remEl) remEl.value = saved.finalRemeasure || saved.finalMeasure || '';
+        const changedEl = document.getElementById('finalChanged');
+        if (changedEl) changedEl.value = saved.changed || saved.reached || '';
+        const diffEl = document.getElementById('finalDifference');
+        if (diffEl) diffEl.value = saved.difference || '';
+        const difflyEl = document.getElementById('finalDifferently');
+        if (difflyEl) difflyEl.value = saved.differently || saved.almostQuit || '';
+        const proudEl = document.getElementById('finalProud');
+        if (proudEl) proudEl.value = saved.proud || saved.lesson || '';
+    }
 
     openModal('finalModal');
 }
