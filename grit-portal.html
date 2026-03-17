@@ -23,8 +23,6 @@
         .welcome-title { font-size: 2.2rem; font-weight: 800; color: white; margin-bottom: 12px; }
         .welcome-subtitle { font-size: 1.1rem; color: rgba(255,255,255,0.9); margin-bottom: 40px; max-width: 400px; }
         .sign-in-container { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 30px 40px; }
-        .demo-btn { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); }
-        .demo-btn button { background: var(--gold); color: var(--black); border: none; padding: 14px 32px; border-radius: 30px; font-size: 1rem; font-weight: 600; cursor: pointer; }
         
         /* Header */
         .header { background: linear-gradient(135deg, var(--burgundy-dark), var(--burgundy)); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
@@ -267,10 +265,6 @@
             <p class="welcome-subtitle">Choose something hard. Stick with it. Grow as an athlete.</p>
             <div class="sign-in-container">
                 <div id="googleSignIn"></div>
-                <div class="demo-btn">
-                    <button onclick="demoLogin()">🧪 Test Without Login</button>
-                    <button onclick="demoLoginActive()" style="margin-top: 8px; background: rgba(255,255,255,0.3); color: white; border: none; padding: 10px 24px; border-radius: 20px; font-size: 0.85rem; cursor: pointer;">🧪 Demo with Active Challenge</button>
-                </div>
             </div>
         </div>
     </div>
@@ -813,75 +807,11 @@ let selectedFocus = null;
 let selectedLevel = null;
 let currentSessionNum = null;
 let planningSession = null;
-let DEMO_MODE = false;
-
-// Demo data
-const DEMO_PHYSIOLOGY = {
-    'Strength': { score: 2.0, raw: '' },
-    'Broad Jump': { score: 4.0, raw: '220 cm' },
-    '40m Sprint': { score: 4.0, raw: '5.48 sec' },
-    'Agility': { score: 2.0, raw: '5.42 sec' },
-    'Cooper Test': { score: 5.0, raw: '3460m' }
-};
-
-const DEMO_CHALLENGE = {
-    type: 'fitness',
-    focusId: 'broadjump',
-    focusName: 'Broad Jump',
-    baseline: '220 cm',
-    target: '245 cm',
-    current: '232 cm',
-    measureMethod: '3 max jumps, best counts',
-    level: 4,
-    why: 'Want to improve explosive power for basketball',
-    excuses: ['Tired after school', 'Homework'],
-    sessions: [
-        { completed: true, baseline: 'Measured baseline - 220cm', plan: 'Practice arm swing', measure: 'Distance in cm', obstacle: 'None', counter: '-' },
-        { completed: true, goal: 'Improve takeoff', plan: 'Box jumps, squat jumps', measure: 'Jump distance', obstacle: 'Tired', counter: 'Started anyway' },
-        { completed: true, goal: 'Better timing', plan: 'Arm swing drills', measure: 'Consistency of landing', obstacle: 'Wanted to skip', counter: 'Thought about goal' },
-        { completed: false },
-        { completed: false, plan: '' },
-        { completed: false, plan: '' },
-        { completed: false, plan: '' },
-        { completed: false, plan: '' }
-    ],
-    homeLogs: [
-        { date: '2026-03-28', mins: 25, note: 'Box jumps at home' },
-        { date: '2026-04-02', mins: 30, note: 'Mobility and jumps' }
-    ],
-    status: 'active'
-};
 
 // ============ INIT ============
 window.onload = function() {
     initGoogleSignIn();
 };
-
-function demoLogin() {
-    DEMO_MODE = true;
-    currentUser = { email: 'demo@fis.edu', name: 'Demo Student' };
-    physiologyScores = DEMO_PHYSIOLOGY;
-    showScreen('loadingScreen');
-    setTimeout(() => {
-        currentChallenge = null; // Start fresh
-        document.getElementById('headerUser').textContent = currentUser.name;
-        showScreen('appScreen');
-        showSetupView();
-    }, 500);
-}
-
-function demoLoginActive() {
-    DEMO_MODE = true;
-    currentUser = { email: 'demo@fis.edu', name: 'Demo Student' };
-    physiologyScores = DEMO_PHYSIOLOGY;
-    currentChallenge = JSON.parse(JSON.stringify(DEMO_CHALLENGE));
-    showScreen('loadingScreen');
-    setTimeout(() => {
-        document.getElementById('headerUser').textContent = currentUser.name;
-        showScreen('appScreen');
-        showActiveView();
-    }, 500);
-}
 
 function initGoogleSignIn() {
     if (typeof google !== 'undefined' && google.accounts) {
@@ -917,7 +847,6 @@ async function loadAthleteData() {
         loadGritChallenge();
     } catch (e) {
         console.error('Error loading athlete data:', e);
-        physiologyScores = DEMO_PHYSIOLOGY;
         loadGritChallenge();
     }
 }
@@ -984,11 +913,6 @@ async function loadGritChallenge() {
     document.getElementById('headerUser').textContent = currentUser.name.split(' ')[0];
     showScreen('appScreen');
     
-    if (DEMO_MODE) {
-        showSetupView();
-        return;
-    }
-    
     try {
         const url = `${GRIT_API}?action=getGritChallenge&email=${encodeURIComponent(currentUser.email)}`;
         const response = await fetch(url);
@@ -1020,7 +944,7 @@ function showScreen(id) {
 
 function renderChoiceFitnessScores() {
     const container = document.getElementById('choiceFitnessScores');
-    const scores = physiologyScores || DEMO_PHYSIOLOGY;
+    const scores = physiologyScores;
     if (!scores) { container.innerHTML = ''; return; }
     const items = [
         { label: 'Strength', score: scores['Strength']?.score, raw: scores['Strength']?.raw },
@@ -1109,7 +1033,8 @@ function renderStep2() {
 
 function renderFitnessScores() {
     const grid = document.getElementById('scoreGrid');
-    const scores = physiologyScores || DEMO_PHYSIOLOGY;
+    const scores = physiologyScores;
+    if (!scores) { grid.innerHTML = '<p style="color: var(--grey); font-size: 0.9rem;">No fitness scores available yet.</p>'; return; }
     
     const items = [
         { id: 'strength', name: 'Strength', ...scores['Strength'] },
@@ -1275,7 +1200,7 @@ async function submitChallenge() {
 
 // ============ API PERSISTENCE ============
 async function persistChallenge() {
-    if (DEMO_MODE || !currentChallenge) return;
+    if (!currentChallenge) return;
     try {
         const response = await fetch(GRIT_API, {
             method: 'POST',
