@@ -955,6 +955,322 @@
         .insight-empty { font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 8px 0; }
         @media (max-width: 768px) { .insights-grid { grid-template-columns: 1fr; } }
 
+        /* ── View Tabs ── */
+        .view-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            width: fit-content;
+        }
+        .view-tab {
+            padding: 10px 24px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .view-tab:hover { color: var(--text-primary); }
+        .view-tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+        .view-panel { display: none; }
+        .view-panel.active { display: block; }
+
+        /* ── Grit Section ── */
+        .grit-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .grit-card:hover { border-color: var(--border-light); }
+        .grit-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: background 0.15s;
+            gap: 16px;
+        }
+        .grit-card-header:hover { background: var(--bg-hover); }
+        .grit-card-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            min-width: 0;
+        }
+        .grit-card-arrow {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .grit-card.open .grit-card-arrow { transform: rotate(90deg); }
+        .grit-card-name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .grit-card-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .grit-tag {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+        .grit-tag.fitness { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+        .grit-tag.personal { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+        .grit-tag.sessions { background: rgba(34,197,94,0.15); color: var(--accent-green); }
+        .grit-tag.scores { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+        .grit-card-body {
+            display: none;
+            padding: 0 20px 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        .grit-card.open .grit-card-body { display: block; }
+
+        .grit-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .grit-detail-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+        }
+        .grit-detail-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .grit-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 4px 0;
+            font-size: 0.85rem;
+        }
+        .grit-detail-label { color: var(--text-secondary); }
+        .grit-detail-value { color: var(--text-primary); font-weight: 500; text-align: right; max-width: 60%; }
+        .grit-detail-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        .grit-detail-text:last-child { margin-bottom: 0; }
+        .grit-detail-text strong { color: var(--text-primary); font-weight: 600; }
+
+        /* Session cards within grit detail */
+        .grit-session {
+            background: var(--bg-card);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        .grit-session-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 0.85rem;
+        }
+        .grit-session-header:hover { background: var(--bg-hover); }
+        .grit-session-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .grit-session-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.8rem;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .grit-session-num.done {
+            background: rgba(34,197,94,0.15);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        .grit-session-num.pending-s {
+            color: var(--text-muted);
+        }
+        .grit-session-body {
+            display: none;
+            padding: 0 14px 14px;
+            border-top: 1px solid var(--border-color);
+        }
+        .grit-session.open .grit-session-body { display: block; }
+        .grit-session.open .grit-session-arrow { transform: rotate(90deg); }
+        .grit-session-arrow {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+        .grit-session-field {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+        .grit-session-field:last-child { border-bottom: none; }
+        .grit-session-field-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 4px;
+        }
+        .grit-session-field-value {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Score entry */
+        .grit-scores-section {
+            grid-column: 1 / -1;
+        }
+        .grit-score-inputs {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .grit-score-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .grit-score-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .grit-score-input {
+            width: 70px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            text-align: center;
+        }
+        .grit-score-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+        .grit-save-btn {
+            padding: 10px 24px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-green), #16a34a);
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .grit-save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(34,197,94,0.3);
+        }
+        .grit-save-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .grit-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .grit-search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+        .grit-search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        .grit-search-box input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+        .grit-search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1rem;
+        }
+        .grit-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .grit-stats span { color: var(--text-primary); font-weight: 600; }
+        @media (max-width: 768px) {
+            .grit-detail-grid { grid-template-columns: 1fr; }
+            .grit-score-inputs { flex-direction: column; align-items: stretch; }
+            .grit-score-input { width: 100%; }
+            .grit-card-meta { flex-wrap: wrap; }
+        }
+
     </style>
 </head>
 <body>
@@ -1019,41 +1335,64 @@
             <div class="insights-grid" id="insightsGrid"></div>
         </div>
 
-        <!-- Toolbar -->
-        <div class="toolbar">
-            <div class="search-box">
-                <input type="text" placeholder="Search by name or email..." id="searchInput" oninput="filterStudents()">
+        <!-- View Tabs -->
+        <div class="view-tabs">
+            <button class="view-tab active" onclick="switchView('strength')" id="tabStrength">🏋️ Strength</button>
+            <button class="view-tab" onclick="switchView('grit')" id="tabGrit">🧠 Grit Challenge</button>
+        </div>
+
+        <!-- Strength Panel (existing) -->
+        <div class="view-panel active" id="panelStrength">
+            <div class="toolbar">
+                <div class="search-box">
+                    <input type="text" placeholder="Search by name or email..." id="searchInput" oninput="filterStudents()">
+                </div>
+                <div class="filter-group">
+                    <button class="filter-btn active" onclick="setFilter('all')" id="filterAll">All</button>
+                    <button class="filter-btn ready" onclick="setFilter('ready')" id="filterReady">🎯 Ready to Test</button>
+                    <button class="filter-btn behind" onclick="setFilter('behind')" id="filterBehind">⚠️ Needs Help</button>
+                </div>
             </div>
-            <div class="filter-group">
-                <button class="filter-btn active" onclick="setFilter('all')" id="filterAll">All</button>
-                <button class="filter-btn ready" onclick="setFilter('ready')" id="filterReady">🎯 Ready to Test</button>
-                <button class="filter-btn behind" onclick="setFilter('behind')" id="filterBehind">⚠️ Needs Help</button>
+
+            <div class="table-container">
+                <table class="student-table">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Squat</th>
+                            <th>Push</th>
+                            <th>Pull</th>
+                            <th>Hinge</th>
+                            <th>Lunge</th>
+                            <th>Press</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-state-icon">🔍</div>
+                    <div>No students found matching your criteria</div>
+                </div>
             </div>
         </div>
 
-        <!-- Student Table -->
-        <div class="table-container">
-            <table class="student-table">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Squat</th>
-                        <th>Push</th>
-                        <th>Pull</th>
-                        <th>Hinge</th>
-                        <th>Lunge</th>
-                        <th>Press</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="studentTableBody">
-                    <!-- Populated by JS -->
-                </tbody>
-            </table>
-            <div class="empty-state" id="emptyState" style="display: none;">
-                <div class="empty-state-icon">🔍</div>
-                <div>No students found matching your criteria</div>
+        <!-- Grit Challenge Panel -->
+        <div class="view-panel" id="panelGrit">
+            <div class="grit-toolbar">
+                <div class="grit-search-box">
+                    <input type="text" placeholder="Search students..." id="gritSearchInput" oninput="filterGritStudents()">
+                </div>
+                <div class="grit-stats" id="gritStats"></div>
+            </div>
+            <div id="gritContainer">
+                <div class="empty-state" id="gritLoading">
+                    <div class="loading-spinner" style="margin: 0 auto 16px;"></div>
+                    <div>Loading Grit challenges...</div>
+                </div>
             </div>
         </div>
     </main>
@@ -1689,6 +2028,329 @@
 
         function logout() {
             window.location.href = 'index.html';
+        }
+
+        // ============================================
+        // VIEW TABS
+        // ============================================
+        let gritDataLoaded = false;
+
+        function switchView(view) {
+            document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
+            document.getElementById('panel' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
+
+            if (view === 'grit' && !gritDataLoaded) {
+                loadGritData();
+            }
+        }
+
+        // ============================================
+        // GRIT CHALLENGE ADMIN
+        // ============================================
+        let allGritStudents = [];
+        let filteredGritStudents = [];
+
+        async function loadGritData() {
+            try {
+                // Load all students first to get emails/names, then load grit data for each
+                const studentEmails = allStudents.map(s => s.Email).filter(Boolean);
+                const gritPromises = studentEmails.map(email =>
+                    fetch(`${APPS_SCRIPT_URL}?action=getGritChallenge&email=${encodeURIComponent(email)}`)
+                        .then(r => r.json())
+                        .catch(() => null)
+                );
+
+                const results = await Promise.all(gritPromises);
+                allGritStudents = [];
+
+                results.forEach((result, i) => {
+                    if (!result || !result.success) return;
+                    let challenge = null;
+                    try {
+                        const json = result.challengeJson || result.challenge_json || result.Challenge_JSON;
+                        if (typeof json === 'string' && json.trim()) {
+                            challenge = JSON.parse(json);
+                        } else if (typeof json === 'object' && json) {
+                            challenge = json;
+                        }
+                    } catch (e) { /* skip parse errors */ }
+                    if (!challenge) return;
+
+                    const student = allStudents.find(s => s.Email === studentEmails[i]);
+                    allGritStudents.push({
+                        email: studentEmails[i],
+                        name: student ? student.Name : studentEmails[i],
+                        athleteId: student ? student.Athlete_ID : null,
+                        challenge: challenge,
+                        // Existing psych scores from result
+                        mindset: result.Mindset || result.mindset || '',
+                        mentalToughness: result.Mental_Toughness || result.mentalToughness || '',
+                        grit: result.Grit || result.grit || ''
+                    });
+                });
+
+                filteredGritStudents = [...allGritStudents];
+                gritDataLoaded = true;
+                renderGritPanel();
+            } catch (error) {
+                console.error('Error loading grit data:', error);
+                document.getElementById('gritContainer').innerHTML =
+                    '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>Failed to load Grit challenges</div></div>';
+            }
+        }
+
+        function filterGritStudents() {
+            const search = document.getElementById('gritSearchInput').value.toLowerCase();
+            filteredGritStudents = allGritStudents.filter(s =>
+                !search || s.name.toLowerCase().includes(search) || s.email.toLowerCase().includes(search)
+            );
+            renderGritPanel();
+        }
+
+        function renderGritPanel() {
+            const container = document.getElementById('gritContainer');
+            const stats = document.getElementById('gritStats');
+
+            if (allGritStudents.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧠</div><div>No students have started a Grit challenge yet</div></div>';
+                stats.innerHTML = '';
+                return;
+            }
+
+            const totalSessions = allGritStudents.reduce((sum, s) => sum + countCompletedSessions(s.challenge), 0);
+            const avgSessions = (totalSessions / allGritStudents.length).toFixed(1);
+            stats.innerHTML = `<span>${allGritStudents.length}</span> students | Avg <span>${avgSessions}</span> sessions`;
+
+            if (filteredGritStudents.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div>No students match your search</div></div>';
+                return;
+            }
+
+            container.innerHTML = filteredGritStudents.map((s, idx) => renderGritCard(s, idx)).join('');
+        }
+
+        function countCompletedSessions(challenge) {
+            if (!challenge || !challenge.sessions) return 0;
+            return challenge.sessions.filter(s => s && s.completed).length;
+        }
+
+        function renderGritCard(student, idx) {
+            const c = student.challenge;
+            const completed = countCompletedSessions(c);
+            const type = c.type === 'fitness' ? 'Fitness' : 'Personal Challenge';
+            const typeClass = c.type === 'fitness' ? 'fitness' : 'personal';
+            const focus = c.focus || c.category || '—';
+            const scores = [student.mindset, student.mentalToughness, student.grit].filter(Boolean);
+            const scoreText = scores.length > 0 ? `M:${student.mindset || '—'} T:${student.mentalToughness || '—'} G:${student.grit || '—'}` : 'No scores';
+
+            return `
+            <div class="grit-card" id="gritCard${idx}">
+                <div class="grit-card-header" onclick="toggleGritCard(${idx})">
+                    <div class="grit-card-left">
+                        <span class="grit-card-arrow">▶</span>
+                        <span class="grit-card-name">${student.name}</span>
+                    </div>
+                    <div class="grit-card-meta">
+                        <span class="grit-tag ${typeClass}">${focus}</span>
+                        <span class="grit-tag sessions">${completed} / 8</span>
+                        <span class="grit-tag scores">${scoreText}</span>
+                    </div>
+                </div>
+                <div class="grit-card-body">
+                    ${renderGritDetail(student, idx)}
+                </div>
+            </div>`;
+        }
+
+        function toggleGritCard(idx) {
+            document.getElementById('gritCard' + idx).classList.toggle('open');
+        }
+
+        function renderGritDetail(student, idx) {
+            const c = student.challenge;
+            const type = c.type === 'fitness' ? 'Fitness' : 'Personal Challenge';
+            const focus = c.focus || c.category || '—';
+            const difficulty = c.difficulty || c.challengeLevel || '—';
+            const why = c.why || '—';
+            const excuses = c.excuses || c.barriers || '—';
+            const baseline = c.baseline || '—';
+            const target = c.target || c.goal || '—';
+            const measure = c.measureMethod || c.measure || '—';
+
+            // Strength-specific fields
+            let goalExtra = '';
+            if (c.type === 'fitness' && (c.focus === 'Strength' || c.category === 'Strength')) {
+                const ex = c.exercise || c.exercises || '';
+                const cw = c.currentWeight || c.startWeight || '';
+                const reps = c.reps || '';
+                const gw = c.goalWeight || '';
+                if (ex || cw) {
+                    goalExtra = `<div class="grit-detail-row"><div class="grit-detail-label">Exercise</div><div class="grit-detail-value">${ex || '—'}</div></div>
+                    <div class="grit-detail-row"><div class="grit-detail-label">Weight/Reps</div><div class="grit-detail-value">${cw ? cw + 'kg' : '—'} x ${reps || '—'} → ${gw ? gw + 'kg' : '—'}</div></div>`;
+                }
+            }
+
+            // Sessions
+            let sessionsHtml = '';
+            for (let i = 0; i < 8; i++) {
+                const session = (c.sessions && c.sessions[i]) || null;
+                const done = session && session.completed;
+                const numClass = done ? 'done' : 'pending-s';
+                const statusText = done ? 'Completed' : 'Not completed';
+
+                let fieldsHtml = '';
+                if (done) {
+                    if (i === 7) {
+                        // Session 8 — final reflection
+                        fieldsHtml = renderSessionField('Final Result', session.finalRemeasure || session.finalMeasure || '—')
+                            + renderSessionField('What Changed', session.changed || session.reached || '—')
+                            + renderSessionField('Biggest Difference', session.difference || session.almostQuit || '—')
+                            + renderSessionField('Do Differently', session.differently || session.lesson || '—')
+                            + renderSessionField('Most Proud Of', session.proud || session.learned || '—');
+                    } else {
+                        // Sessions 1–7
+                        if (i === 0) {
+                            fieldsHtml += renderSessionField('Baseline', session.baseline || session.what || '—');
+                        }
+                        fieldsHtml += renderSessionField('Goal', session.goal || session.what || '—')
+                            + renderSessionField('Plan', session.plan || '—')
+                            + renderSessionField('How to Measure', session.measure || '—')
+                            + renderSessionField('Obstacle', session.obstacle || session.excuse || '—')
+                            + renderSessionField('How to Beat It', session.counter || session.overcome || '—');
+                    }
+                } else {
+                    fieldsHtml = '<div class="grit-session-field"><div class="grit-session-field-value" style="color: var(--text-muted); font-style: italic;">No data yet</div></div>';
+                }
+
+                sessionsHtml += `
+                <div class="grit-session" id="gritSession${idx}_${i}">
+                    <div class="grit-session-header" onclick="document.getElementById('gritSession${idx}_${i}').classList.toggle('open')">
+                        <div class="grit-session-left">
+                            <div class="grit-session-num ${numClass}">${i + 1}</div>
+                            <span>Session ${i + 1}${i === 0 ? ' — Baseline' : i === 7 ? ' — Final' : ''}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:0.8rem;color:${done ? 'var(--accent-green)' : 'var(--text-muted)'}">${statusText}</span>
+                            <span class="grit-session-arrow">▶</span>
+                        </div>
+                    </div>
+                    <div class="grit-session-body">
+                        ${fieldsHtml}
+                    </div>
+                </div>`;
+            }
+
+            return `
+            <div class="grit-detail-grid">
+                <div class="grit-detail-card">
+                    <div class="grit-detail-title">Challenge Summary</div>
+                    <div class="grit-detail-row"><div class="grit-detail-label">Type</div><div class="grit-detail-value">${type}</div></div>
+                    <div class="grit-detail-row"><div class="grit-detail-label">Focus</div><div class="grit-detail-value">${focus}</div></div>
+                    <div class="grit-detail-row"><div class="grit-detail-label">Difficulty</div><div class="grit-detail-value">${difficulty} / 5</div></div>
+                    <div class="grit-detail-row"><div class="grit-detail-label">Why</div><div class="grit-detail-value">${why}</div></div>
+                    <div class="grit-detail-row"><div class="grit-detail-label">Excuses</div><div class="grit-detail-value">${excuses}</div></div>
+                </div>
+                <div class="grit-detail-card">
+                    <div class="grit-detail-title">Goal</div>
+                    <div class="grit-detail-row"><div class="grit-detail-label">Baseline</div><div class="grit-detail-value">${baseline}</div></div>
+                    <div class="grit-detail-row"><div class="grit-detail-label">Target</div><div class="grit-detail-value">${target}</div></div>
+                    <div class="grit-detail-row"><div class="grit-detail-label">Measure</div><div class="grit-detail-value">${measure}</div></div>
+                    ${goalExtra}
+                </div>
+                <div class="grit-detail-card" style="grid-column: 1 / -1;">
+                    <div class="grit-detail-title">Sessions (${countCompletedSessions(c)} / 8 completed)</div>
+                    ${sessionsHtml}
+                </div>
+                <div class="grit-scores-section">
+                    <div class="grit-detail-card">
+                        <div class="grit-detail-title">Psychology Scores</div>
+                        <div class="grit-score-inputs">
+                            <div class="grit-score-group">
+                                <div class="grit-score-label">Mindset</div>
+                                <input type="number" min="1" max="5" class="grit-score-input" id="gritMindset${idx}" value="${student.mindset || ''}" placeholder="—">
+                            </div>
+                            <div class="grit-score-group">
+                                <div class="grit-score-label">Mental Toughness</div>
+                                <input type="number" min="1" max="5" class="grit-score-input" id="gritToughness${idx}" value="${student.mentalToughness || ''}" placeholder="—">
+                            </div>
+                            <div class="grit-score-group">
+                                <div class="grit-score-label">Grit</div>
+                                <input type="number" min="1" max="5" class="grit-score-input" id="gritGrit${idx}" value="${student.grit || ''}" placeholder="—">
+                            </div>
+                            <button class="grit-save-btn" onclick="saveGritScores(${idx})" id="gritSaveBtn${idx}">Save Scores</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderSessionField(label, value) {
+            return `<div class="grit-session-field">
+                <div class="grit-session-field-label">${label}</div>
+                <div class="grit-session-field-value">${value}</div>
+            </div>`;
+        }
+
+        async function saveGritScores(idx) {
+            const student = filteredGritStudents[idx];
+            if (!student || !student.athleteId) {
+                showToast('Cannot save — student not found', 'error');
+                return;
+            }
+
+            const mindset = document.getElementById('gritMindset' + idx).value;
+            const toughness = document.getElementById('gritToughness' + idx).value;
+            const grit = document.getElementById('gritGrit' + idx).value;
+
+            // Validate 1–5
+            for (const [name, val] of [['Mindset', mindset], ['Mental Toughness', toughness], ['Grit', grit]]) {
+                if (val && (parseInt(val) < 1 || parseInt(val) > 5)) {
+                    showToast(`${name} must be between 1 and 5`, 'error');
+                    return;
+                }
+            }
+
+            const btn = document.getElementById('gritSaveBtn' + idx);
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const updates = {};
+                if (mindset) updates.Mindset = parseInt(mindset);
+                if (toughness) updates.Mental_Toughness = parseInt(toughness);
+                if (grit) updates.Grit = parseInt(grit);
+
+                if (Object.keys(updates).length === 0) {
+                    showToast('No scores to save', 'error');
+                    return;
+                }
+
+                const params = new URLSearchParams({
+                    action: 'updateStudent',
+                    athleteId: student.athleteId,
+                    updates: JSON.stringify(updates)
+                });
+
+                const response = await fetch(`${APPS_SCRIPT_URL}?${params}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    student.mindset = mindset;
+                    student.mentalToughness = toughness;
+                    student.grit = grit;
+                    showToast(`Scores saved for ${student.name}`, 'success');
+                } else {
+                    showToast('Failed to save: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error saving grit scores:', error);
+                showToast('Failed to save scores', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Scores';
+            }
         }
     </script>
 </body>
