@@ -185,6 +185,16 @@
         .toggle-link { background: none; border: none; color: var(--burgundy); font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 0; font-family: inherit; }
         .toggle-content { background: var(--off-white); border-radius: 10px; padding: 16px; margin-top: 8px; display: none; }
         .toggle-content.show { display: block; }
+        .ideas-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+        .ideas-tab { flex: 1; padding: 10px 8px; border: 2px solid var(--light-grey); border-radius: 10px; background: var(--white); cursor: pointer; text-align: center; font-family: inherit; font-size: 0.85rem; font-weight: 600; color: var(--grey); transition: all 0.2s; }
+        .ideas-tab:hover { border-color: var(--burgundy-light); }
+        .ideas-tab.active { border-color: var(--burgundy); background: var(--burgundy); color: var(--white); }
+        .ideas-tab small { display: block; font-weight: 400; font-size: 0.75rem; opacity: 0.8; margin-top: 2px; }
+        .ideas-phase { display: none; }
+        .ideas-phase.active { display: block; }
+        .ideas-phase ul { list-style: none; padding: 0; margin: 0; }
+        .ideas-phase li { padding: 8px 0; border-bottom: 1px solid var(--light-grey); font-size: 0.88rem; line-height: 1.5; color: var(--black); }
+        .ideas-phase li:last-child { border-bottom: none; }
         
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; opacity: 0; visibility: hidden; transition: all 0.3s; }
@@ -572,6 +582,222 @@ const PERSONAL_OPTIONS = [
     { id: 'mobility', name: 'Mobility', icon: '🧘' },
     { id: 'custom', name: 'Custom', icon: '✨' }
 ];
+
+const SESSION_IDEAS = {
+    fitness: {
+        strength: {
+            early: [
+                'Find your current max or working weight and record it — that\u2019s your baseline',
+                'Focus on technique before adding load — a solid pattern now means bigger gains later',
+                'Identify which movement pattern feels weakest and start there',
+                'Keep volume low and quality high in early sessions'
+            ],
+            middle: [
+                'Add small amounts of load each session — progress doesn\u2019t have to be dramatic to be real',
+                'When technique breaks down, drop the weight and rebuild it',
+                'Train the supporting muscles too — most strength plateaus are a weakness somewhere else',
+                'Push to a challenging effort level, not just comfortable'
+            ],
+            later: [
+                'Re-test your max or working weight the same way you did in Session 1',
+                'Peak your effort in Session 7, then back off slightly before the final test',
+                'Don\u2019t add new exercises late — refine what\u2019s already working'
+            ]
+        },
+        broadjump: {
+            early: [
+                'Measure your jump and record it — distance from takeoff line to nearest heel',
+                'Work on your takeoff position — hip hinge, arm swing, weight loaded back',
+                'Practise the landing — a controlled landing means the jump counted',
+                'Jump for distance, not just practice — treat every rep like a test attempt'
+            ],
+            middle: [
+                'Focus on the arm swing — most improvement at this age comes from using arms properly',
+                'Practise the full sequence slowly: load, swing, push, land',
+                'Add some single leg work to build the power you\u2019re drawing on',
+                'Film from the side to see where you\u2019re losing distance'
+            ],
+            later: [
+                'Re-measure under the same conditions as Session 1 — same surface, same shoes',
+                'Take 3 attempts and record your best — that\u2019s how the test works',
+                'Warm up thoroughly before your final test attempts'
+            ]
+        },
+        sprint: {
+            early: [
+                'Time yourself over the exact distance of your test and record it',
+                'Work on your starting position — most time is lost in the first two steps',
+                'Practise your reaction — from a still position, explode as fast as possible',
+                'Run at full effort every rep — sprint training only works at maximum intensity'
+            ],
+            middle: [
+                'Focus on acceleration mechanics — stay low, drive back, don\u2019t stand up too early',
+                'Do short sharp reps with full recovery between — quality over quantity',
+                'Work on your arm drive — it directly affects your leg speed',
+                'Film from the side to check your first-step posture'
+            ],
+            later: [
+                'Re-time yourself over the exact same distance as Session 1',
+                'Taper slightly before your final test — fresher legs run faster',
+                'Warm up properly — sprinting cold is slower and risks injury'
+            ]
+        },
+        agility: {
+            early: [
+                'Run the full test and record your time — note where you slow down most',
+                'Walk through the pattern first so you know every turn before you run it',
+                'Work on your deceleration — slowing down fast is usually the limiter',
+                'Practise each direction change in isolation before putting it together'
+            ],
+            middle: [
+                'Focus on your plant foot — a strong plant means a faster change of direction',
+                'Lower your centre of gravity on the turns — stay low through the change',
+                'Do the full pattern at 80% pace with perfect footwork before going flat out',
+                'Add fatigue — practise when tired to see what breaks down'
+            ],
+            later: [
+                'Re-run the full test under the same conditions as Session 1',
+                'Run it at full effort with a proper warm up — treat it like the real test',
+                'Focus on the turns you identified as slow in early sessions'
+            ]
+        },
+        cooper: {
+            early: [
+                'Run for 12 minutes and record your distance — that\u2019s your baseline',
+                'Note your pacing — did you go out too fast, too slow, or was it even?',
+                'Identify where you slowed down most and why',
+                'Build your weekly running volume gradually — consistency matters more than intensity early'
+            ],
+            middle: [
+                'Practise running at your target pace — work out what that feels like',
+                'Add one harder session per week — intervals or a tempo effort',
+                'Don\u2019t neglect easy running — it builds the aerobic base you need',
+                'Work on pacing discipline — even splits almost always beat going out hard'
+            ],
+            later: [
+                'Do a full 12-minute time trial before your final test to check where you are',
+                'Taper in the last few days — arrive at the test fresh, not tired',
+                'Nail your pacing from the first minute — going out too fast is the most common mistake'
+            ]
+        },
+        mobility: {
+            early: [
+                'Measure your range — a specific position, a distance, an angle — so you can track change',
+                'Find the position that feels hardest and spend the most time there',
+                'Identify whether your limit is tightness, weakness, or control — they need different approaches',
+                'Don\u2019t just stretch — move through the range so your body learns to use it'
+            ],
+            middle: [
+                'Add light load to the stretch once you\u2019re warm — passive stretching only goes so far',
+                'Work the range through movement, not just static holds',
+                'Spend at least 10 minutes on your target area every home session',
+                'Push slightly further than last time — small increments add up'
+            ],
+            later: [
+                'Re-measure the same way you did in Session 1 — same position, same conditions',
+                'Test your mobility inside a real movement, not just an isolated stretch',
+                'Use your final sessions to consolidate the range you\u2019ve built, not push further'
+            ]
+        }
+    },
+    personal: {
+        sport: {
+            early: [
+                'Measure your starting point — film it, time it, or count reps so you have something to compare later',
+                'Identify the one part of the skill that breaks down most often',
+                'Slow everything down and focus on doing it right before doing it fast',
+                'Pick one specific situation to practise, not the whole skill at once'
+            ],
+            middle: [
+                'Put yourself under pressure — tired, on a timer, competitive — and see what holds up',
+                'Target the weakness you found early on, not just the parts you\u2019re already good at',
+                'Practise in the context it actually happens in, not just in isolation',
+                'Watch footage of someone good at it and find one thing you\u2019re still not doing'
+            ],
+            later: [
+                'Re-test the same way you did in Session 1 — same conditions, same measure',
+                'Identify what\u2019s still weak and spend your last sessions there',
+                'Practise under match or game conditions so the skill is ready for real use'
+            ]
+        },
+        movement: {
+            early: [
+                'Film yourself and note what you see — side on or behind is usually most useful',
+                'Measure your starting point — a timed drill, a max effort, or a technique checklist',
+                'Break the movement into parts and identify which part feels least controlled',
+                'Do it at 50% speed with full focus on position before adding any load or pace'
+            ],
+            middle: [
+                'Drill the weakest part in isolation before putting the whole movement together',
+                'Add load or speed only once the basic pattern feels solid',
+                'Film again and compare to your Session 1 footage — look for specific changes',
+                'Push into the range or speed that feels uncomfortable but controlled'
+            ],
+            later: [
+                'Re-test under the same conditions as Session 1 — same drill, same load, same measure',
+                'Put the full movement together at real effort, not just practice pace',
+                'Identify any remaining faults and prioritise them in your last sessions'
+            ]
+        },
+        endurance: {
+            early: [
+                'Measure your starting point — film it, time it, or count reps so you have something to compare later',
+                'Identify the one part of the skill that breaks down most often',
+                'Slow everything down and focus on doing it right before doing it fast',
+                'Pick one specific situation to practise, not the whole skill at once'
+            ],
+            middle: [
+                'Put yourself under pressure — tired, on a timer, competitive — and see what holds up',
+                'Target the weakness you found early on, not just the parts you\u2019re already good at',
+                'Practise in the context it actually happens in, not just in isolation',
+                'Watch footage of someone good at it and find one thing you\u2019re still not doing'
+            ],
+            later: [
+                'Re-test the same way you did in Session 1 — same conditions, same measure',
+                'Identify what\u2019s still weak and spend your last sessions there',
+                'Practise under match or game conditions so the skill is ready for real use'
+            ]
+        },
+        mobility: {
+            early: [
+                'Measure your range — a specific position, a distance, an angle — so you can track change',
+                'Find the position that feels hardest and spend the most time there',
+                'Identify whether your limit is tightness, weakness, or control — they need different approaches',
+                'Don\u2019t just stretch — move through the range so your body learns to use it'
+            ],
+            middle: [
+                'Add light load to the stretch once you\u2019re warm — passive stretching only goes so far',
+                'Work the range through movement, not just static holds',
+                'Spend at least 10 minutes on your target area every home session',
+                'Push slightly further than last time — small increments add up'
+            ],
+            later: [
+                'Re-measure the same way you did in Session 1 — same position, same conditions',
+                'Test your mobility inside a real movement, not just an isolated stretch',
+                'Use your final sessions to consolidate the range you\u2019ve built, not push further'
+            ]
+        },
+        custom: {
+            early: [
+                'Define what \u201cbetter\u201d looks like in a way you can actually measure — if you can\u2019t measure it, you can\u2019t track it',
+                'Set your baseline the same way you\u2019ll test at the end',
+                'Identify the one thing that\u2019s limiting your progress right now',
+                'Keep it simple early — understand the problem before trying to solve it'
+            ],
+            middle: [
+                'Target the weakness you identified, not just the parts that are already improving',
+                'Do the thing you\u2019ve been avoiding — that\u2019s usually what matters most',
+                'Find the hardest version of your challenge and use it to set your ceiling',
+                'Check in on your original goal — are you still working towards it or drifting?'
+            ],
+            later: [
+                'Re-test the same way you did in Session 1 — same conditions, same measure',
+                'Reflect on what actually moved the needle and what was wasted effort',
+                'Use your last sessions to address anything that\u2019s still weak before the final test'
+            ]
+        }
+    }
+};
 
 const LEVEL_FEEDBACK = {
     1: { text: "This won't challenge you much. Aim higher!", class: "warning" },
@@ -1184,28 +1410,73 @@ function openCurrentSession() {
 }
 
 // ============ SESSION MODALS ============
+function getSessionIdeasHTML(sessionNum) {
+    if (!currentChallenge) return '';
+    const type = currentChallenge.type;
+    const focusId = currentChallenge.focusId;
+    const ideasSet = SESSION_IDEAS[type] && SESSION_IDEAS[type][focusId];
+    if (!ideasSet) return '';
+
+    // Determine default phase
+    let defaultPhase = 'early';
+    if (sessionNum >= 4 && sessionNum <= 6) defaultPhase = 'middle';
+    else if (sessionNum >= 7) defaultPhase = 'later';
+
+    const phases = [
+        { key: 'early', label: 'Early', sub: 'Sessions 1\u20133' },
+        { key: 'middle', label: 'Middle', sub: 'Sessions 4\u20136' },
+        { key: 'later', label: 'Later', sub: 'Sessions 7\u20138' }
+    ];
+
+    const tabsHTML = phases.map(p =>
+        `<button class="ideas-tab${p.key === defaultPhase ? ' active' : ''}" onclick="switchIdeasTab('${p.key}')">${p.label}<small>${p.sub}</small></button>`
+    ).join('');
+
+    const phasesHTML = phases.map(p => {
+        const items = ideasSet[p.key] || [];
+        return `<div class="ideas-phase${p.key === defaultPhase ? ' active' : ''}" id="ideasPhase_${p.key}"><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+    }).join('');
+
+    return `
+        <button class="toggle-link" onclick="togglePanel('sessionIdeasPanel')" style="margin-top: 12px;">💡 Need ideas?</button>
+        <div class="toggle-content" id="sessionIdeasPanel">
+            <div class="ideas-tabs">${tabsHTML}</div>
+            ${phasesHTML}
+        </div>`;
+}
+
+function switchIdeasTab(phase) {
+    document.querySelectorAll('#sessionIdeasPanel .ideas-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#sessionIdeasPanel .ideas-phase').forEach(p => p.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById('ideasPhase_' + phase).classList.add('active');
+}
+
 function openSession(num) {
     currentSessionNum = num;
-    
+
     if (num === 8) {
         openFinalModal();
         return;
     }
-    
+
     document.getElementById('sessionModalTitle').textContent = `Session ${num}`;
     const body = document.getElementById('sessionModalBody');
+    const ideasHTML = getSessionIdeasHTML(num);
     if (num === 1) {
         body.innerHTML = `
             <div class="form-group"><label class="form-label">What did you measure? What's your baseline?</label><textarea class="form-textarea" id="sessionWhat" placeholder="Describe what you measured..."></textarea></div>
             <div class="form-group"><label class="form-label">What's your plan for the next session?</label><textarea class="form-textarea" id="sessionExcuse" style="min-height: 60px;"></textarea></div>
             <div class="form-group"><label class="form-label">What excuse might try to stop you?</label><textarea class="form-textarea" id="sessionOvercome" style="min-height: 60px;"></textarea></div>
-            <div class="form-group"><label class="form-label">How will you beat it?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>`;
+            <div class="form-group"><label class="form-label">How will you beat it?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>
+            ${ideasHTML}`;
     } else {
         body.innerHTML = `
             <div class="form-group"><label class="form-label">What did you do?</label><textarea class="form-textarea" id="sessionWhat" placeholder="Describe your session..."></textarea></div>
             <div class="form-group"><label class="form-label">What excuse almost stopped you?</label><textarea class="form-textarea" id="sessionExcuse" style="min-height: 60px;"></textarea></div>
             <div class="form-group"><label class="form-label">What made you do it anyway?</label><textarea class="form-textarea" id="sessionOvercome" style="min-height: 60px;"></textarea></div>
-            <div class="form-group"><label class="form-label">What did you learn?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>`;
+            <div class="form-group"><label class="form-label">What did you learn?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>
+            ${ideasHTML}`;
     }
 
     openModal('sessionModal');
