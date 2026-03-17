@@ -1463,7 +1463,9 @@ function openSession(num) {
     const body = document.getElementById('sessionModalBody');
     const ideasHTML = getSessionIdeasHTML(num);
     const strengthActive = isActiveStrength();
-    const strengthWeightField = strengthActive ? `
+
+    // Strength weight check-in field — shown in sessions 2-7 only (not session 1, which is the baseline)
+    const strengthWeightField = (strengthActive && num > 1) ? `
         <div class="form-group">
             <label class="form-label">What weight are you lifting now? (kg)</label>
             <input type="number" class="form-input" id="sessionStrengthWeight" placeholder="0" min="0" step="0.5">
@@ -1472,9 +1474,23 @@ function openSession(num) {
 
     // Session 1: baseline measurement + planning questions
     // Sessions 2-7: session goal + planning questions
-    const firstQuestion = num === 1
-        ? `<div class="form-group"><label class="form-label">What did you measure? What's your baseline?</label><textarea class="form-textarea" id="sessionBaseline" placeholder="Describe what you measured and the result..."></textarea></div>`
-        : `<div class="form-group"><label class="form-label">What do you want to achieve in this session?</label><textarea class="form-textarea" id="sessionGoal" placeholder="Your goal for this session..."></textarea></div>`;
+    let firstQuestion;
+    if (num === 1 && strengthActive) {
+        // Strength Session 1: read-only confirmation of setup data (already entered during setup)
+        const exercise = currentChallenge.strengthExercise || 'Strength exercise';
+        const weight = currentChallenge.baseline || '0';
+        const reps = currentChallenge.strengthReps || 5;
+        firstQuestion = `<div class="form-group">
+            <label class="form-label">Your baseline</label>
+            <div style="background: var(--off-white); border: 2px solid var(--light-grey); border-radius: 10px; padding: 14px 16px; font-size: 1rem; font-weight: 600; color: var(--black);">${exercise} — ${weight}kg × ${reps} reps</div>
+            <div class="form-hint">If this is wrong, update it in your challenge settings.</div>
+            <input type="hidden" id="sessionBaseline" value="${exercise} — ${weight}kg × ${reps} reps">
+        </div>`;
+    } else if (num === 1) {
+        firstQuestion = `<div class="form-group"><label class="form-label">What did you measure? What's your baseline?</label><textarea class="form-textarea" id="sessionBaseline" placeholder="Describe what you measured and the result..."></textarea></div>`;
+    } else {
+        firstQuestion = `<div class="form-group"><label class="form-label">What do you want to achieve in this session?</label><textarea class="form-textarea" id="sessionGoal" placeholder="Your goal for this session..."></textarea></div>`;
+    }
 
     body.innerHTML = `
         ${firstQuestion}
@@ -1493,10 +1509,11 @@ function openSession(num) {
     //   learned → (no direct equivalent, not mapped)
     const saved = (currentChallenge.sessions || [])[num - 1];
     if (saved) {
-        if (num === 1) {
+        if (num === 1 && !(strengthActive)) {
+            // Only populate baseline textarea for non-Strength (Strength uses hidden input pre-filled above)
             const el = document.getElementById('sessionBaseline');
             if (el) el.value = saved.baseline || saved.what || '';
-        } else {
+        } else if (num > 1) {
             const el = document.getElementById('sessionGoal');
             if (el) el.value = saved.goal || saved.what || '';
         }
@@ -1508,7 +1525,7 @@ function openSession(num) {
         if (obstacleEl) obstacleEl.value = saved.obstacle || saved.excuse || '';
         const counterEl = document.getElementById('sessionCounter');
         if (counterEl) counterEl.value = saved.counter || saved.overcome || '';
-        if (strengthActive) {
+        if (strengthActive && num > 1) {
             const weightEl = document.getElementById('sessionStrengthWeight');
             if (weightEl && currentChallenge.current) weightEl.value = currentChallenge.current;
         }
@@ -1530,15 +1547,28 @@ function viewSession(num) {
     const body = document.getElementById('sessionModalBody');
 
     // Build read-only view. Handle old field names (what, excuse, overcome) and new ones.
-    const primaryLabel = num === 1 ? 'What did you measure? What\'s your baseline?' : 'What do you want to achieve in this session?';
-    const primaryValue = num === 1 ? (saved.baseline || saved.what || '') : (saved.goal || saved.what || '');
+    const strengthActive = isActiveStrength();
+    let primaryLabel, primaryValue;
+    if (num === 1 && strengthActive) {
+        primaryLabel = 'Your baseline';
+        const exercise = currentChallenge.strengthExercise || 'Strength exercise';
+        const weight = currentChallenge.baseline || '0';
+        const reps = currentChallenge.strengthReps || 5;
+        primaryValue = `${exercise} — ${weight}kg × ${reps} reps`;
+    } else if (num === 1) {
+        primaryLabel = 'What did you measure? What\'s your baseline?';
+        primaryValue = saved.baseline || saved.what || '';
+    } else {
+        primaryLabel = 'What do you want to achieve in this session?';
+        primaryValue = saved.goal || saved.what || '';
+    }
     const plan = saved.plan || '';
     const measure = saved.measure || '';
     const obstacle = saved.obstacle || saved.excuse || '';
     const counter = saved.counter || saved.overcome || '';
 
-    const strengthActive = isActiveStrength();
-    const weightHTML = strengthActive && currentChallenge.current
+    // Show weight field in read-only view for Strength sessions 2-7 only (not session 1)
+    const weightHTML = (strengthActive && num > 1 && currentChallenge.current)
         ? `<div class="form-group"><label class="form-label">Weight lifted (kg)</label><div class="readonly-field">${currentChallenge.current}</div></div>`
         : '';
 
