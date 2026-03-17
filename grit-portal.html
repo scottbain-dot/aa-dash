@@ -533,24 +533,7 @@
     <div class="modal-overlay" id="finalModal">
         <div class="modal">
             <div class="modal-header"><div class="modal-title">Session 8: Final Reflection</div><button class="modal-close" onclick="closeModal('finalModal')">✕</button></div>
-            <div class="modal-body">
-                <div class="form-group" id="finalMeasureGroup"><label class="form-label">📊 Your final measurement</label><input type="text" class="form-input" id="finalMeasure" placeholder="What's your final result?"></div>
-                <div class="form-group"><label class="form-label">Did you reach your goal?</label><textarea class="form-textarea" id="finalReached" placeholder="Yes/No and why..."></textarea></div>
-                <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--light-grey);">
-                <div class="form-group">
-                    <label class="form-label">🧠 Rate your Mental Toughness</label>
-                    <div class="form-hint">Be honest — only you know the truth.</div>
-                    <div class="assess-options" id="assessOptions">
-                        <div class="assess-option" onclick="selectAssess(1)"><div class="assess-num">1</div><div>Excuses won most of the time</div></div>
-                        <div class="assess-option" onclick="selectAssess(2)"><div class="assess-num">2</div><div>I gave in to excuses sometimes</div></div>
-                        <div class="assess-option" onclick="selectAssess(3)"><div class="assess-num">3</div><div>I fought excuses and mostly won</div></div>
-                        <div class="assess-option" onclick="selectAssess(4)"><div class="assess-num">4</div><div>I beat excuses consistently</div></div>
-                        <div class="assess-option" onclick="selectAssess(5)"><div class="assess-num">5</div><div>I was relentless — every excuse beaten</div></div>
-                    </div>
-                </div>
-                <div class="form-group"><label class="form-label">Describe a moment you almost quit</label><textarea class="form-textarea" id="finalQuit" placeholder="What happened? What did you choose?"></textarea></div>
-                <div class="form-group"><label class="form-label">What did this teach you about yourself?</label><textarea class="form-textarea" id="finalLesson"></textarea></div>
-            </div>
+            <div class="modal-body" id="finalModalBody"></div>
             <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('finalModal')">Cancel</button><button class="btn btn-success" onclick="submitFinal()">🏁 Complete Challenge</button></div>
         </div>
     </div>
@@ -829,7 +812,6 @@ let currentChallenge = null;
 let selectedType = null;
 let selectedFocus = null;
 let selectedLevel = null;
-let selectedAssess = null;
 let currentSessionNum = null;
 let planningSession = null;
 let DEMO_MODE = false;
@@ -855,10 +837,10 @@ const DEMO_CHALLENGE = {
     why: 'Want to improve explosive power for basketball',
     excuses: ['Tired after school', 'Homework'],
     sessions: [
-        { completed: true, what: 'Measured baseline - 220cm', excuse: 'None', overcome: '-', learned: 'Need better arm swing' },
-        { completed: true, what: 'Box jumps, squat jumps', excuse: 'Tired', overcome: 'Started anyway', learned: 'Warming up helps' },
-        { completed: true, what: 'Arm swing drills', excuse: 'Wanted to skip', overcome: 'Thought about goal', learned: 'Timing matters' },
-        { completed: false, plan: 'Approach work' },
+        { completed: true, baseline: 'Measured baseline - 220cm', plan: 'Practice arm swing', measure: 'Distance in cm', obstacle: 'None', counter: '-' },
+        { completed: true, goal: 'Improve takeoff', plan: 'Box jumps, squat jumps', measure: 'Jump distance', obstacle: 'Tired', counter: 'Started anyway' },
+        { completed: true, goal: 'Better timing', plan: 'Arm swing drills', measure: 'Consistency of landing', obstacle: 'Wanted to skip', counter: 'Thought about goal' },
+        { completed: false },
         { completed: false, plan: '' },
         { completed: false, plan: '' },
         { completed: false, plan: '' },
@@ -1487,6 +1469,12 @@ function openCurrentSession() {
 }
 
 // ============ SESSION MODALS ============
+// Session questions are defined here, dynamically generated in openSession() for Sessions 1-7
+// and in the #finalModal HTML + openFinalModal()/submitFinal() for Session 8.
+// Field IDs for Sessions 1-7: sessionBaseline (S1 only), sessionGoal (S2-7), sessionPlan,
+// sessionMeasure, sessionObstacle, sessionCounter, sessionStrengthWeight (strength only).
+// Field IDs for Session 8: finalRemeasure, finalChanged, finalDifference, finalDifferently, finalProud.
+
 function getSessionIdeasHTML(sessionNum) {
     if (!currentChallenge) return '';
     const type = currentChallenge.type;
@@ -1548,35 +1536,36 @@ function openSession(num) {
             <div class="form-hint">Minimum ${currentChallenge.strengthReps || 5} reps — we don't test single rep maxes at this stage.</div>
         </div>` : '';
 
-    if (num === 1) {
-        body.innerHTML = `
-            <div class="form-group"><label class="form-label">What did you measure? What's your baseline?</label><textarea class="form-textarea" id="sessionWhat" placeholder="Describe what you measured..."></textarea></div>
-            ${strengthWeightField}
-            <div class="form-group"><label class="form-label">What's your plan for the next session?</label><textarea class="form-textarea" id="sessionExcuse" style="min-height: 60px;"></textarea></div>
-            <div class="form-group"><label class="form-label">What excuse might try to stop you?</label><textarea class="form-textarea" id="sessionOvercome" style="min-height: 60px;"></textarea></div>
-            <div class="form-group"><label class="form-label">How will you beat it?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>
-            ${ideasHTML}`;
-    } else {
-        body.innerHTML = `
-            ${strengthWeightField}
-            <div class="form-group"><label class="form-label">What did you do?</label><textarea class="form-textarea" id="sessionWhat" placeholder="Describe your session..."></textarea></div>
-            <div class="form-group"><label class="form-label">What excuse almost stopped you?</label><textarea class="form-textarea" id="sessionExcuse" style="min-height: 60px;"></textarea></div>
-            <div class="form-group"><label class="form-label">What made you do it anyway?</label><textarea class="form-textarea" id="sessionOvercome" style="min-height: 60px;"></textarea></div>
-            <div class="form-group"><label class="form-label">What did you learn?</label><textarea class="form-textarea" id="sessionLearned" style="min-height: 60px;"></textarea></div>
-            ${ideasHTML}`;
-    }
+    // Session 1: baseline measurement + planning questions
+    // Sessions 2-7: session goal + planning questions
+    const firstQuestion = num === 1
+        ? `<div class="form-group"><label class="form-label">What did you measure? What's your baseline?</label><textarea class="form-textarea" id="sessionBaseline" placeholder="Describe what you measured and the result..."></textarea></div>`
+        : `<div class="form-group"><label class="form-label">What do you want to achieve in this session?</label><textarea class="form-textarea" id="sessionGoal" placeholder="Your goal for this session..."></textarea></div>`;
+
+    body.innerHTML = `
+        ${firstQuestion}
+        ${strengthWeightField}
+        <div class="form-group"><label class="form-label">What will you actually do? Be specific.</label><textarea class="form-textarea" id="sessionPlan" placeholder="Describe your plan..."></textarea></div>
+        <div class="form-group"><label class="form-label">How will you know if it worked?</label><textarea class="form-textarea" id="sessionMeasure" placeholder="How you'll measure success..." style="min-height: 60px;"></textarea></div>
+        <div class="form-group"><label class="form-label">What excuse might try to stop you?</label><textarea class="form-textarea" id="sessionObstacle" style="min-height: 60px;"></textarea></div>
+        <div class="form-group"><label class="form-label">How will you beat it?</label><textarea class="form-textarea" id="sessionCounter" style="min-height: 60px;"></textarea></div>
+        ${ideasHTML}`;
 
     openModal('sessionModal');
 }
 
 function saveSession() {
-    const what = document.getElementById('sessionWhat').value.trim();
-    const excuse = document.getElementById('sessionExcuse').value.trim();
-    const overcome = document.getElementById('sessionOvercome').value.trim();
-    const learned = document.getElementById('sessionLearned').value.trim();
+    // Session 1 uses sessionBaseline; Sessions 2-7 use sessionGoal
+    const baselineEl = document.getElementById('sessionBaseline');
+    const goalEl = document.getElementById('sessionGoal');
+    const primaryField = baselineEl ? baselineEl.value.trim() : (goalEl ? goalEl.value.trim() : '');
+    const plan = document.getElementById('sessionPlan').value.trim();
+    const measure = document.getElementById('sessionMeasure').value.trim();
+    const obstacle = document.getElementById('sessionObstacle').value.trim();
+    const counter = document.getElementById('sessionCounter').value.trim();
 
-    if (!what) {
-        showToast(currentSessionNum === 1 ? 'Please describe what you measured' : 'Please describe what you did');
+    if (!primaryField) {
+        showToast(currentSessionNum === 1 ? 'Please describe what you measured' : 'Please describe your session goal');
         return;
     }
 
@@ -1588,10 +1577,13 @@ function saveSession() {
         }
     }
 
-    currentChallenge.sessions[currentSessionNum - 1] = {
-        completed: true,
-        what, excuse, overcome, learned
-    };
+    const sessionData = { completed: true, plan, measure, obstacle, counter };
+    if (currentSessionNum === 1) {
+        sessionData.baseline = primaryField;
+    } else {
+        sessionData.goal = primaryField;
+    }
+    currentChallenge.sessions[currentSessionNum - 1] = sessionData;
 
     closeModal('sessionModal');
     renderActiveView();
@@ -1604,53 +1596,53 @@ function saveSession() {
 }
 
 function openFinalModal() {
-    selectedAssess = null;
-    document.querySelectorAll('.assess-option').forEach(o => o.classList.remove('selected'));
+    const body = document.getElementById('finalModalBody');
+    const strengthActive = isActiveStrength();
 
-    // Render strength-specific final measurement field
-    const measureGroup = document.getElementById('finalMeasureGroup');
-    if (isActiveStrength()) {
+    // Strength gets a weight-specific first field; others get a generic text field
+    let remeasureField;
+    if (strengthActive) {
         const reps = currentChallenge.strengthReps || 5;
-        measureGroup.innerHTML = `
-            <label class="form-label">📊 Your final weight (kg)</label>
-            <input type="number" class="form-input" id="finalMeasure" placeholder="0" min="0" step="0.5">
-            <div class="form-hint">At ${reps} reps — same rep count as your goal.</div>`;
+        remeasureField = `
+            <div class="form-group">
+                <label class="form-label">How did you re-measure? What was your final weight? (kg)</label>
+                <input type="number" class="form-input" id="finalRemeasure" placeholder="0" min="0" step="0.5">
+                <div class="form-hint">At ${reps} reps — same rep count as your goal.</div>
+            </div>`;
     } else {
-        measureGroup.innerHTML = `
-            <label class="form-label">📊 Your final measurement</label>
-            <input type="text" class="form-input" id="finalMeasure" placeholder="What's your final result?">`;
+        remeasureField = `
+            <div class="form-group">
+                <label class="form-label">How did you re-measure? What was your final result?</label>
+                <textarea class="form-textarea" id="finalRemeasure" placeholder="Describe how you tested and the result..."></textarea>
+            </div>`;
     }
 
-    document.getElementById('finalMeasure').value = '';
-    document.getElementById('finalReached').value = '';
-    document.getElementById('finalQuit').value = '';
-    document.getElementById('finalLesson').value = '';
+    body.innerHTML = `
+        ${remeasureField}
+        <div class="form-group"><label class="form-label">What changed most over the 8 sessions?</label><textarea class="form-textarea" id="finalChanged" placeholder="Think about where you started vs now..."></textarea></div>
+        <div class="form-group"><label class="form-label">What made the biggest difference to your progress?</label><textarea class="form-textarea" id="finalDifference" placeholder="A habit, a technique, a mindset shift..."></textarea></div>
+        <div class="form-group"><label class="form-label">What would you do differently?</label><textarea class="form-textarea" id="finalDifferently" placeholder="If you could start again..."></textarea></div>
+        <div class="form-group"><label class="form-label">What are you most proud of?</label><textarea class="form-textarea" id="finalProud"></textarea></div>`;
+
     openModal('finalModal');
 }
 
-function selectAssess(level) {
-    selectedAssess = level;
-    document.querySelectorAll('.assess-option').forEach((o, i) => {
-        o.classList.toggle('selected', i === level - 1);
-    });
-}
-
 function submitFinal() {
-    const measure = document.getElementById('finalMeasure').value.trim();
-    
-    if (!measure || !selectedAssess) {
-        showToast('Please complete all fields');
+    const remeasure = document.getElementById('finalRemeasure').value.trim();
+
+    if (!remeasure) {
+        showToast('Please enter your final measurement');
         return;
     }
-    
-    currentChallenge.current = measure;
+
+    currentChallenge.current = remeasure;
     currentChallenge.sessions[7] = {
         completed: true,
-        finalMeasure: measure,
-        reached: document.getElementById('finalReached').value.trim(),
-        mentalToughness: selectedAssess,
-        almostQuit: document.getElementById('finalQuit').value.trim(),
-        lesson: document.getElementById('finalLesson').value.trim()
+        finalRemeasure: remeasure,
+        changed: document.getElementById('finalChanged').value.trim(),
+        difference: document.getElementById('finalDifference').value.trim(),
+        differently: document.getElementById('finalDifferently').value.trim(),
+        proud: document.getElementById('finalProud').value.trim()
     };
     currentChallenge.status = 'complete';
 
