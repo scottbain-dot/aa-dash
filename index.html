@@ -562,7 +562,6 @@
         .strength-dots .dots { font-size: 0.75rem; letter-spacing: 1px; }
         .strength-dots .dots.tech { color: var(--burgundy); }
         .strength-dots .dots.str { color: var(--gold); }
-        .strength-dots .str-locked { font-size: 0.65rem; color: var(--grey); font-style: italic; }
         .strength-chart-area { margin-top: 10px; }
         .strength-chart-label { font-size: 0.65rem; color: #aaa; text-align: center; font-style: italic; margin-top: 2px; }
         .strength-progress { font-size: 0.78rem; font-weight: 700; text-align: center; margin-top: 3px; }
@@ -787,7 +786,6 @@
             { 
                 name: 'Squat', 
                 key: 'Squat',
-                testLevel: 3,
                 exercises: {
                     0: '—',
                     1: 'BW Squat',
@@ -801,7 +799,6 @@
             { 
                 name: 'Hinge', 
                 key: 'Hinge',
-                testLevel: 3,
                 exercises: {
                     0: '—',
                     1: 'BW Hinge',
@@ -815,7 +812,6 @@
             { 
                 name: 'Push', 
                 key: 'Push',
-                testLevel: 3,
                 exercises: {
                     0: '—',
                     1: 'Floor Push Up',
@@ -829,7 +825,6 @@
             { 
                 name: 'Pull', 
                 key: 'Pull',
-                testLevel: 3,
                 exercises: {
                     0: '—',
                     1: 'Banded Row',
@@ -843,7 +838,6 @@
             { 
                 name: 'Lunge', 
                 key: 'Lunge',
-                testLevel: 3,
                 exercises: {
                     0: '—',
                     1: 'BW Lunge',
@@ -857,7 +851,6 @@
             { 
                 name: 'Press', 
                 key: 'Press',
-                testLevel: 3,
                 exercises: {
                     0: '—',
                     1: 'Band OH Press',
@@ -1438,7 +1431,6 @@
                 const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
                 const strVal = strengthData[p.key + '_Str'];
                 const str = (strVal && strVal !== '—' && !isNaN(parseFloat(strVal))) ? parseInt(strVal) : 0;
-                const unlocked = tech >= p.testLevel;
                 const weights = patternWeights[p.key];
                 const hasData = tech > 0 || weights.length > 0;
 
@@ -1460,18 +1452,11 @@
                     ${renderDots(tech, 5, 'tech')}
                 </div>`;
 
-                // Str dots or locked message
-                let strDots;
-                if (unlocked) {
-                    strDots = `<div class="strength-dots">
-                        <span class="dot-label str">Str</span>
-                        ${str > 0 ? renderDots(str, 5, 'str') : renderDots(0, 5, 'str')}
-                    </div>`;
-                } else {
-                    strDots = `<div class="strength-dots">
-                        <span class="str-locked">Str unlocks at Tech ${p.testLevel}</span>
-                    </div>`;
-                }
+                // Str dots
+                const strDots = `<div class="strength-dots">
+                    <span class="dot-label str">Str</span>
+                    ${renderDots(str, 5, 'str')}
+                </div>`;
 
                 // Chart area
                 let chartArea = '';
@@ -1572,21 +1557,12 @@
             let nextStep = '';
             let nextMsg = '';
             
-            // Check for patterns not yet unlocked for strength testing
-            let patternsToUnlock = [];
-            MOVEMENT_PATTERNS.forEach(p => {
-                const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
-                if (tech < p.testLevel) {
-                    patternsToUnlock.push({ name: p.name, needed: p.testLevel - tech });
-                }
-            });
-            
             // Check for strength tests not done
             let strengthTestsNeeded = [];
             MOVEMENT_PATTERNS.forEach(p => {
                 const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
                 const str = strengthData[p.key + '_Str'];
-                if (tech >= p.testLevel && (!str || str === '—')) {
+                if (tech > 0 && (!str || str === '—')) {
                     strengthTestsNeeded.push(p.name);
                 }
             });
@@ -1606,11 +1582,7 @@
             }
             
             // Determine next step
-            if (patternsToUnlock.length > 0) {
-                const closest = patternsToUnlock.sort((a, b) => a.needed - b.needed)[0];
-                nextStep = `Unlock ${closest.name}`;
-                nextMsg = `${closest.needed} tech level${closest.needed > 1 ? 's' : ''} to go`;
-            } else if (strengthTestsNeeded.length > 0) {
+            if (strengthTestsNeeded.length > 0) {
                 nextStep = `Test ${strengthTestsNeeded[0]}`;
                 nextMsg = "Ready for strength test!";
             } else if (pointsToNext > 0) {
