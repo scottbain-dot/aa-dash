@@ -289,6 +289,34 @@
         .radar-card .radar-container { height: 280px; display: none; }
         .insights-card .insights-grid { margin-bottom: 0; }
 
+        /* Below-hero row: Up Next + Insights side by side */
+        .below-hero-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            align-items: start;
+            margin-bottom: 3rem;
+        }
+        .below-hero-row .up-next-card {
+            margin-bottom: 0;
+        }
+        .below-hero-row .insights-col .insights-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .below-hero-row .insights-col .insight-box {
+            text-align: left;
+        }
+        .insights-col-overline {
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: #524342;
+            margin-bottom: 1rem;
+        }
+
         /* Strength card — full width below the 3-col grid */
         .strength-card { margin-top: 0; margin-bottom: 1.5rem; }
 
@@ -925,62 +953,66 @@
                 </div>
             </div>
         
-        <!-- Up Next CTA Section — single card, two columns -->
-        <div class="up-next-card" id="upNextRow">
-            <div class="up-next-card-overline">UP NEXT</div>
-            <div class="up-next-columns">
-                <div class="up-next-col">
-                    <div>
-                        <div class="up-next-overline">GRIT CHALLENGE</div>
-                        <div class="up-next-heading">Grit Challenge</div>
-                        <div class="up-next-subtext" id="upNextGritSubtext">Set your 8-session goal</div>
-                    </div>
-                    <a href="grit-portal.html" class="up-next-btn grit-btn" id="upNextGritBtn">Get Started →</a>
-                </div>
-                <div class="up-next-divider"></div>
-                <div class="up-next-col">
-                    <div>
-                        <div class="up-next-overline">STRENGTH TRAINING</div>
-                        <div class="up-next-heading">Strength Training</div>
-                        <div class="up-next-subtext" id="upNextStrengthSubtext">Session A</div>
-                    </div>
-                    <a href="strength-portal.html" class="up-next-btn strength-btn">Open Portal →</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Personal Insights + Level Progress -->
         <!-- Hidden canvas for radar chart JS (avoids errors) -->
         <div style="display:none;"><canvas id="radarChart"></canvas></div>
-        <div class="card insights-card" style="margin-bottom: 3rem;">
-            <div class="card-title">Personal Insights</div>
-            <div class="insights-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                <div class="insight-box strength-insight">
-                    <div class="insight-label">YOUR STRENGTH</div>
-                    <div class="insight-value" id="insightStrength">-</div>
-                    <div class="insight-message" id="insightStrengthMsg">-</div>
-                </div>
-                <div class="insight-box growth-insight">
-                    <div class="insight-label">GROWTH FOCUS</div>
-                    <div class="insight-value" id="insightGrowth">-</div>
-                    <div class="insight-message" id="insightGrowthMsg">-</div>
-                </div>
-                <div class="insight-box next-insight">
-                    <div class="insight-label">NEXT STEP</div>
-                    <div class="insight-value" id="insightNext">-</div>
-                    <div class="insight-message" id="insightNextMsg">-</div>
+
+        <!-- Below-hero row: Up Next + Personal Insights side by side -->
+        <div class="below-hero-row">
+            <!-- Left: Up Next card -->
+            <div class="up-next-card" id="upNextRow">
+                <div class="up-next-card-overline">UP NEXT</div>
+                <div class="up-next-columns">
+                    <div class="up-next-col">
+                        <div>
+                            <div class="up-next-overline">GRIT CHALLENGE</div>
+                            <div class="up-next-heading">Grit Challenge</div>
+                            <div class="up-next-subtext" id="upNextGritSubtext">Set your 8-session goal</div>
+                        </div>
+                        <a href="grit-portal.html" class="up-next-btn grit-btn" id="upNextGritBtn">Get Started →</a>
+                    </div>
+                    <div class="up-next-divider"></div>
+                    <div class="up-next-col">
+                        <div>
+                            <div class="up-next-overline">STRENGTH TRAINING</div>
+                            <div class="up-next-heading">Strength Training</div>
+                            <div class="up-next-subtext" id="upNextStrengthSubtext">Session A</div>
+                        </div>
+                        <a href="strength-portal.html" class="up-next-btn strength-btn">Open Portal →</a>
+                    </div>
                 </div>
             </div>
-                <!-- Badge Progress -->
+
+            <!-- Right: Personal Insights + Level Progress -->
+            <div class="insights-col">
+                <div class="insights-col-overline">PERSONAL INSIGHTS</div>
+                <div class="insights-grid">
+                    <div class="insight-box strength-insight">
+                        <div class="insight-label">YOUR STRENGTH</div>
+                        <div class="insight-value" id="insightStrength">-</div>
+                        <div class="insight-message" id="insightStrengthMsg">-</div>
+                    </div>
+                    <div class="insight-box growth-insight">
+                        <div class="insight-label">GROWTH FOCUS</div>
+                        <div class="insight-value" id="insightGrowth">-</div>
+                        <div class="insight-message" id="insightGrowthMsg">-</div>
+                    </div>
+                    <div class="insight-box next-insight">
+                        <div class="insight-label">NEXT STEP</div>
+                        <div class="insight-value" id="insightNext">-</div>
+                        <div class="insight-message" id="insightNextMsg">-</div>
+                    </div>
+                </div>
+                <!-- Level Progress -->
                 <div class="card-title" style="margin-top:1.25rem;">Level Progress</div>
                 <div class="badge-row" id="badgeRow">
-                    <div class="badge-item building">🎖️</div>
-                    <div class="badge-item approaching">🥉</div>
-                    <div class="badge-item achieving">🥈</div>
-                    <div class="badge-item mastering">🥇</div>
-                    <div class="badge-item leading">👑</div>
+                    <div class="badge-item building"></div>
+                    <div class="badge-item approaching"></div>
+                    <div class="badge-item achieving"></div>
+                    <div class="badge-item mastering"></div>
+                    <div class="badge-item leading"></div>
                 </div>
                 <div class="next-level" id="nextLevel">-</div>
+            </div>
         </div>
 
         <!-- Pillar detail cards — 3 columns -->
