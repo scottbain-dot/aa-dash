@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -123,6 +124,10 @@
             border: none;
             border-top: 3px solid transparent;
         }
+        .nav-btn .material-symbols-rounded {
+            font-size: 24px;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
         .nav-btn:hover {
             background: var(--burgundy-dark);
             color: var(--white);
@@ -133,6 +138,9 @@
             font-weight: 700;
             opacity: 1;
             border-top: 3px solid #6b3430;
+        }
+        .nav-btn.active .material-symbols-rounded {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
 
         /* Athlete Selector (admin) */
@@ -150,24 +158,43 @@
         /* Main Content */
         .container { max-width: 1200px; margin: 0 auto; padding: 2rem 3rem; }
         
-        /* Athlete Header Card — asymmetric 4/12 + 8/12 grid */
+        /* Athlete Header Card — asymmetric 5/12 + 7/12 grid */
         .athlete-header {
             background: #1d1b1b;
             border-radius: 2rem;
             padding: 2rem 2.5rem;
             margin-bottom: 3rem;
             display: grid;
-            grid-template-columns: 1fr 2fr;
+            grid-template-columns: 5fr 7fr;
             align-items: center;
             gap: 2rem;
             box-shadow: 0 12px 40px rgba(53, 15, 13, 0.18);
             position: relative;
             overflow: hidden;
         }
+        /* Hero left column: gauge + insight text */
+        .hero-left {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-left .gauge-svg-wrap {
+            width: 200px;
+            height: 200px;
+            margin-bottom: 0.75rem;
+        }
+        .hero-left .gauge-insight-text {
+            font-size: 0.8rem;
+            font-style: italic;
+            color: rgba(255,255,255,0.6);
+            text-align: center;
+        }
         .hero-right {
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
+            gap: 1rem;
         }
         .athlete-header::before {
             content: '';
@@ -270,7 +297,7 @@
         .insights-card .insights-grid { margin-bottom: 0; }
 
         /* Strength card — full width below the 3-col grid */
-        .strength-card { margin-top: 0; margin-bottom: 3rem; }
+        .strength-card { margin-top: 0; margin-bottom: 1.5rem; }
 
         /* Grid Layout — 3 pillar cards side by side */
         .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 3rem; }
@@ -300,33 +327,24 @@
         /* Radar Chart */
         .radar-container { height: 280px; }
         
-        /* Header Pillar Boxes */
+        /* Header Pillar Boxes — stacked vertically */
         .header-pillars {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
             position: relative;
             z-index: 1;
         }
         .header-pillar-box {
-            text-align: center;
-            padding: 1.25rem 1.5rem;
-            border-radius: 1rem;
-            min-height: 100px;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            gap: 1rem;
+            padding: 0.85rem 1.25rem;
+            border-radius: 1rem;
             transition: transform 0.2s;
         }
         .header-pillar-box:hover {
-            transform: scale(1.03);
-        }
-        .header-pillar-score {
-            font-size: 2.5rem;
-            font-weight: 900;
-            line-height: 1;
-            letter-spacing: -0.02em;
+            transform: scale(1.02);
         }
         .header-pillar-label {
             font-size: 0.55rem;
@@ -334,18 +352,23 @@
             letter-spacing: 0.15em;
             font-weight: 600;
             opacity: 0.7;
-            margin-top: 0.2rem;
+        }
+        .header-pillar-score {
+            font-size: 1.75rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.02em;
         }
         .header-pillar-level {
             font-size: 0.5rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.15em;
-            margin-top: 0.5rem;
             padding: 2px 8px;
             border-radius: 9999px;
             display: inline-block;
             background: rgba(0,0,0,0.2);
+            margin-left: auto;
         }
         /* Header pillar color schemes — gold gradient for high scores, muted glass for low */
         .header-pillar-box.building {
@@ -361,12 +384,11 @@
         .header-pillar-box.approaching .header-pillar-score { color: #ffffff; font-weight: 900; }
         .header-pillar-box.approaching .header-pillar-level { color: rgba(255,255,255,0.7); }
         .header-pillar-box.achieving {
-            background: linear-gradient(135deg, #c49a00, #D4AF37);
-            color: #1d1b1b;
+            background: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.8);
         }
-        .header-pillar-box.achieving .header-pillar-score { color: #1d1b1b; font-weight: 900; }
-        .header-pillar-box.achieving .header-pillar-label { color: #1d1b1b; opacity: 0.8; }
-        .header-pillar-box.achieving .header-pillar-level { background: rgba(0,0,0,0.2); color: #1d1b1b; }
+        .header-pillar-box.achieving .header-pillar-score { color: #ffffff; font-weight: 900; }
+        .header-pillar-box.achieving .header-pillar-level { color: rgba(255,255,255,0.7); }
         .header-pillar-box.mastering {
             background: linear-gradient(135deg, #c49a00, #D4AF37);
             color: #1d1b1b;
@@ -561,14 +583,14 @@
 
         /* Chart area: hidden by default, revealed on hover */
         .strength-chart-area {
-            max-height: 0;
+            height: 0;
             opacity: 0;
             overflow: hidden;
-            transition: max-height 0.35s ease, opacity 0.3s ease 0.05s;
+            transition: height 0.3s ease, opacity 0.3s ease;
             margin-top: 0;
         }
         .strength-item:hover .strength-chart-area {
-            max-height: 70px;
+            height: 80px;
             opacity: 1;
             margin-top: 10px;
         }
@@ -577,7 +599,8 @@
         
         /* Editorial Quote */
         .editorial-quote {
-            margin-top: 3rem;
+            margin-top: 2rem;
+            margin-bottom: 0;
             padding: 1.5rem 2rem;
             border-left: 4px solid var(--primary);
             background: transparent;
@@ -626,10 +649,12 @@
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
             margin-bottom: 3rem;
+            align-items: stretch;
         }
         .up-next-card {
             border-radius: 2rem;
             padding: 2rem;
+            min-height: 160px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -732,21 +757,20 @@
         .gauge-center .gauge-number {
             font-size: 2.5rem;
             font-weight: 900;
-            color: #6b3430;
+            color: #ffffff;
             line-height: 1;
             letter-spacing: -0.02em;
         }
         .gauge-center .gauge-max {
             font-size: 0.85rem;
-            color: #524342;
-            opacity: 0.6;
+            color: rgba(255,255,255,0.6);
         }
         .gauge-center .gauge-status {
             font-size: 0.625rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.15em;
-            color: #524342;
+            color: rgba(255,255,255,0.7);
             margin-top: 0.25rem;
         }
         .gauge-insight-text {
@@ -815,9 +839,9 @@
                     <div class="nav-logo-text">Athlete <span>Academy</span></div>
                 </div>
                 <div class="nav-links">
-                    <a href="index.html" class="nav-btn active">📊 Dashboard</a>
-                    <a href="strength-portal.html" class="nav-btn">🏋️ Strength</a>
-                    <a href="grit-portal.html" class="nav-btn">🔥 Grit</a>
+                    <a href="index.html" class="nav-btn active"><span class="material-symbols-rounded">dashboard</span> Dashboard</a>
+                    <a href="strength-portal.html" class="nav-btn"><span class="material-symbols-rounded">fitness_center</span> Strength</a>
+                    <a href="grit-portal.html" class="nav-btn"><span class="material-symbols-rounded">local_fire_department</span> Grit</a>
                 </div>
             </div>
         </nav>
@@ -831,15 +855,35 @@
         <div id="noDataState" class="no-data" style="display:none;">No athlete data available.</div>
         
         <main id="dashboardContent" class="container" style="display:none;">
-            <!-- Athlete Header — asymmetric grid -->
+            <!-- Athlete Header — asymmetric 5/12 + 7/12 grid -->
             <div class="athlete-header">
-                <!-- Left: Training Age gauge -->
-                <div id="trainingAgeBox" class="training-age-display level-building">
-                    <div class="label">Training Age</div>
-                    <div class="score" id="trainingAgeScore">-</div>
-                    <div class="level" id="trainingAgeLevel">-</div>
+                <!-- Left: Circular SVG Training Age gauge + insight -->
+                <div class="hero-left">
+                    <div id="trainingAgeBox" class="training-age-display level-building" style="display:none;">
+                        <div class="label">Training Age</div>
+                        <div class="score" id="trainingAgeScore">-</div>
+                        <div class="level" id="trainingAgeLevel">-</div>
+                    </div>
+                    <div class="gauge-svg-wrap">
+                        <svg viewBox="0 0 200 200" id="gaugeChart">
+                            <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="12" />
+                            <circle cx="100" cy="100" r="80" fill="none" stroke="#D4AF37" stroke-width="12"
+                                stroke-linecap="round"
+                                stroke-dasharray="502.65"
+                                stroke-dashoffset="502.65"
+                                transform="rotate(-90 100 100)"
+                                id="gaugeArc"
+                                style="transition: stroke-dashoffset 1s ease;" />
+                        </svg>
+                        <div class="gauge-center">
+                            <div class="gauge-number" id="gaugeNumber">—</div>
+                            <div class="gauge-max">/ 5</div>
+                            <div class="gauge-status" id="gaugeStatus">—</div>
+                        </div>
+                    </div>
+                    <div class="gauge-insight-text" id="gaugeInsight"></div>
                 </div>
-                <!-- Right: name + pillars -->
+                <!-- Right: name + grade + pillar boxes stacked -->
                 <div class="hero-right">
                     <div class="athlete-info">
                         <h2 id="athleteName">-</h2>
@@ -847,18 +891,18 @@
                     </div>
                     <div class="header-pillars">
                         <div class="header-pillar-box" id="headerPsychBox">
-                            <div class="header-pillar-score" id="headerPsychScore">-</div>
                             <div class="header-pillar-label">Psychology</div>
+                            <div class="header-pillar-score" id="headerPsychScore">-</div>
                             <div class="header-pillar-level" id="headerPsychLevel">-</div>
                         </div>
                         <div class="header-pillar-box" id="headerPhysBox">
-                            <div class="header-pillar-score" id="headerPhysScore">-</div>
                             <div class="header-pillar-label">Physiology</div>
+                            <div class="header-pillar-score" id="headerPhysScore">-</div>
                             <div class="header-pillar-level" id="headerPhysLevel">-</div>
                         </div>
                         <div class="header-pillar-box" id="headerHealthBox">
+                            <div class="header-pillar-label">Health & Skills</div>
                             <div class="header-pillar-score" id="headerHealthScore">-</div>
-                            <div class="header-pillar-label">Health</div>
                             <div class="header-pillar-level" id="headerHealthLevel">-</div>
                         </div>
                     </div>
@@ -885,32 +929,10 @@
             </div>
         </div>
 
-        <!-- Top row: Gauge + Insights side by side -->
-        <div class="overview-row">
-            <div class="card radar-card gauge-card">
-                <div class="gauge-overline">CORE METRIC</div>
-                <div class="gauge-heading">Training Age</div>
-                <div class="gauge-svg-wrap">
-                    <svg viewBox="0 0 200 200" id="gaugeChart">
-                        <circle cx="100" cy="100" r="80" fill="none" stroke="#e8e0de" stroke-width="12" />
-                        <circle cx="100" cy="100" r="80" fill="none" stroke="#874b46" stroke-width="12"
-                            stroke-linecap="round"
-                            stroke-dasharray="502.65"
-                            stroke-dashoffset="502.65"
-                            transform="rotate(-90 100 100)"
-                            id="gaugeArc"
-                            style="transition: stroke-dashoffset 1s ease;" />
-                    </svg>
-                    <div class="gauge-center">
-                        <div class="gauge-number" id="gaugeNumber">—</div>
-                        <div class="gauge-max">/ 5</div>
-                        <div class="gauge-status" id="gaugeStatus">—</div>
-                    </div>
-                </div>
-                <div class="gauge-insight-text" id="gaugeInsight"></div>
-                <!-- Hidden canvas for radar chart JS (avoids errors) -->
-                <div style="display:none;"><canvas id="radarChart"></canvas></div>
-            </div>
+        <!-- Personal Insights + Level Progress -->
+        <div class="overview-row" style="grid-template-columns: 1fr;">
+            <!-- Hidden canvas for radar chart JS (avoids errors) -->
+            <div style="display:none;"><canvas id="radarChart"></canvas></div>
             <div class="card insights-card">
                 <div class="card-title">Personal Insights</div>
                 <div class="insights-grid">
