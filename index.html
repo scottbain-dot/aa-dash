@@ -12,18 +12,21 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
+            --primary: #6b3430;
+            --primary-container: #874b46;
+            --secondary: #85504c;
             --burgundy: #874b46;
             --burgundy-dark: #6b3430;
             --burgundy-light: #a06b66;
-            --black: #231F20;
+            --black: #1d1b1b;
             --text: #524342;
             --text-muted: #857371;
             --white: #ffffff;
             --surface: #f8f2f1;
             --surface-inner: #ffffff;
+            --surface-elevated: #ede7e5;
             --off-white: #fef8f6;
             --ghost-border: rgba(215, 194, 191, 0.15);
-            --grey: #6B6B6B;
             --light-grey: #e0dede;
             --bronze: #CD7F32;
             --copper: #B87333;
@@ -32,7 +35,6 @@
             --green: #22c55e;
             --green-dark: #16a34a;
             --amber: #f59e0b;
-            --blue: #2563eb;
         }
         body { font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--off-white); min-height: 100vh; color: var(--text); min-width: 1024px; padding-bottom: 72px; }
         
@@ -45,15 +47,15 @@
             min-height: 100vh;
             text-align: center;
             padding: 40px 20px;
-            background: linear-gradient(135deg, var(--burgundy-dark), var(--burgundy), var(--burgundy-light));
+            background: linear-gradient(135deg, var(--primary), var(--primary-container), var(--secondary));
         }
         .welcome-logo { font-size: 80px; margin-bottom: 20px; }
         .welcome-title { font-size: 2.5rem; font-weight: 800; color: var(--white); margin-bottom: 10px; }
         .welcome-subtitle { font-size: 1.2rem; color: rgba(255,255,255,0.7); margin-bottom: 40px; }
         .privacy-notice {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
+            background: rgba(255,255,255,0.12);
+            border: none;
+            border-radius: 1rem;
             padding: 15px 25px;
             margin-bottom: 30px;
             max-width: 500px;
@@ -129,25 +131,25 @@
 
         /* Athlete Selector (admin) */
         .athlete-selector { display: flex; align-items: center; gap: 1rem; }
-        .athlete-selector label { color: var(--grey); font-size: 0.85rem; }
-        .athlete-selector select { padding: 0.4rem 0.75rem; border-radius: 8px; border: 1px solid var(--light-grey); font-size: 0.85rem; min-width: 200px; }
+        .athlete-selector label { color: var(--text-muted); font-size: 0.85rem; }
+        .athlete-selector select { padding: 0.4rem 0.75rem; border-radius: 0.75rem; border: none; background: var(--surface); font-size: 0.85rem; min-width: 200px; color: var(--text); }
         
         /* Loading/Error States */
-        .loading { text-align: center; padding: 4rem 2rem; }
-        .loading-spinner { width: 50px; height: 50px; border: 4px solid var(--light-grey); border-top-color: var(--burgundy); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        .loading { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+        .loading-spinner { width: 50px; height: 50px; border: 4px solid var(--surface); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .error-message { background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin: 2rem; text-align: center; }
-        .no-data { text-align: center; padding: 4rem 2rem; color: var(--grey); }
+        .error-message { background: rgba(135,75,70,0.08); color: var(--primary); padding: 1rem; border-radius: 1rem; margin: 2rem; text-align: center; }
+        .no-data { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
         
         /* Main Content */
-        .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 3rem; }
         
         /* Athlete Header Card — asymmetric 4/12 + 8/12 grid */
         .athlete-header {
             background: #1d1b1b;
             border-radius: 2rem;
             padding: 2rem 2.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 3rem;
             display: grid;
             grid-template-columns: 1fr 2fr;
             align-items: center;
@@ -255,13 +257,13 @@
             display: grid;
             grid-template-columns: 1fr 1.5fr;
             gap: 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 3rem;
         }
         .radar-card .radar-container { height: 280px; }
         .insights-card .insights-grid { margin-bottom: 0; }
 
         /* Strength card — full width below the 3-col grid */
-        .strength-card { margin-top: 1.5rem; }
+        .strength-card { margin-top: 3rem; }
 
         /* Grid Layout — 3 pillar cards side by side */
         .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
@@ -423,14 +425,14 @@
         .component-row:hover { background: rgba(135,75,70,0.04); }
         .component-name { flex: 0 0 120px; font-size: 0.78rem; color: var(--text); font-weight: 500; }
         .raw-value { display: block; font-size: 0.65rem; color: var(--text-muted); font-weight: normal; margin-top: 1px; }
-        .component-bar { flex: 1; height: 10px; background: var(--light-grey); border-radius: 999px; overflow: hidden; position: relative; }
-        .component-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; background: var(--burgundy); }
-        .component-fill.bronze { background: var(--burgundy); }
-        .component-fill.copper { background: var(--burgundy); }
-        .component-fill.silver { background: var(--burgundy); }
-        .component-fill.gold { background: var(--burgundy); }
-        .component-fill.platinum { background: var(--burgundy-dark); }
-        .component-score { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 0.65rem; font-weight: 700; color: var(--text); }
+        .component-bar { flex: 1; height: 10px; background: var(--light-grey); border-radius: 999px; position: relative; }
+        .component-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; background: var(--primary-container); }
+        .component-fill.bronze { background: var(--primary-container); }
+        .component-fill.copper { background: var(--primary-container); }
+        .component-fill.silver { background: var(--primary-container); }
+        .component-fill.gold { background: var(--gold); }
+        .component-fill.platinum { background: var(--primary); }
+        .component-score { position: absolute; right: 0; top: -14px; font-size: 0.65rem; font-weight: 900; color: var(--text); letter-spacing: -0.02em; }
         
         /* Growth Indicators */
         .growth-indicator { 
@@ -482,7 +484,7 @@
             border: none;
             font-size: 1.5rem;
             cursor: pointer;
-            color: var(--grey);
+            color: var(--text-muted);
             width: 36px;
             height: 36px;
             border-radius: 50%;
@@ -491,7 +493,7 @@
             justify-content: center;
             transition: background 0.2s;
         }
-        .modal-close:hover { background: var(--light-grey); }
+        .modal-close:hover { background: var(--surface); }
         .modal-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text); letter-spacing: -0.3px; }
         .modal-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; }
         .modal-chart { height: 250px; margin-bottom: 1.5rem; }
@@ -533,8 +535,8 @@
 
         /* Weight headline — always visible at bottom of default card */
         .strength-weight-headline { font-size: 0.78rem; font-weight: 700; text-align: center; margin-top: 10px; }
-        .strength-weight-headline.has-gain { color: var(--burgundy-dark); }
-        .strength-weight-headline.no-gain { color: #999; }
+        .strength-weight-headline.has-gain { color: var(--primary); }
+        .strength-weight-headline.no-gain { color: var(--text-muted); }
 
         /* Chart area: hidden by default, revealed on hover */
         .strength-chart-area {
@@ -550,13 +552,13 @@
             margin-top: 10px;
         }
 
-        .strength-muted-label { font-size: 0.75rem; color: #aaa; text-align: center; margin-top: 12px; font-style: italic; }
+        .strength-muted-label { font-size: 0.625rem; color: var(--text-muted); text-align: center; margin-top: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
         
         /* Editorial Quote */
         .editorial-quote {
-            margin-top: 2rem;
+            margin-top: 3rem;
             padding: 1.5rem 2rem;
-            border-left: 4px solid var(--burgundy);
+            border-left: 4px solid var(--primary);
             background: transparent;
         }
         .editorial-quote blockquote {
@@ -572,7 +574,7 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.2em;
-            color: var(--burgundy);
+            color: var(--primary);
             font-style: normal;
         }
 
@@ -582,18 +584,19 @@
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem 1rem;
-            background: var(--burgundy);
+            background: linear-gradient(135deg, var(--primary), var(--primary-container));
             color: var(--white);
             text-decoration: none;
-            border-radius: 0.75rem;
+            border-radius: 0.5rem;
             font-size: 0.75rem;
             font-weight: 700;
-            letter-spacing: 0.02em;
-            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
         }
         .portal-link:hover {
-            background: var(--burgundy-dark);
-            box-shadow: 0 8px 24px rgba(53, 15, 13, 0.12);
+            box-shadow: 0 12px 32px rgba(53, 15, 13, 0.10);
+            transform: scale(1.02);
         }
     </style>
 </head>
