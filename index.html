@@ -183,13 +183,6 @@
         .hero-left .gauge-svg-wrap {
             width: 200px;
             height: 200px;
-            margin-bottom: 0.75rem;
-        }
-        .hero-left .gauge-insight-text {
-            font-size: 0.8rem;
-            font-style: italic;
-            color: rgba(255,255,255,0.6);
-            text-align: center;
         }
         .hero-right {
             display: flex;
@@ -433,11 +426,10 @@
         .next-insight::before { background: #874b46; }
 
         .insight-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+            display: none;
         }
         .insight-label {
-            font-size: 0.625rem;
+            font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.25em;
@@ -445,7 +437,7 @@
             margin-bottom: 0.5rem;
         }
         .insight-value {
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             font-weight: 800;
             color: #1d1b1b;
             margin-bottom: 0.15rem;
@@ -456,11 +448,24 @@
             font-style: italic;
         }
         
-        /* Badge Progress */
-        .badge-row { display: flex; justify-content: center; gap: 0.4rem; margin-bottom: 0.35rem; }
-        .badge-item { font-size: 1.4rem; opacity: 0.25; transition: all 0.3s; }
-        .badge-item.achieved { opacity: 1; transform: scale(1.1); }
-        .next-level { text-align: center; font-size: 0.75rem; color: var(--text-muted); }
+        /* Badge Progress — clean circles */
+        .badge-row { display: flex; justify-content: center; gap: 0.6rem; margin-bottom: 0.5rem; }
+        .badge-item {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #d7c2bf;
+            background: transparent;
+            transition: all 0.3s;
+            font-size: 0;
+            line-height: 0;
+            overflow: hidden;
+        }
+        .badge-item.achieved {
+            background: #874b46;
+            border-color: #874b46;
+        }
+        .next-level { text-align: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #524342; }
         
         /* Component Lists */
         .component-list { display: flex; flex-direction: column; gap: 0.6rem; }
@@ -643,34 +648,35 @@
             transform: scale(1.02);
         }
 
-        /* Up Next CTA Section */
-        .up-next-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-            align-items: stretch;
-        }
+        /* Up Next CTA Section — single card, two columns */
         .up-next-card {
+            background: linear-gradient(135deg, #1d1b1b, #2d1f1e);
             border-radius: 2rem;
             padding: 2rem;
-            min-height: 160px;
+            margin-bottom: 3rem;
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr;
+            gap: 0;
+        }
+        .up-next-col {
+            padding: 0 2rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
-        .up-next-card.grit-card {
-            background: linear-gradient(135deg, #1d1b1b, #2d1f1e);
-        }
-        .up-next-card.strength-next-card {
-            background: linear-gradient(135deg, #2d1f1e, #3d2520);
+        .up-next-col:first-child { padding-left: 0; }
+        .up-next-col:last-child { padding-right: 0; }
+        .up-next-divider {
+            background: rgba(255,255,255,0.1);
+            width: 1px;
+            align-self: stretch;
         }
         .up-next-overline {
-            font-size: 0.625rem;
+            font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.25em;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.5);
             margin-bottom: 0.75rem;
         }
         .up-next-heading {
@@ -881,7 +887,7 @@
                             <div class="gauge-status" id="gaugeStatus">—</div>
                         </div>
                     </div>
-                    <div class="gauge-insight-text" id="gaugeInsight"></div>
+                    <div class="gauge-insight-text" id="gaugeInsight" style="display:none;"></div>
                 </div>
                 <!-- Right: name + grade + pillar boxes stacked -->
                 <div class="hero-right">
@@ -909,19 +915,20 @@
                 </div>
             </div>
         
-        <!-- Up Next CTA Section -->
-        <div class="up-next-row" id="upNextRow">
-            <div class="up-next-card grit-card">
+        <!-- Up Next CTA Section — single card, two columns -->
+        <div class="up-next-card" id="upNextRow">
+            <div class="up-next-col">
                 <div>
-                    <div class="up-next-overline">UP NEXT</div>
+                    <div class="up-next-overline">GRIT CHALLENGE</div>
                     <div class="up-next-heading">Grit Challenge</div>
                     <div class="up-next-subtext" id="upNextGritSubtext">Set your 8-session goal</div>
                 </div>
                 <a href="grit-portal.html" class="up-next-btn grit-btn" id="upNextGritBtn">Get Started →</a>
             </div>
-            <div class="up-next-card strength-next-card">
+            <div class="up-next-divider"></div>
+            <div class="up-next-col">
                 <div>
-                    <div class="up-next-overline">UP NEXT</div>
+                    <div class="up-next-overline">STRENGTH TRAINING</div>
                     <div class="up-next-heading">Strength Training</div>
                     <div class="up-next-subtext" id="upNextStrengthSubtext">Session A</div>
                 </div>
