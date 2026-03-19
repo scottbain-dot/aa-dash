@@ -1265,3 +1265,104 @@ function getNextWeights(athleteId) {
     return {};
   }
 }
+
+
+// ========================================
+// ONE-TIME MIGRATION: Copy old {Pattern}_Str values
+// into level-specific {Pattern}_Str_L{techLevel} columns.
+//
+// Run manually from the Apps Script editor:
+//   Select "migrateStrTiers" from the function dropdown → click ▶ Run
+//
+// Safe to run multiple times — it never overwrites existing
+// level-specific values.
+// ========================================
+
+function migrateStrTiers() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Strength');
+
+  if (!sheet) {
+    Logger.log('Strength sheet not found — nothing to migrate.');
+    return { success: false, error: 'Strength sheet not found' };
+  }
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) {
+    Logger.log('Strength sheet has no data rows — nothing to migrate.');
+    return { success: true, migrated: 0 };
+  }
+
+  var headers = data[0];
+  var patterns = ['Squat', 'Hinge', 'Push', 'Pull', 'Lunge', 'Press'];
+
+  // Ensure level-specific columns exist; add any that are missing
+  var currentHeaders = headers.slice(); // copy
+  patterns.forEach(function(pat) {
+    for (var lvl = 2; lvl <= 5; lvl++) {
+      var colName = pat + '_Str_L' + lvl;
+      if (currentHeaders.indexOf(colName) === -1) {
+        var newCol = sheet.getLastColumn() + 1;
+        sheet.getRange(1, newCol).setValue(colName).setFontWeight('bold');
+        currentHeaders.push(colName);
+        Logger.log('Added missing column: ' + colName);
+      }
+    }
+  });
+
+  // Re-read headers after potentially adding columns
+  headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+  // Build column index maps
+  var colIndex = {};
+  for (var h = 0; h < headers.length; h++) {
+    colIndex[headers[h]] = h;
+  }
+
+  var totalMigrated = 0;
+  var perPattern = {};
+  patterns.forEach(function(pat) { perPattern[pat] = 0; });
+
+  // Process each student row
+  for (var row = 1; row < data.length; row++) {
+    // Re-read the row to get values including any new columns
+    var rowData = sheet.getRange(row + 1, 1, 1, headers.length).getValues()[0];
+
+    patterns.forEach(function(pat) {
+      var techCol = colIndex[pat + '_Tech'];
+      var oldStrCol = colIndex[pat + '_Str'];
+
+      // Skip if columns don't exist
+      if (techCol === undefined || oldStrCol === undefined) return;
+
+      var techLevel = parseInt(rowData[techCol]) || 0;
+      var oldStrValue = parseInt(rowData[oldStrCol]) || 0;
+
+      // Nothing to migrate if old Str is empty/zero or Tech is outside 2-5
+      if (oldStrValue === 0) return;
+      if (techLevel < 2 || techLevel > 5) return;
+
+      var targetColName = pat + '_Str_L' + techLevel;
+      var targetCol = colIndex[targetColName];
+      if (targetCol === undefined) return;
+
+      var existingValue = parseInt(rowData[targetCol]) || 0;
+
+      // Only copy if the level-specific column is empty
+      if (existingValue === 0) {
+        sheet.getRange(row + 1, targetCol + 1).setValue(oldStrValue);
+        perPattern[pat]++;
+        totalMigrated++;
+      }
+    });
+  }
+
+  // Log summary
+  Logger.log('=== migrateStrTiers complete ===');
+  Logger.log('Total values migrated: ' + totalMigrated);
+  patterns.forEach(function(pat) {
+    Logger.log('  ' + pat + ': ' + perPattern[pat] + ' migrated');
+  });
+
+  return { success: true, migrated: totalMigrated, perPattern: perPattern };
+}
