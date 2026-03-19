@@ -2471,7 +2471,10 @@
         function getStrengthHash() {
             // Create a simple hash of strength data to detect admin changes
             if (!currentStrength) return '';
-            const keys = patterns.map(p => `${p.name}_Tech,${p.name}_Str`).flat();
+            const keys = patterns.flatMap(p => [
+                `${p.name}_Tech`, `${p.name}_Str`,
+                `${p.name}_Str_L2`, `${p.name}_Str_L3`, `${p.name}_Str_L4`, `${p.name}_Str_L5`
+            ]);
             return keys.map(k => `${k}=${currentStrength[k] || 0}`).join('|');
         }
         
@@ -2698,6 +2701,22 @@
             }
         ];
 
+        // Helper: get Str tier for a pattern from level-specific column, with fallback to old column
+        // TEMPORARY FALLBACK: remove old-column fallback once all data is migrated
+        function getStrTier(strengthObj, patternName) {
+            if (!strengthObj) return 0;
+            const tech = parseInt(strengthObj[patternName + '_Tech']) || 0;
+            let str = 0;
+            if (tech >= 2 && tech <= 5) {
+                str = parseInt(strengthObj[patternName + '_Str_L' + tech]) || 0;
+            }
+            // Fallback to old {Pattern}_Str column
+            if (str === 0) {
+                str = parseInt(strengthObj[patternName + '_Str']) || 0;
+            }
+            return str;
+        }
+
         let selectedPattern = patterns[0];
         let selectedLevel = 1;
 
@@ -2920,18 +2939,17 @@
 
             patterns.forEach((pattern, index) => {
                 const techKey = pattern.name + '_Tech';
-                const strKey = pattern.name + '_Str';
                 const techLevel = parseInt(strength?.[techKey]) || 0;
-                const strengthTier = parseInt(strength?.[strKey]) || 0;
-                
+                const strengthTier = getStrTier(strength, pattern.name);
+
                 const hasStrength = strengthTier > 0;
                 const isReadyToTest = techLevel >= 2 && !hasStrength;
                 const isRepBased = pattern.testType === 'reps';
-                
+
                 const card = document.createElement('div');
                 card.className = 'progress-card';
                 card.onclick = () => togglePatternDetail(index);
-                
+
                 if (isReadyToTest) {
                     // Ready to test - burgundy
                     card.style.cssText = 'background: linear-gradient(135deg, #874B46, #6a3a36); border-color: #874B46;';
@@ -3003,10 +3021,10 @@
             cards.forEach((card, index) => {
                 const pattern = patterns[index];
                 const techLevel = parseInt(currentStrength?.[pattern.name + '_Tech']) || 0;
-                const strTier = parseInt(currentStrength?.[pattern.name + '_Str']) || 0;
+                const strTier = getStrTier(currentStrength, pattern.name);
                 const hasStrength = strTier > 0;
                 const isReadyToTest = techLevel >= 2 && !hasStrength;
-                
+
                 // Practice info only shown in the workout technique block, not on tiles
             });
         }
@@ -3029,9 +3047,8 @@
             
             const pattern = patterns[index];
             const techKey = pattern.name + '_Tech';
-            const strKey = pattern.name + '_Str';
             const techLevel = parseInt(currentStrength?.[techKey]) || 0;
-            const strengthTier = parseInt(currentStrength?.[strKey]) || 0;
+            const strengthTier = getStrTier(currentStrength, pattern.name);
             const hasStrength = strengthTier > 0;
             const gender = currentStrength?.Gender || 'M';
             const isReadyToTest = techLevel >= 2 && !hasStrength;
@@ -3449,9 +3466,8 @@
             primaryPatterns.forEach((patternName, index) => {
                 const pattern = patterns.find(p => p.name === patternName);
                 const techKey = pattern.name + '_Tech';
-                const strKey = pattern.name + '_Str';
                 const techLevel = parseInt(strength?.[techKey]) || 0;
-                const strengthTier = parseInt(strength?.[strKey]) || 0;
+                const strengthTier = getStrTier(strength, pattern.name);
                 const gender = strength?.Gender || 'M';
                 
                 // Look up actual weight from tier
@@ -3544,9 +3560,8 @@
             accessoryPatterns.forEach((patternName, index) => {
                 const pattern = patterns.find(p => p.name === patternName);
                 const techKey = pattern.name + '_Tech';
-                const strKey = pattern.name + '_Str';
                 const techLevel = parseInt(strength?.[techKey]) || 0;
-                const strengthTier = parseInt(strength?.[strKey]) || 0;
+                const strengthTier = getStrTier(strength, pattern.name);
                 const gender = strength?.Gender || 'M';
                 
                 // Look up actual weight from tier
@@ -3713,9 +3728,9 @@
                 if (workoutPatternNames.includes(pattern.name)) return;
                 
                 const techLevel = parseInt(strength?.[pattern.name + '_Tech']) || 0;
-                const strTier = parseInt(strength?.[pattern.name + '_Str']) || 0;
+                const strTier = getStrTier(strength, pattern.name);
                 const hasStrength = strTier > 0;
-                
+
                 // Only include if not at max level (5) and not in testing state
                 if (techLevel < 5) {
                     const isReadyToTest = techLevel >= 2 && !hasStrength;
@@ -4163,7 +4178,7 @@
                 // Rep-based pattern (Pull): show rep target, not weight
                 const gender = currentStrength?.Gender || 'M';
                 const loadTiers = gender === 'F' ? patternDef.loadTiers.F : patternDef.loadTiers.M;
-                const strTier = parseInt(currentStrength?.[exercise.patternName + '_Str']) || 0;
+                const strTier = getStrTier(currentStrength, exercise.patternName);
                 const currentTierReps = strTier > 0 ? loadTiers[strTier - 1] : loadTiers[0];
                 
                 let lastTimeHtml = '';

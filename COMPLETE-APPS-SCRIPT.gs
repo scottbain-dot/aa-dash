@@ -620,18 +620,42 @@ function getAllStudents(ss) {
         }
       }
 
-      // Add strength fields
+      // Add strength fields — level-specific Str columns
       var patterns = ['Squat', 'Push', 'Pull', 'Hinge', 'Lunge', 'Press'];
       for (var p = 0; p < patterns.length; p++) {
         var pat = patterns[p];
         if (strengthRow) {
           var techIdx = strengthHeaders.indexOf(pat + '_Tech');
-          var strIdx = strengthHeaders.indexOf(pat + '_Str');
-          student[pat + '_Tech'] = techIdx >= 0 ? (strengthRow[techIdx] || 0) : 0;
-          student[pat + '_Str'] = strIdx >= 0 ? (strengthRow[strIdx] || 0) : 0;
+          var techVal = techIdx >= 0 ? (parseInt(strengthRow[techIdx]) || 0) : 0;
+          student[pat + '_Tech'] = techVal;
+
+          // Read level-specific Str column based on current Tech level
+          var strVal = 0;
+          if (techVal >= 2 && techVal <= 5) {
+            var levelStrIdx = strengthHeaders.indexOf(pat + '_Str_L' + techVal);
+            strVal = levelStrIdx >= 0 ? (parseInt(strengthRow[levelStrIdx]) || 0) : 0;
+          }
+          // TEMPORARY FALLBACK: if level-specific column is empty, fall back to old {Pattern}_Str column
+          // Remove this fallback once all data is migrated to level-specific columns
+          if (strVal === 0) {
+            var oldStrIdx = strengthHeaders.indexOf(pat + '_Str');
+            if (oldStrIdx >= 0) {
+              strVal = parseInt(strengthRow[oldStrIdx]) || 0;
+            }
+          }
+          student[pat + '_Str'] = strVal;
+
+          // Also include all level-specific Str values for portals that need them
+          for (var lvl = 2; lvl <= 5; lvl++) {
+            var lvlIdx = strengthHeaders.indexOf(pat + '_Str_L' + lvl);
+            student[pat + '_Str_L' + lvl] = lvlIdx >= 0 ? (parseInt(strengthRow[lvlIdx]) || 0) : 0;
+          }
         } else {
           student[pat + '_Tech'] = 0;
           student[pat + '_Str'] = 0;
+          for (var lvl = 2; lvl <= 5; lvl++) {
+            student[pat + '_Str_L' + lvl] = 0;
+          }
         }
       }
 
@@ -747,22 +771,32 @@ function updateStudent(athleteId, updates) {
 
     if (!strengthSheet) {
       strengthSheet = ss.insertSheet('Strength');
-      strengthSheet.getRange('A1:N1').setValues([[
-        'Athlete_ID', 'Date',
-        'Squat_Tech', 'Squat_Str',
-        'Push_Tech', 'Push_Str',
-        'Pull_Tech', 'Pull_Str',
-        'Hinge_Tech', 'Hinge_Str',
-        'Lunge_Tech', 'Lunge_Str',
-        'Press_Tech', 'Press_Str'
-      ]]);
+      // Create sheet with level-specific Str columns (L2–L5) per pattern
+      // Old {Pattern}_Str columns kept for backwards compatibility during migration
+      var sheetHeaders = ['Athlete_ID', 'Date'];
+      var strPatterns = ['Squat', 'Push', 'Pull', 'Hinge', 'Lunge', 'Press'];
+      for (var sp = 0; sp < strPatterns.length; sp++) {
+        sheetHeaders.push(strPatterns[sp] + '_Tech');
+        sheetHeaders.push(strPatterns[sp] + '_Str');      // legacy column — remove after migration
+        sheetHeaders.push(strPatterns[sp] + '_Str_L2');
+        sheetHeaders.push(strPatterns[sp] + '_Str_L3');
+        sheetHeaders.push(strPatterns[sp] + '_Str_L4');
+        sheetHeaders.push(strPatterns[sp] + '_Str_L5');
+      }
+      strengthSheet.getRange(1, 1, 1, sheetHeaders.length).setValues([sheetHeaders]);
     }
 
-    // Validate fields
+    // Validate fields — includes level-specific Str columns and legacy columns
     var validFields = [
       'Squat_Tech', 'Squat_Str', 'Push_Tech', 'Push_Str',
       'Pull_Tech', 'Pull_Str', 'Hinge_Tech', 'Hinge_Str',
       'Lunge_Tech', 'Lunge_Str', 'Press_Tech', 'Press_Str',
+      'Squat_Str_L2', 'Squat_Str_L3', 'Squat_Str_L4', 'Squat_Str_L5',
+      'Push_Str_L2', 'Push_Str_L3', 'Push_Str_L4', 'Push_Str_L5',
+      'Pull_Str_L2', 'Pull_Str_L3', 'Pull_Str_L4', 'Pull_Str_L5',
+      'Hinge_Str_L2', 'Hinge_Str_L3', 'Hinge_Str_L4', 'Hinge_Str_L5',
+      'Lunge_Str_L2', 'Lunge_Str_L3', 'Lunge_Str_L4', 'Lunge_Str_L5',
+      'Press_Str_L2', 'Press_Str_L3', 'Press_Str_L4', 'Press_Str_L5',
       'Notes', 'Date'
     ];
 
@@ -799,7 +833,7 @@ function updateStudent(athleteId, updates) {
         if (field.indexOf('_Tech') >= 0) {
           value = Math.max(0, Math.min(5, parseInt(value) || 0));
         }
-        if (field.indexOf('_Str') >= 0) {
+        if (field.indexOf('_Str') >= 0 && field.indexOf('_Tech') === -1) {
           value = Math.max(0, Math.min(5, parseInt(value) || 0));
         }
 
