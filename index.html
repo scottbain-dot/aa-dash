@@ -1153,11 +1153,22 @@
             const mobility = a.mobility || {};
             
             // Strength composite: per-pattern sub-score averaged across all 6 patterns
+            // Uses level-specific Str column based on current Tech level
             let strengthTotal = 0;
             MOVEMENT_PATTERNS.forEach(p => {
                 const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
-                const strVal = strengthData[p.key + '_Str'];
-                const str = (strVal === '—' || strVal === '' || strVal === null) ? 0 : parseFloat(strVal) || 0;
+                // Read level-specific Str column (e.g. Squat_Str_L3 if Tech=3)
+                let str = 0;
+                if (tech >= 2 && tech <= 5) {
+                    const levelStrVal = strengthData[p.key + '_Str_L' + Math.floor(tech)];
+                    str = (levelStrVal === '—' || levelStrVal === '' || levelStrVal === null || levelStrVal === undefined) ? 0 : parseFloat(levelStrVal) || 0;
+                }
+                // TEMPORARY FALLBACK: if level-specific column is empty, fall back to old {Pattern}_Str
+                // Remove this fallback once all data is migrated to level-specific columns
+                if (str === 0) {
+                    const oldStrVal = strengthData[p.key + '_Str'];
+                    str = (oldStrVal === '—' || oldStrVal === '' || oldStrVal === null) ? 0 : parseFloat(oldStrVal) || 0;
+                }
 
                 if (tech > 0 && str > 0) {
                     strengthTotal += (tech + str) / 2;
@@ -1456,8 +1467,18 @@
             // Render cards
             container.innerHTML = MOVEMENT_PATTERNS.map(p => {
                 const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
-                const strVal = strengthData[p.key + '_Str'];
-                const str = (strVal && strVal !== '—' && !isNaN(parseFloat(strVal))) ? parseInt(strVal) : 0;
+                // Read level-specific Str column based on current Tech level
+                let str = 0;
+                if (tech >= 2 && tech <= 5) {
+                    const levelStrVal = strengthData[p.key + '_Str_L' + Math.floor(tech)];
+                    str = (levelStrVal && levelStrVal !== '—' && !isNaN(parseFloat(levelStrVal))) ? parseInt(levelStrVal) : 0;
+                }
+                // TEMPORARY FALLBACK: fall back to old {Pattern}_Str if level-specific is empty
+                // Remove this fallback once all data is migrated
+                if (str === 0) {
+                    const oldStrVal = strengthData[p.key + '_Str'];
+                    str = (oldStrVal && oldStrVal !== '—' && !isNaN(parseFloat(oldStrVal))) ? parseInt(oldStrVal) : 0;
+                }
                 const weights = patternWeights[p.key];
                 const hasData = tech > 0 || weights.length > 0;
 
@@ -1595,8 +1616,18 @@
             let strengthTestsNeeded = [];
             MOVEMENT_PATTERNS.forEach(p => {
                 const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
-                const str = strengthData[p.key + '_Str'];
-                if (tech >= p.testLevel && (!str || str === '—')) {
+                // Check level-specific Str column for current tech level
+                let str = 0;
+                if (tech >= 2 && tech <= 5) {
+                    const levelStr = strengthData[p.key + '_Str_L' + Math.floor(tech)];
+                    str = (levelStr && levelStr !== '—') ? parseFloat(levelStr) || 0 : 0;
+                }
+                // TEMPORARY FALLBACK: check old column too
+                if (str === 0) {
+                    const oldStr = strengthData[p.key + '_Str'];
+                    str = (oldStr && oldStr !== '—') ? parseFloat(oldStr) || 0 : 0;
+                }
+                if (tech >= p.testLevel && str === 0) {
                     strengthTestsNeeded.push(p.name);
                 }
             });

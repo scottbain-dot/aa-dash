@@ -1786,13 +1786,21 @@
 
         function setStr(tier) {
             const pattern = document.getElementById('updatePattern').value;
+            const techLevel = parseInt(selectedStudent[pattern + '_Tech']) || 0;
+
+            // Write to level-specific Str column based on current Tech level
+            if (techLevel >= 2 && techLevel <= 5) {
+                const levelKey = pattern + '_Str_L' + techLevel;
+                selectedStudent[levelKey] = tier;
+                pendingUpdates[levelKey] = tier;
+            }
+            // Also update the display value used by the UI
             selectedStudent[pattern + '_Str'] = tier;
-            pendingUpdates[pattern + '_Str'] = tier;
-            
+
             document.querySelectorAll('#strButtons .level-btn').forEach((btn, i) => {
                 btn.classList.toggle('active', i === tier);
             });
-            
+
             renderProgressGrid();
         }
 
