@@ -36,7 +36,7 @@
             --green-dark: #16a34a;
             --amber: #f59e0b;
         }
-        body { font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--off-white); min-height: 100vh; color: var(--text); min-width: 1024px; padding-bottom: 72px; }
+        body { font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; background: #fef8f6; min-height: 100vh; color: var(--text); min-width: 1024px; padding-bottom: 6rem; }
         
         /* Welcome/Sign-in Screen */
         .welcome-screen {
@@ -113,20 +113,26 @@
             gap: 0.4rem;
             padding: 0.5rem 1rem;
             background: transparent;
-            color: rgba(82, 67, 66, 0.6);
+            color: #524342;
+            opacity: 0.5;
             text-decoration: none;
             border-radius: 0.75rem;
             font-size: 0.8rem;
             font-weight: 600;
             transition: all 0.15s;
             border: none;
+            border-top: 3px solid transparent;
         }
         .nav-btn:hover {
             background: var(--burgundy-dark);
             color: var(--white);
+            opacity: 1;
         }
         .nav-btn.active {
-            color: var(--burgundy-dark);
+            color: #6b3430;
+            font-weight: 700;
+            opacity: 1;
+            border-top: 3px solid #6b3430;
         }
 
         /* Athlete Selector (admin) */
@@ -204,11 +210,11 @@
             margin-bottom: 0.25rem;
         }
         .training-age-display .score {
-            font-size: 3.5rem;
+            font-size: 4rem;
             font-weight: 900;
             line-height: 1;
             color: #ffb3ac;
-            letter-spacing: -1px;
+            letter-spacing: -0.03em;
         }
         .training-age-display .level {
             font-size: 0.75rem;
@@ -252,30 +258,35 @@
         .level-mastering { background: linear-gradient(135deg, #FFD700, #D4AF37); color: var(--black); }
         .level-leading { background: linear-gradient(135deg, #2C2C2C, #1a1a1a); color: #E5E4E2; }
         
-        /* Overview row: radar + insights side by side */
+        /* Overview row: gauge + insights side by side */
         .overview-row {
             display: grid;
-            grid-template-columns: 1fr 1.5fr;
+            grid-template-columns: 2fr 3fr;
             gap: 1.5rem;
             margin-bottom: 3rem;
+            align-items: stretch;
         }
-        .radar-card .radar-container { height: 280px; }
+        .radar-card .radar-container { height: 280px; display: none; }
         .insights-card .insights-grid { margin-bottom: 0; }
 
         /* Strength card — full width below the 3-col grid */
-        .strength-card { margin-top: 3rem; }
+        .strength-card { margin-top: 0; margin-bottom: 3rem; }
 
         /* Grid Layout — 3 pillar cards side by side */
-        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 3rem; }
         
+        /* Section wrappers */
+        .section-wrapper { background: #f8f2f1; border-radius: 2rem; padding: 2rem; margin-bottom: 3rem; }
         /* Cards */
-        .card { background: var(--surface); border-radius: 2rem; padding: 2rem; box-shadow: none; }
+        .card { background: #f8f2f1; border-radius: 2rem; padding: 2rem; box-shadow: none; }
+        .card-inner { background: #ffffff; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0px 4px 16px rgba(53, 15, 13, 0.04); transition: box-shadow 0.2s ease, transform 0.2s ease; }
+        .card-inner:hover { box-shadow: 0px 12px 32px rgba(53, 15, 13, 0.08); transform: scale(1.02); }
         .card-title {
             font-size: 0.625rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.2em;
-            color: var(--text);
+            letter-spacing: 0.25em;
+            color: #524342;
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
@@ -299,18 +310,23 @@
         }
         .header-pillar-box {
             text-align: center;
-            padding: 0.75rem 1rem;
+            padding: 1.25rem 1.5rem;
             border-radius: 1rem;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             transition: transform 0.2s;
         }
         .header-pillar-box:hover {
             transform: scale(1.03);
         }
         .header-pillar-score {
-            font-size: 1.5rem;
+            font-size: 2.5rem;
             font-weight: 900;
             line-height: 1;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.02em;
         }
         .header-pillar-label {
             font-size: 0.55rem;
@@ -322,45 +338,49 @@
         }
         .header-pillar-level {
             font-size: 0.5rem;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-top: 0.3rem;
-            padding: 0.15rem 0.5rem;
-            border-radius: 10px;
+            letter-spacing: 0.15em;
+            margin-top: 0.5rem;
+            padding: 2px 8px;
+            border-radius: 9999px;
             display: inline-block;
+            background: rgba(0,0,0,0.2);
         }
-        /* Header pillar color schemes — warm tones within dark hero */
+        /* Header pillar color schemes — gold gradient for high scores, muted glass for low */
         .header-pillar-box.building {
-            background: rgba(255,179,172,0.1);
-            color: rgba(255,255,255,0.7);
+            background: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.8);
         }
-        .header-pillar-box.building .header-pillar-score { color: rgba(255,255,255,0.7); }
-        .header-pillar-box.building .header-pillar-level { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+        .header-pillar-box.building .header-pillar-score { color: #ffffff; font-weight: 900; }
+        .header-pillar-box.building .header-pillar-level { color: rgba(255,255,255,0.7); }
         .header-pillar-box.approaching {
-            background: rgba(205,127,50,0.2);
-            color: #e8a862;
+            background: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.8);
         }
-        .header-pillar-box.approaching .header-pillar-score { color: #e8a862; }
-        .header-pillar-box.approaching .header-pillar-level { background: rgba(205,127,50,0.15); color: #e8a862; }
+        .header-pillar-box.approaching .header-pillar-score { color: #ffffff; font-weight: 900; }
+        .header-pillar-box.approaching .header-pillar-level { color: rgba(255,255,255,0.7); }
         .header-pillar-box.achieving {
-            background: rgba(200,201,205,0.15);
-            color: #c8c9cd;
+            background: linear-gradient(135deg, #c49a00, #D4AF37);
+            color: #1d1b1b;
         }
-        .header-pillar-box.achieving .header-pillar-score { color: #c8c9cd; }
-        .header-pillar-box.achieving .header-pillar-level { background: rgba(200,201,205,0.12); color: #c8c9cd; }
+        .header-pillar-box.achieving .header-pillar-score { color: #1d1b1b; font-weight: 900; }
+        .header-pillar-box.achieving .header-pillar-label { color: #1d1b1b; opacity: 0.8; }
+        .header-pillar-box.achieving .header-pillar-level { background: rgba(0,0,0,0.2); color: #1d1b1b; }
         .header-pillar-box.mastering {
-            background: rgba(212,175,55,0.2);
-            color: var(--gold);
+            background: linear-gradient(135deg, #c49a00, #D4AF37);
+            color: #1d1b1b;
         }
-        .header-pillar-box.mastering .header-pillar-score { color: var(--gold); }
-        .header-pillar-box.mastering .header-pillar-level { background: rgba(212,175,55,0.15); color: var(--gold); }
+        .header-pillar-box.mastering .header-pillar-score { color: #1d1b1b; font-weight: 900; }
+        .header-pillar-box.mastering .header-pillar-label { color: #1d1b1b; opacity: 0.8; }
+        .header-pillar-box.mastering .header-pillar-level { background: rgba(0,0,0,0.2); color: #1d1b1b; }
         .header-pillar-box.leading {
-            background: rgba(212,175,55,0.15);
-            color: var(--gold);
+            background: linear-gradient(135deg, #c49a00, #D4AF37);
+            color: #1d1b1b;
         }
-        .header-pillar-box.leading .header-pillar-score { color: var(--gold); }
-        .header-pillar-box.leading .header-pillar-level { background: rgba(212,175,55,0.2); color: var(--gold); }
+        .header-pillar-box.leading .header-pillar-score { color: #1d1b1b; font-weight: 900; }
+        .header-pillar-box.leading .header-pillar-label { color: #1d1b1b; opacity: 0.8; }
+        .header-pillar-box.leading .header-pillar-level { background: rgba(0,0,0,0.2); color: #1d1b1b; }
         
         /* Insights Grid */
         .insights-grid {
@@ -370,12 +390,12 @@
         }
         .insight-box {
             text-align: center;
-            padding: 1.25rem 0.75rem;
+            padding: 1.5rem;
             border-radius: 1.5rem;
-            background: var(--surface-inner);
+            background: #ffffff;
             position: relative;
             overflow: hidden;
-            outline: 1px solid var(--ghost-border);
+            box-shadow: 0px 4px 16px rgba(53, 15, 13, 0.04);
         }
         .insight-box::before {
             content: '';
@@ -383,33 +403,34 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 4px;
+            border-radius: 9999px;
         }
         .strength-insight::before { background: #D4AF37; }
         .growth-insight::before { background: #22c55e; }
         .next-insight::before { background: #874b46; }
-        
+
         .insight-icon {
-            font-size: 1.5rem;
-            margin-bottom: 0.35rem;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
         }
         .insight-label {
-            font-size: 0.6rem;
+            font-size: 0.625rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: var(--text-muted);
+            letter-spacing: 0.25em;
+            color: #524342;
             margin-bottom: 0.5rem;
         }
         .insight-value {
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             font-weight: 800;
-            color: var(--text);
+            color: #1d1b1b;
             margin-bottom: 0.15rem;
         }
         .insight-message {
-            font-size: 0.75rem;
-            color: var(--text-muted);
+            font-size: 0.8rem;
+            color: #524342;
             font-style: italic;
         }
         
@@ -425,14 +446,14 @@
         .component-row:hover { background: rgba(135,75,70,0.04); }
         .component-name { flex: 0 0 120px; font-size: 0.78rem; color: var(--text); font-weight: 500; }
         .raw-value { display: block; font-size: 0.65rem; color: var(--text-muted); font-weight: normal; margin-top: 1px; }
-        .component-bar { flex: 1; height: 10px; background: var(--light-grey); border-radius: 999px; position: relative; }
-        .component-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; background: var(--primary-container); }
-        .component-fill.bronze { background: var(--primary-container); }
-        .component-fill.copper { background: var(--primary-container); }
-        .component-fill.silver { background: var(--primary-container); }
-        .component-fill.gold { background: var(--gold); }
-        .component-fill.platinum { background: var(--primary); }
-        .component-score { position: absolute; right: 0; top: -14px; font-size: 0.65rem; font-weight: 900; color: var(--text); letter-spacing: -0.02em; }
+        .component-bar { flex: 1; height: 10px; background: #e8e0de; border-radius: 9999px; position: relative; }
+        .component-fill { height: 100%; border-radius: 9999px; transition: width 0.8s ease; background: #874b46; }
+        .component-fill.bronze { background: #874b46; }
+        .component-fill.copper { background: #874b46; }
+        .component-fill.silver { background: #874b46; }
+        .component-fill.gold { background: #D4AF37; }
+        .component-fill.platinum { background: #D4AF37; }
+        .component-score { position: absolute; right: 0; top: -18px; font-size: 1.25rem; font-weight: 900; color: var(--text); letter-spacing: -0.02em; }
         
         /* Growth Indicators */
         .growth-indicator { 
@@ -508,7 +529,7 @@
         .strength-summary span { white-space: nowrap; }
 
         /* Strength Grid - 6 pattern cards */
-        .strength-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; align-items: start; }
+        .strength-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items: start; }
 
         .strength-item {
             background: var(--surface-inner);
@@ -598,6 +619,155 @@
             box-shadow: 0 12px 32px rgba(53, 15, 13, 0.10);
             transform: scale(1.02);
         }
+
+        /* Up Next CTA Section */
+        .up-next-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        .up-next-card {
+            border-radius: 2rem;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .up-next-card.grit-card {
+            background: linear-gradient(135deg, #1d1b1b, #2d1f1e);
+        }
+        .up-next-card.strength-next-card {
+            background: linear-gradient(135deg, #2d1f1e, #3d2520);
+        }
+        .up-next-overline {
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 0.75rem;
+        }
+        .up-next-heading {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.5rem;
+        }
+        .up-next-subtext {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 1.25rem;
+        }
+        .up-next-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.6rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+            width: fit-content;
+        }
+        .up-next-btn.grit-btn {
+            background: #874b46;
+            color: #ffffff;
+        }
+        .up-next-btn.grit-btn:hover { opacity: 0.9; transform: scale(1.02); }
+        .up-next-btn.strength-btn {
+            background: #D4AF37;
+            color: #1d1b1b;
+        }
+        .up-next-btn.strength-btn:hover { opacity: 0.9; transform: scale(1.02); }
+
+        /* Circular Training Age Gauge */
+        .gauge-section {
+            display: grid;
+            grid-template-columns: 2fr 3fr;
+            gap: 1.5rem;
+            align-items: stretch;
+            margin-bottom: 3rem;
+        }
+        .gauge-card {
+            background: #f8f2f1;
+            border-radius: 2rem;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .gauge-overline {
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: #524342;
+            margin-bottom: 0.25rem;
+        }
+        .gauge-heading {
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: -0.01em;
+            color: #1d1b1b;
+            margin-bottom: 1rem;
+        }
+        .gauge-svg-wrap {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin-bottom: 1rem;
+        }
+        .gauge-svg-wrap svg { width: 100%; height: 100%; }
+        .gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .gauge-center .gauge-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #6b3430;
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+        .gauge-center .gauge-max {
+            font-size: 0.85rem;
+            color: #524342;
+            opacity: 0.6;
+        }
+        .gauge-center .gauge-status {
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #524342;
+            margin-top: 0.25rem;
+        }
+        .gauge-insight-text {
+            font-size: 0.85rem;
+            font-style: italic;
+            color: #524342;
+            text-align: center;
+        }
+
+        /* Zero / empty score styling */
+        .score-empty {
+            color: #857371;
+        }
+        .score-empty-label {
+            display: block;
+            font-size: 9px;
+            text-transform: uppercase;
+            color: #857371;
+            letter-spacing: 0.05em;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
@@ -645,6 +815,7 @@
                     <div class="nav-logo-text">Athlete <span>Academy</span></div>
                 </div>
                 <div class="nav-links">
+                    <a href="index.html" class="nav-btn active">📊 Dashboard</a>
                     <a href="strength-portal.html" class="nav-btn">🏋️ Strength</a>
                     <a href="grit-portal.html" class="nav-btn">🔥 Grit</a>
                 </div>
@@ -694,13 +865,51 @@
                 </div>
             </div>
         
-        <!-- Top row: Radar + Insights side by side -->
-        <div class="overview-row">
-            <div class="card radar-card">
-                <div class="card-title">Performance Profile</div>
-                <div class="radar-container">
-                    <canvas id="radarChart"></canvas>
+        <!-- Up Next CTA Section -->
+        <div class="up-next-row" id="upNextRow">
+            <div class="up-next-card grit-card">
+                <div>
+                    <div class="up-next-overline">UP NEXT</div>
+                    <div class="up-next-heading">Grit Challenge</div>
+                    <div class="up-next-subtext" id="upNextGritSubtext">Set your 8-session goal</div>
                 </div>
+                <a href="grit-portal.html" class="up-next-btn grit-btn" id="upNextGritBtn">Get Started →</a>
+            </div>
+            <div class="up-next-card strength-next-card">
+                <div>
+                    <div class="up-next-overline">UP NEXT</div>
+                    <div class="up-next-heading">Strength Training</div>
+                    <div class="up-next-subtext" id="upNextStrengthSubtext">Session A</div>
+                </div>
+                <a href="strength-portal.html" class="up-next-btn strength-btn">Open Portal →</a>
+            </div>
+        </div>
+
+        <!-- Top row: Gauge + Insights side by side -->
+        <div class="overview-row">
+            <div class="card radar-card gauge-card">
+                <div class="gauge-overline">CORE METRIC</div>
+                <div class="gauge-heading">Training Age</div>
+                <div class="gauge-svg-wrap">
+                    <svg viewBox="0 0 200 200" id="gaugeChart">
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="#e8e0de" stroke-width="12" />
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="#874b46" stroke-width="12"
+                            stroke-linecap="round"
+                            stroke-dasharray="502.65"
+                            stroke-dashoffset="502.65"
+                            transform="rotate(-90 100 100)"
+                            id="gaugeArc"
+                            style="transition: stroke-dashoffset 1s ease;" />
+                    </svg>
+                    <div class="gauge-center">
+                        <div class="gauge-number" id="gaugeNumber">—</div>
+                        <div class="gauge-max">/ 5</div>
+                        <div class="gauge-status" id="gaugeStatus">—</div>
+                    </div>
+                </div>
+                <div class="gauge-insight-text" id="gaugeInsight"></div>
+                <!-- Hidden canvas for radar chart JS (avoids errors) -->
+                <div style="display:none;"><canvas id="radarChart"></canvas></div>
             </div>
             <div class="card insights-card">
                 <div class="card-title">Personal Insights</div>
@@ -1889,6 +2098,68 @@
             </span>`;
         }
         
+        // ========== GAUGE RENDERING ==========
+        function renderGauge(trainingAge, levelName) {
+            const circumference = 2 * Math.PI * 80; // 502.65
+            const pct = Math.min(trainingAge / 5, 1);
+            const offset = circumference * (1 - pct);
+            const arc = document.getElementById('gaugeArc');
+            const numEl = document.getElementById('gaugeNumber');
+            const statusEl = document.getElementById('gaugeStatus');
+            const insightEl = document.getElementById('gaugeInsight');
+            if (arc) arc.setAttribute('stroke-dashoffset', offset);
+            if (numEl) numEl.textContent = trainingAge.toFixed(1);
+            if (statusEl) statusEl.textContent = levelName;
+            if (insightEl) {
+                if (trainingAge < 2.0) insightEl.textContent = "You're just getting started — every session counts.";
+                else if (trainingAge < 3.0) insightEl.textContent = "Building your foundation — stay consistent.";
+                else if (trainingAge < 4.0) insightEl.textContent = "You're ahead of most athletes your age.";
+                else insightEl.textContent = "Elite level — you're setting the standard.";
+            }
+        }
+
+        // ========== ZERO-SCORE DISPLAY ==========
+        // Patch renderComponents to show "—" for zero scores
+        const _origRenderComponents = renderComponents;
+        renderComponents = function(containerId, scores, rawValues, historyData, dataType) {
+            _origRenderComponents(containerId, scores, rawValues, historyData, dataType);
+            // Post-process: replace 0.0 scores with em dash
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.querySelectorAll('.component-row').forEach(row => {
+                const scoreEl = row.querySelector('.component-score');
+                if (scoreEl && scoreEl.textContent.trim() === '0.0') {
+                    scoreEl.innerHTML = '<span class="score-empty">—</span><span class="score-empty-label">not yet assessed</span>';
+                    const fill = row.querySelector('.component-fill');
+                    if (fill) fill.style.width = '0%';
+                }
+            });
+        };
+
+        // Also patch the physiology custom renderer output
+        const _origRenderDashboard = renderDashboard;
+        renderDashboard = function() {
+            _origRenderDashboard();
+
+            // Fix zero scores in physiology (custom renderer)
+            const physContainer = document.getElementById('physComponents');
+            if (physContainer) {
+                physContainer.querySelectorAll('.component-row').forEach(row => {
+                    const scoreEl = row.querySelector('.component-score');
+                    if (scoreEl && scoreEl.textContent.trim() === '0.0') {
+                        scoreEl.innerHTML = '<span class="score-empty">—</span><span class="score-empty-label">not yet assessed</span>';
+                        const fill = row.querySelector('.component-fill');
+                        if (fill) fill.style.width = '0%';
+                    }
+                });
+            }
+
+            // Render gauge from displayed values
+            const taScore = parseFloat(document.getElementById('trainingAgeScore').textContent) || 0;
+            const taLevel = document.getElementById('trainingAgeLevel').textContent || '';
+            renderGauge(taScore, taLevel);
+        };
+
         // Initialize - Google Sign-In handles the flow via handleCredentialResponse
         // No auto-load needed
     </script>
