@@ -294,19 +294,15 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
-            align-items: start;
+            align-items: stretch;
             margin-bottom: 3rem;
         }
         .below-hero-row .up-next-card {
             margin-bottom: 0;
         }
-        .below-hero-row .insights-col .insights-grid {
+        .insights-col {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-        }
-        .below-hero-row .insights-col .insight-box {
-            text-align: left;
         }
         .insights-col-overline {
             font-size: 0.625rem;
@@ -315,6 +311,88 @@
             letter-spacing: 0.25em;
             color: #524342;
             margin-bottom: 1rem;
+        }
+
+        /* Insight carousel */
+        .insight-carousel {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .insight-carousel-track {
+            position: relative;
+            flex: 1;
+        }
+        .insight-carousel-track .insight-box {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            text-align: left;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .insight-carousel-track .insight-box.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid #d7c2bf;
+            background: #fff;
+            color: #874b46;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .carousel-arrow:hover {
+            background: #874b46;
+            color: #fff;
+            border-color: #874b46;
+        }
+        .carousel-arrow.left { left: -14px; }
+        .carousel-arrow.right { right: -14px; }
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            padding-top: 0.75rem;
+        }
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #d7c2bf;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            transition: background 0.2s;
+        }
+        .carousel-dot.active {
+            background: #874b46;
+        }
+        .level-progress-label {
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: #524342;
+            text-align: center;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
         }
 
         /* Strength card — full width below the 3-col grid */
@@ -982,28 +1060,37 @@
                 </div>
             </div>
 
-            <!-- Right: Personal Insights + Level Progress -->
+            <!-- Right: Personal Insights Carousel + Level Progress -->
             <div class="insights-col">
                 <div class="insights-col-overline">PERSONAL INSIGHTS</div>
-                <div class="insights-grid">
-                    <div class="insight-box strength-insight">
-                        <div class="insight-label">YOUR STRENGTH</div>
-                        <div class="insight-value" id="insightStrength">-</div>
-                        <div class="insight-message" id="insightStrengthMsg">-</div>
+                <div class="insight-carousel" id="insightCarousel">
+                    <div class="insight-carousel-track">
+                        <div class="insight-box strength-insight active">
+                            <div class="insight-label">YOUR STRENGTH</div>
+                            <div class="insight-value" id="insightStrength">-</div>
+                            <div class="insight-message" id="insightStrengthMsg">-</div>
+                        </div>
+                        <div class="insight-box growth-insight">
+                            <div class="insight-label">GROWTH FOCUS</div>
+                            <div class="insight-value" id="insightGrowth">-</div>
+                            <div class="insight-message" id="insightGrowthMsg">-</div>
+                        </div>
+                        <div class="insight-box next-insight">
+                            <div class="insight-label">NEXT STEP</div>
+                            <div class="insight-value" id="insightNext">-</div>
+                            <div class="insight-message" id="insightNextMsg">-</div>
+                        </div>
                     </div>
-                    <div class="insight-box growth-insight">
-                        <div class="insight-label">GROWTH FOCUS</div>
-                        <div class="insight-value" id="insightGrowth">-</div>
-                        <div class="insight-message" id="insightGrowthMsg">-</div>
-                    </div>
-                    <div class="insight-box next-insight">
-                        <div class="insight-label">NEXT STEP</div>
-                        <div class="insight-value" id="insightNext">-</div>
-                        <div class="insight-message" id="insightNextMsg">-</div>
+                    <button class="carousel-arrow left" id="carouselPrev">&#8249;</button>
+                    <button class="carousel-arrow right" id="carouselNext">&#8250;</button>
+                    <div class="carousel-dots">
+                        <button class="carousel-dot active" data-index="0"></button>
+                        <button class="carousel-dot" data-index="1"></button>
+                        <button class="carousel-dot" data-index="2"></button>
                     </div>
                 </div>
                 <!-- Level Progress -->
-                <div class="card-title" style="margin-top:1.25rem;">Level Progress</div>
+                <div class="level-progress-label">LEVEL PROGRESS</div>
                 <div class="badge-row" id="badgeRow">
                     <div class="badge-item building"></div>
                     <div class="badge-item approaching"></div>
@@ -1011,7 +1098,7 @@
                     <div class="badge-item mastering"></div>
                     <div class="badge-item leading"></div>
                 </div>
-                <div class="next-level" id="nextLevel">-</div>
+                <div class="next-level" id="nextLevel" style="display:none;"></div>
             </div>
         </div>
 
@@ -2231,6 +2318,42 @@
 
         // Initialize - Google Sign-In handles the flow via handleCredentialResponse
         // No auto-load needed
+
+        // --- Insight Carousel ---
+        (function() {
+            const carousel = document.getElementById('insightCarousel');
+            const slides = carousel.querySelectorAll('.insight-carousel-track .insight-box');
+            const dots = carousel.querySelectorAll('.carousel-dot');
+            const prevBtn = document.getElementById('carouselPrev');
+            const nextBtn = document.getElementById('carouselNext');
+            let current = 0;
+            let autoTimer = null;
+
+            function goTo(index) {
+                current = (index + slides.length) % slides.length;
+                slides.forEach(s => s.classList.remove('active'));
+                dots.forEach(d => d.classList.remove('active'));
+                slides[current].classList.add('active');
+                dots[current].classList.add('active');
+            }
+
+            function startAuto() {
+                stopAuto();
+                autoTimer = setInterval(() => goTo(current + 1), 4000);
+            }
+
+            function stopAuto() {
+                if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+            }
+
+            prevBtn.addEventListener('click', () => { goTo(current - 1); startAuto(); });
+            nextBtn.addEventListener('click', () => { goTo(current + 1); startAuto(); });
+            dots.forEach(dot => dot.addEventListener('click', () => { goTo(+dot.dataset.index); startAuto(); }));
+            carousel.addEventListener('mouseenter', stopAuto);
+            carousel.addEventListener('mouseleave', startAuto);
+
+            startAuto();
+        })();
     </script>
 </body>
 </html>
