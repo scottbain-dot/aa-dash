@@ -1361,6 +1361,171 @@
             margin-top: 10px;
         }
 
+        /* Session Analysis Bar */
+        .session-analysis-bar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .session-analysis-bar select {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .session-analysis-bar select:focus { outline: none; border-color: var(--accent-blue); }
+        .session-analyse-btn {
+            background: #874b46;
+            color: #fff;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .session-analyse-btn:hover { background: #6a3a36; }
+        .session-analyse-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .session-status-line {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-left: auto;
+        }
+        .session-status-line span { color: var(--text-primary); font-weight: 600; }
+
+        /* Session Analysis Results */
+        .session-results { margin-top: 16px; }
+        .session-results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .session-results-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .save-all-btn {
+            background: #874b46;
+            color: #fff;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .save-all-btn:hover { background: #6a3a36; }
+        .save-all-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .sa-row {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 10px;
+        }
+        .sa-row-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .sa-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            min-width: 140px;
+        }
+        .sa-no-plan-badge {
+            background: rgba(245,158,11,0.2);
+            color: var(--accent-amber);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        .sa-score-input {
+            width: 60px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 6px;
+        }
+        .sa-score-input:focus { outline: none; border-color: var(--accent-blue); }
+        .sa-feedback-textarea {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 10px 12px;
+            min-height: 60px;
+            resize: vertical;
+            margin-bottom: 8px;
+        }
+        .sa-feedback-textarea:focus { outline: none; border-color: var(--accent-blue); }
+        .sa-no-plan-msg {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 8px;
+        }
+        .sa-row-btn {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .sa-row-btn.save { background: #874b46; color: #fff; }
+        .sa-row-btn.save:hover { background: #6a3a36; }
+        .sa-row-btn.send { background: var(--accent-amber); color: #1a1a1a; }
+        .sa-row-btn.send:hover { opacity: 0.85; }
+        .sa-row-btn.saved { background: var(--accent-green); color: #fff; cursor: default; }
+        .sa-reasoning-toggle {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 4px;
+        }
+        .sa-reasoning-toggle:hover { color: var(--text-secondary); }
+        .sa-reasoning-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: 4px;
+            display: none;
+        }
+        .sa-reasoning-text.show { display: block; }
+
         @media (max-width: 768px) {
             .grit-detail-grid { grid-template-columns: 1fr; }
             .grit-score-inputs { flex-direction: column; align-items: stretch; }
@@ -1479,6 +1644,23 @@
 
         <!-- Grit Challenge Panel -->
         <div class="view-panel" id="panelGrit">
+            <!-- Session Analysis Bar -->
+            <div class="session-analysis-bar">
+                <select id="sessionAnalysisSelect" onchange="onSessionSelectChange()">
+                    <option value="1">Session 1</option>
+                    <option value="2">Session 2</option>
+                    <option value="3">Session 3</option>
+                    <option value="4">Session 4</option>
+                    <option value="5">Session 5</option>
+                    <option value="6">Session 6</option>
+                    <option value="7">Session 7</option>
+                    <option value="8">Session 8</option>
+                </select>
+                <button class="session-analyse-btn" id="sessionAnalyseBtn" onclick="analyseSessionWithAI()" disabled>Analyse Session with AI</button>
+                <div class="session-status-line" id="sessionStatusLine">Select a session to check planning status</div>
+            </div>
+            <div id="sessionAnalysisResults"></div>
+
             <div class="grit-toolbar">
                 <div class="grit-search-box">
                     <input type="text" placeholder="Search students..." id="gritSearchInput" oninput="filterGritStudents()">
@@ -2623,6 +2805,236 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
                 btn.disabled = false;
                 btn.textContent = 'Save Scores';
             }
+        }
+
+        // ============================================
+        // SESSION-LEVEL AI ANALYSIS
+        // ============================================
+        let sessionPlanningData = null;
+
+        async function onSessionSelectChange() {
+            const sessionNum = document.getElementById('sessionAnalysisSelect').value;
+            const statusLine = document.getElementById('sessionStatusLine');
+            const btn = document.getElementById('sessionAnalyseBtn');
+            statusLine.textContent = 'Loading...';
+            btn.disabled = true;
+            sessionPlanningData = null;
+            document.getElementById('sessionAnalysisResults').innerHTML = '';
+
+            try {
+                const resp = await fetch(`${APPS_SCRIPT_URL}?action=getSessionPlanning&session=${sessionNum}`);
+                const data = await resp.json();
+                if (!data.success) throw new Error(data.error || 'Failed to load');
+                sessionPlanningData = data.students || [];
+                const planned = sessionPlanningData.filter(s => s.hasPlanned).length;
+                const total = sessionPlanningData.length;
+                statusLine.innerHTML = `<span>${planned}</span> of <span>${total}</span> students have planned Session ${sessionNum}`;
+                btn.disabled = total === 0;
+            } catch (err) {
+                console.error('Session planning fetch error:', err);
+                statusLine.textContent = 'Failed to load planning data';
+            }
+        }
+
+        async function analyseSessionWithAI() {
+            const apiKey = getAnthropicKey();
+            if (!apiKey) return;
+            if (!sessionPlanningData || sessionPlanningData.length === 0) return;
+
+            const sessionNum = document.getElementById('sessionAnalysisSelect').value;
+            const btn = document.getElementById('sessionAnalyseBtn');
+            btn.disabled = true;
+            btn.textContent = `Analysing ${sessionPlanningData.length} students...`;
+
+            const resultsContainer = document.getElementById('sessionAnalysisResults');
+
+            const systemPrompt = `You are an athletic development coach reviewing a student's session planning for their Grit Challenge. Assess their planning and provide a suggested score plus student-facing feedback. Be encouraging but honest. Use plain language appropriate for a 14-year-old athlete. Only assess what has been submitted — do not penalise for fields left blank if others show quality thinking. Scoring scale 1–5: 1 = Not yet meeting expectations 2 = Approaching 3 = Meeting 4 = Exceeding 5 = Outstanding Assess the overall quality of their session planning — did they set a clear goal, make a specific plan, think about how to measure success, and genuinely engage with the obstacle/counter exercise? Respond in JSON only. No preamble, no markdown, no code blocks. Format: { "score": X, "reasoning": "one sentence teacher-only note", "feedback": "2-3 sentences written directly to the student, warm and specific to what they wrote" }`;
+
+            const NO_PLAN_MSG = "You haven't completed your session plan yet. Plan your session and check in with your teacher before completing this session.";
+
+            // Process all students
+            const results = [];
+            const promises = sessionPlanningData.map(async (student, i) => {
+                if (!student.hasPlanned) {
+                    results[i] = { student, score: null, feedback: null, reasoning: null, blocking: true };
+                    return;
+                }
+
+                const s = student.session || {};
+                let userMsg = `Challenge type: ${student.challengeType || '—'}\nFocus: ${student.challengeFocus || '—'}\nSession ${sessionNum} planning:\n`;
+                if (s.baseline) userMsg += `Baseline: ${s.baseline}\n`;
+                if (s.goal || s.what) userMsg += `Goal: ${s.goal || s.what}\n`;
+                if (s.plan) userMsg += `Plan: ${s.plan}\n`;
+                if (s.measure) userMsg += `Measure: ${s.measure}\n`;
+                if (s.obstacle || s.excuse) userMsg += `Obstacle: ${s.obstacle || s.excuse}\n`;
+                if (s.counter || s.overcome) userMsg += `Counter: ${s.counter || s.overcome}\n`;
+
+                try {
+                    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-key': apiKey,
+                            'anthropic-version': '2023-06-01',
+                            'anthropic-dangerous-direct-browser-access': 'true'
+                        },
+                        body: JSON.stringify({
+                            model: 'claude-sonnet-4-20250514',
+                            max_tokens: 800,
+                            system: systemPrompt,
+                            messages: [{ role: 'user', content: userMsg }]
+                        })
+                    });
+
+                    if (!resp.ok) {
+                        if (resp.status === 401 || resp.status === 403) localStorage.removeItem('anthropic_api_key');
+                        throw new Error(`API error: ${resp.status}`);
+                    }
+                    const data = await resp.json();
+                    const parsed = JSON.parse(data.content[0].text);
+                    results[i] = { student, score: parsed.score, feedback: parsed.feedback, reasoning: parsed.reasoning, blocking: false };
+                } catch (err) {
+                    console.error(`AI analysis failed for ${student.name}:`, err);
+                    results[i] = { student, score: null, feedback: 'Analysis unavailable — please review manually.', reasoning: null, blocking: false, error: true };
+                }
+            });
+
+            await Promise.all(promises);
+
+            // Render results
+            let html = `<div class="session-results">
+                <div class="session-results-header">
+                    <div class="session-results-title">Session ${sessionNum} Analysis — ${results.length} students</div>
+                    <button class="save-all-btn" id="saveAllBtn" onclick="saveAllSessionFeedback(${sessionNum})">Save All</button>
+                </div>`;
+
+            results.forEach((r, i) => {
+                if (r.blocking) {
+                    html += `<div class="sa-row" id="saRow${i}">
+                        <div class="sa-row-top">
+                            <div class="sa-name">${r.student.name}</div>
+                            <span class="sa-no-plan-badge">No plan submitted</span>
+                        </div>
+                        <div class="sa-no-plan-msg">${NO_PLAN_MSG}</div>
+                        <button class="sa-row-btn send" id="saBtn${i}" onclick="sendBlockingMessage(${i}, ${sessionNum})">Send Message</button>
+                    </div>`;
+                } else {
+                    html += `<div class="sa-row" id="saRow${i}">
+                        <div class="sa-row-top">
+                            <div class="sa-name">${r.student.name}</div>
+                            <label style="font-size:0.8rem;color:var(--text-secondary);margin-left:auto;">Score</label>
+                            <input type="number" min="1" max="5" class="sa-score-input" id="saScore${i}" value="${r.score || ''}">
+                        </div>
+                        <textarea class="sa-feedback-textarea" id="saFeedback${i}">${r.feedback || ''}</textarea>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <button class="sa-row-btn save" id="saBtn${i}" onclick="saveSessionFeedback(${i}, ${sessionNum})">Save</button>
+                            <button class="sa-reasoning-toggle" onclick="toggleSaReasoning(${i})">AI reasoning ▸</button>
+                        </div>
+                        <div class="sa-reasoning-text" id="saReasoning${i}">${r.reasoning || '—'}</div>
+                    </div>`;
+                }
+            });
+
+            html += '</div>';
+            resultsContainer.innerHTML = html;
+
+            // Store results for save operations
+            window._sessionAnalysisResults = results;
+
+            btn.textContent = 'Analyse Session with AI';
+            btn.disabled = false;
+        }
+
+        function toggleSaReasoning(i) {
+            document.getElementById('saReasoning' + i).classList.toggle('show');
+        }
+
+        async function saveSessionFeedback(i, sessionNum) {
+            const r = window._sessionAnalysisResults[i];
+            const feedback = document.getElementById('saFeedback' + i).value;
+            const btn = document.getElementById('saBtn' + i);
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'saveCoachFeedback',
+                        email: r.student.email,
+                        sessionNumber: parseInt(sessionNum),
+                        feedback: feedback,
+                        blockingMessage: false
+                    })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    btn.textContent = 'Saved ✓';
+                    btn.classList.remove('save');
+                    btn.classList.add('saved');
+                } else {
+                    throw new Error(data.error || 'Save failed');
+                }
+            } catch (err) {
+                console.error('Save feedback error:', err);
+                btn.textContent = 'Save';
+                btn.disabled = false;
+                showToast('Failed to save feedback for ' + r.student.name, 'error');
+            }
+        }
+
+        async function sendBlockingMessage(i, sessionNum) {
+            const r = window._sessionAnalysisResults[i];
+            const msg = "You haven't completed your session plan yet. Plan your session and check in with your teacher before completing this session.";
+            const btn = document.getElementById('saBtn' + i);
+            btn.textContent = 'Sending...';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'saveCoachFeedback',
+                        email: r.student.email,
+                        sessionNumber: parseInt(sessionNum),
+                        feedback: msg,
+                        blockingMessage: true
+                    })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    btn.textContent = 'Sent ✓';
+                    btn.classList.remove('send');
+                    btn.classList.add('saved');
+                } else {
+                    throw new Error(data.error || 'Send failed');
+                }
+            } catch (err) {
+                console.error('Send blocking message error:', err);
+                btn.textContent = 'Send Message';
+                btn.disabled = false;
+                showToast('Failed to send message for ' + r.student.name, 'error');
+            }
+        }
+
+        async function saveAllSessionFeedback(sessionNum) {
+            const results = window._sessionAnalysisResults;
+            if (!results) return;
+            const saveAllBtn = document.getElementById('saveAllBtn');
+            saveAllBtn.disabled = true;
+            saveAllBtn.textContent = 'Saving all...';
+
+            const promises = results.map((r, i) => {
+                const btn = document.getElementById('saBtn' + i);
+                if (btn.classList.contains('saved')) return Promise.resolve(); // already saved
+                if (r.blocking) return sendBlockingMessage(i, sessionNum);
+                return saveSessionFeedback(i, sessionNum);
+            });
+
+            await Promise.all(promises);
+            saveAllBtn.textContent = 'All Saved ✓';
         }
     </script>
 </body>
