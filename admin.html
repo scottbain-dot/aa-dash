@@ -2424,7 +2424,23 @@
             </div>`;
         }
 
+        function getAnthropicKey() {
+            if (window.ANTHROPIC_API_KEY) return window.ANTHROPIC_API_KEY;
+            let key = localStorage.getItem('anthropic_api_key');
+            if (key) return key;
+            key = prompt('Enter your Anthropic API key to enable AI analysis.\nThis will be stored in your browser for future use.');
+            if (key && key.trim()) {
+                key = key.trim();
+                localStorage.setItem('anthropic_api_key', key);
+                return key;
+            }
+            return null;
+        }
+
         async function analyseWithAI(idx) {
+            const apiKey = getAnthropicKey();
+            if (!apiKey) return;
+
             const student = filteredGritStudents[idx];
             const c = student.challenge;
             const btn = document.getElementById('aiBtn' + idx);
@@ -2488,7 +2504,7 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-api-key': window.ANTHROPIC_API_KEY || '',
+                        'x-api-key': apiKey,
                         'anthropic-version': '2023-06-01',
                         'anthropic-dangerous-direct-browser-access': 'true'
                     },
@@ -2500,7 +2516,10 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
                     })
                 });
 
-                if (!response.ok) throw new Error(`API error: ${response.status}`);
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) localStorage.removeItem('anthropic_api_key');
+                    throw new Error(`API error: ${response.status}`);
+                }
                 const data = await response.json();
                 const text = data.content[0].text;
                 const result = JSON.parse(text);
