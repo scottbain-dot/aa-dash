@@ -198,6 +198,39 @@
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; opacity: 0; visibility: hidden; transition: all 0.3s; }
         .modal-overlay.active { opacity: 1; visibility: visible; }
+
+        /* Coach Feedback */
+        .coach-feedback-section {
+            margin-top: 20px;
+            border-left: 4px solid #874b46;
+            background: #fef8f6;
+            border-radius: 0 10px 10px 0;
+            padding: 1rem;
+        }
+        .coach-feedback-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #874b46;
+            margin-bottom: 8px;
+        }
+        .coach-feedback-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--black);
+        }
+
+        /* Planning-first banner */
+        .planning-first-banner {
+            background: var(--amber);
+            color: #1a1a1a;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
         .modal { background: white; border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
         .modal-header { background: linear-gradient(135deg, var(--burgundy-dark), var(--burgundy)); padding: 18px 24px; color: white; display: flex; justify-content: space-between; align-items: center; }
         .modal-title { font-size: 1.1rem; font-weight: 700; }
@@ -1437,7 +1470,9 @@ function openSession(num) {
 
     // Restore editable footer (may have been swapped by viewSession)
     const footer = document.querySelector('#sessionModal .modal-footer');
-    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('sessionModal')">Cancel</button><button class="btn btn-success" onclick="saveSession()">✓ Complete</button>`;
+    const savedForBlock = (currentChallenge.sessions || [])[num - 1];
+    const isBlocked = savedForBlock && savedForBlock.requiresPlanningFirst;
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('sessionModal')">Cancel</button><button class="btn btn-success" onclick="saveSession()" ${isBlocked ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>✓ Complete</button>`;
 
     document.getElementById('sessionModalTitle').textContent = `Session ${num}`;
     const body = document.getElementById('sessionModalBody');
@@ -1470,7 +1505,14 @@ function openSession(num) {
         firstQuestion = `<div class="form-group"><label class="form-label">What do you want to achieve in this session?</label><textarea class="form-textarea" id="sessionGoal" placeholder="Your goal for this session..."></textarea></div>`;
     }
 
+    // Check if this session requires planning first (blocking message from teacher)
+    const savedCheck = (currentChallenge.sessions || [])[num - 1];
+    const planningBanner = (savedCheck && savedCheck.requiresPlanningFirst)
+        ? `<div class="planning-first-banner">Complete your session plan and check in with your teacher before marking this session done.</div>`
+        : '';
+
     body.innerHTML = `
+        ${planningBanner}
         ${firstQuestion}
         ${strengthWeightField}
         <div class="form-group"><label class="form-label">What will you actually do? Be specific.</label><textarea class="form-textarea" id="sessionPlan" placeholder="Describe your plan..."></textarea></div>
@@ -1553,6 +1595,14 @@ function viewSession(num) {
         ? `<div class="form-group"><label class="form-label">${label}</label><div class="readonly-field">${value.replace(/</g, '&lt;').replace(/\n/g, '<br>')}</div></div>`
         : '';
 
+    // Coach feedback section
+    const coachFeedbackHTML = saved.coachFeedback
+        ? `<div class="coach-feedback-section">
+            <div class="coach-feedback-label">COACH FEEDBACK</div>
+            <div class="coach-feedback-text">${saved.coachFeedback.replace(/</g, '&lt;').replace(/\n/g, '<br>')}</div>
+           </div>`
+        : '';
+
     body.innerHTML = `
         <div class="view-only-badge">View only</div>
         ${field(primaryLabel, primaryValue)}
@@ -1560,7 +1610,8 @@ function viewSession(num) {
         ${field('What will you actually do? Be specific.', plan)}
         ${field('How will you know if it worked?', measure)}
         ${field('What excuse might try to stop you?', obstacle)}
-        ${field('How will you beat it?', counter)}`;
+        ${field('How will you beat it?', counter)}
+        ${coachFeedbackHTML}`;
 
     // Swap footer to Close-only
     const footer = document.querySelector('#sessionModal .modal-footer');
@@ -1585,13 +1636,22 @@ function viewFinalSession() {
         ? `<div class="form-group"><label class="form-label">${label}</label><div class="readonly-field">${value.replace(/</g, '&lt;').replace(/\n/g, '<br>')}</div></div>`
         : '';
 
+    // Coach feedback section
+    const coachFeedbackHTML = saved.coachFeedback
+        ? `<div class="coach-feedback-section">
+            <div class="coach-feedback-label">COACH FEEDBACK</div>
+            <div class="coach-feedback-text">${saved.coachFeedback.replace(/</g, '&lt;').replace(/\n/g, '<br>')}</div>
+           </div>`
+        : '';
+
     body.innerHTML = `
         <div class="view-only-badge">View only</div>
         ${field('Final measurement', remeasure)}
         ${field('What changed most over the 8 sessions?', changed)}
         ${field('What made the biggest difference to your progress?', difference)}
         ${field('What would you do differently?', differently)}
-        ${field('What are you most proud of?', proud)}`;
+        ${field('What are you most proud of?', proud)}
+        ${coachFeedbackHTML}`;
 
     // Swap footer to Close-only
     const footer = document.querySelector('#finalModal .modal-footer');
