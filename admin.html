@@ -2330,6 +2330,7 @@
 
             if (view === 'grit' && !gritDataLoaded) {
                 loadGritData();
+                onSessionSelectChange();
             }
         }
 
@@ -2822,8 +2823,17 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
             document.getElementById('sessionAnalysisResults').innerHTML = '';
 
             try {
-                const resp = await fetch(`${APPS_SCRIPT_URL}?action=getSessionPlanning&session=${sessionNum}`);
-                const data = await resp.json();
+                const url = `${APPS_SCRIPT_URL}?action=getSessionPlanning&session=${sessionNum}`;
+                console.log('[Session Analysis] Fetching:', url);
+                const resp = await fetch(url);
+                const text = await resp.text();
+                console.log('[Session Analysis] Raw response:', text.substring(0, 500));
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (parseErr) {
+                    throw new Error('Invalid JSON response — the Apps Script may need redeploying. Response: ' + text.substring(0, 200));
+                }
                 if (!data.success) throw new Error(data.error || 'Failed to load');
                 sessionPlanningData = data.students || [];
                 const planned = sessionPlanningData.filter(s => s.hasPlanned).length;
@@ -2832,7 +2842,7 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
                 btn.disabled = total === 0;
             } catch (err) {
                 console.error('Session planning fetch error:', err);
-                statusLine.textContent = 'Failed to load planning data';
+                statusLine.textContent = 'Failed to load planning data — ' + err.message;
             }
         }
 
