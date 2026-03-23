@@ -91,6 +91,13 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (action === 'getSessionPlanning') {
+      var sessionNum = parseInt(e.parameter.session) || 1;
+      var planningResult = handleGetSessionPlanning(ss, sessionNum);
+      return ContentService.createTextOutput(JSON.stringify(planningResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // ===== EXISTING DASHBOARD LOGIC =====
     if (e.parameter.admin === 'true') {
       return handleAdminRequest(ss);
@@ -137,6 +144,14 @@ function doPost(e) {
       var ss = SpreadsheetApp.getActiveSpreadsheet();
       var gritResult = handleSaveGritChallenge(ss, data.email, data.challenge);
       return ContentService.createTextOutput(JSON.stringify(gritResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ===== COACH FEEDBACK SAVE =====
+    if (data.action === 'saveCoachFeedback') {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var feedbackResult = handleSaveCoachFeedback(ss, data.email, data.sessionNumber, data.feedback, data.blockingMessage);
+      return ContentService.createTextOutput(JSON.stringify(feedbackResult))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -397,6 +412,206 @@ function handleGetGritAdminData(ss) {
   }
 }
 
+
+// ========================================
+// COACH FEEDBACK FUNCTION
+// POST: { action: 'saveCoachFeedback', email, sessionNumber, feedback, blockingMessage }
+// Saves coach feedback into the session object within Challenge_JSON
+// ========================================
+
+function handleSaveCoachFeedback(ss, email, sessionNumber, feedback, blockingMessage) {
+  try {
+    if (!email) {
+      return { success: false, error: 'No email provided' };
+    }
+    if (!sessionNumber || sessionNumber < 1 || sessionNumber > 8) {
+      return { success: false, error: 'Session number must be 1–8' };
+    }
+    if (feedback === undefined || feedback === null) {
+      return { success: false, error: 'No feedback provided' };
+    }
+
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) {
+      return { success: false, error: 'No athlete found for email: ' + email };
+    }
+
+    var sheet = ensureGritChallengeColumns(ss);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idCol = headers.indexOf('Athlete_ID');
+    var jsonCol = headers.indexOf('Challenge_JSON');
+
+    if (idCol === -1 || jsonCol === -1) {
+      return { success: false, error: 'Required columns not found in Grit_Journal' };
+    }
+
+    // Find the most recent row for this athlete
+    var targetRow = -1;
+    for (var i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][idCol]).trim() == String(athleteId).trim()) {
+        targetRow = i;
+        break;
+      }
+    }
+
+    if (targetRow === -1) {
+      return { success: false, error: 'No Grit Journal row found for this athlete' };
+    }
+
+    var challengeJSON = data[targetRow][jsonCol];
+    var challenge;
+    if (challengeJSON && String(challengeJSON).trim() !== '') {
+      try {
+        challenge = JSON.parse(challengeJSON);
+      } catch (parseErr) {
+        return { success: false, error: 'Could not parse existing Challenge_JSON' };
+      }
+    } else {
+      // No challenge data yet — create minimal structure
+      challenge = { sessions: [] };
+    }
+
+    // Ensure sessions array exists
+    if (!challenge.sessions) {
+      challenge.sessions = [];
+    }
+
+    var idx = sessionNumber - 1;
+
+    // Ensure the sessions array is long enough
+    while (challenge.sessions.length <= idx) {
+      challenge.sessions.push(null);
+    }
+
+    if (challenge.sessions[idx] && typeof challenge.sessions[idx] === 'object') {
+      // Session object exists — add feedback fields
+      challenge.sessions[idx].coachFeedback = feedback;
+      challenge.sessions[idx].requiresPlanningFirst = !!blockingMessage;
+    } else {
+      // Session doesn't exist yet — create minimal object
+      challenge.sessions[idx] = {
+        coachFeedback: feedback,
+        requiresPlanningFirst: !!blockingMessage
+      };
+    }
+
+    // Write updated challenge back
+    var updatedJSON = JSON.stringify(challenge);
+    sheet.getRange(targetRow + 1, jsonCol + 1).setValue(updatedJSON);
+
+    // Update timestamp if column exists
+    var updatedCol = headers.indexOf('Challenge_Updated');
+    if (updatedCol >= 0) {
+      sheet.getRange(targetRow + 1, updatedCol + 1).setValue(new Date());
+    }
+
+    return { success: true };
+
+  } catch (error) {
+    return { success: false, error: 'Error saving coach feedback: ' + error.message };
+  }
+}
+
+// ========================================
+// SESSION PLANNING FUNCTION
+// GET: ?action=getSessionPlanning&session=N
+// Returns all students with active Grit challenges and their session N data
+// ========================================
+
+function handleGetSessionPlanning(ss, sessionNumber) {
+  try {
+    if (!sessionNumber || sessionNumber < 1 || sessionNumber > 8) {
+      return { success: false, error: 'Session number must be 1–8' };
+    }
+
+    var sheet = ensureGritChallengeColumns(ss);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idCol = headers.indexOf('Athlete_ID');
+    var jsonCol = headers.indexOf('Challenge_JSON');
+    var statusCol = headers.indexOf('Challenge_Status');
+
+    if (idCol === -1 || jsonCol === -1) {
+      return { success: false, error: 'Required columns not found in Grit_Journal' };
+    }
+
+    // Build athlete lookup map (name + email)
+    var athletesSheet = ss.getSheetByName('Athletes');
+    var athleteMap = {};
+    if (athletesSheet) {
+      var aData = athletesSheet.getDataRange().getValues();
+      var aHeaders = aData[0];
+      var aIdCol = aHeaders.indexOf('Athlete_ID');
+      var aEmailCol = aHeaders.indexOf('Email');
+      var aNameCol = aHeaders.indexOf('Name');
+      var aFirstCol = aHeaders.indexOf('First_Name');
+      var aLastCol = aHeaders.indexOf('Last_Name');
+      for (var a = 1; a < aData.length; a++) {
+        var aid = aData[a][aIdCol];
+        if (!aid) continue;
+        var aName = '';
+        if (aNameCol >= 0 && aData[a][aNameCol]) {
+          aName = aData[a][aNameCol];
+        } else if (aFirstCol >= 0) {
+          aName = aData[a][aFirstCol] + ' ' + (aLastCol >= 0 ? aData[a][aLastCol] || '' : '');
+        }
+        athleteMap[String(aid).trim()] = {
+          name: aName.trim(),
+          email: aEmailCol >= 0 ? aData[a][aEmailCol] : ''
+        };
+      }
+    }
+
+    var students = [];
+    var seen = {};
+    var idx = sessionNumber - 1;
+
+    // Iterate from bottom up to get most recent row per athlete
+    for (var i = data.length - 1; i >= 1; i--) {
+      var rowId = String(data[i][idCol] || '').trim();
+      if (!rowId || seen[rowId]) continue;
+
+      var jsonVal = jsonCol >= 0 ? data[i][jsonCol] : '';
+      if (!jsonVal || String(jsonVal).trim() === '') continue;
+
+      // Skip non-active challenges
+      if (statusCol >= 0 && data[i][statusCol] && String(data[i][statusCol]).toLowerCase() === 'inactive') continue;
+
+      try {
+        var challenge = JSON.parse(jsonVal);
+        var athleteInfo = athleteMap[rowId] || {};
+
+        var sessionData = null;
+        var hasPlanned = false;
+
+        if (challenge.sessions && challenge.sessions.length > idx && challenge.sessions[idx]) {
+          sessionData = challenge.sessions[idx];
+          // hasPlanned is true if the session has a non-empty plan field
+          hasPlanned = !!(sessionData.plan && String(sessionData.plan).trim() !== '');
+        }
+
+        students.push({
+          name: athleteInfo.name || '',
+          email: athleteInfo.email || '',
+          challengeType: challenge.type || challenge.challengeType || '',
+          challengeFocus: challenge.focus || challenge.challengeFocus || '',
+          session: sessionData,
+          hasPlanned: hasPlanned
+        });
+
+        seen[rowId] = true;
+      } catch (parseErr) {
+        // Skip malformed JSON
+      }
+    }
+
+    return { success: true, session: sessionNumber, students: students };
+
+  } catch (error) {
+    return { success: false, error: 'Error loading session planning: ' + error.message };
+  }
+}
 
 // ========================================
 // PSYCH SCORES UPDATE
