@@ -823,6 +823,28 @@
         .level-node-status.passed { color: #22c55e; }
         .level-node-status.active { color: #D4AF37; }
 
+        /* Strength chart tooltip */
+        .str-chart-wrap {
+            position: relative;
+        }
+        .str-chart-tooltip {
+            position: absolute;
+            background: #1d1b1b;
+            color: #ffffff;
+            font-size: 0.75rem;
+            border-radius: 0.5rem;
+            padding: 6px 10px;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 10;
+            transform: translate(-50%, -100%);
+            margin-top: -8px;
+            opacity: 0;
+            transition: opacity 0.15s;
+            line-height: 1.4;
+        }
+        .str-chart-tooltip.visible { opacity: 1; }
+
         /* Strength progress chart in modal */
         .strength-chart-section {
             margin-bottom: 1.5rem;
@@ -1903,9 +1925,10 @@
                     // Match exercise to pattern using the pattern field first, then fall back to name matching
                     const patternName = ex.pattern || '';
                     let matched = false;
+                    const entry = { session: session.number || 0, weight: w, date: session.date || '', sets: ex.sets || '', reps: ex.reps || '' };
                     for (const p of MOVEMENT_PATTERNS) {
                         if (patternName === p.key || patternName === p.name) {
-                            patternWeights[p.key].push({ session: session.number || 0, weight: w });
+                            patternWeights[p.key].push(entry);
                             matched = true;
                             break;
                         }
@@ -1914,7 +1937,7 @@
                         const exName = ex.name.toLowerCase();
                         for (const p of MOVEMENT_PATTERNS) {
                             if (exName.includes(p.key.toLowerCase()) || exName.includes(p.name.toLowerCase())) {
-                                patternWeights[p.key].push({ session: session.number || 0, weight: w });
+                                patternWeights[p.key].push(entry);
                                 break;
                             }
                         }
@@ -2093,7 +2116,7 @@
                 const points = weights.map((w, i) => {
                     const x = padX + (i / (weights.length - 1)) * (chartW - padX * 2);
                     const y = padY + (1 - (w.weight - minW) / range) * (chartH - padY * 2);
-                    return { x, y, weight: w.weight, session: w.session };
+                    return { x, y, weight: w.weight, session: w.session, date: w.date || '', sets: w.sets || '', reps: w.reps || '' };
                 });
 
                 // Build smooth path
@@ -2114,24 +2137,77 @@
                             <text x="${padX - 6}" y="${y + 4}" fill="#857371" font-size="10" text-anchor="end">${Math.round(v)}</text>`;
                 }).join('');
 
-                // Dots
+                // Dots — with data attributes for tooltips
                 let dotsHTML = points.map((pt, i) => {
                     const r = (i === 0 || i === points.length - 1) ? 6 : 4;
                     let label = '';
                     if (i === 0 || i === points.length - 1) {
-                        const ly = i === 0 ? pt.y - 12 : pt.y - 12;
-                        label = `<text x="${pt.x}" y="${ly}" fill="#874b46" font-size="11" font-weight="700" text-anchor="middle">${pt.weight}kg</text>`;
+                        label = `<text x="${pt.x}" y="${pt.y - 12}" fill="#874b46" font-size="11" font-weight="700" text-anchor="middle">${pt.weight}kg</text>`;
                     }
-                    return `<circle cx="${pt.x}" cy="${pt.y}" r="${r}" fill="#874b46"/>${label}`;
+                    const setsReps = (pt.sets && pt.reps) ? `${pt.sets} × ${pt.reps}` : '';
+                    return `<circle class="str-dot" cx="${pt.x}" cy="${pt.y}" r="${r}" fill="#874b46" style="cursor:pointer;"
+                        data-date="${pt.date}" data-weight="${pt.weight}" data-setsreps="${setsReps}" data-px="${pt.x}" data-py="${pt.y}"/>${label}`;
                 }).join('');
 
                 chartSection.innerHTML = `
                     <div class="strength-chart-overline">STRENGTH PROGRESS — LEVEL ${Math.floor(tech)}</div>
-                    <svg width="100%" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="xMidYMid meet">
-                        ${gridLines}
-                        <path d="${pathD}" stroke="#874b46" stroke-width="2" fill="none"/>
-                        ${dotsHTML}
-                    </svg>`;
+                    <div class="str-chart-wrap">
+                        <div class="str-chart-tooltip" id="strChartTooltip"></div>
+                        <svg width="100%" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="xMidYMid meet">
+                            ${gridLines}
+                            <path d="${pathD}" stroke="#874b46" stroke-width="2" fill="none"/>
+                            ${dotsHTML}
+                        </svg>
+                    </div>`;
+
+                // Attach tooltip listeners
+                const wrapEl = chartSection.querySelector('.str-chart-wrap');
+                const tipEl = chartSection.querySelector('#strChartTooltip');
+                const svgEl = wrapEl.querySelector('svg');
+
+                function showDotTooltip(dot) {
+                    const date = dot.getAttribute('data-date');
+                    const weight = dot.getAttribute('data-weight');
+                    const setsReps = dot.getAttribute('data-setsreps');
+                    let html = '';
+                    if (date) html += `<div>${date}</div>`;
+                    html += `<div>${weight}kg</div>`;
+                    if (setsReps) html += `<div>${setsReps}</div>`;
+                    tipEl.innerHTML = html;
+
+                    // Convert SVG coords to container coords
+                    const svgRect = svgEl.getBoundingClientRect();
+                    const wrapRect = wrapEl.getBoundingClientRect();
+                    const vb = svgEl.viewBox.baseVal;
+                    const px = parseFloat(dot.getAttribute('data-px'));
+                    const py = parseFloat(dot.getAttribute('data-py'));
+                    const scaleX = svgRect.width / vb.width;
+                    const scaleY = svgRect.height / vb.height;
+                    const left = (svgRect.left - wrapRect.left) + px * scaleX;
+                    const top = (svgRect.top - wrapRect.top) + py * scaleY;
+
+                    tipEl.style.left = left + 'px';
+                    tipEl.style.top = top + 'px';
+                    tipEl.classList.add('visible');
+                }
+
+                function hideDotTooltip() {
+                    tipEl.classList.remove('visible');
+                }
+
+                wrapEl.querySelectorAll('.str-dot').forEach(dot => {
+                    dot.addEventListener('mouseenter', () => showDotTooltip(dot));
+                    dot.addEventListener('mouseleave', hideDotTooltip);
+                    dot.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        showDotTooltip(dot);
+                    });
+                });
+
+                // Hide tooltip when tapping elsewhere
+                document.addEventListener('touchstart', (e) => {
+                    if (!e.target.classList.contains('str-dot')) hideDotTooltip();
+                }, { passive: true });
             } else {
                 chartSection.innerHTML = `
                     <div class="strength-chart-overline">STRENGTH PROGRESS — LEVEL ${Math.floor(tech)}</div>
