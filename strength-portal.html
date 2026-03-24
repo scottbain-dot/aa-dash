@@ -307,6 +307,23 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-card .pattern-bg-img {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 55%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            opacity: 0.45;
+            -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%);
+            mask-image: linear-gradient(to left, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%);
+            pointer-events: none;
+            border-radius: 0 10px 10px 0;
         }
 
         .progress-card:hover {
@@ -344,12 +361,16 @@
             margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
         }
 
         .progress-level {
             font-size: 1.8rem;
             font-weight: 800;
             color: #1a1a1a;
+            position: relative;
+            z-index: 1;
         }
 
         .progress-label {
@@ -357,6 +378,8 @@
             color: #666;
             margin-top: 2px;
             font-weight: 500;
+            position: relative;
+            z-index: 1;
         }
 
         /* Demo Section */
@@ -2930,6 +2953,16 @@
             loadWorkoutPlan();
         }
 
+        // Pattern background images
+        const patternBgImages = {
+            Squat: 'strength-squat.jpg',
+            Hinge: 'strength-hinge.jpg',
+            Push: 'strength-push.jpg',
+            Pull: 'strength-pull.jpg',
+            Lunge: 'strength-lunge.jpg',
+            Press: 'strength-press.png'
+        };
+
         function renderProgressGrid(strength) {
             console.log('renderProgressGrid called with:', strength);
             const container = document.getElementById('progressGrid');
@@ -2950,10 +2983,14 @@
                 card.className = 'progress-card';
                 card.onclick = () => togglePatternDetail(index);
 
+                const imgFile = patternBgImages[pattern.name];
+                const imgTag = imgFile ? `<img class="pattern-bg-img" src="${imgFile}" alt="">` : '';
+
                 if (isReadyToTest) {
                     // Ready to test - burgundy
                     card.style.cssText = 'background: linear-gradient(135deg, #874B46, #6a3a36); border-color: #874B46;';
                     card.innerHTML = `
+                        ${imgTag}
                         <div class="progress-pattern" style="color: #D4AF37;">${pattern.name.toUpperCase()}</div>
                         <div class="progress-level" style="color: #fff; font-size: 1.4rem;">⚡</div>
                         <div class="progress-label" style="color: #D4AF37; font-weight: 600;">TEST</div>
@@ -2963,8 +3000,9 @@
                     const loadTiers = gender === 'F' ? pattern.loadTiers.F : pattern.loadTiers.M;
                     const tierWeight = loadTiers[strengthTier - 1] || 0;
                     const tierLabel = isRepBased ? `T${strengthTier} · ${tierWeight} reps` : `T${strengthTier} · ${tierWeight}kg`;
-                    
+
                     card.innerHTML = `
+                        ${imgTag}
                         <div class="progress-pattern">${pattern.name.toUpperCase()}</div>
                         <div class="progress-level" style="font-size: 1.6rem;">${techLevel} <span style="color: #22c55e; font-size: 0.8rem;">✓</span></div>
                         <div class="progress-label" style="color: #874B46; font-weight: 600; font-size: 0.65rem;">${tierLabel}</div>
@@ -2972,6 +3010,7 @@
                 } else {
                     // Normal tech level
                     card.innerHTML = `
+                        ${imgTag}
                         <div class="progress-pattern">${pattern.name.toUpperCase()}</div>
                         <div class="progress-level">${techLevel}</div>
                         <div class="progress-label">Tech Lvl</div>
