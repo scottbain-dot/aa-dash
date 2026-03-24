@@ -583,52 +583,283 @@
         .strength-summary { display: flex; justify-content: center; gap: 2rem; background: rgba(212,175,55,0.1); color: var(--text); border-radius: 1rem; padding: 7px 20px; margin-bottom: 1rem; font-size: 0.8rem; font-weight: 600; flex-wrap: wrap; }
         .strength-summary span { white-space: nowrap; }
 
-        /* Strength Grid - 6 pattern cards */
+        /* Strength Grid - 6 pattern cards in 3x2 */
         .strength-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items: start; }
 
         .strength-item {
-            background: var(--surface-inner);
+            background: #ffffff;
             border-radius: 1.5rem;
-            padding: 1.25rem;
+            padding: 1.5rem;
             text-align: left;
-            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            position: relative;
             overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0px 4px 16px rgba(53, 15, 13, 0.04);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
         }
         .strength-item:hover {
-            box-shadow: 0 12px 32px rgba(53, 15, 13, 0.06);
-            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0px 12px 32px rgba(53, 15, 13, 0.08);
         }
-        .strength-item.muted { opacity: 0.45; }
-        .strength-item .pattern-name { font-size: 0.95rem; font-weight: 800; margin-bottom: 1px; color: var(--text); letter-spacing: -0.3px; }
-        .strength-item .exercise-name { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 8px; }
-        .strength-dots { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
-        .strength-dots .dot-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; width: 28px; letter-spacing: 0.5px; }
-        .strength-dots .dot-label.tech { color: var(--burgundy); }
-        .strength-dots .dot-label.str { color: var(--gold); }
-        .strength-dots .dots { font-size: 0.75rem; letter-spacing: 1px; }
-        .strength-dots .dots.tech { color: var(--burgundy); }
-        .strength-dots .dots.str { color: var(--gold); }
+        .strength-item.muted { opacity: 0.45; cursor: default; }
 
-        /* Weight headline — always visible at bottom of default card */
-        .strength-weight-headline { font-size: 0.78rem; font-weight: 700; text-align: center; margin-top: 10px; }
-        .strength-weight-headline.has-gain { color: var(--primary); }
-        .strength-weight-headline.no-gain { color: var(--text-muted); }
-
-        /* Chart area: hidden by default, revealed on hover */
-        .strength-chart-area {
-            height: 0;
-            opacity: 0;
-            overflow: hidden;
-            transition: height 0.3s ease, opacity 0.3s ease;
-            margin-top: 0;
+        /* SVG background illustration */
+        .strength-item .pattern-svg {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 120px;
+            height: 120px;
+            opacity: 0.06;
+            pointer-events: none;
         }
-        .strength-item:hover .strength-chart-area {
-            height: 80px;
-            opacity: 1;
+
+        /* Card top section */
+        .strength-item .pattern-name {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1d1b1b;
+            margin-bottom: 2px;
+            position: relative;
+            z-index: 1;
+        }
+        .strength-item .exercise-name {
+            font-size: 0.8rem;
+            color: #524342;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Level label */
+        .strength-level-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #874b46;
+            font-weight: 700;
+            margin-bottom: 2px;
+            position: relative;
+            z-index: 1;
+        }
+        .strength-level-exercise {
+            font-size: 0.85rem;
+            color: #1d1b1b;
+            font-weight: 600;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Strength tier progress bar */
+        .strength-tier-section {
+            position: relative;
+            z-index: 1;
+        }
+        .strength-tier-overline {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #524342;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .strength-tier-bar {
+            width: 100%;
+            height: 6px;
+            border-radius: 9999px;
+            background: #e8e0de;
+            position: relative;
+        }
+        .strength-tier-fill {
+            height: 100%;
+            border-radius: 9999px;
+            background: #874b46;
+            transition: width 0.8s ease;
+        }
+        .strength-tier-score {
+            text-align: right;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #874b46;
+            margin-top: 2px;
+        }
+        .strength-tier-locked {
+            font-size: 9px;
+            color: #857371;
+            font-style: italic;
+        }
+
+        /* Weight headline at bottom */
+        .strength-weight-headline {
+            font-size: 0.85rem;
+            font-weight: 700;
             margin-top: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        .strength-weight-headline.has-gain { color: #874b46; }
+        .strength-weight-headline.no-gain { color: #857371; }
+
+        .strength-muted-label {
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            position: relative;
+            z-index: 1;
         }
 
-        .strength-muted-label { font-size: 0.625rem; color: var(--text-muted); text-align: center; margin-top: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
+        /* Strength Detail Modal */
+        .strength-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .strength-modal-overlay.active { display: flex; }
+        .strength-modal {
+            background: #fef8f6;
+            border-radius: 2rem;
+            max-width: 680px;
+            width: 92%;
+            padding: 2rem;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(53, 15, 13, 0.2);
+        }
+        .strength-modal-close {
+            position: absolute;
+            top: 1rem; right: 1rem;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #857371;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .strength-modal-close:hover { background: #e8e0de; }
+        .strength-modal-name {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: #1d1b1b;
+            margin-bottom: 2px;
+        }
+        .strength-modal-exercise {
+            font-size: 0.9rem;
+            color: #857371;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Level timeline */
+        .level-timeline {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .level-timeline::before {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 24px;
+            right: 24px;
+            height: 2px;
+            background: #e8e0de;
+            z-index: 0;
+        }
+        .level-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+        .level-circle {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .level-circle.completed {
+            background: #874b46;
+            color: #ffffff;
+        }
+        .level-circle.current {
+            background: #D4AF37;
+            color: #ffffff;
+        }
+        .level-circle.future {
+            background: transparent;
+            border: 2px solid #d7c2bf;
+            color: #857371;
+        }
+        .level-node-label {
+            font-size: 0.65rem;
+            color: #524342;
+            text-align: center;
+            max-width: 80px;
+            line-height: 1.2;
+        }
+        .level-node-status {
+            font-size: 0.55rem;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .level-node-status.passed { color: #22c55e; }
+        .level-node-status.active { color: #D4AF37; }
+
+        /* Strength progress chart in modal */
+        .strength-chart-section {
+            margin-bottom: 1.5rem;
+        }
+        .strength-chart-overline {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-weight: 700;
+            color: #524342;
+            margin-bottom: 0.75rem;
+        }
+        .strength-chart-placeholder {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #857371;
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+
+        /* Session history list */
+        .session-history-list {
+            margin-top: 1rem;
+        }
+        .session-history-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            border-radius: 0.5rem;
+        }
+        .session-history-row:nth-child(odd) { background: #ffffff; }
+        .session-history-row:nth-child(even) { background: #f8f2f1; }
+        .session-history-row .sh-session { font-weight: 700; color: #1d1b1b; min-width: 60px; }
+        .session-history-row .sh-date { color: #857371; min-width: 80px; }
+        .session-history-row .sh-weight { color: #874b46; font-weight: 600; min-width: 60px; }
+        .session-history-row .sh-sets { color: #524342; }
         
         /* Editorial Quote */
         .editorial-quote {
@@ -1075,6 +1306,18 @@
         </div>
     </div>
     
+    <!-- Strength Detail Modal -->
+    <div id="strengthDetailModal" class="strength-modal-overlay">
+        <div class="strength-modal">
+            <button class="strength-modal-close" onclick="closeStrengthModal()">&times;</button>
+            <div class="strength-modal-name" id="strModalName"></div>
+            <div class="strength-modal-exercise" id="strModalExercise"></div>
+            <div class="level-timeline" id="strModalTimeline"></div>
+            <div class="strength-chart-section" id="strModalChartSection"></div>
+            <div class="session-history-list" id="strModalHistory"></div>
+        </div>
+    </div>
+
     <script>
         // ========== CONFIGURATION ==========
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxg8voUoN0Lpffv_fQIcI7igALEksa0MSUscvNMS0HLWLY3Oi_9IqQbUwwSw1JzJ0HK/exec';
@@ -1704,49 +1947,74 @@
                 `;
             }
 
-            // Helper: render filled/empty dots
-            function renderDots(value, max, filledClass) {
-                const v = Math.round(Math.min(Math.max(value, 0), max));
-                let out = '';
-                for (let i = 0; i < max; i++) {
-                    out += i < v ? '●' : '○';
-                }
-                return `<span class="dots ${filledClass}">${out}</span>`;
-            }
+            // SVG silhouettes per pattern
+            const patternSVGs = {
+                Squat: `<svg class="pattern-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="60" cy="18" r="8" stroke="#874b46" stroke-width="1.5"/>
+                    <path d="M60 26 L60 50" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M60 50 L45 80 L40 110" stroke="#874b46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M60 50 L75 80 L80 110" stroke="#874b46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M60 35 L38 42" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M60 35 L82 42" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <rect x="34" y="38" width="8" height="4" rx="1" stroke="#874b46" stroke-width="1.5"/>
+                    <rect x="78" y="38" width="8" height="4" rx="1" stroke="#874b46" stroke-width="1.5"/>
+                </svg>`,
+                Hinge: `<svg class="pattern-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="75" cy="28" r="8" stroke="#874b46" stroke-width="1.5"/>
+                    <path d="M75 36 L55 58" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M55 58 L50 90 L48 112" stroke="#874b46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M55 58 L70 90 L72 112" stroke="#874b46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M65 47 L55 75" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M65 47 L48 68" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>`,
+                Push: `<svg class="pattern-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="28" cy="68" r="7" stroke="#874b46" stroke-width="1.5"/>
+                    <path d="M35 70 L90 72" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M90 72 L100 72 L100 112" stroke="#874b46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M55 72 L55 112" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M35 70 L22 90 L18 112" stroke="#874b46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M28 75 L15 80" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>`,
+                Pull: `<svg class="pattern-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="30" y1="10" x2="90" y2="10" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <circle cx="60" cy="32" r="8" stroke="#874b46" stroke-width="1.5"/>
+                    <path d="M52 14 L52 24" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M68 14 L68 24" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M60 40 L60 70" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M60 70 L45 105" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M60 70 L75 105" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>`,
+                Lunge: `<svg class="pattern-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="55" cy="16" r="8" stroke="#874b46" stroke-width="1.5"/>
+                    <path d="M55 24 L55 55" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M55 55 L35 85 L20 112" stroke="#874b46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M55 55 L80 80 L95 112" stroke="#874b46" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M55 35 L40 50" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M55 35 L70 50" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>`,
+                Press: `<svg class="pattern-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="60" cy="28" r="8" stroke="#874b46" stroke-width="1.5"/>
+                    <path d="M60 36 L60 70" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M60 70 L48 110" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M60 70 L72 110" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M60 40 L40 15" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M60 40 L80 15" stroke="#874b46" stroke-width="1.5" stroke-linecap="round"/>
+                    <rect x="30" y="11" width="20" height="4" rx="1" stroke="#874b46" stroke-width="1.5"/>
+                    <rect x="70" y="11" width="20" height="4" rx="1" stroke="#874b46" stroke-width="1.5"/>
+                </svg>`
+            };
 
-            // Helper: render mini SVG line chart — clean line from first to last point only
-            function renderMiniChart(weights) {
-                if (weights.length < 2) return '';
-                const chartH = 50;
-                const chartW = 120;
-                const padding = 6;
-                const firstW = weights[0].weight;
-                const lastW = weights[weights.length - 1].weight;
-                const minW = Math.min(firstW, lastW);
-                const maxW = Math.max(firstW, lastW);
-                const range = maxW - minW || 1;
-                const firstY = chartH - padding - ((firstW - minW) / range) * (chartH - padding * 2);
-                const lastY = chartH - padding - ((lastW - minW) / range) * (chartH - padding * 2);
-                const firstX = padding;
-                const lastX = chartW - padding;
-                return `<svg width="100%" height="${chartH}" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="none">
-                    <line x1="${firstX}" y1="${firstY}" x2="${lastX}" y2="${lastY}" stroke="var(--burgundy)" stroke-width="1.5" stroke-linecap="round" opacity="0.7" />
-                    <circle cx="${firstX}" cy="${firstY}" r="2.5" fill="var(--burgundy)" />
-                    <circle cx="${lastX}" cy="${lastY}" r="2.5" fill="var(--burgundy)" />
-                </svg>`;
-            }
+            // Store data for modal use
+            window._strengthModalData = { strengthData, gender, patternWeights, workoutHistory };
 
             // Render cards
             container.innerHTML = MOVEMENT_PATTERNS.map(p => {
                 const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
-                // Read level-specific Str column based on current Tech level
                 let str = 0;
                 if (tech >= 2 && tech <= 5) {
                     const levelStrVal = strengthData[p.key + '_Str_L' + Math.floor(tech)];
                     str = (levelStrVal && levelStrVal !== '—' && !isNaN(parseFloat(levelStrVal))) ? parseInt(levelStrVal) : 0;
                 }
-                // TEMPORARY FALLBACK: fall back to old {Pattern}_Str if level-specific is empty
-                // Remove this fallback once all data is migrated
                 if (str === 0) {
                     const oldStrVal = strengthData[p.key + '_Str'];
                     str = (oldStrVal && oldStrVal !== '—' && !isNaN(parseFloat(oldStrVal))) ? parseInt(oldStrVal) : 0;
@@ -1754,53 +2022,219 @@
                 const weights = patternWeights[p.key];
                 const hasData = tech > 0 || weights.length > 0;
 
-                // Current exercise name
                 let currentExercise = p.exercises[Math.min(tech, 5)] || p.exercises[0];
                 if (Array.isArray(currentExercise)) currentExercise = currentExercise.join(' / ');
 
+                const svg = patternSVGs[p.key] || '';
+
                 if (!hasData) {
                     return `<div class="strength-item muted">
+                        ${svg}
                         <div class="pattern-name">${p.name}</div>
                         <div class="exercise-name">${currentExercise}</div>
                         <div class="strength-muted-label">Not yet assessed</div>
                     </div>`;
                 }
 
-                // Tech dots
-                const techDots = `<div class="strength-dots">
-                    <span class="dot-label tech">Tech</span>
-                    ${renderDots(tech, 5, 'tech')}
-                </div>`;
+                // Level label
+                const levelLabel = `<div class="strength-level-label">LEVEL ${Math.floor(tech)}</div>`;
+                const levelExercise = `<div class="strength-level-exercise">${currentExercise}</div>`;
 
-                // Str dots — always show if str data exists
-                const strDots = str > 0 ? `<div class="strength-dots">
-                    <span class="dot-label str">Str</span>
-                    ${renderDots(str, 5, 'str')}
-                </div>` : '';
+                // Strength tier bar or locked message
+                let strSection = '';
+                if (tech >= p.testLevel && str > 0) {
+                    const strPct = Math.min((str / 5) * 100, 100);
+                    strSection = `<div class="strength-tier-section">
+                        <div class="strength-tier-overline">STRENGTH TIER</div>
+                        <div class="strength-tier-bar"><div class="strength-tier-fill" style="width:${strPct}%"></div></div>
+                        <div class="strength-tier-score">${str} / 5</div>
+                    </div>`;
+                } else if (tech < p.testLevel) {
+                    strSection = `<div class="strength-tier-section">
+                        <div class="strength-tier-locked">Unlocks at Level ${p.testLevel}</div>
+                    </div>`;
+                } else {
+                    strSection = `<div class="strength-tier-section">
+                        <div class="strength-tier-overline">STRENGTH TIER</div>
+                        <div class="strength-tier-bar"><div class="strength-tier-fill" style="width:0%"></div></div>
+                        <div class="strength-tier-score">0 / 5</div>
+                    </div>`;
+                }
 
-                // Weight headline (always visible) and chart area (hover only)
+                // Weight headline
                 let weightHeadline = '';
-                let chartArea = '';
                 if (weights.length > 1) {
                     const firstW = weights[0].weight;
                     const lastW = weights[weights.length - 1].weight;
                     const gainClass = lastW > firstW ? 'has-gain' : 'no-gain';
                     weightHeadline = `<div class="strength-weight-headline ${gainClass}">${firstW}kg → ${lastW}kg</div>`;
-                    chartArea = `<div class="strength-chart-area">${renderMiniChart(weights)}</div>`;
                 } else if (weights.length === 1) {
                     weightHeadline = `<div class="strength-weight-headline no-gain">${weights[0].weight}kg</div>`;
                 }
 
-                return `<div class="strength-item">
+                return `<div class="strength-item" onclick="openStrengthModal('${p.key}')">
+                    ${svg}
                     <div class="pattern-name">${p.name}</div>
                     <div class="exercise-name">${currentExercise}</div>
-                    ${techDots}
-                    ${strDots}
+                    ${levelLabel}
+                    ${levelExercise}
+                    ${strSection}
                     ${weightHeadline}
-                    ${chartArea}
                 </div>`;
             }).join('');
         }
+
+        // ========== STRENGTH DETAIL MODAL ==========
+        function openStrengthModal(patternKey) {
+            const data = window._strengthModalData;
+            if (!data) return;
+            const { strengthData, gender, patternWeights, workoutHistory } = data;
+            const pattern = MOVEMENT_PATTERNS.find(p => p.key === patternKey);
+            if (!pattern) return;
+
+            const tech = parseFloat(strengthData[pattern.key + '_Tech']) || 0;
+            let currentExercise = pattern.exercises[Math.min(tech, 5)] || pattern.exercises[0];
+            if (Array.isArray(currentExercise)) currentExercise = currentExercise.join(' / ');
+
+            document.getElementById('strModalName').textContent = pattern.name;
+            document.getElementById('strModalExercise').textContent = currentExercise;
+
+            // Level timeline
+            const timelineEl = document.getElementById('strModalTimeline');
+            let timelineHTML = '';
+            for (let lvl = 1; lvl <= 5; lvl++) {
+                let ex = pattern.exercises[lvl] || '—';
+                if (Array.isArray(ex)) ex = ex.join(' / ');
+                let circleClass, statusHTML;
+                if (lvl < tech) {
+                    circleClass = 'completed';
+                    statusHTML = `<div class="level-node-status passed">Passed</div>`;
+                } else if (lvl === Math.floor(tech) && tech > 0) {
+                    circleClass = 'current';
+                    statusHTML = `<div class="level-node-status active">Current</div>`;
+                } else {
+                    circleClass = 'future';
+                    statusHTML = '';
+                }
+                timelineHTML += `<div class="level-node">
+                    <div class="level-circle ${circleClass}">${lvl}</div>
+                    <div class="level-node-label">${ex}</div>
+                    ${statusHTML}
+                </div>`;
+            }
+            timelineEl.innerHTML = timelineHTML;
+
+            // Strength progress chart
+            const chartSection = document.getElementById('strModalChartSection');
+            const weights = patternWeights[pattern.key] || [];
+            if (weights.length >= 2) {
+                const chartW = 600;
+                const chartH = 160;
+                const padX = 40;
+                const padY = 20;
+                const allW = weights.map(w => w.weight);
+                const minW = Math.min(...allW);
+                const maxW = Math.max(...allW);
+                const range = maxW - minW || 1;
+
+                const points = weights.map((w, i) => {
+                    const x = padX + (i / (weights.length - 1)) * (chartW - padX * 2);
+                    const y = padY + (1 - (w.weight - minW) / range) * (chartH - padY * 2);
+                    return { x, y, weight: w.weight, session: w.session };
+                });
+
+                // Build smooth path
+                let pathD = `M ${points[0].x} ${points[0].y}`;
+                for (let i = 1; i < points.length; i++) {
+                    const prev = points[i - 1];
+                    const curr = points[i];
+                    const cpx1 = prev.x + (curr.x - prev.x) * 0.4;
+                    const cpx2 = curr.x - (curr.x - prev.x) * 0.4;
+                    pathD += ` C ${cpx1} ${prev.y}, ${cpx2} ${curr.y}, ${curr.x} ${curr.y}`;
+                }
+
+                // Gridlines
+                const gridVals = [minW, minW + range / 2, maxW];
+                let gridLines = gridVals.map(v => {
+                    const y = padY + (1 - (v - minW) / range) * (chartH - padY * 2);
+                    return `<line x1="${padX}" y1="${y}" x2="${chartW - padX}" y2="${y}" stroke="#e8e0de" stroke-width="1"/>
+                            <text x="${padX - 6}" y="${y + 4}" fill="#857371" font-size="10" text-anchor="end">${Math.round(v)}</text>`;
+                }).join('');
+
+                // Dots
+                let dotsHTML = points.map((pt, i) => {
+                    const r = (i === 0 || i === points.length - 1) ? 6 : 4;
+                    let label = '';
+                    if (i === 0 || i === points.length - 1) {
+                        const ly = i === 0 ? pt.y - 12 : pt.y - 12;
+                        label = `<text x="${pt.x}" y="${ly}" fill="#874b46" font-size="11" font-weight="700" text-anchor="middle">${pt.weight}kg</text>`;
+                    }
+                    return `<circle cx="${pt.x}" cy="${pt.y}" r="${r}" fill="#874b46"/>${label}`;
+                }).join('');
+
+                chartSection.innerHTML = `
+                    <div class="strength-chart-overline">STRENGTH PROGRESS — LEVEL ${Math.floor(tech)}</div>
+                    <svg width="100%" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="xMidYMid meet">
+                        ${gridLines}
+                        <path d="${pathD}" stroke="#874b46" stroke-width="2" fill="none"/>
+                        ${dotsHTML}
+                    </svg>`;
+            } else {
+                chartSection.innerHTML = `
+                    <div class="strength-chart-overline">STRENGTH PROGRESS — LEVEL ${Math.floor(tech)}</div>
+                    <div class="strength-chart-placeholder">Bodyweight foundation — no load data yet</div>`;
+            }
+
+            // Session history list
+            const historyEl = document.getElementById('strModalHistory');
+            const sessions = [];
+            workoutHistory.forEach(session => {
+                let exercises = session.exercises;
+                if (!exercises) return;
+                if (typeof exercises === 'string') {
+                    try { exercises = JSON.parse(exercises); } catch(e) { return; }
+                }
+                if (!Array.isArray(exercises)) return;
+                exercises.forEach(ex => {
+                    const pName = ex.pattern || '';
+                    const exName = (ex.name || '').toLowerCase();
+                    if (pName === pattern.key || pName === pattern.name || exName.includes(pattern.key.toLowerCase())) {
+                        sessions.push({
+                            number: session.number || '?',
+                            date: session.date || '—',
+                            weight: ex.weight || 'BW',
+                            sets: ex.sets || '—',
+                            reps: ex.reps || '—'
+                        });
+                    }
+                });
+            });
+
+            if (sessions.length > 0) {
+                historyEl.innerHTML = sessions.map(s => `
+                    <div class="session-history-row">
+                        <span class="sh-session">Session ${s.number}</span>
+                        <span class="sh-date">${s.date}</span>
+                        <span class="sh-weight">${s.weight === 'bodyweight' ? 'BW' : s.weight + 'kg'}</span>
+                        <span class="sh-sets">${s.sets} × ${s.reps}</span>
+                    </div>`).join('');
+            } else {
+                historyEl.innerHTML = '';
+            }
+
+            document.getElementById('strengthDetailModal').classList.add('active');
+        }
+
+        function closeStrengthModal() {
+            document.getElementById('strengthDetailModal').classList.remove('active');
+        }
+
+        // Close strength modal on overlay click
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'strengthDetailModal') {
+                closeStrengthModal();
+            }
+        });
         
         function updateBadges(trainingAge) {
             const badges = document.querySelectorAll('.badge-item');
