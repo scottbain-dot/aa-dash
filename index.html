@@ -910,24 +910,6 @@
         }
 
         /* Session history list */
-        .session-history-list {
-            margin-top: 1rem;
-        }
-        .session-history-row {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.8rem;
-            border-radius: 0.5rem;
-        }
-        .session-history-row:nth-child(odd) { background: #ffffff; }
-        .session-history-row:nth-child(even) { background: #f8f2f1; }
-        .session-history-row .sh-session { font-weight: 700; color: #1d1b1b; min-width: 60px; }
-        .session-history-row .sh-date { color: #857371; min-width: 80px; }
-        .session-history-row .sh-weight { color: #874b46; font-weight: 600; min-width: 60px; }
-        .session-history-row .sh-sets { color: #524342; }
-        
         /* Editorial Quote */
         .editorial-quote {
             margin-top: 2rem;
@@ -1364,7 +1346,6 @@
             <div class="strength-modal-exercise" id="strModalExercise"></div>
             <div class="level-timeline" id="strModalTimeline"></div>
             <div class="strength-chart-section" id="strModalChartSection"></div>
-            <div class="session-history-list" id="strModalHistory"></div>
         </div>
     </div>
 
@@ -2241,43 +2222,6 @@
                 chartSection.innerHTML = `
                     <div class="strength-chart-overline">STRENGTH PROGRESS — LEVEL ${Math.floor(tech)}</div>
                     <div class="strength-chart-placeholder">Bodyweight foundation — no load data yet</div>`;
-            }
-
-            // Session history list
-            const historyEl = document.getElementById('strModalHistory');
-            const sessions = [];
-            workoutHistory.forEach(session => {
-                let exercises = session.exercises;
-                if (!exercises) return;
-                if (typeof exercises === 'string') {
-                    try { exercises = JSON.parse(exercises); } catch(e) { return; }
-                }
-                if (!Array.isArray(exercises)) return;
-                exercises.forEach(ex => {
-                    const pName = ex.pattern || '';
-                    const exName = (ex.name || '').toLowerCase();
-                    if (pName === pattern.key || pName === pattern.name || exName.includes(pattern.key.toLowerCase())) {
-                        sessions.push({
-                            number: session.number || '?',
-                            date: session.date || '—',
-                            weight: ex.weight || 'BW',
-                            sets: ex.sets || '—',
-                            reps: ex.reps || '—'
-                        });
-                    }
-                });
-            });
-
-            if (sessions.length > 0) {
-                historyEl.innerHTML = sessions.map(s => `
-                    <div class="session-history-row">
-                        <span class="sh-session">Session ${s.number}</span>
-                        <span class="sh-date">${s.date}</span>
-                        <span class="sh-weight">${s.weight === 'bodyweight' ? 'BW' : s.weight + 'kg'}</span>
-                        <span class="sh-sets">${s.sets} × ${s.reps}</span>
-                    </div>`).join('');
-            } else {
-                historyEl.innerHTML = '';
             }
 
             document.getElementById('strengthDetailModal').classList.add('active');
