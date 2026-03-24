@@ -1414,7 +1414,7 @@
     <script>
         // ========== CONFIGURATION ==========
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxg8voUoN0Lpffv_fQIcI7igALEksa0MSUscvNMS0HLWLY3Oi_9IqQbUwwSw1JzJ0HK/exec';
-        const STRENGTH_API_URL = 'https://script.google.com/macros/s/AKfycbzoyT7zqrOhEf3LAsflbRB73OO2-RaHdnCz5f676xuO9Odc6wFUQpo0aE3XX6Qt-Bk0/exec';
+        const STRENGTH_API_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
         
         // 6 Movement patterns with 1-5 progressions and load tiers
         // Strength testing at Level 3 for all patterns
@@ -2858,9 +2858,11 @@
 
             // Add pulse loading state to all card bodies
             document.querySelectorAll('.insight-card-body').forEach(el => el.classList.add('ai-loading'));
+            console.log('🤖 AI insights: requesting from', STRENGTH_API_URL);
+            console.log('🤖 AI insights: data summary', dataSummary);
 
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 3000);
+            const timeout = setTimeout(() => { console.log('🤖 AI insights: timeout after 10s'); controller.abort(); }, 10000);
 
             try {
                 const response = await fetch(STRENGTH_API_URL, {
@@ -2874,11 +2876,13 @@
                 });
 
                 clearTimeout(timeout);
+                console.log('🤖 AI insights: response status', response.status, response.ok);
 
-                if (!response.ok) throw new Error('API error');
+                if (!response.ok) throw new Error('API returned ' + response.status);
 
                 const result = await response.json();
-                if (!result.success || !result.insights) throw new Error(result.error || 'No insights');
+                console.log('🤖 AI insights: result', result);
+                if (!result.success || !result.insights) throw new Error(result.error || 'No insights in response');
 
                 const aiText = result.insights;
 
@@ -2891,15 +2895,18 @@
                     'FOCUS AREA': 'weakestComponent'
                 };
 
+                let replaced = 0;
                 document.querySelectorAll('.insight-card').forEach(card => {
                     const overline = card.querySelector('.insight-card-overline')?.textContent;
                     const field = overlineToField[overline];
                     if (field && aiText[field]) {
                         card.querySelector('.insight-card-body').textContent = aiText[field];
+                        replaced++;
                     }
                 });
+                console.log('🤖 AI insights: replaced', replaced, 'card bodies');
             } catch (e) {
-                // Timeout or error — silently keep fallback text
+                console.log('🤖 AI insights: failed -', e.message || e);
                 clearTimeout(timeout);
             } finally {
                 document.querySelectorAll('.insight-card-body').forEach(el => el.classList.remove('ai-loading'));
