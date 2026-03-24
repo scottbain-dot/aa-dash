@@ -2823,19 +2823,69 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
             document.getElementById('sessionAnalysisResults').innerHTML = '';
 
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getSessionPlanning&session=${sessionNum}`;
-                console.log('[Session Analysis] Fetching:', url);
-                const resp = await fetch(url);
-                const text = await resp.text();
-                console.log('[Session Analysis] Raw response:', text.substring(0, 500));
-                let data;
+                // Try dedicated endpoint first
+                let students = null;
                 try {
-                    data = JSON.parse(text);
-                } catch (parseErr) {
-                    throw new Error('Invalid JSON response — the Apps Script may need redeploying. Response: ' + text.substring(0, 200));
+                    const url = `${APPS_SCRIPT_URL}?action=getSessionPlanning&session=${sessionNum}`;
+                    console.log('[Session Analysis] Fetching:', url);
+                    const resp = await fetch(url);
+                    const text = await resp.text();
+                    console.log('[Session Analysis] Raw response:', text.substring(0, 500));
+                    const data = JSON.parse(text);
+                    if (data.success && data.students) {
+                        students = data.students;
+                    }
+                } catch (e) {
+                    console.warn('[Session Analysis] getSessionPlanning failed, trying fallback:', e.message);
                 }
-                if (!data.success) throw new Error(data.error || 'Failed to load');
-                sessionPlanningData = data.students || [];
+
+                // Fallback: use allStudents + individual getGritChallenge calls
+                if (!students) {
+                    console.log('[Session Analysis] Using per-student getGritChallenge fallback');
+                    if (!allStudents || allStudents.length === 0) {
+                        throw new Error('No students loaded — try refreshing the page');
+                    }
+                    const studentEmails = allStudents.map(s => s.Email).filter(Boolean);
+                    const idx = parseInt(sessionNum) - 1;
+                    const gritPromises = studentEmails.map(email =>
+                        fetch(`${APPS_SCRIPT_URL}?action=getGritChallenge&email=${encodeURIComponent(email)}`)
+                            .then(r => r.json())
+                            .catch(() => null)
+                    );
+                    const results = await Promise.all(gritPromises);
+                    students = [];
+                    results.forEach((result, i) => {
+                        if (!result || !result.success) return;
+                        let challenge = null;
+                        try {
+                            const json = result.challenge || result.challengeJson || result.challenge_json || result.Challenge_JSON;
+                            if (typeof json === 'string' && json.trim()) {
+                                challenge = JSON.parse(json);
+                            } else if (typeof json === 'object' && json) {
+                                challenge = json;
+                            }
+                        } catch (e) { /* skip malformed */ }
+                        if (!challenge) return;
+
+                        let sessionData = null;
+                        let hasPlanned = false;
+                        if (challenge.sessions && challenge.sessions.length > idx && challenge.sessions[idx]) {
+                            sessionData = challenge.sessions[idx];
+                            hasPlanned = !!(sessionData.plan && String(sessionData.plan).trim() !== '');
+                        }
+                        const student = allStudents[i];
+                        students.push({
+                            name: student ? student.Name : studentEmails[i],
+                            email: studentEmails[i],
+                            challengeType: challenge.type || challenge.challengeType || '',
+                            challengeFocus: challenge.focus || challenge.challengeFocus || '',
+                            session: sessionData,
+                            hasPlanned: hasPlanned
+                        });
+                    });
+                }
+
+                sessionPlanningData = students;
                 const planned = sessionPlanningData.filter(s => s.hasPlanned).length;
                 const total = sessionPlanningData.length;
                 statusLine.innerHTML = `<span>${planned}</span> of <span>${total}</span> students have planned Session ${sessionNum}`;
