@@ -548,8 +548,57 @@
         
         /* Component Lists */
         .component-list { display: flex; flex-direction: column; gap: 0.6rem; }
-        .component-row { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; transition: background 0.2s; padding: 0.25rem 0; border-radius: 6px; }
+        .component-row { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; transition: background 0.2s, border-color 0.2s; padding: 0.25rem 0; padding-left: 0.5rem; border-radius: 6px; border-left: 3px solid transparent; }
         .component-row:hover { background: rgba(135,75,70,0.04); }
+        .component-row.expanded { border-left-color: #874b46; }
+        .comp-chevron { margin-left: auto; font-size: 0.7rem; color: #857371; transition: transform 0.3s ease; flex-shrink: 0; }
+        .component-row.expanded .comp-chevron { transform: rotate(180deg); }
+        .comp-mini-graph {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+        .comp-mini-graph.open {
+            max-height: 80px;
+            opacity: 1;
+        }
+        .comp-mini-inner {
+            background: #f8f2f1;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            font-size: 0.75rem;
+            color: #524342;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .comp-bar-viz {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .comp-bar-track {
+            height: 6px;
+            background: #e8e0de;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .comp-bar-fill {
+            height: 100%;
+            background: #874b46;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+        .comp-bar-label {
+            font-size: 0.7rem;
+            color: #857371;
+        }
+        .comp-mini-chart {
+            width: 100%;
+            height: 50px;
+        }
         .component-name { flex: 0 0 120px; font-size: 0.78rem; color: var(--text); font-weight: 500; }
         .raw-value { display: block; font-size: 0.65rem; color: var(--text-muted); font-weight: normal; margin-top: 1px; }
         .component-bar { flex: 1; height: 10px; background: #e8e0de; border-radius: 9999px; position: relative; }
@@ -1776,25 +1825,33 @@
         
         function renderComponents(containerId, scores, rawValues = {}, historyData = {}, dataType = '') {
             const container = document.getElementById(containerId);
-            container.innerHTML = Object.entries(scores).map(([name, score]) => {
+            container.innerHTML = Object.entries(scores).map(([name, score], idx) => {
                 const pct = Math.min((score / 5) * 100, 100);
                 const barClass = getBarClass(score);
                 const raw = rawValues[name] || '';
-                
-                // Get metric key for history lookup
+
                 const metricKey = historyData.keyMap ? historyData.keyMap[name] : null;
                 const history = historyData.history || [];
                 const growth = metricKey ? calculateGrowth(history, metricKey) : null;
                 const growthHtml = growth ? renderGrowthIndicator(growth, historyData.higherIsBetter !== false) : '';
-                
-                // Click handler for timeline (only if we have history data)
-                const clickAttr = metricKey && history.length > 1 
-                    ? `onclick="openTimelineModal('${name}', '${metricKey}', '${dataType}')"` 
-                    : '';
-                const clickClass = metricKey && history.length > 1 ? 'clickable' : '';
-                
+
+                // Build mini graph content — bar visualization for single-score components
+                let miniContent = '';
+                if (score === 0) {
+                    miniContent = '<div class="comp-mini-inner"><span>Not yet assessed \u2014 speak to your teacher</span></div>';
+                } else {
+                    const lastEntry = history.length > 0 ? history[history.length - 1] : null;
+                    const dateStr = lastEntry?.Date ? new Date(lastEntry.Date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+                    miniContent = `<div class="comp-mini-inner">
+                        <div class="comp-bar-viz">
+                            <div style="display:flex;justify-content:space-between;"><span>Your score: ${score.toFixed(1)} / 5</span>${dateStr ? `<span class="comp-bar-label">Assessed ${dateStr}</span>` : ''}</div>
+                            <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${pct}%"></div></div>
+                        </div>
+                    </div>`;
+                }
+
                 return `
-                    <div class="component-row ${clickClass}" ${clickAttr}>
+                    <div class="component-row" data-card="${containerId}" data-idx="${idx}" onclick="toggleMiniGraph(this)">
                         <div class="component-name">
                             ${name}${growthHtml}
                             ${raw ? `<span class="raw-value">${raw}</span>` : ''}
@@ -1803,6 +1860,10 @@
                             <div class="component-fill ${barClass}" style="width:${pct}%"></div>
                             <span class="component-score">${score.toFixed(1)}</span>
                         </div>
+                        <span class="comp-chevron">\u25be</span>
+                    </div>
+                    <div class="comp-mini-graph" data-graph="${containerId}-${idx}">
+                        ${miniContent}
                     </div>
                 `;
             }).join('');
@@ -1827,51 +1888,68 @@
         function renderPhysComponents(a, scores) {
             const perf = a.performance || {};
             const history = a.performance_history || [];
-            
+            const gender = a.Gender;
+
             const rawValues = {
                 'Broad Jump': perf.Broad_Jump_cm ? `${perf.Broad_Jump_cm} cm` : '',
                 '40m Sprint': perf['40m_sec'] ? `${perf['40m_sec']} sec` : '',
                 'Agility (5-10-5)': perf['5_10_5_sec'] ? `${perf['5_10_5_sec']} sec` : '',
-                'Cooper Test': perf.Cooper_m ? `${perf.Cooper_m}m | VO₂max: ${calculateVO2max(perf.Cooper_m).toFixed(1)}` : ''
+                'Cooper Test': perf.Cooper_m ? `${perf.Cooper_m}m | VO\u2082max: ${calculateVO2max(perf.Cooper_m).toFixed(1)}` : ''
             };
-            
-            const historyData = {
-                history: history,
-                keyMap: {
-                    'Strength': null, // Strength is calculated, not in history
-                    'Broad Jump': 'Broad_Jump_cm',
-                    '40m Sprint': '40m_sec',
-                    'Agility (5-10-5)': '5_10_5_sec',
-                    'Cooper Test': 'Cooper_m',
-                    'Mobility': null // Mobility is in separate history
-                },
-                higherIsBetter: {
-                    'Broad Jump': true,
-                    '40m Sprint': false, // Lower is better
-                    'Agility (5-10-5)': false, // Lower is better
-                    'Cooper Test': true,
-                }
+
+            const keyMap = {
+                'Strength': null,
+                'Broad Jump': 'Broad_Jump_cm',
+                '40m Sprint': '40m_sec',
+                'Agility (5-10-5)': '5_10_5_sec',
+                'Cooper Test': 'Cooper_m',
+                'Mobility': null
             };
-            
-            // Custom render for physiology to handle different "higher is better" per metric
+            const converters = {
+                'Broad Jump': (v) => convertBroadJump(parseFloat(v), gender),
+                '40m Sprint': (v) => convertSprint(parseFloat(v), gender),
+                'Agility (5-10-5)': (v) => convertAgility(parseFloat(v), gender),
+                'Cooper Test': (v) => convertCooper(parseFloat(v), gender)
+            };
+            const higherIsBetterMap = {
+                'Broad Jump': true,
+                '40m Sprint': false,
+                'Agility (5-10-5)': false,
+                'Cooper Test': true,
+            };
+
             const container = document.getElementById('physComponents');
-            container.innerHTML = Object.entries(scores).map(([name, score]) => {
+            container.innerHTML = Object.entries(scores).map(([name, score], idx) => {
                 const pct = Math.min((score / 5) * 100, 100);
                 const barClass = getBarClass(score);
                 const raw = rawValues[name] || '';
-                
-                const metricKey = historyData.keyMap[name];
+
+                const metricKey = keyMap[name];
                 const growth = metricKey ? calculateGrowth(history, metricKey) : null;
-                const higherIsBetter = historyData.higherIsBetter[name] !== false;
+                const higherIsBetter = higherIsBetterMap[name] !== false;
                 const growthHtml = growth ? renderGrowthIndicator(growth, higherIsBetter) : '';
-                
-                const clickAttr = metricKey && history.length > 1 
-                    ? `onclick="openTimelineModal('${name}', '${metricKey}', 'performance')"` 
-                    : '';
-                const clickClass = metricKey && history.length > 1 ? 'clickable' : '';
-                
+
+                // Build mini graph content
+                let miniContent = '';
+                if (score === 0) {
+                    miniContent = '<div class="comp-mini-inner"><span>Not yet assessed \u2014 speak to your teacher</span></div>';
+                } else if (metricKey && history.length > 1) {
+                    // Multiple history points — render SVG mini line chart
+                    const converter = converters[name];
+                    const points = history
+                        .filter(h => h[metricKey] && parseFloat(h[metricKey]) > 0)
+                        .map(h => ({ val: converter ? converter(h[metricKey]) : parseFloat(h[metricKey]), date: h.Date }));
+                    if (points.length > 1) {
+                        miniContent = buildMiniLineChart(points, `phys-${idx}`);
+                    } else {
+                        miniContent = buildSingleBar(score, raw);
+                    }
+                } else {
+                    miniContent = buildSingleBar(score, raw);
+                }
+
                 return `
-                    <div class="component-row ${clickClass}" ${clickAttr}>
+                    <div class="component-row" data-card="physComponents" data-idx="${idx}" onclick="toggleMiniGraph(this)">
                         <div class="component-name">
                             ${name}${growthHtml}
                             ${raw ? `<span class="raw-value">${raw}</span>` : ''}
@@ -1880,6 +1958,10 @@
                             <div class="component-fill ${barClass}" style="width:${pct}%"></div>
                             <span class="component-score">${score.toFixed(1)}</span>
                         </div>
+                        <span class="comp-chevron">\u25be</span>
+                    </div>
+                    <div class="comp-mini-graph" data-graph="physComponents-${idx}">
+                        ${miniContent}
                     </div>
                 `;
             }).join('');
@@ -1898,7 +1980,76 @@
             };
             renderComponents('healthComponents', scores, {}, historyData, 'recovery');
         }
-        
+
+        function toggleMiniGraph(row) {
+            const cardId = row.dataset.card;
+            const idx = row.dataset.idx;
+            const graphKey = `${cardId}-${idx}`;
+            const graph = document.querySelector(`[data-graph="${graphKey}"]`);
+            const isOpen = graph && graph.classList.contains('open');
+
+            // Close all graphs in the same card
+            const parentList = row.closest('.component-list');
+            if (parentList) {
+                parentList.querySelectorAll('.component-row.expanded').forEach(r => r.classList.remove('expanded'));
+                parentList.querySelectorAll('.comp-mini-graph.open').forEach(g => g.classList.remove('open'));
+            }
+
+            // Toggle this one (if it wasn't already open)
+            if (!isOpen && graph) {
+                row.classList.add('expanded');
+                graph.classList.add('open');
+            }
+        }
+
+        function buildSingleBar(score, rawLabel) {
+            const pct = Math.min((score / 5) * 100, 100);
+            return `<div class="comp-mini-inner">
+                <div class="comp-bar-viz">
+                    <div style="display:flex;justify-content:space-between;"><span>Current: ${score.toFixed(1)} / 5</span>${rawLabel ? `<span class="comp-bar-label">${rawLabel}</span>` : ''}</div>
+                    <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${pct}%"></div></div>
+                </div>
+            </div>`;
+        }
+
+        function buildMiniLineChart(points, id) {
+            if (points.length < 2) return buildSingleBar(points[0]?.val || 0, '');
+            const w = 240, h = 40, padX = 4, padY = 4;
+            const vals = points.map(p => p.val);
+            const minV = Math.min(...vals, 0);
+            const maxV = Math.max(...vals, 5);
+            const range = maxV - minV || 1;
+
+            const coords = points.map((p, i) => ({
+                x: padX + (i / (points.length - 1)) * (w - padX * 2),
+                y: padY + (1 - (p.val - minV) / range) * (h - padY * 2)
+            }));
+
+            let pathD = `M ${coords[0].x} ${coords[0].y}`;
+            for (let i = 1; i < coords.length; i++) {
+                const prev = coords[i - 1], curr = coords[i];
+                const cx1 = prev.x + (curr.x - prev.x) * 0.4;
+                const cx2 = curr.x - (curr.x - prev.x) * 0.4;
+                pathD += ` C ${cx1} ${prev.y}, ${cx2} ${curr.y}, ${curr.x} ${curr.y}`;
+            }
+
+            const dotsHtml = coords.map((c, i) => {
+                const r = (i === 0 || i === coords.length - 1) ? 3 : 2;
+                return `<circle cx="${c.x}" cy="${c.y}" r="${r}" fill="#874b46"/>`;
+            }).join('');
+
+            const firstLabel = points[0].val.toFixed(1);
+            const lastLabel = points[points.length - 1].val.toFixed(1);
+
+            return `<div class="comp-mini-inner" style="flex-direction:column;gap:0.25rem;">
+                <svg class="comp-mini-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+                    <path d="${pathD}" stroke="#874b46" stroke-width="1.5" fill="none"/>
+                    ${dotsHtml}
+                </svg>
+                <div style="display:flex;justify-content:space-between;width:100%;"><span class="comp-bar-label">${firstLabel}</span><span class="comp-bar-label">${lastLabel}</span></div>
+            </div>`;
+        }
+
         async function renderStrengthGrid(strengthData, gender, athleteId) {
             const container = document.getElementById('strengthGrid');
             const summaryBar = document.getElementById('strengthSummary');
