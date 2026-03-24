@@ -2914,8 +2914,8 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
 
             // Process students in batches to avoid rate limits
             const results = [];
-            const BATCH_SIZE = 3;
-            const BATCH_DELAY = 1000; // ms between batches
+            const BATCH_SIZE = 2;
+            const BATCH_DELAY = 1500; // ms between batches
 
             // Separate planned vs unplanned
             sessionPlanningData.forEach((student, i) => {
@@ -2941,8 +2941,13 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
                 if (s.obstacle || s.excuse) userMsg += `Obstacle: ${s.obstacle || s.excuse}\n`;
                 if (s.counter || s.overcome) userMsg += `Counter: ${s.counter || s.overcome}\n`;
 
-                const MAX_RETRIES = 2;
+                const MAX_RETRIES = 3;
+                let lastErr = null;
                 for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+                    if (attempt > 0) {
+                        // Exponential backoff: 2s, 4s, 8s
+                        await new Promise(r => setTimeout(r, 2000 * Math.pow(2, attempt - 1)));
+                    }
                     try {
                         const resp = await fetch('https://api.anthropic.com/v1/messages', {
                             method: 'POST',
@@ -2960,9 +2965,9 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
                             })
                         });
 
-                        if (resp.status === 429 && attempt < MAX_RETRIES) {
-                            await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-                            continue;
+                        if (resp.status === 429 || resp.status === 529 || resp.status === 500) {
+                            lastErr = `API ${resp.status}`;
+                            if (attempt < MAX_RETRIES) continue;
                         }
 
                         if (!resp.ok) {
@@ -2979,9 +2984,10 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
                         results[i] = { student, score: parsed.score, feedback: parsed.feedback, reasoning: parsed.reasoning, blocking: false };
                         return;
                     } catch (err) {
+                        lastErr = err.message || err;
                         if (attempt === MAX_RETRIES) {
-                            console.error(`AI analysis failed for ${student.name}:`, err);
-                            results[i] = { student, score: null, feedback: 'Analysis unavailable — please review manually.', reasoning: null, blocking: false, error: true };
+                            console.error(`AI analysis failed for ${student.name} after ${MAX_RETRIES + 1} attempts:`, lastErr);
+                            results[i] = { student, score: null, feedback: 'Analysis unavailable — please review manually.', reasoning: 'Error: ' + lastErr, blocking: false, error: true };
                         }
                     }
                 }
@@ -2999,11 +3005,16 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
                 }
             }
 
+            const failedCount = results.filter(r => r && r.error).length;
+
             // Render results
             let html = `<div class="session-results">
                 <div class="session-results-header">
-                    <div class="session-results-title">Session ${sessionNum} Analysis — ${results.length} students</div>
-                    <button class="save-all-btn" id="saveAllBtn" onclick="saveAllSessionFeedback(${sessionNum})">Save All</button>
+                    <div class="session-results-title">Session ${sessionNum} Analysis — ${results.length} students${failedCount ? ` (${failedCount} failed)` : ''}</div>
+                    <div style="display:flex;gap:8px;">
+                        ${failedCount ? `<button class="save-all-btn" style="background:var(--amber);color:#000;" onclick="retryFailedAnalyses(${sessionNum})">Retry Failed</button>` : ''}
+                        <button class="save-all-btn" id="saveAllBtn" onclick="saveAllSessionFeedback(${sessionNum})">Save All</button>
+                    </div>
                 </div>`;
 
             results.forEach((r, i) => {
@@ -3038,6 +3049,91 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
 
             // Store results for save operations
             window._sessionAnalysisResults = results;
+
+            btn.textContent = 'Analyse Session with AI';
+            btn.disabled = false;
+        }
+
+        async function retryFailedAnalyses(sessionNum) {
+            const apiKey = getAnthropicKey();
+            if (!apiKey) return;
+            const results = window._sessionAnalysisResults;
+            if (!results) return;
+
+            const failed = [];
+            results.forEach((r, i) => { if (r && r.error) failed.push(i); });
+            if (failed.length === 0) return;
+
+            const btn = document.getElementById('sessionAnalyseBtn');
+            btn.disabled = true;
+            btn.textContent = `Retrying ${failed.length} failed...`;
+
+            const systemPrompt = `You are an athletic development coach reviewing a student's session planning for their Grit Challenge. Assess their planning and provide a suggested score plus student-facing feedback. Be encouraging but honest. Use plain language appropriate for a 14-year-old athlete. Only assess what has been submitted — do not penalise for fields left blank if others show quality thinking. Scoring scale 1–5: 1 = Not yet meeting expectations 2 = Approaching 3 = Meeting 4 = Exceeding 5 = Outstanding Assess the overall quality of their session planning — did they set a clear goal, make a specific plan, think about how to measure success, and genuinely engage with the obstacle/counter exercise? Respond in JSON only. No preamble, no markdown, no code blocks. Format: { "score": X, "reasoning": "one sentence teacher-only note", "feedback": "2-3 sentences written directly to the student, warm and specific to what they wrote" }`;
+
+            // Process one at a time for retries
+            let done = 0;
+            for (const i of failed) {
+                const student = results[i].student;
+                const s = student.session || {};
+                let userMsg = `Challenge type: ${student.challengeType || '—'}\nFocus: ${student.challengeFocus || '—'}\nSession ${sessionNum} planning:\n`;
+                if (s.baseline) userMsg += `Baseline: ${s.baseline}\n`;
+                if (s.goal || s.what) userMsg += `Goal: ${s.goal || s.what}\n`;
+                if (s.plan) userMsg += `Plan: ${s.plan}\n`;
+                if (s.measure) userMsg += `Measure: ${s.measure}\n`;
+                if (s.obstacle || s.excuse) userMsg += `Obstacle: ${s.obstacle || s.excuse}\n`;
+                if (s.counter || s.overcome) userMsg += `Counter: ${s.counter || s.overcome}\n`;
+
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    if (attempt > 0) await new Promise(r => setTimeout(r, 3000 * attempt));
+                    try {
+                        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-api-key': apiKey,
+                                'anthropic-version': '2023-06-01',
+                                'anthropic-dangerous-direct-browser-access': 'true'
+                            },
+                            body: JSON.stringify({
+                                model: 'claude-sonnet-4-20250514',
+                                max_tokens: 800,
+                                system: systemPrompt,
+                                messages: [{ role: 'user', content: userMsg }]
+                            })
+                        });
+                        if (resp.status === 429 || resp.status === 529) { continue; }
+                        if (!resp.ok) throw new Error(`API ${resp.status}`);
+                        const data = await resp.json();
+                        let rawText = data.content[0].text.trim();
+                        if (rawText.startsWith('```')) {
+                            rawText = rawText.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+                        }
+                        const parsed = JSON.parse(rawText);
+                        results[i] = { student, score: parsed.score, feedback: parsed.feedback, reasoning: parsed.reasoning, blocking: false };
+                        // Update the row in-place
+                        const row = document.getElementById('saRow' + i);
+                        if (row) {
+                            row.innerHTML = `<div class="sa-row-top">
+                                <div class="sa-name">${student.name}</div>
+                                <label style="font-size:0.8rem;color:var(--text-secondary);margin-left:auto;">Score</label>
+                                <input type="number" min="1" max="5" class="sa-score-input" id="saScore${i}" value="${parsed.score || ''}">
+                            </div>
+                            <textarea class="sa-feedback-textarea" id="saFeedback${i}">${parsed.feedback || ''}</textarea>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <button class="sa-row-btn save" id="saBtn${i}" onclick="saveSessionFeedback(${i}, ${sessionNum})">Save</button>
+                                <button class="sa-reasoning-toggle" onclick="toggleSaReasoning(${i})">AI reasoning ▸</button>
+                            </div>
+                            <div class="sa-reasoning-text" id="saReasoning${i}">${parsed.reasoning || '—'}</div>`;
+                        }
+                        break;
+                    } catch (err) {
+                        if (attempt === 2) console.error(`Retry failed for ${student.name}:`, err);
+                    }
+                }
+                done++;
+                btn.textContent = `Retrying... ${done}/${failed.length}`;
+                await new Promise(r => setTimeout(r, 1500));
+            }
 
             btn.textContent = 'Analyse Session with AI';
             btn.disabled = false;
