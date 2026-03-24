@@ -163,6 +163,13 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ===== AI COACHING INSIGHTS =====
+    if (data.action === 'getAICoachingInsights') {
+      var aiResult = handleGetAICoachingInsights(data.data);
+      return ContentService.createTextOutput(JSON.stringify(aiResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (data.athleteId && data.updates) {
       return updateStudent(data.athleteId, data.updates);
     }
@@ -1478,5 +1485,82 @@ function getNextWeights(athleteId) {
   } catch (e) {
     Logger.log('Error parsing exercises JSON: ' + e);
     return {};
+  }
+}
+
+// ========================================
+// AI COACHING INSIGHTS
+// Set this via File > Project Properties > Script Properties, key: ANTHROPIC_API_KEY
+// ========================================
+function handleGetAICoachingInsights(studentData) {
+  try {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+    if (!apiKey) {
+      return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
+    }
+
+    if (!studentData) {
+      return { success: false, error: 'No student data provided' };
+    }
+
+    var systemPrompt = 'You are a world-class youth athletic development coach. You write personalised, motivating insights for a 14-15 year old athlete based on their real performance data.\n'
+      + 'Your coaching style:\n'
+      + '- Rooted in positive psychology — always start from what\'s working\n'
+      + '- Specific to their actual data — never generic\n'
+      + '- Warm but direct — you respect their intelligence and effort\n'
+      + '- Action-oriented — every insight ends with a clear next step\n'
+      + '- Brief — each insight is 1-2 sentences maximum, punchy and memorable\n\n'
+      + 'You never say "great job" or use hollow praise. You connect effort to outcome. You never mention scores or numbers directly — translate them into what they mean athletically.\n\n'
+      + 'Respond in JSON only. No preamble, no markdown, no code blocks:\n'
+      + '{\n'
+      + '  "gritReminder": "1-2 sentence coaching note about their upcoming session",\n'
+      + '  "strengthProgress": "1-2 sentence coaching note celebrating their specific strength gain",\n'
+      + '  "unassessedGap": "1-2 sentence coaching note framing the unassessed area as an opportunity",\n'
+      + '  "consistency": "1-2 sentence coaching note about what their session count says about them",\n'
+      + '  "weakestComponent": "1-2 sentence coaching note about their biggest growth opportunity"\n'
+      + '}';
+
+    var userMessage = 'Here is this athlete\'s current data:\n' + JSON.stringify(studentData, null, 2)
+      + '\n\nGenerate personalised coaching text for all applicable fields.';
+
+    var payload = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 600,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    };
+
+    var options = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    var response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', options);
+    var statusCode = response.getResponseCode();
+
+    if (statusCode !== 200) {
+      return { success: false, error: 'Anthropic API returned status ' + statusCode };
+    }
+
+    var responseBody = JSON.parse(response.getContentText());
+    var aiText = responseBody.content && responseBody.content[0] && responseBody.content[0].text;
+    if (!aiText) {
+      return { success: false, error: 'No text in API response' };
+    }
+
+    // Strip markdown fences if present
+    aiText = aiText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    var insights = JSON.parse(aiText);
+
+    return { success: true, insights: insights };
+
+  } catch (error) {
+    return { success: false, error: error.toString() };
   }
 }
