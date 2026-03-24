@@ -3009,6 +3009,47 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
             document.getElementById('saReasoning' + i).classList.toggle('show');
         }
 
+        // Helper: save feedback by modifying challenge JSON directly via saveGritChallenge
+        async function saveFeedbackViaChallenge(email, sessionNum, feedback, blockingMessage) {
+            // First, fetch the student's current challenge
+            const gritResp = await fetch(`${APPS_SCRIPT_URL}?action=getGritChallenge&email=${encodeURIComponent(email)}`);
+            const gritData = await gritResp.json();
+            if (!gritData.success) throw new Error(gritData.error || 'Failed to load challenge');
+
+            let challenge = null;
+            const json = gritData.challenge || gritData.challengeJson || gritData.challenge_json || gritData.Challenge_JSON;
+            if (typeof json === 'string' && json.trim()) {
+                challenge = JSON.parse(json);
+            } else if (typeof json === 'object' && json) {
+                challenge = json;
+            }
+            if (!challenge) throw new Error('No challenge data found');
+
+            // Ensure sessions array
+            if (!challenge.sessions) challenge.sessions = [];
+            const idx = parseInt(sessionNum) - 1;
+            while (challenge.sessions.length <= idx) challenge.sessions.push(null);
+            if (!challenge.sessions[idx] || typeof challenge.sessions[idx] !== 'object') {
+                challenge.sessions[idx] = {};
+            }
+            challenge.sessions[idx].coachFeedback = feedback;
+            challenge.sessions[idx].requiresPlanningFirst = !!blockingMessage;
+
+            // Save back via saveGritChallenge
+            const saveResp = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    action: 'saveGritChallenge',
+                    email: email,
+                    challenge: challenge
+                })
+            });
+            const saveData = await saveResp.json();
+            if (!saveData.success) throw new Error(saveData.error || 'Save failed');
+            return saveData;
+        }
+
         async function saveSessionFeedback(i, sessionNum) {
             const r = window._sessionAnalysisResults[i];
             const feedback = document.getElementById('saFeedback' + i).value;
@@ -3017,25 +3058,32 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
             btn.disabled = true;
 
             try {
-                const resp = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'saveCoachFeedback',
-                        email: r.student.email,
-                        sessionNumber: parseInt(sessionNum),
-                        feedback: feedback,
-                        blockingMessage: false
-                    })
-                });
-                const data = await resp.json();
-                if (data.success) {
-                    btn.textContent = 'Saved ✓';
-                    btn.classList.remove('save');
-                    btn.classList.add('saved');
-                } else {
-                    throw new Error(data.error || 'Save failed');
+                // Try saveCoachFeedback first
+                let success = false;
+                try {
+                    const resp = await fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify({
+                            action: 'saveCoachFeedback',
+                            email: r.student.email,
+                            sessionNumber: parseInt(sessionNum),
+                            feedback: feedback,
+                            blockingMessage: false
+                        })
+                    });
+                    const data = await resp.json();
+                    if (data.success) success = true;
+                } catch (e) { /* fall through to fallback */ }
+
+                // Fallback: modify challenge directly
+                if (!success) {
+                    await saveFeedbackViaChallenge(r.student.email, sessionNum, feedback, false);
                 }
+
+                btn.textContent = 'Saved ✓';
+                btn.classList.remove('save');
+                btn.classList.add('saved');
             } catch (err) {
                 console.error('Save feedback error:', err);
                 btn.textContent = 'Save';
@@ -3052,25 +3100,32 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
             btn.disabled = true;
 
             try {
-                const resp = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'saveCoachFeedback',
-                        email: r.student.email,
-                        sessionNumber: parseInt(sessionNum),
-                        feedback: msg,
-                        blockingMessage: true
-                    })
-                });
-                const data = await resp.json();
-                if (data.success) {
-                    btn.textContent = 'Sent ✓';
-                    btn.classList.remove('send');
-                    btn.classList.add('saved');
-                } else {
-                    throw new Error(data.error || 'Send failed');
+                // Try saveCoachFeedback first
+                let success = false;
+                try {
+                    const resp = await fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify({
+                            action: 'saveCoachFeedback',
+                            email: r.student.email,
+                            sessionNumber: parseInt(sessionNum),
+                            feedback: msg,
+                            blockingMessage: true
+                        })
+                    });
+                    const data = await resp.json();
+                    if (data.success) success = true;
+                } catch (e) { /* fall through to fallback */ }
+
+                // Fallback: modify challenge directly
+                if (!success) {
+                    await saveFeedbackViaChallenge(r.student.email, sessionNum, msg, true);
                 }
+
+                btn.textContent = 'Sent ✓';
+                btn.classList.remove('send');
+                btn.classList.add('saved');
             } catch (err) {
                 console.error('Send blocking message error:', err);
                 btn.textContent = 'Send Message';
