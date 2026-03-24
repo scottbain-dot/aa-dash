@@ -2912,14 +2912,26 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
 
             const NO_PLAN_MSG = "You haven't completed your session plan yet. Plan your session and check in with your teacher before completing this session.";
 
-            // Process all students
+            // Process students in batches to avoid rate limits
             const results = [];
-            const promises = sessionPlanningData.map(async (student, i) => {
+            const BATCH_SIZE = 3;
+            const BATCH_DELAY = 1000; // ms between batches
+
+            // Separate planned vs unplanned
+            sessionPlanningData.forEach((student, i) => {
                 if (!student.hasPlanned) {
                     results[i] = { student, score: null, feedback: null, reasoning: null, blocking: true };
-                    return;
                 }
+            });
 
+            // Build list of students needing AI analysis
+            const toAnalyse = [];
+            sessionPlanningData.forEach((student, i) => {
+                if (student.hasPlanned) toAnalyse.push(i);
+            });
+
+            async function analyseOne(i) {
+                const student = sessionPlanningData[i];
                 const s = student.session || {};
                 let userMsg = `Challenge type: ${student.challengeType || '—'}\nFocus: ${student.challengeFocus || '—'}\nSession ${sessionNum} planning:\n`;
                 if (s.baseline) userMsg += `Baseline: ${s.baseline}\n`;
@@ -2929,37 +2941,63 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
                 if (s.obstacle || s.excuse) userMsg += `Obstacle: ${s.obstacle || s.excuse}\n`;
                 if (s.counter || s.overcome) userMsg += `Counter: ${s.counter || s.overcome}\n`;
 
-                try {
-                    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-api-key': apiKey,
-                            'anthropic-version': '2023-06-01',
-                            'anthropic-dangerous-direct-browser-access': 'true'
-                        },
-                        body: JSON.stringify({
-                            model: 'claude-sonnet-4-20250514',
-                            max_tokens: 800,
-                            system: systemPrompt,
-                            messages: [{ role: 'user', content: userMsg }]
-                        })
-                    });
+                const MAX_RETRIES = 2;
+                for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+                    try {
+                        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-api-key': apiKey,
+                                'anthropic-version': '2023-06-01',
+                                'anthropic-dangerous-direct-browser-access': 'true'
+                            },
+                            body: JSON.stringify({
+                                model: 'claude-sonnet-4-20250514',
+                                max_tokens: 800,
+                                system: systemPrompt,
+                                messages: [{ role: 'user', content: userMsg }]
+                            })
+                        });
 
-                    if (!resp.ok) {
-                        if (resp.status === 401 || resp.status === 403) localStorage.removeItem('anthropic_api_key');
-                        throw new Error(`API error: ${resp.status}`);
+                        if (resp.status === 429 && attempt < MAX_RETRIES) {
+                            await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+                            continue;
+                        }
+
+                        if (!resp.ok) {
+                            if (resp.status === 401 || resp.status === 403) localStorage.removeItem('anthropic_api_key');
+                            throw new Error(`API error: ${resp.status}`);
+                        }
+                        const data = await resp.json();
+                        let rawText = data.content[0].text.trim();
+                        // Strip markdown code blocks if present
+                        if (rawText.startsWith('```')) {
+                            rawText = rawText.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+                        }
+                        const parsed = JSON.parse(rawText);
+                        results[i] = { student, score: parsed.score, feedback: parsed.feedback, reasoning: parsed.reasoning, blocking: false };
+                        return;
+                    } catch (err) {
+                        if (attempt === MAX_RETRIES) {
+                            console.error(`AI analysis failed for ${student.name}:`, err);
+                            results[i] = { student, score: null, feedback: 'Analysis unavailable — please review manually.', reasoning: null, blocking: false, error: true };
+                        }
                     }
-                    const data = await resp.json();
-                    const parsed = JSON.parse(data.content[0].text);
-                    results[i] = { student, score: parsed.score, feedback: parsed.feedback, reasoning: parsed.reasoning, blocking: false };
-                } catch (err) {
-                    console.error(`AI analysis failed for ${student.name}:`, err);
-                    results[i] = { student, score: null, feedback: 'Analysis unavailable — please review manually.', reasoning: null, blocking: false, error: true };
                 }
-            });
+            }
 
-            await Promise.all(promises);
+            // Process in batches
+            let completed = 0;
+            for (let b = 0; b < toAnalyse.length; b += BATCH_SIZE) {
+                const batch = toAnalyse.slice(b, b + BATCH_SIZE);
+                await Promise.all(batch.map(i => analyseOne(i)));
+                completed += batch.length;
+                btn.textContent = `Analysing... ${completed}/${toAnalyse.length}`;
+                if (b + BATCH_SIZE < toAnalyse.length) {
+                    await new Promise(r => setTimeout(r, BATCH_DELAY));
+                }
+            }
 
             // Render results
             let html = `<div class="session-results">
