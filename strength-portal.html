@@ -2937,9 +2937,15 @@
             console.log('loadPortal - athleteId:', currentUser.athleteId);
 
             // Strength is nested inside athlete object, also get gender from athlete
-            const strength = data?.athlete?.strength || {};
+            // Support both formats: strength data may be in data.athlete.strength (buildAthleteObject)
+            // or directly on data.athlete (getAllStudents format)
+            const nestedStrength = data?.athlete?.strength || {};
             const gender = data?.athlete?.Gender || 'M';
-            console.log('loadPortal - strength:', strength, 'gender:', gender);
+
+            // Check if _Tech fields are directly on athlete (flat format) or in strength sub-object
+            const hasNestedTech = Object.keys(nestedStrength).some(k => k.endsWith('_Tech'));
+            const strength = hasNestedTech ? nestedStrength : data?.athlete || {};
+            console.log('loadPortal - strength:', strength, 'gender:', gender, 'nested:', hasNestedTech);
             
             if (strength) {
                 // Add gender to currentStrength for use in 3T level
