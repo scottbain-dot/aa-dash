@@ -538,6 +538,13 @@
         .insights-dot.active {
             background: #874b46;
         }
+        .insight-card-body.ai-loading {
+            animation: insightPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes insightPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
         
         /* Component Lists */
         .component-list { display: flex; flex-direction: column; gap: 0.6rem; }
@@ -2254,38 +2261,48 @@
                 { n: 5, date: 'Mon 27 Apr' }, { n: 6, date: 'Tue 5 May' },
                 { n: 7, date: 'Wed 13 May' }, { n: 8, date: 'Tue 19 May' }
             ];
-            const gritPsych = a?.psych || {};
-            const hasGritScores = parseFloat(gritPsych.Mindset) > 0 || parseFloat(gritPsych.Mental_Toughness) > 0;
-            // Simple heuristic: if no grit-related scores, assume challenge not started
-            if (!hasGritScores) {
+            // Read grit challenge data from psych_history (Grit_Journal entries)
+            const gritEntry = (a?.psych_history || []).find(h => h.Challenge_Status);
+            const challengeStatus = gritEntry?.Challenge_Status || '';
+            let challengeData = null;
+            if (gritEntry?.Challenge_JSON) {
+                try {
+                    challengeData = typeof gritEntry.Challenge_JSON === 'string'
+                        ? JSON.parse(gritEntry.Challenge_JSON) : gritEntry.Challenge_JSON;
+                } catch(e) {}
+            }
+            const isComplete = challengeStatus === 'Complete' ||
+                (challengeData?.sessions && challengeData.sessions.filter(s => s && s.completed).length >= 8);
+
+            if (!challengeStatus || challengeStatus === '') {
+                // No challenge started
                 cards.push({
                     bar: '#D4AF37', overline: 'GRIT CHALLENGE',
                     title: 'Start your Grit Challenge',
                     body: 'Pick something hard and commit to 8 sessions of real work.',
                     action: '<a href="grit-portal.html">Get Started \u2192</a>'
                 });
-            } else {
-                // Find next session based on current date
-                const now = new Date();
-                const nextSession = gritSessions.find(s => {
-                    const d = new Date(s.date + ' 2025');
-                    return d >= new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            } else if (isComplete) {
+                // Explicitly complete
+                cards.push({
+                    bar: '#D4AF37', overline: 'GRIT CHALLENGE',
+                    title: 'Grit Challenge complete',
+                    body: 'All 8 sessions are done. Make sure your evidence is in the shared Google Drive folder.',
+                    action: '<a href="grit-portal.html">Review your challenge \u2192</a>'
                 });
-                if (nextSession) {
-                    cards.push({
-                        bar: '#D4AF37', overline: 'GRIT CHALLENGE',
-                        title: `Session ${nextSession.n} is on ${nextSession.date}`,
-                        body: 'Your session plan is due before you arrive. The more specific your plan, the better your session.',
-                        action: '<a href="grit-portal.html">Open Grit Portal \u2192</a>'
-                    });
-                } else {
-                    cards.push({
-                        bar: '#D4AF37', overline: 'GRIT CHALLENGE',
-                        title: 'Grit Challenge complete',
-                        body: 'All 8 sessions are done. Make sure your evidence is in the shared Google Drive folder.',
-                        action: '<a href="grit-portal.html">Review your challenge \u2192</a>'
-                    });
-                }
+            } else {
+                // Active challenge — find next uncompleted session
+                const completedSessions = challengeData?.sessions
+                    ? challengeData.sessions.map((s, i) => (s && s.completed) ? i + 1 : 0).filter(n => n > 0)
+                    : [];
+                const nextUncompleted = gritSessions.find(s => !completedSessions.includes(s.n));
+                const target = nextUncompleted || gritSessions[gritSessions.length - 1];
+                cards.push({
+                    bar: '#D4AF37', overline: 'GRIT CHALLENGE',
+                    title: `Session ${target.n} is on ${target.date}`,
+                    body: 'Your session plan is due before you arrive. The more specific your plan, the better your session.',
+                    action: '<a href="grit-portal.html">Open Grit Portal \u2192</a>'
+                });
             }
 
             // --- Card 2: Strength Progression Highlight ---
@@ -2491,6 +2508,9 @@
                     c.querySelector('.insight-card-body').textContent = body;
                 }
             });
+
+            // All data now available — enhance with AI
+            enhanceInsightsWithAI();
         }
 
         function renderInsights(psychAvg, physAvg, healthAvg, trainingAge, strengthData) {
@@ -2499,6 +2519,167 @@
             const healthScores = calculateHealth(currentAthlete, strengthData);
             const cards = buildInsightCards(psychScores, physScores, healthScores, strengthData);
             renderInsightsCarousel(cards);
+
+            // Store context for AI enhancement after workout data loads
+            window._insightContext = { psychAvg, physAvg, healthAvg, trainingAge, psychScores, physScores, healthScores, cards };
+        }
+
+        async function enhanceInsightsWithAI() {
+            const apiKey = localStorage.getItem('anthropic_api_key');
+            if (!apiKey) return;
+
+            const ctx = window._insightContext;
+            if (!ctx) return;
+
+            const modalData = window._strengthModalData;
+            const sessionCount = modalData?.workoutHistory?.length || 0;
+
+            // Build strength gain info
+            let bestPattern = null, bestFirst = 0, bestLast = 0;
+            if (modalData?.patternWeights) {
+                let bestGain = 0;
+                Object.entries(modalData.patternWeights).forEach(([key, weights]) => {
+                    if (weights.length < 2) return;
+                    const gain = weights[weights.length - 1].weight - weights[0].weight;
+                    if (gain > bestGain) {
+                        bestGain = gain;
+                        bestFirst = weights[0].weight;
+                        bestLast = weights[weights.length - 1].weight;
+                        bestPattern = MOVEMENT_PATTERNS.find(p => p.key === key)?.name || key;
+                    }
+                });
+            }
+
+            // Find lowest non-zero component
+            const allComp = [];
+            Object.entries(ctx.psychScores).forEach(([k, v]) => { if (v > 0) allComp.push({ name: k, score: v }); });
+            Object.entries(ctx.physScores).forEach(([k, v]) => { if (v > 0) allComp.push({ name: k, score: v }); });
+            Object.entries(ctx.healthScores).forEach(([k, v]) => { if (v > 0) allComp.push({ name: k, score: v }); });
+            allComp.sort((a, b) => a.score - b.score);
+            const weakest = allComp[0] || null;
+
+            // Find unassessed components
+            const unassessedList = [];
+            ['Recovery', 'Nutrition'].forEach(k => { if (!ctx.healthScores[k]) unassessedList.push(k); });
+            if (!ctx.physScores['Mobility']) unassessedList.push('Mobility');
+            if (!ctx.physScores['Agility (5-10-5)']) unassessedList.push('Agility');
+
+            // Grit session info
+            const gritEntry = (currentAthlete?.psych_history || []).find(h => h.Challenge_Status);
+            const challengeStatus = gritEntry?.Challenge_Status || '';
+            let nextGritSession = null;
+            if (challengeStatus === 'Active') {
+                let challengeData = null;
+                if (gritEntry?.Challenge_JSON) {
+                    try { challengeData = typeof gritEntry.Challenge_JSON === 'string' ? JSON.parse(gritEntry.Challenge_JSON) : gritEntry.Challenge_JSON; } catch(e) {}
+                }
+                const completed = challengeData?.sessions ? challengeData.sessions.map((s, i) => (s && s.completed) ? i + 1 : 0).filter(n => n > 0) : [];
+                const gritSessions = [
+                    { n: 1, date: 'Wed 25 Mar' }, { n: 2, date: 'Wed 15 Apr' },
+                    { n: 3, date: 'Mon 20 Apr' }, { n: 4, date: 'Wed 22 Apr' },
+                    { n: 5, date: 'Mon 27 Apr' }, { n: 6, date: 'Tue 5 May' },
+                    { n: 7, date: 'Wed 13 May' }, { n: 8, date: 'Tue 19 May' }
+                ];
+                nextGritSession = gritSessions.find(s => !completed.includes(s.n));
+            }
+
+            // Build data summary
+            const dataSummary = {
+                trainingAge: ctx.trainingAge.toFixed(2),
+                pillarScores: { psychology: ctx.psychAvg.toFixed(2), physiology: ctx.physAvg.toFixed(2), healthAndSkills: ctx.healthAvg.toFixed(2) },
+                lowestComponent: weakest ? { name: weakest.name, score: weakest.score.toFixed(2) } : null,
+                strengthGain: bestPattern ? { pattern: bestPattern, startWeight: bestFirst, endWeight: bestLast } : null,
+                totalSessions: sessionCount,
+                nextGritSession: nextGritSession ? { number: nextGritSession.n, date: nextGritSession.date } : null,
+                unassessedComponents: unassessedList
+            };
+
+            // Determine which cards are shown
+            const activeOverlines = [];
+            ctx.cards.forEach(c => activeOverlines.push(c.overline));
+            const fieldsNeeded = [];
+            if (activeOverlines.includes('GRIT CHALLENGE') && challengeStatus === 'Active') fieldsNeeded.push('"gritReminder"');
+            if (activeOverlines.includes('STRENGTH PROGRESS') && bestPattern) fieldsNeeded.push('"strengthProgress"');
+            if (activeOverlines.includes('ACTION NEEDED')) fieldsNeeded.push('"unassessedGap"');
+            if (activeOverlines.includes('CONSISTENCY')) fieldsNeeded.push('"consistency"');
+            if (activeOverlines.includes('FOCUS AREA')) fieldsNeeded.push('"weakestComponent"');
+
+            if (fieldsNeeded.length === 0) return;
+
+            // Add pulse loading state to all card bodies
+            document.querySelectorAll('.insight-card-body').forEach(el => el.classList.add('ai-loading'));
+
+            const systemPrompt = `You are a world-class youth athletic development coach. You write personalised, motivating insights for a 14-15 year old athlete based on their real performance data.
+Your coaching style:
+- Rooted in positive psychology — always start from what's working
+- Specific to their actual data — never generic
+- Warm but direct — you respect their intelligence and effort
+- Action-oriented — every insight ends with a clear next step
+- Brief — each insight is 1-2 sentences maximum, punchy and memorable
+
+You never say "great job" or use hollow praise. You connect effort to outcome. You never mention scores or numbers directly — translate them into what they mean athletically.
+
+Respond in JSON only. No preamble, no markdown, no code blocks:
+{ ${fieldsNeeded.join(', ')}: "1-2 sentence coaching note" }`;
+
+            const userMsg = `Here is this athlete's current data:\n${JSON.stringify(dataSummary, null, 2)}\n\nGenerate personalised coaching text for these fields: ${fieldsNeeded.join(', ')}`;
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 3000);
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 600,
+                        system: systemPrompt,
+                        messages: [{ role: 'user', content: userMsg }]
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeout);
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) localStorage.removeItem('anthropic_api_key');
+                    throw new Error('API error');
+                }
+
+                const result = await response.json();
+                const text = result?.content?.[0]?.text || '';
+                // Parse JSON — strip any markdown fences if present
+                const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+                const aiText = JSON.parse(cleaned);
+
+                // Map AI text to card overlines
+                const overlineToField = {
+                    'GRIT CHALLENGE': 'gritReminder',
+                    'STRENGTH PROGRESS': 'strengthProgress',
+                    'ACTION NEEDED': 'unassessedGap',
+                    'CONSISTENCY': 'consistency',
+                    'FOCUS AREA': 'weakestComponent'
+                };
+
+                document.querySelectorAll('.insight-card').forEach(card => {
+                    const overline = card.querySelector('.insight-card-overline')?.textContent;
+                    const field = overlineToField[overline];
+                    if (field && aiText[field]) {
+                        card.querySelector('.insight-card-body').textContent = aiText[field];
+                    }
+                });
+            } catch (e) {
+                // Timeout or error — silently keep fallback text
+                clearTimeout(timeout);
+            } finally {
+                document.querySelectorAll('.insight-card-body').forEach(el => el.classList.remove('ai-loading'));
+            }
         }
         
         function renderRadarChart(psychAvg, physAvg, healthAvg, psychScores, physScores, healthScores) {
