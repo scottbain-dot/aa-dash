@@ -555,32 +555,24 @@
         .component-row.expanded .comp-chevron { transform: rotate(180deg); }
         .comp-mini-graph {
             max-height: 0;
-            opacity: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease, opacity 0.3s ease;
+            transition: max-height 0.3s ease;
         }
         .comp-mini-graph.open {
-            max-height: 80px;
-            opacity: 1;
+            max-height: 160px;
         }
         .comp-mini-inner {
             background: #f8f2f1;
             border-radius: 0.75rem;
-            padding: 0.75rem;
+            padding: 1rem;
             font-size: 0.75rem;
             color: #524342;
             display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .comp-bar-viz {
-            flex: 1;
-            display: flex;
             flex-direction: column;
-            gap: 0.35rem;
+            gap: 0.5rem;
         }
         .comp-bar-track {
-            height: 6px;
+            height: 8px;
             background: #e8e0de;
             border-radius: 9999px;
             overflow: hidden;
@@ -597,8 +589,22 @@
         }
         .comp-mini-chart {
             width: 100%;
-            height: 50px;
+            height: 70px;
         }
+        .comp-chart-tooltip {
+            position: absolute;
+            background: #1d1b1b;
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 3px 7px;
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            white-space: nowrap;
+            z-index: 10;
+        }
+        .comp-chart-tooltip.visible { opacity: 1; }
         .component-name { flex: 0 0 120px; font-size: 0.78rem; color: var(--text); font-weight: 500; }
         .raw-value { display: block; font-size: 0.65rem; color: var(--text-muted); font-weight: normal; margin-top: 1px; }
         .component-bar { flex: 1; height: 10px; background: #e8e0de; border-radius: 9999px; position: relative; }
@@ -1836,18 +1842,18 @@
                 const growth = metricKey ? calculateGrowth(history, metricKey) : null;
                 const growthHtml = growth ? renderGrowthIndicator(growth, historyData.higherIsBetter !== false) : '';
 
-                // Build mini graph content — bar visualization for single-score components
+                // Build mini graph — horizontal bar for single-score components
                 let miniContent = '';
                 if (score === 0) {
-                    miniContent = '<div class="comp-mini-inner"><span>Not yet assessed \u2014 speak to your teacher</span></div>';
+                    miniContent = '<div class="comp-mini-inner"><span>Not yet assessed — speak to your teacher</span></div>';
                 } else {
                     const lastEntry = history.length > 0 ? history[history.length - 1] : null;
                     const dateStr = lastEntry?.Date ? new Date(lastEntry.Date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+                    const extra = (dataType === 'recovery' && name === 'Movement Technique') ? '<span class="comp-bar-label">Calculated from technique scores</span>' : '';
                     miniContent = `<div class="comp-mini-inner">
-                        <div class="comp-bar-viz">
-                            <div style="display:flex;justify-content:space-between;"><span>Your score: ${score.toFixed(1)} / 5</span>${dateStr ? `<span class="comp-bar-label">Assessed ${dateStr}</span>` : ''}</div>
-                            <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${pct}%"></div></div>
-                        </div>
+                        <div class="comp-bar-label">${dateStr ? `Assessed ${dateStr} — ` : ''}${score.toFixed(1)} / 5</div>
+                        <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${pct}%"></div></div>
+                        ${extra}
                     </div>`;
                 }
 
@@ -1861,7 +1867,7 @@
                             <div class="component-fill ${barClass}" style="width:${pct}%"></div>
                             <span class="component-score">${score.toFixed(1)}</span>
                         </div>
-                        <span class="comp-chevron">\u25be</span>
+                        <span class="comp-chevron">▾</span>
                     </div>
                     <div class="comp-mini-graph" data-graph="${containerId}-${idx}">
                         ${miniContent}
@@ -1895,7 +1901,7 @@
                 'Broad Jump': perf.Broad_Jump_cm ? `${perf.Broad_Jump_cm} cm` : '',
                 '40m Sprint': perf['40m_sec'] ? `${perf['40m_sec']} sec` : '',
                 'Agility (5-10-5)': perf['5_10_5_sec'] ? `${perf['5_10_5_sec']} sec` : '',
-                'Cooper Test': perf.Cooper_m ? `${perf.Cooper_m}m | VO\u2082max: ${calculateVO2max(perf.Cooper_m).toFixed(1)}` : ''
+                'Cooper Test': perf.Cooper_m ? `${perf.Cooper_m}m | VO₂max: ${calculateVO2max(perf.Cooper_m).toFixed(1)}` : ''
             };
 
             const keyMap = {
@@ -1906,11 +1912,11 @@
                 'Cooper Test': 'Cooper_m',
                 'Mobility': null
             };
-            const converters = {
-                'Broad Jump': (v) => convertBroadJump(parseFloat(v), gender),
-                '40m Sprint': (v) => convertSprint(parseFloat(v), gender),
-                'Agility (5-10-5)': (v) => convertAgility(parseFloat(v), gender),
-                'Cooper Test': (v) => convertCooper(parseFloat(v), gender)
+            const unitMap = {
+                'Broad Jump': 'cm',
+                '40m Sprint': 'sec',
+                'Agility (5-10-5)': 'sec',
+                'Cooper Test': 'm'
             };
             const higherIsBetterMap = {
                 'Broad Jump': true,
@@ -1918,6 +1924,31 @@
                 'Agility (5-10-5)': false,
                 'Cooper Test': true,
             };
+
+            // Pre-compute strength avg weight from workout history
+            let strengthAvgWeights = [];
+            if (window._strengthModalData) {
+                const pw = window._strengthModalData.patternWeights || {};
+                const wh = window._strengthModalData.workoutHistory || [];
+                // Group by session: compute average weight across all patterns per session
+                wh.forEach(session => {
+                    let sessionWeights = [];
+                    let exercises = session.exercises;
+                    if (!exercises) return;
+                    if (typeof exercises === 'string') { try { exercises = JSON.parse(exercises); } catch(e) { return; } }
+                    if (!Array.isArray(exercises)) return;
+                    exercises.forEach(ex => {
+                        const ws = String(ex.weight || '');
+                        if (ws === 'bodyweight' || ws.includes('reps')) return;
+                        const w = parseFloat(ws);
+                        if (!isNaN(w) && w > 0) sessionWeights.push(w);
+                    });
+                    if (sessionWeights.length > 0) {
+                        const avg = sessionWeights.reduce((a,b) => a+b, 0) / sessionWeights.length;
+                        strengthAvgWeights.push({ val: avg, date: session.date || '' });
+                    }
+                });
+            }
 
             const container = document.getElementById('physComponents');
             container.innerHTML = Object.entries(scores).map(([name, score], idx) => {
@@ -1933,20 +1964,35 @@
                 // Build mini graph content
                 let miniContent = '';
                 if (score === 0) {
-                    miniContent = '<div class="comp-mini-inner"><span>Not yet assessed \u2014 speak to your teacher</span></div>';
-                } else if (metricKey && history.length > 1) {
-                    // Multiple history points — render SVG mini line chart
-                    const converter = converters[name];
+                    miniContent = '<div class="comp-mini-inner"><span>Not yet assessed — speak to your teacher</span></div>';
+                } else if (name === 'Strength') {
+                    // Strength: show trend of average weight across patterns
+                    if (strengthAvgWeights.length > 1) {
+                        miniContent = buildPhysLineChart(strengthAvgWeights, 'kg', true, `phys-str`);
+                    } else if (strengthAvgWeights.length === 1) {
+                        miniContent = buildPhysSingleBar(strengthAvgWeights[0].val, 'kg', strengthAvgWeights[0].date);
+                    } else {
+                        miniContent = buildScoreBar(score);
+                    }
+                } else if (name === 'Mobility') {
+                    miniContent = buildScoreBar(score);
+                } else if (metricKey) {
+                    // Performance metrics — use raw values
+                    const unit = unitMap[name] || '';
                     const points = history
                         .filter(h => h[metricKey] && parseFloat(h[metricKey]) > 0)
-                        .map(h => ({ val: converter ? converter(h[metricKey]) : parseFloat(h[metricKey]), date: h.Date }));
+                        .map(h => ({ val: parseFloat(h[metricKey]), date: h.Date }));
+
                     if (points.length > 1) {
-                        miniContent = buildMiniLineChart(points, `phys-${idx}`);
+                        const isCooper = name === 'Cooper Test';
+                        miniContent = buildPhysLineChart(points, unit, higherIsBetter, `phys-${idx}`, isCooper ? perf.Cooper_m : null);
+                    } else if (points.length === 1) {
+                        miniContent = buildPhysSingleBar(points[0].val, unit, points[0].date, name === 'Cooper Test' ? perf.Cooper_m : null);
                     } else {
-                        miniContent = buildSingleBar(score, raw);
+                        miniContent = buildScoreBar(score);
                     }
                 } else {
-                    miniContent = buildSingleBar(score, raw);
+                    miniContent = buildScoreBar(score);
                 }
 
                 return `
@@ -1959,7 +2005,7 @@
                             <div class="component-fill ${barClass}" style="width:${pct}%"></div>
                             <span class="component-score">${score.toFixed(1)}</span>
                         </div>
-                        <span class="comp-chevron">\u25be</span>
+                        <span class="comp-chevron">▾</span>
                     </div>
                     <div class="comp-mini-graph" data-graph="physComponents-${idx}">
                         ${miniContent}
@@ -2000,54 +2046,121 @@
             if (!isOpen && graph) {
                 row.classList.add('expanded');
                 graph.classList.add('open');
+                // Attach tooltip listeners for chart dots
+                initChartTooltips(graph);
             }
         }
 
-        function buildSingleBar(score, rawLabel) {
+        function initChartTooltips(container) {
+            const tooltip = container.querySelector('.comp-chart-tooltip');
+            if (!tooltip) return;
+            container.querySelectorAll('.comp-chart-dot').forEach(dot => {
+                dot.addEventListener('mouseenter', (e) => {
+                    const val = dot.getAttribute('data-val');
+                    const date = dot.getAttribute('data-date');
+                    tooltip.textContent = `${val}${date ? ' — ' + date : ''}`;
+                    tooltip.classList.add('visible');
+                    const rect = container.querySelector('.comp-mini-inner').getBoundingClientRect();
+                    const dotRect = dot.getBoundingClientRect();
+                    tooltip.style.left = (dotRect.left - rect.left + dotRect.width/2) + 'px';
+                    tooltip.style.top = (dotRect.top - rect.top - 22) + 'px';
+                    tooltip.style.transform = 'translateX(-50%)';
+                });
+                dot.addEventListener('mouseleave', () => {
+                    tooltip.classList.remove('visible');
+                });
+            });
+        }
+
+        // Simple score bar (score out of 5)
+        function buildScoreBar(score) {
             const pct = Math.min((score / 5) * 100, 100);
             return `<div class="comp-mini-inner">
-                <div class="comp-bar-viz">
-                    <div style="display:flex;justify-content:space-between;"><span>Current: ${score.toFixed(1)} / 5</span>${rawLabel ? `<span class="comp-bar-label">${rawLabel}</span>` : ''}</div>
-                    <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${pct}%"></div></div>
-                </div>
+                <div class="comp-bar-label">${score.toFixed(1)} / 5</div>
+                <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${pct}%"></div></div>
             </div>`;
         }
 
-        function buildMiniLineChart(points, id) {
-            if (points.length < 2) return buildSingleBar(points[0]?.val || 0, '');
-            const w = 240, h = 40, padX = 4, padY = 4;
+        // Single raw-value bar for physiology (one data point)
+        function buildPhysSingleBar(val, unit, date, cooperM) {
+            const dateStr = date ? new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+            const vo2 = cooperM ? ` | VO₂max: ${calculateVO2max(parseFloat(cooperM)).toFixed(1)}` : '';
+            return `<div class="comp-mini-inner">
+                <div style="display:flex;justify-content:space-between;width:100%;">
+                    <span style="font-weight:600;font-size:0.85rem;">${val}${unit}</span>
+                    <span class="comp-bar-label">${dateStr}${vo2}</span>
+                </div>
+                <div class="comp-bar-track"><div class="comp-bar-fill" style="width:100%"></div></div>
+            </div>`;
+        }
+
+        // SVG line chart for physiology time-series with raw values on Y axis
+        function buildPhysLineChart(points, unit, higherIsBetter, id, cooperM) {
+            if (points.length < 2) return buildPhysSingleBar(points[0]?.val || 0, unit, points[0]?.date);
+            const w = 300, h = 70, padL = 38, padR = 8, padT = 8, padB = 16;
+            const chartW = w - padL - padR;
+            const chartH = h - padT - padB;
             const vals = points.map(p => p.val);
-            const minV = Math.min(...vals, 0);
-            const maxV = Math.max(...vals, 5);
-            const range = maxV - minV || 1;
+            const minV = Math.min(...vals);
+            const maxV = Math.max(...vals);
+            const spread = maxV - minV || 1;
+            // Add 10% padding to range
+            const rangeMin = minV - spread * 0.1;
+            const rangeMax = maxV + spread * 0.1;
+            const range = rangeMax - rangeMin || 1;
 
             const coords = points.map((p, i) => ({
-                x: padX + (i / (points.length - 1)) * (w - padX * 2),
-                y: padY + (1 - (p.val - minV) / range) * (h - padY * 2)
+                x: padL + (i / (points.length - 1)) * chartW,
+                y: padT + (1 - (p.val - rangeMin) / range) * chartH
             }));
 
+            // Path
             let pathD = `M ${coords[0].x} ${coords[0].y}`;
             for (let i = 1; i < coords.length; i++) {
-                const prev = coords[i - 1], curr = coords[i];
-                const cx1 = prev.x + (curr.x - prev.x) * 0.4;
-                const cx2 = curr.x - (curr.x - prev.x) * 0.4;
-                pathD += ` C ${cx1} ${prev.y}, ${cx2} ${curr.y}, ${curr.x} ${curr.y}`;
+                pathD += ` L ${coords[i].x} ${coords[i].y}`;
             }
 
+            // Dots with data attributes for tooltip
             const dotsHtml = coords.map((c, i) => {
-                const r = (i === 0 || i === coords.length - 1) ? 3 : 2;
-                return `<circle cx="${c.x}" cy="${c.y}" r="${r}" fill="#874b46"/>`;
+                const dateStr = points[i].date ? new Date(points[i].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+                return `<circle cx="${c.x}" cy="${c.y}" r="3" fill="#874b46" class="comp-chart-dot" data-val="${points[i].val}${unit}" data-date="${dateStr}" style="cursor:pointer"/>`;
             }).join('');
 
-            const firstLabel = points[0].val.toFixed(1);
-            const lastLabel = points[points.length - 1].val.toFixed(1);
+            // Grid lines — 3 horizontal
+            const gridVals = [rangeMin + range * 0.25, rangeMin + range * 0.5, rangeMin + range * 0.75];
+            const gridHtml = gridVals.map(gv => {
+                const gy = padT + (1 - (gv - rangeMin) / range) * chartH;
+                return `<line x1="${padL}" y1="${gy}" x2="${w - padR}" y2="${gy}" stroke="#e8e0de" stroke-width="1"/>`;
+            }).join('');
 
-            return `<div class="comp-mini-inner" style="flex-direction:column;gap:0.25rem;">
+            // Y axis labels — min, mid, max
+            const yLabels = [minV, (minV + maxV) / 2, maxV].map(v => {
+                const gy = padT + (1 - (v - rangeMin) / range) * chartH;
+                const label = Number.isInteger(v) ? v : v.toFixed(1);
+                return `<text x="${padL - 4}" y="${gy + 3}" text-anchor="end" fill="#524342" font-size="7" font-family="Inter,sans-serif">${label}</text>`;
+            }).join('');
+
+            // X axis date labels — first and last
+            const firstDate = points[0].date ? new Date(points[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+            const lastDate = points[points.length-1].date ? new Date(points[points.length-1].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+            const xLabels = `
+                <text x="${coords[0].x}" y="${h - 2}" text-anchor="start" fill="#524342" font-size="7" font-family="Inter,sans-serif">${firstDate}</text>
+                <text x="${coords[coords.length-1].x}" y="${h - 2}" text-anchor="end" fill="#524342" font-size="7" font-family="Inter,sans-serif">${lastDate}</text>
+            `;
+
+            const vo2Note = cooperM ? `<div class="comp-bar-label">VO₂max: ${calculateVO2max(parseFloat(cooperM)).toFixed(1)}</div>` : '';
+            const dirNote = !higherIsBetter ? `<div class="comp-bar-label">↓ Lower is better</div>` : '';
+
+            return `<div class="comp-mini-inner" style="position:relative;">
                 <svg class="comp-mini-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
-                    <path d="${pathD}" stroke="#874b46" stroke-width="1.5" fill="none"/>
+                    ${gridHtml}
+                    ${yLabels}
+                    ${xLabels}
+                    <path d="${pathD}" stroke="#874b46" stroke-width="2" fill="none"/>
                     ${dotsHtml}
                 </svg>
-                <div style="display:flex;justify-content:space-between;width:100%;"><span class="comp-bar-label">${firstLabel}</span><span class="comp-bar-label">${lastLabel}</span></div>
+                <div class="comp-chart-tooltip"></div>
+                ${dirNote}${vo2Note}
             </div>`;
         }
 
