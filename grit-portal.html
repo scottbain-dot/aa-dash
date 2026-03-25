@@ -477,6 +477,7 @@
                         <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 8px;" id="pendingFocus"></div>
                         <div style="color: var(--grey);" id="pendingGoal"></div>
                     </div>
+                    <button class="btn btn-secondary" onclick="editPendingChallenge()" style="margin-top: 20px;">✏️ Edit My Plan</button>
                 </div>
             </div>
             
@@ -490,7 +491,10 @@
                 <div class="progress-card">
                     <div class="progress-top">
                         <div><div class="progress-goal-name" id="progressGoal">Broad Jump</div><div class="progress-tier" id="progressTier">Fitness</div></div>
-                        <button class="progress-update-btn" onclick="openUpdateModal()">📊 Update</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="progress-update-btn" onclick="openEditGoalModal()">✏️ Edit Goal</button>
+                            <button class="progress-update-btn" onclick="openUpdateModal()">📊 Update</button>
+                        </div>
                     </div>
                     <div class="progress-numbers" id="progressNumbers">
                         <div class="progress-num start"><div class="progress-num-value" id="progStart">220</div><div class="progress-num-label">Start</div></div>
@@ -1026,11 +1030,51 @@ function goToStep(num) {
 
     if (num === 2) {
         renderStep2();
+        // Re-highlight previously selected focus if editing
+        if (selectedFocus) {
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.score-card');
+                cards.forEach(card => {
+                    const onclick = card.getAttribute('onclick') || '';
+                    if (onclick.includes(`'${selectedFocus.id}'`)) {
+                        card.classList.add('selected');
+                    }
+                });
+                document.getElementById('step2Btn').disabled = false;
+                // Show custom desc field if needed
+                if (selectedFocus.id === 'custom') {
+                    const customGroup = document.getElementById('customDescGroup');
+                    if (customGroup) {
+                        customGroup.style.display = 'block';
+                        const descEl = document.getElementById('customDesc');
+                        if (descEl && currentChallenge && currentChallenge.focusName) {
+                            descEl.value = currentChallenge.focusName;
+                        }
+                    }
+                }
+            }, 50);
+        }
     }
     if (num === 3) {
         const isStrength = isStrengthChallenge();
         document.getElementById('standardGoalFields').style.display = isStrength ? 'none' : 'block';
         document.getElementById('strengthGoalFields').style.display = isStrength ? 'block' : 'none';
+    }
+    if (num === 4 && currentChallenge && currentChallenge.excuses && currentChallenge.excuses.length > 0) {
+        // Pre-populate excuses when editing
+        const excusesList = document.getElementById('excusesList');
+        const existingInputs = excusesList.querySelectorAll('.excuse-input');
+        const excuses = currentChallenge.excuses;
+        // Only pre-fill if current inputs are empty (not already filled by user)
+        const allEmpty = Array.from(existingInputs).every(i => !i.value.trim());
+        if (allEmpty) {
+            excusesList.innerHTML = excuses.map((e, i) =>
+                `<div class="excuse-row"><input type="text" class="excuse-input" value="${e.replace(/"/g, '&quot;')}">${i > 0 ? '<button class="excuse-remove" onclick="this.parentElement.remove()">✕</button>' : ''}</div>`
+            ).join('');
+            // Also check commitment box if they had it checked before
+            document.getElementById('commitCheck').checked = true;
+            document.getElementById('submitBtn').disabled = false;
+        }
     }
 }
 
@@ -1186,28 +1230,38 @@ async function submitChallenge() {
         ? customDesc
         : selectedFocus.name;
 
+    // Preserve existing sessions and home logs if editing an existing challenge
+    const existingSessions = currentChallenge ? currentChallenge.sessions : null;
+    const existingHomeLogs = currentChallenge ? currentChallenge.homeLogs : null;
+    const existingCurrent = currentChallenge ? currentChallenge.current : null;
+    const isEditing = currentChallenge && (currentChallenge.status === 'active' || currentChallenge.status === 'pending' || currentChallenge.status === 'complete');
+
     currentChallenge = {
         type: selectedType,
         focusId: selectedFocus.id,
         focusName: focusName,
         baseline,
         target,
-        current: baseline,
+        current: isEditing ? (existingCurrent || baseline) : baseline,
         measureMethod: measure,
         level: selectedLevel || 3,
         why,
         excuses,
-        sessions: [{},{},{},{},{},{},{},{}],
-        homeLogs: [],
-        status: 'active'
+        sessions: isEditing && existingSessions ? existingSessions : [{},{},{},{},{},{},{},{}],
+        homeLogs: isEditing && existingHomeLogs ? existingHomeLogs : [],
+        status: isEditing ? currentChallenge.status : 'active'
     };
 
     if (isStrength) {
         currentChallenge.strengthExercise = document.getElementById('strengthExercise').value.trim();
     }
-    
-    showToast('Challenge started!');
-    showActiveView();
+
+    showToast(isEditing ? 'Challenge updated!' : 'Challenge started!');
+    if (currentChallenge.status === 'pending') {
+        showPendingView();
+    } else {
+        showActiveView();
+    }
     await persistChallenge();
 }
 
@@ -1329,10 +1383,7 @@ function renderTimeline() {
             const status = done ? '✓' : isCurrent ? '▶' : '🔒';
             content = `<div class="timeline-num">${item.session}</div><div class="timeline-label">${item.label}</div><div class="timeline-status">${status}</div>`;
             
-            if (done) {
-                // If coach feedback exists, open editable so student can improve
-                onclick = sess.coachFeedback ? `onclick="openSession(${item.session})"` : `onclick="viewSession(${item.session})"`;
-            } else if (item.session <= completedCount + 1) {
+            if (done || item.session <= completedCount + 1) {
                 onclick = `onclick="openSession(${item.session})"`;
             }
         } else {
@@ -1347,9 +1398,7 @@ function renderTimeline() {
             const status = done ? '✓' : isCurrent ? '▶' : '🔒';
             content = `<div class="timeline-num">${item.session}</div><div class="timeline-label">${item.label.replace('Session ', 'S')}</div><div class="timeline-status">${status}</div>`;
 
-            if (done) {
-                onclick = sess.coachFeedback ? `onclick="openSession(${item.session})"` : `onclick="viewSession(${item.session})"`;
-            } else {
+            if (done || item.session <= completedCount + 1) {
                 onclick = `onclick="openSession(${item.session})"`;
             }
         }
@@ -1687,7 +1736,9 @@ function saveSession() {
         }
     }
 
-    const sessionData = { completed: true, plan, measure, obstacle, counter };
+    // Preserve existing fields (coachFeedback, requiresPlanningFirst) when re-saving
+    const existing = currentChallenge.sessions[currentSessionNum - 1] || {};
+    const sessionData = { ...existing, completed: true, plan, measure, obstacle, counter };
     if (currentSessionNum === 1) {
         sessionData.baseline = primaryField;
     } else {
@@ -1698,17 +1749,24 @@ function saveSession() {
     closeModal('sessionModal');
     renderActiveView();
 
-    // Show upload prompt
-    document.getElementById('completeTitle').textContent = `Session ${currentSessionNum} Complete!`;
-    openModal('completeModal');
+    const wasAlreadyDone = existing && existing.completed;
+    if (wasAlreadyDone) {
+        showToast(`Session ${currentSessionNum} updated!`);
+    } else {
+        // Show upload prompt
+        document.getElementById('completeTitle').textContent = `Session ${currentSessionNum} Complete!`;
+        openModal('completeModal');
+    }
 
     persistChallenge();
 }
 
 function openFinalModal() {
     // Restore editable footer (may have been swapped by viewFinalSession)
+    const existingS8 = (currentChallenge.sessions || [])[7];
+    const s8Label = (existingS8 && existingS8.completed) ? '✓ Update' : '🏁 Complete Challenge';
     const footer = document.querySelector('#finalModal .modal-footer');
-    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('finalModal')">Cancel</button><button class="btn btn-success" onclick="submitFinal()">🏁 Complete Challenge</button>`;
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('finalModal')">Cancel</button><button class="btn btn-success" onclick="submitFinal()">${s8Label}</button>`;
 
     const body = document.getElementById('finalModalBody');
     const strengthActive = isActiveStrength();
@@ -1764,7 +1822,9 @@ function submitFinal() {
     }
 
     currentChallenge.current = remeasure;
+    const existingFinal = currentChallenge.sessions[7] || {};
     currentChallenge.sessions[7] = {
+        ...existingFinal,
         completed: true,
         finalRemeasure: remeasure,
         changed: document.getElementById('finalChanged').value.trim(),
@@ -1777,8 +1837,13 @@ function submitFinal() {
     closeModal('finalModal');
     renderActiveView();
 
-    document.getElementById('completeTitle').textContent = 'Challenge Complete! 🏆';
-    openModal('completeModal');
+    const wasAlreadyComplete = existingFinal && existingFinal.completed;
+    if (wasAlreadyComplete) {
+        showToast('Session 8 updated!');
+    } else {
+        document.getElementById('completeTitle').textContent = 'Challenge Complete!';
+        openModal('completeModal');
+    }
 
     persistChallenge();
 }
@@ -1866,6 +1931,53 @@ function saveUpdate() {
 
     persistChallenge();
 }
+
+// ============ EDIT GOAL ============
+function openEditGoalModal() {
+    returnToSetupForEditing();
+}
+
+function returnToSetupForEditing() {
+    const c = currentChallenge;
+    selectedType = c.type;
+    selectedFocus = { id: c.focusId, name: c.focusName };
+    selectedLevel = c.level || 3;
+
+    showSetupView();
+
+    // Pre-select type on step 1
+    document.querySelectorAll('.choice-card').forEach(card => card.classList.remove('selected'));
+    document.getElementById(c.type === 'fitness' ? 'choiceFitness' : 'choicePersonal').classList.add('selected');
+    document.getElementById('step1Btn').disabled = false;
+
+    // Pre-fill step 3 fields (they'll be ready when the student navigates there)
+    setTimeout(() => {
+        const strengthMode = c.type === 'fitness' && c.focusId === 'strength';
+        if (strengthMode) {
+            document.getElementById('strengthExercise').value = c.strengthExercise || '';
+            document.getElementById('strengthCurrentWeight').value = c.baseline || '';
+            document.getElementById('strengthGoalWeight').value = c.target || '';
+        } else {
+            document.getElementById('baselineInput').value = c.baseline || '';
+            document.getElementById('targetInput').value = c.target || '';
+            document.getElementById('measureInput').value = c.measureMethod || '';
+        }
+        document.getElementById('whyInput').value = c.why || '';
+    }, 50);
+
+    // Start at step 1 so they can change everything
+    goToStep(1);
+}
+
+function editPendingChallenge() {
+    returnToSetupForEditing();
+}
+
+// No longer needed but kept for safety
+let editGoalLevel = null;
+function selectEditGoalLevel() {}
+function addEditGoalExcuse() {}
+function saveEditGoal() {}
 
 // ============ MODAL HELPERS ============
 function openModal(id) {
