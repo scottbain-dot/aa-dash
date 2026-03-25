@@ -477,6 +477,7 @@
                         <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 8px;" id="pendingFocus"></div>
                         <div style="color: var(--grey);" id="pendingGoal"></div>
                     </div>
+                    <button class="btn btn-secondary" onclick="editPendingChallenge()" style="margin-top: 20px;">✏️ Edit My Plan</button>
                 </div>
             </div>
             
@@ -490,7 +491,10 @@
                 <div class="progress-card">
                     <div class="progress-top">
                         <div><div class="progress-goal-name" id="progressGoal">Broad Jump</div><div class="progress-tier" id="progressTier">Fitness</div></div>
-                        <button class="progress-update-btn" onclick="openUpdateModal()">📊 Update</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="progress-update-btn" onclick="openEditGoalModal()">✏️ Edit Goal</button>
+                            <button class="progress-update-btn" onclick="openUpdateModal()">📊 Update</button>
+                        </div>
                     </div>
                     <div class="progress-numbers" id="progressNumbers">
                         <div class="progress-num start"><div class="progress-num-value" id="progStart">220</div><div class="progress-num-label">Start</div></div>
@@ -584,6 +588,14 @@
         </div>
     </div>
     
+    <div class="modal-overlay" id="editGoalModal">
+        <div class="modal">
+            <div class="modal-header"><div class="modal-title">Edit My Goal</div><button class="modal-close" onclick="closeModal('editGoalModal')">✕</button></div>
+            <div class="modal-body" id="editGoalModalBody"></div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('editGoalModal')">Cancel</button><button class="btn btn-success" onclick="saveEditGoal()">✓ Save Changes</button></div>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
     
     <script>
@@ -1329,10 +1341,7 @@ function renderTimeline() {
             const status = done ? '✓' : isCurrent ? '▶' : '🔒';
             content = `<div class="timeline-num">${item.session}</div><div class="timeline-label">${item.label}</div><div class="timeline-status">${status}</div>`;
             
-            if (done) {
-                // If coach feedback exists, open editable so student can improve
-                onclick = sess.coachFeedback ? `onclick="openSession(${item.session})"` : `onclick="viewSession(${item.session})"`;
-            } else if (item.session <= completedCount + 1) {
+            if (done || item.session <= completedCount + 1) {
                 onclick = `onclick="openSession(${item.session})"`;
             }
         } else {
@@ -1347,9 +1356,7 @@ function renderTimeline() {
             const status = done ? '✓' : isCurrent ? '▶' : '🔒';
             content = `<div class="timeline-num">${item.session}</div><div class="timeline-label">${item.label.replace('Session ', 'S')}</div><div class="timeline-status">${status}</div>`;
 
-            if (done) {
-                onclick = sess.coachFeedback ? `onclick="openSession(${item.session})"` : `onclick="viewSession(${item.session})"`;
-            } else {
+            if (done || item.session <= completedCount + 1) {
                 onclick = `onclick="openSession(${item.session})"`;
             }
         }
@@ -1687,7 +1694,9 @@ function saveSession() {
         }
     }
 
-    const sessionData = { completed: true, plan, measure, obstacle, counter };
+    // Preserve existing fields (coachFeedback, requiresPlanningFirst) when re-saving
+    const existing = currentChallenge.sessions[currentSessionNum - 1] || {};
+    const sessionData = { ...existing, completed: true, plan, measure, obstacle, counter };
     if (currentSessionNum === 1) {
         sessionData.baseline = primaryField;
     } else {
@@ -1698,17 +1707,24 @@ function saveSession() {
     closeModal('sessionModal');
     renderActiveView();
 
-    // Show upload prompt
-    document.getElementById('completeTitle').textContent = `Session ${currentSessionNum} Complete!`;
-    openModal('completeModal');
+    const wasAlreadyDone = existing && existing.completed;
+    if (wasAlreadyDone) {
+        showToast(`Session ${currentSessionNum} updated!`);
+    } else {
+        // Show upload prompt
+        document.getElementById('completeTitle').textContent = `Session ${currentSessionNum} Complete!`;
+        openModal('completeModal');
+    }
 
     persistChallenge();
 }
 
 function openFinalModal() {
     // Restore editable footer (may have been swapped by viewFinalSession)
+    const existingS8 = (currentChallenge.sessions || [])[7];
+    const s8Label = (existingS8 && existingS8.completed) ? '✓ Update' : '🏁 Complete Challenge';
     const footer = document.querySelector('#finalModal .modal-footer');
-    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('finalModal')">Cancel</button><button class="btn btn-success" onclick="submitFinal()">🏁 Complete Challenge</button>`;
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('finalModal')">Cancel</button><button class="btn btn-success" onclick="submitFinal()">${s8Label}</button>`;
 
     const body = document.getElementById('finalModalBody');
     const strengthActive = isActiveStrength();
@@ -1764,7 +1780,9 @@ function submitFinal() {
     }
 
     currentChallenge.current = remeasure;
+    const existingFinal = currentChallenge.sessions[7] || {};
     currentChallenge.sessions[7] = {
+        ...existingFinal,
         completed: true,
         finalRemeasure: remeasure,
         changed: document.getElementById('finalChanged').value.trim(),
@@ -1777,8 +1795,13 @@ function submitFinal() {
     closeModal('finalModal');
     renderActiveView();
 
-    document.getElementById('completeTitle').textContent = 'Challenge Complete! 🏆';
-    openModal('completeModal');
+    const wasAlreadyComplete = existingFinal && existingFinal.completed;
+    if (wasAlreadyComplete) {
+        showToast('Session 8 updated!');
+    } else {
+        document.getElementById('completeTitle').textContent = 'Challenge Complete!';
+        openModal('completeModal');
+    }
 
     persistChallenge();
 }
@@ -1865,6 +1888,167 @@ function saveUpdate() {
     showToast('Updated!');
 
     persistChallenge();
+}
+
+// ============ EDIT GOAL ============
+function openEditGoalModal() {
+    const c = currentChallenge;
+    const body = document.getElementById('editGoalModalBody');
+    const strengthMode = c.type === 'fitness' && c.focusId === 'strength';
+
+    let goalFields;
+    if (strengthMode) {
+        goalFields = `
+            <div class="form-group">
+                <label class="form-label">Exercise(s)</label>
+                <input type="text" class="form-input" id="editGoalExercise" value="${(c.strengthExercise || '').replace(/"/g, '&quot;')}">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Starting weight or reps</label>
+                    <input type="text" class="form-input" id="editGoalBaseline" value="${(c.baseline || '').replace(/"/g, '&quot;')}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Goal weight or reps</label>
+                    <input type="text" class="form-input" id="editGoalTarget" value="${(c.target || '').replace(/"/g, '&quot;')}">
+                </div>
+            </div>`;
+    } else {
+        goalFields = `
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Where I am NOW</label>
+                    <input type="text" class="form-input" id="editGoalBaseline" value="${(c.baseline || '').replace(/"/g, '&quot;')}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Where I want to BE</label>
+                    <input type="text" class="form-input" id="editGoalTarget" value="${(c.target || '').replace(/"/g, '&quot;')}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">How will you measure it?</label>
+                <input type="text" class="form-input" id="editGoalMeasure" value="${(c.measureMethod || '').replace(/"/g, '&quot;')}">
+            </div>`;
+    }
+
+    const diffLevel = c.level || 3;
+    const excusesList = (c.excuses || []).map((e, i) =>
+        `<div class="excuse-row"><input type="text" class="excuse-input edit-goal-excuse" value="${e.replace(/"/g, '&quot;')}">` +
+        (i > 0 ? `<button class="excuse-remove" onclick="this.parentElement.remove()">✕</button>` : '') +
+        `</div>`
+    ).join('') || '<div class="excuse-row"><input type="text" class="excuse-input edit-goal-excuse" placeholder="I might not finish because..."></div>';
+
+    body.innerHTML = `
+        <div class="form-group">
+            <label class="form-label">Challenge</label>
+            <div style="background: var(--off-white); border-radius: 10px; padding: 12px 16px; font-weight: 600; color: var(--burgundy);">${c.type === 'fitness' ? 'Fitness' : 'Personal'} — ${c.focusName}</div>
+            <div class="form-hint">To change your challenge type or focus, talk to Mr. Bain.</div>
+        </div>
+        ${goalFields}
+        <div class="form-group">
+            <label class="form-label">How hard is this goal?</label>
+            <div class="level-selector" id="editGoalLevelSelector">
+                ${[1,2,3,4,5].map(n => `<div class="level-btn${n === diffLevel ? ' selected' : ''}" onclick="selectEditGoalLevel(${n})"><div class="level-num">${n}</div><div class="level-label">${['Easy','Stretch','Hard','V. Hard','Extreme'][n-1]}</div></div>`).join('')}
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Why does this matter to you?</label>
+            <textarea class="form-textarea" id="editGoalWhy">${(c.why || '').replace(/</g, '&lt;')}</textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Your excuses</label>
+            <div id="editGoalExcusesList">${excusesList}</div>
+            <button class="add-btn" onclick="addEditGoalExcuse()" style="margin-top: 8px;">+ Add another</button>
+        </div>`;
+
+    openModal('editGoalModal');
+}
+
+let editGoalLevel = null;
+
+function selectEditGoalLevel(level) {
+    editGoalLevel = level;
+    document.querySelectorAll('#editGoalLevelSelector .level-btn').forEach((b, i) => {
+        b.classList.toggle('selected', i === level - 1);
+    });
+}
+
+function addEditGoalExcuse() {
+    const row = document.createElement('div');
+    row.className = 'excuse-row';
+    row.innerHTML = `<input type="text" class="excuse-input edit-goal-excuse" placeholder="Another reason..."><button class="excuse-remove" onclick="this.parentElement.remove()">✕</button>`;
+    document.getElementById('editGoalExcusesList').appendChild(row);
+}
+
+function saveEditGoal() {
+    const c = currentChallenge;
+    const strengthMode = c.type === 'fitness' && c.focusId === 'strength';
+
+    const baseline = document.getElementById('editGoalBaseline').value.trim();
+    const target = document.getElementById('editGoalTarget').value.trim();
+
+    if (!baseline || !target) {
+        showToast('Please fill in your start and goal');
+        return;
+    }
+
+    c.baseline = baseline;
+    c.target = target;
+
+    if (strengthMode) {
+        const exercise = document.getElementById('editGoalExercise').value.trim();
+        if (!exercise) { showToast('Please enter the exercise'); return; }
+        c.strengthExercise = exercise;
+    } else {
+        const measureEl = document.getElementById('editGoalMeasure');
+        if (measureEl) c.measureMethod = measureEl.value.trim();
+    }
+
+    if (editGoalLevel) c.level = editGoalLevel;
+    editGoalLevel = null;
+
+    const whyEl = document.getElementById('editGoalWhy');
+    if (whyEl) c.why = whyEl.value.trim();
+
+    c.excuses = Array.from(document.querySelectorAll('.edit-goal-excuse'))
+        .map(i => i.value.trim()).filter(e => e);
+
+    closeModal('editGoalModal');
+    renderActiveView();
+    showToast('Goal updated!');
+    persistChallenge();
+}
+
+function editPendingChallenge() {
+    // Re-populate setup state from saved challenge and go back to setup
+    const c = currentChallenge;
+    selectedType = c.type;
+    selectedFocus = { id: c.focusId, name: c.focusName };
+    selectedLevel = c.level || 3;
+
+    showSetupView();
+
+    // Pre-select type
+    document.querySelectorAll('.choice-card').forEach(card => card.classList.remove('selected'));
+    document.getElementById(c.type === 'fitness' ? 'choiceFitness' : 'choicePersonal').classList.add('selected');
+    document.getElementById('step1Btn').disabled = false;
+
+    // Jump to step 3 so they can edit goal details
+    goToStep(3);
+
+    // Pre-fill step 3 fields
+    const strengthMode = c.type === 'fitness' && c.focusId === 'strength';
+    if (strengthMode) {
+        document.getElementById('strengthExercise').value = c.strengthExercise || '';
+        document.getElementById('strengthCurrentWeight').value = c.baseline || '';
+        document.getElementById('strengthGoalWeight').value = c.target || '';
+    } else {
+        document.getElementById('baselineInput').value = c.baseline || '';
+        document.getElementById('targetInput').value = c.target || '';
+        document.getElementById('measureInput').value = c.measureMethod || '';
+    }
+    if (selectedLevel) selectLevel(selectedLevel);
+    document.getElementById('whyInput').value = c.why || '';
 }
 
 // ============ MODAL HELPERS ============
