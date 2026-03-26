@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nominate an Athlete | Athlete Academy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #1a1a1a;
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            position: relative;
+            background: #1d1b1b;
+            min-height: 480px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .hero-images {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            opacity: 0.12;
+        }
+
+        .hero-images img {
+            flex: 1;
+            object-fit: cover;
+            min-width: 0;
+            height: 100%;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(29,27,27,0.7) 0%, rgba(29,27,27,0.85) 50%, rgba(29,27,27,0.95) 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .hero-overline {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #D4AF37;
+            letter-spacing: 0.25em;
+            margin-bottom: 1.25rem;
+            font-weight: 600;
+        }
+
+        .hero-heading {
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 3rem;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subheading {
+            color: rgba(255,255,255,0.6);
+            font-size: 1.25rem;
+            font-weight: 400;
+            margin-bottom: 2rem;
+        }
+
+        .hero-divider {
+            width: 60px;
+            height: 2px;
+            background: #D4AF37;
+            margin: 2rem auto;
+        }
+
+        .hero-body {
+            color: rgba(255,255,255,0.7);
+            font-size: 1rem;
+            line-height: 1.7;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ===== PROGRAMME SECTION ===== */
+        .programme {
+            background: #fef8f6;
+            padding: 5rem 2rem;
+        }
+
+        .section-overline {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #524342;
+            letter-spacing: 0.25em;
+            text-align: center;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .section-heading {
+            font-weight: 800;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #1a1a1a;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0px 4px 16px rgba(53,15,13,0.04);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0px 12px 32px rgba(53,15,13,0.08);
+            transform: translateY(-2px);
+        }
+
+        .card-accent {
+            width: 40px;
+            height: 4px;
+            border-radius: 2px;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-accent--gold { background: #D4AF37; }
+        .card-accent--burgundy { background: #874b46; }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-heading {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #1a1a1a;
+        }
+
+        .card-body {
+            font-size: 0.875rem;
+            line-height: 1.65;
+            color: #555555;
+        }
+
+        /* ===== FORM SECTION ===== */
+        .form-section {
+            background: #f8f2f1;
+            padding: 5rem 2rem;
+        }
+
+        .form-container {
+            background: #ffffff;
+            border-radius: 2rem;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 3rem;
+            box-shadow: 0px 4px 16px rgba(53,15,13,0.04);
+        }
+
+        .form-subtext {
+            color: #524342;
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 0.375rem;
+        }
+
+        .form-group label .required {
+            color: #874b46;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid #e0dede;
+            border-radius: 0.625rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            color: #1a1a1a;
+            background: #fafafa;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #874b46;
+            box-shadow: 0 0 0 3px rgba(135,75,70,0.1);
+            background: #ffffff;
+        }
+
+        .form-group input.error,
+        .form-group select.error,
+        .form-group textarea.error {
+            border: 2px solid #874b46;
+        }
+
+        .form-group .error-message {
+            color: #874b46;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .form-group .error-message.visible {
+            display: block;
+        }
+
+        .form-group .field-note {
+            font-size: 0.75rem;
+            color: #888;
+            font-style: italic;
+            margin-top: 0.25rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+        }
+
+        .form-separator {
+            height: 1px;
+            background: #e0dede;
+            margin: 2rem 0;
+        }
+
+        /* Ratings */
+        .ratings-overline {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #524342;
+            letter-spacing: 0.25em;
+            font-weight: 600;
+            margin-bottom: 0.375rem;
+        }
+
+        .ratings-subtext {
+            font-size: 0.8125rem;
+            color: #888;
+            font-style: italic;
+            margin-bottom: 1.5rem;
+        }
+
+        .rating-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .rating-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            min-width: 160px;
+        }
+
+        .rating-buttons {
+            display: flex;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .rating-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #e0dede;
+            background: #fafafa;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: #888;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rating-btn:hover {
+            border-color: #874b46;
+            color: #874b46;
+            background: #fef8f6;
+        }
+
+        .rating-btn.selected {
+            border-color: #874b46;
+            background: #874b46;
+            color: #ffffff;
+        }
+
+        .rating-hint {
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.6875rem;
+            color: #874b46;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .rating-hint.visible {
+            opacity: 1;
+        }
+
+        .rating-error {
+            color: #874b46;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+            width: 100%;
+        }
+
+        .rating-error.visible {
+            display: block;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #6b3430, #874b46);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: none;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            margin-top: 1.5rem;
+        }
+
+        .submit-btn:hover {
+            opacity: 0.92;
+        }
+
+        .submit-btn:active {
+            transform: scale(0.995);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .submit-error {
+            color: #874b46;
+            font-size: 0.875rem;
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .submit-error.visible {
+            display: block;
+        }
+
+        /* ===== CONFIRMATION SECTION ===== */
+        .confirmation {
+            display: none;
+            position: relative;
+            background: #1d1b1b;
+            padding: 5rem 2rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .confirmation-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            object-fit: cover;
+            opacity: 0.08;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .confirmation-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .confirmation-overline {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #D4AF37;
+            letter-spacing: 0.25em;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+        }
+
+        .confirmation-heading {
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 2.5rem;
+            letter-spacing: -0.02em;
+            margin-bottom: 1.25rem;
+        }
+
+        .confirmation-body {
+            color: rgba(255,255,255,0.7);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 2rem;
+        }
+
+        .confirmation-divider {
+            width: 60px;
+            height: 2px;
+            background: #D4AF37;
+            margin: 2rem auto;
+        }
+
+        .confirmation-closing {
+            color: rgba(255,255,255,0.4);
+            font-style: italic;
+            font-size: 0.9375rem;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: #1d1b1b;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .footer-logo {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-logo svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .footer-copy {
+            color: rgba(255,255,255,0.4);
+            font-size: 0.75rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .hero-heading {
+                font-size: 2.25rem;
+            }
+
+            .hero-subheading {
+                font-size: 1.1rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .form-container {
+                padding: 2rem 1.5rem;
+            }
+
+            .rating-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .rating-buttons {
+                margin-bottom: 0.75rem;
+            }
+
+            .confirmation-heading {
+                font-size: 2rem;
+            }
+
+            .footer {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-heading {
+                font-size: 1.85rem;
+            }
+
+            .section-heading {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SECTION 1: HERO -->
+    <section class="hero">
+        <div class="hero-images">
+            <img src="strength-squat.jpg" alt="" loading="eager">
+            <img src="strength-hinge.jpg" alt="" loading="eager">
+            <img src="strength-push.jpg" alt="" loading="eager">
+            <img src="strength-pull.jpg" alt="" loading="eager">
+            <img src="strength-lunge.jpg" alt="" loading="eager">
+            <img src="strength-press.png" alt="" loading="eager">
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="hero-overline">FRANKFURT INTERNATIONAL SCHOOL</div>
+            <h1 class="hero-heading">Grade 10–12 Athlete Academy</h1>
+            <p class="hero-subheading">Nomination 2026–27</p>
+            <div class="hero-divider"></div>
+            <p class="hero-body">The Athlete Academy is a multi-year development programme for students who are ready to take ownership of their athletic growth. Selected students train with purpose, track their progress over time, and develop the physical and psychological foundations of a complete athlete. Nominations are reviewed by the PE department. Places are limited.</p>
+        </div>
+    </section>
+
+    <!-- SECTION 2: PROGRAMME -->
+    <section class="programme">
+        <div class="section-overline">THE PROGRAMME</div>
+        <h2 class="section-heading">What your athlete will have access to</h2>
+        <div class="cards-grid">
+            <!-- Card 1: Training Age -->
+            <div class="card">
+                <div class="card-accent card-accent--gold"></div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none">
+                        <circle cx="24" cy="24" r="20" stroke="#874b46" stroke-width="3" stroke-dasharray="94.2 31.4" stroke-linecap="round"/>
+                        <circle cx="24" cy="24" r="14" stroke="#874b46" stroke-width="2" opacity="0.3"/>
+                        <line x1="24" y1="24" x2="24" y2="10" stroke="#874b46" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="24" cy="24" r="3" fill="#874b46"/>
+                    </svg>
+                </div>
+                <h3 class="card-heading">Training Age</h3>
+                <p class="card-body">A personalised metric that tracks athletic development across Psychology, Physiology, and Health & Skills. Updated every term. Grows over years.</p>
+            </div>
+            <!-- Card 2: Personal Training Portal -->
+            <div class="card">
+                <div class="card-accent card-accent--burgundy"></div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none">
+                        <rect x="6" y="10" width="36" height="30" rx="4" stroke="#874b46" stroke-width="2.5"/>
+                        <line x1="6" y1="18" x2="42" y2="18" stroke="#874b46" stroke-width="2.5"/>
+                        <line x1="18" y1="10" x2="18" y2="40" stroke="#874b46" stroke-width="1.5" opacity="0.3"/>
+                        <line x1="30" y1="10" x2="30" y2="40" stroke="#874b46" stroke-width="1.5" opacity="0.3"/>
+                        <line x1="6" y1="26" x2="42" y2="26" stroke="#874b46" stroke-width="1.5" opacity="0.3"/>
+                        <line x1="6" y1="34" x2="42" y2="34" stroke="#874b46" stroke-width="1.5" opacity="0.3"/>
+                        <circle cx="14" cy="6" r="2" fill="#874b46"/>
+                        <circle cx="34" cy="6" r="2" fill="#874b46"/>
+                    </svg>
+                </div>
+                <h3 class="card-heading">Personal Training Portal</h3>
+                <p class="card-body">Athletes plan their own training weeks, log sessions, and track progress over time. Teacher-visible — coach feedback built in.</p>
+            </div>
+            <!-- Card 3: PE Integration -->
+            <div class="card">
+                <div class="card-accent card-accent--gold"></div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none">
+                        <circle cx="24" cy="24" r="18" stroke="#874b46" stroke-width="2.5"/>
+                        <line x1="24" y1="24" x2="24" y2="12" stroke="#874b46" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="24" y1="24" x2="33" y2="28" stroke="#874b46" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="24" cy="24" r="2.5" fill="#874b46"/>
+                        <line x1="24" y1="4" x2="24" y2="7" stroke="#874b46" stroke-width="2"/>
+                        <line x1="24" y1="41" x2="24" y2="44" stroke="#874b46" stroke-width="2"/>
+                        <line x1="4" y1="24" x2="7" y2="24" stroke="#874b46" stroke-width="2"/>
+                        <line x1="41" y1="24" x2="44" y2="24" stroke="#874b46" stroke-width="2"/>
+                    </svg>
+                </div>
+                <h3 class="card-heading">PE Time to Train</h3>
+                <p class="card-body">Selected PE units give athletes dedicated training time during the school day — structured development built into the timetable, not just an after-school commitment.</p>
+            </div>
+            <!-- Card 4: Strength & Movement -->
+            <div class="card">
+                <div class="card-accent card-accent--burgundy"></div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none">
+                        <rect x="20" y="21" width="8" height="6" rx="1" fill="#874b46"/>
+                        <rect x="10" y="19" width="10" height="10" rx="2" stroke="#874b46" stroke-width="2.5" fill="none"/>
+                        <rect x="28" y="19" width="10" height="10" rx="2" stroke="#874b46" stroke-width="2.5" fill="none"/>
+                        <rect x="5" y="22" width="5" height="4" rx="1" stroke="#874b46" stroke-width="2" fill="none"/>
+                        <rect x="38" y="22" width="5" height="4" rx="1" stroke="#874b46" stroke-width="2" fill="none"/>
+                    </svg>
+                </div>
+                <h3 class="card-heading">Strength & Movement Foundations</h3>
+                <p class="card-body">Progressive technique and strength development across six fundamental movement patterns. Assessed termly, tracked across years.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: NOMINATION FORM -->
+    <section class="form-section" id="form-section">
+        <div class="form-container">
+            <div class="section-overline">NOMINATE AN ATHLETE</div>
+            <h2 class="section-heading" style="margin-bottom: 0.5rem;">Tell us about your athlete</h2>
+            <p class="form-subtext">All nominations are reviewed by the PE department. You'll hear back within two weeks.</p>
+
+            <form id="nomination-form" novalidate>
+                <!-- Coach Details -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Coach full name <span class="required">*</span></label>
+                        <input type="text" id="coachName" required>
+                        <div class="error-message">Please enter your name</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sport / Role <span class="required">*</span></label>
+                        <input type="text" id="coachRole" required placeholder="e.g. Basketball Coach, Athletics Coach">
+                        <div class="error-message">Please enter your sport or role</div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>School <span class="required">*</span></label>
+                        <input type="text" id="coachSchool" required placeholder="e.g. Frankfurt International School">
+                        <div class="error-message">Please enter the school name</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email address <span class="required">*</span></label>
+                        <input type="email" id="coachEmail" required placeholder="For follow-up correspondence">
+                        <div class="error-message">Please enter a valid email address</div>
+                    </div>
+                </div>
+
+                <div class="form-separator"></div>
+
+                <!-- Athlete Details -->
+                <div class="form-group">
+                    <label>Athlete full name <span class="required">*</span></label>
+                    <input type="text" id="athleteName" required>
+                    <div class="error-message">Please enter the athlete's name</div>
+                </div>
+                <div class="form-group">
+                    <label>Current grade <span class="required">*</span></label>
+                    <select id="athleteGrade" required>
+                        <option value="" disabled selected>Select grade</option>
+                        <option value="Grade 7">Grade 7</option>
+                        <option value="Grade 8">Grade 8</option>
+                        <option value="Grade 9">Grade 9</option>
+                        <option value="Grade 10">Grade 10</option>
+                        <option value="Grade 11">Grade 11</option>
+                    </select>
+                    <div class="field-note">Athletes joining the programme enter in Grade 10</div>
+                    <div class="error-message">Please select a grade</div>
+                </div>
+
+                <div class="form-separator"></div>
+
+                <!-- Nomination Reason -->
+                <div class="form-group">
+                    <label>Why are you nominating this athlete? <span class="required">*</span></label>
+                    <textarea id="nominationReason" required style="min-height: 120px;" placeholder="Tell us what makes this athlete ready for a self-directed development programme. What have you seen from them that others might not?"></textarea>
+                    <div class="error-message">Please explain why you're nominating this athlete</div>
+                </div>
+
+                <div class="form-separator"></div>
+
+                <!-- Ratings -->
+                <div class="ratings-overline">RATE THIS ATHLETE</div>
+                <p class="ratings-subtext">Be honest — we use these to understand the athlete, not just to select them.</p>
+
+                <div class="rating-row" data-rating="grit">
+                    <span class="rating-label">Grit & Persistence</span>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-value="1">1</button>
+                        <button type="button" class="rating-btn" data-value="2">2</button>
+                        <button type="button" class="rating-btn" data-value="3">3</button>
+                        <button type="button" class="rating-btn" data-value="4">4</button>
+                        <button type="button" class="rating-btn" data-value="5">5</button>
+                        <div class="rating-hint"></div>
+                    </div>
+                    <div class="rating-error">Please select a rating</div>
+                </div>
+
+                <div class="rating-row" data-rating="coachability">
+                    <span class="rating-label">Coachability</span>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-value="1">1</button>
+                        <button type="button" class="rating-btn" data-value="2">2</button>
+                        <button type="button" class="rating-btn" data-value="3">3</button>
+                        <button type="button" class="rating-btn" data-value="4">4</button>
+                        <button type="button" class="rating-btn" data-value="5">5</button>
+                        <div class="rating-hint"></div>
+                    </div>
+                    <div class="rating-error">Please select a rating</div>
+                </div>
+
+                <div class="rating-row" data-rating="selfMotivation">
+                    <span class="rating-label">Self-Motivation</span>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-value="1">1</button>
+                        <button type="button" class="rating-btn" data-value="2">2</button>
+                        <button type="button" class="rating-btn" data-value="3">3</button>
+                        <button type="button" class="rating-btn" data-value="4">4</button>
+                        <button type="button" class="rating-btn" data-value="5">5</button>
+                        <div class="rating-hint"></div>
+                    </div>
+                    <div class="rating-error">Please select a rating</div>
+                </div>
+
+                <div class="rating-row" data-rating="athleticPotential">
+                    <span class="rating-label">Athletic Potential</span>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-value="1">1</button>
+                        <button type="button" class="rating-btn" data-value="2">2</button>
+                        <button type="button" class="rating-btn" data-value="3">3</button>
+                        <button type="button" class="rating-btn" data-value="4">4</button>
+                        <button type="button" class="rating-btn" data-value="5">5</button>
+                        <div class="rating-hint"></div>
+                    </div>
+                    <div class="rating-error">Please select a rating</div>
+                </div>
+
+                <div class="form-separator"></div>
+
+                <!-- Additional Info -->
+                <div class="form-group">
+                    <label>Anything else we should know?</label>
+                    <textarea id="additionalInfo" style="min-height: 80px;" placeholder="Training history, injuries, personal circumstances — anything relevant."></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submit-btn">Submit Nomination</button>
+                <div class="submit-error" id="submit-error">Something went wrong — please try again or email directly.</div>
+            </form>
+        </div>
+    </section>
+
+    <!-- SECTION 4: CONFIRMATION -->
+    <section class="confirmation" id="confirmation">
+        <img src="strength-squat.jpg" alt="" class="confirmation-bg">
+        <div class="confirmation-content">
+            <div class="confirmation-overline">NOMINATION RECEIVED</div>
+            <h2 class="confirmation-heading" id="confirmation-heading">Thank you.</h2>
+            <p class="confirmation-body" id="confirmation-body"></p>
+            <div class="confirmation-divider"></div>
+            <p class="confirmation-closing">We'll take it from here.</p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-logo">
+            <svg viewBox="0 0 20 20" fill="none">
+                <path d="M10 2L3 7v9a2 2 0 002 2h10a2 2 0 002-2V7l-7-5z" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" fill="none"/>
+                <path d="M7 18v-5a1 1 0 011-1h4a1 1 0 011 1v5" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+            </svg>
+            FIS Warriors
+        </div>
+        <div class="footer-copy">Athlete Academy &copy; 2026</div>
+    </footer>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzoyT7zqrOhEf3LAsflbRB73OO2-RaHdnCz5f676xuO9Odc6wFUQpo0aE3XX6Qt-Bk0/exec';
+
+        const RATING_LABELS = {
+            1: 'Room to grow',
+            2: 'Developing',
+            3: 'Solid',
+            4: 'Strong',
+            5: 'Exceptional'
+        };
+
+        const ratings = {
+            grit: 0,
+            coachability: 0,
+            selfMotivation: 0,
+            athleticPotential: 0
+        };
+
+        // Rating buttons
+        document.querySelectorAll('.rating-row').forEach(row => {
+            const key = row.dataset.rating;
+            const hint = row.querySelector('.rating-hint');
+            const buttons = row.querySelectorAll('.rating-btn');
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const val = parseInt(btn.dataset.value);
+                    ratings[key] = val;
+                    buttons.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    hint.textContent = RATING_LABELS[val];
+                    hint.classList.add('visible');
+                    row.querySelector('.rating-error').classList.remove('visible');
+                });
+
+                btn.addEventListener('mouseenter', () => {
+                    const val = parseInt(btn.dataset.value);
+                    hint.textContent = RATING_LABELS[val];
+                    hint.classList.add('visible');
+                });
+
+                btn.addEventListener('mouseleave', () => {
+                    if (ratings[key] === 0) {
+                        hint.classList.remove('visible');
+                    } else {
+                        hint.textContent = RATING_LABELS[ratings[key]];
+                    }
+                });
+            });
+        });
+
+        // Form submission
+        document.getElementById('nomination-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submit-btn');
+            const submitError = document.getElementById('submit-error');
+            submitError.classList.remove('visible');
+
+            // Validate
+            let firstError = null;
+            let valid = true;
+
+            const requiredFields = [
+                { id: 'coachName', type: 'text' },
+                { id: 'coachRole', type: 'text' },
+                { id: 'coachSchool', type: 'text' },
+                { id: 'coachEmail', type: 'email' },
+                { id: 'athleteName', type: 'text' },
+                { id: 'athleteGrade', type: 'select' },
+                { id: 'nominationReason', type: 'textarea' }
+            ];
+
+            requiredFields.forEach(field => {
+                const el = document.getElementById(field.id);
+                const errorEl = el.parentElement.querySelector('.error-message');
+                let isValid = el.value.trim() !== '';
+
+                if (field.type === 'email' && isValid) {
+                    isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
+                }
+
+                if (!isValid) {
+                    el.classList.add('error');
+                    if (errorEl) errorEl.classList.add('visible');
+                    if (!firstError) firstError = el;
+                    valid = false;
+                } else {
+                    el.classList.remove('error');
+                    if (errorEl) errorEl.classList.remove('visible');
+                }
+            });
+
+            // Validate ratings
+            Object.keys(ratings).forEach(key => {
+                if (ratings[key] === 0) {
+                    const row = document.querySelector(`.rating-row[data-rating="${key}"]`);
+                    const errorEl = row.querySelector('.rating-error');
+                    errorEl.classList.add('visible');
+                    if (!firstError) firstError = row;
+                    valid = false;
+                }
+            });
+
+            if (!valid) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            // Submit
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting…';
+
+            const payload = {
+                action: 'saveNomination',
+                coachName: document.getElementById('coachName').value.trim(),
+                coachRole: document.getElementById('coachRole').value.trim(),
+                coachSchool: document.getElementById('coachSchool').value.trim(),
+                coachEmail: document.getElementById('coachEmail').value.trim(),
+                athleteName: document.getElementById('athleteName').value.trim(),
+                athleteGrade: document.getElementById('athleteGrade').value,
+                nominationReason: document.getElementById('nominationReason').value.trim(),
+                ratings: ratings,
+                additionalInfo: document.getElementById('additionalInfo').value.trim()
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('form-section').style.display = 'none';
+                    const confirmation = document.getElementById('confirmation');
+                    confirmation.style.display = 'block';
+                    document.getElementById('confirmation-heading').textContent = 'Thank you, ' + payload.coachName + '.';
+                    document.getElementById('confirmation-body').textContent =
+                        'Your nomination for ' + payload.athleteName + ' has been received. The PE department will review all nominations and be in touch within two weeks regarding the 2026–27 cohort.';
+                    confirmation.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+            } catch (err) {
+                submitError.classList.add('visible');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Nomination';
+            }
+        });
+
+        // Clear error on input
+        document.querySelectorAll('#nomination-form input, #nomination-form select, #nomination-form textarea').forEach(el => {
+            el.addEventListener('input', () => {
+                el.classList.remove('error');
+                const errorEl = el.parentElement.querySelector('.error-message');
+                if (errorEl) errorEl.classList.remove('visible');
+            });
+        });
+    </script>
+</body>
+</html>
