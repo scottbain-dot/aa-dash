@@ -170,6 +170,13 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ===== SAVE NOMINATION =====
+    if (data.action === 'saveNomination') {
+      var nomResult = handleSaveNomination(data);
+      return ContentService.createTextOutput(JSON.stringify(nomResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (data.athleteId && data.updates) {
       return updateStudent(data.athleteId, data.updates);
     }
@@ -1559,6 +1566,60 @@ function handleGetAICoachingInsights(studentData) {
     var insights = JSON.parse(aiText);
 
     return { success: true, insights: insights };
+
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ========================================
+// NOMINATION HANDLER
+// ========================================
+
+function handleSaveNomination(data) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('Nominations');
+
+    if (!sheet) {
+      sheet = ss.insertSheet('Nominations');
+      sheet.appendRow([
+        'Timestamp',
+        'Coach_Name',
+        'Coach_Role',
+        'Coach_School',
+        'Coach_Email',
+        'Athlete_Name',
+        'Athlete_Grade',
+        'Nomination_Reason',
+        'Grit_Rating',
+        'Coachability_Rating',
+        'SelfMotivation_Rating',
+        'AthleticPotential_Rating',
+        'Additional_Info'
+      ]);
+      sheet.getRange(1, 1, 1, 13).setFontWeight('bold');
+    }
+
+    var ratings = data.ratings || {};
+
+    sheet.appendRow([
+      new Date(),
+      data.coachName || '',
+      data.coachRole || '',
+      data.coachSchool || '',
+      data.coachEmail || '',
+      data.athleteName || '',
+      data.athleteGrade || '',
+      data.nominationReason || '',
+      ratings.grit || 0,
+      ratings.coachability || 0,
+      ratings.selfMotivation || 0,
+      ratings.athleticPotential || 0,
+      data.additionalInfo || ''
+    ]);
+
+    return { success: true };
 
   } catch (error) {
     return { success: false, error: error.toString() };
