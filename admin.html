@@ -1790,7 +1790,7 @@
         // ============================================
         async function loadStudents() {
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=getAllStudents`);
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getAllStudents&_t=${Date.now()}`);
                 const data = await response.json();
                 
                 if (data.success && data.students) {
@@ -2073,8 +2073,9 @@
                 selectedStudent[levelKey] = tier;
                 pendingUpdates[levelKey] = tier;
             }
-            // Also update the display value used by the UI
+            // Always save the legacy _Str column too (used by dashboard and other portals)
             selectedStudent[pattern + '_Str'] = tier;
+            pendingUpdates[pattern + '_Str'] = tier;
 
             document.querySelectorAll('#strButtons .level-btn').forEach((btn, i) => {
                 btn.classList.toggle('active', i === tier);
@@ -2093,26 +2094,53 @@
             saveBtn.disabled = true;
             saveBtn.textContent = 'Saving...';
 
+            // Snapshot what we're saving before clearing
+            const updatesToSend = { ...pendingUpdates };
+
             try {
-                // Use GET with URL params (simpler for Apps Script CORS)
-                const params = new URLSearchParams({
-                    action: 'updateStudent',
-                    athleteId: selectedStudent.Athlete_ID,
-                    updates: JSON.stringify(pendingUpdates)
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateStudent',
+                        athleteId: selectedStudent.Athlete_ID,
+                        updates: updatesToSend
+                    })
                 });
-                
-                const response = await fetch(`${APPS_SCRIPT_URL}?${params}`);
-                const data = await response.json();
-                
+
+                if (!response.ok) {
+                    throw new Error('Server returned ' + response.status);
+                }
+
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (parseErr) {
+                    console.error('Invalid JSON response:', text.substring(0, 200));
+                    throw new Error('Server returned invalid response');
+                }
+
                 if (data.success) {
-                    showToast('Changes saved!', 'success');
-                    pendingUpdates = {};
-                    
-                    // Update local data
-                    for (const [key, value] of Object.entries(data.updatedValues || pendingUpdates)) {
+                    // Verify save: check server returned the values we sent
+                    const confirmed = data.savedValues || {};
+                    const sent = Object.keys(updatesToSend);
+                    const saved = Object.keys(confirmed);
+                    if (saved.length > 0 && saved.length < sent.length) {
+                        const missing = sent.filter(k => !(k in confirmed));
+                        console.warn('Some fields were not saved:', missing);
+                        showToast('Warning: some changes may not have saved (' + missing.join(', ') + ')', 'error');
+                    }
+
+                    // Update local data from server-confirmed values, falling back to what we sent
+                    const merged = { ...updatesToSend, ...confirmed };
+                    for (const [key, value] of Object.entries(merged)) {
                         selectedStudent[key] = value;
                     }
-                    
+
+                    pendingUpdates = {};
+                    showToast('Changes saved!', 'success');
+
                     renderProgressGrid();
                     renderTable();
                     updateStats();
@@ -2122,7 +2150,7 @@
                 }
             } catch (error) {
                 console.error('Error saving:', error);
-                showToast('Failed to save changes', 'error');
+                showToast('Failed to save changes — please try again', 'error');
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.textContent = '💾 Save Changes';
@@ -2154,20 +2182,22 @@
         
         async function deleteNote(index) {
             if (!confirm('Delete this note?')) return;
-            
+
             const notes = selectedStudent.Notes ? JSON.parse(selectedStudent.Notes) : [];
             notes.splice(index, 1);
-            
+
             try {
-                const params = new URLSearchParams({
-                    action: 'updateStudent',
-                    athleteId: selectedStudent.Athlete_ID,
-                    updates: JSON.stringify({ Notes: JSON.stringify(notes) })
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateStudent',
+                        athleteId: selectedStudent.Athlete_ID,
+                        updates: { Notes: JSON.stringify(notes) }
+                    })
                 });
-                
-                const response = await fetch(`${APPS_SCRIPT_URL}?${params}`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     selectedStudent.Notes = JSON.stringify(notes);
                     renderNotes();
@@ -2197,15 +2227,17 @@
             });
 
             try {
-                const params = new URLSearchParams({
-                    action: 'updateStudent',
-                    athleteId: selectedStudent.Athlete_ID,
-                    updates: JSON.stringify({ Notes: JSON.stringify(notes) })
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateStudent',
+                        athleteId: selectedStudent.Athlete_ID,
+                        updates: { Notes: JSON.stringify(notes) }
+                    })
                 });
-                
-                const response = await fetch(`${APPS_SCRIPT_URL}?${params}`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     selectedStudent.Notes = JSON.stringify(notes);
                     renderNotes();
@@ -2772,23 +2804,22 @@ Respond in JSON only. No preamble, no markdown, no code blocks. Format:
             btn.textContent = 'Saving...';
 
             try {
-                const updates = {};
-                if (mindset) updates.Mindset = parseInt(mindset);
-                if (toughness) updates.Mental_Toughness = parseInt(toughness);
-                if (grit) updates.Grit = parseInt(grit);
-
-                if (Object.keys(updates).length === 0) {
+                if (!mindset && !toughness && !grit) {
                     showToast('No scores to save', 'error');
                     return;
                 }
 
-                const params = new URLSearchParams({
-                    action: 'updateStudent',
-                    athleteId: student.athleteId,
-                    updates: JSON.stringify(updates)
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updatePsychScores',
+                        email: student.email || student.athleteId,
+                        mindset: mindset ? parseInt(mindset) : undefined,
+                        mentalToughness: toughness ? parseInt(toughness) : undefined,
+                        grit: grit ? parseInt(grit) : undefined
+                    })
                 });
-
-                const response = await fetch(`${APPS_SCRIPT_URL}?${params}`);
                 const data = await response.json();
 
                 if (data.success) {
