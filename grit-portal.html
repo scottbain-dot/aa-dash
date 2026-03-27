@@ -1268,22 +1268,51 @@ async function submitChallenge() {
 // ============ API PERSISTENCE ============
 async function persistChallenge() {
     if (!currentChallenge) return;
-    try {
-        const response = await fetch(GRIT_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                action: 'saveGritChallenge',
-                email: currentUser.email,
-                challenge: currentChallenge
-            })
-        });
-        const data = await response.json();
-        if (!data.success) {
-            console.error('Save failed:', data.error);
+
+    const MAX_RETRIES = 2;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            const response = await fetch(GRIT_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    action: 'saveGritChallenge',
+                    email: currentUser.email,
+                    challenge: currentChallenge
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Server returned ' + response.status);
+            }
+
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (parseErr) {
+                throw new Error('Server returned invalid response');
+            }
+
+            if (!data.success) {
+                // Don't retry server-side validation errors (e.g. athlete not found)
+                const errMsg = data.error || 'Unknown error';
+                console.error('Save failed:', errMsg);
+                showToast('⚠️ Save failed — ' + errMsg);
+                return;
+            }
+
+            // Save succeeded
+            return;
+        } catch (e) {
+            console.error(`Save attempt ${attempt + 1} failed:`, e);
+            if (attempt < MAX_RETRIES) {
+                // Wait before retrying (1s, then 2s)
+                await new Promise(r => setTimeout(r, (attempt + 1) * 1000));
+            } else {
+                showToast('⚠️ Could not save — check your connection and try again');
+            }
         }
-    } catch (e) {
-        console.error('Error saving challenge:', e);
     }
 }
 
@@ -1713,7 +1742,7 @@ function viewFinalSession() {
     openModal('finalModal');
 }
 
-function saveSession() {
+async function saveSession() {
     // Session 1 uses sessionBaseline; Sessions 2-7 use sessionGoal
     const baselineEl = document.getElementById('sessionBaseline');
     const goalEl = document.getElementById('sessionGoal');
@@ -1727,6 +1756,10 @@ function saveSession() {
         showToast(currentSessionNum === 1 ? 'Please describe what you measured' : 'Please describe your session goal');
         return;
     }
+
+    // Disable save button while persisting
+    const saveBtn = document.querySelector('#sessionModal .btn-success');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
 
     // Update current weight for strength challenges
     if (isActiveStrength()) {
@@ -1746,6 +1779,9 @@ function saveSession() {
     }
     currentChallenge.sessions[currentSessionNum - 1] = sessionData;
 
+    // Save to server BEFORE showing success
+    await persistChallenge();
+
     closeModal('sessionModal');
     renderActiveView();
 
@@ -1757,8 +1793,6 @@ function saveSession() {
         document.getElementById('completeTitle').textContent = `Session ${currentSessionNum} Complete!`;
         openModal('completeModal');
     }
-
-    persistChallenge();
 }
 
 function openFinalModal() {
@@ -1813,13 +1847,17 @@ function openFinalModal() {
     openModal('finalModal');
 }
 
-function submitFinal() {
+async function submitFinal() {
     const remeasure = document.getElementById('finalRemeasure').value.trim();
 
     if (!remeasure) {
         showToast('Please enter your final measurement');
         return;
     }
+
+    // Disable save button while persisting
+    const saveBtn = document.querySelector('#finalModal .btn-success');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
 
     currentChallenge.current = remeasure;
     const existingFinal = currentChallenge.sessions[7] || {};
@@ -1834,6 +1872,9 @@ function submitFinal() {
     };
     currentChallenge.status = 'complete';
 
+    // Save to server BEFORE showing success
+    await persistChallenge();
+
     closeModal('finalModal');
     renderActiveView();
 
@@ -1844,21 +1885,19 @@ function submitFinal() {
         document.getElementById('completeTitle').textContent = 'Challenge Complete!';
         openModal('completeModal');
     }
-
-    persistChallenge();
 }
 
 // ============ TIME LOG ============
-function addTimeLog() {
+async function addTimeLog() {
     const date = document.getElementById('logDate').value;
     const mins = parseInt(document.getElementById('logMins').value);
     const note = document.getElementById('logNote').value.trim();
-    
+
     if (!date || !mins) {
         showToast('Enter date and minutes');
         return;
     }
-    
+
     currentChallenge.homeLogs = currentChallenge.homeLogs || [];
     currentChallenge.homeLogs.push({ date, mins, note: note || 'Practice' });
 
@@ -1866,9 +1905,8 @@ function addTimeLog() {
     document.getElementById('logNote').value = '';
 
     renderActiveView();
+    await persistChallenge();
     showToast('Time logged!');
-
-    persistChallenge();
 }
 
 // ============ UPDATE MODAL ============
@@ -1904,7 +1942,7 @@ function openUpdateModal() {
     openModal('updateModal');
 }
 
-function saveUpdate() {
+async function saveUpdate() {
     const val = document.getElementById('updateValue').value.trim();
     if (!val) return;
 
@@ -1927,9 +1965,8 @@ function saveUpdate() {
     currentChallenge.current = val;
     closeModal('updateModal');
     renderActiveView();
+    await persistChallenge();
     showToast('Updated!');
-
-    persistChallenge();
 }
 
 // ============ EDIT GOAL ============
