@@ -952,6 +952,14 @@ async function loadGritChallenge() {
         
         if (data.success && data.challenge) {
             currentChallenge = data.challenge;
+            // Sanitize sessions array — server may insert nulls when padding
+            if (currentChallenge.sessions) {
+                currentChallenge.sessions = currentChallenge.sessions.map(s => s || {});
+                // Ensure 8 entries
+                while (currentChallenge.sessions.length < 8) currentChallenge.sessions.push({});
+            } else {
+                currentChallenge.sessions = [{},{},{},{},{},{},{},{}];
+            }
             if (currentChallenge.status === 'pending') {
                 showPendingView();
             } else if (currentChallenge.status === 'complete') {
@@ -1385,7 +1393,7 @@ function renderActiveView() {
 
 function renderTimeline() {
     const sessions = currentChallenge.sessions || [];
-    const completedCount = sessions.filter(s => s.completed).length;
+    const completedCount = sessions.filter(s => s && s.completed).length;
     
     const timeline = document.getElementById('timeline');
     timeline.innerHTML = TIMELINE.map((item, i) => {
@@ -1471,7 +1479,7 @@ function renderTimeLogs() {
 
 function updateNextAction() {
     const sessions = currentChallenge.sessions || [];
-    const completedCount = sessions.filter(s => s.completed).length;
+    const completedCount = sessions.filter(s => s && s.completed).length;
     
     if (completedCount >= 8) {
         document.getElementById('nextAction').style.display = 'none';
@@ -1486,7 +1494,7 @@ function updateNextAction() {
 
 function openCurrentSession() {
     const sessions = currentChallenge.sessions || [];
-    const completedCount = sessions.filter(s => s.completed).length;
+    const completedCount = sessions.filter(s => s && s.completed).length;
     openSession(completedCount + 1);
 }
 
@@ -1550,10 +1558,10 @@ function openSession(num) {
     // Restore editable footer (may have been swapped by viewSession)
     const footer = document.querySelector('#sessionModal .modal-footer');
     const savedForBlock = (currentChallenge.sessions || [])[num - 1];
-    const isBlocked = savedForBlock && savedForBlock.requiresPlanningFirst;
+    const isBlocked = savedForBlock && savedForBlock.requiresPlanningFirst && !savedForBlock.completed;
     const isAlreadyCompleted = savedForBlock && savedForBlock.completed;
     const btnLabel = isAlreadyCompleted ? '✓ Update' : '✓ Complete';
-    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('sessionModal')">Cancel</button><button class="btn btn-success" onclick="saveSession()" ${isBlocked ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>${btnLabel}</button>`;
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('sessionModal')">Cancel</button><button class="btn btn-success" id="sessionCompleteBtn" onclick="saveSession()" ${isBlocked ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>${btnLabel}</button>`;
 
     document.getElementById('sessionModalTitle').textContent = `Session ${num}`;
     const body = document.getElementById('sessionModalBody');
@@ -1572,8 +1580,8 @@ function openSession(num) {
     let firstQuestion;
     if (num === 1 && strengthActive) {
         // Strength Session 1: read-only confirmation of setup data (already entered during setup)
-        const exercise = currentChallenge.strengthExercise || 'Strength exercise';
-        const weight = currentChallenge.baseline || '0';
+        const exercise = (currentChallenge.strengthExercise || 'Strength exercise').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        const weight = (currentChallenge.baseline || '0').replace(/"/g, '&quot;').replace(/</g, '&lt;');
         firstQuestion = `<div class="form-group">
             <label class="form-label">Your baseline</label>
             <div style="background: var(--off-white); border: 2px solid var(--light-grey); border-radius: 10px; padding: 14px 16px; font-size: 1rem; font-weight: 600; color: var(--black);">${exercise} — ${weight}</div>
@@ -1631,6 +1639,30 @@ function openSession(num) {
             const weightEl = document.getElementById('sessionStrengthWeight');
             if (weightEl && currentChallenge.current) weightEl.value = currentChallenge.current;
         }
+    }
+
+    // If blocked by requiresPlanningFirst, enable Complete once student fills in their plan
+    if (isBlocked) {
+        const planEl = document.getElementById('sessionPlan');
+        const goalEl = document.getElementById('sessionGoal') || document.getElementById('sessionBaseline');
+        const completeBtn = document.getElementById('sessionCompleteBtn');
+        const checkUnblock = () => {
+            const hasPlan = planEl && planEl.value.trim().length > 0;
+            const hasGoal = goalEl && goalEl.value.trim().length > 0;
+            if (hasPlan && hasGoal) {
+                completeBtn.disabled = false;
+                completeBtn.style.opacity = '';
+                completeBtn.style.cursor = '';
+            } else {
+                completeBtn.disabled = true;
+                completeBtn.style.opacity = '0.5';
+                completeBtn.style.cursor = 'not-allowed';
+            }
+        };
+        if (planEl) planEl.addEventListener('input', checkUnblock);
+        if (goalEl) goalEl.addEventListener('input', checkUnblock);
+        // Check immediately in case fields are pre-populated
+        checkUnblock();
     }
 
     openModal('sessionModal');
@@ -1771,7 +1803,7 @@ async function saveSession() {
 
     // Preserve existing fields (coachFeedback, requiresPlanningFirst) when re-saving
     const existing = currentChallenge.sessions[currentSessionNum - 1] || {};
-    const sessionData = { ...existing, completed: true, plan, measure, obstacle, counter };
+    const sessionData = { ...existing, completed: true, requiresPlanningFirst: false, plan, measure, obstacle, counter };
     if (currentSessionNum === 1) {
         sessionData.baseline = primaryField;
     } else {
@@ -1937,7 +1969,7 @@ function openUpdateModal() {
             </div>`;
     } else {
         titleEl.textContent = 'Update Measurement';
-        body.innerHTML = `<div class="form-group"><label class="form-label">Current level</label><input type="text" class="form-input" id="updateValue" value="${currentChallenge.current}"></div>`;
+        body.innerHTML = `<div class="form-group"><label class="form-label">Current level</label><input type="text" class="form-input" id="updateValue" value="${(currentChallenge.current || '').replace(/"/g, '&quot;')}"></div>`;
     }
     openModal('updateModal');
 }
