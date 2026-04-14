@@ -144,11 +144,89 @@
             padding: 2rem;
             box-shadow: 0px 4px 16px rgba(53,15,13,0.04);
             transition: box-shadow 0.3s ease, transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
         }
 
         .card:hover {
             box-shadow: 0px 12px 32px rgba(53,15,13,0.08);
             transform: translateY(-2px);
+        }
+
+        /* ===== CARD PREVIEW OVERLAY ===== */
+        .card-preview {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 60%;
+            background: rgba(29, 27, 27, 0.95);
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+            padding: 1rem;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+            box-sizing: border-box;
+        }
+
+        .card:hover .card-preview,
+        .card.preview-active .card-preview {
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .card-preview-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #D4AF37;
+            letter-spacing: 0.25em;
+            font-weight: 600;
+        }
+
+        .card-preview-media {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .card-preview-img {
+            width: 100%;
+            max-height: 160px;
+            object-fit: cover;
+            border-radius: 0.75rem;
+            display: block;
+        }
+
+        .card-preview-placeholder {
+            background: #2d2a2a;
+            border-radius: 0.75rem;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #524342;
+            font-style: italic;
+            font-size: 0.8rem;
+        }
+
+        .card-preview-svg {
+            width: 100%;
+            max-height: 160px;
+            border-radius: 0.75rem;
+            display: block;
+            background: #2d2a2a;
+        }
+
+        .card-preview-caption {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.75rem;
+            font-style: italic;
+            line-height: 1.4;
         }
 
         .card-accent {
@@ -601,6 +679,7 @@
     <section class="programme">
         <div class="section-overline">THE PROGRAMME</div>
         <h2 class="section-heading">What your athlete will have access to</h2>
+        <!-- Preview images: replace ./assets/preview-*.png with real screenshots when available -->
         <div class="cards-grid">
             <!-- Card 1: Training Age -->
             <div class="card">
@@ -615,6 +694,16 @@
                 </div>
                 <h3 class="card-heading">Training Age</h3>
                 <p class="card-body">A personalised metric that tracks athletic development across Psychology, Physiology, and Health & Skills. Updated every term. Grows over years.</p>
+                <div class="card-preview">
+                    <div class="card-preview-label">Preview</div>
+                    <div class="card-preview-media">
+                        <img src="./assets/preview-training-age.png" alt="Training Age dashboard preview" class="card-preview-img"
+                             onload="this.nextElementSibling.style.display='none'"
+                             onerror="this.style.display='none'">
+                        <div class="card-preview-placeholder">Screenshot coming soon</div>
+                    </div>
+                    <div class="card-preview-caption">Your Training Age grows every term across three pillars</div>
+                </div>
             </div>
             <!-- Card 2: Personal Training Portal -->
             <div class="card">
@@ -633,6 +722,16 @@
                 </div>
                 <h3 class="card-heading">Personal Training Portal</h3>
                 <p class="card-body">Athletes plan their own training weeks, log sessions, and track progress over time. Teacher-visible — coach feedback built in.</p>
+                <div class="card-preview">
+                    <div class="card-preview-label">Preview</div>
+                    <div class="card-preview-media">
+                        <img src="./assets/preview-athlete-portal.png" alt="Personal Training Portal preview" class="card-preview-img"
+                             onload="this.nextElementSibling.style.display='none'"
+                             onerror="this.style.display='none'">
+                        <div class="card-preview-placeholder">Screenshot coming soon</div>
+                    </div>
+                    <div class="card-preview-caption">Plan your training week, log sessions, and track progress</div>
+                </div>
             </div>
             <!-- Card 3: PE Integration -->
             <div class="card">
@@ -651,6 +750,61 @@
                 </div>
                 <h3 class="card-heading">PE Time to Train</h3>
                 <p class="card-body">Selected PE units give athletes dedicated training time during the school day — structured development built into the timetable, not just an after-school commitment.</p>
+                <div class="card-preview">
+                    <div class="card-preview-label">Preview</div>
+                    <div class="card-preview-media">
+                        <svg class="card-preview-svg" viewBox="0 0 320 160" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="0" y="0" width="320" height="160" fill="#2d2a2a" rx="8"/>
+                            <!-- Day headers -->
+                            <g font-family="Segoe UI, system-ui, sans-serif" font-size="9" fill="rgba(255,255,255,0.6)" text-anchor="middle" font-weight="600">
+                                <text x="82" y="22">MON</text>
+                                <text x="130" y="22">TUE</text>
+                                <text x="178" y="22">WED</text>
+                                <text x="226" y="22">THU</text>
+                                <text x="274" y="22">FRI</text>
+                            </g>
+                            <!-- Row labels -->
+                            <g font-family="Segoe UI, system-ui, sans-serif" font-size="8" fill="rgba(255,255,255,0.5)" font-weight="600">
+                                <text x="10" y="58">AM</text>
+                                <text x="10" y="110">PM</text>
+                            </g>
+                            <!-- Grid cells -->
+                            <g>
+                                <!-- Morning row -->
+                                <rect x="58" y="34" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
+                                <rect x="106" y="34" width="48" height="44" rx="4" fill="#874b46" stroke="#a06b66"/>
+                                <rect x="154" y="34" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
+                                <rect x="202" y="34" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
+                                <rect x="250" y="34" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
+                                <!-- Afternoon row -->
+                                <rect x="58" y="86" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
+                                <rect x="106" y="86" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
+                                <rect x="154" y="86" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
+                                <rect x="202" y="86" width="48" height="44" rx="4" fill="#874b46" stroke="#a06b66"/>
+                                <rect x="250" y="86" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
+                            </g>
+                            <!-- Highlighted cell labels -->
+                            <g font-family="Segoe UI, system-ui, sans-serif" font-size="8" fill="#ffffff" text-anchor="middle" font-weight="700">
+                                <text x="130" y="54">AA</text>
+                                <text x="130" y="66">Training</text>
+                                <text x="226" y="106">AA</text>
+                                <text x="226" y="118">Training</text>
+                            </g>
+                            <!-- Subtle dots in other cells -->
+                            <g fill="rgba(255,255,255,0.2)">
+                                <circle cx="82" cy="56" r="1.5"/>
+                                <circle cx="178" cy="56" r="1.5"/>
+                                <circle cx="226" cy="56" r="1.5"/>
+                                <circle cx="274" cy="56" r="1.5"/>
+                                <circle cx="82" cy="108" r="1.5"/>
+                                <circle cx="130" cy="108" r="1.5"/>
+                                <circle cx="178" cy="108" r="1.5"/>
+                                <circle cx="274" cy="108" r="1.5"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="card-preview-caption">Dedicated training time built into your school week</div>
+                </div>
             </div>
             <!-- Card 4: Strength & Movement -->
             <div class="card">
@@ -666,6 +820,16 @@
                 </div>
                 <h3 class="card-heading">Strength & Movement Foundations</h3>
                 <p class="card-body">Progressive technique and strength development across six fundamental movement patterns. Assessed termly, tracked across years.</p>
+                <div class="card-preview">
+                    <div class="card-preview-label">Preview</div>
+                    <div class="card-preview-media">
+                        <img src="./assets/preview-strength.png" alt="Strength portal preview" class="card-preview-img"
+                             onload="this.nextElementSibling.style.display='none'"
+                             onerror="this.style.display='none'">
+                        <div class="card-preview-placeholder">Screenshot coming soon</div>
+                    </div>
+                    <div class="card-preview-caption">Six movement patterns, tracked from Level 1 to Level 5</div>
+                </div>
             </div>
         </div>
     </section>
@@ -832,6 +996,22 @@
     </footer>
 
     <script>
+        // Programme card preview — click to toggle on touch devices, hover handled by CSS on desktop
+        (function() {
+            const programmeCards = document.querySelectorAll('.programme .card');
+            programmeCards.forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const wasActive = card.classList.contains('preview-active');
+                    programmeCards.forEach(c => c.classList.remove('preview-active'));
+                    if (!wasActive) card.classList.add('preview-active');
+                    e.stopPropagation();
+                });
+            });
+            document.addEventListener('click', () => {
+                programmeCards.forEach(c => c.classList.remove('preview-active'));
+            });
+        })();
+
         const API_URL = 'https://script.google.com/macros/s/AKfycbzoyT7zqrOhEf3LAsflbRB73OO2-RaHdnCz5f676xuO9Odc6wFUQpo0aE3XX6Qt-Bk0/exec';
 
         const RATING_LABELS = {
