@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maya Hoffmann — Athlete Academy Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --burgundy: #874B46;
+            --burgundy-dark: #6a3a36;
+            --burgundy-light: #a06b66;
+            --gold: #D4AF37;
+            --gold-light: #f5e6b3;
+            --black: #1a1a1a;
+            --dark: #1d1b1b;
+            --white: #ffffff;
+            --off-white: #f8f6f5;
+            --cream: #f8f2f1;
+            --grey: #524342;
+            --light-grey: #e8e0de;
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #dc2626;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #fef8f6;
+            color: var(--dark);
+            -webkit-font-smoothing: antialiased;
+            min-width: 1024px;
+        }
+
+        body { padding-bottom: 4rem; }
+
+        /* Top Navigation — glassmorphism */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(254, 248, 246, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(135, 75, 70, 0.08);
+            z-index: 900;
+            box-shadow: 0 12px 32px rgba(53, 15, 13, 0.04);
+        }
+        .top-nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.9rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            text-decoration: none;
+            color: var(--burgundy);
+            font-weight: 800;
+            font-size: 0.95rem;
+            letter-spacing: 0.08em;
+        }
+        .nav-logo-icon {
+            width: 34px;
+            height: 34px;
+            background: var(--burgundy);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: var(--white);
+        }
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .nav-user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--grey);
+        }
+        .nav-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--burgundy);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Generic overline style */
+        .overline {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--grey);
+        }
+        .overline-gold { color: var(--gold); }
+        .overline-white { color: rgba(255,255,255,0.5); }
+
+        /* Section base */
+        section { margin-bottom: 2rem; }
+        .section-heading {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-top: 0.3rem;
+            letter-spacing: -0.01em;
+        }
+
+        /* ───────── Section 1 — Hero Profile Card ───────── */
+        .hero-card {
+            background: var(--dark);
+            border-radius: 2rem;
+            padding: 2.5rem;
+            display: grid;
+            grid-template-columns: 3fr 5fr 4fr;
+            gap: 2rem;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(53, 15, 13, 0.18);
+        }
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 30% 0%, rgba(212,175,55,0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 100%, rgba(135,75,70,0.12) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .hero-col { position: relative; z-index: 1; }
+
+        .hero-left {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .gauge-wrap {
+            width: 180px;
+            height: 180px;
+            position: relative;
+        }
+        .gauge-wrap svg { width: 100%; height: 100%; }
+        .gauge-centre {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .gauge-number {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--white);
+            line-height: 1;
+            letter-spacing: -0.03em;
+        }
+        .gauge-max {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.5);
+            font-weight: 600;
+            margin-top: 0.1rem;
+        }
+        .gauge-label {
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            color: var(--gold);
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+        .gauge-insight {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            font-style: italic;
+            text-align: center;
+            max-width: 220px;
+            line-height: 1.4;
+        }
+
+        .hero-middle .athlete-name {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--white);
+            letter-spacing: -0.02em;
+            margin-top: 0.4rem;
+        }
+        .hero-middle .athlete-meta {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+            margin-top: 0.35rem;
+            font-weight: 500;
+        }
+        .hero-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 1.25rem 0;
+        }
+        .pillar-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+        .pillar-box {
+            padding: 0.9rem 0.85rem;
+            border-radius: 1rem;
+            background: rgba(255,255,255,0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .pillar-box.gold {
+            background: linear-gradient(135deg, #D4AF37 0%, #b8922e 100%);
+        }
+        .pillar-label {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: rgba(255,255,255,0.85);
+        }
+        .pillar-box.gold .pillar-label { color: rgba(29,27,27,0.75); }
+        .pillar-score {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: var(--white);
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+        .pillar-box.gold .pillar-score { color: var(--dark); }
+        .pillar-badge {
+            display: inline-block;
+            width: fit-content;
+            background: rgba(0,0,0,0.2);
+            color: var(--white);
+            padding: 0.15rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .pillar-box.gold .pillar-badge {
+            background: rgba(29,27,27,0.18);
+            color: var(--dark);
+        }
+
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .week-mini {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-top: 0.3rem;
+        }
+        .week-mini-row {
+            display: grid;
+            grid-template-columns: 32px 1fr 14px;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.45rem 0.7rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 0.6rem;
+        }
+        .week-mini-day {
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase;
+        }
+        .week-mini-session {
+            font-size: 0.8rem;
+            color: var(--white);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .dot-red { background: #ef4444; }
+        .dot-amber { background: #f59e0b; }
+        .dot-green { background: #22c55e; }
+
+        /* ───────── Section 2 — Training Age Progression ───────── */
+        .progress-section {
+            background: var(--cream);
+            border-radius: 2rem;
+            padding: 2rem;
+        }
+        .chart-wrap {
+            height: 220px;
+            margin-top: 1.25rem;
+            position: relative;
+        }
+        .stat-chips {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .stat-chip {
+            background: var(--white);
+            border-radius: 9999px;
+            padding: 0.5rem 1.25rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 6px rgba(53,15,13,0.05);
+        }
+        .stat-chip .chip-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .stat-chip.burgundy { color: var(--burgundy); }
+        .stat-chip.burgundy .chip-dot { background: var(--burgundy); }
+        .stat-chip.green { color: #16a34a; }
+        .stat-chip.green .chip-dot { background: var(--green); }
+        .stat-chip.gold { color: #8a6d16; }
+        .stat-chip.gold .chip-dot { background: var(--gold); }
+
+        /* ───────── Section 3 — Weekly Plan + Testing ───────── */
+        .week-grid {
+            display: grid;
+            grid-template-columns: 7fr 5fr;
+            gap: 1.5rem;
+        }
+        .card-white {
+            background: var(--white);
+            border-radius: 2rem;
+            padding: 2rem;
+            box-shadow: 0 8px 28px rgba(53,15,13,0.06);
+        }
+        .session-list { margin-top: 1.25rem; }
+        .session-row {
+            display: grid;
+            grid-template-columns: 40px 14px 1fr;
+            align-items: center;
+            gap: 0.9rem;
+            padding: 0.9rem 0;
+            border-bottom: 1px solid var(--cream);
+        }
+        .session-row:last-child { border-bottom: none; }
+        .session-day {
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            font-weight: 700;
+            color: var(--grey);
+            text-transform: uppercase;
+        }
+        .session-info .session-name {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+        .session-info .session-detail {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.15rem;
+        }
+        .load-strip {
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 2px solid var(--cream);
+        }
+        .load-squares {
+            display: flex;
+            gap: 0.35rem;
+            margin-top: 0.5rem;
+        }
+        .load-square {
+            width: 28px;
+            height: 28px;
+            border-radius: 0.4rem;
+        }
+        .load-square.red { background: #ef4444; }
+        .load-square.amber { background: #f59e0b; }
+        .load-square.green { background: #22c55e; }
+        .load-label {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.6rem;
+            font-weight: 500;
+        }
+
+        /* Testing rows */
+        .test-row {
+            display: grid;
+            grid-template-columns: 36px 1fr auto;
+            align-items: center;
+            gap: 0.9rem;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid var(--cream);
+        }
+        .test-row:last-child { border-bottom: none; }
+        .test-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--white);
+        }
+        .test-icon.done { background: var(--green); }
+        .test-icon.pending { background: var(--amber); }
+        .test-name {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+        .test-detail {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.15rem;
+        }
+        .score-pill {
+            padding: 0.4rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .score-pill.gold { background: var(--gold-light); color: #6b5212; }
+        .score-pill.burgundy { background: rgba(135,75,70,0.12); color: var(--burgundy); }
+        .score-pill.amber { background: rgba(245,158,11,0.15); color: #92530b; }
+        .score-pill.grey { background: var(--cream); color: var(--grey); }
+        .next-test-callout {
+            margin-top: 1.25rem;
+            background: var(--cream);
+            border-radius: 1rem;
+            padding: 1rem 1.1rem;
+        }
+        .next-test-callout .next-label {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        .next-test-callout .next-detail {
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+
+        /* ───────── Section 4 — Strength Patterns ───────── */
+        .strength-section {
+            background: var(--cream);
+            border-radius: 2rem;
+            padding: 2rem;
+        }
+        .strength-summary {
+            background: var(--gold-light);
+            border-radius: 1rem;
+            padding: 0.9rem 1.25rem;
+            margin-top: 1.25rem;
+            font-weight: 600;
+            color: #6b5212;
+            font-size: 0.9rem;
+        }
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.25rem;
+        }
+        .pattern-card {
+            background: var(--white);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 6px 20px rgba(53,15,13,0.06);
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+        }
+        .pattern-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.30;
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 40%, black 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 40%, black 100%);
+            pointer-events: none;
+        }
+        .pattern-card.squat::before { background-image: url('strength-squat.jpg'); }
+        .pattern-card.hinge::before { background-image: url('strength-hinge.jpg'); }
+        .pattern-card.push::before { background-image: url('strength-push.jpg'); }
+        .pattern-card.pull::before { background-image: url('strength-pull.jpg'); }
+        .pattern-card.lunge::before { background-image: url('strength-lunge.jpg'); }
+        .pattern-card.press::before { background-image: url('strength-press.png'); }
+        .pattern-inner { position: relative; z-index: 1; }
+        .pattern-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.01em;
+        }
+        .pattern-exercise {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.2rem;
+        }
+        .pattern-level {
+            display: inline-block;
+            margin-top: 0.75rem;
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            font-weight: 800;
+            color: var(--burgundy);
+            text-transform: uppercase;
+        }
+        .str-bar-wrap {
+            margin-top: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .str-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--cream);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .str-bar-fill {
+            height: 100%;
+            background: var(--burgundy);
+            border-radius: 9999px;
+        }
+        .str-bar-frac {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--burgundy);
+            white-space: nowrap;
+        }
+        .pattern-headline {
+            margin-top: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--burgundy);
+            letter-spacing: -0.01em;
+        }
+        .pattern-headline.flat { color: var(--grey); }
+
+        /* ───────── Section 5 — Grit History ───────── */
+        .grit-section {
+            background: var(--white);
+            border-radius: 2rem;
+            padding: 2rem;
+            box-shadow: 0 8px 28px rgba(53,15,13,0.06);
+        }
+        .grit-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.25rem;
+        }
+        .grit-card {
+            background: var(--dark);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .grit-card-overline {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        .grit-card-challenge {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.75);
+            font-weight: 600;
+            margin-top: 0.45rem;
+        }
+        .grit-card-result {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: var(--white);
+            letter-spacing: -0.02em;
+            margin-top: 0.5rem;
+        }
+        .grit-card-improve {
+            font-size: 0.95rem;
+            color: var(--green);
+            font-weight: 800;
+            margin-top: 0.25rem;
+        }
+        .grit-score-pills {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .grit-score-pill {
+            background: rgba(255,255,255,0.08);
+            color: var(--white);
+            padding: 0.3rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .grit-score-pill strong { color: var(--gold); margin-left: 0.25rem; }
+
+        .psych-summary-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .psych-comp {
+            background: var(--cream);
+            border-radius: 1rem;
+            padding: 0.9rem 0.85rem;
+        }
+        .psych-comp-label {
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            font-weight: 700;
+            color: var(--grey);
+            text-transform: uppercase;
+        }
+        .psych-comp-score {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--burgundy);
+            margin-top: 0.3rem;
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+        .psych-comp-bar {
+            margin-top: 0.5rem;
+            height: 6px;
+            background: rgba(135,75,70,0.15);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .psych-comp-bar-fill {
+            height: 100%;
+            background: var(--burgundy);
+            border-radius: 9999px;
+        }
+
+        /* ───────── Section 6 — What's Next ───────── */
+        .next-section {
+            background: var(--dark);
+            border-radius: 2rem;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .next-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 80% 0%, rgba(212,175,55,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 20% 100%, rgba(135,75,70,0.12) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .next-section .section-heading { color: var(--white); position: relative; z-index: 1; }
+        .next-section .overline { position: relative; z-index: 1; }
+        .next-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.25rem;
+            position: relative;
+            z-index: 1;
+        }
+        .next-card {
+            background: rgba(255,255,255,0.06);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .next-card-topbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+        .next-card-topbar.gold { background: var(--gold); }
+        .next-card-topbar.burgundy { background: var(--burgundy); }
+        .next-card-topbar.amber { background: var(--amber); }
+        .next-card-overline {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+        .next-card-overline.gold { color: var(--gold); }
+        .next-card-overline.burgundy { color: var(--burgundy-light); }
+        .next-card-overline.amber { color: var(--amber); }
+        .next-card-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--white);
+            margin-top: 0.4rem;
+            letter-spacing: -0.01em;
+        }
+        .next-card-sub {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            margin-top: 0.45rem;
+            line-height: 1.45;
+        }
+        .next-progress {
+            margin-top: 1rem;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .next-progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+        }
+        .next-progress-fill.gold { background: var(--gold); }
+        .next-progress-fill.burgundy { background: var(--burgundy-light); }
+        .countdown {
+            margin-top: 1rem;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--amber);
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+
+        /* Footer */
+        .site-footer {
+            text-align: center;
+            color: var(--grey);
+            font-size: 0.8rem;
+            padding: 2rem;
+        }
+
+        /* Print */
+        @media print {
+            body { background: var(--white); min-width: auto; }
+            .top-nav, .site-footer { display: none !important; }
+            .container { max-width: 100%; padding: 0.5rem; }
+            section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 1rem; box-shadow: none !important; }
+            .hero-card, .card-white, .strength-section, .grit-section, .next-section, .progress-section {
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="top-nav-inner">
+            <a class="nav-logo" href="#">
+                <div class="nav-logo-icon">🏅</div>
+                <div>ATHLETE ACADEMY</div>
+            </a>
+            <div class="nav-user">
+                <div class="nav-user-name">Maya Hoffmann</div>
+                <div class="nav-avatar">MH</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- ========== Section 1 — Hero Profile Card ========== -->
+        <section class="hero-card">
+            <!-- Left column: Training Age gauge -->
+            <div class="hero-col hero-left">
+                <div class="gauge-wrap">
+                    <svg viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="12" />
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="#D4AF37" stroke-width="12"
+                            stroke-linecap="round"
+                            stroke-dasharray="502.65"
+                            stroke-dashoffset="120.64"
+                            transform="rotate(-90 100 100)" />
+                    </svg>
+                    <div class="gauge-centre">
+                        <div class="gauge-number">3.8<span style="color:rgba(255,255,255,0.5);font-size:1.5rem;font-weight:700;">/5</span></div>
+                        <div class="gauge-label">TRAINING AGE</div>
+                    </div>
+                </div>
+                <div class="gauge-insight">Two years of consistent work. The trajectory is clear.</div>
+            </div>
+
+            <!-- Middle column: name + pillars -->
+            <div class="hero-col hero-middle">
+                <div class="overline overline-gold">ATHLETE PROFILE</div>
+                <div class="athlete-name">Maya Hoffmann</div>
+                <div class="athlete-meta">Grade 11 · Year 2 in Programme · Basketball & Athletics</div>
+                <div class="hero-divider"></div>
+                <div class="pillar-row">
+                    <div class="pillar-box gold">
+                        <div class="pillar-label">Psychology</div>
+                        <div class="pillar-score">4.1</div>
+                        <span class="pillar-badge">Leading</span>
+                    </div>
+                    <div class="pillar-box gold">
+                        <div class="pillar-label">Physiology</div>
+                        <div class="pillar-score">3.6</div>
+                        <span class="pillar-badge">Developing</span>
+                    </div>
+                    <div class="pillar-box">
+                        <div class="pillar-label">Health &amp; Skills</div>
+                        <div class="pillar-score">3.2</div>
+                        <span class="pillar-badge">Building</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right column: mini week -->
+            <div class="hero-col hero-right">
+                <div class="overline overline-white">THIS WEEK</div>
+                <div class="week-mini">
+                    <div class="week-mini-row"><span class="week-mini-day">Mon</span><span class="week-mini-session">Upper Strength A</span><span class="dot dot-red"></span></div>
+                    <div class="week-mini-row"><span class="week-mini-day">Tue</span><span class="week-mini-session">Basketball Training</span><span class="dot dot-amber"></span></div>
+                    <div class="week-mini-row"><span class="week-mini-day">Wed</span><span class="week-mini-session">Conditioning</span><span class="dot dot-amber"></span></div>
+                    <div class="week-mini-row"><span class="week-mini-day">Thu</span><span class="week-mini-session">Rest / Recovery</span><span class="dot dot-green"></span></div>
+                    <div class="week-mini-row"><span class="week-mini-day">Fri</span><span class="week-mini-session">Lower Strength B</span><span class="dot dot-red"></span></div>
+                    <div class="week-mini-row"><span class="week-mini-day">Sat</span><span class="week-mini-session">Basketball Game</span><span class="dot dot-red"></span></div>
+                    <div class="week-mini-row"><span class="week-mini-day">Sun</span><span class="week-mini-session">Rest</span><span class="dot dot-green"></span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== Section 2 — Training Age Progression ========== -->
+        <section class="progress-section">
+            <div class="overline">DEVELOPMENT</div>
+            <h2 class="section-heading">Training Age Over Time</h2>
+            <div class="chart-wrap">
+                <canvas id="trainingAgeChart"></canvas>
+            </div>
+            <div class="stat-chips">
+                <div class="stat-chip burgundy"><span class="chip-dot"></span>+1.7 since joining</div>
+                <div class="stat-chip green"><span class="chip-dot"></span>Consistent upward trend</div>
+                <div class="stat-chip gold"><span class="chip-dot"></span>On track for 4.2 by G12</div>
+            </div>
+        </section>
+
+        <!-- ========== Section 3 — Weekly Plan + Testing ========== -->
+        <section class="week-grid">
+            <div class="card-white">
+                <div class="overline">CURRENT WEEK</div>
+                <h2 class="section-heading">Training Plan — Week of 23 Mar 2026</h2>
+                <div class="session-list">
+                    <div class="session-row">
+                        <span class="session-day">Mon</span><span class="dot dot-red"></span>
+                        <div class="session-info"><div class="session-name">Upper Strength A</div><div class="session-detail">Back Squat 4×5 · DB Row 3×10 · DB Press 3×8</div></div>
+                    </div>
+                    <div class="session-row">
+                        <span class="session-day">Tue</span><span class="dot dot-amber"></span>
+                        <div class="session-info"><div class="session-name">Basketball Training</div><div class="session-detail">External — FIS Basketball squad</div></div>
+                    </div>
+                    <div class="session-row">
+                        <span class="session-day">Wed</span><span class="dot dot-amber"></span>
+                        <div class="session-info"><div class="session-name">Conditioning</div><div class="session-detail">Intervals 6×400m · Core circuit</div></div>
+                    </div>
+                    <div class="session-row">
+                        <span class="session-day">Thu</span><span class="dot dot-green"></span>
+                        <div class="session-info"><div class="session-name">Rest / Recovery</div><div class="session-detail">Mobility work · 8hrs sleep target</div></div>
+                    </div>
+                    <div class="session-row">
+                        <span class="session-day">Fri</span><span class="dot dot-red"></span>
+                        <div class="session-info"><div class="session-name">Lower Strength B</div><div class="session-detail">Deadlift 4×5 · DB Lunge 3×10 · Mobility</div></div>
+                    </div>
+                    <div class="session-row">
+                        <span class="session-day">Sat</span><span class="dot dot-red"></span>
+                        <div class="session-info"><div class="session-name">Basketball Game</div><div class="session-detail">External — league fixture</div></div>
+                    </div>
+                    <div class="session-row">
+                        <span class="session-day">Sun</span><span class="dot dot-green"></span>
+                        <div class="session-info"><div class="session-name">Rest</div><div class="session-detail">Full recovery day</div></div>
+                    </div>
+                </div>
+                <div class="load-strip">
+                    <div class="overline">WEEKLY LOAD</div>
+                    <div class="load-squares">
+                        <div class="load-square red"></div>
+                        <div class="load-square amber"></div>
+                        <div class="load-square amber"></div>
+                        <div class="load-square green"></div>
+                        <div class="load-square red"></div>
+                        <div class="load-square red"></div>
+                        <div class="load-square green"></div>
+                    </div>
+                    <div class="load-label">3 Hard · 2 Moderate · 2 Easy — well balanced</div>
+                </div>
+            </div>
+
+            <div class="card-white">
+                <div class="overline">TESTING STATUS</div>
+                <h2 class="section-heading">Performance Assessments</h2>
+                <div style="margin-top:1.25rem;">
+                    <div class="test-row">
+                        <div class="test-icon done">✓</div>
+                        <div><div class="test-name">Broad Jump</div><div class="test-detail">185cm · Tested Feb 2026</div></div>
+                        <div class="score-pill gold">4.0 / 5</div>
+                    </div>
+                    <div class="test-row">
+                        <div class="test-icon done">✓</div>
+                        <div><div class="test-name">40m Sprint</div><div class="test-detail">5.2 sec · Tested Feb 2026</div></div>
+                        <div class="score-pill gold">4.0 / 5</div>
+                    </div>
+                    <div class="test-row">
+                        <div class="test-icon done">✓</div>
+                        <div><div class="test-name">Agility (5-10-5)</div><div class="test-detail">5.1 sec · Tested Feb 2026</div></div>
+                        <div class="score-pill burgundy">3.0 / 5</div>
+                    </div>
+                    <div class="test-row">
+                        <div class="test-icon pending">⏳</div>
+                        <div><div class="test-name">Cooper Test</div><div class="test-detail">2800m · Nov 2025 — Retest due May 2026</div></div>
+                        <div class="score-pill amber">3.0 / 5</div>
+                    </div>
+                    <div class="test-row">
+                        <div class="test-icon pending">⏳</div>
+                        <div><div class="test-name">Mobility</div><div class="test-detail">Assessment due May 2026</div></div>
+                        <div class="score-pill grey">Pending</div>
+                    </div>
+                    <div class="test-row">
+                        <div class="test-icon done">✓</div>
+                        <div><div class="test-name">Strength</div><div class="test-detail">Assessed Mar 2026</div></div>
+                        <div class="score-pill burgundy">3.5 / 5</div>
+                    </div>
+                </div>
+                <div class="next-test-callout">
+                    <div class="next-label">NEXT TESTING DAY</div>
+                    <div class="next-detail">May 19, 2026 — Cooper Test · Mobility Assessment</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== Section 4 — Strength Patterns ========== -->
+        <section class="strength-section">
+            <div class="overline">MOVEMENT DEVELOPMENT</div>
+            <h2 class="section-heading">Foundation Strength Patterns</h2>
+            <div class="strength-summary">6 of 6 patterns active · Level 3 reached in 3 patterns · Strongest gain: Squat +37kg</div>
+            <div class="pattern-grid">
+                <div class="pattern-card squat">
+                    <div class="pattern-inner">
+                        <div class="pattern-name">Squat</div>
+                        <div class="pattern-exercise">Back Squat</div>
+                        <div class="pattern-level">LEVEL 3</div>
+                        <div class="str-bar-wrap">
+                            <div class="str-bar"><div class="str-bar-fill" style="width:80%;"></div></div>
+                            <span class="str-bar-frac">4 / 5</span>
+                        </div>
+                        <div class="pattern-headline">8kg → 45kg</div>
+                    </div>
+                </div>
+                <div class="pattern-card hinge">
+                    <div class="pattern-inner">
+                        <div class="pattern-name">Hinge</div>
+                        <div class="pattern-exercise">KB Deadlift</div>
+                        <div class="pattern-level">LEVEL 3</div>
+                        <div class="str-bar-wrap">
+                            <div class="str-bar"><div class="str-bar-fill" style="width:60%;"></div></div>
+                            <span class="str-bar-frac">3 / 5</span>
+                        </div>
+                        <div class="pattern-headline">BW → 32kg</div>
+                    </div>
+                </div>
+                <div class="pattern-card push">
+                    <div class="pattern-inner">
+                        <div class="pattern-name">Push</div>
+                        <div class="pattern-exercise">DB Bench</div>
+                        <div class="pattern-level">LEVEL 2</div>
+                        <div class="str-bar-wrap">
+                            <div class="str-bar"><div class="str-bar-fill" style="width:60%;"></div></div>
+                            <span class="str-bar-frac">3 / 5</span>
+                        </div>
+                        <div class="pattern-headline">8kg → 16kg</div>
+                    </div>
+                </div>
+                <div class="pattern-card pull">
+                    <div class="pattern-inner">
+                        <div class="pattern-name">Pull</div>
+                        <div class="pattern-exercise">Horizontal Pull</div>
+                        <div class="pattern-level">LEVEL 2</div>
+                        <div class="str-bar-wrap">
+                            <div class="str-bar"><div class="str-bar-fill" style="width:40%;background:var(--grey);"></div></div>
+                            <span class="str-bar-frac" style="color:var(--grey);">2 / 5</span>
+                        </div>
+                        <div class="pattern-headline flat">BW → BW+5kg</div>
+                    </div>
+                </div>
+                <div class="pattern-card lunge">
+                    <div class="pattern-inner">
+                        <div class="pattern-name">Lunge</div>
+                        <div class="pattern-exercise">DB Lunge</div>
+                        <div class="pattern-level">LEVEL 3</div>
+                        <div class="str-bar-wrap">
+                            <div class="str-bar"><div class="str-bar-fill" style="width:80%;"></div></div>
+                            <span class="str-bar-frac">4 / 5</span>
+                        </div>
+                        <div class="pattern-headline">8kg → 20kg</div>
+                    </div>
+                </div>
+                <div class="pattern-card press">
+                    <div class="pattern-inner">
+                        <div class="pattern-name">Press</div>
+                        <div class="pattern-exercise">DB Press</div>
+                        <div class="pattern-level">LEVEL 2</div>
+                        <div class="str-bar-wrap">
+                            <div class="str-bar"><div class="str-bar-fill" style="width:60%;"></div></div>
+                            <span class="str-bar-frac">3 / 5</span>
+                        </div>
+                        <div class="pattern-headline">6kg → 12kg</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== Section 5 — Grit History ========== -->
+        <section class="grit-section">
+            <div class="overline">PSYCHOLOGY DEVELOPMENT</div>
+            <h2 class="section-heading">Grit Challenge History</h2>
+            <div class="grit-cards">
+                <div class="grit-card">
+                    <div class="grit-card-overline">GRADE 10 · TERM 1</div>
+                    <div class="grit-card-challenge">Cooper Run Endurance</div>
+                    <div class="grit-card-result">2,400m → 2,800m</div>
+                    <div class="grit-card-improve">+400m</div>
+                    <div class="grit-score-pills">
+                        <span class="grit-score-pill">Grit <strong>4</strong></span>
+                        <span class="grit-score-pill">Mindset <strong>4</strong></span>
+                        <span class="grit-score-pill">Mental Toughness <strong>3</strong></span>
+                    </div>
+                </div>
+                <div class="grit-card">
+                    <div class="grit-card-overline">GRADE 10 · TERM 2</div>
+                    <div class="grit-card-challenge">Broad Jump Power</div>
+                    <div class="grit-card-result">165cm → 185cm</div>
+                    <div class="grit-card-improve">+20cm</div>
+                    <div class="grit-score-pills">
+                        <span class="grit-score-pill">Grit <strong>5</strong></span>
+                        <span class="grit-score-pill">Mindset <strong>4</strong></span>
+                        <span class="grit-score-pill">Mental Toughness <strong>4</strong></span>
+                    </div>
+                </div>
+                <div class="grit-card">
+                    <div class="grit-card-overline">GRADE 11 · TERM 1</div>
+                    <div class="grit-card-challenge">Back Squat Strength</div>
+                    <div class="grit-card-result">30kg → 45kg</div>
+                    <div class="grit-card-improve">+15kg</div>
+                    <div class="grit-score-pills">
+                        <span class="grit-score-pill">Grit <strong>4</strong></span>
+                        <span class="grit-score-pill">Mindset <strong>5</strong></span>
+                        <span class="grit-score-pill">Mental Toughness <strong>4</strong></span>
+                    </div>
+                </div>
+            </div>
+            <div class="psych-summary-row">
+                <div class="psych-comp"><div class="psych-comp-label">Mindset</div><div class="psych-comp-score">4</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:80%;"></div></div></div>
+                <div class="psych-comp"><div class="psych-comp-label">Grit</div><div class="psych-comp-score">4</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:80%;"></div></div></div>
+                <div class="psych-comp"><div class="psych-comp-label">Mental Toughness</div><div class="psych-comp-score">4</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:80%;"></div></div></div>
+                <div class="psych-comp"><div class="psych-comp-label">Coachability</div><div class="psych-comp-score">5</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:100%;"></div></div></div>
+                <div class="psych-comp"><div class="psych-comp-label">Focus &amp; Engagement</div><div class="psych-comp-score">4</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:80%;"></div></div></div>
+                <div class="psych-comp"><div class="psych-comp-label">Effort &amp; Work Ethic</div><div class="psych-comp-score">3</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:60%;"></div></div></div>
+            </div>
+        </section>
+
+        <!-- ========== Section 6 — What's Next ========== -->
+        <section class="next-section">
+            <div class="overline overline-gold">LOOKING AHEAD</div>
+            <h2 class="section-heading">Maya's G11 Term 2 Focus</h2>
+            <div class="next-cards">
+                <div class="next-card">
+                    <div class="next-card-topbar gold"></div>
+                    <div class="next-card-overline gold">CURRENT CHALLENGE</div>
+                    <div class="next-card-title">Agility Improvement</div>
+                    <div class="next-card-sub">Target: 5.1sec → 4.6sec by May 19</div>
+                    <div class="next-progress"><div class="next-progress-fill gold" style="width:30%;"></div></div>
+                </div>
+                <div class="next-card">
+                    <div class="next-card-topbar burgundy"></div>
+                    <div class="next-card-overline burgundy">STRENGTH FOCUS</div>
+                    <div class="next-card-title">Reach Level 3 Push</div>
+                    <div class="next-card-sub">DB Bench progressing well — technique assessment due</div>
+                    <div class="next-progress"><div class="next-progress-fill burgundy" style="width:60%;"></div></div>
+                </div>
+                <div class="next-card">
+                    <div class="next-card-topbar amber"></div>
+                    <div class="next-card-overline amber">UPCOMING TESTS</div>
+                    <div class="next-card-title">May Testing Day</div>
+                    <div class="next-card-sub">Cooper Test · Mobility Assessment · May 19, 2026</div>
+                    <div class="countdown">54 days</div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer class="site-footer">
+        Athlete Academy · Frankfurt International School · This profile is a programme vision mockup
+    </footer>
+
+    <script>
+        (function(){
+            const ctx = document.getElementById('trainingAgeChart');
+            if (!ctx) return;
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['G9 Entry', 'G10 T1', 'G10 T2', 'G10 T3', 'G11 T1', 'G11 T2 (Now)'],
+                    datasets: [{
+                        data: [2.1, 2.6, 2.9, 3.2, 3.5, 3.8],
+                        borderColor: '#874b46',
+                        backgroundColor: 'rgba(135, 75, 70, 0.08)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#874b46',
+                        pointBorderColor: '#874b46',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1d1b1b',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            padding: 10,
+                            displayColors: false,
+                            callbacks: {
+                                title: function(items){ return items[0].label; },
+                                label: function(ctx){ return 'Training Age: ' + ctx.parsed.y.toFixed(1); }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 1.0,
+                            max: 5.0,
+                            ticks: { color: '#524342', font: { family: 'Inter', size: 11, weight: '600' } },
+                            grid: { color: '#e8e0de' }
+                        },
+                        x: {
+                            ticks: { color: '#524342', font: { family: 'Inter', size: 11, weight: '600' } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
+
