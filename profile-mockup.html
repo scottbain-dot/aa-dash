@@ -786,6 +786,521 @@
             padding: 2rem;
         }
 
+        /* ═══════════════════════════════════════════════════
+           INTERACTIVE LAYER — added for principal demo
+           ═══════════════════════════════════════════════════ */
+
+        /* — Generic overlay behind all modals/drawers — */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(29,27,27,0.55);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            z-index: 1000;
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* — Slide-in drawer from the right — */
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 440px;
+            background: var(--white);
+            box-shadow: -20px 0 40px rgba(53,15,13,0.12);
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(.4,.0,.2,1);
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .drawer.active { transform: translateX(0); }
+        .drawer-progress {
+            height: 4px;
+            background: var(--cream);
+            position: relative;
+        }
+        .drawer-progress-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            background: var(--burgundy);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .drawer-head {
+            padding: 1.5rem 1.75rem 1rem;
+            border-bottom: 1px solid var(--cream);
+            position: relative;
+        }
+        .drawer-day-label {
+            font-size: 10px;
+            letter-spacing: 0.16em;
+            font-weight: 700;
+            color: var(--grey);
+            text-transform: uppercase;
+        }
+        .drawer-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-top: 0.3rem;
+            letter-spacing: -0.01em;
+        }
+        .drawer-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--cream);
+            border: none;
+            font-size: 1.15rem;
+            color: var(--grey);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .drawer-close:hover { background: var(--light-grey); }
+        .drawer-body {
+            padding: 1.5rem 1.75rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .drawer-section-label {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            font-weight: 700;
+            color: var(--grey);
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
+        }
+
+        /* — Intensity selector (three coloured pills) — */
+        .intensity-picker {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .intensity-opt {
+            flex: 1;
+            padding: 0.7rem 0.5rem;
+            border-radius: 0.8rem;
+            border: 2px solid var(--cream);
+            background: var(--white);
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--grey);
+            transition: all 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .intensity-opt .i-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+        .intensity-opt:hover { border-color: var(--burgundy-light); }
+        .intensity-opt.selected {
+            border-color: var(--burgundy);
+            background: rgba(135,75,70,0.06);
+            color: var(--burgundy);
+        }
+
+        /* — Exercise check rows inside drawer — */
+        .exercise-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem; }
+        .exercise-row {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.75rem 0.9rem;
+            border: 1px solid var(--cream);
+            border-radius: 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .exercise-row:hover { border-color: var(--burgundy-light); }
+        .exercise-row.done {
+            background: rgba(34,197,94,0.06);
+            border-color: rgba(34,197,94,0.3);
+        }
+        .exercise-row.done .exercise-name { text-decoration: line-through; color: var(--grey); }
+        .exercise-check {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--light-grey);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s;
+            font-size: 0.7rem;
+            color: transparent;
+            font-weight: 800;
+        }
+        .exercise-row.done .exercise-check {
+            background: var(--green);
+            border-color: var(--green);
+            color: var(--white);
+        }
+        .exercise-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+            flex: 1;
+        }
+        .exercise-reps {
+            font-size: 0.8rem;
+            color: var(--grey);
+            font-weight: 500;
+        }
+
+        /* — Complete session button (appears when all checked) — */
+        .complete-btn {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background: var(--green);
+            color: var(--white);
+            border: none;
+            border-radius: 0.8rem;
+            font-weight: 800;
+            font-size: 0.95rem;
+            cursor: pointer;
+            letter-spacing: 0.02em;
+            display: none;
+            transition: background 0.15s;
+        }
+        .complete-btn:hover { background: #16a34a; }
+        .complete-btn.visible {
+            display: block;
+            animation: fadeSlide 0.3s ease;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* — Modal (centred dialog) — */
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -48%);
+            background: var(--white);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 30px 80px rgba(53,15,13,0.3);
+            z-index: 1100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%);
+        }
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.01em;
+            margin-bottom: 0.3rem;
+        }
+        .modal-sub {
+            font-size: 0.9rem;
+            color: var(--grey);
+            margin-bottom: 1.5rem;
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--cream);
+            border: none;
+            font-size: 1.15rem;
+            color: var(--grey);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* — Plan grid inside "Choose a Plan" modal — */
+        .modal-plan { width: 820px; }
+        .plan-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .plan-card {
+            border: 2px solid var(--cream);
+            border-radius: 1rem;
+            padding: 1.1rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.15s;
+            background: var(--white);
+        }
+        .plan-card:hover:not(.locked) {
+            border-color: var(--burgundy);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(53,15,13,0.08);
+        }
+        .plan-card.active {
+            border-color: var(--burgundy);
+            background: rgba(135,75,70,0.04);
+        }
+        .plan-card.locked {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+        .plan-card-name {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.01em;
+        }
+        .plan-card-goal {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.3rem;
+            line-height: 1.4;
+            min-height: 2.3rem;
+        }
+        .plan-card-freq {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--burgundy);
+            margin-top: 0.5rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .plan-diff-bar {
+            margin-top: 0.6rem;
+            height: 5px;
+            background: var(--cream);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .plan-diff-fill {
+            height: 100%;
+            border-radius: 9999px;
+        }
+        .plan-lock {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            font-size: 1.05rem;
+        }
+        .plan-locked-label {
+            font-size: 0.7rem;
+            color: var(--grey);
+            font-style: italic;
+            margin-top: 0.4rem;
+        }
+
+        /* — Reflection + Goal form elements — */
+        .modal-compact { width: 460px; }
+        .form-label {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            font-weight: 700;
+            color: var(--grey);
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 0.5rem;
+            margin-top: 1rem;
+        }
+        .form-label:first-child { margin-top: 0; }
+        .form-input, .form-textarea, .form-date {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border: 2px solid var(--cream);
+            border-radius: 0.7rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--dark);
+            background: var(--white);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .form-input:focus, .form-textarea:focus, .form-date:focus {
+            border-color: var(--burgundy);
+        }
+        .form-textarea { resize: vertical; min-height: 72px; font-family: inherit; }
+        .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .primary-btn {
+            margin-top: 1.5rem;
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background: var(--burgundy);
+            color: var(--white);
+            border: none;
+            border-radius: 0.8rem;
+            font-weight: 800;
+            font-size: 0.95rem;
+            cursor: pointer;
+            letter-spacing: 0.02em;
+            transition: background 0.15s;
+        }
+        .primary-btn:hover { background: var(--burgundy-dark); }
+
+        /* — Weekly-plan heading with "Change Plan" button — */
+        .week-plan-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem;
+        }
+        .change-plan-btn {
+            background: var(--burgundy);
+            color: var(--white);
+            border: none;
+            padding: 0.55rem 1rem;
+            border-radius: 0.7rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.02em;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .change-plan-btn:hover { background: var(--burgundy-dark); }
+        .current-plan-label {
+            margin-top: 0.3rem;
+            font-size: 0.85rem;
+            color: var(--grey);
+            font-weight: 500;
+        }
+
+        /* — Session rows now clickable + completed state — */
+        .session-row { cursor: pointer; border-radius: 0.5rem; padding-left: 0.3rem; padding-right: 0.3rem; transition: background 0.15s; position: relative; }
+        .session-row:hover { background: rgba(135,75,70,0.04); }
+        .session-complete-badge {
+            position: absolute;
+            right: 0.3rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--green);
+            color: var(--white);
+            font-size: 0.72rem;
+            font-weight: 800;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .session-row.completed .session-complete-badge { display: flex; }
+
+        /* — Recommendation tag on next upcoming session — */
+        .rec-tag {
+            display: inline-block;
+            margin-left: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: #92530b;
+            background: rgba(245,158,11,0.15);
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+            letter-spacing: 0.03em;
+        }
+
+        /* — Warning banner (heavy-load alert) — */
+        .load-warning {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(245,158,11,0.12);
+            border: 1px solid rgba(245,158,11,0.35);
+            border-radius: 0.8rem;
+            color: #92530b;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .load-warning.visible { display: flex; animation: fadeSlide 0.3s ease; }
+        .load-warning-icon { font-size: 1.05rem; }
+
+        /* — Hero "Grit Score This Week" counter — */
+        .grit-week-box {
+            margin-top: 0.75rem;
+            padding: 0.65rem 0.9rem;
+            background: rgba(255,255,255,0.08);
+            border-radius: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .grit-week-label {
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            font-weight: 700;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+        }
+        .grit-week-value {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--gold);
+            letter-spacing: -0.01em;
+            transition: transform 0.3s ease;
+        }
+        .grit-week-value.bump { transform: scale(1.15); }
+
+        /* — "Set Goal" button + goal-progress state on next-cards — */
+        .set-goal-btn {
+            margin-top: 0.9rem;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--white);
+            padding: 0.5rem 0.9rem;
+            border-radius: 0.6rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.03em;
+            transition: background 0.15s;
+        }
+        .set-goal-btn:hover { background: rgba(255,255,255,0.2); }
+        .goal-set-display { display: none; margin-top: 0.9rem; }
+        .goal-set-display.visible { display: block; animation: fadeSlide 0.3s ease; }
+        .goal-set-meta {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.7);
+            margin-top: 0.4rem;
+        }
+        .goal-set-why {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.55);
+            font-style: italic;
+            margin-top: 0.35rem;
+        }
+
         /* Print */
         @media print {
             body { background: var(--white); min-width: auto; }
@@ -872,6 +1387,11 @@
                     <div class="week-mini-row"><span class="week-mini-day">Sat</span><span class="week-mini-session">Basketball Game</span><span class="dot dot-red"></span></div>
                     <div class="week-mini-row"><span class="week-mini-day">Sun</span><span class="week-mini-session">Rest</span><span class="dot dot-green"></span></div>
                 </div>
+                <!-- Interactive: grit score this week ticks up on reflection submit -->
+                <div class="grit-week-box">
+                    <span class="grit-week-label">Grit this week</span>
+                    <span class="grit-week-value" id="gritWeekValue">0</span>
+                </div>
             </div>
         </section>
 
@@ -892,50 +1412,29 @@
         <!-- ========== Section 3 — Weekly Plan + Testing ========== -->
         <section class="week-grid">
             <div class="card-white">
-                <div class="overline">CURRENT WEEK</div>
-                <h2 class="section-heading">Training Plan — Week of 23 Mar 2026</h2>
-                <div class="session-list">
-                    <div class="session-row">
-                        <span class="session-day">Mon</span><span class="dot dot-red"></span>
-                        <div class="session-info"><div class="session-name">Upper Strength A</div><div class="session-detail">Back Squat 4×5 · DB Row 3×10 · DB Press 3×8</div></div>
+                <!-- Interactive: heading row + Change Plan CTA -->
+                <div class="week-plan-head">
+                    <div>
+                        <div class="overline">CURRENT WEEK</div>
+                        <h2 class="section-heading">Training Plan — Week of 23 Mar 2026</h2>
+                        <div class="current-plan-label" id="currentPlanLabel">Plan: General Strength 3×/week</div>
                     </div>
-                    <div class="session-row">
-                        <span class="session-day">Tue</span><span class="dot dot-amber"></span>
-                        <div class="session-info"><div class="session-name">Basketball Training</div><div class="session-detail">External — FIS Basketball squad</div></div>
-                    </div>
-                    <div class="session-row">
-                        <span class="session-day">Wed</span><span class="dot dot-amber"></span>
-                        <div class="session-info"><div class="session-name">Conditioning</div><div class="session-detail">Intervals 6×400m · Core circuit</div></div>
-                    </div>
-                    <div class="session-row">
-                        <span class="session-day">Thu</span><span class="dot dot-green"></span>
-                        <div class="session-info"><div class="session-name">Rest / Recovery</div><div class="session-detail">Mobility work · 8hrs sleep target</div></div>
-                    </div>
-                    <div class="session-row">
-                        <span class="session-day">Fri</span><span class="dot dot-red"></span>
-                        <div class="session-info"><div class="session-name">Lower Strength B</div><div class="session-detail">Deadlift 4×5 · DB Lunge 3×10 · Mobility</div></div>
-                    </div>
-                    <div class="session-row">
-                        <span class="session-day">Sat</span><span class="dot dot-red"></span>
-                        <div class="session-info"><div class="session-name">Basketball Game</div><div class="session-detail">External — league fixture</div></div>
-                    </div>
-                    <div class="session-row">
-                        <span class="session-day">Sun</span><span class="dot dot-green"></span>
-                        <div class="session-info"><div class="session-name">Rest</div><div class="session-detail">Full recovery day</div></div>
-                    </div>
+                    <button class="change-plan-btn" id="changePlanBtn">Change Plan</button>
+                </div>
+                <div class="session-list" id="sessionList">
+                    <!-- Interactive: each row clickable → opens session drawer. Rendered by JS below. -->
+                    <!-- Static fallback kept as data source; JS replaces this block on load. -->
                 </div>
                 <div class="load-strip">
                     <div class="overline">WEEKLY LOAD</div>
-                    <div class="load-squares">
-                        <div class="load-square red"></div>
-                        <div class="load-square amber"></div>
-                        <div class="load-square amber"></div>
-                        <div class="load-square green"></div>
-                        <div class="load-square red"></div>
-                        <div class="load-square red"></div>
-                        <div class="load-square green"></div>
+                    <!-- Interactive: dynamic squares that recolour as intensity is logged -->
+                    <div class="load-squares" id="loadSquares"></div>
+                    <div class="load-label" id="loadLabel">3 Hard · 2 Moderate · 2 Easy — well balanced</div>
+                    <!-- Interactive: shows when 3+ consecutive hard sessions detected -->
+                    <div class="load-warning" id="loadWarning">
+                        <span class="load-warning-icon">⚠️</span>
+                        <span>Heavy week ahead — consider your recovery</span>
                     </div>
-                    <div class="load-label">3 Hard · 2 Moderate · 2 Easy — well balanced</div>
                 </div>
             </div>
 
@@ -1122,6 +1621,12 @@
                     <div class="next-card-title">Agility Improvement</div>
                     <div class="next-card-sub">Target: 5.1sec → 4.6sec by May 19</div>
                     <div class="next-progress"><div class="next-progress-fill gold" style="width:30%;"></div></div>
+                    <!-- Interactive: Set Goal button + hidden goal display -->
+                    <button class="set-goal-btn" data-goal="agility" data-title="Agility Improvement" data-current="5.1 sec" data-target="4.6 sec">Set Goal</button>
+                    <div class="goal-set-display" data-goal-display="agility">
+                        <div class="goal-set-meta"></div>
+                        <div class="goal-set-why"></div>
+                    </div>
                 </div>
                 <div class="next-card">
                     <div class="next-card-topbar burgundy"></div>
@@ -1129,6 +1634,11 @@
                     <div class="next-card-title">Reach Level 3 Push</div>
                     <div class="next-card-sub">DB Bench progressing well — technique assessment due</div>
                     <div class="next-progress"><div class="next-progress-fill burgundy" style="width:60%;"></div></div>
+                    <button class="set-goal-btn" data-goal="push" data-title="Reach Level 3 Push" data-current="Level 2" data-target="Level 3">Set Goal</button>
+                    <div class="goal-set-display" data-goal-display="push">
+                        <div class="goal-set-meta"></div>
+                        <div class="goal-set-why"></div>
+                    </div>
                 </div>
                 <div class="next-card">
                     <div class="next-card-topbar amber"></div>
@@ -1136,18 +1646,505 @@
                     <div class="next-card-title">May Testing Day</div>
                     <div class="next-card-sub">Cooper Test · Mobility Assessment · May 19, 2026</div>
                     <div class="countdown">54 days</div>
+                    <button class="set-goal-btn" data-goal="cooper" data-title="Cooper Test Goal" data-current="2800 m" data-target="3200 m">Set Goal</button>
+                    <div class="goal-set-display" data-goal-display="cooper">
+                        <div class="goal-set-meta"></div>
+                        <div class="goal-set-why"></div>
+                    </div>
                 </div>
             </div>
         </section>
 
     </div>
 
-    <footer class="site-footer">
+    <!-- ═══════ INTERACTIVE OVERLAYS, DRAWER, MODALS ═══════ -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Session drawer (slide-in from right) -->
+    <aside class="drawer" id="sessionDrawer" aria-hidden="true">
+        <div class="drawer-progress"><div class="drawer-progress-fill" id="drawerProgressFill"></div></div>
+        <div class="drawer-head">
+            <div class="drawer-day-label" id="drawerDayLabel">MON</div>
+            <div class="drawer-title" id="drawerTitle">Session</div>
+            <button class="drawer-close" id="drawerClose" aria-label="Close">×</button>
+        </div>
+        <div class="drawer-body">
+            <div class="drawer-section-label">How hard is this session?</div>
+            <div class="intensity-picker" id="intensityPicker">
+                <div class="intensity-opt" data-intensity="red"><span class="i-dot dot-red"></span>Hard</div>
+                <div class="intensity-opt" data-intensity="amber"><span class="i-dot dot-amber"></span>Moderate</div>
+                <div class="intensity-opt" data-intensity="green"><span class="i-dot dot-green"></span>Easy</div>
+            </div>
+            <div class="drawer-section-label">Exercises</div>
+            <div class="exercise-list" id="exerciseList"></div>
+            <button class="complete-btn" id="completeBtn">Complete Session ✓</button>
+        </div>
+    </aside>
+
+    <!-- Plan chooser modal -->
+    <div class="modal modal-plan" id="planModal" aria-hidden="true">
+        <button class="modal-close" data-close-modal>×</button>
+        <div class="modal-title">Choose a Training Plan</div>
+        <div class="modal-sub">Select the plan that matches Maya's sport and current block.</div>
+        <div class="plan-grid" id="planGrid"></div>
+    </div>
+
+    <!-- Reflection modal (post-session) -->
+    <div class="modal modal-compact" id="reflectionModal" aria-hidden="true">
+        <button class="modal-close" data-close-modal>×</button>
+        <div class="modal-title">Quick reflection</div>
+        <div class="modal-sub">Three quick things. Takes 20 seconds.</div>
+
+        <label class="form-label">How hard was that really?</label>
+        <div class="intensity-picker" id="reflectionIntensity">
+            <div class="intensity-opt" data-reflect="red"><span class="i-dot dot-red"></span>Hard</div>
+            <div class="intensity-opt" data-reflect="amber"><span class="i-dot dot-amber"></span>Moderate</div>
+            <div class="intensity-opt" data-reflect="green"><span class="i-dot dot-green"></span>Easy</div>
+        </div>
+
+        <label class="form-label">One thing you noticed</label>
+        <input type="text" class="form-input" id="reflectionNoticed" placeholder="e.g. back squat felt strong today">
+
+        <label class="form-label">Anything holding you back? (optional)</label>
+        <input type="text" class="form-input" id="reflectionBlocker" placeholder="e.g. sleep was short">
+
+        <button class="primary-btn" id="reflectionSubmit">Save reflection</button>
+    </div>
+
+    <!-- Goal-setting modal -->
+    <div class="modal modal-compact" id="goalModal" aria-hidden="true">
+        <button class="modal-close" data-close-modal>×</button>
+        <div class="modal-title">Set a goal</div>
+        <div class="modal-sub">Name it, measure it, commit to it.</div>
+
+        <label class="form-label">Goal title</label>
+        <input type="text" class="form-input" id="goalTitle">
+
+        <div class="form-row-2">
+            <div>
+                <label class="form-label">Current</label>
+                <input type="text" class="form-input" id="goalCurrent">
+            </div>
+            <div>
+                <label class="form-label">Target</label>
+                <input type="text" class="form-input" id="goalTarget">
+            </div>
+        </div>
+
+        <label class="form-label">Target date</label>
+        <input type="date" class="form-date" id="goalDate" value="2026-05-19">
+
+        <label class="form-label">Why does this matter to you?</label>
+        <textarea class="form-textarea" id="goalWhy" placeholder="Why this goal, right now?"></textarea>
+
+        <button class="primary-btn" id="goalSubmit">Save goal</button>
+    </div>
         Athlete Academy · Frankfurt International School · This profile is a programme vision mockup
     </footer>
 
     <script>
+        /* ═══════════════════════════════════════════════════
+           INTERACTIVE DEMO LOGIC — in-memory state only
+           ═══════════════════════════════════════════════════ */
         (function(){
+            /* — Plan definitions — */
+            const PLANS = {
+                general: {
+                    name: 'General Strength', goal: 'Build foundation strength year-round', freq: '3×/week', diff: 60, diffColor: '#874B46',
+                    sessions: [
+                        { day:'Mon', name:'Upper Strength A', detail:'Back Squat 4×5 · DB Row 3×10 · DB Press 3×8', intensity:'red', exercises:[{n:'Back Squat',r:'4 × 5 @ 40kg'},{n:'DB Row',r:'3 × 10 @ 12kg'},{n:'DB Press',r:'3 × 8 @ 10kg'},{n:'Core circuit',r:'3 rounds'}] },
+                        { day:'Tue', name:'Basketball Training', detail:'External — FIS Basketball squad', intensity:'amber', exercises:[{n:'Team practice',r:'90 min'}] },
+                        { day:'Wed', name:'Conditioning', detail:'Intervals 6×400m · Core circuit', intensity:'amber', exercises:[{n:'6 × 400m intervals',r:'@ 5k pace'},{n:'Core circuit',r:'3 rounds'}] },
+                        { day:'Thu', name:'Rest / Recovery', detail:'Mobility work · 8hrs sleep target', intensity:'green', exercises:[{n:'Mobility flow',r:'20 min'},{n:'Sleep target',r:'8 hours'}] },
+                        { day:'Fri', name:'Lower Strength B', detail:'Deadlift 4×5 · DB Lunge 3×10 · Mobility', intensity:'red', exercises:[{n:'Deadlift',r:'4 × 5 @ 50kg'},{n:'DB Lunge',r:'3 × 10 @ 8kg'},{n:'Mobility',r:'15 min'}] },
+                        { day:'Sat', name:'Basketball Game', detail:'External — league fixture', intensity:'red', exercises:[{n:'Match',r:'Full game'}] },
+                        { day:'Sun', name:'Rest', detail:'Full recovery day', intensity:'green', exercises:[{n:'Rest',r:'Active recovery only'}] }
+                    ]
+                },
+                inseason: {
+                    name: 'In-Season Maintenance', goal: 'Keep strength while sport load is high', freq: '2×/week', diff: 40, diffColor: '#D4AF37',
+                    sessions: [
+                        { day:'Mon', name:'Full Body Maintenance', detail:'Squat 3×5 · Row 3×8 · Press 2×8', intensity:'amber', exercises:[{n:'Back Squat',r:'3 × 5 @ 35kg'},{n:'DB Row',r:'3 × 8'},{n:'DB Press',r:'2 × 8'}] },
+                        { day:'Tue', name:'Sport Session', detail:'Team practice', intensity:'amber', exercises:[{n:'Practice',r:'90 min'}] },
+                        { day:'Wed', name:'Rest', detail:'Recovery', intensity:'green', exercises:[{n:'Rest day',r:'Mobility optional'}] },
+                        { day:'Thu', name:'Full Body Maintenance', detail:'Deadlift 3×5 · Pull 3×8 · Lunge 2×8', intensity:'amber', exercises:[{n:'Deadlift',r:'3 × 5'},{n:'Horizontal Pull',r:'3 × 8'},{n:'Lunge',r:'2 × 8'}] },
+                        { day:'Fri', name:'Sport Session', detail:'Team practice', intensity:'amber', exercises:[{n:'Practice',r:'90 min'}] },
+                        { day:'Sat', name:'Match', detail:'Competition', intensity:'red', exercises:[{n:'Match',r:'Full game'}] },
+                        { day:'Sun', name:'Rest', detail:'Full recovery', intensity:'green', exercises:[{n:'Rest',r:'Full day off'}] }
+                    ]
+                },
+                basketball: {
+                    name: 'Basketball Performance', goal: 'Jump power, agility, lateral strength', freq: '4×/week', diff: 75, diffColor: '#874B46',
+                    sessions: [
+                        { day:'Mon', name:'Lower Power', detail:'Broad Jump · Squat · Lunge', intensity:'red', exercises:[{n:'Broad Jump',r:'5 × 3'},{n:'Back Squat',r:'4 × 5'},{n:'DB Lunge',r:'3 × 8'}] },
+                        { day:'Tue', name:'Court Skills', detail:'Ball handling · Shooting', intensity:'amber', exercises:[{n:'Handling drills',r:'20 min'},{n:'Shooting sets',r:'200 shots'}] },
+                        { day:'Wed', name:'Upper + Core', detail:'Push · Pull · Core', intensity:'amber', exercises:[{n:'DB Bench',r:'4 × 6'},{n:'Horizontal Pull',r:'4 × 6'},{n:'Core circuit',r:'3 rounds'}] },
+                        { day:'Thu', name:'Agility', detail:'5-10-5 · Court sprints', intensity:'red', exercises:[{n:'5-10-5 drill',r:'6 reps'},{n:'Court sprints',r:'8 × full'}] },
+                        { day:'Fri', name:'Rest', detail:'Recovery', intensity:'green', exercises:[{n:'Mobility',r:'20 min'}] },
+                        { day:'Sat', name:'Game', detail:'Match', intensity:'red', exercises:[{n:'Match',r:'Full game'}] },
+                        { day:'Sun', name:'Rest', detail:'Recovery day', intensity:'green', exercises:[{n:'Rest',r:'Full day off'}] }
+                    ]
+                },
+                football: {
+                    name: 'Football Performance', goal: 'Sprint speed, change of direction, endurance', freq: '4×/week', diff: 75, diffColor: '#874B46',
+                    sessions: [
+                        { day:'Mon', name:'Speed', detail:'Sprints 10×40m', intensity:'red', exercises:[{n:'10 × 40m sprints',r:'Full recovery'}] },
+                        { day:'Tue', name:'Team Practice', detail:'Tactical session', intensity:'amber', exercises:[{n:'Practice',r:'90 min'}] },
+                        { day:'Wed', name:'Strength', detail:'Lower + Upper', intensity:'red', exercises:[{n:'Back Squat',r:'4 × 5'},{n:'DB Press',r:'3 × 8'}] },
+                        { day:'Thu', name:'Conditioning', detail:'Intervals', intensity:'amber', exercises:[{n:'6 × 400m',r:'@ 5k pace'}] },
+                        { day:'Fri', name:'Rest', detail:'Recovery', intensity:'green', exercises:[{n:'Mobility',r:'20 min'}] },
+                        { day:'Sat', name:'Match', detail:'Competition', intensity:'red', exercises:[{n:'Match',r:'Full game'}] },
+                        { day:'Sun', name:'Rest', detail:'Full recovery', intensity:'green', exercises:[{n:'Rest',r:'Full day off'}] }
+                    ]
+                },
+                rugby: {
+                    name: 'Rugby Performance', goal: 'Max strength, power, contact readiness', freq: '4×/week', diff: 85, diffColor: '#874B46',
+                    sessions: [
+                        { day:'Mon', name:'Max Strength', detail:'Squat · Deadlift', intensity:'red', exercises:[{n:'Back Squat',r:'5 × 3 heavy'},{n:'Deadlift',r:'5 × 3 heavy'}] },
+                        { day:'Tue', name:'Contact Skills', detail:'Tackling · Ruck', intensity:'amber', exercises:[{n:'Tackle drills',r:'30 min'},{n:'Ruck practice',r:'30 min'}] },
+                        { day:'Wed', name:'Upper Power', detail:'Bench · Row · Press', intensity:'red', exercises:[{n:'DB Bench',r:'5 × 5'},{n:'DB Row',r:'4 × 8'},{n:'Press',r:'3 × 6'}] },
+                        { day:'Thu', name:'Conditioning', detail:'Shuttles', intensity:'amber', exercises:[{n:'Shuttles',r:'10 × 20m'}] },
+                        { day:'Fri', name:'Rest', detail:'Recovery', intensity:'green', exercises:[{n:'Mobility',r:'25 min'}] },
+                        { day:'Sat', name:'Match', detail:'Competition', intensity:'red', exercises:[{n:'Match',r:'Full game'}] },
+                        { day:'Sun', name:'Rest', detail:'Full recovery', intensity:'green', exercises:[{n:'Rest',r:'Full day off'}] }
+                    ]
+                },
+                swimming: {
+                    name: 'Swimming Performance', goal: 'Pulling strength, shoulder stability, aerobic base', freq: '5×/week', diff: 70, diffColor: '#D4AF37',
+                    sessions: [
+                        { day:'Mon', name:'Pool — Aerobic', detail:'Long sets', intensity:'amber', exercises:[{n:'Warm-up',r:'400m'},{n:'Main set',r:'8 × 200m'}] },
+                        { day:'Tue', name:'Pull Strength', detail:'Pull · Row · Core', intensity:'red', exercises:[{n:'Horizontal Pull',r:'4 × 8'},{n:'DB Row',r:'4 × 8'},{n:'Core',r:'3 rounds'}] },
+                        { day:'Wed', name:'Pool — Sprint', detail:'Short fast sets', intensity:'red', exercises:[{n:'Warm-up',r:'400m'},{n:'Sprint set',r:'12 × 50m'}] },
+                        { day:'Thu', name:'Mobility', detail:'Shoulder + thoracic', intensity:'green', exercises:[{n:'Shoulder flow',r:'20 min'},{n:'Thoracic work',r:'15 min'}] },
+                        { day:'Fri', name:'Pool — Race Pace', detail:'Race-pace sets', intensity:'amber', exercises:[{n:'Race pace',r:'6 × 100m'}] },
+                        { day:'Sat', name:'Meet / Easy Swim', detail:'Competition or easy', intensity:'amber', exercises:[{n:'Meet warm-up',r:'400m'},{n:'Races',r:'As scheduled'}] },
+                        { day:'Sun', name:'Rest', detail:'Full recovery', intensity:'green', exercises:[{n:'Rest',r:'Full day off'}] }
+                    ]
+                },
+                xc: {
+                    name: 'Cross Country / Track', goal: 'Endurance + race pacing', freq: '5×/week', diff: 70, diffColor: '#D4AF37',
+                    sessions: [
+                        { day:'Mon', name:'Easy Run', detail:'45 min easy', intensity:'green', exercises:[{n:'Easy run',r:'45 min'}] },
+                        { day:'Tue', name:'Intervals', detail:'6 × 800m', intensity:'red', exercises:[{n:'Warm-up',r:'2 km'},{n:'6 × 800m',r:'@ 5k pace'},{n:'Cool-down',r:'1 km'}] },
+                        { day:'Wed', name:'Easy Run', detail:'30 min easy', intensity:'green', exercises:[{n:'Easy run',r:'30 min'}] },
+                        { day:'Thu', name:'Strength', detail:'Lower body + core', intensity:'amber', exercises:[{n:'Squat',r:'3 × 6'},{n:'Lunge',r:'3 × 8'},{n:'Core',r:'3 rounds'}] },
+                        { day:'Fri', name:'Tempo Run', detail:'20 min tempo', intensity:'red', exercises:[{n:'Warm-up',r:'10 min'},{n:'Tempo',r:'20 min'},{n:'Cool-down',r:'10 min'}] },
+                        { day:'Sat', name:'Long Run', detail:'60-75 min', intensity:'amber', exercises:[{n:'Long run',r:'60-75 min easy'}] },
+                        { day:'Sun', name:'Rest', detail:'Full recovery', intensity:'green', exercises:[{n:'Rest',r:'Full day off'}] }
+                    ]
+                },
+                volleyball: {
+                    name: 'Volleyball Performance', goal: 'Jump height, shoulder power, agility', freq: '4×/week', diff: 70, diffColor: '#D4AF37',
+                    sessions: [
+                        { day:'Mon', name:'Lower Power', detail:'Broad Jump · Squat', intensity:'red', exercises:[{n:'Broad Jump',r:'5 × 3'},{n:'Back Squat',r:'4 × 5'}] },
+                        { day:'Tue', name:'Court Skills', detail:'Setting · Spiking', intensity:'amber', exercises:[{n:'Setting drills',r:'30 min'},{n:'Spiking sets',r:'30 min'}] },
+                        { day:'Wed', name:'Upper Power', detail:'Press · Pull · Core', intensity:'amber', exercises:[{n:'DB Press',r:'4 × 6'},{n:'Horizontal Pull',r:'4 × 6'},{n:'Core',r:'3 rounds'}] },
+                        { day:'Thu', name:'Agility', detail:'Lateral drills', intensity:'red', exercises:[{n:'Lateral drills',r:'5 rounds'},{n:'Block jumps',r:'5 × 5'}] },
+                        { day:'Fri', name:'Rest', detail:'Recovery', intensity:'green', exercises:[{n:'Mobility',r:'20 min'}] },
+                        { day:'Sat', name:'Match', detail:'Competition', intensity:'red', exercises:[{n:'Match',r:'Full game'}] },
+                        { day:'Sun', name:'Rest', detail:'Recovery day', intensity:'green', exercises:[{n:'Rest',r:'Full day off'}] }
+                    ]
+                },
+                custom: {
+                    name: 'Custom Plan', goal: 'Design your own block', freq: 'Flexible', diff: 90, diffColor: '#D4AF37', locked: true, sessions: []
+                }
+            };
+
+            /* — In-memory state — */
+            const state = {
+                currentPlan: 'general',
+                sessions: deepClone(PLANS.general.sessions),
+                completed: {},        // { dayIndex: true }
+                reflections: {},      // { dayIndex: {intensity, noticed, blocker} }
+                gritWeek: 0,
+                activeSessionIdx: null,
+                goals: {}             // { goalId: {title, current, target, date, why} }
+            };
+            function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+
+            /* — Small DOM helpers — */
+            const $ = (id) => document.getElementById(id);
+            const overlay = $('overlay');
+            const drawer = $('sessionDrawer');
+
+            function showOverlay(){ overlay.classList.add('active'); }
+            function hideOverlay(){ overlay.classList.remove('active'); }
+            function openModal(id){ $(id).classList.add('active'); showOverlay(); }
+            function closeAllModals(){
+                document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+                drawer.classList.remove('active');
+                hideOverlay();
+            }
+            overlay.addEventListener('click', closeAllModals);
+            document.querySelectorAll('[data-close-modal]').forEach(b => b.addEventListener('click', closeAllModals));
+
+            /* — Render the weekly session list — */
+            function renderSessionList() {
+                const list = $('sessionList');
+                list.innerHTML = state.sessions.map((s, i) => {
+                    const doneClass = state.completed[i] ? ' completed' : '';
+                    const dotClass = 'dot-' + s.intensity;
+                    return `
+                        <div class="session-row${doneClass}" data-idx="${i}">
+                            <span class="session-day">${s.day}</span>
+                            <span class="dot ${dotClass}"></span>
+                            <div class="session-info">
+                                <div class="session-name">${s.name}</div>
+                                <div class="session-detail">${s.detail}</div>
+                            </div>
+                            <span class="session-complete-badge">✓</span>
+                        </div>`;
+                }).join('');
+                // bind click
+                list.querySelectorAll('.session-row').forEach(row => {
+                    row.addEventListener('click', () => openSessionDrawer(parseInt(row.dataset.idx, 10)));
+                });
+                injectRecommendationTag();
+            }
+
+            /* — Dynamic weekly-load squares + balance label + warning — */
+            function renderLoadStrip() {
+                const squares = $('loadSquares');
+                squares.innerHTML = state.sessions.map(s =>
+                    `<div class="load-square ${intensityToClass(s.intensity)}"></div>`
+                ).join('');
+                const counts = { red:0, amber:0, green:0 };
+                state.sessions.forEach(s => counts[s.intensity]++);
+                $('loadLabel').textContent = `${counts.red} Hard · ${counts.amber} Moderate · ${counts.green} Easy — ${balanceLabel(counts)}`;
+
+                // warning if 3+ consecutive red sessions
+                let maxRun = 0, run = 0;
+                state.sessions.forEach(s => {
+                    if (s.intensity === 'red') { run++; maxRun = Math.max(maxRun, run); }
+                    else run = 0;
+                });
+                $('loadWarning').classList.toggle('visible', maxRun >= 3);
+            }
+            function intensityToClass(i){ return i === 'red' ? 'red' : i === 'amber' ? 'amber' : 'green'; }
+            function balanceLabel(c) {
+                if (c.red >= 4) return 'heavy load';
+                if (c.green === 0) return 'needs more recovery';
+                if (c.red >= 2 && c.green >= 1) return 'well balanced';
+                return 'steady';
+            }
+
+            /* — Recommendation tag on the next not-yet-completed session — */
+            function injectRecommendationTag() {
+                document.querySelectorAll('.rec-tag').forEach(el => el.remove());
+                // find recent completed intensities
+                const recent = Object.keys(state.completed)
+                    .sort((a,b) => a-b)
+                    .slice(-3)
+                    .map(k => state.reflections[k] ? state.reflections[k].intensity : state.sessions[k].intensity);
+                const hardCount = recent.filter(x => x === 'red').length;
+                let rec = null;
+                if (hardCount >= 2) rec = 'Moderate';
+                else if (recent.length && recent.every(x => x === 'green')) rec = 'Moderate';
+                if (!rec) return;
+                const nextIdx = state.sessions.findIndex((_, i) => !state.completed[i]);
+                if (nextIdx === -1) return;
+                const row = document.querySelector(`.session-row[data-idx="${nextIdx}"] .session-name`);
+                if (row) row.insertAdjacentHTML('beforeend', `<span class="rec-tag">Recommended: ${rec}</span>`);
+            }
+
+            /* — Session drawer open/close + exercise rendering — */
+            function openSessionDrawer(idx) {
+                state.activeSessionIdx = idx;
+                const s = state.sessions[idx];
+                $('drawerDayLabel').textContent = s.day.toUpperCase();
+                $('drawerTitle').textContent = s.name;
+
+                // clear any previous checked state on render (drawer state reset per open)
+                s._checked = s._checked || s.exercises.map(() => false);
+                renderExercises(s);
+                setIntensityPick(s.intensity);
+                updateDrawerProgress();
+
+                drawer.classList.add('active');
+                drawer.setAttribute('aria-hidden','false');
+                showOverlay();
+            }
+            $('drawerClose').addEventListener('click', closeAllModals);
+
+            function renderExercises(s) {
+                const list = $('exerciseList');
+                list.innerHTML = s.exercises.map((ex, i) => {
+                    const doneClass = s._checked[i] ? ' done' : '';
+                    return `<div class="exercise-row${doneClass}" data-ex="${i}">
+                        <div class="exercise-check">✓</div>
+                        <div class="exercise-name">${ex.n}</div>
+                        <div class="exercise-reps">${ex.r}</div>
+                    </div>`;
+                }).join('');
+                list.querySelectorAll('.exercise-row').forEach(r => {
+                    r.addEventListener('click', () => {
+                        const i = parseInt(r.dataset.ex, 10);
+                        s._checked[i] = !s._checked[i];
+                        r.classList.toggle('done', s._checked[i]);
+                        updateDrawerProgress();
+                    });
+                });
+            }
+
+            function setIntensityPick(intensity) {
+                document.querySelectorAll('#intensityPicker .intensity-opt').forEach(el => {
+                    el.classList.toggle('selected', el.dataset.intensity === intensity);
+                });
+            }
+            document.querySelectorAll('#intensityPicker .intensity-opt').forEach(el => {
+                el.addEventListener('click', () => {
+                    const idx = state.activeSessionIdx;
+                    if (idx == null) return;
+                    state.sessions[idx].intensity = el.dataset.intensity;
+                    setIntensityPick(el.dataset.intensity);
+                    renderSessionList();
+                    renderLoadStrip();
+                });
+            });
+
+            function updateDrawerProgress() {
+                const idx = state.activeSessionIdx;
+                if (idx == null) return;
+                const s = state.sessions[idx];
+                const done = s._checked.filter(Boolean).length;
+                const pct = (done / s.exercises.length) * 100;
+                $('drawerProgressFill').style.width = pct + '%';
+                $('completeBtn').classList.toggle('visible', done === s.exercises.length);
+            }
+
+            /* — Complete session → opens reflection modal — */
+            $('completeBtn').addEventListener('click', () => {
+                const idx = state.activeSessionIdx;
+                if (idx == null) return;
+                state.completed[idx] = true;
+                // close drawer, open reflection
+                drawer.classList.remove('active');
+                // reset reflection form
+                document.querySelectorAll('#reflectionIntensity .intensity-opt').forEach(el => el.classList.remove('selected'));
+                $('reflectionNoticed').value = '';
+                $('reflectionBlocker').value = '';
+                openModal('reflectionModal');
+            });
+
+            // reflection intensity buttons
+            document.querySelectorAll('#reflectionIntensity .intensity-opt').forEach(el => {
+                el.addEventListener('click', () => {
+                    document.querySelectorAll('#reflectionIntensity .intensity-opt').forEach(x => x.classList.remove('selected'));
+                    el.classList.add('selected');
+                });
+            });
+
+            /* — Reflection submit → saves, bumps grit counter, updates everything — */
+            $('reflectionSubmit').addEventListener('click', () => {
+                const idx = state.activeSessionIdx;
+                if (idx == null) return;
+                const picked = document.querySelector('#reflectionIntensity .intensity-opt.selected');
+                const intensity = picked ? picked.dataset.reflect : state.sessions[idx].intensity;
+                state.reflections[idx] = {
+                    intensity: intensity,
+                    noticed: $('reflectionNoticed').value.trim(),
+                    blocker: $('reflectionBlocker').value.trim()
+                };
+                // update session dot to the reflected intensity
+                state.sessions[idx].intensity = intensity;
+                // bump grit week counter
+                state.gritWeek += 1;
+                const gv = $('gritWeekValue');
+                gv.textContent = state.gritWeek;
+                gv.classList.add('bump');
+                setTimeout(() => gv.classList.remove('bump'), 300);
+
+                renderSessionList();
+                renderLoadStrip();
+                closeAllModals();
+            });
+
+            /* — Plan chooser — render grid + handle select — */
+            function renderPlanGrid() {
+                const grid = $('planGrid');
+                const order = ['general','inseason','basketball','football','rugby','swimming','xc','volleyball','custom'];
+                grid.innerHTML = order.map(key => {
+                    const p = PLANS[key];
+                    const activeClass = state.currentPlan === key ? ' active' : '';
+                    const lockedClass = p.locked ? ' locked' : '';
+                    const lock = p.locked ? `<div class="plan-lock">🔒</div>` : '';
+                    const lockedLabel = p.locked ? `<div class="plan-locked-label">Unlocked at Level 3 in all tested patterns</div>` : '';
+                    return `
+                        <div class="plan-card${activeClass}${lockedClass}" data-plan="${key}">
+                            ${lock}
+                            <div class="plan-card-name">${p.name}</div>
+                            <div class="plan-card-goal">${p.goal}</div>
+                            <div class="plan-card-freq">${p.freq}</div>
+                            <div class="plan-diff-bar">
+                                <div class="plan-diff-fill" style="width:${p.diff}%; background:${p.diffColor};"></div>
+                            </div>
+                            ${lockedLabel}
+                        </div>`;
+                }).join('');
+                grid.querySelectorAll('.plan-card').forEach(c => {
+                    c.addEventListener('click', () => {
+                        if (c.classList.contains('locked')) return;
+                        const key = c.dataset.plan;
+                        state.currentPlan = key;
+                        state.sessions = deepClone(PLANS[key].sessions);
+                        state.completed = {};
+                        state.reflections = {};
+                        $('currentPlanLabel').textContent = 'Plan: ' + PLANS[key].name + ' · ' + PLANS[key].freq;
+                        renderSessionList();
+                        renderLoadStrip();
+                        closeAllModals();
+                    });
+                });
+            }
+            $('changePlanBtn').addEventListener('click', () => {
+                renderPlanGrid();
+                openModal('planModal');
+            });
+
+            /* — Goal setting — open modal pre-filled from triggering card — */
+            let activeGoalId = null;
+            document.querySelectorAll('.set-goal-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeGoalId = btn.dataset.goal;
+                    $('goalTitle').value = btn.dataset.title;
+                    $('goalCurrent').value = btn.dataset.current;
+                    $('goalTarget').value = btn.dataset.target;
+                    $('goalDate').value = '2026-05-19';
+                    $('goalWhy').value = '';
+                    openModal('goalModal');
+                });
+            });
+            $('goalSubmit').addEventListener('click', () => {
+                if (!activeGoalId) return;
+                const goal = {
+                    title: $('goalTitle').value.trim(),
+                    current: $('goalCurrent').value.trim(),
+                    target: $('goalTarget').value.trim(),
+                    date: $('goalDate').value,
+                    why: $('goalWhy').value.trim()
+                };
+                state.goals[activeGoalId] = goal;
+                renderGoalCard(activeGoalId);
+                closeAllModals();
+            });
+            function renderGoalCard(id) {
+                const g = state.goals[id];
+                if (!g) return;
+                const btn = document.querySelector(`.set-goal-btn[data-goal="${id}"]`);
+                const disp = document.querySelector(`.goal-set-display[data-goal-display="${id}"]`);
+                if (btn) btn.style.display = 'none';
+                if (!disp) return;
+                const dateTxt = g.date ? new Date(g.date).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) : '';
+                disp.querySelector('.goal-set-meta').textContent = `${g.current} → ${g.target} · by ${dateTxt}`;
+                disp.querySelector('.goal-set-why').textContent = g.why ? '“' + g.why + '”' : '';
+                disp.classList.add('visible');
+            }
+
+            /* — Initial render — */
+            renderSessionList();
+            renderLoadStrip();
+
+            /* — Training Age chart — */
             const ctx = document.getElementById('trainingAgeChart');
             if (!ctx) return;
             new Chart(ctx, {
