@@ -952,6 +952,10 @@ async function loadGritChallenge() {
         
         if (data.success && data.challenge) {
             currentChallenge = data.challenge;
+            // Fix 4: clear stale planning blocks for any session that already
+            // contains planning content. Runs in the background — UI is shown
+            // immediately and the sheet is updated asynchronously.
+            autoUnblockPlannedSessions();
             if (currentChallenge.status === 'pending') {
                 showPendingView();
             } else if (currentChallenge.status === 'complete') {
@@ -1287,6 +1291,67 @@ async function persistChallenge() {
     }
 }
 
+// ============ PLANNING-BLOCK HELPERS ============
+// Determines whether a session has enough planning content to be considered "planned".
+// Sessions 1-7: the `plan` field must be non-empty.
+// Session 1 additionally requires `baseline` (or legacy `what`) to be non-empty.
+// Session 8 has no planning gate (it's the final reflection, not a plannable session).
+function hasSufficientPlanning(session, sessionNum) {
+    if (!session) return false;
+    if (sessionNum === 8) return true;
+    const plan = (session.plan || '').trim();
+    if (!plan) return false;
+    if (sessionNum === 1) {
+        const baseline = (session.baseline || session.what || '').trim();
+        if (!baseline) return false;
+    }
+    return true;
+}
+
+// Clears the requiresPlanningFirst flag on a session both locally and in the sheet.
+// Uses the saveCoachFeedback endpoint with blockingMessage:false so the existing
+// coachFeedback string is preserved while the blocking flag is dropped.
+async function clearPlanningBlock(sessionNum) {
+    const idx = sessionNum - 1;
+    if (!currentChallenge || !currentChallenge.sessions || !currentChallenge.sessions[idx]) return;
+    const session = currentChallenge.sessions[idx];
+    if (!session.requiresPlanningFirst) return;
+    session.requiresPlanningFirst = false;
+    try {
+        await fetch(GRIT_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: 'saveCoachFeedback',
+                email: currentUser.email,
+                sessionNumber: sessionNum,
+                feedback: session.coachFeedback || '',
+                blockingMessage: false
+            })
+        });
+    } catch (e) {
+        console.error('Error clearing planning block:', e);
+    }
+}
+
+// Audits all sessions on load and unblocks any that have planning content
+// but still carry a stale requiresPlanningFirst flag (Fix 4: emergency override
+// for students currently stuck because they planned after the flag was set).
+// Local flags are cleared synchronously up front so the initial render shows
+// the unblocked state immediately; sheet sync happens in the background.
+function autoUnblockPlannedSessions() {
+    if (!currentChallenge || !Array.isArray(currentChallenge.sessions)) return;
+    for (let i = 0; i < currentChallenge.sessions.length; i++) {
+        const s = currentChallenge.sessions[i];
+        if (s && s.requiresPlanningFirst && hasSufficientPlanning(s, i + 1)) {
+            // Fire-and-forget. clearPlanningBlock flips the local flag
+            // synchronously before the network call, so the immediate render
+            // already sees the unblocked state.
+            clearPlanningBlock(i + 1);
+        }
+    }
+}
+
 // ============ ACTIVE VIEW ============
 function isActiveStrength() {
     return currentChallenge && currentChallenge.type === 'fitness' && currentChallenge.focusId === 'strength';
@@ -1521,10 +1586,27 @@ function openSession(num) {
     // Restore editable footer (may have been swapped by viewSession)
     const footer = document.querySelector('#sessionModal .modal-footer');
     const savedForBlock = (currentChallenge.sessions || [])[num - 1];
-    const isBlocked = savedForBlock && savedForBlock.requiresPlanningFirst;
+
+    // Fix 1: if a planning-block flag is set BUT the saved session already has
+    // sufficient planning content, auto-clear the flag (and persist via
+    // saveCoachFeedback) so the student isn't permanently locked out.
+    if (savedForBlock && savedForBlock.requiresPlanningFirst && hasSufficientPlanning(savedForBlock, num)) {
+        savedForBlock.requiresPlanningFirst = false;
+        clearPlanningBlock(num); // fire-and-forget; keeps sheet in sync
+    }
+
+    // Fix 3 — Complete button disable conditions (audited):
+    //   (a) requiresPlanningFirst is true AND saved planning is genuinely empty
+    //       — teacher has explicitly blocked completion until the student plans.
+    // No other disable conditions remain. The previous behaviour of disabling
+    // whenever requiresPlanningFirst was set (regardless of whether planning
+    // had since been filled in) was the bug being fixed here. Empty primary
+    // field validation lives in saveSession() and surfaces as a toast, not a
+    // disabled button, so the user always gets actionable feedback.
+    const isBlocked = !!(savedForBlock && savedForBlock.requiresPlanningFirst && !hasSufficientPlanning(savedForBlock, num));
     const isAlreadyCompleted = savedForBlock && savedForBlock.completed;
     const btnLabel = isAlreadyCompleted ? '✓ Update' : '✓ Complete';
-    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('sessionModal')">Cancel</button><button class="btn btn-success" onclick="saveSession()" ${isBlocked ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>${btnLabel}</button>`;
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('sessionModal')">Cancel</button><button class="btn btn-success" id="sessionCompleteBtn" onclick="saveSession()" ${isBlocked ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>${btnLabel}</button>`;
 
     document.getElementById('sessionModalTitle').textContent = `Session ${num}`;
     const body = document.getElementById('sessionModalBody');
@@ -1602,6 +1684,37 @@ function openSession(num) {
             const weightEl = document.getElementById('sessionStrengthWeight');
             if (weightEl && currentChallenge.current) weightEl.value = currentChallenge.current;
         }
+    }
+
+    // Fix 2: re-evaluate the Complete button as the student types. When a
+    // teacher-set planning block is in effect, enable the button the moment
+    // the required fields contain content (no need to close and reopen).
+    const completeBtn = document.getElementById('sessionCompleteBtn');
+    if (completeBtn) {
+        const reevaluate = () => {
+            const planVal = (document.getElementById('sessionPlan')?.value || '').trim();
+            let baselineOk = true;
+            if (num === 1) {
+                const baselineEl = document.getElementById('sessionBaseline');
+                // Strength S1 uses a hidden input pre-filled from setup, so it's always populated.
+                baselineOk = !!(baselineEl && baselineEl.value && baselineEl.value.trim());
+            }
+            const planningOk = !!planVal && baselineOk;
+            const stillBlocked = (savedForBlock && savedForBlock.requiresPlanningFirst) && !planningOk;
+            if (stillBlocked) {
+                completeBtn.disabled = true;
+                completeBtn.style.opacity = '0.5';
+                completeBtn.style.cursor = 'not-allowed';
+            } else {
+                completeBtn.disabled = false;
+                completeBtn.style.opacity = '';
+                completeBtn.style.cursor = '';
+            }
+        };
+        ['sessionBaseline', 'sessionPlan', 'sessionMeasure', 'sessionObstacle', 'sessionCounter'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', reevaluate);
+        });
     }
 
     openModal('sessionModal');
@@ -1743,6 +1856,14 @@ function saveSession() {
         sessionData.baseline = primaryField;
     } else {
         sessionData.goal = primaryField;
+    }
+    // If a planning block was in effect and the student has now filled in
+    // sufficient planning content, clear the flag so it doesn't re-block them
+    // the next time the modal opens (and sync the cleared flag to the sheet).
+    const wasBlocked = !!existing.requiresPlanningFirst;
+    if (wasBlocked && hasSufficientPlanning(sessionData, currentSessionNum)) {
+        sessionData.requiresPlanningFirst = false;
+        clearPlanningBlock(currentSessionNum);
     }
     currentChallenge.sessions[currentSessionNum - 1] = sessionData;
 
