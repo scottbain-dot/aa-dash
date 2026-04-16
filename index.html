@@ -1159,11 +1159,38 @@
             color: rgba(255,255,255,0.7);
             margin-top: 0.25rem;
         }
+        .gauge-center .gauge-training-age-label {
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            color: #D4AF37;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 0.4rem;
+        }
         .gauge-insight-text {
             font-size: 0.85rem;
             font-style: italic;
             color: #524342;
             text-align: center;
+        }
+        .gauge-insight {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            font-style: italic;
+            text-align: center;
+            max-width: 200px;
+            line-height: 1.4;
+            margin-top: 0.5rem;
+        }
+        .gauge-delta {
+            background: rgba(212,175,55,0.15);
+            color: #D4AF37;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            margin-top: 0.4rem;
+            display: inline-block;
         }
 
         /* Zero / empty score styling */
@@ -1265,8 +1292,11 @@
                             <div class="gauge-number" id="gaugeNumber">—</div>
                             <div class="gauge-max">/ 5</div>
                             <div class="gauge-status" id="gaugeStatus">—</div>
+                            <div class="gauge-training-age-label">TRAINING AGE</div>
                         </div>
                     </div>
+                    <div class="gauge-insight">Consistent work is paying off. Keep pushing.</div>
+                    <div class="gauge-delta">↑ +0.4 this term</div>
                     <div class="gauge-insight-text" id="gaugeInsight" style="display:none;"></div>
                 </div>
                 <!-- Right: name + grade + pillar boxes stacked -->
