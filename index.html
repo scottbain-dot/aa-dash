@@ -373,6 +373,40 @@
         .header-pillar-box:hover {
             transform: scale(1.02);
         }
+        /* Click-to-scroll affordance for hero pillar bars. */
+        .header-pillar-box.pillar-clickable {
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s, filter 0.2s ease;
+        }
+        .header-pillar-box.pillar-clickable:hover {
+            filter: brightness(1.08);
+        }
+        .header-pillar-box.pillar-clickable::after {
+            content: '›';
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 1;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+        .header-pillar-box.pillar-clickable:hover::after {
+            opacity: 0.6;
+        }
+        /* Brief highlight ring on the target pillar detail card after scrolling. */
+        .card.pillar-highlight {
+            animation: pillarHighlightFade 1.5s ease forwards;
+        }
+        @keyframes pillarHighlightFade {
+            0%   { box-shadow: 0 0 0 2px #874B46; }
+            80%  { box-shadow: 0 0 0 2px #874B46; }
+            100% { box-shadow: 0 0 0 2px rgba(135, 75, 70, 0); }
+        }
         .header-pillar-label {
             font-size: 0.55rem;
             text-transform: uppercase;
@@ -1309,17 +1343,17 @@
                         <p id="athleteMeta">-</p>
                     </div>
                     <div class="header-pillars">
-                        <div class="header-pillar-box" id="headerPsychBox">
+                        <div class="header-pillar-box pillar-clickable" id="headerPsychBox" onclick="scrollToPillar('pillar-psychology')">
                             <div class="header-pillar-label">Psychology</div>
                             <div class="header-pillar-score" id="headerPsychScore">-</div>
                             <div class="header-pillar-level" id="headerPsychLevel">-</div>
                         </div>
-                        <div class="header-pillar-box" id="headerPhysBox">
+                        <div class="header-pillar-box pillar-clickable" id="headerPhysBox" onclick="scrollToPillar('pillar-physiology')">
                             <div class="header-pillar-label">Physiology</div>
                             <div class="header-pillar-score" id="headerPhysScore">-</div>
                             <div class="header-pillar-level" id="headerPhysLevel">-</div>
                         </div>
-                        <div class="header-pillar-box" id="headerHealthBox">
+                        <div class="header-pillar-box pillar-clickable" id="headerHealthBox" onclick="scrollToPillar('pillar-health')">
                             <div class="header-pillar-label">Health & Skills</div>
                             <div class="header-pillar-score" id="headerHealthScore">-</div>
                             <div class="header-pillar-level" id="headerHealthLevel">-</div>
@@ -1375,15 +1409,15 @@
 
         <!-- Pillar detail cards — 3 columns -->
         <div class="dashboard-grid">
-            <div class="card">
+            <div class="card" id="pillar-psychology">
                 <div class="card-title"><span class="dot psych"></span> Psychology</div>
                 <div class="component-list" id="psychComponents"></div>
             </div>
-            <div class="card">
+            <div class="card" id="pillar-physiology">
                 <div class="card-title"><span class="dot phys"></span> Physiology</div>
                 <div class="component-list" id="physComponents"></div>
             </div>
-            <div class="card">
+            <div class="card" id="pillar-health">
                 <div class="card-title"><span class="dot health"></span> Health & Skills</div>
                 <div class="component-list" id="healthComponents"></div>
             </div>
@@ -1445,6 +1479,19 @@
     </div>
 
     <script>
+        // Smooth-scroll from a hero pillar bar to its matching detail card,
+        // then briefly highlight the target with a ring that fades out.
+        function scrollToPillar(id) {
+            const target = document.getElementById(id);
+            if (!target) return;
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            target.classList.remove('pillar-highlight');
+            // Force reflow so the animation restarts on repeat clicks.
+            void target.offsetWidth;
+            target.classList.add('pillar-highlight');
+            setTimeout(() => target.classList.remove('pillar-highlight'), 1500);
+        }
+
         // ========== CONFIGURATION ==========
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
         const STRENGTH_API_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
