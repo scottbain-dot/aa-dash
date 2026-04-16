@@ -1182,6 +1182,9 @@
             line-height: 1.4;
             margin-top: 0.5rem;
         }
+        .gauge-insight.gauge-insight-loading {
+            color: rgba(255,255,255,0.4);
+        }
         .gauge-delta {
             background: rgba(212,175,55,0.15);
             color: #D4AF37;
@@ -1295,7 +1298,7 @@
                             <div class="gauge-training-age-label">TRAINING AGE</div>
                         </div>
                     </div>
-                    <div class="gauge-insight">Consistent work is paying off. Keep pushing.</div>
+                    <div class="gauge-insight gauge-insight-loading" id="gaugeHeroInsight">Reading your data...</div>
                     <div class="gauge-delta">↑ +0.4 this term</div>
                     <div class="gauge-insight-text" id="gaugeInsight" style="display:none;"></div>
                 </div>
@@ -1757,6 +1760,10 @@
             
             // Personal Insights (now trainingAge is defined)
             renderInsights(psychAvg, physAvg, healthAvg, trainingAge, strengthData);
+
+            // Hero insight — single-sentence trajectory line above the delta chip.
+            // Fires separately from the carousel, uses the same Apps Script API.
+            fetchHeroInsight(trainingAge);
             
             // Update display
             document.getElementById('trainingAgeScore').textContent = trainingAge.toFixed(1);
@@ -2817,6 +2824,66 @@
 
             // Store context for AI enhancement after workout data loads
             window._insightContext = { psychAvg, physAvg, healthAvg, trainingAge, psychScores, physScores, healthScores, cards };
+        }
+
+        // Hero insight — fetches a single-sentence trajectory line for the gauge card.
+        // Uses the same Apps Script endpoint and fetch pattern as enhanceInsightsWithAI().
+        async function fetchHeroInsight(trainingAge) {
+            const el = document.getElementById('gaugeHeroInsight');
+            if (!el) return;
+
+            const FALLBACK = 'Consistent effort builds lasting athleticism.';
+
+            // Training Age delta this term — pure JS comparison; falls back to chip value.
+            const termStartTA = currentAthlete?.TA_Term_Start || currentAthlete?.Start_TA || null;
+            const termDelta = (termStartTA != null && !isNaN(parseFloat(termStartTA)))
+                ? (trainingAge - parseFloat(termStartTA))
+                : 0.4;
+
+            const sessionsCompleted = window._strengthModalData?.workoutHistory?.length || 0;
+
+            const dataSummary = {
+                studentName: currentAthlete?.Name || '',
+                trainingAgeCurrent: Number(trainingAge).toFixed(2),
+                trainingAgeDeltaThisTerm: Number(termDelta).toFixed(2),
+                totalSessionsCompleted: sessionsCompleted,
+                programmeStartDate: currentAthlete?.Programme_Start || currentAthlete?.Start_Date || null
+            };
+
+            console.log('🤖 Hero insight: requesting from', STRENGTH_API_URL);
+            console.log('🤖 Hero insight: data summary', dataSummary);
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => { console.log('🤖 Hero insight: timeout after 10s'); controller.abort(); }, 10000);
+
+            try {
+                const response = await fetch(STRENGTH_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'getHeroInsight',
+                        data: dataSummary
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeout);
+                console.log('🤖 Hero insight: response status', response.status, response.ok);
+
+                if (!response.ok) throw new Error('API returned ' + response.status);
+
+                const result = await response.json();
+                console.log('🤖 Hero insight: result', result);
+                if (!result.success || !result.insight) throw new Error(result.error || 'No insight in response');
+
+                el.textContent = result.insight;
+                el.classList.remove('gauge-insight-loading');
+            } catch (e) {
+                console.log('🤖 Hero insight: failed -', e.message || e);
+                clearTimeout(timeout);
+                el.textContent = FALLBACK;
+                el.classList.remove('gauge-insight-loading');
+            }
         }
 
         async function enhanceInsightsWithAI() {
