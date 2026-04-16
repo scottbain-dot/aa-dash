@@ -488,6 +488,377 @@
             margin-top: 0.3rem;
         }
 
+        /* ───────── Section 3b — Booking + Calendar ───────── */
+        .booking-grid {
+            display: grid;
+            grid-template-columns: 7fr 5fr;
+            gap: 1.5rem;
+        }
+        .booking-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        .booking-head h2 { margin-top: 0.3rem; }
+
+        /* Recurring-window blocks (Tue / Thu) */
+        .window-block { margin-top: 1.5rem; }
+        .window-block:first-of-type { margin-top: 0.25rem; }
+        .window-label {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 2px solid var(--cream);
+            margin-bottom: 0.85rem;
+        }
+        .window-day {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.01em;
+        }
+        .window-time {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--grey);
+        }
+        .window-context {
+            margin-left: auto;
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        .slot-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 0.9rem;
+            padding: 0.85rem 1rem;
+            border: 1px solid var(--cream);
+            border-radius: 1rem;
+            margin-bottom: 0.6rem;
+            background: var(--white);
+            transition: background 0.15s, border-color 0.15s;
+            position: relative;
+        }
+        .slot-row:last-child { margin-bottom: 0; }
+        .slot-row.booked {
+            background: rgba(135, 75, 70, 0.08);
+            border-color: rgba(135, 75, 70, 0.2);
+        }
+        .slot-row.full {
+            background: var(--cream);
+            border-color: var(--cream);
+            opacity: 0.7;
+        }
+        .slot-badge {
+            font-size: 9px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 800;
+            padding: 0.3rem 0.55rem;
+            border-radius: 9999px;
+            color: var(--white);
+            white-space: nowrap;
+        }
+        .slot-badge.type-checkin { background: var(--burgundy); }
+        .slot-badge.type-technique { background: var(--gold); color: #6b5212; }
+        .slot-badge.type-testing { background: var(--dark); }
+        .slot-badge.type-group { background: var(--green); }
+        .slot-badge.type-programme { background: #64748b; }
+        .slot-info .slot-time {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+        .slot-info .slot-sub {
+            font-size: 0.78rem;
+            color: var(--grey);
+            margin-top: 0.1rem;
+            font-weight: 500;
+        }
+        .slot-action .book-btn {
+            background: var(--burgundy);
+            color: var(--white);
+            border: none;
+            padding: 0.5rem 0.95rem;
+            border-radius: 0.65rem;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .slot-action .book-btn:hover { background: var(--burgundy-dark); }
+        .slot-status {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .slot-status.booked-label { color: var(--burgundy); }
+        .slot-status.full-label { color: var(--grey); }
+
+        /* Booking confirmation popover */
+        .confirm-pop {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            z-index: 60;
+            background: var(--white);
+            border: 1px solid var(--light-grey);
+            border-radius: 0.9rem;
+            padding: 1rem 1.1rem;
+            box-shadow: 0 12px 32px rgba(53, 15, 13, 0.12);
+            width: 280px;
+        }
+        .confirm-pop::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 1.5rem;
+            width: 12px;
+            height: 12px;
+            background: var(--white);
+            border-left: 1px solid var(--light-grey);
+            border-top: 1px solid var(--light-grey);
+            transform: rotate(45deg);
+        }
+        .confirm-pop-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--dark);
+            line-height: 1.35;
+        }
+        .confirm-pop-sub {
+            font-size: 0.78rem;
+            color: var(--grey);
+            margin-top: 0.35rem;
+        }
+        .confirm-pop-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.85rem;
+        }
+        .confirm-pop-actions button {
+            flex: 1;
+            padding: 0.55rem 0.8rem;
+            border-radius: 0.65rem;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            letter-spacing: 0.02em;
+        }
+        .confirm-pop .confirm-btn { background: var(--burgundy); color: var(--white); }
+        .confirm-pop .confirm-btn:hover { background: var(--burgundy-dark); }
+        .confirm-pop .cancel-btn { background: var(--cream); color: var(--grey); }
+        .confirm-pop .cancel-btn:hover { background: var(--light-grey); }
+
+        .booking-note {
+            margin-top: 1.25rem;
+            font-size: 0.8rem;
+            color: var(--grey);
+            text-align: center;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--cream);
+        }
+
+        /* Calendar column */
+        .calendar-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .calendar-head-left .section-heading { font-size: 1.3rem; }
+        .ics-btn {
+            background: var(--burgundy);
+            color: var(--white);
+            border: none;
+            padding: 0.55rem 0.9rem;
+            border-radius: 0.7rem;
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .ics-btn:hover { background: var(--burgundy-dark); }
+        .ics-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+        .cal-tabs {
+            display: flex;
+            gap: 0.35rem;
+            background: var(--cream);
+            padding: 0.25rem;
+            border-radius: 0.7rem;
+            margin-bottom: 1rem;
+        }
+        .cal-tab {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 0.55rem 0.8rem;
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--grey);
+            cursor: pointer;
+            letter-spacing: 0.02em;
+            transition: background 0.15s, color 0.15s;
+        }
+        .cal-tab.active {
+            background: var(--white);
+            color: var(--burgundy);
+            box-shadow: 0 2px 6px rgba(53,15,13,0.06);
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.35rem;
+            position: relative;
+        }
+        .cal-dayhead {
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: var(--grey);
+            text-align: center;
+            padding: 0.4rem 0 0.5rem;
+        }
+        .cal-day {
+            aspect-ratio: 1;
+            border-radius: 0.55rem;
+            background: var(--off-white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+            position: relative;
+            cursor: default;
+            transition: background 0.15s;
+        }
+        .cal-day.blank { background: transparent; }
+        .cal-day.has-events { cursor: pointer; }
+        .cal-day.has-events:hover { background: var(--cream); }
+        .cal-day.today {
+            background: var(--burgundy);
+            color: var(--white);
+        }
+        .cal-day.today .cal-dot { box-shadow: 0 0 0 1.5px var(--burgundy); }
+        .cal-day-num { line-height: 1; }
+        .cal-dots {
+            display: flex;
+            gap: 2px;
+            margin-top: 1px;
+        }
+        .cal-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+        .cal-dot.dot-checkin { background: var(--burgundy); }
+        .cal-dot.dot-technique { background: var(--gold); }
+        .cal-dot.dot-testing { background: var(--dark); }
+        .cal-dot.dot-group { background: var(--green); }
+        .cal-dot.dot-programme { background: #64748b; }
+
+        /* Calendar legend */
+        .cal-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.9rem;
+            margin-top: 1rem;
+            padding-top: 0.9rem;
+            border-top: 1px solid var(--cream);
+            font-size: 0.75rem;
+            color: var(--grey);
+            font-weight: 600;
+        }
+        .cal-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .cal-legend-swatch {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* Day-event popover */
+        .day-pop {
+            position: absolute;
+            z-index: 70;
+            background: var(--white);
+            border: 1px solid var(--light-grey);
+            border-radius: 0.8rem;
+            padding: 0.8rem 0.9rem;
+            box-shadow: 0 12px 32px rgba(53, 15, 13, 0.14);
+            width: 220px;
+            font-size: 0.8rem;
+        }
+        .day-pop::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 18px;
+            width: 12px;
+            height: 12px;
+            background: var(--white);
+            border-left: 1px solid var(--light-grey);
+            border-top: 1px solid var(--light-grey);
+            transform: rotate(45deg);
+        }
+        .day-pop-date {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: var(--grey);
+            margin-bottom: 0.4rem;
+        }
+        .day-pop-event {
+            padding: 0.45rem 0;
+            border-bottom: 1px solid var(--cream);
+        }
+        .day-pop-event:last-child { border-bottom: none; padding-bottom: 0; }
+        .day-pop-event:first-child { padding-top: 0; }
+        .day-pop-event .ev-name {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.2rem;
+        }
+        .day-pop-event .ev-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.73rem;
+            color: var(--grey);
+        }
+
         /* ───────── Section 4 — Strength Patterns ───────── */
         .strength-section {
             background: var(--cream);
@@ -1480,6 +1851,62 @@
             </div>
         </section>
 
+        <!-- ========== Section 3b — Booking + Calendar ========== -->
+        <section class="booking-grid">
+            <!-- Left: Booking slots -->
+            <div class="card-white">
+                <div class="booking-head">
+                    <div>
+                        <div class="overline">COACH CHECK-INS</div>
+                        <h2 class="section-heading">Book a Session</h2>
+                    </div>
+                </div>
+
+                <div id="bookingWindows">
+                    <!-- Rendered by JS -->
+                </div>
+
+                <div class="booking-note">
+                    Slots open 2 weeks in advance · Max 1 booking per week
+                </div>
+            </div>
+
+            <!-- Right: Personal Calendar -->
+            <div class="card-white">
+                <div class="calendar-head">
+                    <div class="calendar-head-left">
+                        <div class="overline">YOUR SCHEDULE</div>
+                        <h2 class="section-heading">April &amp; May 2026</h2>
+                    </div>
+                    <button class="ics-btn" id="icsDownloadBtn" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        Add to Calendar
+                    </button>
+                </div>
+
+                <div class="cal-tabs" id="calTabs">
+                    <button class="cal-tab active" data-month="4" type="button">April</button>
+                    <button class="cal-tab" data-month="5" type="button">May</button>
+                </div>
+
+                <div class="cal-grid" id="calGrid">
+                    <!-- Rendered by JS -->
+                </div>
+
+                <div class="cal-legend">
+                    <div class="cal-legend-item"><span class="cal-legend-swatch" style="background: var(--burgundy);"></span>Check-in</div>
+                    <div class="cal-legend-item"><span class="cal-legend-swatch" style="background: var(--gold);"></span>Technique / Programme</div>
+                    <div class="cal-legend-item"><span class="cal-legend-swatch" style="background: var(--dark);"></span>Testing Day</div>
+                    <div class="cal-legend-item"><span class="cal-legend-swatch" style="background: var(--green);"></span>Group Session</div>
+                </div>
+            </div>
+        </section>
+
         <!-- ========== Section 4 — Strength Patterns ========== -->
         <section class="strength-section">
             <div class="overline">MOVEMENT DEVELOPMENT</div>
@@ -2139,6 +2566,399 @@
                 disp.querySelector('.goal-set-why').textContent = g.why ? '“' + g.why + '”' : '';
                 disp.classList.add('visible');
             }
+
+            /* ───────── Booking + Personal Calendar ───────── */
+
+            // Session type palette
+            const SESSION_TYPES = {
+                checkin:    { label: 'Check-in',          cls: 'type-checkin',    dot: 'dot-checkin',    coach: 'Mr Bain' },
+                technique:  { label: 'Technique Review',  cls: 'type-technique',  dot: 'dot-technique',  coach: 'Mr Bain' },
+                testing:    { label: 'Testing Day',       cls: 'type-testing',    dot: 'dot-testing',    coach: null },
+                group:      { label: 'Group Session',     cls: 'type-group',      dot: 'dot-group',      coach: null },
+                programme:  { label: 'Programme Consult', cls: 'type-programme',  dot: 'dot-programme',  coach: 'Mr Bain' }
+            };
+
+            const TODAY = { y: 2026, m: 4, d: 16 }; // April 16, 2026
+
+            // Format helpers
+            const pad2 = (n) => String(n).padStart(2, '0');
+            const dateKey = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`;
+            const monthName = (m) => ['January','February','March','April','May','June','July','August','September','October','November','December'][m-1];
+            const parseTime = (t) => {
+                // Accepts "7:15am" / "3:30pm" → [h,m]
+                const match = t.match(/^(\d{1,2}):(\d{2})(am|pm)$/i);
+                if (!match) return [0,0];
+                let h = parseInt(match[1],10);
+                const mm = parseInt(match[2],10);
+                const mer = match[3].toLowerCase();
+                if (mer === 'pm' && h !== 12) h += 12;
+                if (mer === 'am' && h === 12) h = 0;
+                return [h, mm];
+            };
+            const addMinutes = (h, m, add) => {
+                let total = h*60 + m + add;
+                return [ Math.floor(total/60) % 24, total % 60 ];
+            };
+            const fmtTimeLabel = (t) => {
+                // "7:15am" stays as-is but ensures consistent display
+                return t;
+            };
+
+            // Bookable slots. Each slot is on a real future date.
+            // Today is Thu 16 Apr 2026 → next Tuesday = Apr 21, next Thursday = Apr 23.
+            // (NB: prompt said "Thursday April 17" which is actually a Friday.
+            //  Using real next-Thursday April 23 so the calendar stays consistent.)
+            const bookingSlots = [
+                // Tuesday window (7:15–8:15am)
+                { id:'tue-1', windowKey:'tue-0421', date:{y:2026,m:4,d:21}, startTime:'7:15am', durationMin:20, type:'checkin',   state:'available' },
+                { id:'tue-2', windowKey:'tue-0421', date:{y:2026,m:4,d:21}, startTime:'7:35am', durationMin:20, type:'technique', state:'full' },
+                { id:'tue-3', windowKey:'tue-0421', date:{y:2026,m:4,d:21}, startTime:'7:55am', durationMin:20, type:'checkin',   state:'available' },
+                // Thursday window (3:30–4:30pm)
+                { id:'thu-1', windowKey:'thu-0423', date:{y:2026,m:4,d:23}, startTime:'3:30pm', durationMin:20, type:'checkin',   state:'booked' },
+                { id:'thu-2', windowKey:'thu-0423', date:{y:2026,m:4,d:23}, startTime:'3:50pm', durationMin:20, type:'technique', state:'available' },
+                { id:'thu-3', windowKey:'thu-0423', date:{y:2026,m:4,d:23}, startTime:'4:10pm', durationMin:20, type:'programme', state:'available' }
+            ];
+
+            const bookingWindows = [
+                { key:'tue-0421', dayLabel:'Tuesday',  dateLabel:'21 April', timeRange:'7:15–8:15am', context:'Before School' },
+                { key:'thu-0423', dayLabel:'Thursday', dateLabel:'23 April', timeRange:'3:30–4:30pm', context:'After School'  }
+            ];
+
+            // Personal events: Maya's bookings (start with the pre-booked Thursday slot)
+            const mayaEvents = [];
+            function syncMayaEventsFromBookings() {
+                mayaEvents.length = 0;
+                bookingSlots.forEach(s => {
+                    if (s.state === 'booked') {
+                        const [sh, sm] = parseTime(s.startTime);
+                        const [eh, em] = addMinutes(sh, sm, s.durationMin);
+                        mayaEvents.push({
+                            id: 'booking-' + s.id,
+                            date: { ...s.date },
+                            startH: sh, startM: sm, endH: eh, endM: em,
+                            type: s.type,
+                            name: SESSION_TYPES[s.type].label + ' with ' + SESSION_TYPES[s.type].coach,
+                            source: 'booking'
+                        });
+                    }
+                });
+            }
+
+            // Group events (hardcoded)
+            function firstThursdayOf(y, m) {
+                // JS: 0=Sun..4=Thu
+                for (let d = 1; d <= 7; d++) {
+                    if (new Date(y, m-1, d).getDay() === 4) return d;
+                }
+                return null;
+            }
+            const groupEvents = [
+                // Testing Day — May 19, 2026, 8:00–14:00
+                { id:'testing-may', date:{y:2026,m:5,d:19}, startH:8, startM:0, endH:14, endM:0, type:'testing',
+                  name:'Testing Day', location:'FIS Gym' },
+                // Group Session — first Thursday of April (Apr 2) and May (May 7), 15:30–16:30
+                { id:'group-apr', date:{y:2026,m:4,d:firstThursdayOf(2026,4)}, startH:15, startM:30, endH:16, endM:30,
+                  type:'group', name:'Group Session' },
+                { id:'group-may', date:{y:2026,m:5,d:firstThursdayOf(2026,5)}, startH:15, startM:30, endH:16, endM:30,
+                  type:'group', name:'Group Session' },
+                // Programme Review — last week of term (using 27 May 2026 for G11)
+                { id:'programme-review', date:{y:2026,m:5,d:27}, startH:13, startM:30, endH:14, endM:30,
+                  type:'programme', name:'Programme Review' }
+            ];
+
+            function allEvents() {
+                return groupEvents.concat(mayaEvents);
+            }
+            function eventsByDate() {
+                const map = {};
+                allEvents().forEach(ev => {
+                    const k = dateKey(ev.date.y, ev.date.m, ev.date.d);
+                    (map[k] = map[k] || []).push(ev);
+                });
+                return map;
+            }
+
+            /* — Render booking list — */
+            function renderBooking() {
+                const host = document.getElementById('bookingWindows');
+                if (!host) return;
+                host.innerHTML = bookingWindows.map(w => {
+                    const slots = bookingSlots.filter(s => s.windowKey === w.key);
+                    const slotHTML = slots.map(s => renderSlotRow(s)).join('');
+                    return `
+                        <div class="window-block">
+                            <div class="window-label">
+                                <span class="window-day">${w.dayLabel} · ${w.dateLabel}</span>
+                                <span class="window-time">${w.timeRange}</span>
+                                <span class="window-context">${w.context}</span>
+                            </div>
+                            ${slotHTML}
+                        </div>`;
+                }).join('');
+
+                // Wire book buttons
+                host.querySelectorAll('.book-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openConfirmPop(btn.dataset.slotId, btn.closest('.slot-row'));
+                    });
+                });
+            }
+
+            function renderSlotRow(s) {
+                const t = SESSION_TYPES[s.type];
+                if (s.state === 'booked') {
+                    return `
+                        <div class="slot-row booked" data-slot-id="${s.id}">
+                            <span class="slot-badge ${t.cls}">${t.label}</span>
+                            <div class="slot-info">
+                                <div class="slot-time">${fmtTimeLabel(s.startTime)}</div>
+                                <div class="slot-sub">✓ Booked · with ${t.coach || 'Mr Bain'}</div>
+                            </div>
+                            <span class="slot-status booked-label">Booked</span>
+                        </div>`;
+                }
+                if (s.state === 'full') {
+                    return `
+                        <div class="slot-row full" data-slot-id="${s.id}">
+                            <span class="slot-badge ${t.cls}">${t.label}</span>
+                            <div class="slot-info">
+                                <div class="slot-time">${fmtTimeLabel(s.startTime)}</div>
+                                <div class="slot-sub">Slot unavailable</div>
+                            </div>
+                            <span class="slot-status full-label">Full</span>
+                        </div>`;
+                }
+                // available
+                return `
+                    <div class="slot-row" data-slot-id="${s.id}">
+                        <span class="slot-badge ${t.cls}">${t.label}</span>
+                        <div class="slot-info">
+                            <div class="slot-time">${fmtTimeLabel(s.startTime)}</div>
+                            <div class="slot-sub">20 min · ${t.coach || 'Mr Bain'}</div>
+                        </div>
+                        <div class="slot-action">
+                            <button class="book-btn" data-slot-id="${s.id}" type="button">Book</button>
+                        </div>
+                    </div>`;
+            }
+
+            // Confirmation popover
+            let activeConfirmPop = null;
+            function closeConfirmPop() {
+                if (activeConfirmPop) {
+                    activeConfirmPop.remove();
+                    activeConfirmPop = null;
+                }
+            }
+            function openConfirmPop(slotId, row) {
+                closeConfirmPop();
+                closeDayPop();
+                const slot = bookingSlots.find(s => s.id === slotId);
+                if (!slot) return;
+                const window = bookingWindows.find(w => w.key === slot.windowKey);
+                const t = SESSION_TYPES[slot.type];
+                const pop = document.createElement('div');
+                pop.className = 'confirm-pop';
+                pop.innerHTML = `
+                    <div class="confirm-pop-title">Confirm booking — ${window.dayLabel} ${slot.startTime}, ${t.label}?</div>
+                    <div class="confirm-pop-sub">${window.dateLabel} 2026 · with ${t.coach || 'Mr Bain'}</div>
+                    <div class="confirm-pop-actions">
+                        <button class="cancel-btn" type="button">Cancel</button>
+                        <button class="confirm-btn" type="button">Confirm</button>
+                    </div>`;
+                row.appendChild(pop);
+                activeConfirmPop = pop;
+                pop.querySelector('.cancel-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeConfirmPop();
+                });
+                pop.querySelector('.confirm-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    slot.state = 'booked';
+                    syncMayaEventsFromBookings();
+                    closeConfirmPop();
+                    renderBooking();
+                    renderCalendar();
+                });
+                pop.addEventListener('click', (e) => e.stopPropagation());
+            }
+
+            // Close popovers on outside click
+            document.addEventListener('click', (e) => {
+                if (activeConfirmPop && !activeConfirmPop.contains(e.target) && !e.target.closest('.book-btn')) {
+                    closeConfirmPop();
+                }
+                if (activeDayPop && !activeDayPop.contains(e.target) && !e.target.closest('.cal-day')) {
+                    closeDayPop();
+                }
+            });
+
+            /* — Render the calendar — */
+            let activeCalMonth = 4; // April
+            function renderCalendar() {
+                const grid = document.getElementById('calGrid');
+                if (!grid) return;
+                const y = 2026;
+                const m = activeCalMonth;
+                const daysInMonth = new Date(y, m, 0).getDate();
+                // Monday-first weekday index: JS getDay() → 0=Sun..6=Sat; remap to 0=Mon..6=Sun
+                const firstJSDay = new Date(y, m-1, 1).getDay();
+                const firstMonIdx = (firstJSDay + 6) % 7;
+                const headers = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+                const evMap = eventsByDate();
+                let html = headers.map(h => `<div class="cal-dayhead">${h}</div>`).join('');
+
+                for (let i = 0; i < firstMonIdx; i++) {
+                    html += `<div class="cal-day blank"></div>`;
+                }
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const k = dateKey(y, m, d);
+                    const evs = evMap[k] || [];
+                    const isToday = (y === TODAY.y && m === TODAY.m && d === TODAY.d);
+                    const hasEv = evs.length > 0;
+                    const classes = ['cal-day'];
+                    if (isToday) classes.push('today');
+                    if (hasEv) classes.push('has-events');
+                    const dots = evs.map(ev => `<span class="cal-dot ${SESSION_TYPES[ev.type].dot}"></span>`).join('');
+                    html += `
+                        <div class="${classes.join(' ')}" data-date="${k}">
+                            <span class="cal-day-num">${d}</span>
+                            ${hasEv ? `<span class="cal-dots">${dots}</span>` : ''}
+                        </div>`;
+                }
+                grid.innerHTML = html;
+
+                // Wire day clicks (only for days with events)
+                grid.querySelectorAll('.cal-day.has-events').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openDayPop(el.dataset.date, el);
+                    });
+                });
+            }
+
+            // Day popover
+            let activeDayPop = null;
+            function closeDayPop() {
+                if (activeDayPop) {
+                    activeDayPop.remove();
+                    activeDayPop = null;
+                }
+            }
+            function openDayPop(dateStr, dayEl) {
+                closeDayPop();
+                closeConfirmPop();
+                const evs = eventsByDate()[dateStr] || [];
+                if (!evs.length) return;
+                const [yy, mm, dd] = dateStr.split('-').map(n => parseInt(n,10));
+                const dateLabel = `${dd} ${monthName(mm)} 2026`;
+
+                const pop = document.createElement('div');
+                pop.className = 'day-pop';
+                pop.innerHTML = `
+                    <div class="day-pop-date">${dateLabel}</div>
+                    ${evs.map(ev => {
+                        const t = SESSION_TYPES[ev.type];
+                        const timeTxt = `${pad2(ev.startH)}:${pad2(ev.startM)}–${pad2(ev.endH)}:${pad2(ev.endM)}`;
+                        return `
+                            <div class="day-pop-event">
+                                <div class="ev-name">${ev.name}</div>
+                                <div class="ev-meta">
+                                    <span class="slot-badge ${t.cls}">${t.label}</span>
+                                    <span>${timeTxt}</span>
+                                </div>
+                            </div>`;
+                    }).join('')}
+                `;
+
+                const grid = document.getElementById('calGrid');
+                grid.appendChild(pop);
+                activeDayPop = pop;
+
+                // Position below the day square (within the grid)
+                const gridRect = grid.getBoundingClientRect();
+                const dayRect = dayEl.getBoundingClientRect();
+                let left = dayRect.left - gridRect.left;
+                const top = (dayRect.bottom - gridRect.top) + 6;
+                // Keep within grid bounds
+                const popWidth = 220;
+                const maxLeft = grid.clientWidth - popWidth - 4;
+                if (left > maxLeft) left = maxLeft;
+                if (left < 0) left = 0;
+                pop.style.left = left + 'px';
+                pop.style.top = top + 'px';
+
+                pop.addEventListener('click', (e) => e.stopPropagation());
+            }
+
+            // Tabs
+            document.querySelectorAll('#calTabs .cal-tab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#calTabs .cal-tab').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeCalMonth = parseInt(btn.dataset.month, 10);
+                    closeDayPop();
+                    renderCalendar();
+                });
+            });
+
+            /* — .ics export — */
+            function toICSDate(y, m, d, h, mm) {
+                return `${y}${pad2(m)}${pad2(d)}T${pad2(h)}${pad2(mm)}00`;
+            }
+            function icsStamp() {
+                // Fixed demo stamp (UTC) so the file is deterministic for the mockup
+                return '20260416T090000Z';
+            }
+            function buildICS() {
+                const lines = [
+                    'BEGIN:VCALENDAR',
+                    'VERSION:2.0',
+                    'PRODID:-//Athlete Academy//Maya Hoffmann Schedule//EN',
+                    'CALSCALE:GREGORIAN',
+                    'METHOD:PUBLISH'
+                ];
+                const events = allEvents();
+                events.forEach(ev => {
+                    const t = SESSION_TYPES[ev.type];
+                    let title;
+                    if (ev.source === 'booking') {
+                        title = 'AA — ' + t.label + ' with ' + (t.coach || 'Mr Bain');
+                    } else {
+                        title = 'AA — ' + ev.name;
+                    }
+                    lines.push('BEGIN:VEVENT');
+                    lines.push('UID:' + ev.id + '@athleteacademy.fis');
+                    lines.push('DTSTAMP:' + icsStamp());
+                    lines.push('DTSTART:' + toICSDate(ev.date.y, ev.date.m, ev.date.d, ev.startH, ev.startM));
+                    lines.push('DTEND:' + toICSDate(ev.date.y, ev.date.m, ev.date.d, ev.endH, ev.endM));
+                    lines.push('SUMMARY:' + title);
+                    lines.push('LOCATION:Frankfurt International School');
+                    lines.push('END:VEVENT');
+                });
+                lines.push('END:VCALENDAR');
+                // RFC 5545 requires CRLF
+                return lines.join('\r\n');
+            }
+            document.getElementById('icsDownloadBtn').addEventListener('click', () => {
+                const ics = buildICS();
+                const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'maya-hoffmann-aa-schedule.ics';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 500);
+            });
+
+            /* — Initial booking/calendar render — */
+            syncMayaEventsFromBookings();
+            renderBooking();
+            renderCalendar();
 
             /* — Initial render — */
             renderSessionList();
