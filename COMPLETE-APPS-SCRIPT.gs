@@ -170,6 +170,13 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ===== AI HERO INSIGHT (single-sentence trajectory line) =====
+    if (data.action === 'getHeroInsight') {
+      var heroResult = handleGetHeroInsight(data.data);
+      return ContentService.createTextOutput(JSON.stringify(heroResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // ===== SAVE NOMINATION =====
     if (data.action === 'saveNomination') {
       var nomResult = handleSaveNomination(data);
@@ -1566,6 +1573,71 @@ function handleGetAICoachingInsights(studentData) {
     var insights = JSON.parse(aiText);
 
     return { success: true, insights: insights };
+
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ========================================
+// AI HERO INSIGHT
+// Single-sentence trajectory headline for the dashboard hero card.
+// Reuses the same ANTHROPIC_API_KEY script property as the carousel.
+// ========================================
+function handleGetHeroInsight(studentData) {
+  try {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+    if (!apiKey) {
+      return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
+    }
+
+    if (!studentData) {
+      return { success: false, error: 'No student data provided' };
+    }
+
+    var systemPrompt = 'You are a coach writing a single headline insight for a student athlete\'s profile. '
+      + 'Write exactly one sentence, maximum 12 words, second person, warm and direct. '
+      + 'Focus only on their overall trajectory and consistency — never mention specific scores, pillars, or test results. '
+      + 'Make it feel like it was written for this specific athlete based on their data, not a generic motivational quote.';
+
+    var userMessage = JSON.stringify(studentData);
+
+    var payload = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 80,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    };
+
+    var options = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    var response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', options);
+    var statusCode = response.getResponseCode();
+
+    if (statusCode !== 200) {
+      return { success: false, error: 'Anthropic API returned status ' + statusCode };
+    }
+
+    var responseBody = JSON.parse(response.getContentText());
+    var aiText = responseBody.content && responseBody.content[0] && responseBody.content[0].text;
+    if (!aiText) {
+      return { success: false, error: 'No text in API response' };
+    }
+
+    // Strip any stray quotes/markdown and return a clean sentence
+    var sentence = aiText.replace(/```[a-z]*\s*/gi, '').replace(/```/g, '').trim();
+    sentence = sentence.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim();
+
+    return { success: true, insight: sentence };
 
   } catch (error) {
     return { success: false, error: error.toString() };
