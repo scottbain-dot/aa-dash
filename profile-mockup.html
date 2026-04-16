@@ -503,59 +503,7 @@
         }
         .booking-head h2 { margin-top: 0.3rem; }
 
-        /* Recurring-window blocks (Tue / Thu) */
-        .window-block { margin-top: 1.5rem; }
-        .window-block:first-of-type { margin-top: 0.25rem; }
-        .window-label {
-            display: flex;
-            align-items: baseline;
-            gap: 0.6rem;
-            padding-bottom: 0.6rem;
-            border-bottom: 2px solid var(--cream);
-            margin-bottom: 0.85rem;
-        }
-        .window-day {
-            font-size: 1rem;
-            font-weight: 800;
-            color: var(--dark);
-            letter-spacing: -0.01em;
-        }
-        .window-time {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--grey);
-        }
-        .window-context {
-            margin-left: auto;
-            font-size: 10px;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: var(--gold);
-        }
-        .slot-row {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            align-items: center;
-            gap: 0.9rem;
-            padding: 0.85rem 1rem;
-            border: 1px solid var(--cream);
-            border-radius: 1rem;
-            margin-bottom: 0.6rem;
-            background: var(--white);
-            transition: background 0.15s, border-color 0.15s;
-            position: relative;
-        }
-        .slot-row:last-child { margin-bottom: 0; }
-        .slot-row.booked {
-            background: rgba(135, 75, 70, 0.08);
-            border-color: rgba(135, 75, 70, 0.2);
-        }
-        .slot-row.full {
-            background: var(--cream);
-            border-color: var(--cream);
-            opacity: 0.7;
-        }
+        /* Shared badge (also used by calendar day-popover) */
         .slot-badge {
             font-size: 9px;
             letter-spacing: 0.12em;
@@ -565,28 +513,75 @@
             border-radius: 9999px;
             color: var(--white);
             white-space: nowrap;
+            display: inline-block;
         }
         .slot-badge.type-checkin { background: var(--burgundy); }
         .slot-badge.type-technique { background: var(--gold); color: #6b5212; }
         .slot-badge.type-testing { background: var(--dark); }
         .slot-badge.type-group { background: var(--green); }
         .slot-badge.type-programme { background: #64748b; }
-        .slot-info .slot-time {
-            font-weight: 700;
+
+        /* One card per weekly slot */
+        .slot-card {
+            position: relative;
+            padding: 1rem 1.1rem;
+            border: 1px solid var(--cream);
+            border-radius: 1rem;
+            background: var(--white);
+            margin-bottom: 0.7rem;
+            transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+        }
+        .slot-card:last-child { margin-bottom: 0; }
+        .slot-card.available:hover {
+            border-color: rgba(135, 75, 70, 0.3);
+            box-shadow: 0 4px 12px rgba(135, 75, 70, 0.08);
+        }
+        .slot-card.booked {
+            background: rgba(135, 75, 70, 0.08);
+            border-color: rgba(135, 75, 70, 0.22);
+        }
+        .slot-card.full {
+            background: var(--cream);
+            border-color: var(--cream);
+            opacity: 0.72;
+        }
+        .slot-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.35rem;
+        }
+        .slot-card-title {
+            font-size: 0.98rem;
+            font-weight: 800;
             color: var(--dark);
-            font-size: 0.95rem;
+            letter-spacing: -0.01em;
         }
-        .slot-info .slot-sub {
-            font-size: 0.78rem;
+        .slot-card-context {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: var(--gold);
+            white-space: nowrap;
+        }
+        .slot-card-foot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .slot-card-time {
+            font-size: 0.88rem;
+            font-weight: 600;
             color: var(--grey);
-            margin-top: 0.1rem;
-            font-weight: 500;
         }
-        .slot-action .book-btn {
+        .slot-card .book-btn {
             background: var(--burgundy);
             color: var(--white);
             border: none;
-            padding: 0.5rem 0.95rem;
+            padding: 0.5rem 1.1rem;
             border-radius: 0.65rem;
             font-family: inherit;
             font-size: 0.8rem;
@@ -595,61 +590,105 @@
             cursor: pointer;
             transition: background 0.15s;
         }
-        .slot-action .book-btn:hover { background: var(--burgundy-dark); }
-        .slot-status {
+        .slot-card .book-btn:hover { background: var(--burgundy-dark); }
+        .slot-card-status {
             font-size: 0.75rem;
             font-weight: 800;
             letter-spacing: 0.06em;
             text-transform: uppercase;
             white-space: nowrap;
         }
-        .slot-status.booked-label { color: var(--burgundy); }
-        .slot-status.full-label { color: var(--grey); }
+        .slot-card-status.full-label { color: var(--grey); }
+        .slot-card-status.booked-label { color: var(--burgundy); }
 
-        /* Booking confirmation popover */
-        .confirm-pop {
-            position: absolute;
-            top: calc(100% + 0.5rem);
-            right: 0;
-            z-index: 60;
-            background: var(--white);
-            border: 1px solid var(--light-grey);
-            border-radius: 0.9rem;
-            padding: 1rem 1.1rem;
-            box-shadow: 0 12px 32px rgba(53, 15, 13, 0.12);
-            width: 280px;
+        .slot-booked-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px dashed rgba(135, 75, 70, 0.25);
         }
-        .confirm-pop::before {
-            content: '';
-            position: absolute;
-            top: -6px;
-            right: 1.5rem;
-            width: 12px;
-            height: 12px;
-            background: var(--white);
-            border-left: 1px solid var(--light-grey);
-            border-top: 1px solid var(--light-grey);
-            transform: rotate(45deg);
-        }
-        .confirm-pop-title {
-            font-size: 0.85rem;
-            font-weight: 700;
+        .slot-booked-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            font-size: 0.8rem;
             color: var(--dark);
+            font-weight: 600;
+        }
+        .slot-booked-notes {
+            font-size: 0.8rem;
+            color: var(--grey);
+            font-style: italic;
             line-height: 1.35;
         }
-        .confirm-pop-sub {
-            font-size: 0.78rem;
+
+        /* Inline booker panel (replaces the footer when Book is clicked) */
+        .slot-booker {
+            margin-top: 0.8rem;
+            padding-top: 0.85rem;
+            border-top: 1px dashed var(--light-grey);
+        }
+        .slot-booker-label {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 800;
             color: var(--grey);
-            margin-top: 0.35rem;
+            margin-bottom: 0.5rem;
         }
-        .confirm-pop-actions {
+        .type-choice-grid {
             display: flex;
-            gap: 0.5rem;
-            margin-top: 0.85rem;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.9rem;
         }
-        .confirm-pop-actions button {
-            flex: 1;
-            padding: 0.55rem 0.8rem;
+        .type-choice-btn {
+            background: var(--white);
+            border: 1px solid var(--light-grey);
+            color: var(--grey);
+            padding: 0.4rem 0.7rem;
+            border-radius: 9999px;
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.01em;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+        .type-choice-btn:hover {
+            border-color: var(--burgundy);
+            color: var(--burgundy);
+        }
+        .type-choice-btn.selected {
+            background: var(--burgundy);
+            border-color: var(--burgundy);
+            color: var(--white);
+        }
+        .notes-input {
+            width: 100%;
+            padding: 0.55rem 0.7rem;
+            border: 1px solid var(--light-grey);
+            border-radius: 0.55rem;
+            font-family: inherit;
+            font-size: 0.85rem;
+            color: var(--dark);
+            background: var(--white);
+            margin-bottom: 0.9rem;
+            box-sizing: border-box;
+        }
+        .notes-input:focus {
+            outline: none;
+            border-color: var(--burgundy);
+        }
+        .slot-booker-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+        .slot-booker-actions button {
+            padding: 0.55rem 1rem;
             border-radius: 0.65rem;
             font-family: inherit;
             font-size: 0.8rem;
@@ -658,10 +697,16 @@
             border: none;
             letter-spacing: 0.02em;
         }
-        .confirm-pop .confirm-btn { background: var(--burgundy); color: var(--white); }
-        .confirm-pop .confirm-btn:hover { background: var(--burgundy-dark); }
-        .confirm-pop .cancel-btn { background: var(--cream); color: var(--grey); }
-        .confirm-pop .cancel-btn:hover { background: var(--light-grey); }
+        .slot-booker-actions .cancel-btn {
+            background: var(--cream);
+            color: var(--grey);
+        }
+        .slot-booker-actions .cancel-btn:hover { background: var(--light-grey); }
+        .slot-booker-actions .confirm-btn {
+            background: var(--burgundy);
+            color: var(--white);
+        }
+        .slot-booker-actions .confirm-btn:hover { background: var(--burgundy-dark); }
 
         .booking-note {
             margin-top: 1.25rem;
@@ -1867,7 +1912,7 @@
                 </div>
 
                 <div class="booking-note">
-                    Slots open 2 weeks in advance · Max 1 booking per week
+                    Slots open 2 weeks in advance
                 </div>
             </div>
 
@@ -2604,24 +2649,31 @@
                 return t;
             };
 
-            // Bookable slots. Each slot is on a real future date.
-            // Today is Thu 16 Apr 2026 → next Tuesday = Apr 21, next Thursday = Apr 23.
-            // (NB: prompt said "Thursday April 17" which is actually a Friday.
-            //  Using real next-Thursday April 23 so the calendar stays consistent.)
+            // Bookable slots — one card per weekly window, 2 weeks ahead.
+            // Today is Thu 16 Apr 2026 → Tuesdays: Apr 21, Apr 28 · Thursdays: Apr 23, Apr 30.
+            // (NB: prompt said "Thu Apr 24" + "Thu May 1" but those are Fridays.
+            //  Using real Thursdays so the calendar stays internally consistent.)
             const bookingSlots = [
-                // Tuesday window (7:15–8:15am)
-                { id:'tue-1', windowKey:'tue-0421', date:{y:2026,m:4,d:21}, startTime:'7:15am', durationMin:20, type:'checkin',   state:'available' },
-                { id:'tue-2', windowKey:'tue-0421', date:{y:2026,m:4,d:21}, startTime:'7:35am', durationMin:20, type:'technique', state:'full' },
-                { id:'tue-3', windowKey:'tue-0421', date:{y:2026,m:4,d:21}, startTime:'7:55am', durationMin:20, type:'checkin',   state:'available' },
-                // Thursday window (3:30–4:30pm)
-                { id:'thu-1', windowKey:'thu-0423', date:{y:2026,m:4,d:23}, startTime:'3:30pm', durationMin:20, type:'checkin',   state:'booked' },
-                { id:'thu-2', windowKey:'thu-0423', date:{y:2026,m:4,d:23}, startTime:'3:50pm', durationMin:20, type:'technique', state:'available' },
-                { id:'thu-3', windowKey:'thu-0423', date:{y:2026,m:4,d:23}, startTime:'4:10pm', durationMin:20, type:'programme', state:'available' }
-            ];
-
-            const bookingWindows = [
-                { key:'tue-0421', dayLabel:'Tuesday',  dateLabel:'21 April', timeRange:'7:15–8:15am', context:'Before School' },
-                { key:'thu-0423', dayLabel:'Thursday', dateLabel:'23 April', timeRange:'3:30–4:30pm', context:'After School'  }
+                { id:'tue-0421',
+                  date:{y:2026,m:4,d:21}, dayLabel:'Tuesday',  dateLabel:'21 April',
+                  startH:7, startM:15, endH:8, endM:15,
+                  timeRange:'7:15–8:15am', context:'Before School',
+                  state:'available', bookedType:null, notes:'' },
+                { id:'thu-0423',
+                  date:{y:2026,m:4,d:23}, dayLabel:'Thursday', dateLabel:'23 April',
+                  startH:15, startM:30, endH:16, endM:30,
+                  timeRange:'3:30–4:30pm', context:'After School',
+                  state:'booked', bookedType:'checkin', notes:'' },
+                { id:'tue-0428',
+                  date:{y:2026,m:4,d:28}, dayLabel:'Tuesday',  dateLabel:'28 April',
+                  startH:7, startM:15, endH:8, endM:15,
+                  timeRange:'7:15–8:15am', context:'Before School',
+                  state:'full', bookedType:null, notes:'' },
+                { id:'thu-0430',
+                  date:{y:2026,m:4,d:30}, dayLabel:'Thursday', dateLabel:'30 April',
+                  startH:15, startM:30, endH:16, endM:30,
+                  timeRange:'3:30–4:30pm', context:'After School',
+                  state:'available', bookedType:null, notes:'' }
             ];
 
             // Personal events: Maya's bookings (start with the pre-booked Thursday slot)
@@ -2630,14 +2682,15 @@
                 mayaEvents.length = 0;
                 bookingSlots.forEach(s => {
                     if (s.state === 'booked') {
-                        const [sh, sm] = parseTime(s.startTime);
-                        const [eh, em] = addMinutes(sh, sm, s.durationMin);
+                        const t = SESSION_TYPES[s.bookedType || 'checkin'];
                         mayaEvents.push({
                             id: 'booking-' + s.id,
                             date: { ...s.date },
-                            startH: sh, startM: sm, endH: eh, endM: em,
-                            type: s.type,
-                            name: SESSION_TYPES[s.type].label + ' with ' + SESSION_TYPES[s.type].coach,
+                            startH: s.startH, startM: s.startM,
+                            endH: s.endH, endM: s.endM,
+                            type: s.bookedType || 'checkin',
+                            name: t.label + (t.coach ? ' with ' + t.coach : ''),
+                            notes: s.notes || '',
                             source: 'booking'
                         });
                     }
@@ -2679,115 +2732,178 @@
             }
 
             /* — Render booking list — */
+            // Which slot currently has its inline booker open (null = none)
+            let activeBookerSlotId = null;
+            // Draft state for the currently-open booker
+            let bookerDraft = { type: 'checkin', notes: '' };
+
             function renderBooking() {
                 const host = document.getElementById('bookingWindows');
                 if (!host) return;
-                host.innerHTML = bookingWindows.map(w => {
-                    const slots = bookingSlots.filter(s => s.windowKey === w.key);
-                    const slotHTML = slots.map(s => renderSlotRow(s)).join('');
-                    return `
-                        <div class="window-block">
-                            <div class="window-label">
-                                <span class="window-day">${w.dayLabel} · ${w.dateLabel}</span>
-                                <span class="window-time">${w.timeRange}</span>
-                                <span class="window-context">${w.context}</span>
-                            </div>
-                            ${slotHTML}
-                        </div>`;
-                }).join('');
+                host.innerHTML = bookingSlots.map(s => renderSlotCard(s)).join('');
 
                 // Wire book buttons
                 host.querySelectorAll('.book-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        openConfirmPop(btn.dataset.slotId, btn.closest('.slot-row'));
+                        openBooker(btn.dataset.slotId);
                     });
                 });
+
+                // If a booker is open, wire its controls
+                if (activeBookerSlotId) {
+                    wireBooker(activeBookerSlotId);
+                }
             }
 
-            function renderSlotRow(s) {
-                const t = SESSION_TYPES[s.type];
+            function renderSlotCard(s) {
+                const headHTML = `
+                    <div class="slot-card-head">
+                        <span class="slot-card-title">${s.dayLabel} · ${s.dateLabel}</span>
+                        <span class="slot-card-context">${s.context}</span>
+                    </div>`;
+
                 if (s.state === 'booked') {
+                    const t = SESSION_TYPES[s.bookedType || 'checkin'];
+                    const notesHTML = s.notes
+                        ? `<div class="slot-booked-notes">“${escapeHTML(s.notes)}”</div>`
+                        : '';
                     return `
-                        <div class="slot-row booked" data-slot-id="${s.id}">
-                            <span class="slot-badge ${t.cls}">${t.label}</span>
-                            <div class="slot-info">
-                                <div class="slot-time">${fmtTimeLabel(s.startTime)}</div>
-                                <div class="slot-sub">✓ Booked · with ${t.coach || 'Mr Bain'}</div>
+                        <div class="slot-card booked" data-slot-id="${s.id}">
+                            ${headHTML}
+                            <div class="slot-card-foot">
+                                <span class="slot-card-time">${s.timeRange}</span>
+                                <span class="slot-badge ${t.cls}">${t.label}</span>
                             </div>
-                            <span class="slot-status booked-label">Booked</span>
+                            <div class="slot-booked-body">
+                                <div class="slot-booked-meta">
+                                    <span class="slot-card-status booked-label">✓ Booked</span>
+                                    <span>· with ${t.coach || 'Mr Bain'}</span>
+                                </div>
+                                ${notesHTML}
+                            </div>
                         </div>`;
                 }
+
                 if (s.state === 'full') {
                     return `
-                        <div class="slot-row full" data-slot-id="${s.id}">
-                            <span class="slot-badge ${t.cls}">${t.label}</span>
-                            <div class="slot-info">
-                                <div class="slot-time">${fmtTimeLabel(s.startTime)}</div>
-                                <div class="slot-sub">Slot unavailable</div>
+                        <div class="slot-card full" data-slot-id="${s.id}">
+                            ${headHTML}
+                            <div class="slot-card-foot">
+                                <span class="slot-card-time">${s.timeRange}</span>
+                                <span class="slot-card-status full-label">Full</span>
                             </div>
-                            <span class="slot-status full-label">Full</span>
                         </div>`;
                 }
+
                 // available
+                const isOpen = activeBookerSlotId === s.id;
+                const bookerHTML = isOpen ? renderBookerPanel(s) : '';
+                const footHTML = isOpen ? '' : `
+                    <div class="slot-card-foot">
+                        <span class="slot-card-time">${s.timeRange}</span>
+                        <button class="book-btn" data-slot-id="${s.id}" type="button">Book</button>
+                    </div>`;
                 return `
-                    <div class="slot-row" data-slot-id="${s.id}">
-                        <span class="slot-badge ${t.cls}">${t.label}</span>
-                        <div class="slot-info">
-                            <div class="slot-time">${fmtTimeLabel(s.startTime)}</div>
-                            <div class="slot-sub">20 min · ${t.coach || 'Mr Bain'}</div>
-                        </div>
-                        <div class="slot-action">
-                            <button class="book-btn" data-slot-id="${s.id}" type="button">Book</button>
+                    <div class="slot-card available" data-slot-id="${s.id}">
+                        ${headHTML}
+                        ${isOpen ? `<div class="slot-card-foot"><span class="slot-card-time">${s.timeRange}</span></div>` : footHTML}
+                        ${bookerHTML}
+                    </div>`;
+            }
+
+            function renderBookerPanel(s) {
+                const types = ['checkin','technique','testing','group','programme'];
+                const btns = types.map(k => {
+                    const t = SESSION_TYPES[k];
+                    const sel = k === bookerDraft.type ? ' selected' : '';
+                    return `<button class="type-choice-btn${sel}" data-type="${k}" type="button">${t.label}</button>`;
+                }).join('');
+                return `
+                    <div class="slot-booker" data-slot-id="${s.id}">
+                        <div class="slot-booker-label">Session type</div>
+                        <div class="type-choice-grid">${btns}</div>
+                        <div class="slot-booker-label">Anything specific to cover?</div>
+                        <input class="notes-input" type="text" maxlength="140"
+                               placeholder="Optional — one line"
+                               value="${escapeAttr(bookerDraft.notes)}" />
+                        <div class="slot-booker-actions">
+                            <button class="cancel-btn" type="button">Cancel</button>
+                            <button class="confirm-btn" type="button">Confirm</button>
                         </div>
                     </div>`;
             }
 
-            // Confirmation popover
-            let activeConfirmPop = null;
-            function closeConfirmPop() {
-                if (activeConfirmPop) {
-                    activeConfirmPop.remove();
-                    activeConfirmPop = null;
-                }
+            function escapeHTML(str) {
+                return String(str).replace(/[&<>"']/g, c => ({
+                    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+                }[c]));
             }
-            function openConfirmPop(slotId, row) {
-                closeConfirmPop();
+            function escapeAttr(str) { return escapeHTML(str); }
+
+            function openBooker(slotId) {
                 closeDayPop();
-                const slot = bookingSlots.find(s => s.id === slotId);
-                if (!slot) return;
-                const window = bookingWindows.find(w => w.key === slot.windowKey);
-                const t = SESSION_TYPES[slot.type];
-                const pop = document.createElement('div');
-                pop.className = 'confirm-pop';
-                pop.innerHTML = `
-                    <div class="confirm-pop-title">Confirm booking — ${window.dayLabel} ${slot.startTime}, ${t.label}?</div>
-                    <div class="confirm-pop-sub">${window.dateLabel} 2026 · with ${t.coach || 'Mr Bain'}</div>
-                    <div class="confirm-pop-actions">
-                        <button class="cancel-btn" type="button">Cancel</button>
-                        <button class="confirm-btn" type="button">Confirm</button>
-                    </div>`;
-                row.appendChild(pop);
-                activeConfirmPop = pop;
-                pop.querySelector('.cancel-btn').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    closeConfirmPop();
+                activeBookerSlotId = slotId;
+                bookerDraft = { type: 'checkin', notes: '' };
+                renderBooking();
+            }
+
+            function closeBooker() {
+                if (!activeBookerSlotId) return;
+                activeBookerSlotId = null;
+                bookerDraft = { type: 'checkin', notes: '' };
+                renderBooking();
+            }
+
+            function wireBooker(slotId) {
+                const host = document.getElementById('bookingWindows');
+                const panel = host.querySelector(`.slot-booker[data-slot-id="${slotId}"]`);
+                if (!panel) return;
+
+                panel.addEventListener('click', (e) => e.stopPropagation());
+
+                // Type choice buttons
+                panel.querySelectorAll('.type-choice-btn').forEach(b => {
+                    b.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        bookerDraft.type = b.dataset.type;
+                        panel.querySelectorAll('.type-choice-btn').forEach(x => x.classList.remove('selected'));
+                        b.classList.add('selected');
+                    });
                 });
-                pop.querySelector('.confirm-btn').addEventListener('click', (e) => {
+
+                // Notes input — keep draft in sync so a re-render preserves it
+                const notesEl = panel.querySelector('.notes-input');
+                notesEl.addEventListener('input', (e) => {
+                    bookerDraft.notes = e.target.value;
+                });
+
+                // Cancel
+                panel.querySelector('.cancel-btn').addEventListener('click', (e) => {
                     e.stopPropagation();
+                    closeBooker();
+                });
+
+                // Confirm
+                panel.querySelector('.confirm-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const slot = bookingSlots.find(x => x.id === slotId);
+                    if (!slot) return;
                     slot.state = 'booked';
+                    slot.bookedType = bookerDraft.type;
+                    slot.notes = (bookerDraft.notes || '').trim();
+                    activeBookerSlotId = null;
+                    bookerDraft = { type: 'checkin', notes: '' };
                     syncMayaEventsFromBookings();
-                    closeConfirmPop();
                     renderBooking();
                     renderCalendar();
                 });
-                pop.addEventListener('click', (e) => e.stopPropagation());
             }
 
             // Close popovers on outside click
             document.addEventListener('click', (e) => {
-                if (activeConfirmPop && !activeConfirmPop.contains(e.target) && !e.target.closest('.book-btn')) {
-                    closeConfirmPop();
+                if (activeBookerSlotId && !e.target.closest('.slot-card') && !e.target.closest('.book-btn')) {
+                    closeBooker();
                 }
                 if (activeDayPop && !activeDayPop.contains(e.target) && !e.target.closest('.cal-day')) {
                     closeDayPop();
@@ -2849,7 +2965,7 @@
             }
             function openDayPop(dateStr, dayEl) {
                 closeDayPop();
-                closeConfirmPop();
+                closeBooker();
                 const evs = eventsByDate()[dateStr] || [];
                 if (!evs.length) return;
                 const [yy, mm, dd] = dateStr.split('-').map(n => parseInt(n,10));
