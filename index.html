@@ -201,6 +201,14 @@
             pointer-events: none;
         }
         .athlete-info { position: relative; z-index: 1; }
+        .athlete-info .athlete-overline {
+            font-size: 0.75rem;
+            letter-spacing: 0.18em;
+            color: var(--gold);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
         .athlete-info h2 {
             font-size: 1.75rem;
             color: var(--white);
@@ -1379,6 +1387,7 @@
                 <!-- Right: name + grade + pillar boxes stacked -->
                 <div class="hero-right">
                     <div class="athlete-info">
+                        <div class="athlete-overline">Athlete Profile</div>
                         <h2 id="athleteName">-</h2>
                         <p id="athleteMeta">-</p>
                     </div>
@@ -1847,7 +1856,12 @@
             
             // Header info
             document.getElementById('athleteName').textContent = a.Name || 'Unknown';
-            document.getElementById('athleteMeta').textContent = `Grade ${a.Grade || '?'} | ${a.Gender === 'M' ? 'Male' : 'Female'}`;
+            const sports = [a['Sport 1'] || a.Sport_1 || a.Sport1, a['Sport 2'] || a.Sport_2 || a.Sport2, a['Sport 3'] || a.Sport_3 || a.Sport3]
+                .map(s => (s || '').toString().trim())
+                .filter(Boolean);
+            const metaParts = [`Grade ${a.Grade || '?'}`];
+            if (sports.length) metaParts.push(sports.join(' & '));
+            document.getElementById('athleteMeta').textContent = metaParts.join(' · ');
             
             // Header pillar boxes
             document.getElementById('headerPsychScore').textContent = psychAvg.toFixed(1);
