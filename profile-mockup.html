@@ -319,6 +319,126 @@
         .dot-amber { background: #f59e0b; }
         .dot-green { background: #22c55e; }
 
+        /* ───────── Section 1b — Vision Banner ───────── */
+        .vision-banner {
+            background: var(--dark);
+            border-radius: 2rem;
+            padding: 2rem 2.5rem;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            box-shadow: 0 12px 40px rgba(53, 15, 13, 0.12);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .vision-banner:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 48px rgba(53, 15, 13, 0.18);
+        }
+        .vision-banner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 70% 50%, rgba(212,175,55,0.18) 0%, transparent 60%),
+                        radial-gradient(ellipse at 10% 100%, rgba(135,75,70,0.14) 0%, transparent 55%);
+            pointer-events: none;
+        }
+        .vision-inner {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .vision-text-wrap { flex: 1; min-width: 0; }
+        .vision-overline {
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 0.6rem;
+        }
+        .vision-text {
+            font-size: 1.5rem;
+            font-weight: 500;
+            font-style: italic;
+            color: var(--white);
+            line-height: 1.35;
+            letter-spacing: -0.01em;
+        }
+        .vision-edit-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.75);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .vision-edit-btn:hover {
+            background: rgba(212,175,55,0.18);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        .vision-scroll-hint {
+            position: absolute;
+            right: 2.5rem;
+            bottom: 0.9rem;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            color: var(--gold);
+            font-weight: 700;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .vision-banner:hover .vision-scroll-hint { opacity: 0.85; }
+        .vision-edit-mode { display: none; gap: 0.75rem; align-items: flex-start; }
+        .vision-banner.editing .vision-inner { display: none; }
+        .vision-banner.editing .vision-edit-mode { display: flex; }
+        .vision-banner.editing { cursor: default; }
+        .vision-banner.editing .vision-scroll-hint { display: none; }
+        .vision-edit-textarea {
+            flex: 1;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.9rem;
+            color: var(--white);
+            font-family: inherit;
+            font-size: 1.25rem;
+            font-style: italic;
+            font-weight: 500;
+            padding: 0.9rem 1.1rem;
+            line-height: 1.35;
+            resize: vertical;
+            min-height: 80px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .vision-edit-textarea:focus { border-color: var(--gold); }
+        .vision-save-btn {
+            background: var(--gold);
+            color: var(--dark);
+            border: none;
+            padding: 0.75rem 1.4rem;
+            border-radius: 0.8rem;
+            font-weight: 800;
+            font-size: 0.9rem;
+            letter-spacing: 0.03em;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .vision-save-btn:hover { background: #c19a2b; }
+
         /* ───────── Section 2 — Training Age Progression ───────── */
         .progress-section {
             background: var(--cream);
@@ -1106,92 +1226,443 @@
             border-radius: 9999px;
         }
 
-        /* ───────── Section 6 — What's Next ───────── */
-        .next-section {
-            background: var(--dark);
+        /* ───────── Section 6 — Goals + Grit Breakdown ───────── */
+        .goals-grit-grid {
+            display: grid;
+            grid-template-columns: 7fr 5fr;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+        .goals-col, .grit-col {
+            background: var(--white);
             border-radius: 2rem;
             padding: 2rem;
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 8px 28px rgba(53,15,13,0.06);
         }
-        .next-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse at 80% 0%, rgba(212,175,55,0.12) 0%, transparent 50%),
-                        radial-gradient(ellipse at 20% 100%, rgba(135,75,70,0.12) 0%, transparent 50%);
-            pointer-events: none;
+
+        /* Reflection due banner */
+        .reflection-due {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            background: linear-gradient(135deg, #D4AF37 0%, #b8922e 100%);
+            border-radius: 1rem;
+            padding: 0.9rem 1.1rem;
+            margin-top: 1.25rem;
         }
-        .next-section .section-heading { color: var(--white); position: relative; z-index: 1; }
-        .next-section .overline { position: relative; z-index: 1; }
-        .next-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+        .reflection-due-text {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--dark);
+            line-height: 1.35;
+        }
+        .reflection-due-text small {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: rgba(29,27,27,0.65);
+            margin-top: 0.15rem;
+            letter-spacing: 0.02em;
+        }
+        .reflect-now-btn {
+            background: var(--burgundy);
+            color: var(--white);
+            border: none;
+            padding: 0.6rem 1.1rem;
+            border-radius: 0.7rem;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .reflect-now-btn:hover { background: var(--burgundy-dark); }
+
+        /* Goal cards list */
+        .goal-list {
+            display: flex;
+            flex-direction: column;
             gap: 1rem;
             margin-top: 1.25rem;
-            position: relative;
-            z-index: 1;
         }
-        .next-card {
-            background: rgba(255,255,255,0.06);
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            position: relative;
+        .goal-card {
+            border: 1px solid var(--cream);
+            border-radius: 1.2rem;
+            padding: 1.1rem 1.2rem;
+            background: var(--white);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .goal-card:hover {
+            border-color: var(--light-grey);
+            box-shadow: 0 4px 14px rgba(53,15,13,0.04);
+        }
+        .goal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .goal-cat-pill {
+            display: inline-block;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .goal-cat-pill.fitness   { background: var(--gold-light);            color: #6b5212; }
+        .goal-cat-pill.strength  { background: rgba(135,75,70,0.14);         color: var(--burgundy); }
+        .goal-cat-pill.psychology{ background: rgba(100,116,139,0.18);       color: #334155; }
+        .goal-cat-pill.sport     { background: rgba(34,197,94,0.15);         color: #15803d; }
+        .goal-cat-pill.custom    { background: var(--cream);                 color: var(--grey); }
+
+        .goal-deadline {
+            font-size: 0.75rem;
+            color: var(--grey);
+            font-weight: 600;
+        }
+        .goal-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-top: 0.55rem;
+            letter-spacing: -0.01em;
+        }
+        .goal-progress-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.55rem;
+            font-size: 0.82rem;
+            color: var(--grey);
+            font-weight: 600;
+        }
+        .goal-progress-meta .g-pct {
+            color: var(--burgundy);
+            font-weight: 800;
+        }
+        .goal-progress-bar {
+            margin-top: 0.45rem;
+            height: 8px;
+            background: var(--cream);
+            border-radius: 999px;
             overflow: hidden;
         }
-        .next-card-topbar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
+        .goal-progress-fill {
+            height: 100%;
+            background: var(--burgundy);
+            border-radius: 999px;
+            transition: width 0.6s cubic-bezier(.4,0,.2,1);
         }
-        .next-card-topbar.gold { background: var(--gold); }
-        .next-card-topbar.burgundy { background: var(--burgundy); }
-        .next-card-topbar.amber { background: var(--amber); }
-        .next-card-overline {
+
+        /* Reflection thread on each goal */
+        .reflection-thread {
+            margin-top: 0.9rem;
+            border-top: 1px dashed var(--cream);
+            padding-top: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+        .reflection-entry {
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-start;
+            font-size: 0.8rem;
+            line-height: 1.35;
+            color: var(--dark);
+        }
+        .reflection-entry .r-date {
+            font-weight: 700;
+            color: var(--grey);
+            min-width: 58px;
+            flex-shrink: 0;
+        }
+        .reflection-entry .r-emoji { flex-shrink: 0; }
+        .reflection-entry .r-text { color: var(--dark); font-weight: 500; }
+        .add-reflection-btn {
+            align-self: flex-start;
+            background: transparent;
+            border: 1px solid var(--cream);
+            color: var(--burgundy);
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 0.25rem;
+            transition: all 0.15s;
+        }
+        .add-reflection-btn:hover {
+            background: rgba(135,75,70,0.06);
+            border-color: var(--burgundy-light);
+        }
+
+        .add-goal-btn {
+            width: 100%;
+            margin-top: 1.25rem;
+            background: transparent;
+            border: 2px dashed var(--light-grey);
+            color: var(--burgundy);
+            padding: 0.85rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .add-goal-btn:hover {
+            border-color: var(--burgundy);
+            background: rgba(135,75,70,0.04);
+        }
+
+        /* Grit breakdown column */
+        .grit-col-head { display: flex; flex-direction: column; gap: 0.3rem; }
+        .grit-big-number {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--burgundy);
+            line-height: 1;
+            letter-spacing: -0.03em;
+            margin-top: 0.3rem;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+        .grit-big-number .g-max {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--grey);
+            letter-spacing: 0;
+        }
+        .grit-big-number.bumping {
+            transform: scale(1.12);
+            color: #16a34a;
+        }
+        .grit-factors {
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+            margin-top: 1.5rem;
+        }
+        .grit-factor {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .grit-factor-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .grit-factor-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+        .grit-factor-name .g-icon { font-size: 0.95rem; }
+        .grit-factor-score {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--grey);
+            white-space: nowrap;
+        }
+        .grit-factor-bar {
+            height: 6px;
+            background: var(--cream);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .grit-factor-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.6s cubic-bezier(.4,0,.2,1), background 0.3s;
+        }
+        .grit-factor-fill.good   { background: var(--green); }
+        .grit-factor-fill.amber  { background: var(--amber); }
+        .grit-factor-fill.red    { background: var(--burgundy); }
+        .grit-factor-cta {
+            font-size: 0.76rem;
+            font-style: italic;
+            color: var(--grey);
+            margin-top: 0.1rem;
+        }
+        .grit-factor-cta.amber { color: #b46614; }
+        .grit-factor-cta.red   { color: var(--burgundy); }
+        .grit-factor-cta.good  { color: #15803d; }
+        .grit-foot-note {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--cream);
+            font-size: 0.8rem;
+            color: var(--grey);
+            line-height: 1.45;
+            font-style: italic;
+        }
+
+        /* Add-Goal modal — category pills + unit row */
+        .cat-pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.25rem;
+        }
+        .cat-pill {
+            padding: 0.45rem 0.85rem;
+            border-radius: 999px;
+            border: 1.5px solid var(--cream);
+            background: var(--white);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--grey);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .cat-pill:hover { border-color: var(--burgundy-light); }
+        .cat-pill.selected {
+            border-color: var(--burgundy);
+            background: rgba(135,75,70,0.08);
+            color: var(--burgundy);
+        }
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.6rem;
+        }
+
+        /* Weekly reflection modal */
+        .reflection-goal-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--burgundy);
+            margin-bottom: 0.1rem;
+        }
+        .reflection-stepper-label {
             font-size: 10px;
             letter-spacing: 0.14em;
             font-weight: 700;
+            color: var(--grey);
             text-transform: uppercase;
-            margin-top: 0.5rem;
+            margin-bottom: 1rem;
         }
-        .next-card-overline.gold { color: var(--gold); }
-        .next-card-overline.burgundy { color: var(--burgundy-light); }
-        .next-card-overline.amber { color: var(--amber); }
-        .next-card-title {
+        .progress-tap-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.55rem;
+            margin-bottom: 0.25rem;
+        }
+        .progress-tap {
+            padding: 1rem 0.5rem;
+            border-radius: 1rem;
+            border: 2px solid var(--cream);
+            background: var(--white);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--grey);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .progress-tap .pt-emoji { font-size: 1.5rem; }
+        .progress-tap:hover { border-color: var(--burgundy-light); }
+        .progress-tap.selected {
+            border-color: var(--burgundy);
+            background: rgba(135,75,70,0.06);
+            color: var(--burgundy);
+        }
+        .blocker-pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .blocker-pill {
+            padding: 0.45rem 0.85rem;
+            border-radius: 999px;
+            border: 1.5px solid var(--cream);
+            background: var(--white);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--grey);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .blocker-pill:hover { border-color: var(--burgundy-light); }
+        .blocker-pill.selected {
+            border-color: var(--burgundy);
+            background: rgba(135,75,70,0.08);
+            color: var(--burgundy);
+        }
+        .reflection-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            gap: 0.6rem;
+        }
+        .reflection-step-count {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--grey);
+            letter-spacing: 0.04em;
+        }
+        .reflection-nav-btns { display: flex; gap: 0.5rem; }
+        .reflection-btn-secondary {
+            background: var(--cream);
+            color: var(--grey);
+            border: none;
+            padding: 0.7rem 1.1rem;
+            border-radius: 0.7rem;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .reflection-btn-secondary:hover { background: var(--light-grey); }
+        .reflection-btn-primary {
+            background: var(--burgundy);
+            color: var(--white);
+            border: none;
+            padding: 0.7rem 1.25rem;
+            border-radius: 0.7rem;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .reflection-btn-primary:hover { background: var(--burgundy-dark); }
+
+        /* Success state in reflection modal */
+        .reflection-success {
+            text-align: center;
+            padding: 1rem 0 0.5rem;
+        }
+        .reflection-success .rs-tick {
+            font-size: 3rem;
+            color: var(--green);
+            line-height: 1;
+        }
+        .reflection-success .rs-title {
             font-size: 1.15rem;
             font-weight: 800;
-            color: var(--white);
-            margin-top: 0.4rem;
-            letter-spacing: -0.01em;
+            color: var(--dark);
+            margin-top: 0.6rem;
         }
-        .next-card-sub {
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.7);
-            margin-top: 0.45rem;
-            line-height: 1.45;
-        }
-        .next-progress {
-            margin-top: 1rem;
-            height: 8px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-        .next-progress-fill {
-            height: 100%;
-            border-radius: 9999px;
-        }
-        .next-progress-fill.gold { background: var(--gold); }
-        .next-progress-fill.burgundy { background: var(--burgundy-light); }
-        .countdown {
-            margin-top: 1rem;
-            font-size: 2rem;
-            font-weight: 900;
-            color: var(--amber);
-            letter-spacing: -0.02em;
-            line-height: 1;
+        .reflection-success .rs-sub {
+            font-size: 0.9rem;
+            color: var(--grey);
+            margin-top: 0.3rem;
         }
 
         /* Footer */
@@ -1723,7 +2194,7 @@
             .top-nav, .site-footer { display: none !important; }
             .container { max-width: 100%; padding: 0.5rem; }
             section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 1rem; box-shadow: none !important; }
-            .hero-card, .card-white, .strength-section, .grit-section, .next-section, .progress-section {
+            .hero-card, .card-white, .strength-section, .grit-section, .goals-col, .grit-col, .vision-banner, .progress-section {
                 box-shadow: none !important;
             }
         }
@@ -1809,6 +2280,22 @@
                     <span class="grit-week-value" id="gritWeekValue">0</span>
                 </div>
             </div>
+        </section>
+
+        <!-- ========== Section 1b — Vision Banner ========== -->
+        <section class="vision-banner" id="visionBanner">
+            <div class="vision-inner">
+                <div class="vision-text-wrap">
+                    <div class="vision-overline">MY VISION</div>
+                    <div class="vision-text" id="visionText">I want to be the fittest and strongest player on my basketball team by the end of G12.</div>
+                </div>
+                <button class="vision-edit-btn" id="visionEditBtn" aria-label="Edit vision" title="Edit vision">✎</button>
+            </div>
+            <div class="vision-edit-mode">
+                <textarea class="vision-edit-textarea" id="visionTextarea"></textarea>
+                <button class="vision-save-btn" id="visionSaveBtn">Save</button>
+            </div>
+            <div class="vision-scroll-hint">↓ See my goals</div>
         </section>
 
         <!-- ========== Section 2 — Training Age Progression ========== -->
@@ -2082,47 +2569,38 @@
             </div>
         </section>
 
-        <!-- ========== Section 6 — What's Next ========== -->
-        <section class="next-section">
-            <div class="overline overline-gold">LOOKING AHEAD</div>
-            <h2 class="section-heading">Maya's G11 Term 2 Focus</h2>
-            <div class="next-cards">
-                <div class="next-card">
-                    <div class="next-card-topbar gold"></div>
-                    <div class="next-card-overline gold">CURRENT CHALLENGE</div>
-                    <div class="next-card-title">Agility Improvement</div>
-                    <div class="next-card-sub">Target: 5.1sec → 4.6sec by May 19</div>
-                    <div class="next-progress"><div class="next-progress-fill gold" style="width:30%;"></div></div>
-                    <!-- Interactive: Set Goal button + hidden goal display -->
-                    <button class="set-goal-btn" data-goal="agility" data-title="Agility Improvement" data-current="5.1 sec" data-target="4.6 sec">Set Goal</button>
-                    <div class="goal-set-display" data-goal-display="agility">
-                        <div class="goal-set-meta"></div>
-                        <div class="goal-set-why"></div>
+        <!-- ========== Section 6 — Goals + Grit Breakdown ========== -->
+        <section class="goals-grit-grid" id="goalsGritSection">
+            <!-- Left column — Goals -->
+            <div class="goals-col">
+                <div class="overline">GOALS &amp; PROGRESS</div>
+                <h2 class="section-heading">Active Goals</h2>
+
+                <!-- Weekly Reflection Due banner (visible for demo) -->
+                <div class="reflection-due" id="reflectionDueBanner">
+                    <div class="reflection-due-text">
+                        Your weekly reflection is due
+                        <small>2 minutes to stay on track.</small>
                     </div>
+                    <button class="reflect-now-btn" id="reflectNowBtn">Reflect Now</button>
                 </div>
-                <div class="next-card">
-                    <div class="next-card-topbar burgundy"></div>
-                    <div class="next-card-overline burgundy">STRENGTH FOCUS</div>
-                    <div class="next-card-title">Reach Level 3 Push</div>
-                    <div class="next-card-sub">DB Bench progressing well — technique assessment due</div>
-                    <div class="next-progress"><div class="next-progress-fill burgundy" style="width:60%;"></div></div>
-                    <button class="set-goal-btn" data-goal="push" data-title="Reach Level 3 Push" data-current="Level 2" data-target="Level 3">Set Goal</button>
-                    <div class="goal-set-display" data-goal-display="push">
-                        <div class="goal-set-meta"></div>
-                        <div class="goal-set-why"></div>
-                    </div>
+
+                <div class="goal-list" id="goalList"></div>
+
+                <button class="add-goal-btn" id="addGoalBtn">+ Add Goal</button>
+            </div>
+
+            <!-- Right column — Grit breakdown -->
+            <div class="grit-col">
+                <div class="grit-col-head">
+                    <div class="overline overline-gold">WHAT'S DRIVING YOUR GRIT</div>
+                    <div class="grit-big-number" id="gritBigNumber"></div>
                 </div>
-                <div class="next-card">
-                    <div class="next-card-topbar amber"></div>
-                    <div class="next-card-overline amber">UPCOMING TESTS</div>
-                    <div class="next-card-title">May Testing Day</div>
-                    <div class="next-card-sub">Cooper Test · Mobility Assessment · May 19, 2026</div>
-                    <div class="countdown">54 days</div>
-                    <button class="set-goal-btn" data-goal="cooper" data-title="Cooper Test Goal" data-current="2800 m" data-target="3200 m">Set Goal</button>
-                    <div class="goal-set-display" data-goal-display="cooper">
-                        <div class="goal-set-meta"></div>
-                        <div class="goal-set-why"></div>
-                    </div>
+
+                <div class="grit-factors" id="gritFactors"></div>
+
+                <div class="grit-foot-note">
+                    Your Grit score updates weekly based on these five areas. The biggest gains come from consistency and reflections.
                 </div>
             </div>
         </section>
@@ -2210,6 +2688,99 @@
         <textarea class="form-textarea" id="goalWhy" placeholder="Why this goal, right now?"></textarea>
 
         <button class="primary-btn" id="goalSubmit">Save goal</button>
+    </div>
+
+    <!-- Add-Goal modal (new) -->
+    <div class="modal modal-compact" id="addGoalModal" aria-hidden="true">
+        <button class="modal-close" data-close-modal>×</button>
+        <div class="modal-title">Add a goal</div>
+        <div class="modal-sub">Name it, measure it, commit to a deadline.</div>
+
+        <label class="form-label">Category (optional)</label>
+        <div class="cat-pill-row" id="catPillRow">
+            <button type="button" class="cat-pill" data-cat="fitness">Fitness</button>
+            <button type="button" class="cat-pill" data-cat="strength">Strength</button>
+            <button type="button" class="cat-pill" data-cat="psychology">Psychology</button>
+            <button type="button" class="cat-pill" data-cat="sport">Sport</button>
+            <button type="button" class="cat-pill" data-cat="custom">Custom</button>
+        </div>
+
+        <label class="form-label">Goal title</label>
+        <input type="text" class="form-input" id="addGoalTitle" placeholder="e.g. Level 3 Squat">
+
+        <div class="form-row-3">
+            <div>
+                <label class="form-label">Current</label>
+                <input type="text" class="form-input" id="addGoalCurrent" placeholder="2800">
+            </div>
+            <div>
+                <label class="form-label">Target</label>
+                <input type="text" class="form-input" id="addGoalTarget" placeholder="3200">
+            </div>
+            <div>
+                <label class="form-label">Unit</label>
+                <input type="text" class="form-input" id="addGoalUnit" placeholder="m">
+            </div>
+        </div>
+
+        <label class="form-label">Deadline</label>
+        <input type="date" class="form-date" id="addGoalDate" value="2026-05-19">
+
+        <label class="form-label">Why does this matter?</label>
+        <textarea class="form-textarea" id="addGoalWhy" placeholder="One line is fine."></textarea>
+
+        <button class="primary-btn" id="addGoalConfirm">Add goal</button>
+    </div>
+
+    <!-- Weekly Reflection modal -->
+    <div class="modal modal-compact" id="weeklyReflectionModal" aria-hidden="true">
+        <button class="modal-close" data-close-modal>×</button>
+        <div class="reflection-stepper-label" id="weeklyReflectionStepLabel">WEEKLY REFLECTION</div>
+        <div class="reflection-goal-title" id="weeklyReflectionGoal">Goal title</div>
+
+        <div id="weeklyReflectionForm">
+            <label class="form-label">How did this week go for this goal?</label>
+            <div class="progress-tap-row" id="progressTapRow">
+                <div class="progress-tap" data-pstate="red">
+                    <span class="pt-emoji">🔴</span>
+                    <span>No progress</span>
+                </div>
+                <div class="progress-tap" data-pstate="amber">
+                    <span class="pt-emoji">🟡</span>
+                    <span>Some progress</span>
+                </div>
+                <div class="progress-tap" data-pstate="green">
+                    <span class="pt-emoji">🟢</span>
+                    <span>On track</span>
+                </div>
+            </div>
+
+            <label class="form-label">What got in the way?</label>
+            <div class="blocker-pill-row" id="blockerPillRow">
+                <button type="button" class="blocker-pill" data-blocker="Missed sessions">Missed sessions</button>
+                <button type="button" class="blocker-pill" data-blocker="Low energy">Low energy</button>
+                <button type="button" class="blocker-pill" data-blocker="Time">Time</button>
+                <button type="button" class="blocker-pill" data-blocker="Injury">Injury</button>
+                <button type="button" class="blocker-pill" data-blocker="Nothing">Nothing</button>
+            </div>
+
+            <label class="form-label">What will you do differently? (optional)</label>
+            <input type="text" class="form-input" id="weeklyReflectionDifferent" placeholder="One line is fine.">
+
+            <div class="reflection-actions">
+                <span class="reflection-step-count" id="weeklyReflectionCount">Goal 1 of 3</span>
+                <div class="reflection-nav-btns">
+                    <button type="button" class="reflection-btn-secondary" id="weeklyReflectionSkip">Skip</button>
+                    <button type="button" class="reflection-btn-primary" id="weeklyReflectionNext">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="weeklyReflectionSuccess" class="reflection-success" style="display:none;">
+            <div class="rs-tick">✓</div>
+            <div class="rs-title">Reflection saved.</div>
+            <div class="rs-sub">Your Grit score has been updated.</div>
+        </div>
     </div>
         Athlete Academy · Frankfurt International School · This profile is a programme vision mockup
     </footer>
@@ -3075,6 +3646,342 @@
             syncMayaEventsFromBookings();
             renderBooking();
             renderCalendar();
+
+            /* ═══════════════════════════════════════════════════
+               VISION + GOALS + GRIT (actionable section)
+               ═══════════════════════════════════════════════════ */
+
+            /* — Vision banner edit + smooth-scroll — */
+            const visionBanner   = $('visionBanner');
+            const visionText     = $('visionText');
+            const visionTextarea = $('visionTextarea');
+            const visionEditBtn  = $('visionEditBtn');
+            const visionSaveBtn  = $('visionSaveBtn');
+
+            function enterVisionEdit(e) {
+                e && e.stopPropagation();
+                visionTextarea.value = visionText.textContent;
+                visionBanner.classList.add('editing');
+                setTimeout(() => visionTextarea.focus(), 30);
+            }
+            function saveVision(e) {
+                e && e.stopPropagation();
+                const val = visionTextarea.value.trim();
+                if (val) visionText.textContent = val;
+                visionBanner.classList.remove('editing');
+            }
+            visionEditBtn.addEventListener('click', enterVisionEdit);
+            visionSaveBtn.addEventListener('click', saveVision);
+            visionTextarea.addEventListener('click', (e) => e.stopPropagation());
+            visionBanner.addEventListener('click', () => {
+                if (visionBanner.classList.contains('editing')) return;
+                const goalsSection = $('goalsGritSection');
+                if (goalsSection) goalsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+
+            /* — Goals data — */
+            const goalCategories = {
+                fitness:    { label: 'Fitness',    cls: 'fitness' },
+                strength:   { label: 'Strength',   cls: 'strength' },
+                psychology: { label: 'Psychology', cls: 'psychology' },
+                sport:      { label: 'Sport',      cls: 'sport' },
+                custom:     { label: 'Custom',     cls: 'custom' }
+            };
+            const goals = [
+                {
+                    id: 'g1', cat: 'fitness', title: 'Cooper Test',
+                    current: '2800', target: '3200', unit: 'm',
+                    deadline: '2026-05-19', progress: 40,
+                    reflections: [
+                        { date: 'Apr 7',  emoji: '🟡', text: 'intervals felt hard but completed all reps' },
+                        { date: 'Apr 14', emoji: '🟢', text: 'pacing much better this week' }
+                    ]
+                },
+                {
+                    id: 'g2', cat: 'strength', title: 'Level 3 Push',
+                    current: 'Level 2', target: 'Level 3', unit: '',
+                    deadline: '2026-05-19', progress: 60,
+                    reflections: [
+                        { date: 'Apr 7',  emoji: '🟢', text: 'DB Bench hitting 24kg cleanly' },
+                        { date: 'Apr 14', emoji: '🟡', text: 'technique check needed on lockout' }
+                    ]
+                },
+                {
+                    id: 'g3', cat: 'sport', title: 'Starting lineup by term 3',
+                    current: 'Substitute', target: 'Starter', unit: '',
+                    deadline: '2026-06-01', progress: 25,
+                    reflections: [
+                        { date: 'Apr 7',  emoji: '🔴', text: 'missed two training sessions this week' },
+                        { date: 'Apr 14', emoji: '🟡', text: 'back on track, coach noticed improvement' }
+                    ]
+                }
+            ];
+
+            function fmtDeadline(iso) {
+                if (!iso) return '';
+                const d = new Date(iso);
+                return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            }
+            function daysUntil(iso) {
+                if (!iso) return '';
+                const today = new Date(2026, 3, 17); // 17 Apr 2026
+                const d = new Date(iso);
+                const diff = Math.round((d - today) / (1000*60*60*24));
+                if (diff < 0) return 'overdue';
+                if (diff === 0) return 'today';
+                return diff + ' day' + (diff === 1 ? '' : 's') + ' left';
+            }
+            function formatCurrentTarget(g) {
+                const u = g.unit ? g.unit : '';
+                const c = u ? `${g.current}${u}` : g.current;
+                const t = u ? `${g.target}${u}` : g.target;
+                return `${c} → ${t}`;
+            }
+
+            function renderGoals() {
+                const list = $('goalList');
+                list.innerHTML = goals.map(g => {
+                    const cat = goalCategories[g.cat] || goalCategories.custom;
+                    const reflectionsHtml = g.reflections.map(r =>
+                        `<div class="reflection-entry">
+                            <span class="r-date">${r.date}</span>
+                            <span class="r-emoji">${r.emoji}</span>
+                            <span class="r-text">${escapeHtml(r.text)}</span>
+                        </div>`
+                    ).join('');
+                    return `
+                    <div class="goal-card" data-goal-id="${g.id}">
+                        <div class="goal-head">
+                            <span class="goal-cat-pill ${cat.cls}">${cat.label}</span>
+                            <span class="goal-deadline">Due ${fmtDeadline(g.deadline)} · ${daysUntil(g.deadline)}</span>
+                        </div>
+                        <div class="goal-title">${escapeHtml(g.title)}</div>
+                        <div class="goal-progress-meta">
+                            <span>${escapeHtml(formatCurrentTarget(g))}</span>
+                            <span class="g-pct">${g.progress}%</span>
+                        </div>
+                        <div class="goal-progress-bar">
+                            <div class="goal-progress-fill" style="width:${g.progress}%;"></div>
+                        </div>
+                        <div class="reflection-thread">
+                            ${reflectionsHtml}
+                            <button class="add-reflection-btn" data-add-reflection="${g.id}">+ Add Reflection</button>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                list.querySelectorAll('[data-add-reflection]').forEach(b => {
+                    b.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = b.dataset.addReflection;
+                        openWeeklyReflection([id]);
+                    });
+                });
+            }
+            function escapeHtml(s) {
+                return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            }
+
+            /* — Grit factors — */
+            let gritScore = 4.2;
+            const gritFactors = [
+                { icon: '🗓', name: 'Programme Consistency', score: 4.5, cta: 'Strong — keep showing up.' },
+                { icon: '✅', name: 'Check-in Regularity',   score: 3.0, cta: "Book your next slot — you're overdue." },
+                { icon: '📝', name: 'Weekly Reflections',    score: 2.5, cta: "Complete this week's reflection to move this up." },
+                { icon: '🎯', name: 'Goal Progress',         score: 4.0, cta: 'Two of three goals on track — good work.' },
+                { icon: '🔁', name: 'Challenge Completion',  score: 5.0, cta: 'All past Grit Challenges completed.' }
+            ];
+            function gritBand(score) {
+                if (score >= 4.0) return 'good';
+                if (score >= 2.5) return 'amber';
+                return 'red';
+            }
+            function renderGritBig() {
+                $('gritBigNumber').innerHTML = `${gritScore.toFixed(1)}<span class="g-max">/5</span>`;
+            }
+            function renderGritFactors() {
+                $('gritFactors').innerHTML = gritFactors.map(f => {
+                    const band = gritBand(f.score);
+                    const pct = Math.max(0, Math.min(100, (f.score / 5) * 100));
+                    const showCta = f.score < 4.0 || band === 'good';
+                    return `
+                    <div class="grit-factor">
+                        <div class="grit-factor-top">
+                            <div class="grit-factor-name"><span class="g-icon">${f.icon}</span>${escapeHtml(f.name)}</div>
+                            <div class="grit-factor-score">${f.score.toFixed(1)}/5</div>
+                        </div>
+                        <div class="grit-factor-bar"><div class="grit-factor-fill ${band}" style="width:${pct}%;"></div></div>
+                        ${showCta ? `<div class="grit-factor-cta ${band}">${escapeHtml(f.cta)}</div>` : ''}
+                    </div>`;
+                }).join('');
+            }
+
+            /* — Add-Goal modal wiring — */
+            let addGoalSelectedCat = null;
+            document.querySelectorAll('#catPillRow .cat-pill').forEach(p => {
+                p.addEventListener('click', () => {
+                    document.querySelectorAll('#catPillRow .cat-pill').forEach(x => x.classList.remove('selected'));
+                    p.classList.add('selected');
+                    addGoalSelectedCat = p.dataset.cat;
+                });
+            });
+            $('addGoalBtn').addEventListener('click', () => {
+                addGoalSelectedCat = null;
+                document.querySelectorAll('#catPillRow .cat-pill').forEach(x => x.classList.remove('selected'));
+                $('addGoalTitle').value = '';
+                $('addGoalCurrent').value = '';
+                $('addGoalTarget').value = '';
+                $('addGoalUnit').value = '';
+                $('addGoalDate').value = '2026-05-19';
+                $('addGoalWhy').value = '';
+                openModal('addGoalModal');
+            });
+            $('addGoalConfirm').addEventListener('click', () => {
+                const title = $('addGoalTitle').value.trim();
+                if (!title) { $('addGoalTitle').focus(); return; }
+                const newGoal = {
+                    id: 'g' + (Date.now()),
+                    cat: addGoalSelectedCat || 'custom',
+                    title,
+                    current: $('addGoalCurrent').value.trim() || '0',
+                    target:  $('addGoalTarget').value.trim()  || '0',
+                    unit:    $('addGoalUnit').value.trim(),
+                    deadline: $('addGoalDate').value,
+                    progress: 0,
+                    reflections: []
+                };
+                goals.push(newGoal);
+                renderGoals();
+                closeAllModals();
+            });
+
+            /* — Weekly Reflection modal wiring — */
+            const reflectionState = {
+                queue: [],
+                idx: 0,
+                selectedProgress: null,
+                selectedBlockers: new Set(),
+                different: ''
+            };
+
+            function openWeeklyReflection(goalIdsOrNull) {
+                reflectionState.queue = goalIdsOrNull && goalIdsOrNull.length
+                    ? goalIdsOrNull.slice()
+                    : goals.map(g => g.id);
+                reflectionState.idx = 0;
+                showReflectionStep();
+                $('weeklyReflectionForm').style.display = '';
+                $('weeklyReflectionSuccess').style.display = 'none';
+                openModal('weeklyReflectionModal');
+            }
+            function showReflectionStep() {
+                const id = reflectionState.queue[reflectionState.idx];
+                const g  = goals.find(x => x.id === id);
+                if (!g) return;
+                $('weeklyReflectionGoal').textContent = g.title;
+                $('weeklyReflectionCount').textContent =
+                    `Goal ${reflectionState.idx + 1} of ${reflectionState.queue.length}`;
+                $('weeklyReflectionNext').textContent =
+                    (reflectionState.idx === reflectionState.queue.length - 1) ? 'Submit' : 'Next';
+                // reset per-step selections
+                reflectionState.selectedProgress = null;
+                reflectionState.selectedBlockers = new Set();
+                document.querySelectorAll('#progressTapRow .progress-tap').forEach(x => x.classList.remove('selected'));
+                document.querySelectorAll('#blockerPillRow .blocker-pill').forEach(x => x.classList.remove('selected'));
+                $('weeklyReflectionDifferent').value = '';
+            }
+            document.querySelectorAll('#progressTapRow .progress-tap').forEach(t => {
+                t.addEventListener('click', () => {
+                    document.querySelectorAll('#progressTapRow .progress-tap').forEach(x => x.classList.remove('selected'));
+                    t.classList.add('selected');
+                    reflectionState.selectedProgress = t.dataset.pstate;
+                });
+            });
+            document.querySelectorAll('#blockerPillRow .blocker-pill').forEach(p => {
+                p.addEventListener('click', () => {
+                    p.classList.toggle('selected');
+                    const b = p.dataset.blocker;
+                    if (reflectionState.selectedBlockers.has(b)) reflectionState.selectedBlockers.delete(b);
+                    else reflectionState.selectedBlockers.add(b);
+                });
+            });
+            function saveReflectionForCurrentGoal() {
+                const id = reflectionState.queue[reflectionState.idx];
+                const g  = goals.find(x => x.id === id);
+                if (!g || !reflectionState.selectedProgress) return;
+                const emojiMap = { red: '🔴', amber: '🟡', green: '🟢' };
+                const blockersArr = Array.from(reflectionState.selectedBlockers);
+                const different   = $('weeklyReflectionDifferent').value.trim();
+                let text = '';
+                if (blockersArr.length && !blockersArr.includes('Nothing')) {
+                    text = blockersArr.join(', ').toLowerCase();
+                } else if (reflectionState.selectedProgress === 'green') {
+                    text = 'on track this week';
+                } else if (reflectionState.selectedProgress === 'amber') {
+                    text = 'some progress this week';
+                } else {
+                    text = 'no progress this week';
+                }
+                if (different) text += ` — plan: ${different}`;
+                g.reflections.push({
+                    date: 'Apr 17',
+                    emoji: emojiMap[reflectionState.selectedProgress],
+                    text
+                });
+                // nudge progress based on state
+                if (reflectionState.selectedProgress === 'green') g.progress = Math.min(100, g.progress + 8);
+                else if (reflectionState.selectedProgress === 'amber') g.progress = Math.min(100, g.progress + 3);
+            }
+            $('weeklyReflectionSkip').addEventListener('click', () => {
+                advanceReflection();
+            });
+            $('weeklyReflectionNext').addEventListener('click', () => {
+                if (!reflectionState.selectedProgress) {
+                    // nudge — at least one tap target must be chosen
+                    const row = document.getElementById('progressTapRow');
+                    row.style.transition = 'transform 0.15s';
+                    row.style.transform = 'translateX(-4px)';
+                    setTimeout(() => { row.style.transform = 'translateX(4px)'; }, 120);
+                    setTimeout(() => { row.style.transform = ''; }, 240);
+                    return;
+                }
+                saveReflectionForCurrentGoal();
+                advanceReflection();
+            });
+            function advanceReflection() {
+                if (reflectionState.idx < reflectionState.queue.length - 1) {
+                    reflectionState.idx++;
+                    showReflectionStep();
+                } else {
+                    // final — show success, bump grit
+                    bumpGritScore();
+                    $('weeklyReflectionForm').style.display = 'none';
+                    $('weeklyReflectionSuccess').style.display = 'block';
+                    renderGoals();
+                    // hide the due banner after submit
+                    const due = $('reflectionDueBanner');
+                    if (due) due.style.display = 'none';
+                    setTimeout(() => { closeAllModals(); }, 1800);
+                }
+            }
+            function bumpGritScore() {
+                gritScore = Math.min(5, +(gritScore + 0.1).toFixed(2));
+                const el = $('gritBigNumber');
+                el.classList.add('bumping');
+                renderGritBig();
+                setTimeout(() => el.classList.remove('bumping'), 600);
+                // bump weekly reflections factor a little
+                const f = gritFactors.find(x => x.name === 'Weekly Reflections');
+                if (f) f.score = Math.min(5, +(f.score + 0.3).toFixed(2));
+                renderGritFactors();
+            }
+
+            $('reflectNowBtn').addEventListener('click', () => openWeeklyReflection(null));
+
+            /* — Initial render — */
+            renderGoals();
+            renderGritBig();
+            renderGritFactors();
 
             /* — Initial render — */
             renderSessionList();
