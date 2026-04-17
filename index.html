@@ -1233,13 +1233,13 @@
             color: rgba(255,255,255,0.7);
             margin-top: 0.25rem;
         }
-        .gauge-center .gauge-training-age-label {
+        .gauge-training-age-label {
             font-size: 10px;
             letter-spacing: 0.18em;
             color: #D4AF37;
             font-weight: 700;
             text-transform: uppercase;
-            margin-top: 0.4rem;
+            margin-bottom: 0.6rem;
         }
         .gauge-insight-text {
             font-size: 0.85rem;
@@ -1354,6 +1354,7 @@
                         <div class="score" id="trainingAgeScore">-</div>
                         <div class="level" id="trainingAgeLevel">-</div>
                     </div>
+                    <div class="gauge-training-age-label">TRAINING AGE</div>
                     <div class="gauge-svg-wrap">
                         <svg viewBox="0 0 200 200" id="gaugeChart">
                             <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="12" />
@@ -1366,7 +1367,6 @@
                                 style="transition: stroke-dashoffset 1s ease;" />
                         </svg>
                         <div class="gauge-center">
-                            <div class="gauge-training-age-label">TRAINING AGE</div>
                             <div class="gauge-number" id="gaugeNumber">—</div>
                             <div class="gauge-max">/ 5</div>
                             <div class="gauge-status" id="gaugeStatus">—</div>
