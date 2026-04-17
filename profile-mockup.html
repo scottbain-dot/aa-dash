@@ -1125,107 +1125,6 @@
         }
         .pattern-headline.flat { color: var(--grey); }
 
-        /* ───────── Section 5 — Grit History ───────── */
-        .grit-section {
-            background: var(--white);
-            border-radius: 2rem;
-            padding: 2rem;
-            box-shadow: 0 8px 28px rgba(53,15,13,0.06);
-        }
-        .grit-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-top: 1.25rem;
-        }
-        .grit-card {
-            background: var(--dark);
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .grit-card-overline {
-            font-size: 10px;
-            letter-spacing: 0.14em;
-            font-weight: 700;
-            color: var(--gold);
-            text-transform: uppercase;
-        }
-        .grit-card-challenge {
-            font-size: 0.95rem;
-            color: rgba(255,255,255,0.75);
-            font-weight: 600;
-            margin-top: 0.45rem;
-        }
-        .grit-card-result {
-            font-size: 1.6rem;
-            font-weight: 900;
-            color: var(--white);
-            letter-spacing: -0.02em;
-            margin-top: 0.5rem;
-        }
-        .grit-card-improve {
-            font-size: 0.95rem;
-            color: var(--green);
-            font-weight: 800;
-            margin-top: 0.25rem;
-        }
-        .grit-score-pills {
-            display: flex;
-            gap: 0.4rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-        .grit-score-pill {
-            background: rgba(255,255,255,0.08);
-            color: var(--white);
-            padding: 0.3rem 0.65rem;
-            border-radius: 9999px;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
-        .grit-score-pill strong { color: var(--gold); margin-left: 0.25rem; }
-
-        .psych-summary-row {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-        }
-        .psych-comp {
-            background: var(--cream);
-            border-radius: 1rem;
-            padding: 0.9rem 0.85rem;
-        }
-        .psych-comp-label {
-            font-size: 10px;
-            letter-spacing: 0.12em;
-            font-weight: 700;
-            color: var(--grey);
-            text-transform: uppercase;
-        }
-        .psych-comp-score {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: var(--burgundy);
-            margin-top: 0.3rem;
-            line-height: 1;
-            letter-spacing: -0.02em;
-        }
-        .psych-comp-bar {
-            margin-top: 0.5rem;
-            height: 6px;
-            background: rgba(135,75,70,0.15);
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-        .psych-comp-bar-fill {
-            height: 100%;
-            background: var(--burgundy);
-            border-radius: 9999px;
-        }
-
         /* ───────── Section 6 — Goals + Grit Breakdown ───────── */
         .goals-grit-grid {
             display: grid;
@@ -2194,7 +2093,7 @@
             .top-nav, .site-footer { display: none !important; }
             .container { max-width: 100%; padding: 0.5rem; }
             section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 1rem; box-shadow: none !important; }
-            .hero-card, .card-white, .strength-section, .grit-section, .goals-col, .grit-col, .vision-banner, .progress-section {
+            .hero-card, .card-white, .strength-section, .goals-col, .grit-col, .vision-banner, .progress-section {
                 box-shadow: none !important;
             }
         }
@@ -2517,55 +2416,6 @@
                         <div class="pattern-headline">6kg → 12kg</div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- ========== Section 5 — Grit History ========== -->
-        <section class="grit-section">
-            <div class="overline">PSYCHOLOGY DEVELOPMENT</div>
-            <h2 class="section-heading">Grit Challenge History</h2>
-            <div class="grit-cards">
-                <div class="grit-card">
-                    <div class="grit-card-overline">GRADE 10 · TERM 1</div>
-                    <div class="grit-card-challenge">Cooper Run Endurance</div>
-                    <div class="grit-card-result">2,400m → 2,800m</div>
-                    <div class="grit-card-improve">+400m</div>
-                    <div class="grit-score-pills">
-                        <span class="grit-score-pill">Grit <strong>4</strong></span>
-                        <span class="grit-score-pill">Mindset <strong>4</strong></span>
-                        <span class="grit-score-pill">Mental Toughness <strong>3</strong></span>
-                    </div>
-                </div>
-                <div class="grit-card">
-                    <div class="grit-card-overline">GRADE 10 · TERM 2</div>
-                    <div class="grit-card-challenge">Broad Jump Power</div>
-                    <div class="grit-card-result">165cm → 185cm</div>
-                    <div class="grit-card-improve">+20cm</div>
-                    <div class="grit-score-pills">
-                        <span class="grit-score-pill">Grit <strong>5</strong></span>
-                        <span class="grit-score-pill">Mindset <strong>4</strong></span>
-                        <span class="grit-score-pill">Mental Toughness <strong>4</strong></span>
-                    </div>
-                </div>
-                <div class="grit-card">
-                    <div class="grit-card-overline">GRADE 11 · TERM 1</div>
-                    <div class="grit-card-challenge">Back Squat Strength</div>
-                    <div class="grit-card-result">30kg → 45kg</div>
-                    <div class="grit-card-improve">+15kg</div>
-                    <div class="grit-score-pills">
-                        <span class="grit-score-pill">Grit <strong>4</strong></span>
-                        <span class="grit-score-pill">Mindset <strong>5</strong></span>
-                        <span class="grit-score-pill">Mental Toughness <strong>4</strong></span>
-                    </div>
-                </div>
-            </div>
-            <div class="psych-summary-row">
-                <div class="psych-comp"><div class="psych-comp-label">Mindset</div><div class="psych-comp-score">4</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:80%;"></div></div></div>
-                <div class="psych-comp"><div class="psych-comp-label">Grit</div><div class="psych-comp-score">4</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:80%;"></div></div></div>
-                <div class="psych-comp"><div class="psych-comp-label">Mental Toughness</div><div class="psych-comp-score">4</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:80%;"></div></div></div>
-                <div class="psych-comp"><div class="psych-comp-label">Coachability</div><div class="psych-comp-score">5</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:100%;"></div></div></div>
-                <div class="psych-comp"><div class="psych-comp-label">Focus &amp; Engagement</div><div class="psych-comp-score">4</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:80%;"></div></div></div>
-                <div class="psych-comp"><div class="psych-comp-label">Effort &amp; Work Ethic</div><div class="psych-comp-score">3</div><div class="psych-comp-bar"><div class="psych-comp-bar-fill" style="width:60%;"></div></div></div>
             </div>
         </section>
 
