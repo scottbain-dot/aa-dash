@@ -440,11 +440,138 @@
         .vision-save-btn:hover { background: #c19a2b; }
 
         /* ───────── Section 2 — Training Age Progression ───────── */
+        .dev-grid {
+            display: grid;
+            grid-template-columns: 5fr 7fr;
+            gap: 1.5rem;
+            align-items: stretch;
+        }
         .progress-section {
             background: var(--cream);
             border-radius: 2rem;
             padding: 2rem;
         }
+        .pillars-trio {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.85rem;
+        }
+        .pillar-card {
+            background: var(--cream);
+            border-radius: 1.5rem;
+            padding: 1.25rem 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .pillar-card-head {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-bottom: 0.85rem;
+        }
+        .pillar-card-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .pillar-card-dot.psychology   { background: var(--burgundy); }
+        .pillar-card-dot.physiology   { background: var(--dark); }
+        .pillar-card-dot.health       { background: #9a9390; }
+        .pillar-card-overline {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            font-weight: 700;
+            color: var(--grey);
+            text-transform: uppercase;
+        }
+        .metric-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            flex: 1;
+        }
+        .metric-row {
+            display: grid;
+            grid-template-columns: minmax(70px, auto) 1fr 14px;
+            align-items: end;
+            gap: 0.5rem;
+            position: relative;
+        }
+        .metric-label-main {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--dark);
+            line-height: 1.2;
+        }
+        .metric-label-sub {
+            font-size: 0.68rem;
+            font-weight: 500;
+            color: var(--grey);
+            margin-top: 0.15rem;
+            line-height: 1.2;
+        }
+        .metric-bar-wrap {
+            position: relative;
+            padding-top: 1.25rem;
+        }
+        .metric-score {
+            position: absolute;
+            right: 0;
+            bottom: 9px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.01em;
+            line-height: 1;
+        }
+        .metric-bar {
+            height: 8px;
+            background: rgba(135,75,70,0.10);
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+        }
+        .metric-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+        .metric-bar-fill.gold { background: var(--gold); }
+        .metric-bar-fill.burgundy { background: var(--burgundy); }
+        .metric-bar-dash {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 14px;
+            height: 2px;
+            background: var(--grey);
+            border-radius: 2px;
+            transform: translate(-50%, -50%);
+            opacity: 0.5;
+        }
+        .metric-not-assessed {
+            position: absolute;
+            right: 0;
+            bottom: -14px;
+            font-size: 9px;
+            letter-spacing: 0.12em;
+            font-weight: 800;
+            color: var(--grey);
+            text-transform: uppercase;
+        }
+        .metric-chevron {
+            background: none;
+            border: none;
+            color: var(--grey);
+            font-size: 0.7rem;
+            opacity: 0.45;
+            padding: 0;
+            cursor: pointer;
+            align-self: end;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .metric-chevron:hover { opacity: 0.9; }
         .chart-wrap {
             height: 220px;
             margin-top: 1.25rem;
@@ -2197,17 +2324,175 @@
             <div class="vision-scroll-hint">↓ See my goals</div>
         </section>
 
-        <!-- ========== Section 2 — Training Age Progression ========== -->
-        <section class="progress-section">
-            <div class="overline">DEVELOPMENT</div>
-            <h2 class="section-heading">Training Age Over Time</h2>
-            <div class="chart-wrap">
-                <canvas id="trainingAgeChart"></canvas>
+        <!-- ========== Section 2 — Training Age Progression + Pillar Breakdown ========== -->
+        <section class="dev-grid">
+            <div class="progress-section">
+                <div class="overline">DEVELOPMENT</div>
+                <h2 class="section-heading">Training Age Over Time</h2>
+                <div class="chart-wrap">
+                    <canvas id="trainingAgeChart"></canvas>
+                </div>
+                <div class="stat-chips">
+                    <div class="stat-chip burgundy"><span class="chip-dot"></span>+1.7 since joining</div>
+                    <div class="stat-chip green"><span class="chip-dot"></span>Consistent upward trend</div>
+                    <div class="stat-chip gold"><span class="chip-dot"></span>On track for 4.2 by G12</div>
+                </div>
             </div>
-            <div class="stat-chips">
-                <div class="stat-chip burgundy"><span class="chip-dot"></span>+1.7 since joining</div>
-                <div class="stat-chip green"><span class="chip-dot"></span>Consistent upward trend</div>
-                <div class="stat-chip gold"><span class="chip-dot"></span>On track for 4.2 by G12</div>
+
+            <div class="pillars-trio">
+                <!-- Psychology -->
+                <div class="pillar-card">
+                    <div class="pillar-card-head">
+                        <span class="pillar-card-dot psychology"></span>
+                        <span class="pillar-card-overline">Psychology</span>
+                    </div>
+                    <div class="metric-list">
+                        <div class="metric-row">
+                            <div class="metric-label"><div class="metric-label-main">Mindset</div></div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">5.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill gold" style="width:100%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label"><div class="metric-label-main">Focus &amp; Engagement</div></div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">4.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill gold" style="width:80%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label"><div class="metric-label-main">Effort &amp; Work Ethic</div></div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">5.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill gold" style="width:100%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label"><div class="metric-label-main">Coachability</div></div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">4.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill gold" style="width:80%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label"><div class="metric-label-main">Mental Toughness</div></div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">5.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill gold" style="width:100%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Physiology -->
+                <div class="pillar-card">
+                    <div class="pillar-card-head">
+                        <span class="pillar-card-dot physiology"></span>
+                        <span class="pillar-card-overline">Physiology</span>
+                    </div>
+                    <div class="metric-list">
+                        <div class="metric-row">
+                            <div class="metric-label"><div class="metric-label-main">Strength</div></div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">3.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill gold" style="width:60%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label">
+                                <div class="metric-label-main">Broad Jump</div>
+                                <div class="metric-label-sub">220 cm</div>
+                            </div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">4.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill gold" style="width:80%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label">
+                                <div class="metric-label-main">40m Sprint</div>
+                                <div class="metric-label-sub">5.48 sec</div>
+                            </div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">4.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill gold" style="width:80%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label">
+                                <div class="metric-label-main">Agility (5-10-5)</div>
+                                <div class="metric-label-sub">5.42 sec</div>
+                            </div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">2.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill burgundy" style="width:40%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label">
+                                <div class="metric-label-main">Cooper Test</div>
+                                <div class="metric-label-sub">3460m | VO₂max: 66.1</div>
+                            </div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">5.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill gold" style="width:100%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label"><div class="metric-label-main">Mobility</div></div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-bar"><div class="metric-bar-dash"></div></div>
+                                <div class="metric-not-assessed">Not yet assessed</div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health & Skills -->
+                <div class="pillar-card">
+                    <div class="pillar-card-head">
+                        <span class="pillar-card-dot health"></span>
+                        <span class="pillar-card-overline">Health &amp; Skills</span>
+                    </div>
+                    <div class="metric-list">
+                        <div class="metric-row">
+                            <div class="metric-label"><div class="metric-label-main">Recovery</div></div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-bar"><div class="metric-bar-dash"></div></div>
+                                <div class="metric-not-assessed">Not yet assessed</div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label"><div class="metric-label-main">Movement Technique</div></div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-score">2.0</div>
+                                <div class="metric-bar"><div class="metric-bar-fill burgundy" style="width:40%;"></div></div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label"><div class="metric-label-main">Nutrition</div></div>
+                            <div class="metric-bar-wrap">
+                                <div class="metric-bar"><div class="metric-bar-dash"></div></div>
+                                <div class="metric-not-assessed">Not yet assessed</div>
+                            </div>
+                            <button class="metric-chevron" aria-label="Details">▾</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
