@@ -1311,11 +1311,12 @@ function hasSufficientPlanning(session, sessionNum) {
 // Clears the requiresPlanningFirst flag on a session both locally and in the sheet.
 // Uses the saveCoachFeedback endpoint with blockingMessage:false so the existing
 // coachFeedback string is preserved while the blocking flag is dropped.
+// Always hits the sheet, even if the local flag has already been cleared by the
+// caller — the whole point of this helper is to make the cleared state durable.
 async function clearPlanningBlock(sessionNum) {
     const idx = sessionNum - 1;
     if (!currentChallenge || !currentChallenge.sessions || !currentChallenge.sessions[idx]) return;
     const session = currentChallenge.sessions[idx];
-    if (!session.requiresPlanningFirst) return;
     session.requiresPlanningFirst = false;
     try {
         await fetch(GRIT_API, {
