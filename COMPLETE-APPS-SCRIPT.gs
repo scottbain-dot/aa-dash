@@ -98,6 +98,13 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (action === 'getObservations') {
+      var obsSession = e.parameter.session ? parseInt(e.parameter.session) : null;
+      var obsResult = handleGetObservations(ss, obsSession);
+      return ContentService.createTextOutput(JSON.stringify(obsResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // ===== EXISTING DASHBOARD LOGIC =====
     if (e.parameter.admin === 'true') {
       return handleAdminRequest(ss);
@@ -181,6 +188,14 @@ function doPost(e) {
     if (data.action === 'saveNomination') {
       var nomResult = handleSaveNomination(data);
       return ContentService.createTextOutput(JSON.stringify(nomResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ===== SAVE SESSION OBSERVATION =====
+    if (data.action === 'saveObservation') {
+      var ssObs = SpreadsheetApp.getActiveSpreadsheet();
+      var obsSaveResult = handleSaveObservation(ssObs, data);
+      return ContentService.createTextOutput(JSON.stringify(obsSaveResult))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -1693,6 +1708,119 @@ function handleSaveNomination(data) {
 
     return { success: true };
 
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ========================================
+// SESSION OBSERVATIONS
+// ========================================
+function ensureObservationsSheet(ss) {
+  var sheet = ss.getSheetByName('Observations');
+  var headers = ['Timestamp', 'Session_Number', 'Date', 'Athlete_ID', 'Athlete_Email', 'Rating', 'Rating_Label'];
+  if (!sheet) {
+    sheet = ss.insertSheet('Observations');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    return sheet;
+  }
+  var existing = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  for (var i = 0; i < headers.length; i++) {
+    if (existing.indexOf(headers[i]) === -1) {
+      var newCol = Math.max(sheet.getLastColumn() + 1, i + 1);
+      sheet.getRange(1, newCol).setValue(headers[i]);
+    }
+  }
+  return sheet;
+}
+
+function handleSaveObservation(ss, data) {
+  try {
+    if (!data.athleteEmail || !data.sessionNumber || !data.rating) {
+      return { success: false, error: 'Missing required fields (athleteEmail, sessionNumber, rating)' };
+    }
+
+    var sheet = ensureObservationsSheet(ss);
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var col = {
+      ts: headers.indexOf('Timestamp') + 1,
+      session: headers.indexOf('Session_Number') + 1,
+      date: headers.indexOf('Date') + 1,
+      aid: headers.indexOf('Athlete_ID') + 1,
+      email: headers.indexOf('Athlete_Email') + 1,
+      rating: headers.indexOf('Rating') + 1,
+      label: headers.indexOf('Rating_Label') + 1
+    };
+
+    var athleteId = data.athleteId || lookupAthleteIdByEmail(ss, data.athleteEmail) || '';
+    var emailLower = String(data.athleteEmail).toLowerCase();
+    var sessionNum = parseInt(data.sessionNumber, 10);
+
+    // Look for existing row for this athlete + session
+    var lastRow = sheet.getLastRow();
+    var targetRow = -1;
+    if (lastRow > 1) {
+      var range = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+      for (var i = 0; i < range.length; i++) {
+        var rowEmail = col.email > 0 ? String(range[i][col.email - 1] || '').toLowerCase() : '';
+        var rowSession = col.session > 0 ? parseInt(range[i][col.session - 1], 10) : 0;
+        if (rowEmail === emailLower && rowSession === sessionNum) {
+          targetRow = i + 2;
+          break;
+        }
+      }
+    }
+
+    var now = new Date();
+    var values = {};
+    values[col.ts] = now;
+    values[col.session] = sessionNum;
+    values[col.date] = data.date || '';
+    values[col.aid] = athleteId;
+    values[col.email] = data.athleteEmail;
+    values[col.rating] = parseInt(data.rating, 10);
+    values[col.label] = data.ratingLabel || '';
+
+    if (targetRow > 0) {
+      Object.keys(values).forEach(function (c) {
+        var cn = parseInt(c, 10);
+        if (cn > 0) sheet.getRange(targetRow, cn).setValue(values[c]);
+      });
+    } else {
+      var newRow = new Array(sheet.getLastColumn());
+      Object.keys(values).forEach(function (c) {
+        var cn = parseInt(c, 10);
+        if (cn > 0) newRow[cn - 1] = values[c];
+      });
+      sheet.appendRow(newRow);
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleGetObservations(ss, sessionNumber) {
+  try {
+    var sheet = ss.getSheetByName('Observations');
+    if (!sheet) return { success: true, observations: [] };
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { success: true, observations: [] };
+
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+    var out = [];
+    for (var i = 0; i < data.length; i++) {
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) {
+        obj[headers[j]] = data[i][j];
+      }
+      if (sessionNumber && parseInt(obj.Session_Number, 10) !== parseInt(sessionNumber, 10)) continue;
+      out.push(obj);
+    }
+    return { success: true, observations: out };
   } catch (error) {
     return { success: false, error: error.toString() };
   }

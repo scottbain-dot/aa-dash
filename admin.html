@@ -1361,6 +1361,143 @@
             margin-top: 10px;
         }
 
+        /* Session Check-in Panel */
+        .checkin-toggle-btn {
+            background: #874b46;
+            color: #fff;
+            font-weight: 700;
+            border: none;
+            border-radius: 0.75rem;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            transition: background 0.2s;
+        }
+        .checkin-toggle-btn:hover { background: #6a3a36; }
+        .checkin-toggle-btn .arrow {
+            display: inline-block;
+            font-size: 0.7rem;
+            transition: transform 0.2s;
+        }
+        .checkin-toggle-btn.open .arrow { transform: rotate(90deg); }
+        .checkin-panel {
+            display: none;
+            background: #f8f2f1;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 16px;
+            color: #524342;
+        }
+        .checkin-panel.open { display: block; }
+        .checkin-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .checkin-session-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #524342;
+        }
+        .checkin-session-select {
+            background: #fff;
+            color: #524342;
+            border: 1px solid #e5d7d5;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .checkin-session-select:focus { outline: none; border-color: #874b46; }
+        .checkin-rows { margin-top: 0.5rem; }
+        .checkin-row {
+            background: #ffffff;
+            border-radius: 1rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            transition: background 0.3s;
+        }
+        .checkin-row.rated { background: #f0fdf4; }
+        .checkin-row.saved { animation: checkinFlash 1s ease-out; }
+        @keyframes checkinFlash {
+            0% { background: #bbf7d0; }
+            100% { background: var(--_endBg, #ffffff); }
+        }
+        .checkin-row.rated.saved { --_endBg: #f0fdf4; }
+        .checkin-row-info { min-width: 180px; }
+        .checkin-row-name {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 0.95rem;
+        }
+        .checkin-row-focus {
+            font-size: 0.75rem;
+            color: #777;
+            margin-top: 2px;
+        }
+        .checkin-rating {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .checkin-pill {
+            background: #f8f2f1;
+            color: #524342;
+            border: none;
+            border-radius: 9999px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s, color 0.15s, font-weight 0.15s;
+        }
+        .checkin-pill:hover { background: #eadcda; }
+        .checkin-pill.selected {
+            background: #874b46;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .checkin-tick {
+            display: inline-block;
+            margin-left: 6px;
+            color: #16a34a;
+            font-weight: 700;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .checkin-tick.show { opacity: 1; }
+        .checkin-summary {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: #524342;
+            text-align: right;
+        }
+        .checkin-summary span { font-weight: 700; color: #874b46; }
+        .checkin-empty {
+            padding: 1rem;
+            color: #777;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
         /* Session Analysis Bar */
         .session-analysis-bar {
             background: var(--bg-card);
@@ -1644,6 +1781,30 @@
 
         <!-- Grit Challenge Panel -->
         <div class="view-panel" id="panelGrit">
+            <!-- Session Check-in Panel -->
+            <button class="checkin-toggle-btn" id="checkinToggleBtn" onclick="toggleCheckinPanel()">
+                <span class="arrow">▶</span> 📋 Session Check-in
+            </button>
+            <div class="checkin-panel" id="checkinPanel">
+                <div class="checkin-panel-head">
+                    <div class="checkin-session-label" id="checkinSessionLabel">SESSION — </div>
+                    <select class="checkin-session-select" id="checkinSessionSelect" onchange="onCheckinSessionChange()">
+                        <option value="1">Session 1</option>
+                        <option value="2">Session 2</option>
+                        <option value="3">Session 3</option>
+                        <option value="4">Session 4</option>
+                        <option value="5">Session 5</option>
+                        <option value="6">Session 6</option>
+                        <option value="7">Session 7</option>
+                        <option value="8">Session 8</option>
+                    </select>
+                </div>
+                <div class="checkin-rows" id="checkinRows">
+                    <div class="checkin-empty">Loading students...</div>
+                </div>
+                <div class="checkin-summary" id="checkinSummary"></div>
+            </div>
+
             <!-- Session Analysis Bar -->
             <div class="session-analysis-bar">
                 <select id="sessionAnalysisSelect" onchange="onSessionSelectChange()">
@@ -2438,10 +2599,211 @@
                 filteredGritStudents = [...allGritStudents];
                 gritDataLoaded = true;
                 renderGritPanel();
+                renderCheckinRows();
             } catch (error) {
                 console.error('Error loading grit data:', error);
                 document.getElementById('gritContainer').innerHTML =
                     '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>Failed to load Grit challenges</div></div>';
+            }
+        }
+
+        // ============================================
+        // SESSION CHECK-IN PANEL
+        // ============================================
+        const CHECKIN_SESSION_DATES = [
+            { n: 1, date: '2026-03-25', label: 'Wed 25 Mar' },
+            { n: 2, date: '2026-04-15', label: 'Wed 15 Apr' },
+            { n: 3, date: '2026-04-20', label: 'Mon 20 Apr' },
+            { n: 4, date: '2026-04-22', label: 'Wed 22 Apr' },
+            { n: 5, date: '2026-04-27', label: 'Mon 27 Apr' },
+            { n: 6, date: '2026-05-05', label: 'Tue 5 May' },
+            { n: 7, date: '2026-05-13', label: 'Wed 13 May' },
+            { n: 8, date: '2026-05-19', label: 'Tue 19 May' }
+        ];
+        const CHECKIN_RATING_LABELS = ['Not Yet', 'Almost', 'Meeting', 'Exceeding', 'Leading'];
+        let currentCheckinSession = null;
+        let checkinObservations = {}; // { "email|session": { rating, ratingLabel } }
+
+        function detectCurrentSession() {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            let match = CHECKIN_SESSION_DATES.find(s => s.date === todayStr);
+            if (match) return match;
+            // Otherwise pick the most recent session on or before today, falling back to S1
+            const past = CHECKIN_SESSION_DATES.filter(s => s.date <= todayStr);
+            if (past.length > 0) return past[past.length - 1];
+            return CHECKIN_SESSION_DATES[0];
+        }
+
+        function toggleCheckinPanel() {
+            const btn = document.getElementById('checkinToggleBtn');
+            const panel = document.getElementById('checkinPanel');
+            const open = panel.classList.toggle('open');
+            btn.classList.toggle('open', open);
+            if (open) {
+                if (!currentCheckinSession) {
+                    currentCheckinSession = detectCurrentSession();
+                    document.getElementById('checkinSessionSelect').value = currentCheckinSession.n;
+                }
+                refreshCheckinLabel();
+                if (!gritDataLoaded) {
+                    loadGritData();
+                } else {
+                    renderCheckinRows();
+                }
+                loadCheckinObservations();
+            }
+        }
+
+        function refreshCheckinLabel() {
+            if (!currentCheckinSession) return;
+            document.getElementById('checkinSessionLabel').textContent =
+                `SESSION ${currentCheckinSession.n} — ${currentCheckinSession.label}`;
+        }
+
+        function onCheckinSessionChange() {
+            const n = parseInt(document.getElementById('checkinSessionSelect').value, 10);
+            currentCheckinSession = CHECKIN_SESSION_DATES.find(s => s.n === n) || CHECKIN_SESSION_DATES[0];
+            refreshCheckinLabel();
+            renderCheckinRows();
+            loadCheckinObservations();
+        }
+
+        async function loadCheckinObservations() {
+            if (!currentCheckinSession) return;
+            try {
+                const url = `${APPS_SCRIPT_URL}?action=getObservations&session=${currentCheckinSession.n}`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                if (!data || !data.success || !Array.isArray(data.observations)) return;
+                checkinObservations = {};
+                data.observations.forEach(o => {
+                    const email = (o.Athlete_Email || o.email || '').toLowerCase();
+                    const sessNum = parseInt(o.Session_Number || o.sessionNumber, 10);
+                    if (!email || !sessNum) return;
+                    checkinObservations[`${email}|${sessNum}`] = {
+                        rating: parseInt(o.Rating || o.rating, 10) || null,
+                        ratingLabel: o.Rating_Label || o.ratingLabel || ''
+                    };
+                });
+                renderCheckinRows();
+            } catch (e) {
+                console.warn('[Checkin] getObservations failed (non-fatal):', e.message);
+            }
+        }
+
+        function renderCheckinRows() {
+            const rowsEl = document.getElementById('checkinRows');
+            const summaryEl = document.getElementById('checkinSummary');
+            if (!rowsEl) return;
+
+            if (!gritDataLoaded) {
+                rowsEl.innerHTML = '<div class="checkin-empty">Loading students...</div>';
+                summaryEl.textContent = '';
+                return;
+            }
+            if (!allGritStudents || allGritStudents.length === 0) {
+                rowsEl.innerHTML = '<div class="checkin-empty">No students have an active Grit Challenge yet</div>';
+                summaryEl.textContent = '';
+                return;
+            }
+
+            const sessNum = currentCheckinSession ? currentCheckinSession.n : 1;
+            const sortedStudents = [...allGritStudents].sort((a, b) => a.name.localeCompare(b.name));
+
+            rowsEl.innerHTML = sortedStudents.map((s, i) => {
+                const c = s.challenge || {};
+                const typeLabel = c.type === 'fitness' ? 'Fitness' : 'Personal Challenge';
+                const focus = c.focus || c.category || '—';
+                const key = `${(s.email || '').toLowerCase()}|${sessNum}`;
+                const obs = checkinObservations[key];
+                const currentRating = obs ? obs.rating : null;
+                const ratedClass = currentRating ? 'rated' : '';
+                const pills = [1, 2, 3, 4, 5].map(r => {
+                    const sel = r === currentRating ? 'selected' : '';
+                    return `<button class="checkin-pill ${sel}" data-email="${encodeURIComponent(s.email)}" data-rating="${r}" onclick="onCheckinRatingClick(this)">${r} ${CHECKIN_RATING_LABELS[r - 1]}</button>`;
+                }).join('');
+                return `
+                    <div class="checkin-row ${ratedClass}" data-email="${encodeURIComponent(s.email)}">
+                        <div class="checkin-row-info">
+                            <div class="checkin-row-name">${escapeHtmlC(s.name)}<span class="checkin-tick" id="checkinTick-${i}">✓</span></div>
+                            <div class="checkin-row-focus">${escapeHtmlC(focus)} — ${typeLabel}</div>
+                        </div>
+                        <div class="checkin-rating">${pills}</div>
+                    </div>
+                `;
+            }).join('');
+
+            updateCheckinSummary();
+        }
+
+        function updateCheckinSummary() {
+            const summaryEl = document.getElementById('checkinSummary');
+            const sessNum = currentCheckinSession ? currentCheckinSession.n : 1;
+            const total = allGritStudents.length;
+            const rated = allGritStudents.filter(s => {
+                const key = `${(s.email || '').toLowerCase()}|${sessNum}`;
+                return !!checkinObservations[key];
+            }).length;
+            summaryEl.innerHTML = `<span>${rated}</span> of <span>${total}</span> students rated`;
+        }
+
+        function escapeHtmlC(str) {
+            if (str == null) return '';
+            return String(str).replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[ch]);
+        }
+
+        async function onCheckinRatingClick(btn) {
+            const email = decodeURIComponent(btn.getAttribute('data-email') || '');
+            const rating = parseInt(btn.getAttribute('data-rating'), 10);
+            if (!email || !rating || !currentCheckinSession) return;
+
+            const row = btn.closest('.checkin-row');
+            const student = allGritStudents.find(s => s.email === email);
+            const athleteId = student ? student.athleteId : null;
+
+            // Optimistic UI update
+            row.querySelectorAll('.checkin-pill').forEach(p => p.classList.remove('selected'));
+            btn.classList.add('selected');
+            row.classList.add('rated');
+
+            const payload = {
+                action: 'saveObservation',
+                athleteId: athleteId,
+                athleteEmail: email,
+                sessionNumber: currentCheckinSession.n,
+                date: currentCheckinSession.date,
+                rating: rating,
+                ratingLabel: CHECKIN_RATING_LABELS[rating - 1]
+            };
+
+            try {
+                const resp = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const data = await resp.json();
+                if (!data || !data.success) throw new Error(data && data.error || 'Save failed');
+
+                // Record in local cache and flash green
+                const key = `${email.toLowerCase()}|${currentCheckinSession.n}`;
+                checkinObservations[key] = { rating: rating, ratingLabel: payload.ratingLabel };
+
+                row.classList.remove('saved');
+                void row.offsetWidth; // restart animation
+                row.classList.add('saved');
+                const tick = row.querySelector('.checkin-tick');
+                if (tick) {
+                    tick.classList.add('show');
+                    setTimeout(() => tick.classList.remove('show'), 1000);
+                }
+                setTimeout(() => row.classList.remove('saved'), 1100);
+
+                updateCheckinSummary();
+            } catch (err) {
+                console.error('[Checkin] save failed:', err);
+                showToast('Could not save rating — ' + err.message, 'error');
             }
         }
 
