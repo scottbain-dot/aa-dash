@@ -263,6 +263,72 @@
             color: #555555;
         }
 
+        .feature-card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0px 4px 16px rgba(53,15,13,0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            box-shadow: 0px 8px 28px rgba(53,15,13,0.08);
+            transform: translateY(-2px);
+        }
+
+        .feature-card-image {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .feature-card-image img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .feature-card-image--split img {
+            width: 50%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .feature-card-image--split img:first-child {
+            border-top-left-radius: 1.5rem;
+        }
+
+        .feature-card-image--split img:last-child {
+            border-top-right-radius: 1.5rem;
+        }
+
+        .feature-card-accent {
+            width: 100%;
+            height: 4px;
+            background: #874B46;
+        }
+
+        .feature-card-body {
+            padding: 1.5rem;
+        }
+
+        .feature-card-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1d1b1b;
+        }
+
+        .feature-card-text {
+            font-size: 0.9rem;
+            color: #524342;
+            line-height: 1.55;
+            margin-top: 0.5rem;
+        }
+
         /* ===== FORM SECTION ===== */
         .form-section {
             background: #f8f2f1;
@@ -679,156 +745,72 @@
     <section class="programme">
         <div class="section-overline">THE PROGRAMME</div>
         <h2 class="section-heading">What your athlete will have access to</h2>
-        <!-- Preview images: replace ./assets/preview-*.png with real screenshots when available -->
         <div class="cards-grid">
             <!-- Card 1: Training Age -->
-            <div class="card">
-                <div class="card-accent card-accent--gold"></div>
-                <div class="card-icon">
-                    <svg viewBox="0 0 48 48" fill="none">
-                        <circle cx="24" cy="24" r="20" stroke="#874b46" stroke-width="3" stroke-dasharray="94.2 31.4" stroke-linecap="round"/>
-                        <circle cx="24" cy="24" r="14" stroke="#874b46" stroke-width="2" opacity="0.3"/>
-                        <line x1="24" y1="24" x2="24" y2="10" stroke="#874b46" stroke-width="2.5" stroke-linecap="round"/>
-                        <circle cx="24" cy="24" r="3" fill="#874b46"/>
-                    </svg>
+            <div class="feature-card">
+                <div class="feature-card-image">
+                    <img src="./Screenshot_2026-04-20_at_08_08_10.png" alt="Training Age dashboard with gauge and three pillars" loading="lazy">
                 </div>
-                <h3 class="card-heading">Training Age</h3>
-                <p class="card-body">A personalised metric that tracks athletic development across Psychology, Physiology, and Health & Skills. Updated every term. Grows over years.</p>
-                <div class="card-preview">
-                    <div class="card-preview-label">Preview</div>
-                    <div class="card-preview-media">
-                        <img src="./assets/preview-training-age.png" alt="Training Age dashboard preview" class="card-preview-img"
-                             onload="this.nextElementSibling.style.display='none'"
-                             onerror="this.style.display='none'">
-                        <div class="card-preview-placeholder">Screenshot coming soon</div>
-                    </div>
-                    <div class="card-preview-caption">Your Training Age grows every term across three pillars</div>
+                <div class="feature-card-accent"></div>
+                <div class="feature-card-body">
+                    <h3 class="feature-card-title">Training Age</h3>
+                    <p class="feature-card-text">A personalised composite score across Psychology, Physiology, and Health &amp; Skills. Updated every term. Grows across years in the programme.</p>
                 </div>
             </div>
             <!-- Card 2: Personal Training Portal -->
-            <div class="card">
-                <div class="card-accent card-accent--burgundy"></div>
-                <div class="card-icon">
-                    <svg viewBox="0 0 48 48" fill="none">
-                        <rect x="6" y="10" width="36" height="30" rx="4" stroke="#874b46" stroke-width="2.5"/>
-                        <line x1="6" y1="18" x2="42" y2="18" stroke="#874b46" stroke-width="2.5"/>
-                        <line x1="18" y1="10" x2="18" y2="40" stroke="#874b46" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="30" y1="10" x2="30" y2="40" stroke="#874b46" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="6" y1="26" x2="42" y2="26" stroke="#874b46" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="6" y1="34" x2="42" y2="34" stroke="#874b46" stroke-width="1.5" opacity="0.3"/>
-                        <circle cx="14" cy="6" r="2" fill="#874b46"/>
-                        <circle cx="34" cy="6" r="2" fill="#874b46"/>
-                    </svg>
+            <div class="feature-card">
+                <div class="feature-card-image">
+                    <img src="./Screenshot_2026-04-20_at_08_09_49.png" alt="Weekly training plan and performance assessments" loading="lazy">
                 </div>
-                <h3 class="card-heading">Personal Training Portal</h3>
-                <p class="card-body">Athletes plan their own training weeks, log sessions, and track progress over time. Teacher-visible — coach feedback built in.</p>
-                <div class="card-preview">
-                    <div class="card-preview-label">Preview</div>
-                    <div class="card-preview-media">
-                        <img src="./assets/preview-athlete-portal.png" alt="Personal Training Portal preview" class="card-preview-img"
-                             onload="this.nextElementSibling.style.display='none'"
-                             onerror="this.style.display='none'">
-                        <div class="card-preview-placeholder">Screenshot coming soon</div>
-                    </div>
-                    <div class="card-preview-caption">Plan your training week, log sessions, and track progress</div>
+                <div class="feature-card-accent"></div>
+                <div class="feature-card-body">
+                    <h3 class="feature-card-title">Personal Training Portal</h3>
+                    <p class="feature-card-text">Athletes plan their own training weeks, choose from coach templates, log sessions, and track intensity. Everything visible to the coach.</p>
                 </div>
             </div>
-            <!-- Card 3: PE Integration -->
-            <div class="card">
-                <div class="card-accent card-accent--gold"></div>
-                <div class="card-icon">
-                    <svg viewBox="0 0 48 48" fill="none">
-                        <circle cx="24" cy="24" r="18" stroke="#874b46" stroke-width="2.5"/>
-                        <line x1="24" y1="24" x2="24" y2="12" stroke="#874b46" stroke-width="2.5" stroke-linecap="round"/>
-                        <line x1="24" y1="24" x2="33" y2="28" stroke="#874b46" stroke-width="2" stroke-linecap="round"/>
-                        <circle cx="24" cy="24" r="2.5" fill="#874b46"/>
-                        <line x1="24" y1="4" x2="24" y2="7" stroke="#874b46" stroke-width="2"/>
-                        <line x1="24" y1="41" x2="24" y2="44" stroke="#874b46" stroke-width="2"/>
-                        <line x1="4" y1="24" x2="7" y2="24" stroke="#874b46" stroke-width="2"/>
-                        <line x1="41" y1="24" x2="44" y2="24" stroke="#874b46" stroke-width="2"/>
-                    </svg>
+            <!-- Card 3: Coach Check-ins & Booking -->
+            <div class="feature-card">
+                <div class="feature-card-image">
+                    <img src="./Screenshot_2026-04-20_at_08_10_42.png" alt="Booking view with personal calendar" loading="lazy">
                 </div>
-                <h3 class="card-heading">PE Time to Train</h3>
-                <p class="card-body">Selected PE units give athletes dedicated training time during the school day — structured development built into the timetable, not just an after-school commitment.</p>
-                <div class="card-preview">
-                    <div class="card-preview-label">Preview</div>
-                    <div class="card-preview-media">
-                        <svg class="card-preview-svg" viewBox="0 0 320 160" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="0" y="0" width="320" height="160" fill="#2d2a2a" rx="8"/>
-                            <!-- Day headers -->
-                            <g font-family="Segoe UI, system-ui, sans-serif" font-size="9" fill="rgba(255,255,255,0.6)" text-anchor="middle" font-weight="600">
-                                <text x="82" y="22">MON</text>
-                                <text x="130" y="22">TUE</text>
-                                <text x="178" y="22">WED</text>
-                                <text x="226" y="22">THU</text>
-                                <text x="274" y="22">FRI</text>
-                            </g>
-                            <!-- Row labels -->
-                            <g font-family="Segoe UI, system-ui, sans-serif" font-size="8" fill="rgba(255,255,255,0.5)" font-weight="600">
-                                <text x="10" y="58">AM</text>
-                                <text x="10" y="110">PM</text>
-                            </g>
-                            <!-- Grid cells -->
-                            <g>
-                                <!-- Morning row -->
-                                <rect x="58" y="34" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
-                                <rect x="106" y="34" width="48" height="44" rx="4" fill="#874b46" stroke="#a06b66"/>
-                                <rect x="154" y="34" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
-                                <rect x="202" y="34" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
-                                <rect x="250" y="34" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
-                                <!-- Afternoon row -->
-                                <rect x="58" y="86" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
-                                <rect x="106" y="86" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
-                                <rect x="154" y="86" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
-                                <rect x="202" y="86" width="48" height="44" rx="4" fill="#874b46" stroke="#a06b66"/>
-                                <rect x="250" y="86" width="48" height="44" rx="4" fill="#3a3635" stroke="rgba(255,255,255,0.08)"/>
-                            </g>
-                            <!-- Highlighted cell labels -->
-                            <g font-family="Segoe UI, system-ui, sans-serif" font-size="8" fill="#ffffff" text-anchor="middle" font-weight="700">
-                                <text x="130" y="54">AA</text>
-                                <text x="130" y="66">Training</text>
-                                <text x="226" y="106">AA</text>
-                                <text x="226" y="118">Training</text>
-                            </g>
-                            <!-- Subtle dots in other cells -->
-                            <g fill="rgba(255,255,255,0.2)">
-                                <circle cx="82" cy="56" r="1.5"/>
-                                <circle cx="178" cy="56" r="1.5"/>
-                                <circle cx="226" cy="56" r="1.5"/>
-                                <circle cx="274" cy="56" r="1.5"/>
-                                <circle cx="82" cy="108" r="1.5"/>
-                                <circle cx="130" cy="108" r="1.5"/>
-                                <circle cx="178" cy="108" r="1.5"/>
-                                <circle cx="274" cy="108" r="1.5"/>
-                            </g>
-                        </svg>
-                    </div>
-                    <div class="card-preview-caption">Dedicated training time built into your school week</div>
+                <div class="feature-card-accent"></div>
+                <div class="feature-card-body">
+                    <h3 class="feature-card-title">Coach Check-ins &amp; Booking</h3>
+                    <p class="feature-card-text">Book in-person slots before or after school. Personal calendar with group testing days and programme reviews. Downloads straight to Google Calendar.</p>
                 </div>
             </div>
-            <!-- Card 4: Strength & Movement -->
-            <div class="card">
-                <div class="card-accent card-accent--burgundy"></div>
-                <div class="card-icon">
-                    <svg viewBox="0 0 48 48" fill="none">
-                        <rect x="20" y="21" width="8" height="6" rx="1" fill="#874b46"/>
-                        <rect x="10" y="19" width="10" height="10" rx="2" stroke="#874b46" stroke-width="2.5" fill="none"/>
-                        <rect x="28" y="19" width="10" height="10" rx="2" stroke="#874b46" stroke-width="2.5" fill="none"/>
-                        <rect x="5" y="22" width="5" height="4" rx="1" stroke="#874b46" stroke-width="2" fill="none"/>
-                        <rect x="38" y="22" width="5" height="4" rx="1" stroke="#874b46" stroke-width="2" fill="none"/>
-                    </svg>
+            <!-- Card 4: Foundation Strength Patterns -->
+            <div class="feature-card">
+                <div class="feature-card-image">
+                    <img src="./Screenshot_2026-04-20_at_08_11_10.png" alt="Six foundational strength pattern cards" loading="lazy">
                 </div>
-                <h3 class="card-heading">Strength & Movement Foundations</h3>
-                <p class="card-body">Progressive technique and strength development across six fundamental movement patterns. Assessed termly, tracked across years.</p>
-                <div class="card-preview">
-                    <div class="card-preview-label">Preview</div>
-                    <div class="card-preview-media">
-                        <img src="./assets/preview-strength.png" alt="Strength portal preview" class="card-preview-img"
-                             onload="this.nextElementSibling.style.display='none'"
-                             onerror="this.style.display='none'">
-                        <div class="card-preview-placeholder">Screenshot coming soon</div>
-                    </div>
-                    <div class="card-preview-caption">Six movement patterns, tracked from Level 1 to Level 5</div>
+                <div class="feature-card-accent"></div>
+                <div class="feature-card-body">
+                    <h3 class="feature-card-title">Foundation Strength Patterns</h3>
+                    <p class="feature-card-text">Six fundamental movement patterns tracked progressively across five levels. Technique assessed, strength logged every session.</p>
+                </div>
+            </div>
+            <!-- Card 5: Goals, Vision & Grit -->
+            <div class="feature-card">
+                <div class="feature-card-image feature-card-image--split">
+                    <img src="./Screenshot_2026-04-20_at_08_12_14.png" alt="Active goals across fitness, strength and sport" loading="lazy">
+                    <img src="./Screenshot_2026-04-20_at_08_12_42.png" alt="Grit score breakdown" loading="lazy">
+                </div>
+                <div class="feature-card-accent"></div>
+                <div class="feature-card-body">
+                    <h3 class="feature-card-title">Goals, Vision &amp; Grit</h3>
+                    <p class="feature-card-text">Athletes set a long-term vision and active goals across fitness, strength and sport. Weekly reflections feed a transparent Grit score — they can see exactly what drives it.</p>
+                </div>
+            </div>
+            <!-- Card 6: Long-term Development Tracking -->
+            <div class="feature-card">
+                <div class="feature-card-image">
+                    <img src="./Screenshot_2026-04-20_at_08_13_06.png" alt="Training Age chart across years" loading="lazy">
+                </div>
+                <div class="feature-card-accent"></div>
+                <div class="feature-card-body">
+                    <h3 class="feature-card-title">Long-term Development Tracking</h3>
+                    <p class="feature-card-text">Training Age tracked from programme entry through G12. Every term adds a data point. Students see where they've come from and where they're heading.</p>
                 </div>
             </div>
         </div>
