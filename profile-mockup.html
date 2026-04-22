@@ -479,26 +479,11 @@
         .stat-chip.gold { color: #8a6d16; }
         .stat-chip.gold .chip-dot { background: var(--gold); }
 
-        .progress-section-grid {
+        .pillar-snapshot-grid {
             display: grid;
-            grid-template-columns: 60% 40%;
+            grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
-            align-items: start;
-            margin-top: 1.25rem;
-        }
-        .progress-section-left { min-width: 0; }
-        .progress-section-left .chart-wrap { margin-top: 0; }
-        .progress-section-right {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-        .snapshot-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            color: #524342;
-            letter-spacing: 0.15em;
-            font-weight: 600;
+            margin-top: 1.5rem;
         }
         .pillar-mini {
             background: var(--white);
@@ -510,7 +495,7 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.6rem;
         }
         .pillar-dot {
             width: 8px;
@@ -535,20 +520,20 @@
         }
         .pillar-mini-row {
             display: grid;
-            grid-template-columns: 115px 1fr 34px;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 28px;
             align-items: center;
             gap: 0.5rem;
-            margin-top: 0.4rem;
         }
+        .pillar-mini-row + .pillar-mini-row { margin-top: 0.25rem; }
         .pillar-mini-row-name {
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             color: #524342;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         .pillar-mini-row-bar {
-            height: 8px;
+            height: 6px;
             border-radius: 999px;
             background: #e5dedd;
             overflow: hidden;
@@ -565,7 +550,7 @@
             box-sizing: border-box;
         }
         .pillar-mini-row-value {
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 700;
             color: var(--dark);
             text-align: right;
@@ -574,7 +559,7 @@
             color: #a09695;
             font-weight: 500;
             font-style: italic;
-            font-size: 0.7rem;
+            font-size: 0.72rem;
         }
 
         /* ───────── Section 3 — Weekly Plan + Testing ───────── */
@@ -2299,109 +2284,104 @@
         <section class="progress-section">
             <div class="overline">DEVELOPMENT</div>
             <h2 class="section-heading">Training Age Over Time</h2>
-            <div class="progress-section-grid">
-                <div class="progress-section-left">
-                    <div class="chart-wrap">
-                        <canvas id="trainingAgeChart"></canvas>
+            <div class="chart-wrap">
+                <canvas id="trainingAgeChart"></canvas>
+            </div>
+            <div class="stat-chips">
+                <div class="stat-chip burgundy"><span class="chip-dot"></span>+1.7 since joining</div>
+                <div class="stat-chip green"><span class="chip-dot"></span>Consistent upward trend</div>
+                <div class="stat-chip gold"><span class="chip-dot"></span>On track for 4.2 by G12</div>
+            </div>
+            <div class="pillar-snapshot-grid">
+                <div class="pillar-mini">
+                    <div class="pillar-mini-header">
+                        <span class="pillar-dot pillar-dot--gold"></span>
+                        <span class="pillar-mini-name">Psychology</span>
+                        <span class="pillar-mini-score">4.1</span>
                     </div>
-                    <div class="stat-chips">
-                        <div class="stat-chip burgundy"><span class="chip-dot"></span>+1.7 since joining</div>
-                        <div class="stat-chip green"><span class="chip-dot"></span>Consistent upward trend</div>
-                        <div class="stat-chip gold"><span class="chip-dot"></span>On track for 4.2 by G12</div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Mindset</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 80%;"></div></div>
+                        <span class="pillar-mini-row-value">4.0</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Focus &amp; Engagement</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 80%;"></div></div>
+                        <span class="pillar-mini-row-value">4.0</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Effort &amp; Work Ethic</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 60%;"></div></div>
+                        <span class="pillar-mini-row-value">3.0</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Coachability</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 100%;"></div></div>
+                        <span class="pillar-mini-row-value">5.0</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Mental Toughness</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 80%;"></div></div>
+                        <span class="pillar-mini-row-value">4.0</span>
                     </div>
                 </div>
-                <div class="progress-section-right">
-                    <div class="snapshot-label">STUDENT PROFILE SNAPSHOT</div>
-                    <div class="pillar-mini">
-                        <div class="pillar-mini-header">
-                            <span class="pillar-dot pillar-dot--gold"></span>
-                            <span class="pillar-mini-name">Psychology</span>
-                            <span class="pillar-mini-score">4.1</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Mindset</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 80%;"></div></div>
-                            <span class="pillar-mini-row-value">4.0</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Focus &amp; Engagement</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 80%;"></div></div>
-                            <span class="pillar-mini-row-value">4.0</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Effort &amp; Work Ethic</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 60%;"></div></div>
-                            <span class="pillar-mini-row-value">3.0</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Coachability</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 100%;"></div></div>
-                            <span class="pillar-mini-row-value">5.0</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Mental Toughness</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 80%;"></div></div>
-                            <span class="pillar-mini-row-value">4.0</span>
-                        </div>
+                <div class="pillar-mini">
+                    <div class="pillar-mini-header">
+                        <span class="pillar-dot pillar-dot--burgundy"></span>
+                        <span class="pillar-mini-name">Physiology</span>
+                        <span class="pillar-mini-score">3.6</span>
                     </div>
-                    <div class="pillar-mini">
-                        <div class="pillar-mini-header">
-                            <span class="pillar-dot pillar-dot--burgundy"></span>
-                            <span class="pillar-mini-name">Physiology</span>
-                            <span class="pillar-mini-score">3.6</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Strength</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 70%;"></div></div>
-                            <span class="pillar-mini-row-value">3.5</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Broad Jump</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 80%;"></div></div>
-                            <span class="pillar-mini-row-value">4.0</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">40m Sprint</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 80%;"></div></div>
-                            <span class="pillar-mini-row-value">4.0</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Agility</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 60%;"></div></div>
-                            <span class="pillar-mini-row-value">3.0</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Cooper Test</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 60%;"></div></div>
-                            <span class="pillar-mini-row-value">3.0</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Mobility</span>
-                            <div class="pillar-mini-row-bar pillar-mini-row-bar--unassessed"></div>
-                            <span class="pillar-mini-row-value pillar-mini-row-value--muted">—</span>
-                        </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Strength</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 70%;"></div></div>
+                        <span class="pillar-mini-row-value">3.5</span>
                     </div>
-                    <div class="pillar-mini">
-                        <div class="pillar-mini-header">
-                            <span class="pillar-dot pillar-dot--burgundy"></span>
-                            <span class="pillar-mini-name">Health &amp; Skills</span>
-                            <span class="pillar-mini-score">3.2</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Recovery</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 60%;"></div></div>
-                            <span class="pillar-mini-row-value">3.0</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Movement Tech</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 70%;"></div></div>
-                            <span class="pillar-mini-row-value">3.5</span>
-                        </div>
-                        <div class="pillar-mini-row">
-                            <span class="pillar-mini-row-name">Nutrition</span>
-                            <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 60%;"></div></div>
-                            <span class="pillar-mini-row-value">3.0</span>
-                        </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Broad Jump</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 80%;"></div></div>
+                        <span class="pillar-mini-row-value">4.0</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">40m Sprint</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--gold" style="width: 80%;"></div></div>
+                        <span class="pillar-mini-row-value">4.0</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Agility</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 60%;"></div></div>
+                        <span class="pillar-mini-row-value">3.0</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Cooper Test</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 60%;"></div></div>
+                        <span class="pillar-mini-row-value">3.0</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Mobility</span>
+                        <div class="pillar-mini-row-bar pillar-mini-row-bar--unassessed"></div>
+                        <span class="pillar-mini-row-value pillar-mini-row-value--muted">—</span>
+                    </div>
+                </div>
+                <div class="pillar-mini">
+                    <div class="pillar-mini-header">
+                        <span class="pillar-dot pillar-dot--burgundy"></span>
+                        <span class="pillar-mini-name">Health &amp; Skills</span>
+                        <span class="pillar-mini-score">3.2</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Recovery</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 60%;"></div></div>
+                        <span class="pillar-mini-row-value">3.0</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Movement Tech</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 70%;"></div></div>
+                        <span class="pillar-mini-row-value">3.5</span>
+                    </div>
+                    <div class="pillar-mini-row">
+                        <span class="pillar-mini-row-name">Nutrition</span>
+                        <div class="pillar-mini-row-bar"><div class="pillar-mini-row-fill pillar-mini-row-fill--burgundy" style="width: 60%;"></div></div>
+                        <span class="pillar-mini-row-value">3.0</span>
                     </div>
                 </div>
             </div>
