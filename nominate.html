@@ -105,6 +105,9 @@
             max-width: 600px;
             margin: 0 auto;
         }
+        .hero-body + .hero-body {
+            margin-top: 1rem;
+        }
 
         /* ===== PROGRAMME SECTION ===== */
         .programme {
@@ -746,7 +749,9 @@
             <h1 class="hero-heading">Grade 10–12 Athlete Academy</h1>
             <p class="hero-subheading">Nomination 2026–27</p>
             <div class="hero-divider"></div>
-            <p class="hero-body">The Athlete Academy is a multi-year development programme for students who are ready to take ownership of their athletic growth. Selected students train with purpose, track their progress over time, and develop the physical and psychological foundations of a complete athlete. Nominations are reviewed by the PE department. Places are limited.</p>
+            <p class="hero-body">The Athlete Academy is a multi-year athletic development programme for high-potential students in Grades 10–12 at Frankfurt International School.</p>
+            <p class="hero-body">Students are assessed and tracked across three pillars — Psychology, Physiology, and Health &amp; Skills — building a personalised Training Age score that grows across their time in the programme. In Grades 10–12, students take ownership of their development: designing and logging their own training plans, setting performance goals, and meeting regularly with their teacher for check-ins and testing.</p>
+            <p class="hero-body">Progress is visible, data-driven, and longitudinal. A student who joins in Grade 10 and stays through Grade 12 leaves with three years of tracked athletic development — and the habits to continue beyond school.</p>
         </div>
     </section>
 
@@ -1141,7 +1146,7 @@
                     confirmation.style.display = 'block';
                     document.getElementById('confirmation-heading').textContent = 'Thank you, ' + payload.coachName + '.';
                     document.getElementById('confirmation-body').textContent =
-                        'Your nomination for ' + payload.athleteName + ' has been received. The PE department will review all nominations and be in touch within two weeks regarding the 2026–27 cohort.';
+                        'Your nomination for ' + payload.athleteName + ' has been received.';
                     confirmation.scrollIntoView({ behavior: 'smooth' });
                 } else {
                     throw new Error(result.error || 'Unknown error');
