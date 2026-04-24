@@ -351,6 +351,58 @@
             box-shadow: 0px 4px 16px rgba(53,15,13,0.04);
         }
 
+        .form-tabs {
+            display: flex;
+            gap: 0;
+            background: #f8f2f1;
+            border-radius: 9999px;
+            padding: 0.4rem;
+            margin-bottom: 2.5rem;
+        }
+        .form-tab {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: #524342;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            padding: 0.9rem 1.25rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .form-tab:hover {
+            color: #874b46;
+        }
+        .form-tab.active {
+            background: #874b46;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(135,75,70,0.28);
+        }
+        .form-tab-panel {
+            display: none;
+        }
+        .form-tab-panel.active {
+            display: block;
+        }
+        .about-panel-body {
+            color: #524342;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+        .about-panel-body h3 {
+            color: #1a1a1a;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-top: 1.75rem;
+            margin-bottom: 0.4rem;
+        }
+        .about-panel-body h3:first-child {
+            margin-top: 0;
+        }
+
         .form-subtext {
             color: #524342;
             font-size: 0.875rem;
@@ -828,8 +880,14 @@
     <!-- SECTION 3: NOMINATION FORM -->
     <section class="form-section" id="form-section">
         <div class="form-container">
-            <div class="section-overline">NOMINATE AN ATHLETE</div>
-            <h2 class="section-heading" style="margin-bottom: 0.5rem;">Tell us about your athlete</h2>
+            <div class="form-tabs" role="tablist">
+                <button type="button" class="form-tab active" data-tab="nominate" role="tab">Nominate an Athlete</button>
+                <button type="button" class="form-tab" data-tab="about" role="tab">About the Programme</button>
+            </div>
+
+            <div class="form-tab-panel active" id="tab-nominate" role="tabpanel">
+                <div class="section-overline">NOMINATE AN ATHLETE</div>
+                <h2 class="section-heading" style="margin-bottom: 0.5rem;">Tell us about your athlete</h2>
 
             <form id="nomination-form" novalidate>
                 <!-- Coach Details -->
@@ -957,6 +1015,25 @@
                 <button type="submit" class="submit-btn" id="submit-btn">Submit Nomination</button>
                 <div class="submit-error" id="submit-error">Something went wrong — please try again or email directly.</div>
             </form>
+            </div>
+
+            <div class="form-tab-panel" id="tab-about" role="tabpanel">
+                <div class="section-overline">THE PROGRAMME</div>
+                <h2 class="section-heading" style="margin-bottom: 1.5rem;">How the Athlete Academy works</h2>
+                <div class="about-panel-body">
+                    <h3>Three pillars of development</h3>
+                    <p>Every athlete is tracked across Psychology (mindset, focus, effort, coachability, mental toughness), Physiology (strength, speed, power, agility, endurance), and Health &amp; Skills (recovery, movement technique, nutrition). These combine into a personalised Training Age score — a measure of how the athlete is developing, not a ranking of raw ability.</p>
+
+                    <h3>Athlete-led, coach-verified</h3>
+                    <p>Students plan their own training weeks, choose from coach-built templates, log sessions and intensity, set performance goals, and record weekly reflections. Everything is visible to the coach. Regular in-person check-ins before or after school give space to discuss plans, review progress, and run group testing days.</p>
+
+                    <h3>Three years of tracked development</h3>
+                    <p>The programme runs from Grade 10 through Grade 12. Each term adds a data point to every pillar. A student who joins in Grade 10 and stays through Grade 12 leaves with three years of tracked athletic development and the habits to continue beyond school.</p>
+
+                    <h3>Who we nominate</h3>
+                    <p>We're looking for students who are coachable, self-motivated, and willing to take ownership. Current athletic level matters less than readiness to engage with a long-term development process. Your ratings are most useful when they're honest.</p>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -1000,6 +1077,15 @@
                 programmeCards.forEach(c => c.classList.remove('preview-active'));
             });
         })();
+
+        // Tab switcher
+        document.querySelectorAll('.form-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.tab;
+                document.querySelectorAll('.form-tab').forEach(t => t.classList.toggle('active', t === tab));
+                document.querySelectorAll('.form-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + target));
+            });
+        });
 
         const API_URL = 'https://script.google.com/macros/s/AKfycbzoyT7zqrOhEf3LAsflbRB73OO2-RaHdnCz5f676xuO9Odc6wFUQpo0aE3XX6Qt-Bk0/exec';
 
