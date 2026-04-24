@@ -1306,9 +1306,15 @@
             });
         });
 
+        // Diagnostic: confirm the button itself is receiving clicks
+        document.getElementById('submit-btn').addEventListener('click', () => {
+            console.log('[nominate] submit button clicked');
+        });
+
         // Form submission
         document.getElementById('nomination-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            console.log('[nominate] submit handler fired');
 
             const submitBtn = document.getElementById('submit-btn');
             const submitError = document.getElementById('submit-error');
@@ -1317,6 +1323,7 @@
             // Validate
             let firstError = null;
             let valid = true;
+            const missing = [];
 
             const requiredFields = [
                 { id: 'coachName', type: 'text' },
@@ -1342,6 +1349,7 @@
                     if (errorEl) errorEl.classList.add('visible');
                     if (!firstError) firstError = el;
                     valid = false;
+                    missing.push(field.id);
                 } else {
                     el.classList.remove('error');
                     if (errorEl) errorEl.classList.remove('visible');
@@ -1356,10 +1364,14 @@
                     errorEl.classList.add('visible');
                     if (!firstError) firstError = row;
                     valid = false;
+                    missing.push('rating:' + key);
                 }
             });
 
             if (!valid) {
+                console.warn('[nominate] validation failed, missing:', missing);
+                submitError.textContent = 'Please fill the highlighted fields: ' + missing.join(', ');
+                submitError.classList.add('visible');
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
