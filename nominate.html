@@ -836,6 +836,30 @@
             font-size: 0.9375rem;
         }
 
+        .new-nomination-btn {
+            background: linear-gradient(135deg, #6b3430, #874b46);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 0.9375rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.875rem 2rem;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            margin-top: 0.5rem;
+        }
+
+        .new-nomination-btn:hover {
+            opacity: 0.92;
+        }
+
+        .new-nomination-btn:active {
+            transform: scale(0.995);
+        }
+
         /* ===== FOOTER ===== */
         .footer {
             background: #1d1b1b;
@@ -950,7 +974,7 @@
             <div class="about-intro">
                 <p class="intro-lede">For students who are ready to take ownership of their athletic development.</p>
                 <p>The Athlete Academy is a multi-year programme for high-potential students in Grades 10–12. Students design and log their own training, set performance goals, and are assessed termly across Psychology, Physiology, and Health &amp; Skills — building a personalised Training Age score that grows across their time in the programme.</p>
-                <p>This is a self-directed programme. Students are expected to train independently, reflect honestly, and show up consistently. The teacher provides structure, testing, check-ins, and feedback. The student does the work.</p>
+                <p>This is a self-directed programme. Students are expected to train independently, reflect honestly, and show up consistently. The teacher provides structure, testing, check-ins, and feedback.</p>
                 <div class="intro-divider"></div>
                 <div class="intro-chips">
                     <span class="intro-chip">Places are limited</span>
@@ -965,7 +989,7 @@
                     <div class="how-step">
                         <div class="how-step-number">01</div>
                         <h3 class="how-step-title">Nomination</h3>
-                        <p class="how-step-body">Coaches nominate athletes they believe are ready. Each nomination is reviewed by the PE department.</p>
+                        <p class="how-step-body">Coaches nominate athletes they believe are ready. Each nomination is reviewed.</p>
                     </div>
                     <div class="how-connector"></div>
                     <div class="how-step">
@@ -977,7 +1001,7 @@
                     <div class="how-step">
                         <div class="how-step-number">03</div>
                         <h3 class="how-step-title">Start of Programme</h3>
-                        <p class="how-step-body">Students are assessed, set goals, and begin building their Training Age from day one of Grade 10.</p>
+                        <p class="how-step-body">Students are assessed, set goals, and begin building their Training Age from day one.</p>
                     </div>
                     <div class="how-connector"></div>
                     <div class="how-step">
@@ -1064,15 +1088,6 @@
         </div>
 
         <div class="form-tab-panel active" id="tab-nominate" role="tabpanel">
-            <div class="looking-for">
-                <h3 class="looking-for-heading">What we're looking for</h3>
-                <ul class="looking-for-list">
-                    <li>Athletes who show up consistently — even when it's hard</li>
-                    <li>Students who respond to feedback and apply it</li>
-                    <li>People who want more than the standard PE class offers</li>
-                </ul>
-                <p class="looking-for-note">Ability matters less than attitude. We can develop fitness. We can't develop desire.</p>
-            </div>
             <div class="form-container">
                 <div class="section-overline">NOMINATE AN ATHLETE</div>
                 <h2 class="section-heading" style="margin-bottom: 0.5rem;">Tell us about your athlete</h2>
@@ -1213,6 +1228,7 @@
             <div class="confirmation-overline">NOMINATION RECEIVED</div>
             <h2 class="confirmation-heading" id="confirmation-heading">Thank you.</h2>
             <p class="confirmation-body" id="confirmation-body"></p>
+            <button type="button" class="new-nomination-btn" id="new-nomination-btn">Submit another nomination</button>
             <div class="confirmation-divider"></div>
             <p class="confirmation-closing">Thank you for taking the time. It makes a difference.</p>
         </div>
@@ -1415,7 +1431,7 @@
                     confirmation.style.display = 'block';
                     document.getElementById('confirmation-heading').textContent = 'Thank you, ' + payload.coachName + '.';
                     document.getElementById('confirmation-body').textContent =
-                        'Your nomination for ' + payload.athleteName + ' has been received. We\'ll review all nominations before the end of term and be in touch directly. If you have questions in the meantime, contact the PE department.';
+                        'Your nomination for ' + payload.athleteName + ' has been received. We\'ll review all nominations before the end of term and be in touch directly. If you have questions in the meantime, contact Scott Bain at scott_bain@fis.edu';
                     confirmation.scrollIntoView({ behavior: 'smooth' });
                 } else {
                     throw new Error(result.error || 'Unknown error');
@@ -1436,6 +1452,23 @@
                 const errorEl = el.parentElement.querySelector('.error-message');
                 if (errorEl) errorEl.classList.remove('visible');
             });
+        });
+
+        // Start a new nomination from the confirmation screen
+        document.getElementById('new-nomination-btn').addEventListener('click', () => {
+            document.getElementById('nomination-form').reset();
+            Object.keys(ratings).forEach(k => { ratings[k] = 0; });
+            document.querySelectorAll('.rating-btn.selected').forEach(b => b.classList.remove('selected'));
+            document.querySelectorAll('.rating-hint').forEach(h => h.classList.remove('visible'));
+            document.querySelectorAll('.rating-error.visible').forEach(e => e.classList.remove('visible'));
+            document.querySelectorAll('#nomination-form .error').forEach(el => el.classList.remove('error'));
+            document.querySelectorAll('#nomination-form .error-message.visible').forEach(el => el.classList.remove('visible'));
+            const submitBtn = document.querySelector('.submit-btn');
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Nomination'; }
+            document.querySelector('.submit-error')?.classList.remove('visible');
+            document.getElementById('confirmation').style.display = 'none';
+            document.getElementById('form-section').style.display = '';
+            document.getElementById('form-section').scrollIntoView({ behavior: 'smooth' });
         });
     </script>
 </body>
