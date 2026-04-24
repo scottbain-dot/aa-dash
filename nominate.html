@@ -403,9 +403,144 @@
         .about-intro p:last-child {
             margin-bottom: 0;
         }
-        .about-cards-head {
+        .intro-lede {
+            font-weight: 800;
+            font-size: 1.5rem;
+            line-height: 1.3;
+            color: #1a1a1a !important;
+            letter-spacing: -0.01em;
+            margin-bottom: 1.5rem !important;
+        }
+        .intro-divider {
+            width: 60px;
+            height: 2px;
+            background: #D4AF37;
+            margin: 1.75rem auto 1.25rem;
+        }
+        .intro-chips {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .intro-chip {
+            background: #fbf3d9;
+            color: #7a5d0e;
+            border: 1px solid #D4AF37;
+            padding: 0.4rem 0.9rem;
+            border-radius: 9999px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+        }
+
+        /* ===== HOW IT WORKS ===== */
+        .how-it-works {
+            background: #f8f2f1;
+            padding: 4rem 2rem;
+        }
+        .how-heading {
+            font-weight: 800;
+            font-size: 1.75rem;
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
+            color: #1a1a1a;
+        }
+        .how-steps {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .how-step {
+            flex: 1 1 0;
+            background: #ffffff;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .how-step-number {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #874b46;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        .how-step-title {
+            font-weight: 800;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: #1a1a1a;
+        }
+        .how-step-body {
+            font-size: 0.875rem;
+            color: #524342;
+            line-height: 1.55;
+        }
+        .how-connector {
+            flex: 0 0 auto;
+            align-self: center;
+            width: 2rem;
+            border-top: 2px dashed #d7c2bf;
+        }
+        @media (max-width: 768px) {
+            .how-steps {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .how-connector {
+                width: 0;
+                height: 1.5rem;
+                border-top: none;
+                border-left: 2px dashed #d7c2bf;
+                margin: 0 auto;
+            }
+        }
+
+        /* ===== WHAT WE'RE LOOKING FOR ===== */
+        .looking-for {
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            padding: 0 0.25rem;
+        }
+        .looking-for-heading {
+            font-weight: 800;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+        }
+        .looking-for-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem;
+        }
+        .looking-for-list li {
+            position: relative;
+            padding-left: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #524342;
+            line-height: 1.6;
+            font-size: 0.9375rem;
+        }
+        .looking-for-list li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.6em;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #874b46;
+        }
+        .looking-for-note {
+            font-style: italic;
+            color: #888;
+            font-size: 0.875rem;
+            line-height: 1.55;
         }
 
         .form-subtext {
@@ -813,10 +948,46 @@
 
         <div class="form-tab-panel" id="tab-about" role="tabpanel">
             <div class="about-intro">
-                <p>The Athlete Academy is a multi-year athletic development programme for high-potential students in Grades 10–12 at Frankfurt International School.</p>
-                <p>Students are assessed and tracked across three pillars — Psychology, Physiology, and Health &amp; Skills — building a personalised Training Age score that grows across their time in the programme. In Grades 10–12, students take ownership of their development: designing and logging their own training plans, setting performance goals, and meeting regularly with their teacher for check-ins and testing.</p>
-                <p>Progress is visible, data-driven, and longitudinal. A student who joins in Grade 10 and stays through Grade 12 leaves with three years of tracked athletic development — and the habits to continue beyond school.</p>
+                <p class="intro-lede">For students who are ready to take ownership of their athletic development.</p>
+                <p>The Athlete Academy is a multi-year programme for high-potential students in Grades 10–12. Students design and log their own training, set performance goals, and are assessed termly across Psychology, Physiology, and Health &amp; Skills — building a personalised Training Age score that grows across their time in the programme.</p>
+                <p>This is a self-directed programme. Students are expected to train independently, reflect honestly, and show up consistently. The teacher provides structure, testing, check-ins, and feedback. The student does the work.</p>
+                <div class="intro-divider"></div>
+                <div class="intro-chips">
+                    <span class="intro-chip">Places are limited</span>
+                    <span class="intro-chip">Nominations close May 2026</span>
+                </div>
             </div>
+
+            <section class="how-it-works">
+                <div class="section-overline">HOW IT WORKS</div>
+                <h2 class="how-heading">What to expect</h2>
+                <div class="how-steps">
+                    <div class="how-step">
+                        <div class="how-step-number">01</div>
+                        <h3 class="how-step-title">Nomination</h3>
+                        <p class="how-step-body">Coaches nominate athletes they believe are ready. Each nomination is reviewed by the PE department.</p>
+                    </div>
+                    <div class="how-connector"></div>
+                    <div class="how-step">
+                        <div class="how-step-number">02</div>
+                        <h3 class="how-step-title">Selection</h3>
+                        <p class="how-step-body">Selected students are contacted before the end of term. Places are offered based on attitude, potential, and commitment — not just ability.</p>
+                    </div>
+                    <div class="how-connector"></div>
+                    <div class="how-step">
+                        <div class="how-step-number">03</div>
+                        <h3 class="how-step-title">Start of Programme</h3>
+                        <p class="how-step-body">Students are assessed, set goals, and begin building their Training Age from day one of Grade 10.</p>
+                    </div>
+                    <div class="how-connector"></div>
+                    <div class="how-step">
+                        <div class="how-step-number">04</div>
+                        <h3 class="how-step-title">Multi-year Development</h3>
+                        <p class="how-step-body">Termly check-ins, testing days, and ongoing training. Progress tracked and visible every step of the way.</p>
+                    </div>
+                </div>
+            </section>
+
             <div class="about-cards-head">
                 <div class="section-overline">THE PROGRAMME</div>
                 <h2 class="section-heading">What your athlete will have access to</h2>
@@ -893,6 +1064,15 @@
         </div>
 
         <div class="form-tab-panel active" id="tab-nominate" role="tabpanel">
+            <div class="looking-for">
+                <h3 class="looking-for-heading">What we're looking for</h3>
+                <ul class="looking-for-list">
+                    <li>Athletes who show up consistently — even when it's hard</li>
+                    <li>Students who respond to feedback and apply it</li>
+                    <li>People who want more than the standard PE class offers</li>
+                </ul>
+                <p class="looking-for-note">Ability matters less than attitude. We can develop fitness. We can't develop desire.</p>
+            </div>
             <div class="form-container">
                 <div class="section-overline">NOMINATE AN ATHLETE</div>
                 <h2 class="section-heading" style="margin-bottom: 0.5rem;">Tell us about your athlete</h2>
@@ -1034,7 +1214,7 @@
             <h2 class="confirmation-heading" id="confirmation-heading">Thank you.</h2>
             <p class="confirmation-body" id="confirmation-body"></p>
             <div class="confirmation-divider"></div>
-            <p class="confirmation-closing">We'll take it from here.</p>
+            <p class="confirmation-closing">Thank you for taking the time. It makes a difference.</p>
         </div>
     </section>
 
@@ -1223,7 +1403,7 @@
                     confirmation.style.display = 'block';
                     document.getElementById('confirmation-heading').textContent = 'Thank you, ' + payload.coachName + '.';
                     document.getElementById('confirmation-body').textContent =
-                        'Your nomination for ' + payload.athleteName + ' has been received.';
+                        'Your nomination for ' + payload.athleteName + ' has been received. We\'ll review all nominations before the end of term and be in touch directly. If you have questions in the meantime, contact the PE department.';
                     confirmation.scrollIntoView({ behavior: 'smooth' });
                 } else {
                     throw new Error(result.error || 'Unknown error');
