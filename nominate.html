@@ -1208,7 +1208,14 @@
                     body: JSON.stringify(payload)
                 });
 
-                const result = await response.json();
+                const rawText = await response.text();
+                console.log('[nominate] status=', response.status, 'body=', rawText);
+                let result;
+                try {
+                    result = JSON.parse(rawText);
+                } catch (parseErr) {
+                    throw new Error('Non-JSON response (HTTP ' + response.status + '): ' + rawText.slice(0, 200));
+                }
 
                 if (result.success) {
                     document.getElementById('form-section').style.display = 'none';
@@ -1222,6 +1229,8 @@
                     throw new Error(result.error || 'Unknown error');
                 }
             } catch (err) {
+                console.error('[nominate] submit failed:', err);
+                submitError.textContent = 'Something went wrong — ' + err.message;
                 submitError.classList.add('visible');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit Nomination';
