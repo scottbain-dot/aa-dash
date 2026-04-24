@@ -298,6 +298,15 @@
             object-fit: cover;
         }
 
+        .feature-card-image--fit {
+            background: #ffffff;
+        }
+
+        .feature-card-image--fit img {
+            object-fit: contain;
+            object-position: center;
+        }
+
         .feature-card-image--split img:first-child {
             border-top-left-radius: 1.5rem;
         }
@@ -759,7 +768,7 @@
             </div>
             <!-- Card 2: Personal Training Portal -->
             <div class="feature-card">
-                <div class="feature-card-image">
+                <div class="feature-card-image feature-card-image--fit">
                     <img src="./Nominate%20-%20Personal%20Training%20Portal.png" alt="Weekly training plan and performance assessments" loading="lazy">
                 </div>
                 <div class="feature-card-accent"></div>
