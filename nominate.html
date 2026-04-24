@@ -354,10 +354,12 @@
         .form-tabs {
             display: flex;
             gap: 0;
-            background: #f8f2f1;
+            background: #ffffff;
             border-radius: 9999px;
             padding: 0.4rem;
-            margin-bottom: 2.5rem;
+            margin: 0 auto 2.5rem;
+            max-width: 520px;
+            box-shadow: 0 4px 16px rgba(53,15,13,0.06);
         }
         .form-tab {
             flex: 1;
@@ -387,20 +389,23 @@
         .form-tab-panel.active {
             display: block;
         }
-        .about-panel-body {
+        .about-intro {
+            max-width: 700px;
+            margin: 0 auto 3rem;
+            text-align: center;
+        }
+        .about-intro p {
             color: #524342;
             line-height: 1.7;
             font-size: 1rem;
+            margin-bottom: 1rem;
         }
-        .about-panel-body h3 {
-            color: #1a1a1a;
-            font-size: 1.05rem;
-            font-weight: 700;
-            margin-top: 1.75rem;
-            margin-bottom: 0.4rem;
+        .about-intro p:last-child {
+            margin-bottom: 0;
         }
-        .about-panel-body h3:first-child {
-            margin-top: 0;
+        .about-cards-head {
+            text-align: center;
+            margin-bottom: 2rem;
         }
 
         .form-subtext {
@@ -796,17 +801,27 @@
             <h1 class="hero-heading">Grade 10–12 Athlete Academy</h1>
             <p class="hero-subheading">Nomination 2026–27</p>
             <div class="hero-divider"></div>
-            <p class="hero-body">The Athlete Academy is a multi-year athletic development programme for high-potential students in Grades 10–12 at Frankfurt International School.</p>
-            <p class="hero-body">Students are assessed and tracked across three pillars — Psychology, Physiology, and Health &amp; Skills — building a personalised Training Age score that grows across their time in the programme. In Grades 10–12, students take ownership of their development: designing and logging their own training plans, setting performance goals, and meeting regularly with their teacher for check-ins and testing.</p>
-            <p class="hero-body">Progress is visible, data-driven, and longitudinal. A student who joins in Grade 10 and stays through Grade 12 leaves with three years of tracked athletic development — and the habits to continue beyond school.</p>
         </div>
     </section>
 
-    <!-- SECTION 2: PROGRAMME -->
-    <section class="programme">
-        <div class="section-overline">THE PROGRAMME</div>
-        <h2 class="section-heading">What your athlete will have access to</h2>
-        <div class="cards-grid">
+    <!-- SECTION 2: NOMINATION + ABOUT TABS -->
+    <section class="form-section" id="form-section">
+        <div class="form-tabs" role="tablist">
+            <button type="button" class="form-tab active" data-tab="nominate" role="tab">Nominate an Athlete</button>
+            <button type="button" class="form-tab" data-tab="about" role="tab">About the Programme</button>
+        </div>
+
+        <div class="form-tab-panel" id="tab-about" role="tabpanel">
+            <div class="about-intro">
+                <p>The Athlete Academy is a multi-year athletic development programme for high-potential students in Grades 10–12 at Frankfurt International School.</p>
+                <p>Students are assessed and tracked across three pillars — Psychology, Physiology, and Health &amp; Skills — building a personalised Training Age score that grows across their time in the programme. In Grades 10–12, students take ownership of their development: designing and logging their own training plans, setting performance goals, and meeting regularly with their teacher for check-ins and testing.</p>
+                <p>Progress is visible, data-driven, and longitudinal. A student who joins in Grade 10 and stays through Grade 12 leaves with three years of tracked athletic development — and the habits to continue beyond school.</p>
+            </div>
+            <div class="about-cards-head">
+                <div class="section-overline">THE PROGRAMME</div>
+                <h2 class="section-heading">What your athlete will have access to</h2>
+            </div>
+            <div class="cards-grid">
             <!-- Card 1: Training Age -->
             <div class="feature-card">
                 <div class="feature-card-image">
@@ -875,21 +890,13 @@
                 </div>
             </div>
         </div>
-    </section>
+        </div>
 
-    <!-- SECTION 3: NOMINATION FORM -->
-    <section class="form-section" id="form-section">
-        <div class="form-container">
-            <div class="form-tabs" role="tablist">
-                <button type="button" class="form-tab active" data-tab="nominate" role="tab">Nominate an Athlete</button>
-                <button type="button" class="form-tab" data-tab="about" role="tab">About the Programme</button>
-            </div>
-
-            <div class="form-tab-panel active" id="tab-nominate" role="tabpanel">
+        <div class="form-tab-panel active" id="tab-nominate" role="tabpanel">
+            <div class="form-container">
                 <div class="section-overline">NOMINATE AN ATHLETE</div>
                 <h2 class="section-heading" style="margin-bottom: 0.5rem;">Tell us about your athlete</h2>
-
-            <form id="nomination-form" novalidate>
+                <form id="nomination-form" novalidate>
                 <!-- Coach Details -->
                 <div class="form-row">
                     <div class="form-group">
@@ -1012,27 +1019,9 @@
                     <textarea id="additionalInfo" style="min-height: 80px;" placeholder="Training history, injuries, personal circumstances — anything relevant."></textarea>
                 </div>
 
-                <button type="submit" class="submit-btn" id="submit-btn">Submit Nomination</button>
-                <div class="submit-error" id="submit-error">Something went wrong — please try again or email directly.</div>
-            </form>
-            </div>
-
-            <div class="form-tab-panel" id="tab-about" role="tabpanel">
-                <div class="section-overline">THE PROGRAMME</div>
-                <h2 class="section-heading" style="margin-bottom: 1.5rem;">How the Athlete Academy works</h2>
-                <div class="about-panel-body">
-                    <h3>Three pillars of development</h3>
-                    <p>Every athlete is tracked across Psychology (mindset, focus, effort, coachability, mental toughness), Physiology (strength, speed, power, agility, endurance), and Health &amp; Skills (recovery, movement technique, nutrition). These combine into a personalised Training Age score — a measure of how the athlete is developing, not a ranking of raw ability.</p>
-
-                    <h3>Athlete-led, coach-verified</h3>
-                    <p>Students plan their own training weeks, choose from coach-built templates, log sessions and intensity, set performance goals, and record weekly reflections. Everything is visible to the coach. Regular in-person check-ins before or after school give space to discuss plans, review progress, and run group testing days.</p>
-
-                    <h3>Three years of tracked development</h3>
-                    <p>The programme runs from Grade 10 through Grade 12. Each term adds a data point to every pillar. A student who joins in Grade 10 and stays through Grade 12 leaves with three years of tracked athletic development and the habits to continue beyond school.</p>
-
-                    <h3>Who we nominate</h3>
-                    <p>We're looking for students who are coachable, self-motivated, and willing to take ownership. Current athletic level matters less than readiness to engage with a long-term development process. Your ratings are most useful when they're honest.</p>
-                </div>
+                    <button type="submit" class="submit-btn" id="submit-btn">Submit Nomination</button>
+                    <div class="submit-error" id="submit-error">Something went wrong — please try again or email directly.</div>
+                </form>
             </div>
         </div>
     </section>
