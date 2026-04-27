@@ -221,6 +221,56 @@
             color: var(--black);
         }
 
+        /* Self-assessment */
+        .self-assessment-section {
+            margin-bottom: 20px;
+            padding-top: 8px;
+            border-top: 1px solid var(--light-grey);
+        }
+        .self-assessment-header {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #524342;
+            margin: 12px 0 6px;
+        }
+        .self-assessment-intro {
+            font-style: italic;
+            color: #524342;
+            font-size: 0.8rem;
+            margin-bottom: 16px;
+        }
+        .self-assessment-block { margin-bottom: 18px; }
+        .self-assessment-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #1d1b1b;
+            margin-bottom: 6px;
+        }
+        .self-assessment-bullets {
+            font-size: 0.8rem;
+            color: #524342;
+            margin: 0 0 0.75rem 0;
+            padding-left: 1.1rem;
+            line-height: 1.45;
+        }
+        .self-assessment-bullets li { margin-bottom: 2px; }
+        .self-assessment-rating { display: flex; flex-wrap: wrap; gap: 6px; }
+        .rating-pill {
+            background: #f8f2f1;
+            color: #524342;
+            border: none;
+            border-radius: 9999px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .rating-pill.selected { background: #874b46; color: white; }
+        .rating-pill[disabled] { cursor: default; }
+
         /* Planning-first banner */
         .planning-first-banner {
             background: var(--amber);
@@ -1576,6 +1626,83 @@ function switchIdeasTab(phase) {
     document.getElementById('ideasPhase_' + phase).classList.add('active');
 }
 
+// Self-assessment block definitions for sessions 1-7.
+// Stored on the session object as selfRatingGrit, selfRatingMindset, selfRatingMentalToughness (1-7).
+const SELF_ASSESSMENT_BLOCKS = [
+    {
+        key: 'selfRatingGrit',
+        name: 'Grit',
+        bullets: [
+            'Did you show up and do the work even when it felt hard?',
+            'Did you stick to your plan rather than taking the easy option?',
+            'Did you put in home practice between sessions?'
+        ]
+    },
+    {
+        key: 'selfRatingMindset',
+        name: 'Mindset',
+        bullets: [
+            'Did you approach the session with the intention to improve?',
+            'Did you treat difficulty as part of the process, not a reason to stop?',
+            'Did you set a session goal that genuinely challenged you?'
+        ]
+    },
+    {
+        key: 'selfRatingMentalToughness',
+        name: 'Mental Toughness',
+        bullets: [
+            'Did you follow through on your plan to beat your excuse?',
+            'Did you push through discomfort rather than backing off?',
+            'Did you maintain effort and focus when it got hard?',
+            'Was your session goal genuinely challenging, or did you take the easy option?'
+        ]
+    }
+];
+
+function getSelfAssessmentHTML(saved, readOnly) {
+    const blocksHTML = SELF_ASSESSMENT_BLOCKS.map(block => {
+        const savedVal = saved && typeof saved[block.key] === 'number' ? saved[block.key] : null;
+        const buttons = [1,2,3,4,5,6,7].map(n => {
+            const isSelected = savedVal === n;
+            const cls = `rating-pill${isSelected ? ' selected' : ''}`;
+            const handler = readOnly ? '' : ` onclick="selectRating(this)"`;
+            const disabled = readOnly ? ' disabled' : '';
+            return `<button type="button" class="${cls}" data-rating="${n}"${handler}${disabled}>${n}</button>`;
+        }).join('');
+        const bullets = block.bullets.map(b => `<li>${b}</li>`).join('');
+        return `
+            <div class="self-assessment-block">
+                <div class="self-assessment-name">${block.name}</div>
+                <ul class="self-assessment-bullets">${bullets}</ul>
+                <div class="self-assessment-rating" data-rating-key="${block.key}">${buttons}</div>
+            </div>`;
+    }).join('');
+
+    return `
+        <div class="self-assessment-section">
+            <div class="self-assessment-header">RATE YOURSELF</div>
+            <div class="self-assessment-intro">Be honest. This is about your effort and attitude, not the result.</div>
+            ${blocksHTML}
+        </div>`;
+}
+
+function selectRating(btn) {
+    const container = btn.parentElement;
+    container.querySelectorAll('.rating-pill').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+}
+
+function readSelfAssessmentRatings() {
+    const ratings = {};
+    SELF_ASSESSMENT_BLOCKS.forEach(block => {
+        const container = document.querySelector(`.self-assessment-rating[data-rating-key="${block.key}"]`);
+        if (!container) { ratings[block.key] = null; return; }
+        const sel = container.querySelector('.rating-pill.selected');
+        ratings[block.key] = sel ? parseInt(sel.dataset.rating, 10) : null;
+    });
+    return ratings;
+}
+
 function openSession(num) {
     currentSessionNum = num;
 
@@ -1654,6 +1781,7 @@ function openSession(num) {
         <div class="form-group"><label class="form-label">How will you know if it worked?</label><textarea class="form-textarea" id="sessionMeasure" placeholder="How you'll measure success..." style="min-height: 60px;"></textarea></div>
         <div class="form-group"><label class="form-label">What excuse might try to stop you?</label><textarea class="form-textarea" id="sessionObstacle" style="min-height: 60px;"></textarea></div>
         <div class="form-group"><label class="form-label">How will you beat it?</label><textarea class="form-textarea" id="sessionCounter" style="min-height: 60px;"></textarea></div>
+        ${getSelfAssessmentHTML(savedForBlock, false)}
         ${ideasHTML}
         ${(savedForBlock && savedForBlock.coachFeedback) ? `<div class="coach-feedback-section"><div class="coach-feedback-label">COACH FEEDBACK</div><div class="coach-feedback-text">${savedForBlock.coachFeedback.replace(/</g, '&lt;').replace(/\n/g, '<br>')}</div></div>` : ''}`;
 
@@ -1770,6 +1898,9 @@ function viewSession(num) {
            </div>`
         : '';
 
+    const hasAnyRating = SELF_ASSESSMENT_BLOCKS.some(b => typeof saved[b.key] === 'number');
+    const selfAssessmentHTML = hasAnyRating ? getSelfAssessmentHTML(saved, true) : '';
+
     body.innerHTML = `
         <div class="view-only-badge">View only</div>
         ${field(primaryLabel, primaryValue)}
@@ -1778,6 +1909,7 @@ function viewSession(num) {
         ${field('How will you know if it worked?', measure)}
         ${field('What excuse might try to stop you?', obstacle)}
         ${field('How will you beat it?', counter)}
+        ${selfAssessmentHTML}
         ${coachFeedbackHTML}`;
 
     // Swap footer to Close-only
@@ -1858,6 +1990,12 @@ function saveSession() {
     } else {
         sessionData.goal = primaryField;
     }
+    // Capture self-assessment ratings (1-7). Null when nothing selected — keep
+    // any previously saved value so a partial re-save doesn't wipe ratings.
+    const ratings = readSelfAssessmentRatings();
+    Object.keys(ratings).forEach(key => {
+        if (ratings[key] !== null) sessionData[key] = ratings[key];
+    });
     // If a planning block was in effect and the student has now filled in
     // sufficient planning content, clear the flag so it doesn't re-block them
     // the next time the modal opens (and sync the cleared flag to the sheet).
