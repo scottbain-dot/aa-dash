@@ -1163,6 +1163,109 @@
             line-height: 1.5;
         }
 
+        /* Self-assessment subsection */
+        .grit-sa-section {
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border-color);
+        }
+        .grit-sa-header {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .grit-sa-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 6px 0;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .grit-sa-name {
+            color: var(--text-primary);
+            font-weight: 600;
+            min-width: 130px;
+        }
+        .grit-sa-values {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .grit-sa-student { color: var(--text-secondary); }
+        .grit-sa-coach { color: var(--accent-amber); font-weight: 600; }
+        .grit-sa-coach small { color: var(--text-muted); font-weight: 400; margin-left: 4px; }
+        .grit-sa-edit-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .grit-sa-edit-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .grit-sa-edit-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .grit-sa-edit-input {
+            width: 56px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+        }
+        .grit-sa-edit-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+        }
+        .grit-sa-save {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .grit-sa-cancel {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            padding: 4px 9px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .grit-sa-saving { color: var(--text-muted); font-size: 0.8rem; }
+
+        /* Self-assessment chip in checkin row */
+        .checkin-self-rating {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         /* Score entry */
         .grit-scores-section {
             grid-column: 1 / -1;
@@ -2722,13 +2825,17 @@
                     const sel = r === currentRating ? 'selected' : '';
                     return `<button class="checkin-pill ${sel}" data-email="${encodeURIComponent(s.email)}" data-rating="${r}" onclick="onCheckinRatingClick(this)">${r} ${CHECKIN_RATING_LABELS[r - 1]}</button>`;
                 }).join('');
+                const selfRatingNote = renderCheckinSelfRating(c, sessNum);
                 return `
                     <div class="checkin-row ${ratedClass}" data-email="${encodeURIComponent(s.email)}">
                         <div class="checkin-row-info">
                             <div class="checkin-row-name">${escapeHtmlC(s.name)}<span class="checkin-tick" id="checkinTick-${i}">✓</span></div>
                             <div class="checkin-row-focus">${escapeHtmlC(focus)} — ${typeLabel}</div>
                         </div>
-                        <div class="checkin-rating">${pills}</div>
+                        <div class="checkin-rating">
+                            ${pills}
+                            ${selfRatingNote}
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -2752,6 +2859,22 @@
             return String(str).replace(/[&<>"']/g, ch => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
             })[ch]);
+        }
+
+        // Compact "Self-rated: G4 M3 MT5" line for the check-in panel.
+        // Returns '' when the student hasn't rated this session yet.
+        function renderCheckinSelfRating(challenge, sessNum) {
+            const session = challenge && challenge.sessions && challenge.sessions[sessNum - 1];
+            if (!session) return '';
+            const g = typeof session.selfRatingGrit === 'number' ? session.selfRatingGrit : null;
+            const m = typeof session.selfRatingMindset === 'number' ? session.selfRatingMindset : null;
+            const mt = typeof session.selfRatingMentalToughness === 'number' ? session.selfRatingMentalToughness : null;
+            if (g === null && m === null && mt === null) return '';
+            const parts = [];
+            if (g !== null) parts.push('G' + g);
+            if (m !== null) parts.push('M' + m);
+            if (mt !== null) parts.push('MT' + mt);
+            return `<div class="checkin-self-rating">Self-rated: ${parts.join(' ')}</div>`;
         }
 
         async function onCheckinRatingClick(btn) {
@@ -2924,7 +3047,8 @@
                             + renderSessionField('Plan', session.plan || '—')
                             + renderSessionField('How to Measure', session.measure || '—')
                             + renderSessionField('Obstacle', session.obstacle || session.excuse || '—')
-                            + renderSessionField('How to Beat It', session.counter || session.overcome || '—');
+                            + renderSessionField('How to Beat It', session.counter || session.overcome || '—')
+                            + renderSelfAssessmentSection(student, idx, i, session);
                     }
                 } else {
                     fieldsHtml = '<div class="grit-session-field"><div class="grit-session-field-value" style="color: var(--text-muted); font-style: italic;">No data yet</div></div>';
@@ -2999,6 +3123,187 @@
                 <div class="grit-session-field-label">${label}</div>
                 <div class="grit-session-field-value">${value}</div>
             </div>`;
+        }
+
+        // Self-assessment criteria shown on each completed Sessions 1–7 row.
+        // Student values are stored on the session as selfRating{Grit,Mindset,MentalToughness}.
+        // Coach overrides are stored as coachRating{Grit,Mindset,MentalToughness}.
+        const GRIT_SA_CRITERIA = [
+            { name: 'Grit', selfKey: 'selfRatingGrit', coachKey: 'coachRatingGrit' },
+            { name: 'Mindset', selfKey: 'selfRatingMindset', coachKey: 'coachRatingMindset' },
+            { name: 'Mental Toughness', selfKey: 'selfRatingMentalToughness', coachKey: 'coachRatingMentalToughness' }
+        ];
+
+        function renderSelfAssessmentSection(student, idx, sessionIdx, session) {
+            const rowsHtml = GRIT_SA_CRITERIA.map(crit => {
+                const studentVal = typeof session[crit.selfKey] === 'number' ? session[crit.selfKey] : null;
+                const coachVal = typeof session[crit.coachKey] === 'number' ? session[crit.coachKey] : null;
+                const rowId = `gritSaRow_${idx}_${sessionIdx}_${crit.coachKey}`;
+
+                let valuesHtml;
+                if (coachVal !== null) {
+                    valuesHtml = `
+                        <span class="grit-sa-student">Student: ${studentVal !== null ? studentVal + '/7' : '—'}</span>
+                        <span class="grit-sa-coach">Coach: ${coachVal}/7 <small>(edited)</small></span>`;
+                } else if (studentVal !== null) {
+                    valuesHtml = `<span class="grit-sa-student">${studentVal}/7</span>`;
+                } else {
+                    valuesHtml = `<span class="grit-sa-student" style="color: var(--text-muted); font-style: italic;">Not rated</span>`;
+                }
+
+                const editStartVal = coachVal !== null ? coachVal : (studentVal !== null ? studentVal : '');
+
+                return `
+                    <div class="grit-sa-row" id="${rowId}">
+                        <div class="grit-sa-name">${crit.name}</div>
+                        <div class="grit-sa-values" id="${rowId}_view">
+                            ${valuesHtml}
+                            <button class="grit-sa-edit-btn" title="Override rating" onclick="openSaEdit(${idx}, ${sessionIdx}, '${crit.coachKey}', ${editStartVal === '' ? "''" : editStartVal})">✏️</button>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            return `<div class="grit-sa-section">
+                <div class="grit-sa-header">Self Assessment</div>
+                ${rowsHtml}
+            </div>`;
+        }
+
+        function openSaEdit(studentIdx, sessionIdx, coachKey, currentVal) {
+            const rowId = `gritSaRow_${studentIdx}_${sessionIdx}_${coachKey}`;
+            const view = document.getElementById(rowId + '_view');
+            if (!view) return;
+            const inputId = `${rowId}_input`;
+            view.innerHTML = `
+                <div class="grit-sa-edit-row">
+                    <input type="number" min="1" max="7" step="1" class="grit-sa-edit-input" id="${inputId}" value="${currentVal || ''}" placeholder="1-7">
+                    <button class="grit-sa-save" onclick="saveSaEdit(${studentIdx}, ${sessionIdx}, '${coachKey}')">Save</button>
+                    <button class="grit-sa-cancel" onclick="cancelSaEdit(${studentIdx}, ${sessionIdx})">Cancel</button>
+                </div>`;
+            const inputEl = document.getElementById(inputId);
+            if (inputEl) inputEl.focus();
+        }
+
+        function cancelSaEdit(studentIdx, sessionIdx) {
+            // Re-render this student's grit detail to restore the read-only views.
+            const card = document.getElementById('gritCard' + studentIdx);
+            if (!card) return;
+            const wasOpen = card.classList.contains('open');
+            const sessionEls = [];
+            for (let i = 0; i < 8; i++) {
+                const sEl = document.getElementById(`gritSession${studentIdx}_${i}`);
+                if (sEl && sEl.classList.contains('open')) sessionEls.push(i);
+            }
+            const detailContainer = card.querySelector('.grit-card-body');
+            if (detailContainer) {
+                detailContainer.innerHTML = renderGritDetail(filteredGritStudents[studentIdx], studentIdx);
+                if (wasOpen) card.classList.add('open');
+                sessionEls.forEach(i => {
+                    const re = document.getElementById(`gritSession${studentIdx}_${i}`);
+                    if (re) re.classList.add('open');
+                });
+            }
+        }
+
+        async function saveSaEdit(studentIdx, sessionIdx, coachKey) {
+            const rowId = `gritSaRow_${studentIdx}_${sessionIdx}_${coachKey}`;
+            const inputEl = document.getElementById(rowId + '_input');
+            const view = document.getElementById(rowId + '_view');
+            if (!inputEl || !view) return;
+            const raw = inputEl.value.trim();
+            const val = raw === '' ? null : parseInt(raw, 10);
+            if (val !== null && (isNaN(val) || val < 1 || val > 7)) {
+                showToast('Rating must be between 1 and 7', 'error');
+                return;
+            }
+
+            view.innerHTML = `<span class="grit-sa-saving">Saving…</span>`;
+
+            const student = filteredGritStudents[studentIdx];
+            const sessionNum = sessionIdx + 1;
+
+            try {
+                await saveCoachRating(student.email, sessionNum, coachKey, val);
+                // Mirror the change locally so the next render reflects the edit.
+                if (!student.challenge.sessions) student.challenge.sessions = [];
+                while (student.challenge.sessions.length <= sessionIdx) student.challenge.sessions.push(null);
+                if (!student.challenge.sessions[sessionIdx]) student.challenge.sessions[sessionIdx] = {};
+                if (val === null) {
+                    delete student.challenge.sessions[sessionIdx][coachKey];
+                } else {
+                    student.challenge.sessions[sessionIdx][coachKey] = val;
+                }
+                cancelSaEdit(studentIdx, sessionIdx);
+                showToast('Rating updated');
+            } catch (err) {
+                console.error('Save coach rating failed:', err);
+                showToast('Failed to save rating', 'error');
+                cancelSaEdit(studentIdx, sessionIdx);
+            }
+        }
+
+        // Persists a coach rating override to the challenge JSON. Tries the
+        // saveCoachFeedback Apps Script action first (preserves existing
+        // feedback fields) and falls back to a direct challenge edit when
+        // the backend doesn't recognise the coach rating fields.
+        async function saveCoachRating(email, sessionNum, coachKey, value) {
+            // Read the existing session so we don't clobber feedback or other ratings
+            // when sending alongside the saveCoachFeedback action.
+            const gritResp = await fetch(`${APPS_SCRIPT_URL}?action=getGritChallenge&email=${encodeURIComponent(email)}`);
+            const gritData = await gritResp.json();
+            if (!gritData.success) throw new Error(gritData.error || 'Failed to load challenge');
+
+            let challenge = null;
+            const json = gritData.challenge || gritData.challengeJson || gritData.challenge_json || gritData.Challenge_JSON;
+            if (typeof json === 'string' && json.trim()) {
+                challenge = JSON.parse(json);
+            } else if (typeof json === 'object' && json) {
+                challenge = json;
+            }
+            if (!challenge) throw new Error('No challenge data found');
+
+            if (!challenge.sessions) challenge.sessions = [];
+            const idx = sessionNum - 1;
+            while (challenge.sessions.length <= idx) challenge.sessions.push(null);
+            if (!challenge.sessions[idx] || typeof challenge.sessions[idx] !== 'object') {
+                challenge.sessions[idx] = {};
+            }
+            const sessionObj = challenge.sessions[idx];
+            if (value === null) {
+                delete sessionObj[coachKey];
+            } else {
+                sessionObj[coachKey] = value;
+            }
+
+            // First attempt: saveCoachFeedback with all three coach ratings + existing feedback.
+            try {
+                const resp = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'saveCoachFeedback',
+                        email: email,
+                        sessionNumber: sessionNum,
+                        feedback: sessionObj.coachFeedback || '',
+                        blockingMessage: !!sessionObj.requiresPlanningFirst,
+                        coachRatingGrit: sessionObj.coachRatingGrit ?? null,
+                        coachRatingMindset: sessionObj.coachRatingMindset ?? null,
+                        coachRatingMentalToughness: sessionObj.coachRatingMentalToughness ?? null
+                    })
+                });
+                const data = await resp.json();
+                if (data && data.success) return data;
+            } catch (e) { /* fall through */ }
+
+            // Fallback: write the whole challenge back via saveGritChallenge.
+            const saveResp = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: 'saveGritChallenge', email: email, challenge: challenge })
+            });
+            const saveData = await saveResp.json();
+            if (!saveData.success) throw new Error(saveData.error || 'Save failed');
+            return saveData;
         }
 
         function getAnthropicKey() {
