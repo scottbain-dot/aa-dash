@@ -1320,9 +1320,55 @@ async function submitChallenge() {
 }
 
 // ============ API PERSISTENCE ============
+// Coach-only fields on a session. Written by the admin panel only — never
+// edited from the student side — so the server copy is always the source of
+// truth for these. We pull them across before every save so a stale tab
+// can't overwrite a coach edit (admin panel is gospel).
+const COACH_OWNED_SESSION_FIELDS = [
+    'coachFeedback',
+    'requiresPlanningFirst',
+    'coachRatingGrit',
+    'coachRatingMindset',
+    'coachRatingMentalToughness'
+];
+
+async function pullCoachFieldsFromServer() {
+    if (!currentChallenge || !currentUser) return;
+    const url = `${GRIT_API}?action=getGritChallenge&email=${encodeURIComponent(currentUser.email)}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (!data || !data.success) return;
+    const remote = data.challenge;
+    if (!remote || !Array.isArray(remote.sessions)) return;
+
+    if (!Array.isArray(currentChallenge.sessions)) currentChallenge.sessions = [];
+    remote.sessions.forEach((rs, i) => {
+        if (!rs || typeof rs !== 'object') return;
+        if (!currentChallenge.sessions[i] || typeof currentChallenge.sessions[i] !== 'object') {
+            currentChallenge.sessions[i] = {};
+        }
+        const local = currentChallenge.sessions[i];
+        COACH_OWNED_SESSION_FIELDS.forEach(f => {
+            if (rs[f] !== undefined) {
+                local[f] = rs[f];
+            } else {
+                delete local[f];
+            }
+        });
+    });
+}
+
 async function persistChallenge() {
     if (!currentChallenge) return;
     try {
+        // Pull coach edits from the server first so a student save never
+        // overwrites them. Failure here is non-fatal — the save still proceeds.
+        try {
+            await pullCoachFieldsFromServer();
+        } catch (mergeErr) {
+            console.warn('Coach-field merge before save failed (continuing):', mergeErr);
+        }
+
         const response = await fetch(GRIT_API, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
