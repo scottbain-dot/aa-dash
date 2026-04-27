@@ -1627,7 +1627,15 @@ function switchIdeasTab(phase) {
 }
 
 // Self-assessment block definitions for sessions 1-7.
-// Stored on the session object as selfRatingGrit, selfRatingMindset, selfRatingMentalToughness (1-7).
+// Stored on the session object as selfRatingGrit, selfRatingMindset, selfRatingMentalToughness
+// — integers on the school 1-7 scale, but only one of 5 representative values (2, 4, 5, 6, 7).
+const SELF_ASSESSMENT_LEVELS = [
+    { label: 'Not Yet', value: 2 },
+    { label: 'Almost', value: 4 },
+    { label: 'Meeting', value: 5 },
+    { label: 'Exceeding', value: 6 },
+    { label: 'Leading', value: 7 }
+];
 const SELF_ASSESSMENT_BLOCKS = [
     {
         key: 'selfRatingGrit',
@@ -1662,12 +1670,12 @@ const SELF_ASSESSMENT_BLOCKS = [
 function getSelfAssessmentHTML(saved, readOnly) {
     const blocksHTML = SELF_ASSESSMENT_BLOCKS.map(block => {
         const savedVal = saved && typeof saved[block.key] === 'number' ? saved[block.key] : null;
-        const buttons = [1,2,3,4,5,6,7].map(n => {
-            const isSelected = savedVal === n;
+        const buttons = SELF_ASSESSMENT_LEVELS.map(level => {
+            const isSelected = savedVal === level.value;
             const cls = `rating-pill${isSelected ? ' selected' : ''}`;
             const handler = readOnly ? '' : ` onclick="selectRating(this)"`;
             const disabled = readOnly ? ' disabled' : '';
-            return `<button type="button" class="${cls}" data-rating="${n}"${handler}${disabled}>${n}</button>`;
+            return `<button type="button" class="${cls}" data-rating="${level.value}"${handler}${disabled}>${level.label}</button>`;
         }).join('');
         const bullets = block.bullets.map(b => `<li>${b}</li>`).join('');
         return `
