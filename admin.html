@@ -3272,13 +3272,12 @@
             }
         }
 
-        // Persists a coach rating override to the challenge JSON. Tries the
-        // saveCoachFeedback Apps Script action first (preserves existing
-        // feedback fields) and falls back to a direct challenge edit when
-        // the backend doesn't recognise the coach rating fields.
+        // Persists a coach rating override to the challenge JSON.
+        // Always writes the full challenge via saveGritChallenge — the existing
+        // saveCoachFeedback Apps Script handler ignores fields it doesn't know
+        // about, which would silently drop coachRating* fields.
         async function saveCoachRating(email, sessionNum, coachKey, value) {
-            // Read the existing session so we don't clobber feedback or other ratings
-            // when sending alongside the saveCoachFeedback action.
+            // Read the existing challenge so we don't clobber other fields.
             const gritResp = await fetch(`${APPS_SCRIPT_URL}?action=getGritChallenge&email=${encodeURIComponent(email)}`);
             const gritData = await gritResp.json();
             if (!gritData.success) throw new Error(gritData.error || 'Failed to load challenge');
@@ -3305,27 +3304,6 @@
                 sessionObj[coachKey] = value;
             }
 
-            // First attempt: saveCoachFeedback with all three coach ratings + existing feedback.
-            try {
-                const resp = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'saveCoachFeedback',
-                        email: email,
-                        sessionNumber: sessionNum,
-                        feedback: sessionObj.coachFeedback || '',
-                        blockingMessage: !!sessionObj.requiresPlanningFirst,
-                        coachRatingGrit: sessionObj.coachRatingGrit ?? null,
-                        coachRatingMindset: sessionObj.coachRatingMindset ?? null,
-                        coachRatingMentalToughness: sessionObj.coachRatingMentalToughness ?? null
-                    })
-                });
-                const data = await resp.json();
-                if (data && data.success) return data;
-            } catch (e) { /* fall through */ }
-
-            // Fallback: write the whole challenge back via saveGritChallenge.
             const saveResp = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
