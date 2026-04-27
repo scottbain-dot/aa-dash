@@ -1218,22 +1218,29 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
-        .grit-sa-edit-input {
-            width: 56px;
-            padding: 6px 8px;
-            border-radius: 6px;
-            border: 1px solid var(--border-light);
+        .grit-sa-level-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .grit-sa-level-pill {
             background: var(--bg-secondary);
-            color: var(--text-primary);
-            font-size: 0.85rem;
-            font-family: 'JetBrains Mono', monospace;
-            text-align: center;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 9999px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
         }
-        .grit-sa-edit-input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+        .grit-sa-level-pill:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .grit-sa-level-pill.selected {
+            background: var(--accent-amber);
+            color: white;
+            border-color: var(--accent-amber);
         }
         .grit-sa-save {
             background: var(--accent-green);
@@ -2861,7 +2868,7 @@
             })[ch]);
         }
 
-        // Compact "Self-rated: G4 M3 MT5" line for the check-in panel.
+        // Compact "Self-rated: G·Meeting M·Almost MT·Leading" line for the check-in panel.
         // Returns '' when the student hasn't rated this session yet.
         function renderCheckinSelfRating(challenge, sessNum) {
             const session = challenge && challenge.sessions && challenge.sessions[sessNum - 1];
@@ -2871,10 +2878,10 @@
             const mt = typeof session.selfRatingMentalToughness === 'number' ? session.selfRatingMentalToughness : null;
             if (g === null && m === null && mt === null) return '';
             const parts = [];
-            if (g !== null) parts.push('G' + g);
-            if (m !== null) parts.push('M' + m);
-            if (mt !== null) parts.push('MT' + mt);
-            return `<div class="checkin-self-rating">Self-rated: ${parts.join(' ')}</div>`;
+            if (g !== null) parts.push('G·' + (gritSaLabelFor(g) || g));
+            if (m !== null) parts.push('M·' + (gritSaLabelFor(m) || m));
+            if (mt !== null) parts.push('MT·' + (gritSaLabelFor(mt) || mt));
+            return `<div class="checkin-self-rating">Self-rated: ${parts.join('  ')}</div>`;
         }
 
         async function onCheckinRatingClick(btn) {
@@ -3128,6 +3135,23 @@
         // Self-assessment criteria shown on each completed Sessions 1–7 row.
         // Student values are stored on the session as selfRating{Grit,Mindset,MentalToughness}.
         // Coach overrides are stored as coachRating{Grit,Mindset,MentalToughness}.
+        // Values are on the school 1-7 scale but only 5 levels are exposed.
+        const GRIT_SA_LEVELS = [
+            { label: 'Not Yet', value: 2 },
+            { label: 'Almost', value: 4 },
+            { label: 'Meeting', value: 5 },
+            { label: 'Exceeding', value: 6 },
+            { label: 'Leading', value: 7 }
+        ];
+        const GRIT_SA_VALID_VALUES = GRIT_SA_LEVELS.map(l => l.value);
+        function gritSaLabelFor(value) {
+            const lvl = GRIT_SA_LEVELS.find(l => l.value === value);
+            return lvl ? lvl.label : null;
+        }
+        function gritSaFormat(value) {
+            const lbl = gritSaLabelFor(value);
+            return lbl ? `${lbl} (${value})` : `${value}`;
+        }
         const GRIT_SA_CRITERIA = [
             { name: 'Grit', selfKey: 'selfRatingGrit', coachKey: 'coachRatingGrit' },
             { name: 'Mindset', selfKey: 'selfRatingMindset', coachKey: 'coachRatingMindset' },
@@ -3143,10 +3167,10 @@
                 let valuesHtml;
                 if (coachVal !== null) {
                     valuesHtml = `
-                        <span class="grit-sa-student">Student: ${studentVal !== null ? studentVal + '/7' : '—'}</span>
-                        <span class="grit-sa-coach">Coach: ${coachVal}/7 <small>(edited)</small></span>`;
+                        <span class="grit-sa-student">Student: ${studentVal !== null ? gritSaFormat(studentVal) : '—'}</span>
+                        <span class="grit-sa-coach">Coach: ${gritSaFormat(coachVal)} <small>(edited)</small></span>`;
                 } else if (studentVal !== null) {
-                    valuesHtml = `<span class="grit-sa-student">${studentVal}/7</span>`;
+                    valuesHtml = `<span class="grit-sa-student">${gritSaFormat(studentVal)}</span>`;
                 } else {
                     valuesHtml = `<span class="grit-sa-student" style="color: var(--text-muted); font-style: italic;">Not rated</span>`;
                 }
@@ -3173,15 +3197,22 @@
             const rowId = `gritSaRow_${studentIdx}_${sessionIdx}_${coachKey}`;
             const view = document.getElementById(rowId + '_view');
             if (!view) return;
-            const inputId = `${rowId}_input`;
+            const pills = GRIT_SA_LEVELS.map(level => {
+                const sel = currentVal === level.value ? ' selected' : '';
+                return `<button type="button" class="grit-sa-level-pill${sel}" data-rating="${level.value}" onclick="selectSaLevel(this)">${level.label}</button>`;
+            }).join('');
             view.innerHTML = `
                 <div class="grit-sa-edit-row">
-                    <input type="number" min="1" max="7" step="1" class="grit-sa-edit-input" id="${inputId}" value="${currentVal || ''}" placeholder="1-7">
+                    <div class="grit-sa-level-row">${pills}</div>
                     <button class="grit-sa-save" onclick="saveSaEdit(${studentIdx}, ${sessionIdx}, '${coachKey}')">Save</button>
                     <button class="grit-sa-cancel" onclick="cancelSaEdit(${studentIdx}, ${sessionIdx})">Cancel</button>
                 </div>`;
-            const inputEl = document.getElementById(inputId);
-            if (inputEl) inputEl.focus();
+        }
+
+        function selectSaLevel(btn) {
+            const row = btn.parentElement;
+            row.querySelectorAll('.grit-sa-level-pill').forEach(p => p.classList.remove('selected'));
+            btn.classList.add('selected');
         }
 
         function cancelSaEdit(studentIdx, sessionIdx) {
@@ -3207,13 +3238,12 @@
 
         async function saveSaEdit(studentIdx, sessionIdx, coachKey) {
             const rowId = `gritSaRow_${studentIdx}_${sessionIdx}_${coachKey}`;
-            const inputEl = document.getElementById(rowId + '_input');
             const view = document.getElementById(rowId + '_view');
-            if (!inputEl || !view) return;
-            const raw = inputEl.value.trim();
-            const val = raw === '' ? null : parseInt(raw, 10);
-            if (val !== null && (isNaN(val) || val < 1 || val > 7)) {
-                showToast('Rating must be between 1 and 7', 'error');
+            if (!view) return;
+            const selectedPill = view.querySelector('.grit-sa-level-pill.selected');
+            const val = selectedPill ? parseInt(selectedPill.dataset.rating, 10) : null;
+            if (val !== null && !GRIT_SA_VALID_VALUES.includes(val)) {
+                showToast('Pick a level', 'error');
                 return;
             }
 
