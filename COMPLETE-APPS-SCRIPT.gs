@@ -191,6 +191,13 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ===== SAVE STUDENT APPLICATION =====
+    if (data.action === 'saveStudentApplication') {
+      var appResult = handleSaveStudentApplication(data);
+      return ContentService.createTextOutput(JSON.stringify(appResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // ===== SAVE SESSION OBSERVATION =====
     if (data.action === 'saveObservation') {
       var ssObs = SpreadsheetApp.getActiveSpreadsheet();
@@ -1662,6 +1669,46 @@ function handleGetHeroInsight(studentData) {
 // ========================================
 // NOMINATION HANDLER
 // ========================================
+
+function handleSaveStudentApplication(data) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('Student_Applications');
+
+    if (!sheet) {
+      sheet = ss.insertSheet('Student_Applications');
+      sheet.appendRow([
+        'Timestamp',
+        'Student_Name',
+        'Student_Email',
+        'Current_Grade',
+        'Sports',
+        'Nominator_Name',
+        'Why_Applying',
+        'Commitment_Rating',
+        'Additional_Info'
+      ]);
+      sheet.getRange(1, 1, 1, 9).setFontWeight('bold');
+    }
+
+    sheet.appendRow([
+      new Date(),
+      data.studentName || '',
+      data.studentEmail || '',
+      data.currentGrade || '',
+      data.sports || '',
+      data.nominatorName || '',
+      data.whyApplying || '',
+      data.commitmentRating || 0,
+      data.additionalInfo || ''
+    ]);
+
+    return { success: true };
+
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
 
 function handleSaveNomination(data) {
   try {
