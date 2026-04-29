@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fuel Lab — Athlete Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  /* ============================================
+     EARTHBOUND EDITORIAL — Fuel Lab edition
+     ============================================ */
+  :root {
+    --bg: #fef8f6;
+    --bg-warm: #f5ebe5;
+    --ink: #1a1411;
+    --ink-soft: #3a2e28;
+    --ink-mute: #7a6a60;
+    --burgundy: #874B46;
+    --burgundy-dark: #6b3a36;
+    --gold: #D4AF37;
+    --gold-soft: #e8c969;
+    --cream: #faf3ed;
+    --line: #e8d9cf;
+    --shadow: 0 1px 3px rgba(26,20,17,0.04), 0 8px 24px rgba(26,20,17,0.04);
+    --shadow-lift: 0 4px 12px rgba(26,20,17,0.06), 0 24px 48px rgba(26,20,17,0.08);
+
+    /* energy system colors */
+    --red-sys: #d94d3a;
+    --yellow-sys: #e8b54a;
+    --green-sys: #4a8a5c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    font-size: 16px;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .display {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  /* ============================================
+     HERO
+     ============================================ */
+  .hero {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 80px 5vw 100px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 30%, rgba(212, 175, 55, 0.08), transparent 40%),
+      radial-gradient(circle at 85% 70%, rgba(135, 75, 70, 0.18), transparent 50%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 28px;
+  }
+  .hero h1 {
+    font-size: clamp(56px, 9vw, 124px);
+    font-weight: 700;
+    color: var(--cream);
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--gold);
+  }
+  .hero-sub {
+    font-size: clamp(17px, 1.6vw, 21px);
+    max-width: 640px;
+    color: rgba(250, 243, 237, 0.78);
+    line-height: 1.5;
+    margin-bottom: 56px;
+  }
+
+  /* journey nav */
+  .journey {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 40px;
+  }
+  .journey-step {
+    background: rgba(250, 243, 237, 0.04);
+    border: 1px solid rgba(250, 243, 237, 0.08);
+    border-radius: 12px;
+    padding: 22px 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    color: inherit;
+    font-family: inherit;
+    text-decoration: none;
+    display: block;
+  }
+  .journey-step:hover {
+    background: rgba(212, 175, 55, 0.08);
+    border-color: rgba(212, 175, 55, 0.3);
+    transform: translateY(-2px);
+  }
+  .journey-num {
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .journey-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--cream);
+    margin-bottom: 4px;
+    line-height: 1.2;
+  }
+  .journey-meta {
+    font-size: 12px;
+    color: rgba(250, 243, 237, 0.5);
+  }
+
+  @media (max-width: 720px) {
+    .journey { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ============================================
+     SECTIONS
+     ============================================ */
+  .section {
+    padding: 100px 5vw;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+    margin-bottom: 16px;
+  }
+  .section h2 {
+    font-size: clamp(40px, 5vw, 64px);
+    margin-bottom: 20px;
+    max-width: 800px;
+  }
+  .section h2 em {
+    font-style: italic;
+    color: var(--burgundy);
+  }
+  .section-intro {
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 680px;
+    margin-bottom: 56px;
+    line-height: 1.6;
+  }
+
+  /* ============================================
+     SESSION 1: FOUNDATIONS
+     ============================================ */
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    margin-bottom: 56px;
+  }
+  .video-card {
+    background: var(--cream);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .video-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+  .video-thumb,
+  .video-embed {
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(135deg, var(--burgundy), var(--burgundy-dark));
+    position: relative;
+    overflow: hidden;
+  }
+  .video-embed iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  .video-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .video-thumb::after {
+    content: '';
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    background: rgba(250, 243, 237, 0.95);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .video-thumb::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 12px 0 12px 18px;
+    border-color: transparent transparent transparent var(--burgundy);
+    margin-left: 4px;
+  }
+  .video-info {
+    padding: 24px 24px 28px;
+  }
+  .video-info h3 {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .video-info p {
+    color: var(--ink-mute);
+    font-size: 14px;
+  }
+  .video-link {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 8px 16px;
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s ease;
+  }
+  .video-link:hover { background: var(--burgundy); }
+
+  /* myth cards */
+  .myths-intro {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin: 80px 0 32px;
+    max-width: 640px;
+    line-height: 1.3;
+  }
+  .myth-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .myth-card {
+    background: var(--cream);
+    border-radius: 16px;
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  .myth-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+  }
+  .myth-card .myth-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 12px;
+  }
+  .myth-card .myth-claim {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    line-height: 1.3;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .myth-card .myth-reveal {
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+  }
+  .myth-card.flipped .myth-reveal {
+    max-height: 300px;
+    opacity: 1;
+    margin-top: 16px;
+  }
+  .myth-card.flipped {
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .myth-card.flipped .myth-claim,
+  .myth-card.flipped .myth-reveal {
+    color: var(--cream);
+  }
+  .myth-card.flipped .myth-label {
+    color: var(--gold);
+  }
+  .myth-card .verdict {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 10px;
+    background: var(--gold);
+    color: var(--ink);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ============================================
+     SESSION 2: FUEL SCIENCE
+     ============================================ */
+  .energy-systems {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 32px 0 56px;
+  }
+  .energy-card {
+    border-radius: 20px;
+    padding: 32px 28px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    min-height: 240px;
+  }
+  .energy-card.red { background: linear-gradient(160deg, var(--red-sys), #b03826); }
+  .energy-card.yellow { background: linear-gradient(160deg, var(--yellow-sys), #c4922b); color: var(--ink); }
+  .energy-card.green { background: linear-gradient(160deg, var(--green-sys), #386744); }
+
+  .energy-name {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .energy-duration {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.85;
+    margin-bottom: 24px;
+  }
+  .energy-desc {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    opacity: 0.95;
+  }
+  .energy-fuel {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.25);
+  }
+  .energy-card.yellow .energy-fuel {
+    border-color: rgba(26,20,17,0.2);
+  }
+
+  @media (max-width: 720px) {
+    .energy-systems { grid-template-columns: 1fr; }
+  }
+
+  /* sport quiz */
+  .sport-picker {
+    background: var(--bg-warm);
+    border-radius: 24px;
+    padding: 40px 36px;
+    margin: 32px 0;
+  }
+  .sport-picker h3 {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .sport-picker p {
+    color: var(--ink-soft);
+    margin-bottom: 24px;
+  }
+  .sport-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .sport-btn {
+    padding: 10px 18px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .sport-btn:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .sport-btn.active {
+    background: var(--ink);
+    color: var(--cream);
+    border-color: var(--ink);
+  }
+  .sport-result {
+    margin-top: 20px;
+    padding: 24px;
+    background: white;
+    border-radius: 16px;
+    display: none;
+  }
+  .sport-result.show { display: block; }
+  .sport-bars {
+    display: flex;
+    height: 32px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  .sport-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .sport-bar.red { background: var(--red-sys); }
+  .sport-bar.yellow { background: var(--yellow-sys); color: var(--ink); }
+  .sport-bar.green { background: var(--green-sys); }
+  .sport-takeaway {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 17px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+    margin-top: 12px;
+  }
+
+  /* timeline */
+  .timing-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    margin: 32px 0 56px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--cream);
+    box-shadow: var(--shadow);
+  }
+  .timing-step {
+    padding: 28px 22px;
+    border-right: 1px solid var(--line);
+    position: relative;
+  }
+  .timing-step:last-child { border-right: none; }
+  .timing-when {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--burgundy);
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .timing-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+  .timing-detail {
+    font-size: 13px;
+    color: var(--ink-mute);
+    line-height: 1.5;
+  }
+  @media (max-width: 900px) {
+    .timing-strip { grid-template-columns: 1fr; }
+    .timing-step { border-right: none; border-bottom: 1px solid var(--line); }
+    .timing-step:last-child { border-bottom: none; }
+  }
+
+  /* hydration callout */
+  .callout {
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: 24px;
+    padding: 56px 48px;
+    margin: 32px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .callout::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.15), transparent 50%);
+  }
+  .callout > * { position: relative; z-index: 1; }
+  .callout-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .callout h3 {
+    font-size: 36px;
+    margin-bottom: 16px;
+    color: var(--cream);
+  }
+  .callout p {
+    font-size: 17px;
+    color: rgba(250, 243, 237, 0.85);
+    max-width: 600px;
+    line-height: 1.6;
+  }
+
+  /* ============================================
+     SESSION 3: RECOVERY
+     ============================================ */
+  .art-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 32px 0 56px;
+  }
+  .art-card {
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 36px 28px;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .art-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+  }
+  .art-letter {
+    font-family: 'Fraunces', serif;
+    font-size: 64px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .art-word {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .art-list {
+    list-style: none;
+    padding: 0;
+  }
+  .art-list li {
+    font-size: 14px;
+    color: var(--ink-soft);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line);
+    line-height: 1.5;
+  }
+  .art-list li:last-child { border-bottom: none; }
+  .art-list li::before {
+    content: '— ';
+    color: var(--burgundy);
+    font-weight: 600;
+  }
+  @media (max-width: 720px) {
+    .art-grid { grid-template-columns: 1fr; }
+  }
+
+  /* sleep + active vs passive */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 32px 0 56px;
+  }
+  .two-col-card {
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 36px 32px;
+  }
+  .two-col-card.sleep {
+    background: linear-gradient(160deg, var(--ink), #2a211c);
+    color: var(--cream);
+  }
+  .two-col-card h3 {
+    font-size: 26px;
+    margin-bottom: 12px;
+  }
+  .two-col-card.sleep h3 { color: var(--gold); }
+  .two-col-card p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .two-col-card.sleep p { color: rgba(250, 243, 237, 0.85); }
+  @media (max-width: 720px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  .vs-card {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 24px;
+    align-items: stretch;
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 36px;
+    margin: 32px 0 56px;
+  }
+  .vs-side h4 {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+  .vs-side p {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .vs-side .when {
+    margin-top: 12px;
+    padding: 6px 12px;
+    background: var(--bg-warm);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--burgundy);
+    display: inline-block;
+  }
+  .vs-divider {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink-mute);
+    font-size: 22px;
+    align-self: center;
+  }
+  @media (max-width: 720px) {
+    .vs-card { grid-template-columns: 1fr; }
+    .vs-divider { text-align: center; }
+  }
+
+  /* ============================================
+     QUIZ
+     ============================================ */
+  .quiz-section {
+    background: var(--bg-warm);
+    border-radius: 32px;
+    padding: 56px 48px;
+    margin-top: 56px;
+  }
+  .quiz-section h3 {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+  .quiz-section > p {
+    color: var(--ink-soft);
+    margin-bottom: 32px;
+  }
+  .quiz-progress {
+    height: 4px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 999px;
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+  .quiz-progress-fill {
+    height: 100%;
+    background: var(--burgundy);
+    width: 0%;
+    transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .quiz-q {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.3;
+    margin-bottom: 24px;
+  }
+  .quiz-options {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .quiz-option {
+    background: white;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--ink);
+  }
+  .quiz-option:hover:not(.selected):not(.correct):not(.incorrect) {
+    border-color: var(--burgundy);
+  }
+  .quiz-option.selected { border-color: var(--ink); }
+  .quiz-option.correct {
+    border-color: var(--green-sys);
+    background: rgba(74, 138, 92, 0.08);
+  }
+  .quiz-option.incorrect {
+    border-color: var(--red-sys);
+    background: rgba(217, 77, 58, 0.08);
+  }
+  .quiz-feedback {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    border-left: 3px solid var(--burgundy);
+    display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-btn {
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    padding: 14px 28px;
+    border-radius: 999px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .quiz-btn:hover { background: var(--burgundy); }
+  .quiz-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .quiz-result {
+    text-align: center;
+    padding: 20px 0;
+    display: none;
+  }
+  .quiz-result.show { display: block; }
+  .quiz-score {
+    font-family: 'Fraunces', serif;
+    font-size: 80px;
+    font-weight: 700;
+    color: var(--burgundy);
+    line-height: 1;
+  }
+  .quiz-score-label {
+    font-size: 14px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: 8px 0 24px;
+  }
+  .quiz-result h4 {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+  .quiz-result p {
+    color: var(--ink-soft);
+    max-width: 480px;
+    margin: 0 auto 24px;
+  }
+
+  /* ============================================
+     CLASH OF THE CODES
+     ============================================ */
+  .clash-section {
+    background: linear-gradient(160deg, var(--burgundy), var(--burgundy-dark));
+    color: var(--cream);
+    border-radius: 32px;
+    padding: 64px 56px;
+    margin-bottom: 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .clash-section::before {
+    content: 'JUNE 10';
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    font-family: 'Fraunces', serif;
+    font-size: 96px;
+    font-weight: 700;
+    color: rgba(212, 175, 55, 0.1);
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+  .clash-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .clash-section h2 {
+    font-size: 48px;
+    margin-bottom: 16px;
+    color: var(--cream);
+    max-width: 600px;
+  }
+  .clash-section h2 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .clash-section > p {
+    font-size: 17px;
+    max-width: 600px;
+    line-height: 1.6;
+    color: rgba(250, 243, 237, 0.85);
+    margin-bottom: 32px;
+  }
+  .clash-checklist {
+    background: rgba(250, 243, 237, 0.06);
+    border-radius: 16px;
+    padding: 28px 32px;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    max-width: 700px;
+  }
+  .clash-checklist h4 {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .clash-checklist ul {
+    list-style: none;
+    padding: 0;
+  }
+  .clash-checklist li {
+    padding: 8px 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: rgba(250, 243, 237, 0.95);
+  }
+  .clash-checklist li::before {
+    content: '✓ ';
+    color: var(--gold);
+    font-weight: 700;
+    margin-right: 8px;
+  }
+
+  /* ============================================
+     FOOTER
+     ============================================ */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 40px 5vw;
+    text-align: center;
+    color: var(--ink-mute);
+    font-size: 13px;
+  }
+
+  /* small touches */
+  .pull-quote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 28px;
+    line-height: 1.3;
+    color: var(--ink-soft);
+    border-left: 3px solid var(--gold);
+    padding: 16px 0 16px 28px;
+    margin: 40px 0;
+    max-width: 720px;
+  }
+  .pull-quote strong {
+    font-style: normal;
+    color: var(--burgundy);
+    font-weight: 600;
+  }
+
+  .key-point {
+    background: var(--gold);
+    color: var(--ink);
+    padding: 24px 32px;
+    border-radius: 16px;
+    margin: 24px 0;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.4;
+    max-width: 760px;
+  }
+  .key-point strong {
+    font-style: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 11px;
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+
+  .recovery-indicators {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 32px 0 56px;
+  }
+  .indicator-col {
+    background: var(--cream);
+    border-radius: 16px;
+    padding: 28px 24px;
+  }
+  .indicator-col h4 {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .indicator-col .indicator-sub {
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+  .indicator-col ul {
+    list-style: none;
+    padding: 0;
+  }
+  .indicator-col li {
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--line);
+  }
+  /* ============================================
+     AUTH + USER BADGE
+     ============================================ */
+  .auth-gate {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 20, 17, 0.92);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .auth-gate.hidden { display: none; }
+  .auth-card {
+    background: var(--bg);
+    border-radius: 24px;
+    padding: 48px 40px;
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+  }
+  .auth-card .auth-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+    margin-bottom: 12px;
+  }
+  .auth-card h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    line-height: 1.15;
+  }
+  .auth-card h2 em {
+    font-style: italic;
+    color: var(--burgundy);
+  }
+  .auth-card p {
+    color: var(--ink-soft);
+    margin-bottom: 28px;
+    font-size: 15px;
+  }
+  #gsiButton {
+    display: flex;
+    justify-content: center;
+  }
+  .user-badge {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: rgba(26, 20, 17, 0.85);
+    backdrop-filter: blur(8px);
+    color: var(--cream);
+    padding: 8px 14px 8px 8px;
+    border-radius: 999px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .user-badge img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+  }
+  .user-badge .signout {
+    color: rgba(250, 243, 237, 0.6);
+    cursor: pointer;
+    margin-left: 6px;
+    font-size: 12px;
+    text-decoration: underline;
+  }
+  .user-badge .signout:hover { color: var(--gold); }
+
+  /* save state on quiz */
+  .quiz-save-status {
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--ink-mute);
+    font-style: italic;
+  }
+  .quiz-save-status.saved { color: var(--green-sys); }
+  .quiz-save-status.error { color: var(--red-sys); }
+
+  /* ============================================
+     TEACHER PANEL
+     ============================================ */
+  .teacher-panel {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 5vw;
+  }
+  .teacher-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .teacher-header h1 {
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 700;
+  }
+  .teacher-header h1 em {
+    font-style: italic;
+    color: var(--burgundy);
+  }
+  .teacher-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  .stat-tile {
+    background: var(--cream);
+    border-radius: 16px;
+    padding: 24px 20px;
+    box-shadow: var(--shadow);
+  }
+  .stat-tile .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 8px;
+  }
+  .stat-tile .stat-value {
+    font-family: 'Fraunces', serif;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .stat-tile .stat-sub {
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-top: 4px;
+  }
+
+  .question-row {
+    background: var(--cream);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 32px 1fr 220px 80px;
+    gap: 20px;
+    align-items: center;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s ease;
+  }
+  .question-row:hover { transform: translateX(2px); }
+  .question-row .q-num {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink-mute);
+  }
+  .question-row .q-text {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .question-row .q-bar {
+    height: 24px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  .question-row .q-bar-fill {
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .question-row .q-pct {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  /* color coding by % correct */
+  .perf-good { color: var(--green-sys); }
+  .perf-good-bg { background: var(--green-sys); }
+  .perf-mid { color: #c4922b; }
+  .perf-mid-bg { background: var(--yellow-sys); }
+  .perf-bad { color: var(--red-sys); }
+  .perf-bad-bg { background: var(--red-sys); }
+
+  .verdict-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-left: 12px;
+  }
+  .verdict-pill.gloss { background: rgba(74,138,92,0.15); color: var(--green-sys); }
+  .verdict-pill.review { background: rgba(232,181,74,0.2); color: #a07820; }
+  .verdict-pill.discuss { background: rgba(217,77,58,0.15); color: var(--red-sys); }
+
+  .teacher-section-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+    margin-bottom: 12px;
+  }
+  .teacher-section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+
+  .empty-state {
+    background: var(--cream);
+    border-radius: 16px;
+    padding: 48px 32px;
+    text-align: center;
+    color: var(--ink-mute);
+  }
+
+  @media (max-width: 720px) {
+    .question-row {
+      grid-template-columns: 24px 1fr;
+    }
+    .question-row .q-bar, .question-row .q-pct {
+      grid-column: 1 / -1;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================
+     AUTH GATE
+     ============================================ -->
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="auth-tag">Athlete Academy</div>
+    <h2>Welcome to <em>Fuel Lab</em></h2>
+    <p>Sign in with your school Google account so we can track your progress and your team's prep for Clash of the Codes.</p>
+    <div id="gsiButton"></div>
+  </div>
+</div>
+
+<!-- user badge -->
+<div class="user-badge" id="userBadge" style="display:none;">
+  <img id="userPhoto" src="" alt="" />
+  <span id="userName"></span>
+  <span class="signout" onclick="signOut()">sign out</span>
+</div>
+
+<!-- main app wrapper (hidden until auth) -->
+<div id="appRoot" style="display:none;">
+
+<!-- ============================================
+     HERO
+     ============================================ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Athlete Academy · Nutrition & Recovery</div>
+    <h1>Fuel <em>Lab</em></h1>
+    <p class="hero-sub">Three sessions on what to eat, when to eat it, and how to recover — leading into Clash of the Codes on June 10, where your team will plan and execute the day's nutrition together.</p>
+
+    <div class="journey">
+      <a href="#session-1" class="journey-step">
+        <span class="journey-num">Session 01</span>
+        <div class="journey-title">Foundations</div>
+        <div class="journey-meta">Videos · Myths · Quiz</div>
+      </a>
+      <a href="#session-2" class="journey-step">
+        <span class="journey-num">Session 02</span>
+        <div class="journey-title">Athlete Fuel</div>
+        <div class="journey-meta">Energy · Timing · Hydration</div>
+      </a>
+      <a href="#session-3" class="journey-step">
+        <span class="journey-num">Session 03</span>
+        <div class="journey-title">Recovery</div>
+        <div class="journey-meta">ART · Sleep · Active vs Passive</div>
+      </a>
+      <a href="#clash" class="journey-step">
+        <span class="journey-num">June 10</span>
+        <div class="journey-title">Clash of the Codes</div>
+        <div class="journey-meta">Plan · Execute · Compete</div>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================
+     SESSION 1 — FOUNDATIONS
+     ============================================ -->
+<section class="section" id="session-1">
+  <div class="section-tag">Session 01</div>
+  <h2>The <em>basics</em>, before we go sport-specific.</h2>
+  <p class="section-intro">Most of what you've heard about nutrition is half-right at best. Watch the videos, then take the myth challenge to see what actually holds up. There's a quiz at the end of this session to lock it in.</p>
+
+  <h3 style="font-size: 22px; margin-bottom: 16px;">Watch first</h3>
+  <div class="video-grid">
+    <div class="video-card">
+      <div class="video-embed">
+        <iframe src="https://www.loom.com/embed/440fa39a30394d14a48f0d90ed300d8d" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+      </div>
+      <div class="video-info">
+        <h3>What is Food? — Part 1</h3>
+        <p>The basics of what food actually is and what it does for your body.</p>
+      </div>
+    </div>
+    <div class="video-card">
+      <div class="video-embed">
+        <iframe src="https://www.loom.com/embed/f2202193bc0c47888850cbb2252abc2a" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+      </div>
+      <div class="video-info">
+        <h3>What is Food? — Part 2</h3>
+        <p>Going deeper into how food fuels you and what to eat.</p>
+      </div>
+    </div>
+    <div class="video-card">
+      <div class="video-embed">
+        <iframe src="https://www.loom.com/embed/9d71f8bf4362480aa646e454b551d9ae" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+      </div>
+      <div class="video-info">
+        <h3>What is Food? — Part 3</h3>
+        <p>Pulling it together — putting nutrition into practice.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="myths-intro">Now flip the cards below. Each one is something you've probably heard. Tap to see whether it holds up.</p>
+
+  <div class="myth-grid" id="myths">
+    <div class="myth-card" onclick="this.classList.toggle('flipped')">
+      <div>
+        <div class="myth-label">Myth 01</div>
+        <div class="myth-claim">"Energy drinks give you long-lasting energy."</div>
+      </div>
+      <div class="myth-reveal">
+        <span class="verdict">Mostly false</span>
+        Energy drinks give you a short caffeine + sugar spike followed by a crash. They're not "fuel" — they're stimulants with sugar. For sustained energy in sport, food and a sensible pre-game meal beats them every time.
+      </div>
+    </div>
+
+    <div class="myth-card" onclick="this.classList.toggle('flipped')">
+      <div>
+        <div class="myth-label">Myth 02</div>
+        <div class="myth-claim">"You need a protein shake right after training or you'll lose your gains."</div>
+      </div>
+      <div class="myth-reveal">
+        <span class="verdict">Exaggerated</span>
+        The "anabolic window" is wider than 30 minutes. Eating decent protein within a few hours of training is what matters. A sandwich, milk, or a normal meal works fine — shakes are convenient, not magic.
+      </div>
+    </div>
+
+    <div class="myth-card" onclick="this.classList.toggle('flipped')">
+      <div>
+        <div class="myth-label">Myth 03</div>
+        <div class="myth-claim">"Carbs are bad and make you slow."</div>
+      </div>
+      <div class="myth-reveal">
+        <span class="verdict">False</span>
+        For most sports, carbs are the #1 fuel for working muscles. Skipping them tanks your performance. The type matters (whole grains, fruit, veg over refined sugar most of the time) but cutting carbs as an athlete is a bad call.
+      </div>
+    </div>
+
+    <div class="myth-card" onclick="this.classList.toggle('flipped')">
+      <div>
+        <div class="myth-label">Myth 04</div>
+        <div class="myth-claim">"Skipping breakfast is fine, you'll burn more fat."</div>
+      </div>
+      <div class="myth-reveal">
+        <span class="verdict">Bad for performance</span>
+        For an athlete training in school PE or before a game, skipping breakfast means you start the day under-fuelled. You'll feel flat, lose focus, and underperform. Fat loss isn't the goal — performance is.
+      </div>
+    </div>
+
+    <div class="myth-card" onclick="this.classList.toggle('flipped')">
+      <div>
+        <div class="myth-label">Myth 05</div>
+        <div class="myth-claim">"Eating fat makes you fat."</div>
+      </div>
+      <div class="myth-reveal">
+        <span class="verdict">False</span>
+        Healthy fats (avocado, nuts, olive oil, oily fish) are essential for hormones, brain function, and joints. What makes you gain unwanted weight is a sustained surplus of total energy — not fat specifically.
+      </div>
+    </div>
+
+    <div class="myth-card" onclick="this.classList.toggle('flipped')">
+      <div>
+        <div class="myth-label">Myth 06</div>
+        <div class="myth-claim">"Athletes need supplements to perform."</div>
+      </div>
+      <div class="myth-reveal">
+        <span class="verdict">Mostly false</span>
+        For 99% of school-age athletes, real food covers it. Supplements are a tiny edge at the very top end. Get your sleep, hydration, and three good meals dialled before even thinking about a tub of anything.
+      </div>
+    </div>
+
+    <div class="myth-card" onclick="this.classList.toggle('flipped')">
+      <div>
+        <div class="myth-label">Myth 07</div>
+        <div class="myth-claim">"Sports drinks are necessary for any workout."</div>
+      </div>
+      <div class="myth-reveal">
+        <span class="verdict">Mostly false</span>
+        For a normal PE session or short game, water is fine. Sports drinks earn their place in long efforts (over 60–90 min) or hot conditions where you're losing meaningful sweat and fuel.
+      </div>
+    </div>
+
+    <div class="myth-card" onclick="this.classList.toggle('flipped')">
+      <div>
+        <div class="myth-label">Myth 08</div>
+        <div class="myth-claim">"You should eat right before competing for energy."</div>
+      </div>
+      <div class="myth-reveal">
+        <span class="verdict">Depends</span>
+        A big meal too close to competition can leave you sluggish or queasy. A proper meal 2–3 hours before, and a small top-up snack 30–60 min before, is the usual play.
+      </div>
+    </div>
+  </div>
+
+  <p style="color: var(--ink-mute); font-size: 14px; font-style: italic;">Tap any card to flip it.</p>
+</section>
+
+<!-- ============================================
+     SESSION 2 — FUEL SCIENCE
+     ============================================ -->
+<section class="section" id="session-2" style="background: var(--bg-warm); max-width: none; margin: 0; border-radius: 0;">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    <div class="section-tag">Session 02</div>
+    <h2>Fuel for the <em>working</em> athlete.</h2>
+    <p class="section-intro">Your body uses three energy systems. Most sports rely on a mix, and that mix tells you what to eat and when. Then we'll layer on timing — before, during, and the basics of hydration.</p>
+
+    <h3 style="font-size: 22px; margin-bottom: 16px;">The three energy systems</h3>
+    <div class="energy-systems">
+      <div class="energy-card red">
+        <div class="energy-name">Red</div>
+        <div class="energy-duration">Up to ~10 seconds</div>
+        <p class="energy-desc">Maximum effort, instant power. Used for jumps, sprints, lifts, the first explosive move.</p>
+        <div class="energy-fuel">Fuel: ATP + creatine phosphate (already in the muscle)</div>
+      </div>
+      <div class="energy-card yellow">
+        <div class="energy-name">Yellow</div>
+        <div class="energy-duration">~10 sec to 2 min</div>
+        <p class="energy-desc">Hard efforts that hurt. Lactate builds up. This is the burn you feel when you're going hard for a sustained burst.</p>
+        <div class="energy-fuel">Fuel: carbohydrate (glucose)</div>
+      </div>
+      <div class="energy-card green">
+        <div class="energy-name">Green</div>
+        <div class="energy-duration">2 min and up</div>
+        <p class="energy-desc">Steady, sustainable effort. Long games, distance running, anything where you're going for ages.</p>
+        <div class="energy-fuel">Fuel: carbs + fat + oxygen</div>
+      </div>
+    </div>
+
+    <div class="key-point">
+      <strong>Key Point</strong>
+      In MOST sports, due to the energy system requirements, carbs are the main and most important fuel for the working muscles.
+    </div>
+
+    <!-- sport picker -->
+    <div class="sport-picker">
+      <h3>What does your sport demand?</h3>
+      <p>Pick a sport to see roughly how its energy systems split. The bigger the share, the more important that fuel system.</p>
+      <div class="sport-buttons" id="sportButtons">
+        <button class="sport-btn" data-sport="basketball">Basketball</button>
+        <button class="sport-btn" data-sport="soccer">Soccer</button>
+        <button class="sport-btn" data-sport="rugby">Rugby</button>
+        <button class="sport-btn" data-sport="tennis">Tennis</button>
+        <button class="sport-btn" data-sport="hockey">Hockey</button>
+        <button class="sport-btn" data-sport="volleyball">Volleyball</button>
+        <button class="sport-btn" data-sport="swimming-distance">Swimming (distance)</button>
+        <button class="sport-btn" data-sport="swimming-sprint">Swimming (50m)</button>
+        <button class="sport-btn" data-sport="running-distance">Running (distance)</button>
+        <button class="sport-btn" data-sport="gymnastics">Gymnastics</button>
+        <button class="sport-btn" data-sport="rowing">Rowing</button>
+        <button class="sport-btn" data-sport="golf">Golf</button>
+      </div>
+      <div class="sport-result" id="sportResult">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+          <strong id="sportName" style="font-family: 'Fraunces', serif; font-size: 20px;"></strong>
+          <span style="font-size: 12px; color: var(--ink-mute);">Energy system contribution</span>
+        </div>
+        <div class="sport-bars" id="sportBars"></div>
+        <p class="sport-takeaway" id="sportTakeaway"></p>
+      </div>
+    </div>
+
+    <!-- timing -->
+    <h3 style="font-size: 22px; margin: 56px 0 8px;">Timing — when to eat, before and during</h3>
+    <p style="color: var(--ink-soft); margin-bottom: 16px;">Eat too early and you're empty. Too late and you're sluggish. Here's the rough framework:</p>
+
+    <div class="timing-strip">
+      <div class="timing-step">
+        <div class="timing-when">2–3 hrs before</div>
+        <div class="timing-title">Real meal</div>
+        <div class="timing-detail">Slow-release carbs (oats, pasta, rice), some protein, easy on the fat. This is the meal that fills the tank.</div>
+      </div>
+      <div class="timing-step">
+        <div class="timing-when">1–2 hrs before</div>
+        <div class="timing-title">Top-up snack</div>
+        <div class="timing-detail">Quicker carbs — banana, toast with honey, sports drink. Small enough to not sit heavy.</div>
+      </div>
+      <div class="timing-step">
+        <div class="timing-when">During (under 60 min)</div>
+        <div class="timing-title">Water is fine</div>
+        <div class="timing-detail">For most school PE or short games, plain water keeps you going. Sip, don't gulp.</div>
+      </div>
+      <div class="timing-step">
+        <div class="timing-when">During (60+ min)</div>
+        <div class="timing-title">Add carbs</div>
+        <div class="timing-detail">Sports drink, gel, banana, or similar. Top up little and often.</div>
+      </div>
+      <div class="timing-step">
+        <div class="timing-when">Within 30–60 min after</div>
+        <div class="timing-title">Recovery snack</div>
+        <div class="timing-detail">Carbs + protein. Flavoured milk, sandwich, smoothie, yoghurt with fruit. Refill the tank.</div>
+      </div>
+    </div>
+
+    <!-- hydration callout -->
+    <div class="callout">
+      <div class="callout-tag">Hydration</div>
+      <h3>Drink before you're thirsty.</h3>
+      <p>Thirst is a late warning. Once you feel it, performance has already dropped. Sip water through the day — your pee should be pale yellow. For longer games or hot days, a sports drink replaces both fluids and salts you sweat out.</p>
+    </div>
+
+    <div class="pull-quote">
+      <strong>Important.</strong> Don't experiment in competition. Try anything new — drinks, gels, pre-game meals — at training first. A bad reaction in a final is the worst place to find out.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     SESSION 3 — RECOVERY
+     ============================================ -->
+<section class="section" id="session-3">
+  <div class="section-tag">Session 03</div>
+  <h2>Recovery is where you actually <em>get better</em>.</h2>
+  <p class="section-intro">Training breaks you down. Recovery is when your body adapts and comes back stronger. Skip this part and you'll be the rat on the wheel — moving a lot, going nowhere.</p>
+
+  <!-- ART -->
+  <h3 style="font-size: 22px; margin-bottom: 16px;">The ART of tournament performance</h3>
+  <p style="color: var(--ink-soft); margin-bottom: 16px;">Three things to focus on across a tournament day, a heavy training week, or anything that runs long.</p>
+
+  <div class="art-grid">
+    <div class="art-card">
+      <div class="art-letter">A</div>
+      <div class="art-word">Act</div>
+      <ul class="art-list">
+        <li>Stay calm under pressure — your team will follow your energy.</li>
+        <li>Stay focused — know why you're there, on and off the pitch.</li>
+        <li>Be confident, not arrogant.</li>
+        <li>Lead — what you do and say influences everyone around you.</li>
+        <li>Have fun (at the right times).</li>
+      </ul>
+    </div>
+    <div class="art-card">
+      <div class="art-letter">R</div>
+      <div class="art-word">Recover</div>
+      <ul class="art-list">
+        <li>Plan recovery times — when do you eat, drink, rest?</li>
+        <li>Find time to rest. Stay out of the sun.</li>
+        <li>Active in between games — passive between days.</li>
+        <li>Sleep. Bring snacks. Hydrate fast after performing.</li>
+        <li>Time your food (2 hrs to break down complex meals).</li>
+      </ul>
+    </div>
+    <div class="art-card">
+      <div class="art-letter">T</div>
+      <div class="art-word">Think</div>
+      <ul class="art-list">
+        <li>Focus on what you can control.</li>
+        <li>Ignore distractions — other teams, other athletes, noise.</li>
+        <li>Worry about you and your team alone.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- sleep + indicators -->
+  <div class="two-col">
+    <div class="two-col-card sleep">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 12px;">#1 Recovery Tool</div>
+      <h3>Sleep.</h3>
+      <p>It's free, you already do it, and nothing else comes close. 8–10 hours for teenagers, in a cool dark room, no screens for an hour before bed.</p>
+      <p>Your body releases growth hormone, repairs muscle, and consolidates everything you learned in training while you sleep. Skip it and you cancel out half the work you did that day.</p>
+    </div>
+    <div class="two-col-card">
+      <h3>Hydrate, eat, repeat.</h3>
+      <p><strong>After performing:</strong> replace fluids straight away. Don't wait to feel thirsty.</p>
+      <p><strong>Snack timing:</strong> recovery food in the first 30–60 minutes. Carbs + protein together — flavoured milk, smoothie, sandwich, yoghurt with fruit.</p>
+      <p><strong>The next meal:</strong> a proper meal within 2 hours. Real food, normal portions.</p>
+    </div>
+  </div>
+
+  <!-- recovery snacks -->
+  <h3 style="font-size: 22px; margin-bottom: 16px;">Recovery snacks that actually work</h3>
+  <p style="color: var(--ink-soft); margin-bottom: 16px;">Between short recovery windows (1–2 hours), pick something that's mostly carbs with a bit of protein and is easy to digest:</p>
+  <div style="background: var(--cream); border-radius: 16px; padding: 28px 32px; margin-bottom: 56px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+      <div style="font-size: 14px; color: var(--ink-soft);">— Flavoured milk</div>
+      <div style="font-size: 14px; color: var(--ink-soft);">— Fruit smoothie</div>
+      <div style="font-size: 14px; color: var(--ink-soft);">— Banana bread or fruit muffins</div>
+      <div style="font-size: 14px; color: var(--ink-soft);">— Trail mix / nut bars</div>
+      <div style="font-size: 14px; color: var(--ink-soft);">— Oat-based protein balls</div>
+      <div style="font-size: 14px; color: var(--ink-soft);">— Fresh fruit</div>
+      <div style="font-size: 14px; color: var(--ink-soft);">— Yoghurt pouches</div>
+      <div style="font-size: 14px; color: var(--ink-soft);">— Sandwich or wrap</div>
+    </div>
+  </div>
+
+  <!-- active vs passive -->
+  <h3 style="font-size: 22px; margin-bottom: 16px;">Active vs passive recovery</h3>
+  <div class="vs-card">
+    <div class="vs-side">
+      <h4>Active recovery</h4>
+      <p>Low-intensity movement after a hard session — easy jog, swim, cycle, walk. Helps clear lactate from blood, gets blood flow to muscles.</p>
+      <span class="when">Use: between games / between hard reps</span>
+    </div>
+    <div class="vs-divider">vs.</div>
+    <div class="vs-side">
+      <h4>Passive recovery</h4>
+      <p>Complete rest. No exercise. Sitting, lying down, sleeping, watching a film, doing nothing.</p>
+      <span class="when">Use: between training days / overnight</span>
+    </div>
+  </div>
+
+  <!-- recovery indicators -->
+  <h3 style="font-size: 22px; margin-bottom: 16px;">How do you know you're recovered?</h3>
+  <p style="color: var(--ink-soft); margin-bottom: 16px;">Three ways your body tells you. Tune in to all of them.</p>
+  <div class="recovery-indicators">
+    <div class="indicator-col">
+      <h4>Physiological</h4>
+      <div class="indicator-sub">What your body's doing</div>
+      <ul>
+        <li>Resting heart rate</li>
+        <li>Body weight (steady)</li>
+        <li>Muscle soreness</li>
+        <li>Yesterday's performance</li>
+      </ul>
+    </div>
+    <div class="indicator-col">
+      <h4>Symptomatic</h4>
+      <div class="indicator-sub">What you can feel</div>
+      <ul>
+        <li>Sleep quality</li>
+        <li>Hydration (pee colour)</li>
+        <li>Appetite</li>
+        <li>Reduced soreness</li>
+      </ul>
+    </div>
+    <div class="indicator-col">
+      <h4>Psychological</h4>
+      <div class="indicator-sub">What's in your head</div>
+      <ul>
+        <li>Energy level</li>
+        <li>Mood</li>
+        <li>Motivation to train</li>
+        <li>General wellbeing</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="pull-quote">
+    There's no physiological difference between <strong>under-recovery</strong> and <strong>overtraining</strong>. If you keep hammering without recovering, you're a rat on a wheel — moving lots, getting nowhere.
+  </div>
+
+  <!-- ============================================
+       QUIZ — covers all 3 sessions
+       ============================================ -->
+  <div class="quiz-section" id="quizSection">
+    <h3>Lock it in</h3>
+    <p>10 questions covering all three sessions. You'll see your score at the end — aim for 8+.</p>
+
+    <div class="quiz-progress">
+      <div class="quiz-progress-fill" id="quizProgress"></div>
+    </div>
+
+    <div id="quizContainer">
+      <div class="quiz-q" id="quizQuestion"></div>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+      <button class="quiz-btn" id="quizNextBtn" disabled>Next question</button>
+    </div>
+
+    <div class="quiz-result" id="quizResult">
+      <div class="quiz-score" id="quizScore">0</div>
+      <div class="quiz-score-label">out of 10</div>
+      <h4 id="quizResultTitle"></h4>
+      <p id="quizResultMessage"></p>
+      <div class="quiz-save-status" id="quizSaveStatus">Saving your result…</div>
+      <button class="quiz-btn" onclick="restartQuiz()">Try again</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     CLASH OF THE CODES
+     ============================================ -->
+<section class="section" id="clash">
+  <div class="clash-section">
+    <div class="clash-tag">Assessment · June 10</div>
+    <h2>Clash of the <em>Codes</em></h2>
+    <p>Teams will be split by sport. Part of the day is yours to plan: team lunch, snacks, recovery fuel — built around the energy demands of your sport, the timing of your events, and what your team will actually eat. You'll plan it. Then you'll execute it on the day.</p>
+
+    <div class="clash-checklist">
+      <h4>Your team will plan</h4>
+      <ul>
+        <li>Team lunch — what, when, how much for the squad</li>
+        <li>Between-event snacks — quick carbs, easy to digest, easy to share</li>
+        <li>Recovery fuel — carbs + protein within the first 30–60 min after each event</li>
+        <li>Hydration plan — water and/or sports drinks across the day</li>
+        <li>Timing — when each meal/snack happens around your events</li>
+      </ul>
+    </div>
+
+    <div class="clash-checklist" style="margin-top: 16px;">
+      <h4>You'll be assessed on</h4>
+      <ul>
+        <li><strong>Plan quality</strong> — does it match your sport's energy demands and the day's schedule?</li>
+        <li><strong>Execution on the day</strong> — did the team actually follow the plan? Did it work?</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Athlete Academy · Frankfurt International School
+</footer>
+
+</div><!-- /appRoot -->
+
+<!-- ============================================
+     TEACHER PANEL (shown via ?view=teacher)
+     ============================================ -->
+<div id="teacherRoot" style="display:none;">
+  <div class="teacher-panel">
+    <div class="teacher-header">
+      <div>
+        <div class="teacher-section-tag">Fuel Lab · Teacher View</div>
+        <h1>Where to <em>focus</em>.</h1>
+      </div>
+      <div style="font-size: 13px; color: var(--ink-mute);">
+        <span id="teacherLastUpdate"></span>
+        <button class="quiz-btn" style="margin-left: 16px;" onclick="loadTeacherData()">Refresh</button>
+      </div>
+    </div>
+
+    <div class="teacher-stats" id="teacherStats"></div>
+
+    <div class="teacher-section-tag">Per-question performance</div>
+    <h3 class="teacher-section-title">Sorted by % correct — lowest first. Anything below 60% is worth a proper discussion.</h3>
+
+    <div id="teacherQuestions"></div>
+
+    <div style="margin-top: 60px; text-align: center;">
+      <a href="?" class="quiz-btn" style="text-decoration: none; display: inline-block;">← Back to student view</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // CONFIG — UPDATE THESE BEFORE DEPLOYING
+  // ============================================
+  // 1. Get a Google OAuth Client ID from Google Cloud Console
+  //    (Web app, authorised origins = your GitHub Pages domain)
+  const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+
+  // 2. Apps Script Web App URL (deploy as web app, execute as: me, access: anyone)
+  const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL';
+
+  // 3. Optional: restrict to specific email domain (e.g. 'fis.edu') or leave '' for any
+  const ALLOWED_EMAIL_DOMAIN = '';
+
+  // 4. Teachers (emails) who can see the teacher panel
+  const TEACHER_EMAILS = ['scott.bain@fis.edu'];
+
+  // ============================================
+  // STATE
+  // ============================================
+  let currentUser = null;
+
+  // ============================================
+  // GOOGLE AUTH
+  // ============================================
+  function decodeJwt(token) {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+  }
+
+  function handleCredentialResponse(response) {
+    const payload = decodeJwt(response.credential);
+    if (ALLOWED_EMAIL_DOMAIN && !payload.email.endsWith('@' + ALLOWED_EMAIL_DOMAIN)) {
+      alert('Please sign in with your school account (@' + ALLOWED_EMAIL_DOMAIN + ').');
+      return;
+    }
+    currentUser = {
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture,
+      idToken: response.credential
+    };
+    localStorage.setItem('fuelLabUser', JSON.stringify(currentUser));
+    onSignIn();
+  }
+
+  function onSignIn() {
+    document.getElementById('authGate').classList.add('hidden');
+    document.getElementById('userBadge').style.display = 'flex';
+    document.getElementById('userName').textContent = currentUser.name.split(' ')[0];
+    document.getElementById('userPhoto').src = currentUser.picture;
+
+    // route: teacher view or student view
+    const params = new URLSearchParams(location.search);
+    if (params.get('view') === 'teacher' && TEACHER_EMAILS.includes(currentUser.email)) {
+      document.getElementById('teacherRoot').style.display = 'block';
+      document.getElementById('appRoot').style.display = 'none';
+      loadTeacherData();
+    } else {
+      document.getElementById('appRoot').style.display = 'block';
+      document.getElementById('teacherRoot').style.display = 'none';
+    }
+  }
+
+  function signOut() {
+    localStorage.removeItem('fuelLabUser');
+    currentUser = null;
+    location.reload();
+  }
+
+  function initAuth() {
+    // restore from localStorage if available
+    const saved = localStorage.getItem('fuelLabUser');
+    if (saved) {
+      try {
+        currentUser = JSON.parse(saved);
+        onSignIn();
+        return;
+      } catch (e) { /* fall through */ }
+    }
+    // wait for GSI to load
+    const initWhenReady = () => {
+      if (window.google && google.accounts) {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse
+        });
+        google.accounts.id.renderButton(
+          document.getElementById('gsiButton'),
+          { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', logo_alignment: 'center' }
+        );
+      } else {
+        setTimeout(initWhenReady, 200);
+      }
+    };
+    initWhenReady();
+  }
+
+  // ============================================
+  // SAVE QUIZ RESULT
+  // ============================================
+  async function saveQuizResult(score, total, answersArray) {
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.startsWith('YOUR_')) {
+      console.warn('APPS_SCRIPT_URL not configured — skipping save');
+      return { ok: false, reason: 'not configured' };
+    }
+    try {
+      const payload = {
+        action: 'submitQuiz',
+        email: currentUser.email,
+        name: currentUser.name,
+        score: score,
+        total: total,
+        answers: answersArray, // [{q: 0, correct: true}, ...]
+        timestamp: new Date().toISOString()
+      };
+      // Using text/plain to avoid CORS preflight (Apps Script web apps don't handle OPTIONS)
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      return { ok: true, data };
+    } catch (err) {
+      console.error('Save failed:', err);
+      return { ok: false, reason: err.message };
+    }
+  }
+
+  // ============================================
+  // TEACHER VIEW
+  // ============================================
+  async function loadTeacherData() {
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.startsWith('YOUR_')) {
+      document.getElementById('teacherStats').innerHTML = '<div class="empty-state">Apps Script not configured yet. Update APPS_SCRIPT_URL in the code.</div>';
+      return;
+    }
+    document.getElementById('teacherStats').innerHTML = '<div class="empty-state">Loading…</div>';
+    document.getElementById('teacherQuestions').innerHTML = '';
+    try {
+      const url = APPS_SCRIPT_URL + '?action=getStats&email=' + encodeURIComponent(currentUser.email);
+      const res = await fetch(url);
+      const data = await res.json();
+      renderTeacherView(data);
+    } catch (err) {
+      document.getElementById('teacherStats').innerHTML = '<div class="empty-state">Could not load stats: ' + err.message + '</div>';
+    }
+  }
+
+  function renderTeacherView(data) {
+    // expected: { totalSubmissions, uniqueStudents, avgScore, lastUpdate, questions: [{ index, text, correctPct, totalAnswers }] }
+    if (!data || !data.questions || data.questions.length === 0) {
+      document.getElementById('teacherStats').innerHTML = '<div class="empty-state">No submissions yet — once students start finishing the quiz, results will show up here.</div>';
+      return;
+    }
+
+    document.getElementById('teacherLastUpdate').textContent = 'Last update: ' + (data.lastUpdate || '—');
+
+    // stats tiles
+    document.getElementById('teacherStats').innerHTML = `
+      <div class="stat-tile">
+        <div class="stat-label">Submissions</div>
+        <div class="stat-value">${data.totalSubmissions || 0}</div>
+        <div class="stat-sub">${data.uniqueStudents || 0} unique students</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">Average score</div>
+        <div class="stat-value">${data.avgScore ? data.avgScore.toFixed(1) : '—'}<span style="font-size: 18px; color: var(--ink-mute);"> / 10</span></div>
+        <div class="stat-sub">across all attempts</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">Hardest question</div>
+        <div class="stat-value">Q${data.hardest ? data.hardest.index + 1 : '—'}</div>
+        <div class="stat-sub">${data.hardest ? data.hardest.correctPct + '% correct' : ''}</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">Easiest question</div>
+        <div class="stat-value">Q${data.easiest ? data.easiest.index + 1 : '—'}</div>
+        <div class="stat-sub">${data.easiest ? data.easiest.correctPct + '% correct' : ''}</div>
+      </div>
+    `;
+
+    // sort questions by % correct ascending (worst first)
+    const sorted = [...data.questions].sort((a, b) => a.correctPct - b.correctPct);
+    const rowsHtml = sorted.map(q => {
+      const pct = q.correctPct;
+      let perfClass, verdictText, verdictClass;
+      if (pct >= 80) { perfClass = 'good'; verdictText = 'Gloss over'; verdictClass = 'gloss'; }
+      else if (pct >= 60) { perfClass = 'mid'; verdictText = 'Quick review'; verdictClass = 'review'; }
+      else { perfClass = 'bad'; verdictText = 'Discuss'; verdictClass = 'discuss'; }
+      // use client-side question text if available (more reliable than what's in sheet)
+      const qText = (window.quizQuestions && window.quizQuestions[q.index]) ? window.quizQuestions[q.index].q : (q.text || 'Question ' + (q.index + 1));
+      return `
+        <div class="question-row">
+          <div class="q-num">Q${q.index + 1}</div>
+          <div class="q-text">
+            ${qText}
+            <span class="verdict-pill ${verdictClass}">${verdictText}</span>
+          </div>
+          <div class="q-bar">
+            <div class="q-bar-fill perf-${perfClass}-bg" style="width: ${pct}%;"></div>
+          </div>
+          <div class="q-pct perf-${perfClass}">${pct}%</div>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('teacherQuestions').innerHTML = rowsHtml;
+  }
+
+  // ============================================
+  // INIT
+  // ============================================
+  document.addEventListener('DOMContentLoaded', initAuth);
+
+  // ============================================
+  // SPORT PICKER (energy systems)
+  // ============================================
+  const sportData = {
+    'basketball':         { name: 'Basketball',           red: 60, yellow: 20, green: 20, takeaway: "Lots of explosive starts and stops, but you're out there a long time. Carbs to fuel the bursts; aerobic base to keep coming back game after game." },
+    'soccer':             { name: 'Soccer',               red: 50, yellow: 20, green: 30, takeaway: "Repeated sprints across 90 minutes. Carbs are your main fuel — you'll need plenty before the game and a top-up at half time." },
+    'rugby':              { name: 'Rugby',                red: 50, yellow: 25, green: 25, takeaway: "Collisions and sprints in short bursts, but games run long. Big breakfast, smaller top-ups, recovery snack between games in tournaments." },
+    'tennis':             { name: 'Tennis',               red: 70, yellow: 20, green: 10, takeaway: "Bursts of high effort with rest in between. Carbs for the bursts; small snacks during long matches." },
+    'hockey':             { name: 'Field Hockey',         red: 50, yellow: 20, green: 30, takeaway: "Like soccer — repeat sprint efforts over a long game. Carbs first, with a hydration plan for the whole match." },
+    'volleyball':         { name: 'Volleyball',           red: 80, yellow: 5,  green: 15, takeaway: "Mostly explosive jumps and short rallies. Quick energy when you need it; full meal a few hours out." },
+    'swimming-distance':  { name: 'Swimming (distance)',  red: 10, yellow: 20, green: 70, takeaway: "Long sustained effort. Carbs + fat + oxygen do the work. Fuel up properly the night before and at breakfast." },
+    'swimming-sprint':    { name: 'Swimming (50m sprint)',red: 40, yellow: 55, green: 5,  takeaway: "Almost all anaerobic. Short and brutal — you'll feel the burn. Carbs are the right fuel, but volume matters less than for distance events." },
+    'running-distance':   { name: 'Distance Running',     red: 10, yellow: 20, green: 70, takeaway: "Mostly aerobic. Carbs + fat + oxygen for the long haul. Don't go in under-fuelled." },
+    'gymnastics':         { name: 'Gymnastics',           red: 80, yellow: 15, green: 5,  takeaway: "Short, explosive routines. Quick energy you can call on instantly. Eat enough to support skill work — under-fuelling shows up fast in technical sports." },
+    'rowing':             { name: 'Rowing',               red: 20, yellow: 30, green: 50, takeaway: "A blend of all three. Big aerobic base with a sprint finish. You need both long-game fuel and ready carbs to push at the end." },
+    'golf':               { name: 'Golf',                 red: 95, yellow: 5,  green: 0,  takeaway: "Each swing is short and explosive, but the round is long. Steady snacks across 4–5 hours matter more than peak fuelling." }
+  };
+
+  document.querySelectorAll('.sport-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const data = sportData[btn.dataset.sport];
+      document.getElementById('sportName').textContent = data.name;
+      const bars = document.getElementById('sportBars');
+      bars.innerHTML = `
+        <div class="sport-bar red" style="width: 0%">${data.red}%</div>
+        <div class="sport-bar yellow" style="width: 0%">${data.yellow}%</div>
+        <div class="sport-bar green" style="width: 0%">${data.green}%</div>
+      `;
+      document.getElementById('sportTakeaway').textContent = data.takeaway;
+      document.getElementById('sportResult').classList.add('show');
+      // animate
+      requestAnimationFrame(() => {
+        const els = bars.querySelectorAll('.sport-bar');
+        els[0].style.width = data.red + '%';
+        els[1].style.width = data.yellow + '%';
+        els[2].style.width = data.green + '%';
+      });
+    });
+  });
+
+  // ============================================
+  // QUIZ
+  // ============================================
+  const quizQuestions = [
+    {
+      q: "For most sports, what is the main fuel for working muscles?",
+      options: ["Fat", "Protein", "Carbohydrates", "Water"],
+      correct: 2,
+      explain: "Carbs are the dominant fuel for the yellow (lactic) and a big chunk of the green (aerobic) energy systems — which most sports rely on heavily."
+    },
+    {
+      q: "Which energy system provides energy for explosive efforts under 10 seconds?",
+      options: ["Red (ATP-CP)", "Yellow (lactic acid)", "Green (aerobic)", "All three equally"],
+      correct: 0,
+      explain: "Red uses ATP and creatine phosphate already stored in the muscle — instant power, but it runs out fast."
+    },
+    {
+      q: "When should you eat your main pre-competition meal?",
+      options: ["Right before the event", "30 minutes before", "2–3 hours before", "Skip it — you'll perform on empty"],
+      correct: 2,
+      explain: "2–3 hours before gives your body time to digest and absorb the energy without sitting heavy in your stomach."
+    },
+    {
+      q: "True or false: energy drinks give you long-lasting energy.",
+      options: ["True", "False"],
+      correct: 1,
+      explain: "Energy drinks give a short caffeine + sugar spike followed by a crash. They're stimulants with sugar, not real fuel."
+    },
+    {
+      q: "What's the BEST recovery snack within 30–60 minutes after a hard session?",
+      options: ["Just water", "Carbs + protein together (e.g., flavoured milk, smoothie, sandwich)", "A protein shake on its own", "Nothing — let your body rest"],
+      correct: 1,
+      explain: "Carbs refill glycogen, protein helps muscle repair. Together they're more effective than either alone."
+    },
+    {
+      q: "What is the #1 recovery tool an athlete has?",
+      options: ["Ice baths", "Protein supplements", "Sleep", "Compression garments"],
+      correct: 2,
+      explain: "Free, powerful, and you already do it. Growth hormone release, muscle repair, memory consolidation — all happen during sleep."
+    },
+    {
+      q: "When should you use ACTIVE recovery vs PASSIVE recovery?",
+      options: [
+        "Active between games/races, passive between days",
+        "Always passive — you need full rest",
+        "Always active — keep moving",
+        "It doesn't matter"
+      ],
+      correct: 0,
+      explain: "Light activity between events helps clear lactate and keeps you loose. Between days, full rest lets your body actually rebuild."
+    },
+    {
+      q: "What does the ART framework stand for?",
+      options: [
+        "Athlete, Recovery, Training",
+        "Act, Recover, Think",
+        "Aerobic, Resistance, Tempo",
+        "Active, Rest, Train"
+      ],
+      correct: 1,
+      explain: "Act like a champ, Recover with intent, Think about what you can control. Three things to keep on top of across any tournament day."
+    },
+    {
+      q: "Which of these is NOT a sign you're well recovered?",
+      options: [
+        "Resting heart rate is normal",
+        "You feel motivated to train",
+        "Your sleep was solid last night",
+        "You've been sore for 4 days and feel tired"
+      ],
+      correct: 3,
+      explain: "Persistent soreness and fatigue are clear signals your body hasn't recovered — back off, sleep more, eat more, ease the load."
+    },
+    {
+      q: "Should you try a new pre-game meal or sports drink for the first time at a major competition?",
+      options: ["Yes, it might give you an edge", "No — test it at training first"],
+      correct: 1,
+      explain: "Don't experiment in competition. New foods or drinks could cause stomach issues at the worst possible moment. Test in training, find what works for YOU."
+    }
+  ];
+
+  let qIndex = 0;
+  let score = 0;
+  let answered = false;
+  let answersLog = []; // [{q: idx, correct: bool, selectedIndex: i}]
+
+  // expose for teacher view
+  window.quizQuestions = quizQuestions;
+
+  function loadQuestion() {
+    answered = false;
+    const q = quizQuestions[qIndex];
+    document.getElementById('quizQuestion').textContent = `${qIndex + 1}. ${q.q}`;
+    const optsEl = document.getElementById('quizOptions');
+    optsEl.innerHTML = '';
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      btn.textContent = opt;
+      btn.onclick = () => selectAnswer(i);
+      optsEl.appendChild(btn);
+    });
+    document.getElementById('quizFeedback').classList.remove('show');
+    document.getElementById('quizFeedback').textContent = '';
+    document.getElementById('quizNextBtn').disabled = true;
+    document.getElementById('quizNextBtn').textContent = qIndex === quizQuestions.length - 1 ? 'See results' : 'Next question';
+    updateProgress();
+  }
+
+  function selectAnswer(i) {
+    if (answered) return;
+    answered = true;
+    const q = quizQuestions[qIndex];
+    const opts = document.querySelectorAll('.quiz-option');
+    opts.forEach((opt, idx) => {
+      opt.disabled = true;
+      if (idx === q.correct) opt.classList.add('correct');
+      else if (idx === i) opt.classList.add('incorrect');
+    });
+    if (i === q.correct) score++;
+    answersLog.push({ q: qIndex, correct: i === q.correct, selectedIndex: i });
+    const fb = document.getElementById('quizFeedback');
+    fb.textContent = q.explain;
+    fb.classList.add('show');
+    document.getElementById('quizNextBtn').disabled = false;
+  }
+
+  function updateProgress() {
+    const pct = ((qIndex) / quizQuestions.length) * 100;
+    document.getElementById('quizProgress').style.width = pct + '%';
+  }
+
+  document.getElementById('quizNextBtn').onclick = () => {
+    qIndex++;
+    if (qIndex >= quizQuestions.length) {
+      showResults();
+    } else {
+      loadQuestion();
+    }
+  };
+
+  async function showResults() {
+    document.getElementById('quizContainer').style.display = 'none';
+    document.getElementById('quizProgress').style.width = '100%';
+    const result = document.getElementById('quizResult');
+    result.classList.add('show');
+    document.getElementById('quizScore').textContent = score;
+    let title, msg;
+    if (score >= 9) {
+      title = 'Outstanding.';
+      msg = "You've got this nailed. Apply the same level of detail to your team's Clash of the Codes plan.";
+    } else if (score >= 7) {
+      title = 'Solid.';
+      msg = "Good understanding. Look back at any you got wrong before the team planning session.";
+    } else if (score >= 5) {
+      title = 'Halfway there.';
+      msg = "Worth re-watching the videos and revisiting the cards. The Clash plan is going to demand all of this.";
+    } else {
+      title = 'Try again.';
+      msg = "Re-read the sessions, then come back. You'll need this for the Clash plan.";
+    }
+    document.getElementById('quizResultTitle').textContent = title;
+    document.getElementById('quizResultMessage').textContent = msg;
+
+    // save to backend
+    const status = document.getElementById('quizSaveStatus');
+    status.textContent = 'Saving your result…';
+    status.className = 'quiz-save-status';
+    const saveResult = await saveQuizResult(score, quizQuestions.length, answersLog);
+    if (saveResult.ok) {
+      status.textContent = '✓ Saved to your Athlete Academy profile';
+      status.className = 'quiz-save-status saved';
+    } else {
+      status.textContent = '⚠ Could not save automatically — please tell your teacher your score';
+      status.className = 'quiz-save-status error';
+    }
+  }
+
+  function restartQuiz() {
+    qIndex = 0;
+    score = 0;
+    answersLog = [];
+    document.getElementById('quizContainer').style.display = 'block';
+    document.getElementById('quizResult').classList.remove('show');
+    loadQuestion();
+  }
+
+  loadQuestion();
+</script>
+
+</body>
+</html>
