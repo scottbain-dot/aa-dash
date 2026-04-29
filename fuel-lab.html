@@ -1038,7 +1038,7 @@
     margin-bottom: 28px;
     font-size: 15px;
   }
-  .g_id_signin {
+  #gsiButton {
     display: flex;
     justify-content: center;
   }
@@ -1235,6 +1235,104 @@
       grid-column: 1 / -1;
     }
   }
+
+  /* ============================================
+     FORM EMBED + EXTENSION
+     ============================================ */
+  .form-embed {
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 32px;
+  }
+  .form-embed iframe {
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    display: block;
+  }
+
+  .extension-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 80px 0 24px;
+  }
+  .extension-divider hr {
+    flex: 1;
+    border: 0;
+    border-top: 1px solid var(--line);
+  }
+  .extension-divider .extension-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  /* ============================================
+     LOCKED SESSIONS
+     ============================================ */
+  .session-locked {
+    position: relative;
+    overflow: hidden;
+  }
+  .session-locked > .lock-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(254, 248, 246, 0.4) 0%, rgba(254, 248, 246, 0.95) 30%, rgba(254, 248, 246, 0.99) 100%);
+    backdrop-filter: blur(2px);
+    z-index: 5;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 140px;
+    pointer-events: all;
+  }
+  .session-locked.bg-warm > .lock-overlay {
+    background: linear-gradient(180deg, rgba(245, 235, 229, 0.4) 0%, rgba(245, 235, 229, 0.95) 30%, rgba(245, 235, 229, 0.99) 100%);
+  }
+  .lock-card {
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: 20px;
+    padding: 36px 40px;
+    max-width: 460px;
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  }
+  .lock-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+  .lock-card h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--cream);
+  }
+  .lock-card p {
+    font-size: 14px;
+    color: rgba(250, 243, 237, 0.75);
+    line-height: 1.5;
+  }
+  .lock-card .session-num {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  /* hide content behind lock */
+  .session-locked > *:not(.lock-overlay) {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+  }
 </style>
 </head>
 <body>
@@ -1247,26 +1345,13 @@
     <div class="auth-tag">Athlete Academy</div>
     <h2>Welcome to <em>Fuel Lab</em></h2>
     <p>Sign in with your school Google account so we can track your progress and your team's prep for Clash of the Codes.</p>
-    <div id="g_id_onload"
-         data-client_id="701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com"
-         data-context="signin"
-         data-ux_mode="popup"
-         data-callback="handleCredentialResponse"
-         data-auto_prompt="false">
-    </div>
-    <div class="g_id_signin"
-         data-type="standard"
-         data-size="large"
-         data-theme="filled_blue"
-         data-text="signin_with"
-         data-shape="pill"
-         data-logo_alignment="left">
-    </div>
+    <div id="gsiButton"></div>
   </div>
 </div>
 
 <!-- user badge -->
 <div class="user-badge" id="userBadge" style="display:none;">
+  <img id="userPhoto" src="" alt="" />
   <span id="userName"></span>
   <span class="signout" onclick="signOut()">sign out</span>
 </div>
@@ -1347,7 +1432,20 @@
     </div>
   </div>
 
-  <p class="myths-intro">Now flip the cards below. Each one is something you've probably heard. Tap to see whether it holds up.</p>
+  <!-- Reflection form (replaces old Google Form) -->
+  <h3 style="font-size: 22px; margin: 56px 0 12px;">Reflect — fill this in before next session</h3>
+  <p style="color: var(--ink-soft); margin-bottom: 24px; max-width: 640px;">Take a few minutes to put what you've watched into your own words. Your answers go straight to me — no right or wrong, just honest reflection.</p>
+  <div class="form-embed">
+    <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScPdOfEGq1vnjOZ6jCpGQgc5NC-fWDmFhXO2YhBxN-VVO9rkw/viewform?embedded=true" width="640" height="3043" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+  </div>
+
+  <!-- Extension: myth cards -->
+  <div class="extension-divider">
+    <span class="extension-label">⚡ Extension</span>
+    <hr />
+  </div>
+  <h3 style="font-size: 22px; margin-bottom: 8px;">Myth busters</h3>
+  <p class="myths-intro" style="margin-top: 8px;">Done with the form? Flip the cards below — each one is something you've probably heard. Tap to see whether it holds up.</p>
 
   <div class="myth-grid" id="myths">
     <div class="myth-card" onclick="this.classList.toggle('flipped')">
@@ -1445,7 +1543,15 @@
 <!-- ============================================
      SESSION 2 — FUEL SCIENCE
      ============================================ -->
-<section class="section" id="session-2" style="background: var(--bg-warm); max-width: none; margin: 0; border-radius: 0;">
+<section class="section session-locked bg-warm" id="session-2" data-required-session="2" style="background: var(--bg-warm); max-width: none; margin: 0; border-radius: 0;">
+  <div class="lock-overlay">
+    <div class="lock-card">
+      <div class="lock-icon">🔒</div>
+      <div class="session-num">Session 02</div>
+      <h3>Locked</h3>
+      <p>This session unlocks once your teacher releases it. Make sure you've completed the Session 1 reflection in the meantime.</p>
+    </div>
+  </div>
   <div style="max-width: 1200px; margin: 0 auto;">
     <div class="section-tag">Session 02</div>
     <h2>Fuel for the <em>working</em> athlete.</h2>
@@ -1554,7 +1660,15 @@
 <!-- ============================================
      SESSION 3 — RECOVERY
      ============================================ -->
-<section class="section" id="session-3">
+<section class="section session-locked" id="session-3" data-required-session="3">
+  <div class="lock-overlay">
+    <div class="lock-card">
+      <div class="lock-icon">🔒</div>
+      <div class="session-num">Session 03</div>
+      <h3>Locked</h3>
+      <p>This session unlocks once your teacher releases it.</p>
+    </div>
+  </div>
   <div class="section-tag">Session 03</div>
   <h2>Recovery is where you actually <em>get better</em>.</h2>
   <p class="section-intro">Training breaks you down. Recovery is when your body adapts and comes back stronger. Skip this part and you'll be the rat on the wheel — moving a lot, going nowhere.</p>
@@ -1781,62 +1895,129 @@
 
 <script>
   // ============================================
-  // CONFIG
+  // CONFIG — UPDATE THESE BEFORE DEPLOYING
   // ============================================
-  // Shared Athlete Academy Apps Script endpoint (same backend as index/strength/grit/admin).
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
+  // 1. Get a Google OAuth Client ID from Google Cloud Console
+  //    (Web app, authorised origins = your GitHub Pages domain)
+  const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+
+  // 2. Apps Script Web App URL (deploy as web app, execute as: me, access: anyone)
+  const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL';
+
+  // 3. Optional: restrict to specific email domain (e.g. 'fis.edu') or leave '' for any
+  const ALLOWED_EMAIL_DOMAIN = '';
+
+  // 4. Teachers (emails) who can see the teacher panel
+  const TEACHER_EMAILS = ['scott.bain@fis.edu'];
 
   // ============================================
   // STATE
   // ============================================
   let currentUser = null;
-  const isTeacherView = new URLSearchParams(location.search).get('view') === 'teacher';
 
   // ============================================
-  // GOOGLE AUTH (matches index.html / grit-portal.html / strength-portal.html)
+  // GOOGLE AUTH
   // ============================================
+  function decodeJwt(token) {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+  }
+
   function handleCredentialResponse(response) {
-    const payload = JSON.parse(atob(response.credential.split('.')[1]));
+    const payload = decodeJwt(response.credential);
+    if (ALLOWED_EMAIL_DOMAIN && !payload.email.endsWith('@' + ALLOWED_EMAIL_DOMAIN)) {
+      alert('Please sign in with your school account (@' + ALLOWED_EMAIL_DOMAIN + ').');
+      return;
+    }
     currentUser = {
       email: payload.email,
-      name: payload.name
+      name: payload.name,
+      picture: payload.picture,
+      idToken: response.credential
     };
+    localStorage.setItem('fuelLabUser', JSON.stringify(currentUser));
+    onSignIn();
+  }
+
+  function onSignIn() {
     document.getElementById('authGate').classList.add('hidden');
     document.getElementById('userBadge').style.display = 'flex';
     document.getElementById('userName').textContent = currentUser.name.split(' ')[0];
-    document.getElementById('appRoot').style.display = 'block';
+    document.getElementById('userPhoto').src = currentUser.picture;
+
+    // route: teacher view or student view
+    const params = new URLSearchParams(location.search);
+    if (params.get('view') === 'teacher' && TEACHER_EMAILS.includes(currentUser.email)) {
+      document.getElementById('teacherRoot').style.display = 'block';
+      document.getElementById('appRoot').style.display = 'none';
+      loadTeacherData();
+    } else {
+      document.getElementById('appRoot').style.display = 'block';
+      document.getElementById('teacherRoot').style.display = 'none';
+    }
   }
 
   function signOut() {
+    localStorage.removeItem('fuelLabUser');
     currentUser = null;
     location.reload();
   }
 
+  function initAuth() {
+    // restore from localStorage if available
+    const saved = localStorage.getItem('fuelLabUser');
+    if (saved) {
+      try {
+        currentUser = JSON.parse(saved);
+        onSignIn();
+        return;
+      } catch (e) { /* fall through */ }
+    }
+    // wait for GSI to load
+    const initWhenReady = () => {
+      if (window.google && google.accounts) {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse
+        });
+        google.accounts.id.renderButton(
+          document.getElementById('gsiButton'),
+          { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', logo_alignment: 'center' }
+        );
+      } else {
+        setTimeout(initWhenReady, 200);
+      }
+    };
+    initWhenReady();
+  }
+
   // ============================================
-  // SAVE QUIZ RESULT — posts to the shared AA Apps Script endpoint
+  // SAVE QUIZ RESULT
   // ============================================
   async function saveQuizResult(score, total, answersArray) {
-    if (!currentUser) {
-      return { ok: false, reason: 'not signed in' };
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.startsWith('YOUR_')) {
+      console.warn('APPS_SCRIPT_URL not configured — skipping save');
+      return { ok: false, reason: 'not configured' };
     }
     try {
       const payload = {
-        action: 'submitFuelLabQuiz',
+        action: 'submitQuiz',
         email: currentUser.email,
         name: currentUser.name,
         score: score,
         total: total,
-        answers: answersArray,
+        answers: answersArray, // [{q: 0, correct: true}, ...]
         timestamp: new Date().toISOString()
       };
-      // text/plain avoids the CORS preflight (Apps Script web apps don't handle OPTIONS)
+      // Using text/plain to avoid CORS preflight (Apps Script web apps don't handle OPTIONS)
       const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      return { ok: !!data.success, data };
+      return { ok: true, data };
     } catch (err) {
       console.error('Save failed:', err);
       return { ok: false, reason: err.message };
@@ -1844,13 +2025,17 @@
   }
 
   // ============================================
-  // TEACHER VIEW — ungated, matches admin.html convention
+  // TEACHER VIEW
   // ============================================
   async function loadTeacherData() {
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.startsWith('YOUR_')) {
+      document.getElementById('teacherStats').innerHTML = '<div class="empty-state">Apps Script not configured yet. Update APPS_SCRIPT_URL in the code.</div>';
+      return;
+    }
     document.getElementById('teacherStats').innerHTML = '<div class="empty-state">Loading…</div>';
     document.getElementById('teacherQuestions').innerHTML = '';
     try {
-      const url = APPS_SCRIPT_URL + '?action=getFuelLabQuizStats&_t=' + Date.now();
+      const url = APPS_SCRIPT_URL + '?action=getStats&email=' + encodeURIComponent(currentUser.email);
       const res = await fetch(url);
       const data = await res.json();
       renderTeacherView(data);
@@ -1878,7 +2063,7 @@
       <div class="stat-tile">
         <div class="stat-label">Average score</div>
         <div class="stat-value">${data.avgScore ? data.avgScore.toFixed(1) : '—'}<span style="font-size: 18px; color: var(--ink-mute);"> / 10</span></div>
-        <div class="stat-sub">latest attempt per student</div>
+        <div class="stat-sub">across all attempts</div>
       </div>
       <div class="stat-tile">
         <div class="stat-label">Hardest question</div>
@@ -1920,19 +2105,34 @@
   }
 
   // ============================================
-  // INIT — teacher view skips the auth gate (matches the admin.html convention,
-  // which is reachable directly by URL). Student view requires Google sign-in.
+  // INIT
   // ============================================
-  document.addEventListener('DOMContentLoaded', () => {
-    if (isTeacherView) {
-      document.getElementById('authGate').classList.add('hidden');
-      document.getElementById('appRoot').style.display = 'none';
-      document.getElementById('teacherRoot').style.display = 'block';
-      loadTeacherData();
-    }
-    // Student flow: leave auth gate visible. Google's data-callback wires up
-    // handleCredentialResponse automatically once the user signs in.
-  });
+  document.addEventListener('DOMContentLoaded', initAuth);
+
+  // ============================================
+  // SESSION UNLOCK
+  // ============================================
+  // TODO (Claude Code): wire this into the existing AA "Session Unlocked" counter
+  // pattern used in index.html / grit-portal.html. The counter should determine
+  // which Fuel Lab sessions are unlocked. Suggested mapping:
+  //   sessionUnlocked >= [some threshold] → unlock Session 2
+  //   sessionUnlocked >= [some threshold] → unlock Session 3
+  // For now, we hardcode a Fuel Lab unlock level (0 = only Session 1 visible).
+  // Set this from the existing AA admin panel via the same Apps Script call.
+  function applyUnlockState(fuelLabUnlockedSessions) {
+    // fuelLabUnlockedSessions: number — which sessions are unlocked (1, 2, or 3)
+    document.querySelectorAll('.session-locked').forEach(section => {
+      const required = parseInt(section.dataset.requiredSession, 10);
+      if (fuelLabUnlockedSessions >= required) {
+        section.classList.remove('session-locked');
+        const overlay = section.querySelector('.lock-overlay');
+        if (overlay) overlay.remove();
+      }
+    });
+  }
+
+  // Default state — Session 1 only. Claude Code: replace with real fetch.
+  applyUnlockState(1);
 
   // ============================================
   // SPORT PICKER (energy systems)
