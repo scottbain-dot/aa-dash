@@ -105,6 +105,13 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ===== FUEL LAB QUIZ STATS (teacher view) =====
+    if (action === 'getFuelLabQuizStats') {
+      var fuelStatsResult = handleGetFuelLabQuizStats(ss);
+      return ContentService.createTextOutput(JSON.stringify(fuelStatsResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // ===== EXISTING DASHBOARD LOGIC =====
     if (e.parameter.admin === 'true') {
       return handleAdminRequest(ss);
@@ -203,6 +210,14 @@ function doPost(e) {
       var ssObs = SpreadsheetApp.getActiveSpreadsheet();
       var obsSaveResult = handleSaveObservation(ssObs, data);
       return ContentService.createTextOutput(JSON.stringify(obsSaveResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ===== FUEL LAB QUIZ SUBMISSION =====
+    if (data.action === 'submitFuelLabQuiz') {
+      var ssFuel = SpreadsheetApp.getActiveSpreadsheet();
+      var fuelResult = handleSubmitFuelLabQuiz(ssFuel, data);
+      return ContentService.createTextOutput(JSON.stringify(fuelResult))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -1868,6 +1883,200 @@ function handleGetObservations(ss, sessionNumber) {
       out.push(obj);
     }
     return { success: true, observations: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ========================================
+// FUEL LAB QUIZ
+// Sheet: FuelLab_Quiz
+// Columns: Timestamp | Email | Name | Score | Total | Q1 | Q2 | ... | Q10
+// Each Qn cell: 1 (correct), 0 (incorrect), or blank (unanswered)
+// ========================================
+
+var FUEL_LAB_QUIZ_QUESTION_COUNT = 10;
+
+function ensureFuelLabQuizSheet(ss) {
+  var sheet = ss.getSheetByName('FuelLab_Quiz');
+  var headers = ['Timestamp', 'Email', 'Name', 'Score', 'Total'];
+  for (var i = 1; i <= FUEL_LAB_QUIZ_QUESTION_COUNT; i++) {
+    headers.push('Q' + i);
+  }
+  if (!sheet) {
+    sheet = ss.insertSheet('FuelLab_Quiz');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  // Backfill any missing header columns without disturbing existing ones.
+  var existing = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  for (var h = 0; h < headers.length; h++) {
+    if (existing.indexOf(headers[h]) === -1) {
+      var newCol = Math.max(sheet.getLastColumn() + 1, h + 1);
+      sheet.getRange(1, newCol).setValue(headers[h]);
+    }
+  }
+  return sheet;
+}
+
+function handleSubmitFuelLabQuiz(ss, data) {
+  try {
+    if (!data.email) {
+      return { success: false, error: 'Missing email' };
+    }
+    var sheet = ensureFuelLabQuizSheet(ss);
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    // Build row aligned to header order so column reorders never break inserts.
+    var row = new Array(headers.length);
+    var total = parseInt(data.total, 10);
+    if (!total || total < 1) total = FUEL_LAB_QUIZ_QUESTION_COUNT;
+
+    // Map answers array -> per-question 1/0
+    // answersArray entries shaped like { q: <0-based index>, correct: <bool> }.
+    var answerMap = {};
+    if (Array.isArray(data.answers)) {
+      for (var i = 0; i < data.answers.length; i++) {
+        var a = data.answers[i];
+        if (a && typeof a.q === 'number') {
+          answerMap[a.q] = a.correct ? 1 : 0;
+        }
+      }
+    }
+
+    for (var c = 0; c < headers.length; c++) {
+      var name = headers[c];
+      if (name === 'Timestamp') {
+        row[c] = data.timestamp ? new Date(data.timestamp) : new Date();
+      } else if (name === 'Email') {
+        row[c] = data.email;
+      } else if (name === 'Name') {
+        row[c] = data.name || '';
+      } else if (name === 'Score') {
+        row[c] = parseInt(data.score, 10) || 0;
+      } else if (name === 'Total') {
+        row[c] = total;
+      } else if (/^Q\d+$/.test(name)) {
+        var qIdx = parseInt(name.substring(1), 10) - 1;
+        row[c] = (qIdx in answerMap) ? answerMap[qIdx] : '';
+      } else {
+        row[c] = '';
+      }
+    }
+
+    sheet.appendRow(row);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleGetFuelLabQuizStats(ss) {
+  try {
+    var sheet = ss.getSheetByName('FuelLab_Quiz');
+    if (!sheet) {
+      return { success: true, totalSubmissions: 0, uniqueStudents: 0, avgScore: 0, lastUpdate: '', questions: [] };
+    }
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return { success: true, totalSubmissions: 0, uniqueStudents: 0, avgScore: 0, lastUpdate: '', questions: [] };
+    }
+
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var values = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+
+    var col = {
+      ts: headers.indexOf('Timestamp'),
+      email: headers.indexOf('Email'),
+      score: headers.indexOf('Score'),
+      total: headers.indexOf('Total')
+    };
+    var qCols = []; // [{ index: <0-based question idx>, col: <0-based sheet col> }, ...]
+    for (var h = 0; h < headers.length; h++) {
+      var m = /^Q(\d+)$/.exec(headers[h]);
+      if (m) qCols.push({ index: parseInt(m[1], 10) - 1, col: h });
+    }
+    qCols.sort(function (a, b) { return a.index - b.index; });
+
+    // Pick the latest submission per student (by Timestamp).
+    var latestByEmail = {};
+    var lastUpdate = null;
+    for (var r = 0; r < values.length; r++) {
+      var row = values[r];
+      var emailRaw = col.email >= 0 ? row[col.email] : '';
+      if (!emailRaw) continue;
+      var emailKey = String(emailRaw).toLowerCase();
+      var ts = col.ts >= 0 ? row[col.ts] : null;
+      var tsMs = (ts instanceof Date) ? ts.getTime() : (ts ? new Date(ts).getTime() : 0);
+      if (!latestByEmail[emailKey] || tsMs >= latestByEmail[emailKey].tsMs) {
+        latestByEmail[emailKey] = { row: row, tsMs: tsMs, ts: ts };
+      }
+      if (ts && (!lastUpdate || tsMs > lastUpdate.tsMs)) {
+        lastUpdate = { ts: ts, tsMs: tsMs };
+      }
+    }
+
+    var emails = Object.keys(latestByEmail);
+    var uniqueStudents = emails.length;
+    var totalSubmissions = values.length; // raw attempt count, retakes included
+
+    if (uniqueStudents === 0) {
+      return { success: true, totalSubmissions: totalSubmissions, uniqueStudents: 0, avgScore: 0, lastUpdate: '', questions: [] };
+    }
+
+    // Average score across latest-per-student submissions.
+    var scoreSum = 0;
+    var scoreCount = 0;
+    for (var e = 0; e < emails.length; e++) {
+      var rec = latestByEmail[emails[e]];
+      var s = col.score >= 0 ? parseFloat(rec.row[col.score]) : NaN;
+      if (!isNaN(s)) { scoreSum += s; scoreCount++; }
+    }
+    var avgScore = scoreCount > 0 ? (scoreSum / scoreCount) : 0;
+
+    // Per-question correct% across latest-per-student.
+    var questions = [];
+    for (var q = 0; q < qCols.length; q++) {
+      var qc = qCols[q];
+      var correct = 0;
+      var answered = 0;
+      for (var ee = 0; ee < emails.length; ee++) {
+        var v = latestByEmail[emails[ee]].row[qc.col];
+        if (v === '' || v === null || typeof v === 'undefined') continue;
+        answered++;
+        if (Number(v) === 1) correct++;
+      }
+      var pct = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+      questions.push({ index: qc.index, correctPct: pct, totalAnswers: answered });
+    }
+
+    // Hardest = lowest %, Easiest = highest %, only over questions with answers.
+    var answeredQs = questions.filter(function (q) { return q.totalAnswers > 0; });
+    var hardest = null;
+    var easiest = null;
+    if (answeredQs.length) {
+      hardest = answeredQs.reduce(function (a, b) { return a.correctPct <= b.correctPct ? a : b; });
+      easiest = answeredQs.reduce(function (a, b) { return a.correctPct >= b.correctPct ? a : b; });
+    }
+
+    var lastUpdateStr = '';
+    if (lastUpdate && lastUpdate.ts) {
+      var d = (lastUpdate.ts instanceof Date) ? lastUpdate.ts : new Date(lastUpdate.ts);
+      lastUpdateStr = Utilities.formatDate(d, Session.getScriptTimeZone() || 'Europe/Berlin', 'd MMM yyyy HH:mm');
+    }
+
+    return {
+      success: true,
+      totalSubmissions: totalSubmissions,
+      uniqueStudents: uniqueStudents,
+      avgScore: avgScore,
+      lastUpdate: lastUpdateStr,
+      hardest: hardest,
+      easiest: easiest,
+      questions: questions
+    };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
