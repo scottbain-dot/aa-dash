@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Athlete Academy - Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * {
             margin: 0;
@@ -1781,9 +1782,43 @@
             .grit-card-meta { flex-wrap: wrap; }
         }
 
+        /* ===== Auth Gate ===== */
+        #authGate {
+            position: fixed; inset: 0; z-index: 99999;
+            background: var(--bg-primary);
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 24px;
+            font-family: 'DM Sans', sans-serif; color: var(--text-primary);
+        }
+        #authGate.hidden { display: none; }
+        #authGate .auth-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 40px 32px; max-width: 420px; width: 90%;
+            text-align: center;
+        }
+        #authGate h1 { font-size: 1.5rem; margin-bottom: 8px; }
+        #authGate p { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 24px; }
+        #authGate .auth-error {
+            color: var(--accent-red); font-size: 0.9rem; margin-top: 16px;
+            padding: 12px; background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3); border-radius: 8px;
+            display: none;
+        }
+        #authGate .auth-error.visible { display: block; }
+        #gsiButton { display: flex; justify-content: center; }
     </style>
 </head>
 <body>
+    <!-- Auth Gate (covers everything until verified) -->
+    <div id="authGate">
+        <div class="auth-card">
+            <h1>🔒 Athlete Academy Admin</h1>
+            <p>Sign in with your authorised Google account to continue.</p>
+            <div id="gsiButton"></div>
+            <div class="auth-error" id="authError">Access denied. This account is not authorised.</div>
+        </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
@@ -2050,12 +2085,86 @@
         const PATTERNS = ['Squat', 'Push', 'Pull', 'Hinge', 'Lunge', 'Press'];
 
         // ============================================
-        // INITIALIZATION
+        // AUTH GATE (Google Sign-In)
         // ============================================
-        document.addEventListener('DOMContentLoaded', () => {
+        // ⚠️ REPLACE THESE TWO VALUES BEFORE DEPLOYING:
+        const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com';
+        const ALLOWED_EMAILS = ['your.email@example.com']; // lowercase
+
+        function decodeJwt(token) {
+            try {
+                const payload = token.split('.')[1];
+                const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+                return JSON.parse(decodeURIComponent(escape(json)));
+            } catch (e) { return null; }
+        }
+
+        function isTokenValid(payload) {
+            if (!payload) return false;
+            if (!payload.email_verified) return false;
+            if (payload.exp && Date.now() / 1000 > payload.exp) return false;
+            if (payload.aud !== GOOGLE_CLIENT_ID) return false;
+            if (!ALLOWED_EMAILS.includes((payload.email || '').toLowerCase())) return false;
+            return true;
+        }
+
+        function showAuthError(msg) {
+            const el = document.getElementById('authError');
+            if (msg) el.textContent = msg;
+            el.classList.add('visible');
+        }
+
+        function unlockApp(payload) {
+            document.getElementById('authGate').classList.add('hidden');
+            const userEl = document.getElementById('userName');
+            if (userEl && payload.name) userEl.textContent = payload.name;
             loadSession();
             loadStudents();
-        });
+        }
+
+        function handleCredentialResponse(response) {
+            const payload = decodeJwt(response.credential);
+            if (!isTokenValid(payload)) {
+                showAuthError('Access denied. This account is not authorised for the Athlete Academy admin.');
+                sessionStorage.removeItem('aa_admin_token');
+                return;
+            }
+            sessionStorage.setItem('aa_admin_token', response.credential);
+            unlockApp(payload);
+        }
+
+        function initAuthGate() {
+            // Try cached token first
+            const cached = sessionStorage.getItem('aa_admin_token');
+            if (cached) {
+                const payload = decodeJwt(cached);
+                if (isTokenValid(payload)) {
+                    unlockApp(payload);
+                    return;
+                }
+                sessionStorage.removeItem('aa_admin_token');
+            }
+
+            // Otherwise render the Sign In button
+            if (!window.google || !google.accounts || !google.accounts.id) {
+                // GIS not loaded yet — retry shortly
+                setTimeout(initAuthGate, 200);
+                return;
+            }
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleCredentialResponse,
+            });
+            google.accounts.id.renderButton(
+                document.getElementById('gsiButton'),
+                { theme: 'filled_black', size: 'large', shape: 'rectangular', text: 'signin_with' }
+            );
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', initAuthGate);
 
         // ============================================
         // DATA LOADING
@@ -2618,6 +2727,10 @@
         }
 
         function logout() {
+            sessionStorage.removeItem('aa_admin_token');
+            if (window.google && google.accounts && google.accounts.id) {
+                google.accounts.id.disableAutoSelect();
+            }
             window.location.href = 'index.html';
         }
 
