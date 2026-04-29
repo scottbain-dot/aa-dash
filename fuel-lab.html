@@ -1038,7 +1038,7 @@
     margin-bottom: 28px;
     font-size: 15px;
   }
-  #gsiButton {
+  .g_id_signin {
     display: flex;
     justify-content: center;
   }
@@ -1247,13 +1247,26 @@
     <div class="auth-tag">Athlete Academy</div>
     <h2>Welcome to <em>Fuel Lab</em></h2>
     <p>Sign in with your school Google account so we can track your progress and your team's prep for Clash of the Codes.</p>
-    <div id="gsiButton"></div>
+    <div id="g_id_onload"
+         data-client_id="701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com"
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+         data-type="standard"
+         data-size="large"
+         data-theme="filled_blue"
+         data-text="signin_with"
+         data-shape="pill"
+         data-logo_alignment="left">
+    </div>
   </div>
 </div>
 
 <!-- user badge -->
 <div class="user-badge" id="userBadge" style="display:none;">
-  <img id="userPhoto" src="" alt="" />
   <span id="userName"></span>
   <span class="signout" onclick="signOut()">sign out</span>
 </div>
@@ -1768,129 +1781,62 @@
 
 <script>
   // ============================================
-  // CONFIG — UPDATE THESE BEFORE DEPLOYING
+  // CONFIG
   // ============================================
-  // 1. Get a Google OAuth Client ID from Google Cloud Console
-  //    (Web app, authorised origins = your GitHub Pages domain)
-  const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-
-  // 2. Apps Script Web App URL (deploy as web app, execute as: me, access: anyone)
-  const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL';
-
-  // 3. Optional: restrict to specific email domain (e.g. 'fis.edu') or leave '' for any
-  const ALLOWED_EMAIL_DOMAIN = '';
-
-  // 4. Teachers (emails) who can see the teacher panel
-  const TEACHER_EMAILS = ['scott.bain@fis.edu'];
+  // Shared Athlete Academy Apps Script endpoint (same backend as index/strength/grit/admin).
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
 
   // ============================================
   // STATE
   // ============================================
   let currentUser = null;
+  const isTeacherView = new URLSearchParams(location.search).get('view') === 'teacher';
 
   // ============================================
-  // GOOGLE AUTH
+  // GOOGLE AUTH (matches index.html / grit-portal.html / strength-portal.html)
   // ============================================
-  function decodeJwt(token) {
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
-      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-  }
-
   function handleCredentialResponse(response) {
-    const payload = decodeJwt(response.credential);
-    if (ALLOWED_EMAIL_DOMAIN && !payload.email.endsWith('@' + ALLOWED_EMAIL_DOMAIN)) {
-      alert('Please sign in with your school account (@' + ALLOWED_EMAIL_DOMAIN + ').');
-      return;
-    }
+    const payload = JSON.parse(atob(response.credential.split('.')[1]));
     currentUser = {
       email: payload.email,
-      name: payload.name,
-      picture: payload.picture,
-      idToken: response.credential
+      name: payload.name
     };
-    localStorage.setItem('fuelLabUser', JSON.stringify(currentUser));
-    onSignIn();
-  }
-
-  function onSignIn() {
     document.getElementById('authGate').classList.add('hidden');
     document.getElementById('userBadge').style.display = 'flex';
     document.getElementById('userName').textContent = currentUser.name.split(' ')[0];
-    document.getElementById('userPhoto').src = currentUser.picture;
-
-    // route: teacher view or student view
-    const params = new URLSearchParams(location.search);
-    if (params.get('view') === 'teacher' && TEACHER_EMAILS.includes(currentUser.email)) {
-      document.getElementById('teacherRoot').style.display = 'block';
-      document.getElementById('appRoot').style.display = 'none';
-      loadTeacherData();
-    } else {
-      document.getElementById('appRoot').style.display = 'block';
-      document.getElementById('teacherRoot').style.display = 'none';
-    }
+    document.getElementById('appRoot').style.display = 'block';
   }
 
   function signOut() {
-    localStorage.removeItem('fuelLabUser');
     currentUser = null;
     location.reload();
   }
 
-  function initAuth() {
-    // restore from localStorage if available
-    const saved = localStorage.getItem('fuelLabUser');
-    if (saved) {
-      try {
-        currentUser = JSON.parse(saved);
-        onSignIn();
-        return;
-      } catch (e) { /* fall through */ }
-    }
-    // wait for GSI to load
-    const initWhenReady = () => {
-      if (window.google && google.accounts) {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleCredentialResponse
-        });
-        google.accounts.id.renderButton(
-          document.getElementById('gsiButton'),
-          { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', logo_alignment: 'center' }
-        );
-      } else {
-        setTimeout(initWhenReady, 200);
-      }
-    };
-    initWhenReady();
-  }
-
   // ============================================
-  // SAVE QUIZ RESULT
+  // SAVE QUIZ RESULT — posts to the shared AA Apps Script endpoint
   // ============================================
   async function saveQuizResult(score, total, answersArray) {
-    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.startsWith('YOUR_')) {
-      console.warn('APPS_SCRIPT_URL not configured — skipping save');
-      return { ok: false, reason: 'not configured' };
+    if (!currentUser) {
+      return { ok: false, reason: 'not signed in' };
     }
     try {
       const payload = {
-        action: 'submitQuiz',
+        action: 'submitFuelLabQuiz',
         email: currentUser.email,
         name: currentUser.name,
         score: score,
         total: total,
-        answers: answersArray, // [{q: 0, correct: true}, ...]
+        answers: answersArray,
         timestamp: new Date().toISOString()
       };
-      // Using text/plain to avoid CORS preflight (Apps Script web apps don't handle OPTIONS)
+      // text/plain avoids the CORS preflight (Apps Script web apps don't handle OPTIONS)
       const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      return { ok: true, data };
+      return { ok: !!data.success, data };
     } catch (err) {
       console.error('Save failed:', err);
       return { ok: false, reason: err.message };
@@ -1898,17 +1844,13 @@
   }
 
   // ============================================
-  // TEACHER VIEW
+  // TEACHER VIEW — ungated, matches admin.html convention
   // ============================================
   async function loadTeacherData() {
-    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.startsWith('YOUR_')) {
-      document.getElementById('teacherStats').innerHTML = '<div class="empty-state">Apps Script not configured yet. Update APPS_SCRIPT_URL in the code.</div>';
-      return;
-    }
     document.getElementById('teacherStats').innerHTML = '<div class="empty-state">Loading…</div>';
     document.getElementById('teacherQuestions').innerHTML = '';
     try {
-      const url = APPS_SCRIPT_URL + '?action=getStats&email=' + encodeURIComponent(currentUser.email);
+      const url = APPS_SCRIPT_URL + '?action=getFuelLabQuizStats&_t=' + Date.now();
       const res = await fetch(url);
       const data = await res.json();
       renderTeacherView(data);
@@ -1936,7 +1878,7 @@
       <div class="stat-tile">
         <div class="stat-label">Average score</div>
         <div class="stat-value">${data.avgScore ? data.avgScore.toFixed(1) : '—'}<span style="font-size: 18px; color: var(--ink-mute);"> / 10</span></div>
-        <div class="stat-sub">across all attempts</div>
+        <div class="stat-sub">latest attempt per student</div>
       </div>
       <div class="stat-tile">
         <div class="stat-label">Hardest question</div>
@@ -1978,9 +1920,19 @@
   }
 
   // ============================================
-  // INIT
+  // INIT — teacher view skips the auth gate (matches the admin.html convention,
+  // which is reachable directly by URL). Student view requires Google sign-in.
   // ============================================
-  document.addEventListener('DOMContentLoaded', initAuth);
+  document.addEventListener('DOMContentLoaded', () => {
+    if (isTeacherView) {
+      document.getElementById('authGate').classList.add('hidden');
+      document.getElementById('appRoot').style.display = 'none';
+      document.getElementById('teacherRoot').style.display = 'block';
+      loadTeacherData();
+    }
+    // Student flow: leave auth gate visible. Google's data-callback wires up
+    // handleCredentialResponse automatically once the user signs in.
+  });
 
   // ============================================
   // SPORT PICKER (energy systems)
