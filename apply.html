@@ -544,48 +544,82 @@
             gap: 1.5rem;
             max-width: 900px;
             margin: 0 auto;
+            align-items: stretch;
         }
         .programme-card {
-            background: #ffffff;
+            background: #1d1b1b;
             border-radius: 1.5rem;
             padding: 2rem;
-            box-shadow: 0 4px 16px rgba(53,15,13,0.04);
-            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            min-height: 280px;
             position: relative;
             overflow: hidden;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .programme-card:hover {
-            box-shadow: 0 12px 32px rgba(53,15,13,0.08);
-            transform: translateY(-2px);
+            transform: scale(1.02);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.3);
         }
-        .programme-card .top-bar {
+        .programme-card-bg {
             position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 4px;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
+            mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
+            pointer-events: none;
         }
-        .programme-card .top-bar.gold { background: var(--gold); }
-        .programme-card .top-bar.burgundy { background: var(--burgundy); }
-        .programme-card-icon {
-            width: 44px;
-            height: 44px;
-            margin-bottom: 1rem;
-            color: var(--burgundy);
+        .programme-card-svg-bg {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
+            mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .programme-card-icon svg {
+        .programme-card-svg-bg svg {
             width: 100%;
             height: 100%;
-            stroke: var(--burgundy);
+        }
+        .programme-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, #1d1b1b 40%, rgba(29,27,27,0.4) 100%);
+            pointer-events: none;
+        }
+        .programme-card-content {
+            position: relative;
+            z-index: 1;
+            max-width: 60%;
+        }
+        .programme-card-overline {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #D4AF37;
+            letter-spacing: 0.3em;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
         }
         .programme-card-heading {
-            font-weight: 700;
-            font-size: 1.15rem;
+            font-weight: 800;
+            font-size: 1.25rem;
             margin-bottom: 0.5rem;
-            color: var(--black);
+            color: #ffffff;
         }
         .programme-card-body {
             font-size: 0.875rem;
             line-height: 1.6;
-            color: #524342;
+            color: rgba(255,255,255,0.7);
         }
 
         /* Footer */
@@ -820,99 +854,99 @@
                 <div class="section-overline">THE PROGRAMME</div>
                 <h2 class="section-heading">What you'll have access to</h2>
                 <div class="programme-cards">
-                    <!-- Card 1: Training Age (gauge / gold) -->
+                    <!-- Card 1: Training Age -->
                     <div class="programme-card">
-                        <div class="top-bar gold"></div>
-                        <div class="programme-card-icon">
-                            <svg viewBox="0 0 48 48" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M8 32a16 16 0 0 1 32 0"/>
-                                <path d="M24 32 32 18"/>
-                                <circle cx="24" cy="32" r="2.5" fill="currentColor" stroke="none"/>
-                                <path d="M8 36h32"/>
-                            </svg>
+                        <img class="programme-card-bg" src="/assets/Nominate%20-%20Training%20Age.png" alt="" loading="lazy">
+                        <div class="programme-card-overlay"></div>
+                        <div class="programme-card-content">
+                            <div class="programme-card-overline">DEVELOPMENT</div>
+                            <h3 class="programme-card-heading">Training Age</h3>
+                            <p class="programme-card-body">A score that's yours. It tracks how you're developing as an athlete across three areas — and it grows every term you're in the programme.</p>
                         </div>
-                        <h3 class="programme-card-heading">Training Age</h3>
-                        <p class="programme-card-body">A score that's yours. It tracks how you're developing as an athlete across three areas — and it grows every term you're in the programme.</p>
                     </div>
 
-                    <!-- Card 2: Personal Training Portal (calendar / burgundy) -->
+                    <!-- Card 2: Personal Training Portal -->
                     <div class="programme-card">
-                        <div class="top-bar burgundy"></div>
-                        <div class="programme-card-icon">
-                            <svg viewBox="0 0 48 48" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="8" y="10" width="32" height="30" rx="3"/>
-                                <path d="M8 18h32"/>
-                                <path d="M16 6v8"/>
-                                <path d="M32 6v8"/>
-                                <path d="M16 26h4"/>
-                                <path d="M22 26h4"/>
-                                <path d="M28 26h4"/>
-                                <path d="M16 32h4"/>
-                                <path d="M22 32h4"/>
-                            </svg>
+                        <img class="programme-card-bg" src="/assets/Nominate%20-%20Personal%20Training%20Portal.png" alt="" loading="lazy">
+                        <div class="programme-card-overlay"></div>
+                        <div class="programme-card-content">
+                            <div class="programme-card-overline">TRAINING</div>
+                            <h3 class="programme-card-heading">Personal Training Portal</h3>
+                            <p class="programme-card-body">Plan your own training weeks, log your sessions, and see your progress over time. Your coach can see everything — so can you.</p>
                         </div>
-                        <h3 class="programme-card-heading">Personal Training Portal</h3>
-                        <p class="programme-card-body">Plan your own training weeks, log your sessions, and see your progress over time. Your coach can see everything — so can you.</p>
                     </div>
 
-                    <!-- Card 3: PE Time to Train (clock / gold) -->
+                    <!-- Card 3: PE Time to Train (inline timetable SVG) -->
                     <div class="programme-card">
-                        <div class="top-bar gold"></div>
-                        <div class="programme-card-icon">
-                            <svg viewBox="0 0 48 48" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="24" cy="24" r="16"/>
-                                <path d="M24 14v10l7 4"/>
+                        <div class="programme-card-svg-bg" aria-hidden="true">
+                            <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="10" y="14" width="180" height="172" rx="10" fill="#2a2727" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+                                <line x1="10" y1="40" x2="190" y2="40" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                                <text x="22" y="32" fill="rgba(212,175,55,0.85)" font-family="Inter, sans-serif" font-size="9" font-weight="700" letter-spacing="1.5">MON</text>
+                                <text x="62" y="32" fill="rgba(255,255,255,0.45)" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="1.5">TUE</text>
+                                <text x="100" y="32" fill="rgba(255,255,255,0.45)" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="1.5">WED</text>
+                                <text x="138" y="32" fill="rgba(255,255,255,0.45)" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="1.5">THU</text>
+                                <text x="174" y="32" fill="rgba(255,255,255,0.45)" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="1.5">FRI</text>
+                                <line x1="56" y1="40" x2="56" y2="186" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                <line x1="94" y1="40" x2="94" y2="186" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                <line x1="132" y1="40" x2="132" y2="186" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                <line x1="168" y1="40" x2="168" y2="186" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                <rect x="14" y="50" width="40" height="38" rx="4" fill="rgba(255,255,255,0.05)"/>
+                                <rect x="14" y="94" width="40" height="50" rx="4" fill="#874B46"/>
+                                <text x="34" y="116" fill="#fff" font-family="Inter, sans-serif" font-size="9" font-weight="700" text-anchor="middle">TRAIN</text>
+                                <text x="34" y="128" fill="rgba(255,255,255,0.75)" font-family="Inter, sans-serif" font-size="7" text-anchor="middle">PE</text>
+                                <rect x="14" y="150" width="40" height="32" rx="4" fill="rgba(255,255,255,0.05)"/>
+                                <rect x="58" y="50" width="34" height="48" rx="4" fill="rgba(255,255,255,0.05)"/>
+                                <rect x="58" y="104" width="34" height="40" rx="4" fill="rgba(255,255,255,0.05)"/>
+                                <rect x="96" y="50" width="34" height="38" rx="4" fill="rgba(255,255,255,0.05)"/>
+                                <rect x="96" y="94" width="34" height="50" rx="4" fill="#874B46"/>
+                                <text x="113" y="120" fill="#fff" font-family="Inter, sans-serif" font-size="9" font-weight="700" text-anchor="middle">TRAIN</text>
+                                <rect x="96" y="150" width="34" height="32" rx="4" fill="rgba(255,255,255,0.05)"/>
+                                <rect x="134" y="50" width="32" height="60" rx="4" fill="rgba(255,255,255,0.05)"/>
+                                <rect x="134" y="116" width="32" height="40" rx="4" fill="rgba(255,255,255,0.05)"/>
+                                <rect x="170" y="50" width="16" height="50" rx="4" fill="rgba(255,255,255,0.05)"/>
+                                <rect x="170" y="106" width="16" height="48" rx="4" fill="rgba(212,175,55,0.18)"/>
                             </svg>
                         </div>
-                        <h3 class="programme-card-heading">PE Time to Train</h3>
-                        <p class="programme-card-body">Selected PE units give you dedicated time during the school day to train your way.</p>
+                        <div class="programme-card-overlay"></div>
+                        <div class="programme-card-content">
+                            <div class="programme-card-overline">SCHOOL TIME</div>
+                            <h3 class="programme-card-heading">PE Time to Train</h3>
+                            <p class="programme-card-body">Selected PE units give you dedicated time during the school day to train your way.</p>
+                        </div>
                     </div>
 
-                    <!-- Card 4: Strength & Movement (barbell / burgundy) -->
+                    <!-- Card 4: Strength & Movement -->
                     <div class="programme-card">
-                        <div class="top-bar burgundy"></div>
-                        <div class="programme-card-icon">
-                            <svg viewBox="0 0 48 48" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 24h4"/>
-                                <rect x="8" y="16" width="6" height="16" rx="1.5"/>
-                                <path d="M14 24h20"/>
-                                <rect x="34" y="16" width="6" height="16" rx="1.5"/>
-                                <path d="M40 24h4"/>
-                            </svg>
+                        <img class="programme-card-bg" src="/assets/Nominate%20-Foundation%20Strength%20Patterns.png" alt="" loading="lazy">
+                        <div class="programme-card-overlay"></div>
+                        <div class="programme-card-content">
+                            <div class="programme-card-overline">MOVEMENT</div>
+                            <h3 class="programme-card-heading">Strength &amp; Movement</h3>
+                            <p class="programme-card-body">Six fundamental movement patterns, tracked from Level 1 to Level 5. Every session counts.</p>
                         </div>
-                        <h3 class="programme-card-heading">Strength &amp; Movement</h3>
-                        <p class="programme-card-body">Six fundamental movement patterns, tracked from Level 1 to Level 5. Every session counts.</p>
                     </div>
 
-                    <!-- Card 5: Grit Challenge (flame / gold) -->
+                    <!-- Card 5: Grit Challenge -->
                     <div class="programme-card">
-                        <div class="top-bar gold"></div>
-                        <div class="programme-card-icon">
-                            <svg viewBox="0 0 48 48" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M24 6c2 6 8 8 8 16a8 8 0 0 1-16 0c0-4 2-6 4-8 0 4 2 6 4 6 0-6-2-10 0-14z"/>
-                                <path d="M20 32c0 5 4 8 8 8s8-3 8-8c0-3-2-5-4-7-1 3-3 5-5 5"/>
-                            </svg>
+                        <img class="programme-card-bg" src="/assets/Nominate%20-%20Goals%2C%20Vision%20%26%20Grit.png" alt="" loading="lazy">
+                        <div class="programme-card-overlay"></div>
+                        <div class="programme-card-content">
+                            <div class="programme-card-overline">PSYCHOLOGY</div>
+                            <h3 class="programme-card-heading">Grit Challenge</h3>
+                            <p class="programme-card-body">Every term you take on an 8-session challenge you design yourself. Push your limits, track your progress, and prove what you're made of.</p>
                         </div>
-                        <h3 class="programme-card-heading">Grit Challenge</h3>
-                        <p class="programme-card-body">Every term you take on an 8-session challenge you design yourself. Push your limits, track your progress, and prove what you're made of.</p>
                     </div>
 
-                    <!-- Card 6: Earn Your Kit (trophy / burgundy) -->
+                    <!-- Card 6: Earn Your Kit -->
                     <div class="programme-card">
-                        <div class="top-bar burgundy"></div>
-                        <div class="programme-card-icon">
-                            <svg viewBox="0 0 48 48" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 8h20v8a10 10 0 0 1-20 0V8z"/>
-                                <path d="M14 12H8a4 4 0 0 0 6 6"/>
-                                <path d="M34 12h6a4 4 0 0 1-6 6"/>
-                                <path d="M20 26v6h8v-6"/>
-                                <path d="M16 40h16"/>
-                                <path d="M20 32l-2 8"/>
-                                <path d="M28 32l2 8"/>
-                            </svg>
+                        <img class="programme-card-bg" src="/assets/WarriorsKit.png" alt="" loading="lazy">
+                        <div class="programme-card-overlay"></div>
+                        <div class="programme-card-content">
+                            <div class="programme-card-overline">KIT</div>
+                            <h3 class="programme-card-heading">Earn Your Kit</h3>
+                            <p class="programme-card-body">Progress through Training Age levels and unlock Warriors × Athlete Academy kit. What you earn depends on how far you go.</p>
                         </div>
-                        <h3 class="programme-card-heading">Earn Your Kit</h3>
-                        <p class="programme-card-body">Progress through Training Age levels and unlock Warriors × Athlete Academy kit. What you earn depends on how far you go.</p>
                     </div>
                 </div>
             </section>
