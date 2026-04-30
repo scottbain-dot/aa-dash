@@ -566,22 +566,18 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 50%;
+            width: 55%;
             height: 100%;
             object-fit: cover;
             object-position: center;
-            -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
-            mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
             pointer-events: none;
         }
         .programme-card-svg-bg {
             position: absolute;
             top: 0;
             right: 0;
-            width: 50%;
+            width: 55%;
             height: 100%;
-            -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
-            mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
             pointer-events: none;
             display: flex;
             align-items: center;
@@ -594,7 +590,7 @@
         .programme-card-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to right, #1d1b1b 40%, rgba(29,27,27,0.4) 100%);
+            background: linear-gradient(to right, #1d1b1b 35%, rgba(29,27,27,0.3) 100%);
             pointer-events: none;
         }
         .programme-card-content {
@@ -856,7 +852,7 @@
                 <div class="programme-cards">
                     <!-- Card 1: Training Age -->
                     <div class="programme-card">
-                        <img class="programme-card-bg" src="/assets/Nominate%20-%20Training%20Age.png" alt="" loading="lazy">
+                        <img class="programme-card-bg" src="./assets/Nominate%20-%20Training%20Age.png" alt="" loading="lazy">
                         <div class="programme-card-overlay"></div>
                         <div class="programme-card-content">
                             <div class="programme-card-overline">DEVELOPMENT</div>
@@ -867,7 +863,7 @@
 
                     <!-- Card 2: Personal Training Portal -->
                     <div class="programme-card">
-                        <img class="programme-card-bg" src="/assets/Nominate%20-%20Personal%20Training%20Portal.png" alt="" loading="lazy">
+                        <img class="programme-card-bg" src="./assets/Nominate%20-%20Personal%20Training%20Portal.png" alt="" loading="lazy">
                         <div class="programme-card-overlay"></div>
                         <div class="programme-card-content">
                             <div class="programme-card-overline">TRAINING</div>
@@ -879,33 +875,27 @@
                     <!-- Card 3: PE Time to Train (inline timetable SVG) -->
                     <div class="programme-card">
                         <div class="programme-card-svg-bg" aria-hidden="true">
-                            <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="10" y="14" width="180" height="172" rx="10" fill="#2a2727" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-                                <line x1="10" y1="40" x2="190" y2="40" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-                                <text x="22" y="32" fill="rgba(212,175,55,0.85)" font-family="Inter, sans-serif" font-size="9" font-weight="700" letter-spacing="1.5">MON</text>
-                                <text x="62" y="32" fill="rgba(255,255,255,0.45)" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="1.5">TUE</text>
-                                <text x="100" y="32" fill="rgba(255,255,255,0.45)" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="1.5">WED</text>
-                                <text x="138" y="32" fill="rgba(255,255,255,0.45)" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="1.5">THU</text>
-                                <text x="174" y="32" fill="rgba(255,255,255,0.45)" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="1.5">FRI</text>
-                                <line x1="56" y1="40" x2="56" y2="186" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-                                <line x1="94" y1="40" x2="94" y2="186" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-                                <line x1="132" y1="40" x2="132" y2="186" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-                                <line x1="168" y1="40" x2="168" y2="186" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-                                <rect x="14" y="50" width="40" height="38" rx="4" fill="rgba(255,255,255,0.05)"/>
-                                <rect x="14" y="94" width="40" height="50" rx="4" fill="#874B46"/>
-                                <text x="34" y="116" fill="#fff" font-family="Inter, sans-serif" font-size="9" font-weight="700" text-anchor="middle">TRAIN</text>
-                                <text x="34" y="128" fill="rgba(255,255,255,0.75)" font-family="Inter, sans-serif" font-size="7" text-anchor="middle">PE</text>
-                                <rect x="14" y="150" width="40" height="32" rx="4" fill="rgba(255,255,255,0.05)"/>
-                                <rect x="58" y="50" width="34" height="48" rx="4" fill="rgba(255,255,255,0.05)"/>
-                                <rect x="58" y="104" width="34" height="40" rx="4" fill="rgba(255,255,255,0.05)"/>
-                                <rect x="96" y="50" width="34" height="38" rx="4" fill="rgba(255,255,255,0.05)"/>
-                                <rect x="96" y="94" width="34" height="50" rx="4" fill="#874B46"/>
-                                <text x="113" y="120" fill="#fff" font-family="Inter, sans-serif" font-size="9" font-weight="700" text-anchor="middle">TRAIN</text>
-                                <rect x="96" y="150" width="34" height="32" rx="4" fill="rgba(255,255,255,0.05)"/>
-                                <rect x="134" y="50" width="32" height="60" rx="4" fill="rgba(255,255,255,0.05)"/>
-                                <rect x="134" y="116" width="32" height="40" rx="4" fill="rgba(255,255,255,0.05)"/>
-                                <rect x="170" y="50" width="16" height="50" rx="4" fill="rgba(255,255,255,0.05)"/>
-                                <rect x="170" y="106" width="16" height="48" rx="4" fill="rgba(212,175,55,0.18)"/>
+                            <svg viewBox="0 0 240 240" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+                                <g transform="translate(0, 80)">
+                                    <rect x="6" y="0" width="40" height="80" rx="6" fill="rgba(255,255,255,0.06)"/>
+                                    <text x="26" y="26" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="rgba(255,255,255,0.55)" text-anchor="middle">MON</text>
+
+                                    <rect x="54" y="0" width="40" height="80" rx="6" fill="rgba(255,255,255,0.06)"/>
+                                    <text x="74" y="26" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="rgba(255,255,255,0.55)" text-anchor="middle">TUE</text>
+
+                                    <rect x="102" y="0" width="40" height="80" rx="6" fill="#874b46"/>
+                                    <text x="122" y="26" font-family="Inter, sans-serif" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">WED</text>
+                                    <text x="122" y="50" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.95)" text-anchor="middle">AA</text>
+                                    <text x="122" y="64" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.95)" text-anchor="middle">TRAINING</text>
+
+                                    <rect x="150" y="0" width="40" height="80" rx="6" fill="rgba(255,255,255,0.06)"/>
+                                    <text x="170" y="26" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="rgba(255,255,255,0.55)" text-anchor="middle">THU</text>
+
+                                    <rect x="198" y="0" width="40" height="80" rx="6" fill="#874b46"/>
+                                    <text x="218" y="26" font-family="Inter, sans-serif" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">FRI</text>
+                                    <text x="218" y="50" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.95)" text-anchor="middle">AA</text>
+                                    <text x="218" y="64" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.95)" text-anchor="middle">TRAINING</text>
+                                </g>
                             </svg>
                         </div>
                         <div class="programme-card-overlay"></div>
@@ -918,7 +908,7 @@
 
                     <!-- Card 4: Strength & Movement -->
                     <div class="programme-card">
-                        <img class="programme-card-bg" src="/assets/Nominate%20-Foundation%20Strength%20Patterns.png" alt="" loading="lazy">
+                        <img class="programme-card-bg" src="./assets/Nominate%20-Foundation%20Strength%20Patterns.png" alt="" loading="lazy">
                         <div class="programme-card-overlay"></div>
                         <div class="programme-card-content">
                             <div class="programme-card-overline">MOVEMENT</div>
@@ -929,7 +919,7 @@
 
                     <!-- Card 5: Grit Challenge -->
                     <div class="programme-card">
-                        <img class="programme-card-bg" src="/assets/Nominate%20-%20Goals%2C%20Vision%20%26%20Grit.png" alt="" loading="lazy">
+                        <img class="programme-card-bg" src="./assets/Nominate%20-%20Goals%2C%20Vision%20%26%20Grit.png" alt="" loading="lazy">
                         <div class="programme-card-overlay"></div>
                         <div class="programme-card-content">
                             <div class="programme-card-overline">PSYCHOLOGY</div>
@@ -940,7 +930,7 @@
 
                     <!-- Card 6: Earn Your Kit -->
                     <div class="programme-card">
-                        <img class="programme-card-bg" src="/assets/WarriorsKit.png" alt="" loading="lazy">
+                        <img class="programme-card-bg" src="./assets/WarriorsKit.png" alt="" loading="lazy">
                         <div class="programme-card-overlay"></div>
                         <div class="programme-card-content">
                             <div class="programme-card-overline">KIT</div>
