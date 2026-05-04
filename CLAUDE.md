@@ -29,61 +29,67 @@ The **Athlete Academy** is a comprehensive student athletic development system w
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `index.html` | Student Dashboard - Training Age radar, all scores | ✅ Complete |
-| `strength-portal.html` | Strength workouts - technique levels, strength tiers | ✅ Complete |
-| `admin.html` | Teacher admin panel - view all students, edit scores | ✅ Complete |
-| `grit-portal.html` | Grit Challenge - 8-session psychology assignment | 🔧 In Progress |
-| `COMPLETE-APPS-SCRIPT.gs` | Google Apps Script backend for all portals | ✅ Complete |
+| `index.html` | Student Dashboard — Training Age radar, all scores, AI hero/coaching insights | ✅ Live |
+| `strength-portal.html` | Strength workouts — technique levels (1–5), level-specific load tiers, Canvas video submission | ✅ Live |
+| `admin.html` | Teacher admin panel — view all students, edit scores, current-session control, session check-ins, Grit coach feedback | ✅ Live |
+| `grit-portal.html` | Grit Challenge — 8-session psychology assignment with planning, ideas, evidence reminders | ✅ Live |
+| `apply.html` | Student application form — Google sign-in + form, writes to `Student_Applications` | ✅ Live |
+| `nominate.html` | Coach nomination form — coach-facing, writes to `Nominations` | ✅ Live |
+| `fuel-lab.html` | Nutrition & recovery curriculum + 10-question quiz, plus teacher quiz-stats view | ✅ Live |
+| `profile-mockup.html` | Static design mockup for "Maya Hoffmann" — no backend wiring; design reference only | 🎨 Mockup |
+| `COMPLETE-APPS-SCRIPT.gs` | Google Apps Script backend for all portals (single web-app deployment) | ✅ Live |
+| `assets/` | Marketing screenshots used by `nominate.html` and `apply.html` | — |
 
 ---
 
-## API Endpoints
+## API Endpoint
 
-### Primary Athlete Data API
-```
-https://script.google.com/macros/s/AKfycbxg8voUoN0Lpffv_fQIcI7igALEksa0MSUscvNMS0HLWLY3Oi_9IqQbUwwSw1JzJ0HK/exec
-```
-Used by: `index.html`
+All portals share a **single Apps Script web-app deployment**:
 
-### Strength / Admin / Grit API
 ```
-https://script.google.com/macros/s/AKfycbzoyT7zqrOhEf3LAsflbRB73OO2-RaHdnCz5f676xuO9Odc6wFUQpo0aE3XX6Qt-Bk0/exec
+https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec
 ```
-Used by: `strength-portal.html`, `admin.html`, `grit-portal.html`
+
+Used by: `index.html`, `strength-portal.html`, `admin.html`, `grit-portal.html`, `apply.html`, `nominate.html`, `fuel-lab.html`.
+
+The script also calls Anthropic's API (`https://api.anthropic.com/v1/messages`, model `claude-sonnet-4-20250514`) for the dashboard's hero insight and coaching carousel. The key is read from Apps Script `Script Properties` under `ANTHROPIC_API_KEY`.
 
 ---
 
 ## Google OAuth Configuration
 
-**Client ID:** `761245051498-tptgfgo1ib49s01frtslltm4p6h03fvl.apps.googleusercontent.com`
+**Client ID:** `701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com`
+
+Used by every portal that requires sign-in (all except `profile-mockup.html`).
 
 ---
 
 ## Branding & Design System
 
 ### Colors
+Core brand tokens shared across portals:
 ```css
-:root {
-    --burgundy: #874B46;
-    --burgundy-dark: #6a3a36;
-    --burgundy-light: #a06b66;
-    --gold: #D4AF37;
-    --gold-light: #f5e6b3;
-    --black: #1a1a1a;
-    --white: #ffffff;
-    --off-white: #f8f6f5;
-    --grey: #555555;
-    --light-grey: #e0dede;
-    --green: #22c55e;
-    --green-dark: #16a34a;
-    --amber: #f59e0b;
-    --blue: #2563eb;
-}
+--burgundy: #874B46;
+--burgundy-dark: #6a3a36;   /* index.html uses #6b3430 as --primary */
+--burgundy-light: #a06b66;
+--gold: #D4AF37;
+--gold-light: #f5e6b3;
+--black: #1a1a1a;            /* index.html uses #1d1b1b */
+--white: #ffffff;
+--off-white: #f8f6f5;        /* page background is typically #fef8f6 */
+--green: #22c55e;
+--green-dark: #16a34a;
+--amber: #f59e0b;
 ```
+Per-file extras worth noting:
+- `index.html`: also defines `--primary`, `--primary-container`, `--secondary`, `--surface`, `--text`, `--text-muted`, plus medal tones (`--bronze`, `--copper`, `--silver`).
+- `fuel-lab.html`: editorial palette with `--ink`, `--ink-soft`, `--ink-mute`, `--cream`, `--line`, plus energy-system colours `--red-sys`, `--yellow-sys`, `--green-sys`.
 
 ### Typography
-- Primary: 'Segoe UI', system-ui, sans-serif
-- Weights: 400 (body), 600 (labels), 700 (headings), 800 (numbers)
+- Primary UI: **'Inter'** (Google Fonts) with `'Segoe UI', system-ui, sans-serif` fallback.
+- Display / hero headings on `apply.html`, `nominate.html`, `fuel-lab.html`: **'Barlow Condensed'**.
+- Editorial headings on `fuel-lab.html`: **'Fraunces'** serif.
+- Weights in use: 400 (body), 500/600 (labels), 700 (headings), 800–900 (display numbers).
 
 ### UX Preferences
 - Plain language — students with learning needs should understand everything
@@ -96,6 +102,28 @@ Used by: `strength-portal.html`, `admin.html`, `grit-portal.html`
 
 ---
 
+## Google Sheets — Tabs the Apps Script reads/writes
+
+| Sheet | Used by | Key columns |
+|-------|---------|-------------|
+| `Athletes` | all student lookups | `Athlete_ID`, `Email`, `Name` (or `First_Name` + `Last_Name`), `Grade` (or `Year_Group`), `Gender`, `Sport_1/2/3` |
+| `Strength` | dashboard, strength portal, admin | `Athlete_ID`, `Date`, per-pattern `_Tech` + `_Str_L2..L5` (+ legacy `_Str`), `Notes` |
+| `Performance` | dashboard | `Athlete_ID`, `Date`, `Broad_Jump_cm`, `40m_sec`, `5_10_5_sec`, `Cooper_m` |
+| `Mobility` | dashboard | `Athlete_ID`, `Date`, `ASL`, `Trunk_Stability`, `Shoulder_Mobility` (each 0–3) |
+| `Recovery` | dashboard | `Athlete_ID`, `Date`, `Recovery_Score`, `Nutrition`, `Movement_Technique` (ignored) |
+| `Psych_Assessments` | dashboard, admin psych update | `Athlete_ID`, `Date`, `Mindset`, `Focus_Engagement`, `Effort_Work_Ethic`, `Coachability`, `Mental_Toughness` |
+| `Grit_Journal` | dashboard, grit portal, admin | `Athlete_ID`, `Date`, `Grit_Assignment`, `Challenge_JSON`, `Challenge_Status`, `Challenge_Updated` |
+| `Workout_Logs` | strength portal, admin session counts | `Athlete_ID`, `Date`, `Session_Type`, `Session_Number`, `Exercises_Completed` (JSON), `Notes`, `Duration`, `Completed`, `RPE` |
+| `Config` | admin | key/value pairs (`CurrentSession` is the active one) |
+| `Observations` | admin check-ins | `Timestamp`, `Session_Number`, `Date`, `Athlete_ID`, `Athlete_Email`, `Rating`, `Rating_Label` |
+| `Nominations` | nominate.html | timestamp + coach + athlete + 4 ratings + reason |
+| `Student_Applications` | apply.html | timestamp + student + nominator + commitment rating + why |
+| `FuelLab_Quiz` | fuel-lab.html | `Timestamp`, `Email`, `Name`, `Score`, `Total`, `Q1..Q10` (1/0/blank per question) |
+
+Sheets are auto-created by the Apps Script when missing (`ensure*` helpers). Most reads use the most-recent row by `Date`. Strength/Grit reads pick the most-recent row per athlete.
+
+---
+
 ## Training Age Framework
 
 ```
@@ -103,22 +131,24 @@ Training Age = (Psychology × 0.35) + (Physiology × 0.35) + (Health & Skills ×
 ```
 
 ### Psychology Pillar
-Average of: Mindset, Focus & Engagement, Effort & Work Ethic, Coachability, Mental Toughness
-- Source: Psych_Assessments and Grit_Journal sheets
+Average of: Mindset, Focus & Engagement, Effort & Work Ethic, Coachability, Mental Toughness.
+- Mindset, Focus_Engagement, Effort_Work_Ethic, Coachability, Mental_Toughness come from `Psych_Assessments` (latest row by Date).
+- `Grit_Journal.Grit_Assignment` is also surfaced on the athlete object (used elsewhere on the dashboard) but is *not* part of the Psychology average above.
 
 ### Physiology Pillar
 Average of non-zero values from:
-- Strength — see scoring logic below
-- Broad Jump — raw cm converted to 1–5 via gender-specific thresholds
-- 40m Sprint — raw seconds converted to 1–5
-- Agility (5-10-5) — raw seconds converted to 1–5
-- Cooper Test — raw metres converted to 1–5
+- Strength — per-pattern composite, see scoring logic below
+- Broad Jump — raw cm from `Performance.Broad_Jump_cm`, gender thresholds → 1–5
+- 40m Sprint — raw seconds from `Performance.40m_sec`, gender thresholds → 1–5
+- Agility (5-10-5) — raw seconds from `Performance.5_10_5_sec`, gender thresholds → 1–5
+- Cooper Test — raw metres from `Performance.Cooper_m`, gender thresholds → 1–5
+- Mobility — average of `Mobility.ASL`, `Mobility.Trunk_Stability`, `Mobility.Shoulder_Mobility`, each /3 × 5 (FMS-style 0–3 normalised to a 1–5 scale)
 
 ### Health & Skills Pillar
 Average of:
-- Movement Technique — see scoring logic below
-- Recovery Score — manually entered 1–5 from Recovery sheet
-- Nutrition — manually entered 1–5 from Recovery sheet
+- Movement Technique — derived from the 6 Tech scores in the Strength sheet (see below)
+- Recovery Score — manually entered 1–5 from `Recovery.Recovery_Score`
+- Nutrition — manually entered 1–5 from `Recovery.Nutrition`
 
 ---
 
@@ -126,25 +156,37 @@ Average of:
 
 **This is critical — do not revert to the old flat average logic.**
 
+### Strength sheet columns (current schema)
+
+For each pattern (Squat, Hinge, Push, Pull, Lunge, Press) the sheet stores:
+- `{Pattern}_Tech` — current technique level, 0–5
+- `{Pattern}_Str_L2`, `{Pattern}_Str_L3`, `{Pattern}_Str_L4`, `{Pattern}_Str_L5` — load-tier score (0–5) achieved at each technique level
+- `{Pattern}_Str` — **legacy** flat column, kept only as a fallback during data migration
+
+Plus shared columns: `Athlete_ID`, `Date`, `Notes`.
+
 ### Strength Score (Physiology pillar)
 
-For each of the 6 movement patterns (Squat, Hinge, Push, Pull, Lunge, Press):
-- Read `{Pattern}_Tech` (0–5) and `{Pattern}_Str` (0–5) from Strength sheet
-- If both are 0 or missing → pattern sub-score = 0
-- If only Tech present (Str is 0, blank, or '—') → pattern sub-score = Tech value
-- If both present → pattern sub-score = (Tech + Str) / 2
-- If Str present but Tech is 0 (data error) → pattern sub-score = Str value
+For each of the 6 movement patterns:
+1. Read `{Pattern}_Tech` (0–5).
+2. If `Tech ∈ [2,5]`, read the matching level-specific column `{Pattern}_Str_L{Tech}`. Otherwise Str = 0.
+3. **Fallback:** if the level-specific column is empty / 0, fall back to legacy `{Pattern}_Str` (this fallback exists in both `index.html` and `getAllStudents` and should be removed once all data is migrated).
+4. Pattern sub-score:
+   - If both Tech and Str > 0 → `(Tech + Str) / 2`
+   - If only Tech > 0 → `Tech`
+   - If only Str > 0 (data error) → `Str`
+   - Otherwise → 0
 
-Final Strength score = sum of all 6 pattern sub-scores / 6
+Final Strength score = sum of all 6 pattern sub-scores / 6.
 
 Always divide by 6 — unassessed patterns count as zero and pull the score down intentionally. A student with more patterns assessed should score higher than one with fewer.
 
 ### Movement Technique Score (Health & Skills pillar)
 
-- Sourced from the 6 Tech scores in the Strength sheet — NOT from the manually entered Recovery sheet value
-- Movement Technique = sum of all 6 `{Pattern}_Tech` values / 6
-- Always divide by 6 — zeros count
-- The Recovery sheet still has a `Movement_Technique` column but it is ignored in the calculation
+- Sourced from the 6 `{Pattern}_Tech` values in the Strength sheet — NOT from `Recovery.Movement_Technique`.
+- Movement Technique = sum of all 6 `{Pattern}_Tech` values / 6.
+- Always divide by 6 — zeros count.
+- The Recovery sheet still has a `Movement_Technique` column but it is ignored in the dashboard calculation.
 
 ---
 
@@ -153,20 +195,22 @@ Always divide by 6 — unassessed patterns count as zero and pull the score down
 ### Purpose
 8-session athletic development challenge building Psychology scores: Mindset, Mental Toughness, Grit.
 
-### Timeline (Spring 2025)
+### Timeline (Spring 2026)
+
+The grit-portal display strings show day + date only ("Wed 25 Mar"); the year is hard-coded in `admin.html`'s session-checkin date list as 2026.
 
 | Date | Session |
 |------|---------|
-| Wed 25 Mar | Session 1: Baseline measurement |
-| 30 Mar – 12 Apr | Spring Break (optional practice) |
-| Wed 15 Apr | Session 2 |
-| Mon 20 Apr | Session 3 |
-| Wed 22 Apr | Session 4 |
-| Mon 27 Apr | Session 5 |
-| Tue 5 May | Session 6 |
-| Wed 13 May | Session 7 |
-| Tue 19 May | Session 8: Final test |
-| Thu 22 May | **DUE** — All evidence in Google Drive folder |
+| Wed 25 Mar 2026 | Session 1: Baseline measurement |
+| 30 Mar – 12 Apr 2026 | Spring Break (optional practice) |
+| Wed 15 Apr 2026 | Session 2 |
+| Mon 20 Apr 2026 | Session 3 |
+| Wed 22 Apr 2026 | Session 4 |
+| Mon 27 Apr 2026 | Session 5 |
+| Tue 5 May 2026 | Session 6 |
+| Wed 13 May 2026 | Session 7 |
+| Tue 19 May 2026 | Session 8: Final test |
+| Thu 22 May 2026 | **DUE** — All evidence in Google Drive folder |
 
 ### Challenge Types
 
@@ -174,26 +218,25 @@ Always divide by 6 — unassessed patterns count as zero and pull the score down
 
 Categories: Broad Jump, Sprint, Agility, Cooper
 
-Strength is also a Fitness category but has its own custom setup:
-- Exercise(s) — free text
-- Current weight (kg) — number input
-- Reps — number input, minimum 5 enforced (no single rep maxes at this age)
-- Goal weight (kg) — number input
-- Progress display: "[Exercise] — [current weight]kg × [reps] reps → [goal weight]kg × [reps] reps"
-- Progress % based on weight: (current - start) / (goal - start) × 100
-- Session check-in for Strength asks "What weight are you lifting now?" as the primary metric
+Strength is also a Fitness category but has its own custom setup (`grit-portal.html` lines ~430–467):
+- **Exercise** — free text (e.g. "Back Squat")
+- **Starting weight or reps** — single text input (placeholder `e.g. 20kg or 15 reps`)
+- **Goal weight or reps** — single text input (placeholder `e.g. 20kg or 15 reps`)
+- Inline hint: "If your goal is max reps, aim for at least 5 — we don't test single rep maxes at this stage." (Hint only — not enforced.)
+- Progress display reads `${exercise}` then `${baseline} → ${target}` then `Now: ${current}`.
+- Progress % based on the numeric portion of the strings: `(current - start) / (goal - start) × 100`.
+- Session check-in prompt for Strength sessions 2–7: "What are you lifting or hitting now? (kg or reps)".
 
-All other Fitness categories (Broad Jump, Sprint, Agility, Cooper) use a single number baseline/target flow — start score, current score, goal score.
+All other Fitness categories (Broad Jump, Sprint, Agility, Cooper) use a single text baseline/target flow — start score, current score, goal score.
 
 **Personal Challenge** — student-defined
 
-Categories:
-- Skill or Strategy — sport skills, game tactics, decision making under pressure
-- Movement & Technique — athletic movement quality: sprinting, lifting, jumping, landing, changing direction
-- Mobility — flexibility, range of motion, joint control
-- Custom — anything else
-
-Note: Endurance is NOT a Personal Challenge category. Students wanting to improve Cooper/running use the Fitness path.
+Categories (`PERSONAL_OPTIONS` in `grit-portal.html`):
+- **Sport Skill** 🎯 (`id: sport`) — sport skills, game tactics, decision making under pressure
+- **Movement** 🤸 (`id: movement`) — athletic movement quality: sprinting, lifting, jumping, landing, changing direction
+- **Endurance** 🏃 (`id: endurance`) — running/aerobic work outside the official Cooper path; idea content currently mirrors the Sport Skill ideas as a fallback
+- **Mobility** 🧘 (`id: mobility`) — flexibility, range of motion, joint control
+- **Custom** ✨ (`id: custom`) — anything else, with a free-text description
 
 ### Setup Flow (4 Steps)
 1. **Choose Type** — Fitness or Personal Challenge (fitness scores visible on Fitness card)
@@ -283,13 +326,51 @@ Content is category-specific based on the student's chosen challenge type. See f
 
 ---
 
+## Apps Script Actions Reference (`COMPLETE-APPS-SCRIPT.gs`)
+
+`doGet` dispatches on `?action=…` (or returns student data when `?email=` is supplied with no action; `?admin=true` returns every athlete). `doPost` reads `data.action` from the JSON body.
+
+### GET actions
+| Action | Purpose | Caller |
+|--------|---------|--------|
+| `getAthleteData` | Build full athlete object (psych, strength, performance, mobility, recovery + history) | index, strength, grit |
+| `getAllStudents` | All athletes + strength + Workout_Logs session counts | admin |
+| `getConfig` / `setConfig` | Read/write `Config` sheet (e.g. `CurrentSession`) | admin, strength |
+| `updateStudent` | Write Tech / Str_Lx / Notes to `Strength` (also exposed via POST) | admin |
+| `saveWorkout` | Append a row to `Workout_Logs` (also exposed via POST) | strength |
+| `getLastSession`, `getLastSessionByType`, `getWorkoutHistory`, `getNextWeights` | Workout history helpers | strength, index |
+| `getGritChallenge` | Latest `Challenge_JSON` for one athlete | grit, admin |
+| `getGritAdminData` | Most-recent challenge per athlete + name/email | admin |
+| `getSessionPlanning` | All active challenges' session-N data + `hasPlanned` flag | admin |
+| `getObservations` | Read `Observations` (optionally filtered by session) | admin |
+| `getFuelLabQuizStats` | Latest-per-student quiz stats: avg score, per-question %, easiest/hardest | fuel-lab teacher view |
+
+### POST actions (JSON body)
+| Action | Purpose | Caller |
+|--------|---------|--------|
+| `saveWorkout` | Log a strength session | strength |
+| `updateStudent` | Edit strength scores (any of `_Tech`, `_Str`, `_Str_L2..L5`, `Notes`) | admin |
+| `saveGritChallenge` | Persist `currentChallenge` JSON blob to `Grit_Journal` | grit, admin |
+| `saveCoachFeedback` | Write `coachFeedback` + `requiresPlanningFirst` into a session inside `Challenge_JSON` | admin |
+| `updatePsychScores` | Write Mindset / Mental_Toughness / Grit (1–5) to today's `Psych_Assessments` row | admin |
+| `getAICoachingInsights` | Anthropic call → JSON insights for the dashboard carousel | index |
+| `getHeroInsight` | Anthropic call → single-sentence hero line | index |
+| `saveNomination` | Append to `Nominations` | nominate.html |
+| `saveStudentApplication` | Append to `Student_Applications` | apply.html |
+| `saveObservation` | Append/update `Observations` row for athlete + session | admin |
+| `submitFuelLabQuiz` | Append a row to `FuelLab_Quiz` | fuel-lab.html |
+
+`getAICoachingInsights` and `getHeroInsight` need `ANTHROPIC_API_KEY` set in Apps Script `Script Properties`.
+
+---
+
 ## Data Architecture
 
-- All challenge data saved as a JSON blob in Grit_Journal sheet, `Challenge_JSON` column
-- `persistChallenge()` sends the entire `currentChallenge` object on every save
-- Session data stored at `currentChallenge.sessions[n-1]`
-- New field names: `goal`, `baseline`, `plan`, `measure`, `obstacle`, `counter` (sessions 1–7), `finalRemeasure`, `changed`, `difference`, `differently`, `proud` (session 8)
-- Old field names still supported for backwards compatibility: `what`, `excuse`, `overcome`, `learned`, `finalMeasure`, `reached`, `almostQuit`, `lesson`
+- All challenge data saved as a JSON blob in `Grit_Journal.Challenge_JSON`. Status and last-updated timestamp are tracked in sibling columns `Challenge_Status` and `Challenge_Updated`.
+- `persistChallenge()` sends the entire `currentChallenge` object on every save.
+- Session data stored at `currentChallenge.sessions[n-1]`. Coach feedback (when entered from admin) is written into the same session object as `coachFeedback` and `requiresPlanningFirst`.
+- New field names: `goal`, `baseline`, `plan`, `measure`, `obstacle`, `counter` (sessions 1–7), `finalRemeasure`, `changed`, `difference`, `differently`, `proud` (session 8).
+- Legacy field names still supported for backwards compatibility: `what`, `excuse`, `overcome`, `learned`, `finalMeasure`, `reached`, `almostQuit`, `lesson`.
 
 ---
 
@@ -337,24 +418,14 @@ Content is category-specific based on the student's chosen challenge type. See f
 
 ---
 
-## Remaining Work
+## Known Tech Debt / Follow-ups
 
-### Immediate (before students use it today)
-- Verify evidence reminder references Google Drive folder (not Canvas upload)
-- Verify completed session read-only view is working
-- Verify session planning data saves and reloads correctly after page refresh
-- Verify Strength custom setup (exercise/weight/reps) is working
-- Test full flow with real Google login
-
-### Short term
-- Deploy updated Apps Script with Grit functions
-- Fix Strength score calculation in index.html (per-pattern average, divide by 6)
-- Fix Movement Technique in index.html (source from Tech scores not Recovery sheet)
-
-### Future
-- Admin view for Grit challenges (see all students, approve plans, enter scores)
-- Dashboard integration (show Grit status on main dashboard)
-- Psychology scores flowing back to Training Age radar from Grit challenge
+- **Legacy `{Pattern}_Str` column.** Both `index.html` and the Apps Script `getAllStudents` include a `TEMPORARY FALLBACK` to the old flat `_Str` column when `_Str_L{Tech}` is empty. Remove once all data is migrated to level-specific columns.
+- **`Recovery.Movement_Technique`.** Column still exists in the sheet but is ignored — Movement Technique is derived from Strength `_Tech` columns. Safe to delete after a sheet audit.
+- **Grit Endurance ideas.** `SESSION_IDEAS.personal.endurance` in `grit-portal.html` currently mirrors the Sport-Skill copy as a placeholder; replace with endurance-specific ideas.
+- **Grit Strength setup inputs.** Currently single text fields ("e.g. 20kg or 15 reps") with no numeric validation. If we want enforced numeric kg + reps + min-5-reps, the inputs need to be split.
+- **Hero / coaching insights.** Both call Anthropic with `claude-sonnet-4-20250514`; bump to a current model when refreshing.
+- **Year is hard-coded.** Session-checkin dates in `admin.html` are 2026 literals; update each spring.
 
 ---
 
