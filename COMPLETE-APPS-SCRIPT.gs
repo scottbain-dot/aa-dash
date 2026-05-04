@@ -1702,9 +1702,12 @@ function handleSaveStudentApplication(data) {
         'Why_Applying',
         'Commitment_Rating',
         'Additional_Info',
-        'Goals'
+        'Goals',
+        'Training_Detail',
+        'Strength_Experience',
+        'Support_Type'
       ]);
-      sheet.getRange(1, 1, 1, 10).setFontWeight('bold');
+      sheet.getRange(1, 1, 1, 13).setFontWeight('bold');
     }
 
     sheet.appendRow([
@@ -1717,7 +1720,10 @@ function handleSaveStudentApplication(data) {
       data.whyApplying || '',
       data.commitmentRating || 0,
       data.additionalInfo || '',
-      data.goals || ''
+      data.goals || '',
+      data.trainingDetail || '',
+      data.strengthExperience || 0,
+      data.supportType || 0
     ]);
 
     return { success: true };

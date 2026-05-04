@@ -247,7 +247,7 @@
             font-style: italic;
             margin-bottom: 2rem;
         }
-        .form-group { margin-bottom: 1.25rem; }
+        .form-group { margin-bottom: 1rem; background: #f5ede9; padding: 1.25rem 1.5rem; border-radius: 0.875rem; }
         .form-group label {
             display: block;
             font-size: 0.8125rem;
@@ -261,7 +261,7 @@
             padding: 0.75rem 1rem;
             border: 1.5px solid #e0dede;
             border-radius: 0.625rem;
-            background: #f8f6f5;
+            background: #ffffff;
             font-size: 0.875rem;
             color: var(--black);
             font-weight: 500;
@@ -276,7 +276,7 @@
             font-family: 'Inter', sans-serif;
             font-size: 0.875rem;
             color: var(--black);
-            background: #fafafa;
+            background: #ffffff;
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
             outline: none;
         }
@@ -306,17 +306,18 @@
             margin: 2rem 0;
         }
 
-        /* Commitment 1-5 pill rating */
-        .commitment-row { margin-bottom: 1.5rem; }
+        /* Scale-pill rating (1-5 or 1-3) */
+        .commitment-row { margin-bottom: 1rem; background: #f5ede9; padding: 1.25rem 1.5rem; border-radius: 0.875rem; }
         .commitment-pills {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
             gap: 0.5rem;
             margin-top: 0.5rem;
         }
+        .commitment-pills--five { grid-template-columns: repeat(5, 1fr); }
+        .commitment-pills--three { grid-template-columns: repeat(3, 1fr); }
         .commitment-pill {
             border: 2px solid #e0dede;
-            background: #fafafa;
+            background: #ffffff;
             border-radius: 0.75rem;
             padding: 0.75rem 0.85rem;
             cursor: pointer;
@@ -717,12 +718,13 @@
         }
 
         @media (max-width: 480px) {
-            .commitment-pills {
+            .commitment-pills--five {
                 grid-template-columns: repeat(6, 1fr);
             }
-            .commitment-pill { grid-column: span 2; }
-            .commitment-pill:nth-child(4) { grid-column: 2 / span 2; }
-            .commitment-pill:nth-child(5) { grid-column: 4 / span 2; }
+            .commitment-pills--five .commitment-pill { grid-column: span 2; }
+            .commitment-pills--five .commitment-pill:nth-child(4) { grid-column: 2 / span 2; }
+            .commitment-pills--five .commitment-pill:nth-child(5) { grid-column: 4 / span 2; }
+            .commitment-pills--three { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -839,7 +841,7 @@
 
                         <div class="commitment-row">
                             <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--black); margin-bottom:0.375rem;">How often are you currently training outside of school? <span class="required">*</span></label>
-                            <div class="commitment-pills" id="commitmentPills">
+                            <div class="commitment-pills commitment-pills--five" id="commitmentPills">
                                 <button type="button" class="commitment-pill" data-value="1">
                                     <span class="pill-num">1</span>
                                     <span class="pill-text">Not yet — ready to start</span>
@@ -862,6 +864,58 @@
                                 </button>
                             </div>
                             <div class="commitment-error" id="commitmentError">Please pick a number from 1 to 5</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>What do you do outside of school? <span class="required">*</span></label>
+                            <textarea id="trainingDetail" required style="min-height: 140px;" placeholder="Tell us about your training, sport, and any coaching or programmes you follow."></textarea>
+                            <div class="error-message">Please tell us what you do outside of school</div>
+                        </div>
+
+                        <div class="commitment-row">
+                            <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--black); margin-bottom:0.375rem;">How many years of strength training experience do you have? <span class="required">*</span></label>
+                            <div class="commitment-pills commitment-pills--five" id="strengthExperiencePills">
+                                <button type="button" class="commitment-pill" data-value="1">
+                                    <span class="pill-num">1</span>
+                                    <span class="pill-text">Less than 6 months</span>
+                                </button>
+                                <button type="button" class="commitment-pill" data-value="2">
+                                    <span class="pill-num">2</span>
+                                    <span class="pill-text">About a year</span>
+                                </button>
+                                <button type="button" class="commitment-pill" data-value="3">
+                                    <span class="pill-num">3</span>
+                                    <span class="pill-text">1–2 years</span>
+                                </button>
+                                <button type="button" class="commitment-pill" data-value="4">
+                                    <span class="pill-num">4</span>
+                                    <span class="pill-text">2–3 years</span>
+                                </button>
+                                <button type="button" class="commitment-pill" data-value="5">
+                                    <span class="pill-num">5</span>
+                                    <span class="pill-text">3+ years</span>
+                                </button>
+                            </div>
+                            <div class="commitment-error" id="strengthExperienceError">Please pick a number from 1 to 5</div>
+                        </div>
+
+                        <div class="commitment-row">
+                            <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--black); margin-bottom:0.375rem;">What kind of support are you looking for from AA? <span class="required">*</span></label>
+                            <div class="commitment-pills commitment-pills--three" id="supportTypePills">
+                                <button type="button" class="commitment-pill" data-value="1">
+                                    <span class="pill-num">1</span>
+                                    <span class="pill-text">I already have a structured strength &amp; conditioning plan that works for my goals.</span>
+                                </button>
+                                <button type="button" class="commitment-pill" data-value="2">
+                                    <span class="pill-num">2</span>
+                                    <span class="pill-text">I want a structured plan created for me and my goals.</span>
+                                </button>
+                                <button type="button" class="commitment-pill" data-value="3">
+                                    <span class="pill-num">3</span>
+                                    <span class="pill-text">I have a plan but want to make it better.</span>
+                                </button>
+                            </div>
+                            <div class="commitment-error" id="supportTypeError">Please pick an option</div>
                         </div>
 
                         <div class="form-separator"></div>
@@ -1087,7 +1141,11 @@
         const CLIENT_ID = '701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com';
 
         let currentUser = null;
-        let commitmentRating = 0;
+        const scaleValues = {
+            commitmentPills: 0,
+            strengthExperiencePills: 0,
+            supportTypePills: 0
+        };
 
         // ===== Google Sign-In =====
         window.onload = function() {
@@ -1149,12 +1207,15 @@
             });
         });
 
-        // ===== Commitment rating =====
+        // ===== Scale-pill ratings (frequency, strength experience, support type) =====
         document.querySelectorAll('.commitment-pill').forEach(pill => {
             pill.addEventListener('click', () => {
-                commitmentRating = parseInt(pill.dataset.value, 10);
-                document.querySelectorAll('.commitment-pill').forEach(p => p.classList.toggle('selected', p === pill));
-                document.getElementById('commitmentError').classList.remove('visible');
+                const container = pill.closest('.commitment-pills');
+                if (!container) return;
+                scaleValues[container.id] = parseInt(pill.dataset.value, 10);
+                container.querySelectorAll('.commitment-pill').forEach(p => p.classList.toggle('selected', p === pill));
+                const errorEl = container.parentElement.querySelector('.commitment-error');
+                if (errorEl) errorEl.classList.remove('visible');
             });
         });
 
@@ -1188,7 +1249,8 @@
                 { id: 'sports', type: 'text' },
                 { id: 'nominatorName', type: 'text' },
                 { id: 'whyApplying', type: 'textarea' },
-                { id: 'goals', type: 'textarea' }
+                { id: 'goals', type: 'textarea' },
+                { id: 'trainingDetail', type: 'textarea' }
             ];
 
             requiredFields.forEach(field => {
@@ -1206,11 +1268,19 @@
                 }
             });
 
-            if (commitmentRating === 0) {
-                document.getElementById('commitmentError').classList.add('visible');
-                if (!firstError) firstError = document.getElementById('commitmentPills');
-                valid = false;
-            }
+            const requiredScales = [
+                { id: 'commitmentPills', errorId: 'commitmentError' },
+                { id: 'strengthExperiencePills', errorId: 'strengthExperienceError' },
+                { id: 'supportTypePills', errorId: 'supportTypeError' }
+            ];
+
+            requiredScales.forEach(scale => {
+                if (scaleValues[scale.id] === 0) {
+                    document.getElementById(scale.errorId).classList.add('visible');
+                    if (!firstError) firstError = document.getElementById(scale.id);
+                    valid = false;
+                }
+            });
 
             if (!valid) {
                 if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1229,7 +1299,10 @@
                 nominatorName: document.getElementById('nominatorName').value.trim(),
                 whyApplying: document.getElementById('whyApplying').value.trim(),
                 goals: document.getElementById('goals').value.trim(),
-                commitmentRating: commitmentRating,
+                commitmentRating: scaleValues.commitmentPills,
+                trainingDetail: document.getElementById('trainingDetail').value.trim(),
+                strengthExperience: scaleValues.strengthExperiencePills,
+                supportType: scaleValues.supportTypePills,
                 additionalInfo: document.getElementById('additionalInfo').value.trim()
             };
 
