@@ -1701,9 +1701,10 @@ function handleSaveStudentApplication(data) {
         'Nominator_Name',
         'Why_Applying',
         'Commitment_Rating',
-        'Additional_Info'
+        'Additional_Info',
+        'Goals'
       ]);
-      sheet.getRange(1, 1, 1, 9).setFontWeight('bold');
+      sheet.getRange(1, 1, 1, 10).setFontWeight('bold');
     }
 
     sheet.appendRow([
@@ -1715,7 +1716,8 @@ function handleSaveStudentApplication(data) {
       data.nominatorName || '',
       data.whyApplying || '',
       data.commitmentRating || 0,
-      data.additionalInfo || ''
+      data.additionalInfo || '',
+      data.goals || ''
     ]);
 
     return { success: true };

@@ -309,14 +309,12 @@
         /* Commitment 1-5 pill rating */
         .commitment-row { margin-bottom: 1.5rem; }
         .commitment-pills {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
             gap: 0.5rem;
-            flex-wrap: wrap;
             margin-top: 0.5rem;
         }
         .commitment-pill {
-            flex: 1;
-            min-width: 130px;
             border: 2px solid #e0dede;
             background: #fafafa;
             border-radius: 0.75rem;
@@ -715,8 +713,16 @@
                 border-left: 2px dashed #d7c2bf;
                 margin: 0 auto;
             }
-            .commitment-pill { min-width: calc(50% - 0.25rem); }
             .confirmation-heading { font-size: 2rem; }
+        }
+
+        @media (max-width: 480px) {
+            .commitment-pills {
+                grid-template-columns: repeat(6, 1fr);
+            }
+            .commitment-pill { grid-column: span 2; }
+            .commitment-pill:nth-child(4) { grid-column: 2 / span 2; }
+            .commitment-pill:nth-child(5) { grid-column: 4 / span 2; }
         }
     </style>
 </head>
@@ -781,7 +787,7 @@
                 <div class="form-container">
                     <div class="form-overline">YOUR APPLICATION</div>
                     <h2 class="form-heading">Tell us about yourself</h2>
-                    <p class="form-subtext">Applications are open for the 2026–27 cohort. Places are limited.</p>
+                    <p class="form-subtext">Applications are open for the 2026–27 cohort. Applications close Monday 25 May 2026.</p>
                     <form id="apply-form" novalidate>
                         <div class="form-group">
                             <label>Your name</label>
@@ -823,30 +829,36 @@
                             <div class="error-message">Please tell us why you want to join</div>
                         </div>
 
+                        <div class="form-group">
+                            <label>What do you want to get out of AA? <span class="required">*</span></label>
+                            <textarea id="goals" required style="min-height: 140px;" placeholder="Tell us what you're hoping to develop, learn, or achieve."></textarea>
+                            <div class="error-message">Please tell us what you want to get out of AA</div>
+                        </div>
+
                         <div class="form-separator"></div>
 
                         <div class="commitment-row">
-                            <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--black); margin-bottom:0.375rem;">How would you describe your commitment to training outside of school? <span class="required">*</span></label>
+                            <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--black); margin-bottom:0.375rem;">How often are you currently training outside of school? <span class="required">*</span></label>
                             <div class="commitment-pills" id="commitmentPills">
                                 <button type="button" class="commitment-pill" data-value="1">
                                     <span class="pill-num">1</span>
-                                    <span class="pill-text">Just getting started</span>
+                                    <span class="pill-text">Not yet — ready to start</span>
                                 </button>
                                 <button type="button" class="commitment-pill" data-value="2">
                                     <span class="pill-num">2</span>
-                                    <span class="pill-text">Training occasionally</span>
+                                    <span class="pill-text">Once a week or so</span>
                                 </button>
                                 <button type="button" class="commitment-pill" data-value="3">
                                     <span class="pill-num">3</span>
-                                    <span class="pill-text">Training regularly</span>
+                                    <span class="pill-text">2–3 times a week</span>
                                 </button>
                                 <button type="button" class="commitment-pill" data-value="4">
                                     <span class="pill-num">4</span>
-                                    <span class="pill-text">Training most days</span>
+                                    <span class="pill-text">4–5 times a week</span>
                                 </button>
                                 <button type="button" class="commitment-pill" data-value="5">
                                     <span class="pill-num">5</span>
-                                    <span class="pill-text">Fully committed</span>
+                                    <span class="pill-text">Most days, structured programme</span>
                                 </button>
                             </div>
                             <div class="commitment-error" id="commitmentError">Please pick a number from 1 to 5</div>
@@ -1175,7 +1187,8 @@
                 { id: 'currentGrade', type: 'select' },
                 { id: 'sports', type: 'text' },
                 { id: 'nominatorName', type: 'text' },
-                { id: 'whyApplying', type: 'textarea' }
+                { id: 'whyApplying', type: 'textarea' },
+                { id: 'goals', type: 'textarea' }
             ];
 
             requiredFields.forEach(field => {
@@ -1215,6 +1228,7 @@
                 sports: document.getElementById('sports').value.trim(),
                 nominatorName: document.getElementById('nominatorName').value.trim(),
                 whyApplying: document.getElementById('whyApplying').value.trim(),
+                goals: document.getElementById('goals').value.trim(),
                 commitmentRating: commitmentRating,
                 additionalInfo: document.getElementById('additionalInfo').value.trim()
             };
