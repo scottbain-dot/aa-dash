@@ -3,6 +3,9 @@
 // WITH WORKOUT SYSTEM + ADMIN PANEL + GRIT CHALLENGE
 // ========================================
 
+// academy-portal.html uses: getAthleteData (GET, ?email=)
+// New actions will be added in subsequent prompts
+
 function doGet(e) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();

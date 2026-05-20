@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athlete Academy — G10-12 Portal</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --burgundy: #874B46;
+            --burgundy-dark: #6a3a36;
+            --burgundy-light: #a06b66;
+            --gold: #D4AF37;
+            --gold-light: #f5e6b3;
+            --dark: #1d1b1b;
+            --white: #ffffff;
+            --off-white: #fef8f6;
+            --cream: #f8f2f1;
+            --grey: #524342;
+            --light-grey: #e8e0de;
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: var(--off-white);
+            color: var(--dark);
+            min-width: 1024px;
+            min-height: 100vh;
+        }
+
+        /* ───────── Welcome / Sign-in Screen ───────── */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .welcome-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        .welcome-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--burgundy);
+            letter-spacing: -0.01em;
+            margin-bottom: 0.5rem;
+        }
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            color: var(--grey);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .welcome-pill {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--dark);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.2rem 0.7rem;
+            border-radius: 999px;
+            letter-spacing: 0.05em;
+            margin-bottom: 2rem;
+        }
+        .privacy-notice {
+            background: rgba(135, 75, 70, 0.06);
+            border: 1px solid rgba(135, 75, 70, 0.12);
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+            max-width: 420px;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            color: var(--grey);
+        }
+
+        /* ───────── Loading Spinner ───────── */
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            gap: 1.5rem;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(135, 75, 70, 0.15);
+            border-top-color: var(--burgundy);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 0.95rem;
+            color: var(--grey);
+            font-weight: 500;
+        }
+
+        /* ───────── Gatekeeper / Error Messages ───────── */
+        .gate-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 40px 20px;
+            gap: 1.25rem;
+        }
+        .gate-icon {
+            font-size: 3rem;
+        }
+        .gate-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--burgundy);
+            letter-spacing: -0.01em;
+        }
+        .gate-message {
+            font-size: 1rem;
+            color: var(--grey);
+            max-width: 480px;
+            line-height: 1.5;
+        }
+        .gate-link {
+            display: inline-block;
+            background: var(--burgundy);
+            color: var(--white);
+            text-decoration: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .gate-link:hover { background: var(--burgundy-dark); }
+
+        /* ───────── Top Navigation — glassmorphism ───────── */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(254, 248, 246, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(135, 75, 70, 0.08);
+            box-shadow: 0 12px 32px rgba(53, 15, 13, 0.04);
+            z-index: 50;
+        }
+        .top-nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .nav-logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--burgundy);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            color: var(--white);
+        }
+        .nav-logo-text {
+            color: var(--burgundy);
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            font-size: 0.95rem;
+        }
+        .nav-grade-pill {
+            background: var(--gold);
+            color: var(--dark);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            letter-spacing: 0.03em;
+        }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .nav-bell {
+            position: relative;
+            background: none;
+            border: none;
+            color: var(--burgundy);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            line-height: 1;
+        }
+        .nav-bell-dot {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 8px;
+            background: var(--gold);
+            border-radius: 50%;
+            border: 2px solid var(--off-white);
+        }
+        .nav-user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--grey);
+        }
+        .nav-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--burgundy);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .nav-signout {
+            background: none;
+            border: none;
+            color: var(--grey);
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: underline;
+            font-family: inherit;
+        }
+        .nav-signout:hover { color: var(--burgundy); }
+
+        /* ───────── Main Layout ───────── */
+        .portal-main {
+            padding: 0;
+        }
+
+        /* ───────── Hero Section ───────── */
+        .hero-section {
+            background: var(--dark);
+            border-radius: 2rem;
+            padding: 2.5rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(53, 15, 13, 0.18);
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 30% 0%, rgba(212,175,55,0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 100%, rgba(135,75,70,0.12) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .hero-grid {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 3fr 5fr 4fr;
+            gap: 2rem;
+            align-items: center;
+        }
+        .hero-col {
+            min-height: 200px;
+        }
+
+        /* ───────── Content Grid (below hero) ───────── */
+        .content-grid {
+            max-width: 1200px;
+            margin: 0 auto 4rem;
+            padding: 0 2rem;
+        }
+        .content-card {
+            background: var(--white);
+            border-radius: 2rem;
+            padding: 2rem;
+            box-shadow: 0 8px 28px rgba(53, 15, 13, 0.06);
+            margin-bottom: 1.5rem;
+        }
+
+        /* ───────── Drawer ───────── */
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(29, 27, 27, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .drawer-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 480px;
+            background: var(--white);
+            z-index: 101;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            padding: 2rem;
+            box-shadow: -12px 0 40px rgba(53, 15, 13, 0.12);
+        }
+        .drawer.open {
+            transform: translateX(0);
+        }
+        .drawer-close {
+            position: absolute;
+            top: 1.25rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--burgundy);
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.25rem;
+        }
+        .drawer-close:hover { color: var(--burgundy-dark); }
+        .drawer-content {
+            padding-top: 1rem;
+        }
+
+        /* Utility */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <!-- ============ WELCOME / SIGN-IN ============ -->
+    <div id="welcomeScreen" class="welcome-screen">
+        <div class="welcome-logo">🏅</div>
+        <h1 class="welcome-title">Athlete Academy</h1>
+        <p class="welcome-subtitle">G10–12 Portal</p>
+        <span class="welcome-pill">G10–12</span>
+
+        <div class="privacy-notice">
+            <p>🔒 Sign in with your school Google account to access your portal.</p>
+        </div>
+
+        <div id="g_id_onload"
+             data-client_id="701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com"
+             data-context="signin"
+             data-ux_mode="popup"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-size="large"
+             data-theme="filled_blue"
+             data-text="sign_in_with"
+             data-shape="rectangular"
+             data-logo_alignment="left">
+        </div>
+    </div>
+
+    <!-- ============ LOADING ============ -->
+    <div id="loadingScreen" class="loading-screen hidden">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading your portal…</p>
+    </div>
+
+    <!-- ============ GATE: WRONG GRADE ============ -->
+    <div id="wrongGradeScreen" class="gate-screen hidden">
+        <div class="gate-icon">👋</div>
+        <h2 class="gate-title">Wrong portal</h2>
+        <p class="gate-message">This portal is for G10–12 athletes. Head to your G9 dashboard.</p>
+        <a href="index.html" class="gate-link">Go to G9 Dashboard →</a>
+    </div>
+
+    <!-- ============ GATE: NOT ENROLLED ============ -->
+    <div id="notEnrolledScreen" class="gate-screen hidden">
+        <div class="gate-icon">🔒</div>
+        <h2 class="gate-title">Not enrolled</h2>
+        <p class="gate-message">You're not enrolled in Athlete Academy. Speak to Mr Bain.</p>
+        <button class="gate-link" onclick="signOut()">Sign out</button>
+    </div>
+
+    <!-- ============ GATE: ERROR ============ -->
+    <div id="errorScreen" class="gate-screen hidden">
+        <div class="gate-icon">⚠️</div>
+        <h2 class="gate-title">Something went wrong</h2>
+        <p class="gate-message" id="errorMessage">We couldn't load your data. Try again in a moment.</p>
+        <button class="gate-link" onclick="location.reload()">Reload</button>
+    </div>
+
+    <!-- ============ PORTAL (hidden until authed + verified) ============ -->
+    <div id="portalApp" class="hidden">
+        <nav class="top-nav">
+            <div class="top-nav-inner">
+                <div class="nav-left">
+                    <div class="nav-logo-icon">🏅</div>
+                    <div class="nav-logo-text">ATHLETE ACADEMY</div>
+                    <span class="nav-grade-pill">G10–12</span>
+                </div>
+                <div class="nav-right">
+                    <button class="nav-bell" aria-label="Notifications" onclick="openDrawer('notifications')">
+                        🔔
+                        <span class="nav-bell-dot"></span>
+                    </button>
+                    <span class="nav-user-name" id="navUserName">—</span>
+                    <div class="nav-avatar" id="navAvatar">—</div>
+                    <button class="nav-signout" onclick="signOut()">Sign out</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="portal-main">
+            <!-- ============ HERO ============ -->
+            <section class="hero-section">
+                <div class="hero-grid">
+                    <!-- GAUGE COLUMN — built in Prompt 2 -->
+                    <div class="hero-col" id="heroGaugeCol"></div>
+
+                    <!-- PROFILE COLUMN — built in Prompt 2 -->
+                    <div class="hero-col" id="heroProfileCol"></div>
+
+                    <!-- THIS WEEK COLUMN — built in Prompt 3 -->
+                    <div class="hero-col" id="heroThisWeekCol"></div>
+                </div>
+            </section>
+
+            <!-- ============ CONTENT GRID ============ -->
+            <section class="content-grid">
+                <!-- MY PLAN — built in Prompt 3 -->
+                <div class="content-card" id="cardMyPlan"></div>
+
+                <!-- MY GOALS — built in Prompt 5 -->
+                <div class="content-card" id="cardMyGoals"></div>
+
+                <!-- CHECK-INS — built in Prompt 6 -->
+                <div class="content-card" id="cardCheckIns"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ============ DRAWER ============ -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+        <button class="drawer-close" onclick="closeDrawer()" aria-label="Close">×</button>
+        <div class="drawer-content" id="drawerContent"></div>
+    </aside>
+
+    <script>
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
+
+        let currentUser = null;
+        let currentAthlete = null;
+
+        // ───────── Screen toggles ─────────
+        function showScreen(id) {
+            ['welcomeScreen', 'loadingScreen', 'wrongGradeScreen', 'notEnrolledScreen', 'errorScreen', 'portalApp']
+                .forEach(s => {
+                    const el = document.getElementById(s);
+                    if (el) el.classList.toggle('hidden', s !== id);
+                });
+        }
+
+        // ───────── Google Sign-In callback ─────────
+        function handleCredentialResponse(response) {
+            try {
+                const payload = JSON.parse(atob(response.credential.split('.')[1]));
+                currentUser = {
+                    email: payload.email,
+                    name: payload.name,
+                    picture: payload.picture
+                };
+                console.log('Signed in as:', currentUser.email);
+                showScreen('loadingScreen');
+                loadAthleteData();
+            } catch (err) {
+                console.error('Sign-in error:', err);
+                showError('Sign-in failed. Try again.');
+            }
+        }
+
+        // ───────── Athlete lookup + grade gate ─────────
+        async function loadAthleteData() {
+            try {
+                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&email=${encodeURIComponent(currentUser.email)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (!data.authenticated || !data.athlete) {
+                    showScreen('notEnrolledScreen');
+                    return;
+                }
+
+                currentAthlete = data.athlete;
+                const grade = parseInt(currentAthlete.Grade || currentAthlete.Year_Group, 10);
+
+                if (grade === 10 || grade === 11 || grade === 12) {
+                    initPortal();
+                } else {
+                    showScreen('wrongGradeScreen');
+                }
+            } catch (err) {
+                console.error('Fetch error:', err);
+                showError('Failed to load data: ' + err.message);
+            }
+        }
+
+        function showError(msg) {
+            document.getElementById('errorMessage').textContent = msg;
+            showScreen('errorScreen');
+        }
+
+        // ───────── Init portal (after grade gate passes) ─────────
+        function initPortal() {
+            // Populate nav user
+            const fullName = currentAthlete.Name
+                || `${currentAthlete.First_Name || ''} ${currentAthlete.Last_Name || ''}`.trim()
+                || currentUser.name
+                || 'Athlete';
+            document.getElementById('navUserName').textContent = fullName;
+            document.getElementById('navAvatar').textContent = initialsFrom(fullName);
+
+            showScreen('portalApp');
+            // Prompt 2+ will populate hero + content cards here.
+        }
+
+        function initialsFrom(name) {
+            const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+            if (parts.length === 0) return '—';
+            if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        // ───────── Sign out ─────────
+        function signOut() {
+            currentUser = null;
+            currentAthlete = null;
+            if (window.google && google.accounts && google.accounts.id) {
+                google.accounts.id.disableAutoSelect();
+            }
+            location.reload();
+        }
+
+        // ───────── Drawer ─────────
+        function openDrawer(type) {
+            const content = document.getElementById('drawerContent');
+            // Stub content — real panels wired up in later prompts.
+            const panels = {
+                notifications: `<h3 style="font-weight:800;color:var(--burgundy);margin-bottom:1rem;">Notifications</h3>
+                                <p style="color:var(--grey);font-size:0.95rem;">Reflection due — placeholder.</p>`
+            };
+            content.innerHTML = panels[type] || `<p style="color:var(--grey);">Drawer: ${type}</p>`;
+            document.getElementById('drawerOverlay').classList.add('open');
+            document.getElementById('drawer').classList.add('open');
+            document.getElementById('drawer').setAttribute('aria-hidden', 'false');
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawerOverlay').classList.remove('open');
+            document.getElementById('drawer').classList.remove('open');
+            document.getElementById('drawer').setAttribute('aria-hidden', 'true');
+        }
+
+        // Close drawer on Esc
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDrawer();
+        });
+    </script>
+</body>
+</html>
