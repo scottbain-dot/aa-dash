@@ -2195,7 +2195,9 @@ function handleSaveFuelLabPlan(ss, data) {
       } else if (name === 'Plan_JSON') {
         row[c] = planJson;
       } else if (name === 'Score') {
-        row[c] = parseInt(data.score, 10) || 0;
+        // Personal plans send null/'' (no score) — leave the cell blank for those.
+        row[c] = (data.score === null || data.score === undefined || data.score === '')
+          ? '' : (parseInt(data.score, 10) || 0);
       } else if (name === 'Feedback_Tags') {
         row[c] = tags;
       } else {
