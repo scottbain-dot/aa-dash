@@ -289,8 +289,163 @@
             align-items: center;
         }
         .hero-col {
-            min-height: 200px;
+            position: relative;
+            z-index: 1;
         }
+
+        /* Hero left — Training Age gauge (copied from profile-mockup.html) */
+        .hero-left {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .gauge-wrap {
+            width: 180px;
+            height: 180px;
+            position: relative;
+        }
+        .gauge-wrap svg { width: 100%; height: 100%; }
+        .gauge-centre {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .gauge-number {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--white);
+            line-height: 1;
+            letter-spacing: -0.03em;
+        }
+        .gauge-label {
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            color: var(--gold);
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+        .gauge-insight {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            font-style: italic;
+            text-align: center;
+            max-width: 220px;
+            line-height: 1.4;
+        }
+        /* Delta chip (copied from index.html) */
+        .gauge-delta {
+            background: rgba(212,175,55,0.15);
+            color: #D4AF37;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            display: inline-block;
+        }
+
+        /* Hero middle — name + pillars (copied from profile-mockup.html) */
+        .hero-middle .athlete-name {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--white);
+            letter-spacing: -0.02em;
+            margin-top: 0.4rem;
+        }
+        .hero-middle .athlete-meta {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+            margin-top: 0.35rem;
+            font-weight: 500;
+        }
+        .overline {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--grey);
+        }
+        .overline-gold { color: var(--gold); }
+        .overline-white { color: rgba(255,255,255,0.5); }
+        .hero-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 1.25rem 0;
+        }
+        .pillar-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+        .pillar-box {
+            padding: 0.9rem 0.85rem;
+            border-radius: 1rem;
+            background: rgba(255,255,255,0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .pillar-box.gold {
+            background: linear-gradient(135deg, #D4AF37 0%, #b8922e 100%);
+        }
+        .pillar-label {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: rgba(255,255,255,0.85);
+        }
+        .pillar-box.gold .pillar-label { color: rgba(29,27,27,0.75); }
+        .pillar-score {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: var(--white);
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+        .pillar-box.gold .pillar-score { color: var(--dark); }
+        .pillar-badge {
+            display: inline-block;
+            width: fit-content;
+            background: rgba(0,0,0,0.2);
+            color: var(--white);
+            padding: 0.15rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .pillar-box.gold .pillar-badge {
+            background: rgba(29,27,27,0.18);
+            color: var(--dark);
+        }
+
+        /* Hero right — this week + log session (copied from profile-mockup.html) */
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .log-session-btn {
+            margin-top: 0.75rem;
+            background: var(--gold);
+            color: var(--dark);
+            border: none;
+            padding: 0.85rem 1.25rem;
+            border-radius: 0.9rem;
+            font-family: inherit;
+            font-weight: 800;
+            font-size: 0.9rem;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .log-session-btn:hover { background: #c19a2b; }
 
         /* ───────── Content Grid (below hero) ───────── */
         .content-grid {
@@ -444,14 +599,42 @@
             <!-- ============ HERO ============ -->
             <section class="hero-section">
                 <div class="hero-grid">
-                    <!-- GAUGE COLUMN — built in Prompt 2 -->
-                    <div class="hero-col" id="heroGaugeCol"></div>
+                    <!-- GAUGE COLUMN -->
+                    <div class="hero-col hero-left">
+                        <div class="gauge-wrap">
+                            <svg viewBox="0 0 200 200">
+                                <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="12" />
+                                <circle cx="100" cy="100" r="80" fill="none" stroke="#D4AF37" stroke-width="12"
+                                    stroke-linecap="round"
+                                    stroke-dasharray="502.65"
+                                    stroke-dashoffset="502.65"
+                                    transform="rotate(-90 100 100)"
+                                    id="gaugeArc"
+                                    style="transition: stroke-dashoffset 1s ease;" />
+                            </svg>
+                            <div class="gauge-centre">
+                                <div class="gauge-number"><span id="gaugeNumber">—</span><span style="color:rgba(255,255,255,0.5);font-size:1.5rem;font-weight:700;">/5</span></div>
+                                <div class="gauge-label">TRAINING AGE</div>
+                            </div>
+                        </div>
+                        <div class="gauge-insight" id="gaugeInsight">—</div>
+                        <div class="gauge-delta">↑ +0.4 this term</div>
+                    </div>
 
-                    <!-- PROFILE COLUMN — built in Prompt 2 -->
-                    <div class="hero-col" id="heroProfileCol"></div>
+                    <!-- PROFILE COLUMN -->
+                    <div class="hero-col hero-middle">
+                        <div class="overline overline-gold">ATHLETE PROFILE</div>
+                        <div class="athlete-name" id="athleteName">—</div>
+                        <div class="athlete-meta" id="athleteMeta">—</div>
+                        <div class="hero-divider"></div>
+                        <div class="pillar-row" id="pillarRow"></div>
+                    </div>
 
-                    <!-- THIS WEEK COLUMN — built in Prompt 3 -->
-                    <div class="hero-col" id="heroThisWeekCol"></div>
+                    <!-- THIS WEEK COLUMN — schedule built in Prompt 3 -->
+                    <div class="hero-col hero-right">
+                        <div class="overline overline-white">THIS WEEK</div>
+                        <button class="log-session-btn" onclick="openDrawer('log')">Log a Session</button>
+                    </div>
                 </div>
             </section>
 
@@ -551,7 +734,200 @@
             document.getElementById('navAvatar').textContent = initialsFrom(fullName);
 
             showScreen('portalApp');
-            // Prompt 2+ will populate hero + content cards here.
+            populateHero(fullName);
+        }
+
+        // ───────── Calculations (copied exactly from index.html) ─────────
+        const MOVEMENT_PATTERNS = [
+            { key: 'Squat' }, { key: 'Hinge' }, { key: 'Push' },
+            { key: 'Pull' }, { key: 'Lunge' }, { key: 'Press' }
+        ];
+
+        function average(arr) {
+            const valid = arr.filter(v => v > 0);
+            return valid.length > 0 ? valid.reduce((a, b) => a + b, 0) / valid.length : 0;
+        }
+
+        function getLevelName(score) {
+            if (score < 1) return 'Building';
+            if (score < 2) return 'Approaching';
+            if (score < 3) return 'Achieving';
+            if (score < 4) return 'Mastering';
+            return 'Leading';
+        }
+
+        function convertBroadJump(cm, gender) {
+            if (!cm || cm <= 0) return 0;
+            const thresholds = gender === 'M' ? [160, 180, 200, 220, 240] : [130, 145, 155, 165, 180];
+            if (cm < thresholds[0]) return 1;
+            if (cm < thresholds[1]) return 2;
+            if (cm < thresholds[2]) return 3;
+            if (cm < thresholds[3]) return 4;
+            if (cm < thresholds[4]) return 4;
+            return 5;
+        }
+
+        function convertSprint(sec, gender) {
+            if (!sec || sec <= 0) return 0;
+            const thresholds = gender === 'M' ? [6.5, 6.0, 5.5, 5.0, 4.8] : [7.5, 7.0, 6.5, 6.0, 5.7];
+            if (sec > thresholds[0]) return 1;
+            if (sec > thresholds[1]) return 2;
+            if (sec > thresholds[2]) return 3;
+            if (sec > thresholds[3]) return 4;
+            if (sec > thresholds[4]) return 4;
+            return 5;
+        }
+
+        function convertAgility(sec, gender) {
+            if (!sec || sec <= 0) return 0;
+            const thresholds = gender === 'M' ? [5.5, 5.1, 4.8, 4.5, 4.2] : [6.0, 5.6, 5.3, 5.0, 4.7];
+            if (sec > thresholds[0]) return 1;
+            if (sec > thresholds[1]) return 2;
+            if (sec > thresholds[2]) return 3;
+            if (sec > thresholds[3]) return 4;
+            if (sec > thresholds[4]) return 4;
+            return 5;
+        }
+
+        function convertCooper(meters, gender) {
+            if (!meters || meters <= 0) return 0;
+            const thresholds = gender === 'M' ? [1600, 2000, 2400, 2800, 3000] : [1200, 1600, 2000, 2400, 2600];
+            if (meters < thresholds[0]) return 1;
+            if (meters < thresholds[1]) return 2;
+            if (meters < thresholds[2]) return 3;
+            if (meters < thresholds[3]) return 4;
+            if (meters < thresholds[4]) return 4;
+            return 5;
+        }
+
+        function calculatePsychology(a) {
+            const psych = a.psych || {};
+            return {
+                'Mindset': parseFloat(psych.Mindset) || 0,
+                'Focus & Engagement': parseFloat(psych.Focus_Engagement) || 0,
+                'Effort & Work Ethic': parseFloat(psych.Effort_Work_Ethic) || 0,
+                'Coachability': parseFloat(psych.Coachability) || 0,
+                'Mental Toughness': parseFloat(psych.Mental_Toughness) || 0
+            };
+        }
+
+        function calculatePhysiology(a, strengthData) {
+            const gender = a.Gender;
+            const perf = a.performance || {};
+            const mobility = a.mobility || {};
+
+            let strengthTotal = 0;
+            MOVEMENT_PATTERNS.forEach(p => {
+                const tech = parseFloat(strengthData[p.key + '_Tech']) || 0;
+                let str = 0;
+                if (tech >= 2 && tech <= 5) {
+                    const levelStrVal = strengthData[p.key + '_Str_L' + Math.floor(tech)];
+                    str = (levelStrVal === '—' || levelStrVal === '' || levelStrVal === null || levelStrVal === undefined) ? 0 : parseFloat(levelStrVal) || 0;
+                }
+                // TEMPORARY FALLBACK: if level-specific column is empty, fall back to old {Pattern}_Str
+                if (str === 0) {
+                    const oldStrVal = strengthData[p.key + '_Str'];
+                    str = (oldStrVal === '—' || oldStrVal === '' || oldStrVal === null) ? 0 : parseFloat(oldStrVal) || 0;
+                }
+
+                if (tech > 0 && str > 0) {
+                    strengthTotal += (tech + str) / 2;
+                } else if (tech > 0) {
+                    strengthTotal += tech;
+                } else if (str > 0) {
+                    strengthTotal += str;
+                }
+            });
+            const strengthAvg = strengthTotal / 6;
+
+            const broadJump = convertBroadJump(parseFloat(perf.Broad_Jump_cm), gender);
+            const sprint = convertSprint(parseFloat(perf['40m_sec']), gender);
+            const agility = convertAgility(parseFloat(perf['5_10_5_sec']), gender);
+            const cooper = convertCooper(parseFloat(perf.Cooper_m), gender);
+
+            const asl = ((parseFloat(mobility.ASL) || 0) / 3) * 5;
+            const trunk = ((parseFloat(mobility.Trunk_Stability) || 0) / 3) * 5;
+            const shoulder = ((parseFloat(mobility.Shoulder_Mobility) || 0) / 3) * 5;
+            const mobilityAvg = average([asl, trunk, shoulder]);
+
+            return {
+                'Strength': strengthAvg,
+                'Broad Jump': broadJump,
+                '40m Sprint': sprint,
+                'Agility (5-10-5)': agility,
+                'Cooper Test': cooper,
+                'Mobility': mobilityAvg
+            };
+        }
+
+        function calculateHealth(a, strengthData) {
+            const recovery = a.recovery || {};
+            let techTotal = 0;
+            MOVEMENT_PATTERNS.forEach(p => {
+                techTotal += parseFloat(strengthData[p.key + '_Tech']) || 0;
+            });
+            const movementTech = techTotal / 6;
+            return {
+                'Recovery': parseFloat(recovery.Recovery_Score) || 0,
+                'Movement Technique': movementTech,
+                'Nutrition': parseFloat(recovery.Nutrition) || 0
+            };
+        }
+
+        // Gauge insight tiers (copied exactly from index.html renderGauge)
+        function gaugeInsightText(trainingAge) {
+            if (trainingAge < 2.0) return "You're just getting started — every session counts.";
+            if (trainingAge < 3.0) return "Building your foundation — stay consistent.";
+            if (trainingAge < 4.0) return "You're ahead of most athletes your age.";
+            return "Elite level — you're setting the standard.";
+        }
+
+        // ───────── Populate hero card ─────────
+        function populateHero(fullName) {
+            const a = currentAthlete;
+            const strengthData = a.strength || {};
+
+            const psychScores = calculatePsychology(a);
+            const physScores = calculatePhysiology(a, strengthData);
+            const healthScores = calculateHealth(a, strengthData);
+
+            const psychAvg = average(Object.values(psychScores));
+            const physAvg = average(Object.values(physScores));
+            const healthAvg = average(Object.values(healthScores));
+
+            // Training Age (weighted) — copied exactly from index.html
+            const trainingAge = (psychAvg * 0.35) + (physAvg * 0.35) + (healthAvg * 0.30);
+
+            // Gauge — same SVG maths as index.html renderGauge
+            const circumference = 2 * Math.PI * 80; // 502.65
+            const pct = Math.min(trainingAge / 5, 1);
+            document.getElementById('gaugeArc').setAttribute('stroke-dashoffset', circumference * (1 - pct));
+            document.getElementById('gaugeNumber').textContent = trainingAge.toFixed(1);
+            document.getElementById('gaugeInsight').textContent = gaugeInsightText(trainingAge);
+
+            // Profile name + meta (meta format copied from index.html)
+            document.getElementById('athleteName').textContent = a.Name || fullName || 'Unknown';
+            const sports = [a['Sport 1'] || a.Sport_1 || a.Sport1, a['Sport 2'] || a.Sport_2 || a.Sport2, a['Sport 3'] || a.Sport_3 || a.Sport3]
+                .map(s => (s || '').toString().trim())
+                .filter(Boolean);
+            const metaParts = [`Grade ${a.Grade || '?'}`];
+            if (sports.length) metaParts.push(sports.join(' & '));
+            document.getElementById('athleteMeta').textContent = metaParts.join(' · ');
+
+            // Pillars — gild the highest-scoring one (see PR note)
+            const pillars = [
+                { label: 'Psychology', score: psychAvg },
+                { label: 'Physiology', score: physAvg },
+                { label: 'Health & Skills', score: healthAvg }
+            ];
+            const topScore = Math.max(psychAvg, physAvg, healthAvg);
+            document.getElementById('pillarRow').innerHTML = pillars.map(p => `
+                <div class="pillar-box${p.score === topScore && topScore > 0 ? ' gold' : ''}">
+                    <div class="pillar-label">${p.label}</div>
+                    <div class="pillar-score">${p.score.toFixed(1)}</div>
+                    <span class="pillar-badge">${getLevelName(p.score)}</span>
+                </div>
+            `).join('');
         }
 
         function initialsFrom(name) {
