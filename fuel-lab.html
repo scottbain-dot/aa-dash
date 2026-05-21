@@ -2851,43 +2851,45 @@
   // ============================================
   // STEP 3: NUTRITION PLAN BUILDER
   // ============================================
+  // Each food has a DISPLAY category (cat, used only to group the bank visually)
+  // and a set of nutrition TAGS used by scoring. Tags model real foods that sit
+  // in more than one group: a Sports drink is a fluid AND fast carbs; Milk is
+  // protein AND a fluid; a Smoothie can be all three. Scoring reads tags only —
+  // never food names and never the display category — so a food counts for
+  // everything it genuinely provides. To change scoring behaviour, edit a food's
+  // tags here; nothing else needs touching.
+  // Tag vocabulary: 'carb' | 'protein' | 'fat' | 'fluid'.
   const FOOD_BANK = [
     { cat: 'Carbs', items: [
-      { e: '🍝', n: 'Pasta' }, { e: '🍚', n: 'Rice' }, { e: '🍞', n: 'Toast' },
-      { e: '🥣', n: 'Oats' }, { e: '🥔', n: 'Potato' }, { e: '🥯', n: 'Bagel' }
+      { e: '🍝', n: 'Pasta', tags: ['carb'] }, { e: '🍚', n: 'Rice', tags: ['carb'] },
+      { e: '🍞', n: 'Toast', tags: ['carb'] }, { e: '🥣', n: 'Oats', tags: ['carb'] },
+      { e: '🥔', n: 'Potato', tags: ['carb'] }, { e: '🥯', n: 'Bagel', tags: ['carb'] }
     ]},
     { cat: 'Protein', items: [
-      { e: '🥚', n: 'Eggs' }, { e: '🍗', n: 'Chicken' }, { e: '🐟', n: 'Fish' },
-      { e: '🥛', n: 'Milk' }, { e: '🫘', n: 'Beans' }, { e: '🍶', n: 'Yoghurt' }
+      { e: '🥚', n: 'Eggs', tags: ['protein'] }, { e: '🍗', n: 'Chicken', tags: ['protein'] },
+      { e: '🐟', n: 'Fish', tags: ['protein'] }, { e: '🥛', n: 'Milk', tags: ['protein', 'fluid'] },
+      { e: '🫘', n: 'Beans', tags: ['protein'] }, { e: '🍶', n: 'Yoghurt', tags: ['protein'] }
     ]},
     { cat: 'Fats', items: [
-      { e: '🥑', n: 'Avocado' }, { e: '🥜', n: 'Nuts' }, { e: '🫒', n: 'Olive oil' },
-      { e: '🫙', n: 'Peanut butter' }, { e: '🧀', n: 'Cheese' }, { e: '🌻', n: 'Seeds' }
+      { e: '🥑', n: 'Avocado', tags: ['fat'] }, { e: '🥜', n: 'Nuts', tags: ['fat'] },
+      { e: '🫒', n: 'Olive oil', tags: ['fat'] }, { e: '🫙', n: 'Peanut butter', tags: ['fat'] },
+      { e: '🧀', n: 'Cheese', tags: ['protein', 'fat'] }, { e: '🌻', n: 'Seeds', tags: ['fat'] }
     ]},
     { cat: 'Fluids', items: [
-      { e: '💧', n: 'Water' }, { e: '🧃', n: 'Sports drink' }, { e: '🥤', n: 'Smoothie' },
-      { e: '🧋', n: 'Milk drink' }, { e: '🥥', n: 'Coconut water' }, { e: '🍹', n: 'Juice' }
+      { e: '💧', n: 'Water', tags: ['fluid'] }, { e: '🧃', n: 'Sports drink', tags: ['fluid', 'carb'] },
+      { e: '🥤', n: 'Smoothie', tags: ['fluid', 'carb', 'protein'] }, { e: '🧋', n: 'Milk drink', tags: ['fluid', 'carb', 'protein'] },
+      { e: '🥥', n: 'Coconut water', tags: ['fluid'] }, { e: '🍹', n: 'Juice', tags: ['fluid', 'carb'] }
     ]},
     { cat: 'Snacks', items: [
-      { e: '🍫', n: 'Cereal bar' }, { e: '🍯', n: 'Honey toast' }, { e: '🍎', n: 'Fruit' },
-      { e: '🥨', n: 'Crackers' }, { e: '🍌', n: 'Banana' }, { e: '🌰', n: 'Trail mix' }
+      { e: '🍫', n: 'Cereal bar', tags: ['carb'] }, { e: '🍯', n: 'Honey toast', tags: ['carb'] },
+      { e: '🍎', n: 'Fruit', tags: ['carb'] }, { e: '🥨', n: 'Crackers', tags: ['carb'] },
+      { e: '🍌', n: 'Banana', tags: ['carb'] }, { e: '🌰', n: 'Trail mix', tags: ['carb', 'fat'] }
     ]}
   ];
 
-  // category lookup for scoring (food name -> bank category)
-  const FOOD_CAT = {};
-  FOOD_BANK.forEach(g => g.items.forEach(it => { FOOD_CAT[it.n] = g.cat; }));
-
-  // ---- Category GROUPS — scoring works on these groups, NEVER on food names. ----
-  // A food's BANK category decides its group. Snacks are carb-based quick energy,
-  // so they count as a CARB source for fuelling. This is what fixes the recovery-
-  // window bug: a Cereal bar (Snacks) or Smoothie satisfies the "carb" requirement
-  // without needing a literal 'Carbs'-category food. If you re-categorise a food in
-  // the bank, its scoring behaviour follows automatically — no name lists to update.
-  const CARB_SOURCES    = ['Carbs', 'Snacks'];
-  const PROTEIN_SOURCES = ['Protein'];
-  const FAT_SOURCES     = ['Fats'];
-  const FLUID_SOURCES   = ['Fluids'];
+  // food name -> nutrition tags (the only thing scoring looks at)
+  const FOOD_TAGS = {};
+  FOOD_BANK.forEach(g => g.items.forEach(it => { FOOD_TAGS[it.n] = it.tags; }));
 
   const SCENARIOS_BUILD = {
     training: {
@@ -3051,16 +3053,18 @@
   }
 
   // returns { score, tags: [{good:bool, text}] }
-  // All checks run on category GROUPS (CARB_SOURCES etc.), never on food names.
+  // All checks run on nutrition TAGS (carb/protein/fat/fluid), never on food
+  // names or display category — so dual-nature foods (sports drink = fluid+carb,
+  // milk = protein+fluid) count for everything they provide.
   function scorePlan() {
     const sc = SCENARIOS_BUILD[activeScenario];
     const plan = planState[activeScenario];
     const tags = [];
 
-    const slotCats = slot => (plan[slot] || []).map(n => FOOD_CAT[n]);
-    const slotHasGroup = (slot, group) => slotCats(slot).some(c => group.includes(c));
+    const slotTags = slot => (plan[slot] || []).reduce((acc, n) => acc.concat(FOOD_TAGS[n] || []), []);
+    const slotHasTag = (slot, tag) => slotTags(slot).includes(tag);
     const slotFilled = slot => !!(plan[slot] && plan[slot].length);
-    const fluidSlots = sc.slots.filter(s => slotHasGroup(s, FLUID_SOURCES));
+    const fluidSlots = sc.slots.filter(s => slotHasTag(s, 'fluid'));
 
     let score;
 
@@ -3074,7 +3078,7 @@
       if (filled === sc.slots.length) tags.push({ good: true, text: 'Eating across the whole day ✓' });
       else tags.push({ good: false, text: 'Fill all four parts of the day ✗' });
 
-      const hasProtein = sc.slots.some(s => slotHasGroup(s, PROTEIN_SOURCES));
+      const hasProtein = sc.slots.some(s => slotHasTag(s, 'protein'));
       if (hasProtein) { score += 18; tags.push({ good: true, text: 'Protein for repair ✓' }); }
       else tags.push({ good: false, text: 'Add some protein to repair ✗' });
 
@@ -3082,21 +3086,21 @@
       else if (fluidSlots.length === 1) { score += 7; tags.push({ good: false, text: 'Spread fluids across the day ✗' }); }
       else tags.push({ good: false, text: 'Add fluids across the day ✗' });
 
-      // Penalty: every filled slot is carb-only (no protein/fats/fluids anywhere).
-      const allCarb = filled > 0 && sc.slots.every(s =>
-        !slotFilled(s) || slotCats(s).every(c => CARB_SOURCES.includes(c)));
+      // Penalty: nothing but carbs all day — no protein, fats or fluids anywhere.
+      const hasFat = sc.slots.some(s => slotHasTag(s, 'fat'));
+      const allCarb = filled > 0 && !hasProtein && !hasFat && fluidSlots.length === 0;
       if (allCarb) { score -= 20; tags.push({ good: false, text: 'Too carb-heavy — add protein and variety ✗' }); }
     } else {
       // Performance day: carbs before, carbs + protein after (the recovery window
       // is weighted heaviest), fluids spread across the day, no heavy fat pre/during.
       score = 35;
 
-      const preCarb = sc.pre.some(s => slotHasGroup(s, CARB_SOURCES));
+      const preCarb = sc.pre.some(s => slotHasTag(s, 'carb'));
       if (preCarb) { score += 15; tags.push({ good: true, text: 'Carbs before you perform ✓' }); }
       else tags.push({ good: false, text: 'Load carbs before you perform ✗' });
 
-      const postCarb = sc.post.some(s => slotHasGroup(s, CARB_SOURCES));
-      const postProtein = sc.post.some(s => slotHasGroup(s, PROTEIN_SOURCES));
+      const postCarb = sc.post.some(s => slotHasTag(s, 'carb'));
+      const postProtein = sc.post.some(s => slotHasTag(s, 'protein'));
       if (postCarb && postProtein) { score += 25; tags.push({ good: true, text: 'Carbs + protein to recover ✓' }); }
       else if (postCarb) { score += 10; tags.push({ good: false, text: 'Add protein to your recovery window ✗' }); }
       else if (postProtein) { score += 10; tags.push({ good: false, text: 'Add carbs to your recovery window ✗' }); }
@@ -3107,12 +3111,12 @@
       else tags.push({ good: false, text: 'Add fluids across the day ✗' });
 
       // Bonus: a balanced evening meal (carbs + protein).
-      if (slotHasGroup('Evening', CARB_SOURCES) && slotHasGroup('Evening', PROTEIN_SOURCES)) {
+      if (slotHasTag('Evening', 'carb') && slotHasTag('Evening', 'protein')) {
         score += 10; tags.push({ good: true, text: 'Balanced evening meal ✓' });
       }
 
       // Penalty: heavy fat in Before or During slows you down / sits heavy.
-      const fatSlots = ['Before', 'During'].filter(s => slotHasGroup(s, FAT_SOURCES));
+      const fatSlots = ['Before', 'During'].filter(s => slotHasTag(s, 'fat'));
       if (fatSlots.length) {
         score -= fatSlots.length * 10;
         tags.push({ good: false, text: 'Heavy fat too close to performance ✗' });
