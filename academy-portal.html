@@ -431,10 +431,51 @@
             flex-direction: column;
             gap: 0.5rem;
         }
+        .week-mini {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-top: 0.3rem;
+        }
+        .week-mini-row {
+            display: grid;
+            grid-template-columns: 32px 1fr 14px;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.45rem 0.7rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 0.6rem;
+        }
+        .week-mini-day {
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase;
+        }
+        .week-mini-session {
+            font-size: 0.8rem;
+            color: var(--white);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .dot-red { background: #ef4444; }
+        .dot-amber { background: #f59e0b; }
+        .dot-green { background: #22c55e; }
+        .dot-grey { background: rgba(255,255,255,0.25); }
         .log-session-btn {
             margin-top: 0.75rem;
-            background: var(--gold);
-            color: var(--dark);
+            background: var(--burgundy);
+            color: var(--white);
             border: none;
             padding: 0.85rem 1.25rem;
             border-radius: 0.9rem;
@@ -445,7 +486,7 @@
             cursor: pointer;
             transition: background 0.15s;
         }
-        .log-session-btn:hover { background: #c19a2b; }
+        .log-session-btn:hover { background: var(--burgundy-dark); }
 
         /* ───────── Content Grid (below hero) ───────── */
         .content-grid {
@@ -630,9 +671,10 @@
                         <div class="pillar-row" id="pillarRow"></div>
                     </div>
 
-                    <!-- THIS WEEK COLUMN — schedule built in Prompt 3 -->
+                    <!-- THIS WEEK COLUMN -->
                     <div class="hero-col hero-right">
                         <div class="overline overline-white">THIS WEEK</div>
+                        <div class="week-mini" id="weekMini"></div>
                         <button class="log-session-btn" onclick="openDrawer('log')">Log a Session</button>
                     </div>
                 </div>
@@ -928,6 +970,37 @@
                     <span class="pillar-badge">${getLevelName(p.score)}</span>
                 </div>
             `).join('');
+
+            renderThisWeek(a);
+        }
+
+        // ───────── This Week list ─────────
+        // getAthleteData carries no Workout_Logs, so with no log data we show
+        // all 7 days as "—" with grey dots. A schedule source can populate
+        // sessionFor()/dotFor() later without changing this structure.
+        function renderThisWeek(a) {
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const logs = a.workout_logs || a.workoutHistory || [];
+            const hasLogs = Array.isArray(logs) && logs.length > 0;
+
+            document.getElementById('weekMini').innerHTML = days.map(day => {
+                const session = hasLogs ? (sessionFor(logs, day) || '—') : '—';
+                const dotClass = (hasLogs && session !== '—') ? 'dot-amber' : 'dot-grey';
+                return `<div class="week-mini-row">
+                            <span class="week-mini-day">${day}</span>
+                            <span class="week-mini-session">${session}</span>
+                            <span class="dot ${dotClass}"></span>
+                        </div>`;
+            }).join('');
+        }
+
+        function sessionFor(logs, day) {
+            const match = logs.find(l => {
+                const d = new Date(l.Date);
+                if (isNaN(d)) return false;
+                return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()] === day;
+            });
+            return match ? (match.Session_Type || match.Session_Number || '') : '';
         }
 
         function initialsFrom(name) {
