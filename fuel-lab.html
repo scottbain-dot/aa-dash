@@ -1333,6 +1333,215 @@
     pointer-events: none;
     user-select: none;
   }
+
+  /* ============================================
+     INTERACTIVE: SCENARIO MATCHER (Block A)
+     ============================================ */
+  .interactive-block {
+    background: var(--cream);
+    border-radius: 24px;
+    padding: 32px;
+    margin: 40px 0;
+  }
+  .interactive-block .ib-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .interactive-block h3 { font-size: 22px; }
+  .interactive-block .ib-intro {
+    color: var(--ink-soft);
+    margin-bottom: 24px;
+    max-width: 640px;
+  }
+  .ib-score {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--ink-mute);
+    white-space: nowrap;
+  }
+  .ib-score strong { color: var(--burgundy); }
+
+  .scenario-card {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+  }
+  .scenario-prompt {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+  .scenario-sub { color: var(--ink-mute); font-size: 14px; margin-bottom: 18px; }
+  .scenario-choices { display: flex; gap: 10px; flex-wrap: wrap; }
+  .scenario-choice {
+    flex: 1 1 120px;
+    border: 2px solid var(--line);
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 14px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+    text-align: center;
+  }
+  .scenario-choice .sc-sys { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2px; }
+  .scenario-choice.red .sc-sys { color: var(--red-sys); }
+  .scenario-choice.yellow .sc-sys { color: #c4922b; }
+  .scenario-choice.green .sc-sys { color: var(--green-sys); }
+  .scenario-choice:hover:not(:disabled) { border-color: var(--burgundy); }
+  .scenario-choice:disabled { cursor: default; }
+  .scenario-choice.is-correct { border-color: var(--green-sys); background: rgba(74,138,92,0.12); }
+  .scenario-choice.is-wrong { border-color: var(--red-sys); background: rgba(217,77,58,0.10); opacity: 0.85; }
+  .scenario-feedback {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--bg-warm);
+    font-size: 14px;
+    color: var(--ink-soft);
+    display: none;
+  }
+  .scenario-feedback.show { display: block; }
+  .scenario-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; gap: 12px; }
+  .scenario-dots { display: flex; gap: 6px; }
+  .scenario-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+  .scenario-dot.done { background: var(--green-sys); }
+  .scenario-dot.current { background: var(--burgundy); }
+  .scenario-summary {
+    text-align: center;
+    padding: 12px 0 4px;
+    display: none;
+  }
+  .scenario-summary.show { display: block; }
+  .scenario-summary .ss-score { font-family: 'Fraunces', serif; font-size: 56px; font-weight: 700; color: var(--burgundy); line-height: 1; }
+  .scenario-summary p { color: var(--ink-soft); margin: 8px 0 16px; }
+
+  /* ============================================
+     INTERACTIVE: EFFORT DIAL (Block B)
+     ============================================ */
+  .dial-readout { font-family: 'Fraunces', serif; font-size: 28px; margin-bottom: 2px; }
+  .dial-readout small { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; color: var(--ink-mute); }
+  .dial-bars { display: flex; flex-direction: column; gap: 10px; margin: 20px 0 8px; }
+  .dial-row { display: flex; align-items: center; gap: 12px; }
+  .dial-label { width: 130px; flex-shrink: 0; font-size: 13px; font-weight: 600; }
+  .dial-label span { display: block; font-size: 11px; font-weight: 500; color: var(--ink-mute); }
+  .dial-track { flex: 1; background: var(--bg-warm); border-radius: 999px; height: 22px; overflow: hidden; }
+  .dial-fill { height: 100%; border-radius: 999px; transition: width 0.15s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 11px; font-weight: 700; color: #fff; }
+  .dial-fill.red { background: var(--red-sys); }
+  .dial-fill.yellow { background: var(--yellow-sys); color: var(--ink); }
+  .dial-fill.green { background: var(--green-sys); }
+  .dial-slider-wrap { margin-top: 24px; }
+  .dial-slider { width: 100%; accent-color: var(--burgundy); height: 6px; cursor: pointer; }
+  .dial-snaps { display: flex; justify-content: space-between; margin-top: 8px; }
+  .dial-snap {
+    background: none; border: none; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+    color: var(--ink-mute); padding: 4px 6px; border-radius: 8px;
+  }
+  .dial-snap:hover { color: var(--burgundy); }
+  .dial-snap.active { color: var(--burgundy); background: var(--bg-warm); }
+  @media (max-width: 720px) {
+    .dial-label { width: 96px; }
+    .dial-snap { font-size: 10px; padding: 4px 3px; }
+  }
+
+  /* ============================================
+     FUEL MATCH (Step 2)
+     ============================================ */
+  .fuel-match {
+    margin-top: 20px;
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+    display: none;
+  }
+  .fuel-match.show { display: block; }
+  .fuel-match .fm-kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+  .fuel-match h4 { font-family: 'Fraunces', serif; font-size: 24px; margin-bottom: 14px; }
+  .fuel-match .fm-profile { display: inline-block; font-size: 13px; font-weight: 700; padding: 5px 14px; border-radius: 999px; margin-bottom: 16px; }
+  .fm-profile.carb { background: rgba(217,77,58,0.12); color: var(--red-sys); }
+  .fm-profile.fat { background: rgba(74,138,92,0.14); color: var(--green-sys); }
+  .fm-profile.mixed { background: rgba(212,175,55,0.18); color: #9a7d1f; }
+  .fuel-match ul { list-style: none; display: grid; gap: 10px; }
+  .fuel-match li { position: relative; padding-left: 26px; color: var(--ink-soft); font-size: 15px; }
+  .fuel-match li::before { content: '→'; position: absolute; left: 0; color: var(--burgundy); font-weight: 700; }
+
+  /* ============================================
+     PLAN BUILDER (Step 3)
+     ============================================ */
+  .builder-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+  .builder-tab {
+    border: 2px solid var(--line); background: var(--bg);
+    border-radius: 999px; padding: 10px 18px;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; color: var(--ink-soft); transition: all 0.15s ease;
+  }
+  .builder-tab:hover { border-color: var(--burgundy); }
+  .builder-tab.active { background: var(--burgundy); border-color: var(--burgundy); color: var(--cream); }
+  .builder-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+  @media (max-width: 900px) { .builder-grid { grid-template-columns: 1fr; } }
+
+  .slot-list { display: grid; gap: 12px; }
+  .plan-slot {
+    background: var(--bg); border: 1px dashed var(--line); border-radius: 14px;
+    padding: 14px 16px; transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .plan-slot.drag-over { border-color: var(--burgundy); border-style: solid; background: var(--cream); }
+  .plan-slot.tap-target { border-color: var(--gold); border-style: solid; }
+  .slot-when { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--burgundy); margin-bottom: 8px; }
+  .slot-drop-hint { font-size: 13px; color: var(--ink-mute); font-style: italic; }
+  .slot-items { display: flex; flex-wrap: wrap; gap: 6px; }
+  .slot-chip {
+    background: var(--cream); border: 1px solid var(--line); border-radius: 999px;
+    padding: 5px 10px 5px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .slot-chip:hover { border-color: var(--red-sys); color: var(--red-sys); }
+  .slot-chip .chip-x { font-size: 14px; color: var(--ink-mute); }
+
+  .food-bank { background: var(--bg); border: 1px solid var(--line); border-radius: 16px; padding: 20px; position: sticky; top: 16px; }
+  .food-bank h4 { font-size: 16px; margin-bottom: 4px; }
+  .food-bank .fb-hint { font-size: 12px; color: var(--ink-mute); margin-bottom: 14px; }
+  .food-cat { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); margin: 14px 0 8px; }
+  .food-cat:first-of-type { margin-top: 0; }
+  .food-items { display: flex; flex-wrap: wrap; gap: 6px; }
+  .food-item {
+    background: var(--cream); border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: grab;
+    user-select: none; transition: border-color 0.15s ease, transform 0.1s ease;
+  }
+  .food-item:hover { border-color: var(--burgundy); }
+  .food-item:active { cursor: grabbing; }
+  .food-item.dragging { opacity: 0.4; }
+  .food-item.tap-selected { border-color: var(--gold); background: var(--gold-soft); transform: scale(1.04); }
+
+  .builder-score { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin: 24px 0 16px; }
+  .builder-score .bs-num { font-family: 'Fraunces', serif; font-size: 52px; font-weight: 700; color: var(--burgundy); line-height: 1; }
+  .builder-score .bs-num small { font-family: 'Inter', sans-serif; font-size: 18px; color: var(--ink-mute); }
+  .builder-tags { display: flex; flex-direction: column; gap: 6px; }
+  .builder-tag { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .builder-tag.good { color: var(--green-sys); }
+  .builder-tag.bad { color: var(--red-sys); }
+  .tap-hint { font-size: 13px; color: var(--ink-mute); margin-bottom: 14px; }
+  .tap-hint strong { color: var(--burgundy); }
+
+  /* toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--cream); padding: 14px 24px; border-radius: 999px;
+    font-size: 14px; font-weight: 600; box-shadow: var(--shadow-lift);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; z-index: 9999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--red-sys); }
 </style>
 </head>
 <body>
@@ -1597,6 +1806,64 @@
       In MOST sports, due to the energy system requirements, carbs are the main and most important fuel for the working muscles.
     </div>
 
+    <!-- INTERACTIVE A: scenario matcher -->
+    <div class="interactive-block" id="scenarioBlock">
+      <div class="ib-head">
+        <h3>Which system is doing the work?</h3>
+        <div class="ib-score">Score: <strong id="scenarioScore">0</strong> / <span id="scenarioTotal">0</span></div>
+      </div>
+      <p class="ib-intro">For each one, tap the energy system that does most of the work. You'll get instant feedback — no need to be right first time, just have a go.</p>
+
+      <div class="scenario-card" id="scenarioCard">
+        <div class="scenario-prompt" id="scenarioPrompt"></div>
+        <div class="scenario-sub" id="scenarioSub"></div>
+        <div class="scenario-choices">
+          <button class="scenario-choice red" data-sys="red"><span class="sc-sys">Red</span>under 10 sec</button>
+          <button class="scenario-choice yellow" data-sys="yellow"><span class="sc-sys">Yellow</span>10 sec – 2 min</button>
+          <button class="scenario-choice green" data-sys="green"><span class="sc-sys">Green</span>2 min and up</button>
+        </div>
+        <div class="scenario-feedback" id="scenarioFeedback"></div>
+        <div class="scenario-nav">
+          <div class="scenario-dots" id="scenarioDots"></div>
+          <button class="quiz-btn" id="scenarioNext" style="display:none;">Next →</button>
+        </div>
+      </div>
+
+      <div class="scenario-summary" id="scenarioSummary">
+        <div class="ss-score"><span id="scenarioFinal">0</span>/<span id="scenarioFinalTotal">0</span></div>
+        <p id="scenarioSummaryMsg"></p>
+        <button class="quiz-btn" id="scenarioRestart">Try again</button>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE B: effort dial -->
+    <div class="interactive-block" id="dialBlock">
+      <h3>It's always a blend</h3>
+      <p class="ib-intro">Drag the dial from a short sprint to a long endurance effort. Watch how the three systems trade off — there's no effort that's powered by just one.</p>
+
+      <div class="dial-readout" id="dialReadout">10 sec effort <small id="dialExample">— like a 100m sprint</small></div>
+
+      <div class="dial-bars">
+        <div class="dial-row">
+          <div class="dial-label">Red <span>ATP-CP</span></div>
+          <div class="dial-track"><div class="dial-fill red" id="dialRed" style="width:0%"></div></div>
+        </div>
+        <div class="dial-row">
+          <div class="dial-label">Yellow <span>Lactic</span></div>
+          <div class="dial-track"><div class="dial-fill yellow" id="dialYellow" style="width:0%"></div></div>
+        </div>
+        <div class="dial-row">
+          <div class="dial-label">Green <span>Aerobic</span></div>
+          <div class="dial-track"><div class="dial-fill green" id="dialGreen" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="dial-slider-wrap">
+        <input type="range" class="dial-slider" id="dialSlider" min="0" max="1000" value="170">
+        <div class="dial-snaps" id="dialSnaps"></div>
+      </div>
+    </div>
+
     <!-- sport picker -->
     <div class="sport-picker">
       <h3>What does your sport demand?</h3>
@@ -1622,6 +1889,13 @@
         </div>
         <div class="sport-bars" id="sportBars"></div>
         <p class="sport-takeaway" id="sportTakeaway"></p>
+
+        <div class="fuel-match" id="fuelMatch">
+          <div class="fm-kicker">So your fuel priority is...</div>
+          <h4 id="fmTitle"></h4>
+          <span class="fm-profile" id="fmProfile"></span>
+          <ul id="fmPoints"></ul>
+        </div>
       </div>
     </div>
 
@@ -1662,6 +1936,32 @@
       <div class="callout-tag">Hydration</div>
       <h3>Drink before you're thirsty.</h3>
       <p>Thirst is a late warning. Once you feel it, performance has already dropped. Sip water through the day — your pee should be pale yellow. For longer games or hot days, a sports drink replaces both fluids and salts you sweat out.</p>
+    </div>
+
+    <!-- PLAN BUILDER (Step 3) -->
+    <h3 style="font-size: 22px; margin: 56px 0 8px;">Build your fuelling plan</h3>
+    <p style="color: var(--ink-soft); margin-bottom: 16px;">Drag foods from the bank into each time slot — or tap a food, then tap a slot. Build a plan for each kind of day and see how it scores. You can put more than one food in a slot; tap a food in a slot to remove it.</p>
+
+    <div class="interactive-block" id="builderBlock">
+      <div class="builder-tabs" id="builderTabs"></div>
+      <p class="tap-hint" id="tapHint" style="display:none;"><strong>Tap-to-place:</strong> <span id="tapHintText">tap a food below, then tap a slot.</span></p>
+
+      <div class="builder-grid">
+        <div class="slot-list" id="slotList"></div>
+
+        <div class="food-bank" id="foodBank">
+          <h4>Food bank</h4>
+          <p class="fb-hint">Drag onto a slot, or tap to select then tap a slot.</p>
+          <div id="foodCats"></div>
+        </div>
+      </div>
+
+      <div class="builder-score">
+        <div class="bs-num" id="builderScoreNum">0<small>/100</small></div>
+        <div class="builder-tags" id="builderTags"></div>
+      </div>
+
+      <button class="quiz-btn" id="savePlanBtn">Save my plan</button>
     </div>
 
     <div class="pull-quote">
@@ -2118,6 +2418,7 @@
       `;
       document.getElementById('sportTakeaway').textContent = data.takeaway;
       document.getElementById('sportResult').classList.add('show');
+      renderFuelMatch(data);
       // animate
       requestAnimationFrame(() => {
         const els = bars.querySelectorAll('.sport-bar');
@@ -2127,6 +2428,236 @@
       });
     });
   });
+
+  // ============================================
+  // STEP 2: FUEL MATCH — derived from sportData percentages
+  // ============================================
+  function fuelProfile(d) {
+    const explosive = d.red + d.yellow; // PCr + glycolytic
+    if (explosive > 60) {
+      return {
+        cls: 'carb',
+        label: 'Carb-heavy / explosive fuelling',
+        points: [
+          "Top up carbs 1–2 hours before training or a game. You burn through them fast — don't show up empty.",
+          "Recover with carbs + protein within 30 minutes of finishing.",
+          "A bigger carb meal 2–3 hours out fills the tank before the explosive work starts."
+        ]
+      };
+    }
+    if (d.green > 70) {
+      return {
+        cls: 'fat',
+        label: 'Fat-tolerant / endurance fuelling',
+        points: [
+          "Fuel up properly the night before and at breakfast — your tank needs to be full for the long haul.",
+          "For efforts over an hour, take carbs on board during (drink, gel, banana).",
+          "Train your gut: practise eating and drinking on the move so race day feels normal."
+        ]
+      };
+    }
+    return {
+      cls: 'mixed',
+      label: 'Mixed fuelling',
+      points: [
+        "You need both — a solid carb base for the bursts and enough fuel to last the distance.",
+        "Eat a real carb-led meal 2–3 hours before, then a light top-up closer to the start.",
+        "Recover with carbs + protein, and keep your fluids steady across the whole effort."
+      ]
+    };
+  }
+
+  function renderFuelMatch(d) {
+    const p = fuelProfile(d);
+    document.getElementById('fmTitle').textContent = d.name;
+    const prof = document.getElementById('fmProfile');
+    prof.textContent = p.label;
+    prof.className = 'fm-profile ' + p.cls;
+    document.getElementById('fmPoints').innerHTML = p.points.map(t => `<li>${t}</li>`).join('');
+    document.getElementById('fuelMatch').classList.add('show');
+  }
+
+  // ============================================
+  // BLOCK A: SCENARIO MATCHER
+  // ============================================
+  const scenarios = [
+    { prompt: "100m sprint", sub: "All-out, over in about 10 seconds.", answer: "red", explain: "Under 10 seconds of maximum power — that's the Red system (ATP-CP) using energy already stored in the muscle." },
+    { prompt: "5km run", sub: "A steady effort lasting around 20 minutes.", answer: "green", explain: "Sustained effort well over 2 minutes runs on the Green (aerobic) system — carbs and fat with oxygen." },
+    { prompt: "Rugby ruck", sub: "A few seconds of maximum force, then it's over.", answer: "red", explain: "A short explosive collision is Red (ATP-CP) — instant power, then you recover before the next one." },
+    { prompt: "Tennis rally", sub: "A burst of effort with rest between points.", answer: "red", explain: "Most points are short, sharp bursts under 10 seconds — Red system. The rest between points lets it recharge." },
+    { prompt: "Marathon", sub: "Hours of continuous running.", answer: "green", explain: "Long, continuous effort is almost entirely Green (aerobic) — this is where fat becomes an important fuel alongside carbs." },
+    { prompt: "Single heavy deadlift", sub: "One maximum lift lasting a couple of seconds.", answer: "red", explain: "One huge effort over in seconds is pure Red (ATP-CP) — stored energy fires instantly." },
+    { prompt: "400m run", sub: "All-out for around 50–60 seconds — it really burns.", answer: "yellow", explain: "That deep burn from 10 seconds to about 2 minutes is the Yellow (lactic) system. The 400m is the classic example." },
+    { prompt: "Football match", sub: "Repeated sprints across 90 minutes.", answer: "red", explain: "The decisive actions — sprints, tackles, jumps — are Red (ATP-CP). The Green system works in the background to keep you recovering between them." }
+  ];
+
+  let scIndex = 0, scScore = 0, scAnswered = false;
+  const scTotalEl = document.getElementById('scenarioTotal');
+  const scScoreEl = document.getElementById('scenarioScore');
+  const scPrompt = document.getElementById('scenarioPrompt');
+  const scSub = document.getElementById('scenarioSub');
+  const scFeedback = document.getElementById('scenarioFeedback');
+  const scNext = document.getElementById('scenarioNext');
+  const scDots = document.getElementById('scenarioDots');
+  const scCard = document.getElementById('scenarioCard');
+  const scSummary = document.getElementById('scenarioSummary');
+
+  if (scTotalEl) {
+    scTotalEl.textContent = scenarios.length;
+    document.getElementById('scenarioFinalTotal').textContent = scenarios.length;
+    scDots.innerHTML = scenarios.map(() => '<span class="scenario-dot"></span>').join('');
+    renderScenario();
+  }
+
+  function renderScenario() {
+    scAnswered = false;
+    const s = scenarios[scIndex];
+    scPrompt.textContent = s.prompt;
+    scSub.textContent = s.sub;
+    scFeedback.classList.remove('show');
+    scNext.style.display = 'none';
+    scNext.textContent = scIndex === scenarios.length - 1 ? 'See result →' : 'Next →';
+    document.querySelectorAll('.scenario-choice').forEach(c => {
+      c.disabled = false;
+      c.classList.remove('is-correct', 'is-wrong');
+    });
+    scDots.querySelectorAll('.scenario-dot').forEach((dot, i) => {
+      dot.classList.toggle('current', i === scIndex);
+    });
+  }
+
+  document.querySelectorAll('.scenario-choice').forEach(choice => {
+    choice.addEventListener('click', () => {
+      if (scAnswered) return;
+      scAnswered = true;
+      const s = scenarios[scIndex];
+      const picked = choice.dataset.sys;
+      const right = picked === s.answer;
+      if (right) { scScore++; scScoreEl.textContent = scScore; }
+      document.querySelectorAll('.scenario-choice').forEach(c => {
+        c.disabled = true;
+        if (c.dataset.sys === s.answer) c.classList.add('is-correct');
+        else if (c === choice) c.classList.add('is-wrong');
+      });
+      scFeedback.textContent = (right ? '✓ ' : '✗ ') + s.explain;
+      scFeedback.classList.add('show');
+      scDots.querySelectorAll('.scenario-dot')[scIndex].classList.add('done');
+      scNext.style.display = 'inline-block';
+    });
+  });
+
+  scNext.addEventListener('click', () => {
+    if (scIndex < scenarios.length - 1) {
+      scIndex++;
+      renderScenario();
+    } else {
+      scCard.style.display = 'none';
+      document.getElementById('scenarioFinal').textContent = scScore;
+      const pct = scScore / scenarios.length;
+      let msg;
+      if (pct === 1) msg = "Perfect — you've got the energy systems nailed.";
+      else if (pct >= 0.6) msg = "Strong work. Re-read the ones you missed and the rest will click.";
+      else msg = "Good start — scroll back up to the three systems and have another go.";
+      document.getElementById('scenarioSummaryMsg').textContent = msg;
+      scSummary.classList.add('show');
+    }
+  });
+
+  document.getElementById('scenarioRestart').addEventListener('click', () => {
+    scIndex = 0; scScore = 0; scAnswered = false;
+    scScoreEl.textContent = '0';
+    scSummary.classList.remove('show');
+    scCard.style.display = 'block';
+    scDots.querySelectorAll('.scenario-dot').forEach(d => d.classList.remove('done', 'current'));
+    renderScenario();
+  });
+
+  // ============================================
+  // BLOCK B: EFFORT DIAL (log time scale -> system blend)
+  // ============================================
+  // Slider 0..1000 maps log-scale to 5 sec .. 3600 sec.
+  const DIAL_MIN_S = 5, DIAL_MAX_S = 3600;
+  const dialSnapPoints = [
+    { label: '100m', sec: 11 },
+    { label: '400m', sec: 55 },
+    { label: '1500m', sec: 240 },
+    { label: '5km', sec: 1080 },
+    { label: 'marathon', sec: 3600 }
+  ];
+
+  function sliderToSeconds(v) {
+    const t = v / 1000;
+    return DIAL_MIN_S * Math.pow(DIAL_MAX_S / DIAL_MIN_S, t);
+  }
+  function secondsToSlider(sec) {
+    const t = Math.log(sec / DIAL_MIN_S) / Math.log(DIAL_MAX_S / DIAL_MIN_S);
+    return Math.round(Math.max(0, Math.min(1, t)) * 1000);
+  }
+  function fmtDuration(sec) {
+    if (sec < 60) return Math.round(sec) + ' sec';
+    if (sec < 3600) return Math.round(sec / 60 * 10) / 10 + ' min';
+    return Math.round(sec / 60) + ' min';
+  }
+  // Approximate energy-system blend by effort duration (alactic/lactic/aerobic).
+  function dialBlend(sec) {
+    let red, yellow, green;
+    if (sec <= 10) {
+      red = 90 - (sec / 10) * 35;   // 90 -> 55
+      yellow = (sec / 10) * 35;     // 0 -> 35
+      green = 10;
+    } else if (sec <= 120) {
+      const t = (sec - 10) / 110;   // 0..1 across 10s..2min
+      red = 55 - t * 45;            // 55 -> 10
+      yellow = 35 + t * 5;          // 35 -> 40
+      green = 10 + t * 40;          // 10 -> 50
+    } else {
+      const t = Math.min(1, (sec - 120) / (DIAL_MAX_S - 120));
+      red = Math.max(2, 10 - t * 8);
+      yellow = 40 - t * 33;         // 40 -> 7
+      green = 50 + t * 43;          // 50 -> 93
+    }
+    const sum = red + yellow + green;
+    return { red: red / sum * 100, yellow: yellow / sum * 100, green: green / sum * 100 };
+  }
+  function dialExampleFor(sec) {
+    let best = dialSnapPoints[0];
+    for (const sp of dialSnapPoints) {
+      if (Math.abs(Math.log(sp.sec) - Math.log(sec)) < Math.abs(Math.log(best.sec) - Math.log(sec))) best = sp;
+    }
+    return best.label;
+  }
+
+  const dialSlider = document.getElementById('dialSlider');
+  if (dialSlider) {
+    const snapsEl = document.getElementById('dialSnaps');
+    snapsEl.innerHTML = dialSnapPoints.map(sp =>
+      `<button class="dial-snap" data-sec="${sp.sec}">${sp.label}</button>`).join('');
+    snapsEl.querySelectorAll('.dial-snap').forEach(b => {
+      b.addEventListener('click', () => {
+        dialSlider.value = secondsToSlider(parseFloat(b.dataset.sec));
+        updateDial();
+      });
+    });
+    dialSlider.addEventListener('input', updateDial);
+    updateDial();
+  }
+
+  function updateDial() {
+    const sec = sliderToSeconds(parseFloat(dialSlider.value));
+    const b = dialBlend(sec);
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      el.style.width = val + '%';
+      el.textContent = Math.round(val) + '%';
+    };
+    set('dialRed', b.red); set('dialYellow', b.yellow); set('dialGreen', b.green);
+    const example = dialExampleFor(sec);
+    document.getElementById('dialReadout').innerHTML =
+      `${fmtDuration(sec)} effort <small id="dialExample">— like a ${example}</small>`;
+    document.querySelectorAll('.dial-snap').forEach(snp => {
+      snp.classList.toggle('active', dialExampleFor(parseFloat(snp.dataset.sec)) === example && Math.abs(secondsToSlider(parseFloat(snp.dataset.sec)) - parseFloat(dialSlider.value)) < 25);
+    });
+  }
 
   // ============================================
   // QUIZ
@@ -2316,6 +2847,313 @@
   }
 
   loadQuestion();
+
+  // ============================================
+  // STEP 3: NUTRITION PLAN BUILDER
+  // ============================================
+  const FOOD_BANK = [
+    { cat: 'Carbs', items: [
+      { e: '🍝', n: 'Pasta' }, { e: '🍚', n: 'Rice' }, { e: '🍞', n: 'Toast' },
+      { e: '🥣', n: 'Oats' }, { e: '🥔', n: 'Potato' }, { e: '🍌', n: 'Banana' },
+      { e: '🥯', n: 'Bagel' }
+    ]},
+    { cat: 'Protein', items: [
+      { e: '🥚', n: 'Eggs' }, { e: '🍗', n: 'Chicken' }, { e: '🐟', n: 'Fish' },
+      { e: '🥛', n: 'Milk' }, { e: '🫘', n: 'Beans' }, { e: '🧀', n: 'Yoghurt' }
+    ]},
+    { cat: 'Fats', items: [
+      { e: '🥑', n: 'Avocado' }, { e: '🥜', n: 'Nuts' }, { e: '🫒', n: 'Olive oil' }
+    ]},
+    { cat: 'Fluids', items: [
+      { e: '💧', n: 'Water' }, { e: '🧃', n: 'Sports drink' }, { e: '🥤', n: 'Smoothie' }
+    ]},
+    { cat: 'Snacks', items: [
+      { e: '🍫', n: 'Cereal bar' }, { e: '🍯', n: 'Honey toast' }, { e: '🍎', n: 'Fruit' },
+      { e: '🥨', n: 'Crackers' }
+    ]}
+  ];
+
+  // category lookup for scoring
+  const FOOD_CAT = {};
+  FOOD_BANK.forEach(g => g.items.forEach(it => { FOOD_CAT[it.n] = g.cat; }));
+
+  const SCENARIOS_BUILD = {
+    training: {
+      label: 'Training day',
+      slots: ['3 hrs before', '1 hr before', 'during', 'immediately after', '2 hrs after', 'evening'],
+      pre: ['3 hrs before', '1 hr before'],
+      post: ['immediately after', '2 hrs after']
+    },
+    game: {
+      label: 'Game day',
+      slots: ['3 hrs before', '1 hr before', 'warm-up', 'during', 'immediately after', '2 hrs after', 'evening'],
+      pre: ['3 hrs before', '1 hr before', 'warm-up'],
+      post: ['immediately after', '2 hrs after']
+    },
+    multi: {
+      label: 'Multi-day comp',
+      slots: ['end of Day 1', 'evening', 'overnight', 'breakfast Day 2', 'pre-comp Day 2'],
+      pre: ['breakfast Day 2', 'pre-comp Day 2'],
+      post: ['end of Day 1', 'evening']
+    },
+    rest: {
+      label: 'Rest / recovery day',
+      slots: ['breakfast', 'lunch', 'easy movement', 'dinner'],
+      pre: [],
+      post: [],
+      isRest: true
+    }
+  };
+
+  // state: { training: { slotName: [foodName,...] }, ... }
+  const planState = {};
+  Object.keys(SCENARIOS_BUILD).forEach(k => {
+    planState[k] = {};
+    SCENARIOS_BUILD[k].slots.forEach(s => { planState[k][s] = []; });
+  });
+
+  let activeScenario = 'training';
+  let tapSelected = null; // food name selected via tap
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+
+  const builderTabs = document.getElementById('builderTabs');
+  const slotList = document.getElementById('slotList');
+  const foodCats = document.getElementById('foodCats');
+  const tapHint = document.getElementById('tapHint');
+
+  if (builderTabs) {
+    builderTabs.innerHTML = Object.entries(SCENARIOS_BUILD).map(([k, v]) =>
+      `<button class="builder-tab${k === activeScenario ? ' active' : ''}" data-scenario="${k}">${v.label}</button>`).join('');
+    builderTabs.querySelectorAll('.builder-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        activeScenario = t.dataset.scenario;
+        builderTabs.querySelectorAll('.builder-tab').forEach(x => x.classList.toggle('active', x === t));
+        tapSelected = null;
+        renderSlots();
+        scorePlan();
+      });
+    });
+
+    renderFoodBank();
+    renderSlots();
+    scorePlan();
+
+    if (isTouch) tapHint.style.display = 'block';
+
+    document.getElementById('savePlanBtn').addEventListener('click', savePlan);
+  }
+
+  function renderFoodBank() {
+    foodCats.innerHTML = FOOD_BANK.map(g => `
+      <div class="food-cat">${g.cat}</div>
+      <div class="food-items">
+        ${g.items.map(it => `<div class="food-item" draggable="true" data-food="${it.n}">${it.e} ${it.n}</div>`).join('')}
+      </div>
+    `).join('');
+
+    foodCats.querySelectorAll('.food-item').forEach(el => {
+      el.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', el.dataset.food);
+        el.classList.add('dragging');
+      });
+      el.addEventListener('dragend', () => el.classList.remove('dragging'));
+      // tap-to-select
+      el.addEventListener('click', () => {
+        if (tapSelected === el.dataset.food) {
+          tapSelected = null;
+        } else {
+          tapSelected = el.dataset.food;
+        }
+        foodCats.querySelectorAll('.food-item').forEach(f =>
+          f.classList.toggle('tap-selected', f.dataset.food === tapSelected));
+        document.getElementById('tapHintText').textContent = tapSelected
+          ? `"${tapSelected}" selected — now tap a slot to place it.`
+          : 'tap a food below, then tap a slot.';
+        if (tapSelected) tapHint.style.display = 'block';
+      });
+    });
+  }
+
+  function emojiFor(name) {
+    for (const g of FOOD_BANK) {
+      const f = g.items.find(i => i.n === name);
+      if (f) return f.e;
+    }
+    return '';
+  }
+
+  function renderSlots() {
+    const sc = SCENARIOS_BUILD[activeScenario];
+    slotList.innerHTML = sc.slots.map(slot => {
+      const items = planState[activeScenario][slot];
+      const chips = items.map(n =>
+        `<span class="slot-chip" data-slot="${slot}" data-food="${n}">${emojiFor(n)} ${n} <span class="chip-x">×</span></span>`).join('');
+      return `
+        <div class="plan-slot" data-slot="${slot}">
+          <div class="slot-when">${slot}</div>
+          ${items.length
+            ? `<div class="slot-items">${chips}</div>`
+            : `<div class="slot-drop-hint">Drop or tap a food here</div>`}
+        </div>`;
+    }).join('');
+
+    slotList.querySelectorAll('.plan-slot').forEach(slotEl => {
+      const slot = slotEl.dataset.slot;
+      slotEl.addEventListener('dragover', e => { e.preventDefault(); slotEl.classList.add('drag-over'); });
+      slotEl.addEventListener('dragleave', () => slotEl.classList.remove('drag-over'));
+      slotEl.addEventListener('drop', e => {
+        e.preventDefault();
+        slotEl.classList.remove('drag-over');
+        const food = e.dataTransfer.getData('text/plain');
+        if (food) addFood(slot, food);
+      });
+      // tap-to-place
+      slotEl.addEventListener('click', () => {
+        if (tapSelected) {
+          addFood(slot, tapSelected);
+          tapSelected = null;
+          foodCats.querySelectorAll('.food-item').forEach(f => f.classList.remove('tap-selected'));
+          document.getElementById('tapHintText').textContent = 'tap a food below, then tap a slot.';
+        }
+      });
+    });
+
+    slotList.querySelectorAll('.slot-chip').forEach(chip => {
+      chip.addEventListener('click', e => {
+        e.stopPropagation();
+        removeFood(chip.dataset.slot, chip.dataset.food);
+      });
+    });
+  }
+
+  function addFood(slot, food) {
+    const arr = planState[activeScenario][slot];
+    if (!arr.includes(food)) arr.push(food);
+    renderSlots();
+    scorePlan();
+  }
+  function removeFood(slot, food) {
+    const arr = planState[activeScenario][slot];
+    const i = arr.indexOf(food);
+    if (i > -1) arr.splice(i, 1);
+    renderSlots();
+    scorePlan();
+  }
+
+  // returns { score, tags: [{good:bool, text}] }
+  function scorePlan() {
+    const sc = SCENARIOS_BUILD[activeScenario];
+    const plan = planState[activeScenario];
+    const tags = [];
+    let score = 50; // neutral baseline
+
+    const slotCats = slot => (plan[slot] || []).map(n => FOOD_CAT[n]);
+    const slotHas = (slot, cat) => slotCats(slot).includes(cat);
+    const fluidSlots = sc.slots.filter(s => slotCats(s).includes('Fluids'));
+
+    if (sc.isRest) {
+      // Rest day: balance across the day, don't over-focus on carbs.
+      const mainMeals = ['breakfast', 'lunch', 'dinner'];
+      const filledMeals = mainMeals.filter(s => plan[s] && plan[s].length).length;
+      score += filledMeals * 8;
+      if (filledMeals === 3) tags.push({ good: true, text: 'Eating across the whole day ✓' });
+      else tags.push({ good: false, text: 'Fill all three main meals ✗' });
+
+      const hasProtein = mainMeals.some(s => slotHas(s, 'Protein'));
+      if (hasProtein) { score += 12; tags.push({ good: true, text: 'Protein for repair ✓' }); }
+      else tags.push({ good: false, text: 'Add some protein to repair ✗' });
+
+      const hasVegFat = mainMeals.some(s => slotHas(s, 'Fats'));
+      if (hasVegFat) { score += 8; tags.push({ good: true, text: 'Balanced — not all carbs ✓' }); }
+
+      const allCarbs = mainMeals.every(s => plan[s] && plan[s].length && slotCats(s).every(c => c === 'Carbs'));
+      if (allCarbs) { score -= 15; tags.push({ good: false, text: 'Too carb-heavy for a rest day ✗' }); }
+
+      if (fluidSlots.length >= 2) { score += 10; tags.push({ good: true, text: 'Staying hydrated ✓' }); }
+      else tags.push({ good: false, text: 'Spread fluids across the day ✗' });
+    } else {
+      // Performance day rubric
+      const preCarb = sc.pre.some(s => slotHas(s, 'Carbs'));
+      if (preCarb) { score += 18; tags.push({ good: true, text: 'Strong pre-performance carbs ✓' }); }
+      else tags.push({ good: false, text: 'Load carbs before you perform ✗' });
+
+      const postCarb = sc.post.some(s => slotHas(s, 'Carbs'));
+      const postProtein = sc.post.some(s => slotHas(s, 'Protein'));
+      if (postCarb && postProtein) { score += 18; tags.push({ good: true, text: 'Carbs + protein to recover ✓' }); }
+      else if (postCarb || postProtein) { score += 6; tags.push({ good: false, text: 'Add the missing recovery piece (carbs + protein) ✗' }); }
+      else tags.push({ good: false, text: 'Refuel after with carbs + protein ✗' });
+
+      if (fluidSlots.length >= 2) { score += 12; tags.push({ good: true, text: 'Fluids across the day ✓' }); }
+      else tags.push({ good: false, text: 'Spread fluids across the day ✗' });
+
+      // penalties: heavy fat/fibre close to performance
+      const lastPre = sc.pre[sc.pre.length - 1];
+      if (lastPre && (slotHas(lastPre, 'Fats'))) {
+        score -= 12; tags.push({ good: false, text: 'Heavy fat too close to performance ✗' });
+      }
+      // empty performance slots
+      const emptyPerf = [...sc.pre, ...sc.post].filter(s => !plan[s] || !plan[s].length);
+      if (emptyPerf.length) {
+        score -= emptyPerf.length * 5;
+        tags.push({ good: false, text: `${emptyPerf.length} key slot${emptyPerf.length > 1 ? 's' : ''} still empty ✗` });
+      }
+    }
+
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    document.getElementById('builderScoreNum').innerHTML = score + '<small>/100</small>';
+    document.getElementById('builderTags').innerHTML = tags.map(t =>
+      `<div class="builder-tag ${t.good ? 'good' : 'bad'}">${t.text}</div>`).join('');
+    return { score, tags };
+  }
+
+  async function savePlan() {
+    if (!currentUser) { showToast('Sign in to save your plan', true); return; }
+    const { score, tags } = scorePlan();
+    const btn = document.getElementById('savePlanBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    try {
+      const payload = {
+        action: 'saveFuelLabPlan',
+        email: currentUser.email,
+        name: currentUser.name,
+        scenario: SCENARIOS_BUILD[activeScenario].label,
+        plan: planState[activeScenario],
+        score: score,
+        tags: tags.map(t => t.text),
+        timestamp: new Date().toISOString()
+      };
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) showToast('Plan saved — ' + SCENARIOS_BUILD[activeScenario].label + ' ✓');
+      else showToast('Could not save: ' + (data.error || 'try again'), true);
+    } catch (err) {
+      showToast('Could not save: ' + err.message, true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save my plan';
+    }
+  }
+
+  let toastTimer = null;
+  function showToast(msg, isError) {
+    let el = document.getElementById('fuelToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'fuelToast';
+      el.className = 'toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.toggle('error', !!isError);
+    requestAnimationFrame(() => el.classList.add('show'));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+  }
 </script>
 
 </body>
