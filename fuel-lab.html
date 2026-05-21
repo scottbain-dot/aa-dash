@@ -1624,6 +1624,75 @@
   }
   .tag-done:hover { background: var(--burgundy-dark); }
   .tag-done:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* editable personal plan */
+  .pp-day-help { color: var(--ink-soft); font-size: 14px; font-style: italic; margin-top: 10px; }
+  .plan-slot.dragging-slot { opacity: 0.5; }
+  .plan-slot.slot-drop-before { box-shadow: 0 -3px 0 var(--burgundy); }
+  .slot-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .slot-drag {
+    cursor: grab; color: var(--line); font-size: 16px; line-height: 1; user-select: none;
+    flex-shrink: 0; transition: color 0.15s ease; letter-spacing: -2px;
+  }
+  .slot-head:hover .slot-drag { color: var(--ink-mute); }
+  .slot-drag:active { cursor: grabbing; }
+  .slot-label-input {
+    flex: 1; min-width: 0; font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; color: var(--burgundy);
+    background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 4px 8px;
+  }
+  .slot-label-input:hover { border-color: var(--line); }
+  .slot-label-input:focus { outline: none; border-color: var(--burgundy); background: var(--bg); }
+  .slot-head-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .slot-arrow, .slot-del {
+    background: none; border: none; cursor: pointer; color: var(--ink-mute); border-radius: 8px;
+    width: 28px; height: 28px; font-size: 15px; line-height: 1; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .slot-arrow:hover { background: var(--bg-warm); color: var(--burgundy); }
+  .slot-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+  .slot-del:hover { background: rgba(217,77,58,0.12); color: var(--red-sys); }
+  .slot-confirm { background: var(--bg-warm); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .slot-confirm-q { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .slot-confirm button { border: none; border-radius: 999px; padding: 5px 14px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .slot-confirm .sc-yes { background: var(--red-sys); color: #fff; }
+  .slot-confirm .sc-no { background: var(--cream); border: 1px solid var(--line); color: var(--ink-soft); }
+
+  .pp-slot-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
+  .pp-add-slot {
+    background: none; border: 1.5px dashed var(--line); border-radius: 12px; padding: 10px 18px;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--burgundy); cursor: pointer; transition: border-color 0.15s ease;
+  }
+  .pp-add-slot:hover:not(:disabled) { border-color: var(--burgundy); }
+  .pp-add-slot:disabled { opacity: 0.45; cursor: not-allowed; }
+  .pp-add-hint { font-size: 13px; color: var(--ink-mute); }
+  .pp-start-over {
+    background: none; border: none; color: var(--burgundy); font-family: 'Inter', sans-serif; font-size: 14px;
+    font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+  }
+  @keyframes slotIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .plan-slot.slot-new { animation: slotIn 0.25s ease; }
+
+  /* principles checklist (personal plan — replaces score) */
+  .principles { background: var(--cream); border-radius: 20px; padding: 26px 30px; margin: 28px 0 20px; }
+  .principles h3 { font-size: 22px; }
+  .principles-sub { color: var(--ink-soft); font-size: 14px; margin: 4px 0 18px; }
+  .principles-list { display: grid; gap: 6px; }
+  .principle-row {
+    display: flex; align-items: flex-start; gap: 14px; width: 100%; text-align: left;
+    background: none; border: none; border-radius: 12px; padding: 9px 10px; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: background 0.15s ease;
+  }
+  .principle-row:hover { background: var(--bg-warm); }
+  .principle-row:focus-visible { outline: 2px solid var(--burgundy); outline-offset: 2px; }
+  .pc-circle {
+    flex-shrink: 0; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; border: 2px solid var(--line);
+    display: flex; align-items: center; justify-content: center; transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  }
+  .pc-circle::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; line-height: 1; opacity: 0; transform: scale(0.4); transition: opacity 0.25s ease, transform 0.25s ease; }
+  .pc-text { font-size: 15px; font-weight: 500; color: var(--ink); transition: color 0.25s ease; }
+  .principle-row.done .pc-circle { background: var(--burgundy); border-color: var(--burgundy); transform: scale(1.08); }
+  .principle-row.done .pc-circle::after { opacity: 1; transform: scale(1); }
+  .principle-row.done .pc-text { color: var(--ink-soft); }
 </style>
 </head>
 <body>
@@ -2077,22 +2146,23 @@
     <!-- PART 2: MAKE YOUR OWN PLAN -->
     <div class="interactive-block personal-plan" id="personalBlock">
       <h3>Now make your own plan</h3>
-      <p class="ib-intro">Pick the kind of day you're planning for, describe what you've got coming up, and build your plan. There's no single right answer — use what you learned from the example.</p>
+      <p class="ib-intro">Pick the kind of day you're planning for, describe what you've got coming up, and build your plan. Start from the template, then make it yours — rename, add, remove, and reorder the slots however you need.</p>
 
       <div class="pp-step">
         <div class="pp-step-label">1 · Pick your day type</div>
         <div class="sport-buttons" id="dayTypeButtons">
           <button class="sport-btn" data-day="training">Training day</button>
           <button class="sport-btn" data-day="game">Game day</button>
-          <button class="sport-btn" data-day="multi">Multi-day comp</button>
+          <button class="sport-btn" data-day="multi">Multi-event day</button>
           <button class="sport-btn" data-day="rest">Rest / recovery day</button>
         </div>
+        <p class="pp-day-help" id="ppDayHelp" style="display:none;"></p>
       </div>
 
       <div class="pp-step" id="ppDescribeStep" style="display:none;">
         <div class="pp-step-label">2 · Describe the event</div>
         <input type="text" class="pp-input" id="ppEvent" maxlength="120"
-               placeholder="What are you fuelling for? e.g. 'Saturday football match, 10am kickoff' or 'Two-day swim meet'">
+               placeholder="What are you fuelling for? e.g. 'Saturday football match, 10am kickoff' or 'Saturday track meet'">
       </div>
 
       <div id="ppBuilder" style="display:none;">
@@ -2102,17 +2172,27 @@
         </div>
         <p class="tap-hint" id="personalTapHint" style="display:none;"><strong>Tap-to-place:</strong> <span class="tap-hint-text">tap a food, then tap a slot.</span></p>
         <div class="builder-grid bank-hidden" id="personalGrid">
-          <div class="slot-list" id="personalSlots"></div>
+          <div>
+            <div class="slot-list" id="personalSlots"></div>
+            <div class="pp-slot-actions">
+              <button type="button" class="pp-add-slot" id="ppAddSlot">+ Add slot</button>
+              <span class="pp-add-hint" id="ppAddHint" style="display:none;">Max 8 slots — delete one to add another.</span>
+              <button type="button" class="pp-start-over" id="ppStartOver" style="display:none;">Start over</button>
+            </div>
+          </div>
           <div class="food-bank" id="personalBank" style="display:none;">
             <h4>Food suggestions</h4>
             <p class="fb-hint">Drag onto a slot, or tap to select then tap a slot.</p>
             <div class="food-cats"></div>
           </div>
         </div>
-        <div class="builder-score">
-          <div class="bs-num" id="personalScoreNum">0<small>/100</small></div>
-          <div class="builder-tags" id="personalTags"></div>
+
+        <div class="principles">
+          <h3>How does your plan stack up?</h3>
+          <p class="principles-sub">Tick the ones you've covered — be honest.</p>
+          <div class="principles-list" id="principlesList"></div>
         </div>
+
         <button class="quiz-btn" id="personalSaveBtn">Save my plan</button>
       </div>
     </div>
@@ -3108,18 +3188,62 @@
       { name: 'Recovery (after)', role: 'recovery' }
     ]
   };
-  const PERSONAL_SCENARIOS = {
-    training: { label: 'Training day', kind: 'performance', penaltyScale: 0.7, slots: [
-      { name: '2 hours before', role: 'load' }, { name: 'Pre-session', role: 'pregame' },
-      { name: 'During', role: 'during' }, { name: 'Recovery', role: 'recovery' } ] },
-    game: { label: 'Game day', kind: 'performance', slots: [
-      { name: '3 hours before', role: 'load' }, { name: 'Pre-game (1 hour)', role: 'pregame' },
-      { name: 'In game', role: 'during' }, { name: 'Recovery', role: 'recovery' } ] },
-    multi: { label: 'Multi-day comp', kind: 'multi', slots: [
-      { name: 'Day 1 recovery', role: 'recovery' }, { name: 'Evening / overnight', role: 'recovery' },
-      { name: 'Day 2 pre-comp', role: 'load' }, { name: 'Day 2 in-comp', role: 'during' } ] },
-    rest: { label: 'Rest / recovery day', kind: 'rest', slots: [
-      { name: 'Breakfast' }, { name: 'Lunch' }, { name: 'Afternoon' }, { name: 'Evening' } ] }
+  // Personal plan: each day type is a fully editable template (labels are starting
+  // points; the student can rename / add / remove / reorder). No scoring — a
+  // self-assessed principles checklist replaces it.
+  const PERSONAL_DAYS = {
+    training: {
+      label: 'Training day',
+      help: 'A normal training day — fuel the session, then recover well afterwards.',
+      template: ['2 hours before', 'Pre-session', 'During', 'Recovery'],
+      principles: [
+        'Carbs in the slots before training',
+        'Light, easy foods close to training (no heavy fat or fibre right before)',
+        'Fluids spread across the whole day',
+        'Carbs + protein in the recovery window',
+        'Realistic — foods you\'d actually eat',
+        'Timed — you know when each thing happens'
+      ]
+    },
+    game: {
+      label: 'Game day',
+      help: 'A single game or match — fuel up, top up, and recover.',
+      template: ['3 hours before', 'Pre-game (1 hour)', 'In game', 'Recovery'],
+      principles: [
+        'Carbs 3 hours before',
+        'Light, easy fuel 1 hour before (no heavy fat or fibre)',
+        'Fluids before, during, and after',
+        'Carbs + protein in the recovery window (within 60 mins)',
+        'Realistic — foods you\'d actually eat',
+        'Timed — you know when each thing happens'
+      ]
+    },
+    multi: {
+      label: 'Multi-event day',
+      help: 'A single day with multiple races, games, or events — like a track meet, swim meet, or tournament.',
+      template: ['3 hours before first event', 'Between events', 'During an event', 'After the meet'],
+      principles: [
+        'Carbs and fluids 3 hours before the first event',
+        'Easy carbs and fluids between events (nothing heavy that slows you down)',
+        'Fluids during events, sports drink if it\'s a long one',
+        'Carbs + protein after the meet',
+        'Realistic — foods you\'d actually eat',
+        'Timed — you know when each thing happens'
+      ]
+    },
+    rest: {
+      label: 'Rest / recovery day',
+      help: 'A day off training — focus on balanced eating and staying hydrated.',
+      template: ['Breakfast', 'Lunch', 'Afternoon', 'Evening'],
+      principles: [
+        'Balance across the day — carbs, protein, fats, fluids all show up',
+        'Protein included to support recovery',
+        'Fluids spread across the day',
+        'Not over-restricting — you\'re still eating enough',
+        'Realistic — foods you\'d actually eat',
+        'Timed — you know when each meal happens'
+      ]
+    }
   };
 
   const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -3177,57 +3301,9 @@
     return { score, tags };
   }
 
-  function scoreMulti(sc, plan) {
-    const tags = [];
-    let score = 20;
-    const recs = sc.slots.filter(s => s.role === 'recovery').map(s => s.name);
-    const load = sc.slots.find(s => s.role === 'load').name;
-    const during = sc.slots.find(s => s.role === 'during').name;
-
-    recs.forEach(name => {
-      if (slotHas(plan, name, 'carb') && slotHas(plan, name, 'protein')) { score += 24; tags.push([true, name + ': carbs + protein ✓']); }
-      else if (slotHas(plan, name, 'carb') || slotHas(plan, name, 'protein')) { score += 8; tags.push([false, name + ' needs carbs + protein ✗']); }
-      else tags.push([false, name + ': refuel with carbs + protein ✗']);
-    });
-    if (slotHas(plan, load, 'carb')) { score += 14; tags.push([true, 'Carbs before Day 2 ✓']); }
-    else tags.push([false, 'Carb up for Day 2 at ' + load + ' ✗']);
-    if (slotHas(plan, during, 'fluid')) { score += 6; tags.push([true, 'Fluids during Day 2 ✓']); }
-    else tags.push([false, 'Drink during Day 2 ✗']);
-
-    const fl = fluidCount(sc, plan);
-    score += [0, 2, 5, 8, 12][Math.min(fl, 4)];
-
-    const empties = recs.concat(load).filter(n => !slotFilled(plan, n));
-    if (empties.length) { score -= empties.length * 12; tags.push([false, empties.join(' and ') + ' still empty ✗']); }
-    return { score, tags };
-  }
-
-  function scoreRest(sc, plan) {
-    const tags = [];
-    let score = 20;
-    const filled = sc.slots.filter(s => slotFilled(plan, s.name)).length;
-    score += filled * 9;
-    if (filled === sc.slots.length) tags.push([true, 'Eating across the whole day ✓']);
-    else tags.push([false, 'Fill all four meals ✗']);
-
-    const any = tag => sc.slots.some(s => slotHas(plan, s.name, tag));
-    if (any('carb')) score += 8; else tags.push([false, 'Add some carbs for energy ✗']);
-    if (any('protein')) { score += 12; tags.push([true, 'Protein for repair ✓']); } else tags.push([false, 'Add protein to repair ✗']);
-    if (any('fat')) score += 6;
-
-    const fl = fluidCount(sc, plan);
-    if (fl >= 2) { score += 12; tags.push([true, 'Hydrating across the day ✓']); }
-    else if (fl === 1) { score += 6; }
-    else tags.push([false, 'Add fluids across the day ✗']);
-
-    if (any('carb') && any('protein') && any('fat') && any('fluid')) { score += 8; tags.push([true, 'Great variety across the day ✓']); }
-    return { score, tags };
-  }
-
   function scoreScenario(sc, plan) {
-    const r = sc.kind === 'rest' ? scoreRest(sc, plan)
-            : sc.kind === 'multi' ? scoreMulti(sc, plan)
-            : scorePerformance(sc, plan);
+    // Only the Game Day worked example is scored, and it's always 'performance'.
+    const r = scorePerformance(sc, plan);
     r.score = Math.max(0, Math.min(100, Math.round(r.score)));
     return r;
   }
@@ -3387,13 +3463,7 @@
   async function doSave(builder) {
     if (!builder.scenario) { showToast('Pick a day type first', true); return; }
     if (!currentUser) { showToast('Sign in to save your plan', true); return; }
-    // Checklist: worked example ticks on save; personal plan needs a described
-    // event + every slot filled before it counts as complete.
     if (builder.cfg.taskOnSave === 'workedExample') tickTask('workedExample');
-    else if (builder.cfg.taskOnSave === 'personalPlan') {
-      const ev = builder.cfg.getEvent ? builder.cfg.getEvent() : '';
-      if (ev && builder.allSlotsFilled()) tickTask('personalPlan');
-    }
     const r = scoreScenario(builder.scenario, builder.plan);
     const btn = builder.cfg.saveBtn;
     const orig = btn.textContent;
@@ -3449,50 +3519,292 @@
     document.getElementById('workedSaveBtn').addEventListener('click', () => doSave(worked));
   }
 
+  // ---- Personal plan: fully editable slots + self-assessed principles (no score) ----
+  async function savePersonalPlan(pp, btn) {
+    if (!pp.dayType) { showToast('Pick a day type first', true); return; }
+    if (!currentUser) { showToast('Sign in to save your plan', true); return; }
+    const event = document.getElementById('ppEvent').value.trim();
+    // Task 5 ticks on: day type + event described + at least one food placed + save.
+    if (event && pp.anyFood()) tickTask('personalPlan');
+    const label = PERSONAL_DAYS[pp.dayType].label + ' (personal)';
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const payload = {
+        action: 'saveFuelLabPlan',
+        email: currentUser.email,
+        name: currentUser.name,
+        scenario: label,
+        event: event,
+        plan: pp.slots.map(s => ({ label: s.label, foods: s.foods })),
+        score: null, // personal plans aren't scored
+        tags: [...pp.ticked].join(', '), // comma-separated ticked principles
+        timestamp: new Date().toISOString()
+      };
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) showToast('Plan saved — ' + label + ' ✓');
+      else showToast('Could not save: ' + (data.error || 'try again'), true);
+    } catch (err) {
+      showToast('Could not save: ' + err.message, true);
+    } finally {
+      btn.disabled = false; btn.textContent = orig;
+    }
+  }
+
   const personalSlotsEl = document.getElementById('personalSlots');
   if (personalSlotsEl) {
     const personalBankHost = document.querySelector('#personalBank .food-cats');
-    const personal = createBuilder({
-      slotsEl: personalSlotsEl,
-      bankHost: personalBankHost,
-      scoreNumEl: document.getElementById('personalScoreNum'),
-      tagsEl: document.getElementById('personalTags'),
-      tapHintEl: document.getElementById('personalTapHint'),
-      saveBtn: document.getElementById('personalSaveBtn'),
-      allowCustom: true,
-      getEvent: () => document.getElementById('ppEvent').value.trim(),
-      taskOnSave: 'personalPlan'
-    });
-    renderBank(personalBankHost, personal);
-
-    let chosenDay = null;
+    const ppEvent = document.getElementById('ppEvent');
     const describeStep = document.getElementById('ppDescribeStep');
     const ppBuilder = document.getElementById('ppBuilder');
-    const ppEvent = document.getElementById('ppEvent');
+    const ppDayHelp = document.getElementById('ppDayHelp');
+    const addSlotBtn = document.getElementById('ppAddSlot');
+    const addHint = document.getElementById('ppAddHint');
+    const startOverBtn = document.getElementById('ppStartOver');
+    const principlesList = document.getElementById('principlesList');
+    const saveBtn = document.getElementById('personalSaveBtn');
+    const MAX_SLOTS = 8;
+
+    // pp is shaped so renderBank (shared with the worked example) works against it:
+    // it reads .tapSelected and .cfg.tapHintEl / .cfg.bankHost.
+    const pp = {
+      dayType: null,
+      slots: [],            // [{ id, label, foods: [item] }]
+      ticked: new Set(),    // ticked principle texts
+      tapSelected: null,
+      pendingDelete: null,  // slot id awaiting delete confirmation
+      focusNew: null,       // slot id to focus after render
+      cfg: { tapHintEl: document.getElementById('personalTapHint'), bankHost: personalBankHost }
+    };
+    pp.anyFood = () => pp.slots.some(s => s.foods.length > 0);
+    let slotSeq = 0;
+    const newSlot = label => ({ id: 'sl' + (++slotSeq), label, foods: [] });
+    const slotById = id => pp.slots.find(s => s.id === id);
+
+    renderBank(personalBankHost, pp);
+
+    function loadTemplate() {
+      pp.slots = PERSONAL_DAYS[pp.dayType].template.map(newSlot);
+      pp.pendingDelete = null;
+      renderSlots();
+    }
+
+    function renderPrinciples() {
+      principlesList.innerHTML = PERSONAL_DAYS[pp.dayType].principles.map(p =>
+        `<button type="button" class="principle-row${pp.ticked.has(p) ? ' done' : ''}" data-principle="${escapeHtml(p)}">
+          <span class="pc-circle"></span><span class="pc-text">${escapeHtml(p)}</span>
+        </button>`).join('');
+      principlesList.querySelectorAll('.principle-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const p = row.dataset.principle;
+          if (pp.ticked.has(p)) pp.ticked.delete(p); else pp.ticked.add(p);
+          row.classList.toggle('done');
+        });
+      });
+    }
+
+    function addFood(id, item) {
+      const s = slotById(id);
+      if (s && !s.foods.some(x => x.name === item.name)) { s.foods.push(item); renderSlots(); }
+    }
+    function moveSlot(id, dir) {
+      const i = pp.slots.findIndex(s => s.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= pp.slots.length) return;
+      const [s] = pp.slots.splice(i, 1);
+      pp.slots.splice(j, 0, s);
+      renderSlots();
+    }
+    function reorderBefore(draggedId, targetId) {
+      if (draggedId === targetId) return;
+      const di = pp.slots.findIndex(s => s.id === draggedId);
+      if (di < 0) return;
+      const [s] = pp.slots.splice(di, 1);
+      const ti = pp.slots.findIndex(x => x.id === targetId);
+      pp.slots.splice(ti < 0 ? pp.slots.length : ti, 0, s);
+      renderSlots();
+    }
+
+    function renderSlots() {
+      if (!pp.slots.length) {
+        personalSlotsEl.innerHTML = '<p class="slot-drop-hint" style="padding:12px 0;">No slots left — Start over to bring the template back.</p>';
+        addSlotBtn.style.display = 'none';
+        addHint.style.display = 'none';
+        startOverBtn.style.display = 'inline';
+        return;
+      }
+      addSlotBtn.style.display = '';
+      startOverBtn.style.display = 'none';
+      const atMax = pp.slots.length >= MAX_SLOTS;
+      addSlotBtn.disabled = atMax;
+      addHint.style.display = atMax ? 'inline' : 'none';
+
+      personalSlotsEl.innerHTML = pp.slots.map((s, i) => {
+        if (pp.pendingDelete === s.id) {
+          return `<div class="plan-slot" data-id="${s.id}">
+            <div class="slot-confirm">
+              <span class="slot-confirm-q">Delete "${escapeHtml(s.label)}"?</span>
+              <button type="button" class="sc-yes">Delete</button>
+              <button type="button" class="sc-no">Cancel</button>
+            </div>
+          </div>`;
+        }
+        const chips = s.foods.map((it, fi) =>
+          `<span class="slot-chip" data-idx="${fi}">${it.emoji ? it.emoji + ' ' : ''}${escapeHtml(it.name)} <span class="chip-x">×</span></span>`).join('');
+        return `<div class="plan-slot${pp.focusNew === s.id ? ' slot-new' : ''}" data-id="${s.id}">
+          <div class="slot-head">
+            <span class="slot-drag" draggable="true" title="Drag to reorder" aria-hidden="true">⠿</span>
+            <input class="slot-label-input" value="${escapeHtml(s.label)}" maxlength="32" aria-label="Slot name">
+            <span class="slot-head-actions">
+              <button type="button" class="slot-arrow" data-dir="-1" title="Move up" aria-label="Move up"${i === 0 ? ' disabled' : ''}>↑</button>
+              <button type="button" class="slot-arrow" data-dir="1" title="Move down" aria-label="Move down"${i === pp.slots.length - 1 ? ' disabled' : ''}>↓</button>
+              <button type="button" class="slot-del" title="Delete slot" aria-label="Delete slot">×</button>
+            </span>
+          </div>
+          ${s.foods.length ? `<div class="slot-items">${chips}</div>` : ''}
+          <div class="slot-entry">
+            <input class="slot-text" type="text" maxlength="40" placeholder="What will you eat/drink? Type anything">
+            <button class="slot-add" type="button">Add</button>
+          </div>
+          <div class="tag-picker" style="display:none;">
+            <span class="tag-picker-q">What's in it? Pick all that apply:</span>
+            <button type="button" class="tag-pick" data-tag="carb">Carbs</button>
+            <button type="button" class="tag-pick" data-tag="protein">Protein</button>
+            <button type="button" class="tag-pick" data-tag="fat">Fat</button>
+            <button type="button" class="tag-pick" data-tag="fluid">Fluid</button>
+            <button type="button" class="tag-pick" data-tag="snack">Snack</button>
+            <button type="button" class="tag-done" disabled>Add to slot</button>
+          </div>
+        </div>`;
+      }).join('');
+
+      wireSlots();
+      if (pp.focusNew) {
+        const el = personalSlotsEl.querySelector('.plan-slot[data-id="' + pp.focusNew + '"] .slot-label-input');
+        if (el) { el.focus(); el.select(); }
+        pp.focusNew = null;
+      }
+    }
+
+    function wireSlots() {
+      personalSlotsEl.querySelectorAll('.plan-slot').forEach(slotEl => {
+        const id = slotEl.dataset.id;
+
+        const yes = slotEl.querySelector('.sc-yes');
+        if (yes) {
+          yes.addEventListener('click', () => { pp.slots = pp.slots.filter(s => s.id !== id); pp.pendingDelete = null; renderSlots(); });
+          slotEl.querySelector('.sc-no').addEventListener('click', () => { pp.pendingDelete = null; renderSlots(); });
+          return;
+        }
+
+        // rename (live — no re-render so the input keeps focus while typing)
+        const labelInput = slotEl.querySelector('.slot-label-input');
+        labelInput.addEventListener('input', () => { const s = slotById(id); if (s) s.label = labelInput.value; });
+
+        slotEl.querySelectorAll('.slot-arrow').forEach(a =>
+          a.addEventListener('click', () => moveSlot(id, parseInt(a.dataset.dir, 10))));
+
+        slotEl.querySelector('.slot-del').addEventListener('click', () => {
+          const s = slotById(id);
+          if (s && s.foods.length) { pp.pendingDelete = id; renderSlots(); }
+          else { pp.slots = pp.slots.filter(x => x.id !== id); renderSlots(); }
+        });
+
+        const handle = slotEl.querySelector('.slot-drag');
+        handle.addEventListener('dragstart', e => { e.dataTransfer.setData('slot-id', id); e.dataTransfer.effectAllowed = 'move'; slotEl.classList.add('dragging-slot'); });
+        handle.addEventListener('dragend', () => { slotEl.classList.remove('dragging-slot'); personalSlotsEl.querySelectorAll('.slot-drop-before').forEach(x => x.classList.remove('slot-drop-before')); });
+
+        slotEl.addEventListener('dragover', e => {
+          e.preventDefault();
+          const isSlot = e.dataTransfer.types && [].indexOf.call(e.dataTransfer.types, 'slot-id') !== -1;
+          slotEl.classList.add(isSlot ? 'slot-drop-before' : 'drag-over');
+        });
+        slotEl.addEventListener('dragleave', () => slotEl.classList.remove('drag-over', 'slot-drop-before'));
+        slotEl.addEventListener('drop', e => {
+          e.preventDefault();
+          slotEl.classList.remove('drag-over', 'slot-drop-before');
+          const draggedId = e.dataTransfer.getData('slot-id');
+          if (draggedId) { reorderBefore(draggedId, id); return; }
+          const it = bankItem(e.dataTransfer.getData('text/plain'));
+          if (it) addFood(id, it);
+        });
+
+        slotEl.addEventListener('click', e => {
+          if (e.target.closest('.slot-head') || e.target.closest('.slot-entry') || e.target.closest('.tag-picker') || e.target.closest('.slot-chip')) return;
+          if (pp.tapSelected) {
+            addFood(id, pp.tapSelected);
+            pp.tapSelected = null;
+            personalBankHost.querySelectorAll('.food-item').forEach(f => f.classList.remove('tap-selected'));
+          }
+        });
+
+        slotEl.querySelectorAll('.slot-chip').forEach(chip => {
+          chip.addEventListener('click', e => {
+            e.stopPropagation();
+            const s = slotById(id);
+            if (s) { s.foods.splice(parseInt(chip.dataset.idx, 10), 1); renderSlots(); }
+          });
+        });
+
+        // custom multi-tag entry
+        const input = slotEl.querySelector('.slot-text');
+        const addBtn = slotEl.querySelector('.slot-add');
+        const picker = slotEl.querySelector('.tag-picker');
+        const doneBtn = picker.querySelector('.tag-done');
+        const pickBtns = picker.querySelectorAll('.tag-pick');
+        const selectedTags = () => {
+          const set = new Set();
+          pickBtns.forEach(tb => { if (tb.classList.contains('selected')) set.add(tb.dataset.tag === 'snack' ? 'carb' : tb.dataset.tag); });
+          return [...set];
+        };
+        const refreshDone = () => { doneBtn.disabled = selectedTags().length === 0; };
+        const beginAdd = () => { const v = input.value.trim(); if (!v) return; picker.dataset.pending = v; pickBtns.forEach(tb => tb.classList.remove('selected')); refreshDone(); picker.style.display = 'flex'; };
+        addBtn.addEventListener('click', beginAdd);
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); beginAdd(); } });
+        pickBtns.forEach(tb => tb.addEventListener('click', () => { tb.classList.toggle('selected'); refreshDone(); }));
+        doneBtn.addEventListener('click', () => {
+          const v = picker.dataset.pending; if (!v) return;
+          const tags = selectedTags();
+          if (!tags.length) { showToast('Pick at least one — what’s mostly in it?', true); return; }
+          addFood(id, { name: v, tags, source: 'custom' });
+        });
+      });
+    }
 
     const maybeShowBuilder = () => {
-      const ready = chosenDay && ppEvent.value.trim().length > 0;
-      if (ready) {
-        if (!personal.scenario || personal.scenario.key !== chosenDay) {
-          personal.setScenario(Object.assign({ key: chosenDay }, PERSONAL_SCENARIOS[chosenDay]));
-        }
-        ppBuilder.style.display = 'block';
-        if (isTouch) document.getElementById('personalTapHint').style.display = 'block';
-      } else {
-        ppBuilder.style.display = 'none';
-      }
+      const ready = pp.dayType && ppEvent.value.trim().length > 0;
+      ppBuilder.style.display = ready ? 'block' : 'none';
+      if (ready && isTouch) pp.cfg.tapHintEl.style.display = 'block';
     };
 
     document.querySelectorAll('#dayTypeButtons .sport-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        chosenDay = btn.dataset.day;
+        const day = btn.dataset.day;
+        const changed = day !== pp.dayType;
+        pp.dayType = day;
         document.querySelectorAll('#dayTypeButtons .sport-btn').forEach(x => x.classList.toggle('active', x === btn));
-        personal.scenarioLabel = PERSONAL_SCENARIOS[chosenDay].label + ' (personal)';
+        ppDayHelp.textContent = PERSONAL_DAYS[day].help;
+        ppDayHelp.style.display = 'block';
         describeStep.style.display = 'block';
+        if (changed) { pp.ticked = new Set(); loadTemplate(); renderPrinciples(); }
         maybeShowBuilder();
       });
     });
     ppEvent.addEventListener('input', maybeShowBuilder);
+
+    addSlotBtn.addEventListener('click', () => {
+      if (pp.slots.length >= MAX_SLOTS) return;
+      const s = newSlot('New slot');
+      pp.slots.push(s);
+      pp.focusNew = s.id;
+      renderSlots();
+    });
+    startOverBtn.addEventListener('click', loadTemplate);
 
     const personalBank = document.getElementById('personalBank');
     const personalGrid = document.getElementById('personalGrid');
@@ -3504,7 +3816,7 @@
       suggestToggle.textContent = show ? 'Hide food suggestions' : 'Show food suggestions';
     });
 
-    document.getElementById('personalSaveBtn').addEventListener('click', () => doSave(personal));
+    saveBtn.addEventListener('click', () => savePersonalPlan(pp, saveBtn));
   }
 
   let toastTimer = null;
