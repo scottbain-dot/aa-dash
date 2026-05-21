@@ -224,6 +224,14 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ===== FUEL LAB PLAN BUILDER =====
+    if (data.action === 'saveFuelLabPlan') {
+      var ssPlan = SpreadsheetApp.getActiveSpreadsheet();
+      var planResult = handleSaveFuelLabPlan(ssPlan, data);
+      return ContentService.createTextOutput(JSON.stringify(planResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (data.athleteId && data.updates) {
       return updateStudent(data.athleteId, data.updates);
     }
@@ -2120,6 +2128,81 @@ function handleGetFuelLabQuizStats(ss) {
       easiest: easiest,
       questions: questions
     };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ========================================
+// Sheet: FuelLab_Plans
+// Columns: Timestamp | Email | Name | Scenario | Plan_JSON | Score | Feedback_Tags
+// ========================================
+
+function ensureFuelLabPlansSheet(ss) {
+  var sheet = ss.getSheetByName('FuelLab_Plans');
+  var headers = ['Timestamp', 'Email', 'Name', 'Scenario', 'Plan_JSON', 'Score', 'Feedback_Tags'];
+  if (!sheet) {
+    sheet = ss.insertSheet('FuelLab_Plans');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  // Backfill any missing header columns without disturbing existing ones.
+  var existing = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  for (var h = 0; h < headers.length; h++) {
+    if (existing.indexOf(headers[h]) === -1) {
+      var newCol = Math.max(sheet.getLastColumn() + 1, h + 1);
+      sheet.getRange(1, newCol).setValue(headers[h]);
+    }
+  }
+  return sheet;
+}
+
+function handleSaveFuelLabPlan(ss, data) {
+  try {
+    if (!data.email) {
+      return { success: false, error: 'Missing email' };
+    }
+    var sheet = ensureFuelLabPlansSheet(ss);
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    var planJson = '';
+    try {
+      planJson = (typeof data.plan === 'string') ? data.plan : JSON.stringify(data.plan || {});
+    } catch (e) {
+      planJson = '';
+    }
+
+    var tags = '';
+    if (Array.isArray(data.tags)) tags = data.tags.join(' | ');
+    else if (typeof data.tags === 'string') tags = data.tags;
+
+    // Build row aligned to header order so column reorders never break inserts.
+    var row = new Array(headers.length);
+    for (var c = 0; c < headers.length; c++) {
+      var name = headers[c];
+      if (name === 'Timestamp') {
+        row[c] = data.timestamp ? new Date(data.timestamp) : new Date();
+      } else if (name === 'Email') {
+        row[c] = data.email;
+      } else if (name === 'Name') {
+        row[c] = data.name || '';
+      } else if (name === 'Scenario') {
+        row[c] = data.scenario || '';
+      } else if (name === 'Plan_JSON') {
+        row[c] = planJson;
+      } else if (name === 'Score') {
+        row[c] = parseInt(data.score, 10) || 0;
+      } else if (name === 'Feedback_Tags') {
+        row[c] = tags;
+      } else {
+        row[c] = '';
+      }
+    }
+
+    sheet.appendRow(row);
+    return { success: true };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
