@@ -2135,12 +2135,12 @@ function handleGetFuelLabQuizStats(ss) {
 
 // ========================================
 // Sheet: FuelLab_Plans
-// Columns: Timestamp | Email | Name | Scenario | Plan_JSON | Score | Feedback_Tags
+// Columns: Timestamp | Email | Name | Scenario | Event_Description | Plan_JSON | Score | Feedback_Tags
 // ========================================
 
 function ensureFuelLabPlansSheet(ss) {
   var sheet = ss.getSheetByName('FuelLab_Plans');
-  var headers = ['Timestamp', 'Email', 'Name', 'Scenario', 'Plan_JSON', 'Score', 'Feedback_Tags'];
+  var headers = ['Timestamp', 'Email', 'Name', 'Scenario', 'Event_Description', 'Plan_JSON', 'Score', 'Feedback_Tags'];
   if (!sheet) {
     sheet = ss.insertSheet('FuelLab_Plans');
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -2190,6 +2190,8 @@ function handleSaveFuelLabPlan(ss, data) {
         row[c] = data.name || '';
       } else if (name === 'Scenario') {
         row[c] = data.scenario || '';
+      } else if (name === 'Event_Description') {
+        row[c] = data.event || '';
       } else if (name === 'Plan_JSON') {
         row[c] = planJson;
       } else if (name === 'Score') {

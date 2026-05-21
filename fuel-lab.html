@@ -1542,6 +1542,47 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .toast.error { background: var(--red-sys); }
+
+  /* worked example + personal plan */
+  .worked-example { border: 1px solid var(--line); }
+  .example-tag {
+    background: var(--gold-soft); color: var(--ink); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px;
+    align-self: center; white-space: nowrap;
+  }
+  .personal-plan { background: var(--bg); border: 1px solid var(--line); }
+  .pp-step { margin: 22px 0; }
+  .pp-step-label { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--burgundy); margin-bottom: 10px; }
+  .pp-step-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 24px 0 10px; }
+  .pp-input {
+    width: 100%; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px;
+    font-family: 'Inter', sans-serif; font-size: 15px; background: var(--bg); color: var(--ink);
+  }
+  .pp-input:focus { outline: none; border-color: var(--burgundy); }
+  .suggest-toggle {
+    background: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--burgundy); cursor: pointer;
+  }
+  .suggest-toggle:hover { border-color: var(--burgundy); }
+  .slot-entry { display: flex; gap: 8px; margin-top: 10px; }
+  .slot-text {
+    flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+    font-family: 'Inter', sans-serif; font-size: 14px; background: var(--cream); color: var(--ink);
+  }
+  .slot-text:focus { outline: none; border-color: var(--burgundy); }
+  .slot-add {
+    background: var(--burgundy); color: var(--cream); border: none; border-radius: 10px;
+    padding: 0 16px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; flex-shrink: 0;
+  }
+  .slot-add:hover { background: var(--burgundy-dark); }
+  .tag-picker { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .tag-picker-q { font-size: 13px; color: var(--ink-soft); margin-right: 4px; }
+  .tag-pick {
+    background: var(--cream); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-soft); cursor: pointer;
+  }
+  .tag-pick:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .builder-grid.bank-hidden { grid-template-columns: 1fr; }
 </style>
 </head>
 <body>
@@ -1938,30 +1979,74 @@
       <p>Thirst is a late warning. Once you feel it, performance has already dropped. Sip water through the day — your pee should be pale yellow. For longer games or hot days, a sports drink replaces both fluids and salts you sweat out.</p>
     </div>
 
-    <!-- PLAN BUILDER (Step 3) -->
-    <h3 style="font-size: 22px; margin: 56px 0 8px;">Build your fuelling plan</h3>
-    <p style="color: var(--ink-soft); margin-bottom: 16px;">Drag foods from the bank into each time slot — or tap a food, then tap a slot. Build a plan for each kind of day and see how it scores. You can put more than one food in a slot; tap a food in a slot to remove it.</p>
+    <!-- PLAN BUILDER — worked example + make-your-own -->
+    <h3 style="font-size: 22px; margin: 56px 0 8px;">Put it into practice</h3>
+    <p style="color: var(--ink-soft); margin-bottom: 24px;">First work through the game-day example to see how the principles fit together — then build a plan for your own next event.</p>
 
-    <div class="interactive-block" id="builderBlock">
-      <div class="builder-tabs" id="builderTabs"></div>
-      <p class="tap-hint" id="tapHint" style="display:none;"><strong>Tap-to-place:</strong> <span id="tapHintText">tap a food below, then tap a slot.</span></p>
-
+    <!-- PART 1: WORKED EXAMPLE -->
+    <div class="interactive-block worked-example" id="workedBlock">
+      <div class="ib-head">
+        <h3>Build a Game Day fuelling plan</h3>
+        <span class="example-tag">Example</span>
+      </div>
+      <p class="ib-intro">Drag foods into each slot to build a plan for game day. Watch how the score updates as you go — this is the model you'll use for your own plan below.</p>
+      <p class="tap-hint" id="workedTapHint" style="display:none;"><strong>Tap-to-place:</strong> <span class="tap-hint-text">tap a food, then tap a slot.</span></p>
       <div class="builder-grid">
-        <div class="slot-list" id="slotList"></div>
-
-        <div class="food-bank" id="foodBank">
+        <div class="slot-list" id="workedSlots"></div>
+        <div class="food-bank" id="workedBank">
           <h4>Food bank</h4>
           <p class="fb-hint">Drag onto a slot, or tap to select then tap a slot.</p>
-          <div id="foodCats"></div>
+          <div class="food-cats"></div>
+        </div>
+      </div>
+      <div class="builder-score">
+        <div class="bs-num" id="workedScoreNum">0<small>/100</small></div>
+        <div class="builder-tags" id="workedTags"></div>
+      </div>
+      <button class="quiz-btn" id="workedSaveBtn">Save my plan</button>
+    </div>
+
+    <!-- PART 2: MAKE YOUR OWN PLAN -->
+    <div class="interactive-block personal-plan" id="personalBlock">
+      <h3>Now make your own plan</h3>
+      <p class="ib-intro">Pick the kind of day you're planning for, describe what you've got coming up, and build your plan. There's no single right answer — use what you learned from the example.</p>
+
+      <div class="pp-step">
+        <div class="pp-step-label">1 · Pick your day type</div>
+        <div class="sport-buttons" id="dayTypeButtons">
+          <button class="sport-btn" data-day="training">Training day</button>
+          <button class="sport-btn" data-day="game">Game day</button>
+          <button class="sport-btn" data-day="multi">Multi-day comp</button>
+          <button class="sport-btn" data-day="rest">Rest / recovery day</button>
         </div>
       </div>
 
-      <div class="builder-score">
-        <div class="bs-num" id="builderScoreNum">0<small>/100</small></div>
-        <div class="builder-tags" id="builderTags"></div>
+      <div class="pp-step" id="ppDescribeStep" style="display:none;">
+        <div class="pp-step-label">2 · Describe the event</div>
+        <input type="text" class="pp-input" id="ppEvent" maxlength="120"
+               placeholder="What are you fuelling for? e.g. 'Saturday football match, 10am kickoff' or 'Two-day swim meet'">
       </div>
 
-      <button class="quiz-btn" id="savePlanBtn">Save my plan</button>
+      <div id="ppBuilder" style="display:none;">
+        <div class="pp-step-head">
+          <div class="pp-step-label" style="margin-bottom:0;">3 · Build your plan</div>
+          <button class="suggest-toggle" id="suggestToggle" type="button">Show food suggestions</button>
+        </div>
+        <p class="tap-hint" id="personalTapHint" style="display:none;"><strong>Tap-to-place:</strong> <span class="tap-hint-text">tap a food, then tap a slot.</span></p>
+        <div class="builder-grid bank-hidden" id="personalGrid">
+          <div class="slot-list" id="personalSlots"></div>
+          <div class="food-bank" id="personalBank" style="display:none;">
+            <h4>Food suggestions</h4>
+            <p class="fb-hint">Drag onto a slot, or tap to select then tap a slot.</p>
+            <div class="food-cats"></div>
+          </div>
+        </div>
+        <div class="builder-score">
+          <div class="bs-num" id="personalScoreNum">0<small>/100</small></div>
+          <div class="builder-tags" id="personalTags"></div>
+        </div>
+        <button class="quiz-btn" id="personalSaveBtn">Save my plan</button>
+      </div>
     </div>
 
     <div class="pull-quote">
@@ -2891,267 +2976,290 @@
   const FOOD_TAGS = {};
   FOOD_BANK.forEach(g => g.items.forEach(it => { FOOD_TAGS[it.n] = it.tags; }));
 
-  const SCENARIOS_BUILD = {
-    training: {
-      label: 'Training day',
-      slots: ['Before', 'During', 'After', 'Evening'],
-      pre: ['Before'], post: ['After']
-    },
-    game: {
-      label: 'Game day',
-      slots: ['Before', 'During', 'After', 'Evening'],
-      pre: ['Before'], post: ['After']
-    },
-    multi: {
-      // Mentally: Before = pre-comp Day 2, During = comp, After = end of Day 1 /
-      // overnight refuel, Evening = recover. Slot labels stay generic on purpose.
-      label: 'Multi-day comp',
-      slots: ['Before', 'During', 'After', 'Evening'],
-      pre: ['Before'], post: ['After']
-    },
-    rest: {
-      label: 'Rest / recovery day',
-      slots: ['Breakfast', 'Lunch', 'Afternoon', 'Evening'],
-      pre: [], post: [],
-      isRest: true
-    }
+  // ---- Scenario definitions. Each slot has a `role` that the scorer keys off,
+  // so the same engine works whatever the slot labels are called. ----
+  const WORKED_SCENARIO = {
+    key: 'worked', label: 'Game day', saveLabel: 'Game day (example)', kind: 'performance',
+    slots: [
+      { name: '3 hours before', role: 'load' },
+      { name: 'Pre-game (1 hour)', role: 'pregame' },
+      { name: 'In game', role: 'during' },
+      { name: 'Recovery (after)', role: 'recovery' }
+    ]
+  };
+  const PERSONAL_SCENARIOS = {
+    training: { label: 'Training day', kind: 'performance', penaltyScale: 0.7, slots: [
+      { name: '2 hours before', role: 'load' }, { name: 'Pre-session', role: 'pregame' },
+      { name: 'During', role: 'during' }, { name: 'Recovery', role: 'recovery' } ] },
+    game: { label: 'Game day', kind: 'performance', slots: [
+      { name: '3 hours before', role: 'load' }, { name: 'Pre-game (1 hour)', role: 'pregame' },
+      { name: 'In game', role: 'during' }, { name: 'Recovery', role: 'recovery' } ] },
+    multi: { label: 'Multi-day comp', kind: 'multi', slots: [
+      { name: 'Day 1 recovery', role: 'recovery' }, { name: 'Evening / overnight', role: 'recovery' },
+      { name: 'Day 2 pre-comp', role: 'load' }, { name: 'Day 2 in-comp', role: 'during' } ] },
+    rest: { label: 'Rest / recovery day', kind: 'rest', slots: [
+      { name: 'Breakfast' }, { name: 'Lunch' }, { name: 'Afternoon' }, { name: 'Evening' } ] }
   };
 
-  // state: { training: { slotName: [foodName,...] }, ... }
-  const planState = {};
-  Object.keys(SCENARIOS_BUILD).forEach(k => {
-    planState[k] = {};
-    SCENARIOS_BUILD[k].slots.forEach(s => { planState[k][s] = []; });
-  });
-
-  let activeScenario = 'training';
-  let tapSelected = null; // food name selected via tap
   const isTouch = window.matchMedia('(pointer: coarse)').matches;
 
-  const builderTabs = document.getElementById('builderTabs');
-  const slotList = document.getElementById('slotList');
-  const foodCats = document.getElementById('foodCats');
-  const tapHint = document.getElementById('tapHint');
-
-  if (builderTabs) {
-    builderTabs.innerHTML = Object.entries(SCENARIOS_BUILD).map(([k, v]) =>
-      `<button class="builder-tab${k === activeScenario ? ' active' : ''}" data-scenario="${k}">${v.label}</button>`).join('');
-    builderTabs.querySelectorAll('.builder-tab').forEach(t => {
-      t.addEventListener('click', () => {
-        activeScenario = t.dataset.scenario;
-        builderTabs.querySelectorAll('.builder-tab').forEach(x => x.classList.toggle('active', x === t));
-        tapSelected = null;
-        renderSlots();
-        scorePlan();
-      });
-    });
-
-    renderFoodBank();
-    renderSlots();
-    scorePlan();
-
-    if (isTouch) tapHint.style.display = 'block';
-
-    document.getElementById('savePlanBtn').addEventListener('click', savePlan);
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  function renderFoodBank() {
-    foodCats.innerHTML = FOOD_BANK.map(g => `
-      <div class="food-cat">${g.cat}</div>
-      <div class="food-items">
-        ${g.items.map(it => `<div class="food-item" draggable="true" data-food="${it.n}">${it.e} ${it.n}</div>`).join('')}
-      </div>
-    `).join('');
-
-    foodCats.querySelectorAll('.food-item').forEach(el => {
-      el.addEventListener('dragstart', e => {
-        e.dataTransfer.setData('text/plain', el.dataset.food);
-        el.classList.add('dragging');
-      });
-      el.addEventListener('dragend', () => el.classList.remove('dragging'));
-      // tap-to-select
-      el.addEventListener('click', () => {
-        if (tapSelected === el.dataset.food) {
-          tapSelected = null;
-        } else {
-          tapSelected = el.dataset.food;
-        }
-        foodCats.querySelectorAll('.food-item').forEach(f =>
-          f.classList.toggle('tap-selected', f.dataset.food === tapSelected));
-        document.getElementById('tapHintText').textContent = tapSelected
-          ? `"${tapSelected}" selected — now tap a slot to place it.`
-          : 'tap a food below, then tap a slot.';
-        if (tapSelected) tapHint.style.display = 'block';
-      });
-    });
-  }
-
-  function emojiFor(name) {
+  // Build a slot item from a bank food name. Bank items carry the full record so
+  // saved plans record emoji + category; scoring only ever reads `tags`.
+  function bankItem(name) {
     for (const g of FOOD_BANK) {
       const f = g.items.find(i => i.n === name);
-      if (f) return f.e;
+      if (f) return { name: f.n, emoji: f.e, category: g.cat, tags: f.tags.slice(), source: 'bank' };
     }
-    return '';
+    return null;
   }
 
-  function renderSlots() {
-    const sc = SCENARIOS_BUILD[activeScenario];
-    slotList.innerHTML = sc.slots.map(slot => {
-      const items = planState[activeScenario][slot];
-      const chips = items.map(n =>
-        `<span class="slot-chip" data-slot="${slot}" data-food="${n}">${emojiFor(n)} ${n} <span class="chip-x">×</span></span>`).join('');
-      return `
-        <div class="plan-slot" data-slot="${slot}">
-          <div class="slot-when">${slot}</div>
-          ${items.length
-            ? `<div class="slot-items">${chips}</div>`
-            : `<div class="slot-drop-hint">Drop or tap a food here</div>`}
-        </div>`;
-    }).join('');
+  // ---- Scoring. Pure functions: take a scenario + plan, return {score, tags}. ----
+  const itemsTags = (plan, name) => (plan[name] || []).reduce((a, it) => a.concat(it.tags || []), []);
+  const slotHas = (plan, name, tag) => itemsTags(plan, name).includes(tag);
+  const slotFilled = (plan, name) => !!(plan[name] && plan[name].length);
+  const fluidCount = (sc, plan) => sc.slots.filter(s => slotHas(plan, s.name, 'fluid')).length;
 
-    slotList.querySelectorAll('.plan-slot').forEach(slotEl => {
-      const slot = slotEl.dataset.slot;
-      slotEl.addEventListener('dragover', e => { e.preventDefault(); slotEl.classList.add('drag-over'); });
-      slotEl.addEventListener('dragleave', () => slotEl.classList.remove('drag-over'));
-      slotEl.addEventListener('drop', e => {
-        e.preventDefault();
-        slotEl.classList.remove('drag-over');
-        const food = e.dataTransfer.getData('text/plain');
-        if (food) addFood(slot, food);
-      });
-      // tap-to-place
-      slotEl.addEventListener('click', () => {
-        if (tapSelected) {
-          addFood(slot, tapSelected);
-          tapSelected = null;
-          foodCats.querySelectorAll('.food-item').forEach(f => f.classList.remove('tap-selected'));
-          document.getElementById('tapHintText').textContent = 'tap a food below, then tap a slot.';
-        }
-      });
-    });
-
-    slotList.querySelectorAll('.slot-chip').forEach(chip => {
-      chip.addEventListener('click', e => {
-        e.stopPropagation();
-        removeFood(chip.dataset.slot, chip.dataset.food);
-      });
-    });
-  }
-
-  function addFood(slot, food) {
-    const arr = planState[activeScenario][slot];
-    if (!arr.includes(food)) arr.push(food);
-    renderSlots();
-    scorePlan();
-  }
-  function removeFood(slot, food) {
-    const arr = planState[activeScenario][slot];
-    const i = arr.indexOf(food);
-    if (i > -1) arr.splice(i, 1);
-    renderSlots();
-    scorePlan();
-  }
-
-  // returns { score, tags: [{good:bool, text}] }
-  // All checks run on nutrition TAGS (carb/protein/fat/fluid), never on food
-  // names or display category — so dual-nature foods (sports drink = fluid+carb,
-  // milk = protein+fluid) count for everything they provide.
-  function scorePlan() {
-    const sc = SCENARIOS_BUILD[activeScenario];
-    const plan = planState[activeScenario];
+  function scorePerformance(sc, plan) {
+    const pen = sc.penaltyScale || 1;
     const tags = [];
+    let score = 25;
+    const roleSlot = r => sc.slots.find(s => s.role === r).name;
+    const load = roleSlot('load'), pre = roleSlot('pregame'), during = roleSlot('during'), rec = roleSlot('recovery');
 
-    const slotTags = slot => (plan[slot] || []).reduce((acc, n) => acc.concat(FOOD_TAGS[n] || []), []);
-    const slotHasTag = (slot, tag) => slotTags(slot).includes(tag);
-    const slotFilled = slot => !!(plan[slot] && plan[slot].length);
-    const fluidSlots = sc.slots.filter(s => slotHasTag(s, 'fluid'));
+    if (slotHas(plan, load, 'carb')) { score += 15; tags.push([true, 'Carbs in your ' + load + ' meal ✓']); }
+    else tags.push([false, 'Add carbs at ' + load + ' ✗']);
 
-    let score;
+    if (slotHas(plan, pre, 'carb')) { score += 10; tags.push([true, 'Light carbs before you start ✓']); }
+    else tags.push([false, 'Add light carbs at ' + pre + ' ✗']);
+    if (slotHas(plan, pre, 'fat') || slotHas(plan, pre, 'protein')) {
+      score -= Math.round(10 * pen); tags.push([false, 'Keep ' + pre + ' light — heavy food sits in your stomach ✗']);
+    } else if (slotFilled(plan, pre)) { score += 5; }
 
-    if (sc.isRest) {
-      // Rest day: reward eating across the whole day + protein for repair. No
-      // performance-fuelling penalties. Hydration is a bonus, not a requirement.
-      score = 28;
+    if (slotHas(plan, rec, 'carb') && slotHas(plan, rec, 'protein')) { score += 25; tags.push([true, 'Carbs + protein to recover ✓']); }
+    else if (slotHas(plan, rec, 'carb') || slotHas(plan, rec, 'protein')) { score += 10; tags.push([false, 'Recovery needs BOTH carbs and protein ✗']); }
+    else tags.push([false, 'Refuel after with carbs + protein ✗']);
 
-      const filled = sc.slots.filter(slotFilled).length;
-      score += filled * 10; // up to +40 for all four parts of the day
-      if (filled === sc.slots.length) tags.push({ good: true, text: 'Eating across the whole day ✓' });
-      else tags.push({ good: false, text: 'Fill all four parts of the day ✗' });
+    if (slotHas(plan, during, 'fluid')) { score += 10; tags.push([true, 'Drinking during the event ✓']); }
+    else tags.push([false, 'Take fluids ' + during + ' ✗']);
 
-      const hasProtein = sc.slots.some(s => slotHasTag(s, 'protein'));
-      if (hasProtein) { score += 18; tags.push({ good: true, text: 'Protein for repair ✓' }); }
-      else tags.push({ good: false, text: 'Add some protein to repair ✗' });
+    const fl = fluidCount(sc, plan);
+    score += [0, 3, 7, 10, 15][Math.min(fl, 4)];
+    if (fl >= 4) tags.push([true, 'Hydrating all day ✓']);
+    else if (fl < 2) tags.push([false, 'Spread fluids across more slots ✗']);
 
-      if (fluidSlots.length >= 2) { score += 14; tags.push({ good: true, text: 'Staying hydrated ✓' }); }
-      else if (fluidSlots.length === 1) { score += 7; tags.push({ good: false, text: 'Spread fluids across the day ✗' }); }
-      else tags.push({ good: false, text: 'Add fluids across the day ✗' });
-
-      // Penalty: nothing but carbs all day — no protein, fats or fluids anywhere.
-      const hasFat = sc.slots.some(s => slotHasTag(s, 'fat'));
-      const allCarb = filled > 0 && !hasProtein && !hasFat && fluidSlots.length === 0;
-      if (allCarb) { score -= 20; tags.push({ good: false, text: 'Too carb-heavy — add protein and variety ✗' }); }
-    } else {
-      // Performance day: carbs before, carbs + protein after (the recovery window
-      // is weighted heaviest), fluids spread across the day, no heavy fat pre/during.
-      score = 35;
-
-      const preCarb = sc.pre.some(s => slotHasTag(s, 'carb'));
-      if (preCarb) { score += 15; tags.push({ good: true, text: 'Carbs before you perform ✓' }); }
-      else tags.push({ good: false, text: 'Load carbs before you perform ✗' });
-
-      const postCarb = sc.post.some(s => slotHasTag(s, 'carb'));
-      const postProtein = sc.post.some(s => slotHasTag(s, 'protein'));
-      if (postCarb && postProtein) { score += 25; tags.push({ good: true, text: 'Carbs + protein to recover ✓' }); }
-      else if (postCarb) { score += 10; tags.push({ good: false, text: 'Add protein to your recovery window ✗' }); }
-      else if (postProtein) { score += 10; tags.push({ good: false, text: 'Add carbs to your recovery window ✗' }); }
-      else tags.push({ good: false, text: 'Refuel after with carbs + protein ✗' });
-
-      if (fluidSlots.length >= 2) { score += 20; tags.push({ good: true, text: 'Fluids across the day ✓' }); }
-      else if (fluidSlots.length === 1) { score += 8; tags.push({ good: false, text: 'Spread fluids across more of the day ✗' }); }
-      else tags.push({ good: false, text: 'Add fluids across the day ✗' });
-
-      // Bonus: a balanced evening meal (carbs + protein).
-      if (slotHasTag('Evening', 'carb') && slotHasTag('Evening', 'protein')) {
-        score += 10; tags.push({ good: true, text: 'Balanced evening meal ✓' });
-      }
-
-      // Penalty: heavy fat in Before or During slows you down / sits heavy.
-      const fatSlots = ['Before', 'During'].filter(s => slotHasTag(s, 'fat'));
-      if (fatSlots.length) {
-        score -= fatSlots.length * 10;
-        tags.push({ good: false, text: 'Heavy fat too close to performance ✗' });
-      }
-
-      // Penalty: empty Before or After (the slots that matter most).
-      const emptyKey = ['Before', 'After'].filter(s => !slotFilled(s));
-      if (emptyKey.length) {
-        score -= emptyKey.length * 15;
-        tags.push({ good: false, text: `${emptyKey.join(' and ')} still empty ✗` });
-      }
-    }
-
-    score = Math.max(0, Math.min(100, Math.round(score)));
-    document.getElementById('builderScoreNum').innerHTML = score + '<small>/100</small>';
-    document.getElementById('builderTags').innerHTML = tags.map(t =>
-      `<div class="builder-tag ${t.good ? 'good' : 'bad'}">${t.text}</div>`).join('');
+    const empties = [load, rec].filter(n => !slotFilled(plan, n));
+    if (empties.length) { score -= Math.round(empties.length * 15 * pen); tags.push([false, empties.join(' and ') + ' still empty ✗']); }
     return { score, tags };
   }
 
-  async function savePlan() {
+  function scoreMulti(sc, plan) {
+    const tags = [];
+    let score = 20;
+    const recs = sc.slots.filter(s => s.role === 'recovery').map(s => s.name);
+    const load = sc.slots.find(s => s.role === 'load').name;
+    const during = sc.slots.find(s => s.role === 'during').name;
+
+    recs.forEach(name => {
+      if (slotHas(plan, name, 'carb') && slotHas(plan, name, 'protein')) { score += 24; tags.push([true, name + ': carbs + protein ✓']); }
+      else if (slotHas(plan, name, 'carb') || slotHas(plan, name, 'protein')) { score += 8; tags.push([false, name + ' needs carbs + protein ✗']); }
+      else tags.push([false, name + ': refuel with carbs + protein ✗']);
+    });
+    if (slotHas(plan, load, 'carb')) { score += 14; tags.push([true, 'Carbs before Day 2 ✓']); }
+    else tags.push([false, 'Carb up for Day 2 at ' + load + ' ✗']);
+    if (slotHas(plan, during, 'fluid')) { score += 6; tags.push([true, 'Fluids during Day 2 ✓']); }
+    else tags.push([false, 'Drink during Day 2 ✗']);
+
+    const fl = fluidCount(sc, plan);
+    score += [0, 2, 5, 8, 12][Math.min(fl, 4)];
+
+    const empties = recs.concat(load).filter(n => !slotFilled(plan, n));
+    if (empties.length) { score -= empties.length * 12; tags.push([false, empties.join(' and ') + ' still empty ✗']); }
+    return { score, tags };
+  }
+
+  function scoreRest(sc, plan) {
+    const tags = [];
+    let score = 20;
+    const filled = sc.slots.filter(s => slotFilled(plan, s.name)).length;
+    score += filled * 9;
+    if (filled === sc.slots.length) tags.push([true, 'Eating across the whole day ✓']);
+    else tags.push([false, 'Fill all four meals ✗']);
+
+    const any = tag => sc.slots.some(s => slotHas(plan, s.name, tag));
+    if (any('carb')) score += 8; else tags.push([false, 'Add some carbs for energy ✗']);
+    if (any('protein')) { score += 12; tags.push([true, 'Protein for repair ✓']); } else tags.push([false, 'Add protein to repair ✗']);
+    if (any('fat')) score += 6;
+
+    const fl = fluidCount(sc, plan);
+    if (fl >= 2) { score += 12; tags.push([true, 'Hydrating across the day ✓']); }
+    else if (fl === 1) { score += 6; }
+    else tags.push([false, 'Add fluids across the day ✗']);
+
+    if (any('carb') && any('protein') && any('fat') && any('fluid')) { score += 8; tags.push([true, 'Great variety across the day ✓']); }
+    return { score, tags };
+  }
+
+  function scoreScenario(sc, plan) {
+    const r = sc.kind === 'rest' ? scoreRest(sc, plan)
+            : sc.kind === 'multi' ? scoreMulti(sc, plan)
+            : scorePerformance(sc, plan);
+    r.score = Math.max(0, Math.min(100, Math.round(r.score)));
+    return r;
+  }
+
+  // Render the shared food bank into a host element, wired to one builder.
+  function renderBank(host, builder) {
+    host.innerHTML = FOOD_BANK.map(g => `
+      <div class="food-cat">${g.cat}</div>
+      <div class="food-items">
+        ${g.items.map(it => `<div class="food-item" draggable="true" data-food="${escapeHtml(it.n)}">${it.e} ${escapeHtml(it.n)}</div>`).join('')}
+      </div>`).join('');
+
+    host.querySelectorAll('.food-item').forEach(el => {
+      const name = el.dataset.food;
+      el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', name); el.classList.add('dragging'); });
+      el.addEventListener('dragend', () => el.classList.remove('dragging'));
+      el.addEventListener('click', () => {
+        builder.tapSelected = (builder.tapSelected && builder.tapSelected.name === name) ? null : bankItem(name);
+        host.querySelectorAll('.food-item').forEach(f =>
+          f.classList.toggle('tap-selected', builder.tapSelected && f.dataset.food === builder.tapSelected.name));
+        const hint = builder.cfg.tapHintEl;
+        if (hint) {
+          hint.querySelector('.tap-hint-text').textContent = builder.tapSelected
+            ? `"${name}" selected — tap a slot to place it.` : 'tap a food, then tap a slot.';
+          hint.style.display = 'block';
+        }
+      });
+    });
+  }
+
+  // Factory: a plan builder bound to a set of DOM nodes.
+  function createBuilder(cfg) {
+    const b = { cfg, scenario: null, plan: {}, tapSelected: null, scenarioLabel: cfg.scenarioLabel || null };
+
+    b.setScenario = sc => {
+      b.scenario = sc;
+      b.plan = {};
+      sc.slots.forEach(s => { b.plan[s.name] = []; });
+      b.tapSelected = null;
+      b.render();
+    };
+
+    b.addItem = (slotName, item) => {
+      const arr = b.plan[slotName];
+      if (arr && !arr.some(x => x.name === item.name)) { arr.push(item); b.render(); }
+    };
+    b.removeItem = (slotName, idx) => {
+      if (b.plan[slotName]) { b.plan[slotName].splice(idx, 1); b.render(); }
+    };
+
+    b.render = () => {
+      if (!b.scenario) return;
+      // slots
+      cfg.slotsEl.innerHTML = b.scenario.slots.map(slot => {
+        const items = b.plan[slot.name] || [];
+        const chips = items.map((it, i) =>
+          `<span class="slot-chip" data-idx="${i}">${it.emoji ? it.emoji + ' ' : ''}${escapeHtml(it.name)} <span class="chip-x">×</span></span>`).join('');
+        const entry = cfg.allowCustom ? `
+          <div class="slot-entry">
+            <input class="slot-text" type="text" maxlength="40" placeholder="What will you eat/drink? Type anything">
+            <button class="slot-add" type="button">Add</button>
+          </div>
+          <div class="tag-picker" style="display:none;">
+            <span class="tag-picker-q">Is this mostly…</span>
+            <button class="tag-pick" data-tag="carb">Carbs</button>
+            <button class="tag-pick" data-tag="protein">Protein</button>
+            <button class="tag-pick" data-tag="fat">Fat</button>
+            <button class="tag-pick" data-tag="fluid">Fluid</button>
+            <button class="tag-pick" data-tag="snack">Snack</button>
+          </div>` : '';
+        return `
+          <div class="plan-slot" data-slot="${escapeHtml(slot.name)}">
+            <div class="slot-when">${escapeHtml(slot.name)}</div>
+            ${items.length ? `<div class="slot-items">${chips}</div>` : (cfg.allowCustom ? '' : `<div class="slot-drop-hint">Drop or tap a food here</div>`)}
+            ${entry}
+          </div>`;
+      }).join('');
+
+      cfg.slotsEl.querySelectorAll('.plan-slot').forEach(slotEl => {
+        const slotName = slotEl.dataset.slot;
+        slotEl.addEventListener('dragover', e => { e.preventDefault(); slotEl.classList.add('drag-over'); });
+        slotEl.addEventListener('dragleave', () => slotEl.classList.remove('drag-over'));
+        slotEl.addEventListener('drop', e => {
+          e.preventDefault(); slotEl.classList.remove('drag-over');
+          const it = bankItem(e.dataTransfer.getData('text/plain'));
+          if (it) b.addItem(slotName, it);
+        });
+        slotEl.addEventListener('click', e => {
+          if (e.target.closest('.slot-entry') || e.target.closest('.tag-picker') || e.target.closest('.slot-chip')) return;
+          if (b.tapSelected) {
+            b.addItem(slotName, b.tapSelected);
+            b.tapSelected = null;
+            if (cfg.bankHost) cfg.bankHost.querySelectorAll('.food-item').forEach(f => f.classList.remove('tap-selected'));
+          }
+        });
+
+        if (cfg.allowCustom) {
+          const input = slotEl.querySelector('.slot-text');
+          const addBtn = slotEl.querySelector('.slot-add');
+          const picker = slotEl.querySelector('.tag-picker');
+          const beginAdd = () => { const v = input.value.trim(); if (!v) return; picker.dataset.pending = v; picker.style.display = 'flex'; };
+          addBtn.addEventListener('click', beginAdd);
+          input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); beginAdd(); } });
+          picker.querySelectorAll('.tag-pick').forEach(tb => {
+            tb.addEventListener('click', () => {
+              const v = picker.dataset.pending; if (!v) return;
+              const tag = tb.dataset.tag === 'snack' ? 'carb' : tb.dataset.tag; // snacks are carb-based
+              b.addItem(slotName, { name: v, tags: [tag], source: 'custom' });
+            });
+          });
+        }
+      });
+
+      cfg.slotsEl.querySelectorAll('.slot-chip').forEach(chip => {
+        chip.addEventListener('click', e => {
+          e.stopPropagation();
+          const slotName = chip.closest('.plan-slot').dataset.slot;
+          b.removeItem(slotName, parseInt(chip.dataset.idx, 10));
+        });
+      });
+
+      b.score();
+    };
+
+    b.score = () => {
+      if (!b.scenario) return { score: 0, tags: [] };
+      const r = scoreScenario(b.scenario, b.plan);
+      cfg.scoreNumEl.innerHTML = r.score + '<small>/100</small>';
+      cfg.tagsEl.innerHTML = r.tags.map(t => `<div class="builder-tag ${t[0] ? 'good' : 'bad'}">${escapeHtml(t[1])}</div>`).join('');
+      return r;
+    };
+
+    return b;
+  }
+
+  async function doSave(builder) {
+    if (!builder.scenario) { showToast('Pick a day type first', true); return; }
     if (!currentUser) { showToast('Sign in to save your plan', true); return; }
-    const { score, tags } = scorePlan();
-    const btn = document.getElementById('savePlanBtn');
-    btn.disabled = true;
-    btn.textContent = 'Saving…';
+    const r = scoreScenario(builder.scenario, builder.plan);
+    const btn = builder.cfg.saveBtn;
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Saving…';
     try {
+      const label = builder.scenarioLabel || builder.scenario.label;
       const payload = {
         action: 'saveFuelLabPlan',
         email: currentUser.email,
         name: currentUser.name,
-        scenario: SCENARIOS_BUILD[activeScenario].label,
-        plan: planState[activeScenario],
-        score: score,
-        tags: tags.map(t => t.text),
+        scenario: label,
+        event: builder.cfg.getEvent ? builder.cfg.getEvent() : '',
+        plan: builder.plan,
+        score: r.score,
+        tags: r.tags.map(t => t[1]),
         timestamp: new Date().toISOString()
       };
       const res = await fetch(APPS_SCRIPT_URL, {
@@ -3160,14 +3268,91 @@
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (data.success) showToast('Plan saved — ' + SCENARIOS_BUILD[activeScenario].label + ' ✓');
+      if (data.success) showToast('Plan saved — ' + label + ' ✓');
       else showToast('Could not save: ' + (data.error || 'try again'), true);
     } catch (err) {
       showToast('Could not save: ' + err.message, true);
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Save my plan';
+      btn.disabled = false; btn.textContent = orig;
     }
+  }
+
+  // ---- Wire up the two builders. ----
+  const workedSlotsEl = document.getElementById('workedSlots');
+  if (workedSlotsEl) {
+    const workedBankHost = document.querySelector('#workedBank .food-cats');
+    const worked = createBuilder({
+      slotsEl: workedSlotsEl,
+      bankHost: workedBankHost,
+      scoreNumEl: document.getElementById('workedScoreNum'),
+      tagsEl: document.getElementById('workedTags'),
+      tapHintEl: document.getElementById('workedTapHint'),
+      saveBtn: document.getElementById('workedSaveBtn'),
+      allowCustom: false,
+      scenarioLabel: WORKED_SCENARIO.saveLabel,
+      getEvent: () => ''
+    });
+    renderBank(workedBankHost, worked);
+    worked.setScenario(WORKED_SCENARIO);
+    if (isTouch) document.getElementById('workedTapHint').style.display = 'block';
+    document.getElementById('workedSaveBtn').addEventListener('click', () => doSave(worked));
+  }
+
+  const personalSlotsEl = document.getElementById('personalSlots');
+  if (personalSlotsEl) {
+    const personalBankHost = document.querySelector('#personalBank .food-cats');
+    const personal = createBuilder({
+      slotsEl: personalSlotsEl,
+      bankHost: personalBankHost,
+      scoreNumEl: document.getElementById('personalScoreNum'),
+      tagsEl: document.getElementById('personalTags'),
+      tapHintEl: document.getElementById('personalTapHint'),
+      saveBtn: document.getElementById('personalSaveBtn'),
+      allowCustom: true,
+      getEvent: () => document.getElementById('ppEvent').value.trim()
+    });
+    renderBank(personalBankHost, personal);
+
+    let chosenDay = null;
+    const describeStep = document.getElementById('ppDescribeStep');
+    const ppBuilder = document.getElementById('ppBuilder');
+    const ppEvent = document.getElementById('ppEvent');
+
+    const maybeShowBuilder = () => {
+      const ready = chosenDay && ppEvent.value.trim().length > 0;
+      if (ready) {
+        if (!personal.scenario || personal.scenario.key !== chosenDay) {
+          personal.setScenario(Object.assign({ key: chosenDay }, PERSONAL_SCENARIOS[chosenDay]));
+        }
+        ppBuilder.style.display = 'block';
+        if (isTouch) document.getElementById('personalTapHint').style.display = 'block';
+      } else {
+        ppBuilder.style.display = 'none';
+      }
+    };
+
+    document.querySelectorAll('#dayTypeButtons .sport-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        chosenDay = btn.dataset.day;
+        document.querySelectorAll('#dayTypeButtons .sport-btn').forEach(x => x.classList.toggle('active', x === btn));
+        personal.scenarioLabel = PERSONAL_SCENARIOS[chosenDay].label + ' (personal)';
+        describeStep.style.display = 'block';
+        maybeShowBuilder();
+      });
+    });
+    ppEvent.addEventListener('input', maybeShowBuilder);
+
+    const personalBank = document.getElementById('personalBank');
+    const personalGrid = document.getElementById('personalGrid');
+    const suggestToggle = document.getElementById('suggestToggle');
+    suggestToggle.addEventListener('click', () => {
+      const show = personalBank.style.display === 'none';
+      personalBank.style.display = show ? 'block' : 'none';
+      personalGrid.classList.toggle('bank-hidden', !show);
+      suggestToggle.textContent = show ? 'Hide food suggestions' : 'Show food suggestions';
+    });
+
+    document.getElementById('personalSaveBtn').addEventListener('click', () => doSave(personal));
   }
 
   let toastTimer = null;
