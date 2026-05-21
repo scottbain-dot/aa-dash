@@ -78,7 +78,7 @@ function doGet(e) {
 
     if (action === 'getAthleteData') {
       const email = e.parameter.email;
-      return handleStudentRequest(ss, email);
+      return handleStudentRequest(ss, email, e.parameter.portal);
     }
 
     // ===== GRIT CHALLENGE ACTIONS =====
@@ -120,7 +120,7 @@ function doGet(e) {
       return handleAdminRequest(ss);
     }
 
-    return handleStudentRequest(ss, e.parameter.email);
+    return handleStudentRequest(ss, e.parameter.email, e.parameter.portal);
 
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({
@@ -1153,7 +1153,7 @@ function updateStudent(athleteId, updates) {
 // EXISTING DASHBOARD FUNCTIONS
 // ========================================
 
-function handleStudentRequest(ss, userEmail) {
+function handleStudentRequest(ss, userEmail, portal) {
   if (!userEmail) {
     return ContentService.createTextOutput(JSON.stringify({
       error: 'No email provided',
@@ -1170,19 +1170,51 @@ function handleStudentRequest(ss, userEmail) {
   var data = athletesSheet.getDataRange().getValues();
   var headers = data[0];
   var emailColIndex = headers.indexOf('Email');
+  var gradeColIndex = headers.indexOf('Grade');
+  if (gradeColIndex === -1) gradeColIndex = headers.indexOf('Year_Group');
 
   if (emailColIndex === -1) {
     throw new Error('Email column not found');
   }
 
-  var athleteRow = null;
-  var athleteId = null;
+  // Collect every row matching this email (a student may have both a G9
+  // and a G10-12 row when testing both portals with the same account).
+  var matches = [];
   for (var i = 1; i < data.length; i++) {
     if (data[i][emailColIndex] && data[i][emailColIndex].toLowerCase() === userEmail.toLowerCase()) {
-      athleteRow = data[i];
-      athleteId = data[i][0];
-      break;
+      matches.push(data[i]);
     }
+  }
+
+  var athleteRow = null;
+  var athleteId = null;
+  if (matches.length > 0) {
+    var gradeOf = function(row) {
+      return gradeColIndex === -1 ? NaN : parseInt(row[gradeColIndex], 10);
+    };
+
+    if (portal === 'g10') {
+      // Highest-grade row in the 10-12 range.
+      var best = null;
+      matches.forEach(function(row) {
+        var g = gradeOf(row);
+        if (g >= 10 && g <= 12 && (best === null || g > gradeOf(best))) {
+          best = row;
+        }
+      });
+      athleteRow = best;
+    } else {
+      // portal === 'g9' or absent: prefer the G9 row, else first match.
+      for (var m = 0; m < matches.length; m++) {
+        if (gradeOf(matches[m]) === 9) {
+          athleteRow = matches[m];
+          break;
+        }
+      }
+      if (!athleteRow) athleteRow = matches[0];
+    }
+
+    if (athleteRow) athleteId = athleteRow[0];
   }
 
   if (!athleteRow) {

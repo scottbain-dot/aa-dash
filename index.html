@@ -1686,7 +1686,7 @@
         // ========== DATA LOADING ==========
         async function loadAthleteData() {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&email=${encodeURIComponent(currentUser.email)}`;
+                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&email=${encodeURIComponent(currentUser.email)}&portal=g9`;
                 console.log('Fetching:', url);
                 
                 const response = await fetch(url);

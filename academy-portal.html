@@ -512,7 +512,7 @@
         // ───────── Athlete lookup + grade gate ─────────
         async function loadAthleteData() {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&email=${encodeURIComponent(currentUser.email)}`;
+                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&email=${encodeURIComponent(currentUser.email)}&portal=g10`;
                 const res = await fetch(url);
                 const data = await res.json();
 
