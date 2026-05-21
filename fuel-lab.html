@@ -1583,6 +1583,47 @@
   }
   .tag-pick:hover { border-color: var(--burgundy); color: var(--burgundy); }
   .builder-grid.bank-hidden { grid-template-columns: 1fr; }
+
+  /* session 2 task checklist */
+  .task-checklist { background: var(--cream); border-radius: 24px; padding: 28px 32px; margin: 8px 0 40px; }
+  .tc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  .task-checklist h3 { font-size: 22px; }
+  .tc-progress-label { font-size: 13px; font-weight: 600; color: var(--ink-mute); white-space: nowrap; }
+  .tc-progress-label strong { color: var(--burgundy); }
+  .tc-sub { color: var(--ink-soft); font-size: 14px; margin: 4px 0 16px; }
+  .tc-bar { height: 6px; background: var(--bg-warm); border-radius: 999px; overflow: hidden; margin-bottom: 20px; }
+  .tc-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), var(--burgundy)); border-radius: 999px; transition: width 0.4s ease; }
+  .tc-list { display: grid; gap: 6px; }
+  .tc-row {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    background: none; border: none; border-radius: 12px; padding: 10px 12px; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: background 0.15s ease;
+  }
+  .tc-row:hover { background: var(--bg-warm); }
+  .tc-row:focus-visible { outline: 2px solid var(--burgundy); outline-offset: 2px; }
+  .tc-circle {
+    flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line);
+    display: flex; align-items: center; justify-content: center; transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  }
+  .tc-circle::after {
+    content: '✓'; color: #fff; font-size: 13px; font-weight: 700; line-height: 1;
+    opacity: 0; transform: scale(0.4); transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .tc-text { font-size: 15px; font-weight: 500; color: var(--ink); transition: color 0.25s ease; }
+  .tc-row.done .tc-circle { background: var(--burgundy); border-color: var(--burgundy); transform: scale(1.08); }
+  .tc-row.done .tc-circle::after { opacity: 1; transform: scale(1); }
+  .tc-row.done .tc-text { color: var(--ink-mute); text-decoration: line-through; text-decoration-color: var(--line); }
+  #scenarioBlock, #dialBlock, #sportBlock, #workedBlock, #personalBlock { scroll-margin-top: 20px; }
+
+  /* multi-select tag picker */
+  .tag-pick.selected { background: var(--burgundy); border-color: var(--burgundy); color: var(--cream); }
+  .tag-pick.selected:hover { color: var(--cream); }
+  .tag-done {
+    background: var(--burgundy); color: var(--cream); border: none; border-radius: 999px;
+    padding: 6px 14px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; margin-left: 4px;
+  }
+  .tag-done:hover { background: var(--burgundy-dark); }
+  .tag-done:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -1820,6 +1861,33 @@
     <h2>Fuel for the <em>working</em> athlete.</h2>
     <p class="section-intro">Your body uses three energy systems. Most sports rely on a mix, and that mix tells you what to eat and when. Then we'll layer on timing — before, during, and the basics of hydration.</p>
 
+    <!-- TASK CHECKLIST -->
+    <div class="task-checklist" id="taskChecklist">
+      <div class="tc-head">
+        <h3>Your tasks this lesson</h3>
+        <span class="tc-progress-label"><strong id="tcCount">0</strong> of 5 complete</span>
+      </div>
+      <p class="tc-sub">These tick off automatically as you complete them. Tap a task to jump to it.</p>
+      <div class="tc-bar"><div class="tc-bar-fill" id="tcBarFill"></div></div>
+      <div class="tc-list">
+        <button type="button" class="tc-row" data-task="matcher" data-target="scenarioBlock">
+          <span class="tc-circle"></span><span class="tc-text">Complete the scenario matcher</span>
+        </button>
+        <button type="button" class="tc-row" data-task="dial" data-target="dialBlock">
+          <span class="tc-circle"></span><span class="tc-text">Try the effort dial</span>
+        </button>
+        <button type="button" class="tc-row" data-task="fuelMatch" data-target="sportBlock">
+          <span class="tc-circle"></span><span class="tc-text">Pick your sport and see your fuel match</span>
+        </button>
+        <button type="button" class="tc-row" data-task="workedExample" data-target="workedBlock">
+          <span class="tc-circle"></span><span class="tc-text">Build the Game Day worked example</span>
+        </button>
+        <button type="button" class="tc-row" data-task="personalPlan" data-target="personalBlock">
+          <span class="tc-circle"></span><span class="tc-text">Make your own plan</span>
+        </button>
+      </div>
+    </div>
+
     <h3 style="font-size: 22px; margin-bottom: 16px;">The three energy systems</h3>
     <div class="energy-systems">
       <div class="energy-card red">
@@ -1906,7 +1974,7 @@
     </div>
 
     <!-- sport picker -->
-    <div class="sport-picker">
+    <div class="sport-picker" id="sportBlock">
       <h3>What does your sport demand?</h3>
       <p>Pick a sport to see roughly how its energy systems split. The bigger the share, the more important that fuel system.</p>
       <div class="sport-buttons" id="sportButtons">
@@ -2317,12 +2385,61 @@
     document.getElementById('userBadge').style.display = 'flex';
     document.getElementById('userName').textContent = currentUser.name.split(' ')[0];
     document.getElementById('appRoot').style.display = 'block';
+    // checklist progress is keyed by email — reload now that we know who it is
+    loadTasks();
+    renderTasks();
   }
 
   function signOut() {
     currentUser = null;
     location.reload();
   }
+
+  // ============================================
+  // SESSION 2 TASK CHECKLIST
+  // ============================================
+  // Feedback, not a gate — students can do tasks in any order. Each interactive
+  // block calls tickTask(key) when its completion criteria are met. State is
+  // persisted in sessionStorage keyed by email so a refresh keeps progress within
+  // the session (cross-session persistence is a future enhancement).
+  const SESSION_TASK_KEYS = ['matcher', 'dial', 'fuelMatch', 'workedExample', 'personalPlan'];
+  const sessionTasks = { matcher: false, dial: false, fuelMatch: false, workedExample: false, personalPlan: false };
+
+  function taskStorageKey() {
+    return 'fuelLabSession2Tasks:' + (currentUser && currentUser.email ? currentUser.email.toLowerCase() : 'anon');
+  }
+  function loadTasks() {
+    try {
+      const raw = sessionStorage.getItem(taskStorageKey());
+      if (raw) { const o = JSON.parse(raw); SESSION_TASK_KEYS.forEach(k => { sessionTasks[k] = !!o[k]; }); }
+    } catch (e) { /* sessionStorage unavailable — run without persistence */ }
+  }
+  function saveTasks() {
+    try { sessionStorage.setItem(taskStorageKey(), JSON.stringify(sessionTasks)); } catch (e) { /* ignore */ }
+  }
+  function renderTasks() {
+    const done = SESSION_TASK_KEYS.filter(k => sessionTasks[k]).length;
+    const countEl = document.getElementById('tcCount');
+    const fillEl = document.getElementById('tcBarFill');
+    if (countEl) countEl.textContent = done;
+    if (fillEl) fillEl.style.width = (done / SESSION_TASK_KEYS.length * 100) + '%';
+    document.querySelectorAll('.tc-row').forEach(row => row.classList.toggle('done', !!sessionTasks[row.dataset.task]));
+  }
+  function tickTask(key) {
+    if (!(key in sessionTasks) || sessionTasks[key]) return; // idempotent
+    sessionTasks[key] = true;
+    saveTasks();
+    renderTasks();
+  }
+
+  document.querySelectorAll('.tc-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const target = document.getElementById(row.dataset.target);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+  loadTasks();
+  renderTasks();
 
   // ============================================
   // SAVE QUIZ RESULT — posts to the shared AA Apps Script endpoint
@@ -2560,6 +2677,7 @@
     prof.className = 'fm-profile ' + p.cls;
     document.getElementById('fmPoints').innerHTML = p.points.map(t => `<li>${t}</li>`).join('');
     document.getElementById('fuelMatch').classList.add('show');
+    tickTask('fuelMatch');
   }
 
   // ============================================
@@ -2645,6 +2763,7 @@
       else msg = "Good start — scroll back up to the three systems and have another go.";
       document.getElementById('scenarioSummaryMsg').textContent = msg;
       scSummary.classList.add('show');
+      tickTask('matcher');
     }
   });
 
@@ -2723,7 +2842,9 @@
         updateDial();
       });
     });
-    dialSlider.addEventListener('input', updateDial);
+    let dialMoves = 0;
+    dialSlider.addEventListener('input', () => { if (++dialMoves >= 3) tickTask('dial'); updateDial(); });
+    snapsEl.querySelectorAll('.dial-snap').forEach(b => b.addEventListener('click', () => { if (++dialMoves >= 3) tickTask('dial'); }));
     updateDial();
   }
 
@@ -3170,12 +3291,13 @@
             <button class="slot-add" type="button">Add</button>
           </div>
           <div class="tag-picker" style="display:none;">
-            <span class="tag-picker-q">Is this mostly…</span>
-            <button class="tag-pick" data-tag="carb">Carbs</button>
-            <button class="tag-pick" data-tag="protein">Protein</button>
-            <button class="tag-pick" data-tag="fat">Fat</button>
-            <button class="tag-pick" data-tag="fluid">Fluid</button>
-            <button class="tag-pick" data-tag="snack">Snack</button>
+            <span class="tag-picker-q">What's in it? Pick all that apply:</span>
+            <button type="button" class="tag-pick" data-tag="carb">Carbs</button>
+            <button type="button" class="tag-pick" data-tag="protein">Protein</button>
+            <button type="button" class="tag-pick" data-tag="fat">Fat</button>
+            <button type="button" class="tag-pick" data-tag="fluid">Fluid</button>
+            <button type="button" class="tag-pick" data-tag="snack">Snack</button>
+            <button type="button" class="tag-done" disabled>Add to slot</button>
           </div>` : '';
         return `
           <div class="plan-slot" data-slot="${escapeHtml(slot.name)}">
@@ -3207,15 +3329,32 @@
           const input = slotEl.querySelector('.slot-text');
           const addBtn = slotEl.querySelector('.slot-add');
           const picker = slotEl.querySelector('.tag-picker');
-          const beginAdd = () => { const v = input.value.trim(); if (!v) return; picker.dataset.pending = v; picker.style.display = 'flex'; };
+          const doneBtn = picker.querySelector('.tag-done');
+          const pickBtns = picker.querySelectorAll('.tag-pick');
+          // Multi-select: toggle tag buttons, confirm with "Add to slot".
+          const selectedTags = () => {
+            const set = new Set();
+            pickBtns.forEach(tb => { if (tb.classList.contains('selected')) set.add(tb.dataset.tag === 'snack' ? 'carb' : tb.dataset.tag); });
+            return [...set];
+          };
+          const refreshDone = () => { doneBtn.disabled = selectedTags().length === 0; };
+          const beginAdd = () => {
+            const v = input.value.trim(); if (!v) return;
+            picker.dataset.pending = v;
+            pickBtns.forEach(tb => tb.classList.remove('selected'));
+            refreshDone();
+            picker.style.display = 'flex';
+          };
           addBtn.addEventListener('click', beginAdd);
           input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); beginAdd(); } });
-          picker.querySelectorAll('.tag-pick').forEach(tb => {
-            tb.addEventListener('click', () => {
-              const v = picker.dataset.pending; if (!v) return;
-              const tag = tb.dataset.tag === 'snack' ? 'carb' : tb.dataset.tag; // snacks are carb-based
-              b.addItem(slotName, { name: v, tags: [tag], source: 'custom' });
-            });
+          pickBtns.forEach(tb => {
+            tb.addEventListener('click', () => { tb.classList.toggle('selected'); refreshDone(); });
+          });
+          doneBtn.addEventListener('click', () => {
+            const v = picker.dataset.pending; if (!v) return;
+            const tags = selectedTags();
+            if (!tags.length) { showToast('Pick at least one — what’s mostly in it?', true); return; }
+            b.addItem(slotName, { name: v, tags, source: 'custom' });
           });
         }
       });
@@ -3229,7 +3368,10 @@
       });
 
       b.score();
+      if (cfg.onChange) cfg.onChange(b);
     };
+
+    b.allSlotsFilled = () => b.scenario && b.scenario.slots.every(s => (b.plan[s.name] || []).length > 0);
 
     b.score = () => {
       if (!b.scenario) return { score: 0, tags: [] };
@@ -3245,6 +3387,13 @@
   async function doSave(builder) {
     if (!builder.scenario) { showToast('Pick a day type first', true); return; }
     if (!currentUser) { showToast('Sign in to save your plan', true); return; }
+    // Checklist: worked example ticks on save; personal plan needs a described
+    // event + every slot filled before it counts as complete.
+    if (builder.cfg.taskOnSave === 'workedExample') tickTask('workedExample');
+    else if (builder.cfg.taskOnSave === 'personalPlan') {
+      const ev = builder.cfg.getEvent ? builder.cfg.getEvent() : '';
+      if (ev && builder.allSlotsFilled()) tickTask('personalPlan');
+    }
     const r = scoreScenario(builder.scenario, builder.plan);
     const btn = builder.cfg.saveBtn;
     const orig = btn.textContent;
@@ -3290,7 +3439,9 @@
       saveBtn: document.getElementById('workedSaveBtn'),
       allowCustom: false,
       scenarioLabel: WORKED_SCENARIO.saveLabel,
-      getEvent: () => ''
+      getEvent: () => '',
+      taskOnSave: 'workedExample',
+      onChange: b => { if (b.allSlotsFilled()) tickTask('workedExample'); }
     });
     renderBank(workedBankHost, worked);
     worked.setScenario(WORKED_SCENARIO);
@@ -3309,7 +3460,8 @@
       tapHintEl: document.getElementById('personalTapHint'),
       saveBtn: document.getElementById('personalSaveBtn'),
       allowCustom: true,
-      getEvent: () => document.getElementById('ppEvent').value.trim()
+      getEvent: () => document.getElementById('ppEvent').value.trim(),
+      taskOnSave: 'personalPlan'
     });
     renderBank(personalBankHost, personal);
 
