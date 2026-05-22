@@ -554,6 +554,310 @@
 
         /* Utility */
         .hidden { display: none !important; }
+
+        /* ───────── My Plan section (styles from profile-mockup.html) ───────── */
+        .section-heading {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-top: 0.3rem;
+            letter-spacing: -0.01em;
+        }
+        .week-grid {
+            display: grid;
+            grid-template-columns: 7fr 5fr;
+            gap: 1.5rem;
+        }
+        .week-plan-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem;
+        }
+        .change-plan-btn {
+            background: var(--burgundy);
+            color: var(--white);
+            border: none;
+            padding: 0.55rem 1rem;
+            border-radius: 0.7rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.02em;
+            transition: background 0.15s;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .change-plan-btn:hover { background: var(--burgundy-dark); }
+        .current-plan-label {
+            margin-top: 0.3rem;
+            font-size: 0.85rem;
+            color: var(--grey);
+            font-weight: 500;
+        }
+        .session-list { margin-top: 1.25rem; }
+        .session-row {
+            display: grid;
+            grid-template-columns: 40px 14px 1fr;
+            align-items: center;
+            gap: 0.9rem;
+            padding: 0.9rem 0.3rem;
+            border-bottom: 1px solid var(--cream);
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transition: background 0.15s;
+        }
+        .session-row:last-child { border-bottom: none; }
+        .session-row:hover { background: rgba(135,75,70,0.04); }
+        .session-day {
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            font-weight: 700;
+            color: var(--grey);
+            text-transform: uppercase;
+        }
+        .session-info .session-name {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+        .session-info .session-detail {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.15rem;
+        }
+        .load-strip {
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 2px solid var(--cream);
+        }
+        .load-squares {
+            display: flex;
+            gap: 0.35rem;
+            margin-top: 0.5rem;
+        }
+        .load-square {
+            width: 28px;
+            height: 28px;
+            border-radius: 0.4rem;
+        }
+        .load-square.red { background: #ef4444; }
+        .load-square.amber { background: #f59e0b; }
+        .load-square.green { background: #22c55e; }
+        .load-label {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.6rem;
+            font-weight: 500;
+        }
+
+        /* Testing rows */
+        .test-row {
+            display: grid;
+            grid-template-columns: 36px 1fr auto;
+            align-items: center;
+            gap: 0.9rem;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid var(--cream);
+        }
+        .test-row:last-child { border-bottom: none; }
+        .test-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--white);
+        }
+        .test-icon.done { background: var(--green); }
+        .test-icon.pending { background: var(--amber); }
+        .test-icon.none { background: var(--light-grey); color: var(--grey); }
+        .test-name {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+        .test-detail {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.15rem;
+        }
+        .score-pill {
+            padding: 0.4rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .score-pill.gold { background: var(--gold-light); color: #6b5212; }
+        .score-pill.grey { background: var(--cream); color: var(--grey); }
+        /* Next testing callout — gold-tinted per Prompt 3 spec */
+        .next-test-callout {
+            margin-top: 1.25rem;
+            background: rgba(212,175,55,0.08);
+            border-left: 3px solid #D4AF37;
+            border-radius: 1rem;
+            padding: 1rem 1.1rem;
+        }
+        .next-test-callout .next-label {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        .next-test-callout .next-detail {
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+        .next-test-callout .next-countdown {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.25rem;
+            font-weight: 600;
+        }
+
+        /* ───────── Modal (centred) — styles from profile-mockup.html ───────── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(29,27,27,0.55);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            z-index: 1000;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -48%);
+            background: var(--white);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 30px 80px rgba(53,15,13,0.3);
+            z-index: 1100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%);
+        }
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.01em;
+            margin-bottom: 0.3rem;
+        }
+        .modal-sub {
+            font-size: 0.9rem;
+            color: var(--grey);
+            margin-bottom: 1.5rem;
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--cream);
+            border: none;
+            font-size: 1.15rem;
+            color: var(--grey);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-plan { width: 820px; }
+        .plan-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .plan-card {
+            border: 2px solid var(--cream);
+            border-radius: 1rem;
+            padding: 1.1rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.15s;
+            background: var(--white);
+        }
+        .plan-card:hover:not(.locked) {
+            border-color: var(--burgundy);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(53,15,13,0.08);
+        }
+        .plan-card.active {
+            border-color: var(--burgundy);
+            background: rgba(135,75,70,0.04);
+        }
+        .plan-card.locked {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+        .plan-card-name {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.01em;
+        }
+        .plan-card-goal {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.3rem;
+            line-height: 1.4;
+            min-height: 2.3rem;
+        }
+        .plan-card-freq {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--burgundy);
+            margin-top: 0.5rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .plan-diff-bar {
+            margin-top: 0.6rem;
+            height: 5px;
+            background: var(--cream);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .plan-diff-fill {
+            height: 100%;
+            border-radius: 9999px;
+        }
+        .plan-lock {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            font-size: 1.05rem;
+        }
+        .plan-locked-label {
+            font-size: 0.7rem;
+            color: var(--grey);
+            font-style: italic;
+            margin-top: 0.4rem;
+        }
     </style>
 </head>
 <body>
@@ -701,6 +1005,15 @@
         <div class="drawer-content" id="drawerContent"></div>
     </aside>
 
+    <!-- ============ CHANGE PLAN MODAL ============ -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closePlanModal()"></div>
+    <div class="modal modal-plan" id="planModal" aria-hidden="true">
+        <button class="modal-close" onclick="closePlanModal()" aria-label="Close">×</button>
+        <div class="modal-title">Choose a Training Plan</div>
+        <div class="modal-sub">Select the plan that matches your sport and current block.</div>
+        <div class="plan-grid" id="planGrid"></div>
+    </div>
+
     <script>
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
 
@@ -777,6 +1090,7 @@
 
             showScreen('portalApp');
             populateHero(fullName);
+            populatePlan(currentAthlete);
         }
 
         // ───────── Calculations (copied exactly from index.html) ─────────
@@ -1010,6 +1324,293 @@
             return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
         }
 
+        // ───────── My Plan ─────────
+        // Plan definitions copied from profile-mockup.html. Plan selection is
+        // in-memory only for now — persistence comes in a later prompt.
+        const PLANS = {
+            general: {
+                name: 'General Strength', goal: 'Build foundation strength year-round', freq: '3×/week', diff: 60, diffColor: '#874B46',
+                sessions: [
+                    { day:'Mon', name:'Upper Strength A', detail:'Back Squat 4×5 · DB Row 3×10 · DB Press 3×8', intensity:'red' },
+                    { day:'Tue', name:'Basketball Training', detail:'External — FIS Basketball squad', intensity:'amber' },
+                    { day:'Wed', name:'Conditioning', detail:'Intervals 6×400m · Core circuit', intensity:'amber' },
+                    { day:'Thu', name:'Rest / Recovery', detail:'Mobility work · 8hrs sleep target', intensity:'green' },
+                    { day:'Fri', name:'Lower Strength B', detail:'Deadlift 4×5 · DB Lunge 3×10 · Mobility', intensity:'red' },
+                    { day:'Sat', name:'Basketball Game', detail:'External — league fixture', intensity:'red' },
+                    { day:'Sun', name:'Rest', detail:'Full recovery day', intensity:'green' }
+                ]
+            },
+            inseason: {
+                name: 'In-Season Maintenance', goal: 'Keep strength while sport load is high', freq: '2×/week', diff: 40, diffColor: '#D4AF37',
+                sessions: [
+                    { day:'Mon', name:'Full Body Maintenance', detail:'Squat 3×5 · Row 3×8 · Press 2×8', intensity:'amber' },
+                    { day:'Tue', name:'Sport Session', detail:'Team practice', intensity:'amber' },
+                    { day:'Wed', name:'Rest', detail:'Recovery', intensity:'green' },
+                    { day:'Thu', name:'Full Body Maintenance', detail:'Deadlift 3×5 · Pull 3×8 · Lunge 2×8', intensity:'amber' },
+                    { day:'Fri', name:'Sport Session', detail:'Team practice', intensity:'amber' },
+                    { day:'Sat', name:'Match', detail:'Competition', intensity:'red' },
+                    { day:'Sun', name:'Rest', detail:'Full recovery', intensity:'green' }
+                ]
+            },
+            basketball: {
+                name: 'Basketball Performance', goal: 'Jump power, agility, lateral strength', freq: '4×/week', diff: 75, diffColor: '#874B46',
+                sessions: [
+                    { day:'Mon', name:'Lower Power', detail:'Broad Jump · Squat · Lunge', intensity:'red' },
+                    { day:'Tue', name:'Court Skills', detail:'Ball handling · Shooting', intensity:'amber' },
+                    { day:'Wed', name:'Upper + Core', detail:'Push · Pull · Core', intensity:'amber' },
+                    { day:'Thu', name:'Agility', detail:'5-10-5 · Court sprints', intensity:'red' },
+                    { day:'Fri', name:'Rest', detail:'Recovery', intensity:'green' },
+                    { day:'Sat', name:'Game', detail:'Match', intensity:'red' },
+                    { day:'Sun', name:'Rest', detail:'Recovery day', intensity:'green' }
+                ]
+            },
+            football: {
+                name: 'Football Performance', goal: 'Sprint speed, change of direction, endurance', freq: '4×/week', diff: 75, diffColor: '#874B46',
+                sessions: [
+                    { day:'Mon', name:'Speed', detail:'Sprints 10×40m', intensity:'red' },
+                    { day:'Tue', name:'Team Practice', detail:'Tactical session', intensity:'amber' },
+                    { day:'Wed', name:'Strength', detail:'Lower + Upper', intensity:'red' },
+                    { day:'Thu', name:'Conditioning', detail:'Intervals', intensity:'amber' },
+                    { day:'Fri', name:'Rest', detail:'Recovery', intensity:'green' },
+                    { day:'Sat', name:'Match', detail:'Competition', intensity:'red' },
+                    { day:'Sun', name:'Rest', detail:'Full recovery', intensity:'green' }
+                ]
+            },
+            rugby: {
+                name: 'Rugby Performance', goal: 'Max strength, power, contact readiness', freq: '4×/week', diff: 85, diffColor: '#874B46',
+                sessions: [
+                    { day:'Mon', name:'Max Strength', detail:'Squat · Deadlift', intensity:'red' },
+                    { day:'Tue', name:'Contact Skills', detail:'Tackling · Ruck', intensity:'amber' },
+                    { day:'Wed', name:'Upper Power', detail:'Bench · Row · Press', intensity:'red' },
+                    { day:'Thu', name:'Conditioning', detail:'Shuttles', intensity:'amber' },
+                    { day:'Fri', name:'Rest', detail:'Recovery', intensity:'green' },
+                    { day:'Sat', name:'Match', detail:'Competition', intensity:'red' },
+                    { day:'Sun', name:'Rest', detail:'Full recovery', intensity:'green' }
+                ]
+            },
+            swimming: {
+                name: 'Swimming Performance', goal: 'Pulling strength, shoulder stability, aerobic base', freq: '5×/week', diff: 70, diffColor: '#D4AF37',
+                sessions: [
+                    { day:'Mon', name:'Pool — Aerobic', detail:'Long sets', intensity:'amber' },
+                    { day:'Tue', name:'Pull Strength', detail:'Pull · Row · Core', intensity:'red' },
+                    { day:'Wed', name:'Pool — Sprint', detail:'Short fast sets', intensity:'red' },
+                    { day:'Thu', name:'Mobility', detail:'Shoulder + thoracic', intensity:'green' },
+                    { day:'Fri', name:'Pool — Race Pace', detail:'Race-pace sets', intensity:'amber' },
+                    { day:'Sat', name:'Meet / Easy Swim', detail:'Competition or easy', intensity:'amber' },
+                    { day:'Sun', name:'Rest', detail:'Full recovery', intensity:'green' }
+                ]
+            },
+            xc: {
+                name: 'Cross Country / Track', goal: 'Endurance + race pacing', freq: '5×/week', diff: 70, diffColor: '#D4AF37',
+                sessions: [
+                    { day:'Mon', name:'Easy Run', detail:'45 min easy', intensity:'green' },
+                    { day:'Tue', name:'Intervals', detail:'6 × 800m', intensity:'red' },
+                    { day:'Wed', name:'Easy Run', detail:'30 min easy', intensity:'green' },
+                    { day:'Thu', name:'Strength', detail:'Lower body + core', intensity:'amber' },
+                    { day:'Fri', name:'Tempo Run', detail:'20 min tempo', intensity:'red' },
+                    { day:'Sat', name:'Long Run', detail:'60-75 min', intensity:'amber' },
+                    { day:'Sun', name:'Rest', detail:'Full recovery', intensity:'green' }
+                ]
+            },
+            volleyball: {
+                name: 'Volleyball Performance', goal: 'Jump height, shoulder power, agility', freq: '4×/week', diff: 70, diffColor: '#D4AF37',
+                sessions: [
+                    { day:'Mon', name:'Lower Power', detail:'Broad Jump · Squat', intensity:'red' },
+                    { day:'Tue', name:'Court Skills', detail:'Setting · Spiking', intensity:'amber' },
+                    { day:'Wed', name:'Upper Power', detail:'Press · Pull · Core', intensity:'amber' },
+                    { day:'Thu', name:'Agility', detail:'Lateral drills', intensity:'red' },
+                    { day:'Fri', name:'Rest', detail:'Recovery', intensity:'green' },
+                    { day:'Sat', name:'Match', detail:'Competition', intensity:'red' },
+                    { day:'Sun', name:'Rest', detail:'Recovery day', intensity:'green' }
+                ]
+            },
+            custom: {
+                name: 'Custom Plan', goal: 'Design your own block', freq: 'Flexible', diff: 90, diffColor: '#D4AF37', locked: true, sessions: []
+            }
+        };
+        const PLAN_ORDER = ['general','inseason','basketball','football','rugby','swimming','xc','volleyball','custom'];
+
+        // Default to General Strength since no plan is saved yet.
+        let currentPlanKey = 'general';
+
+        const INTENSITY_LABEL = { red: 'Hard', amber: 'Moderate', green: 'Easy/Rest' };
+        const TEST_STALE_DAYS = 90; // tested-but-older → due for retest (amber)
+
+        function populatePlan(a) {
+            document.getElementById('cardMyPlan').innerHTML = `
+                <div class="week-grid">
+                    <div>
+                        <div class="week-plan-head">
+                            <div>
+                                <div class="overline">CURRENT WEEK</div>
+                                <h2 class="section-heading">Training Plan</h2>
+                                <div class="current-plan-label" id="currentPlanLabel"></div>
+                            </div>
+                            <button class="change-plan-btn" onclick="openPlanModal()">Change Plan</button>
+                        </div>
+                        <div class="session-list" id="sessionList"></div>
+                        <div class="load-strip">
+                            <div class="overline">WEEKLY LOAD</div>
+                            <div class="load-squares" id="loadSquares"></div>
+                            <div class="load-label" id="loadLabel"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="overline">TESTING STATUS</div>
+                        <h2 class="section-heading">Performance Assessments</h2>
+                        <div id="testList" style="margin-top:1.25rem;"></div>
+                        <div class="next-test-callout">
+                            <div class="next-label">NEXT TESTING DAY</div>
+                            <div class="next-detail">May 19, 2026 — Cooper Test · Mobility Assessment</div>
+                            <div class="next-countdown" id="nextTestCountdown"></div>
+                        </div>
+                    </div>
+                </div>`;
+            renderPlan();
+            renderTests(a);
+            renderNextTestingDay();
+        }
+
+        function renderPlan() {
+            const plan = PLANS[currentPlanKey];
+            document.getElementById('currentPlanLabel').textContent = `${plan.name} · ${plan.freq}`;
+
+            document.getElementById('sessionList').innerHTML = plan.sessions.map((s, i) => `
+                <div class="session-row" onclick="openSessionFromPlan(${i})">
+                    <span class="session-day">${s.day}</span>
+                    <span class="dot dot-${s.intensity}"></span>
+                    <div class="session-info">
+                        <div class="session-name">${s.name}</div>
+                        <div class="session-detail">${s.detail}</div>
+                    </div>
+                </div>`).join('');
+
+            // Weekly load — squares match each session's intensity colour
+            document.getElementById('loadSquares').innerHTML = plan.sessions.map(s =>
+                `<div class="load-square ${s.intensity}"></div>`
+            ).join('');
+            const counts = { red: 0, amber: 0, green: 0 };
+            plan.sessions.forEach(s => counts[s.intensity]++);
+            document.getElementById('loadLabel').textContent =
+                `${counts.red} Hard · ${counts.amber} Moderate · ${counts.green} Easy/Rest`;
+        }
+
+        function openSessionFromPlan(idx) {
+            openDrawer('session', PLANS[currentPlanKey].sessions[idx]);
+        }
+
+        // Tests pull from the already-fetched student object (index.html logic)
+        function renderTests(a) {
+            const perf = a.performance || {};
+            const phys = calculatePhysiology(a, a.strength || {});
+            const tests = [
+                { name: 'Broad Jump', score: phys['Broad Jump'], raw: perf.Broad_Jump_cm ? `${perf.Broad_Jump_cm}cm` : '', date: perf.Date },
+                { name: '40m Sprint', score: phys['40m Sprint'], raw: perf['40m_sec'] ? `${perf['40m_sec']} sec` : '', date: perf.Date },
+                { name: 'Agility (5-10-5)', score: phys['Agility (5-10-5)'], raw: perf['5_10_5_sec'] ? `${perf['5_10_5_sec']} sec` : '', date: perf.Date },
+                { name: 'Cooper Test', score: phys['Cooper Test'], raw: perf.Cooper_m ? `${perf.Cooper_m}m` : '', date: perf.Date },
+                { name: 'Mobility', score: phys['Mobility'], raw: '', date: (a.mobility || {}).Date },
+                { name: 'Strength', score: phys['Strength'], raw: '', date: (a.strength || {}).Date }
+            ];
+
+            document.getElementById('testList').innerHTML = tests.map(t => {
+                const tested = t.score > 0;
+                const stale = tested && isStale(t.date);
+                let iconClass, iconGlyph;
+                if (!tested) { iconClass = 'none'; iconGlyph = '○'; }
+                else if (stale) { iconClass = 'pending'; iconGlyph = '⏳'; }
+                else { iconClass = 'done'; iconGlyph = '✓'; }
+
+                let detail;
+                if (!tested) {
+                    detail = 'Not yet tested';
+                } else {
+                    const my = formatMonthYear(t.date);
+                    const lead = t.raw ? `${t.raw} · ` : '';
+                    detail = `${lead}${my ? 'Tested ' + my : 'Tested'}${stale ? ' — Retest due' : ''}`;
+                }
+
+                const badge = tested
+                    ? `<div class="score-pill gold">${t.score.toFixed(1)} / 5</div>`
+                    : `<div class="score-pill grey">Pending</div>`;
+
+                return `
+                    <div class="test-row">
+                        <div class="test-icon ${iconClass}">${iconGlyph}</div>
+                        <div><div class="test-name">${t.name}</div><div class="test-detail">${detail}</div></div>
+                        ${badge}
+                    </div>`;
+            }).join('');
+        }
+
+        function isStale(dateVal) {
+            const d = new Date(dateVal);
+            if (isNaN(d)) return false;
+            return (Date.now() - d.getTime()) > TEST_STALE_DAYS * 86400000;
+        }
+
+        function formatMonthYear(dateVal) {
+            const d = new Date(dateVal);
+            if (isNaN(d)) return '';
+            return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+        }
+
+        function renderNextTestingDay() {
+            const target = new Date('2026-05-19');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const days = Math.round((target - today) / 86400000);
+            let text;
+            if (days > 1) text = `${days} days away`;
+            else if (days === 1) text = 'Tomorrow';
+            else if (days === 0) text = 'Today';
+            else text = 'Passed';
+            document.getElementById('nextTestCountdown').textContent = text;
+        }
+
+        // ───────── Change Plan modal ─────────
+        function openPlanModal() {
+            renderPlanGrid();
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('planModal').classList.add('active');
+            document.getElementById('planModal').setAttribute('aria-hidden', 'false');
+        }
+
+        function closePlanModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('planModal').classList.remove('active');
+            document.getElementById('planModal').setAttribute('aria-hidden', 'true');
+        }
+
+        function renderPlanGrid() {
+            document.getElementById('planGrid').innerHTML = PLAN_ORDER.map(key => {
+                const p = PLANS[key];
+                const activeClass = currentPlanKey === key ? ' active' : '';
+                const lockedClass = p.locked ? ' locked' : '';
+                const lock = p.locked ? `<div class="plan-lock">🔒</div>` : '';
+                const lockedLabel = p.locked
+                    ? `<div class="plan-locked-label">Unlocked when Level 3 reached in all tested patterns</div>`
+                    : '';
+                return `
+                    <div class="plan-card${activeClass}${lockedClass}" onclick="selectPlan('${key}')">
+                        ${lock}
+                        <div class="plan-card-name">${p.name}</div>
+                        <div class="plan-card-goal">${p.goal}</div>
+                        <div class="plan-card-freq">${p.freq}</div>
+                        <div class="plan-diff-bar">
+                            <div class="plan-diff-fill" style="width:${p.diff}%; background:${p.diffColor};"></div>
+                        </div>
+                        ${lockedLabel}
+                    </div>`;
+            }).join('');
+        }
+
+        function selectPlan(key) {
+            if (PLANS[key].locked) return;
+            currentPlanKey = key;
+            renderPlan();
+            closePlanModal();
+        }
+
         // ───────── Sign out ─────────
         function signOut() {
             currentUser = null;
@@ -1021,14 +1622,22 @@
         }
 
         // ───────── Drawer ─────────
-        function openDrawer(type) {
+        function openDrawer(type, payload) {
             const content = document.getElementById('drawerContent');
             // Stub content — real panels wired up in later prompts.
             const panels = {
                 notifications: `<h3 style="font-weight:800;color:var(--burgundy);margin-bottom:1rem;">Notifications</h3>
                                 <p style="color:var(--grey);font-size:0.95rem;">Reflection due — placeholder.</p>`
             };
-            content.innerHTML = panels[type] || `<p style="color:var(--grey);">Drawer: ${type}</p>`;
+            let html;
+            if (type === 'session' && payload) {
+                // Prompt 4 builds the full session contents; for now just the day heading.
+                html = `<h3 style="font-weight:800;color:var(--burgundy);margin-bottom:0.5rem;">${payload.day}</h3>
+                        <p style="color:var(--grey);font-size:0.95rem;">${payload.name || ''}</p>`;
+            } else {
+                html = panels[type] || `<p style="color:var(--grey);">Drawer: ${type}</p>`;
+            }
+            content.innerHTML = html;
             document.getElementById('drawerOverlay').classList.add('open');
             document.getElementById('drawer').classList.add('open');
             document.getElementById('drawer').setAttribute('aria-hidden', 'false');
@@ -1040,9 +1649,9 @@
             document.getElementById('drawer').setAttribute('aria-hidden', 'true');
         }
 
-        // Close drawer on Esc
+        // Close drawer + modal on Esc
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeDrawer();
+            if (e.key === 'Escape') { closeDrawer(); closePlanModal(); }
         });
     </script>
 </body>
