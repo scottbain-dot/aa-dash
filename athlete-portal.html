@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root {
     --bg: #fef8f6;
@@ -946,9 +947,152 @@
   .sheet-save .btn-secondary {
     border: 1px solid var(--line);
   }
+
+  /* ============================
+     AUTH GATE + APP SHELL
+     ============================ */
+  #portal { display: none; }
+  body.signed-in #portal { display: block; }
+  body.signed-in #welcome { display: none; }
+
+  .welcome {
+    min-height: 100vh;
+    background: var(--ink);
+    color: var(--cream);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+  }
+  .welcome-mark {
+    font-family: 'Fraunces', serif;
+    font-size: 30px;
+    font-weight: 500;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .welcome-mark em { color: var(--gold); font-style: italic; }
+  .welcome-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: rgba(250,243,237,0.6);
+    margin: 0 0 32px;
+    max-width: 320px;
+    line-height: 1.5;
+  }
+  .welcome-signin { min-height: 44px; }
+  .welcome-foot {
+    margin-top: 28px;
+    font-size: 11px;
+    color: rgba(250,243,237,0.35);
+    letter-spacing: 0.04em;
+  }
+
+  /* App-wide loading veil */
+  .app-loading {
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--bg);
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+  }
+  .app-loading.active { display: flex; }
+  .spinner {
+    width: 34px; height: 34px;
+    border: 3px solid var(--line);
+    border-top-color: var(--burgundy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .app-loading-text {
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: 14px; color: var(--ink-mute);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 24px;
+    transform: translate(-50%, 80px);
+    background: var(--ink); color: var(--cream);
+    padding: 12px 20px; border-radius: 10px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-lift); z-index: 300;
+    opacity: 0; transition: transform 0.28s cubic-bezier(.2,.8,.2,1), opacity 0.28s;
+    max-width: calc(100vw - 40px);
+  }
+  .toast.active { transform: translate(-50%, 0); opacity: 1; }
+  .toast.error { background: var(--burgundy); }
+  .toast.success { background: var(--sage); }
+
+  /* Tab view show/hide */
+  .tab-view { display: none; }
+  .tab-view.active { display: block; }
+
+  /* Generic empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+  .empty-state-icon {
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--cream); color: var(--burgundy);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; margin: 0 auto 16px;
+  }
+  .empty-state-title {
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 400;
+    color: var(--ink); margin: 0 0 8px; line-height: 1.2;
+  }
+  .empty-state-title em { font-style: italic; color: var(--burgundy); }
+  .empty-state-text {
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: 14px; color: var(--ink-mute); margin: 0 0 22px; line-height: 1.5;
+  }
+  .empty-state .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 10px; border: none;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
+
+<!-- SIGN-IN GATE -->
+<div class="welcome" id="welcome">
+  <p class="welcome-mark">Athlete <em>Academy</em></p>
+  <p class="welcome-sub">Your year, your weeks, your bests. Sign in to plan and log your training.</p>
+  <div class="welcome-signin">
+    <div id="g_id_onload"
+         data-client_id="701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com"
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false"></div>
+    <div class="g_id_signin"
+         data-type="standard" data-shape="pill"
+         data-theme="filled_black" data-text="signin_with"
+         data-size="large" data-logo_alignment="left"></div>
+  </div>
+  <p class="welcome-foot">FIS Warriors · Grades 10–12</p>
+</div>
+
+<!-- LOADING VEIL -->
+<div class="app-loading" id="appLoading">
+  <div class="spinner"></div>
+  <p class="app-loading-text" id="appLoadingText">Loading your training…</p>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<div id="portal">
 
 <!-- DARK NAV HEADER -->
 <div class="nav">
@@ -958,46 +1102,29 @@
         <span class="nav-brand-mark">Athlete <em>Academy</em></span>
       </div>
       <div class="nav-athlete">
-        <div class="nav-athlete-avatar">NA</div>
-        <span><strong>Nicholas</strong> · G11 · Swimming</span>
+        <div class="nav-athlete-avatar" id="navAvatar">··</div>
+        <span id="navAthlete"><strong>—</strong></span>
       </div>
     </div>
-    <div class="tabs">
-      <button class="tab">Year</button>
-      <button class="tab">Load</button>
-      <button class="tab active">Week</button>
-      <button class="tab">PBs</button>
+    <div class="tabs" id="tabs">
+      <button class="tab" data-tab="year" onclick="switchTab('year')">Year</button>
+      <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
+      <button class="tab active" data-tab="week" onclick="switchTab('week')">Week</button>
+      <button class="tab" data-tab="pbs" onclick="switchTab('pbs')">PBs</button>
     </div>
   </div>
 </div>
 
-<!-- BLOCK CONTEXT BAR -->
+<!-- BLOCK CONTEXT BAR (filled per active tab by JS) -->
 <div class="block-bar">
-  <div class="block-bar-inner">
-    <div class="block-bar-left">
-      <p class="block-eyebrow">Block · November</p>
-      <h1 class="block-title"><em>Build</em>.</h1>
-      <p class="block-sub">Aerobic base. Hold technique under fatigue.</p>
-    </div>
-    <div class="block-meta">
-      <div class="block-meta-item">
-        <strong>4 / 7</strong>
-        sessions done
-      </div>
-      <div class="block-meta-item">
-        <strong>820</strong>
-        au logged
-      </div>
-      <div class="block-meta-item">
-        <strong>~1,350</strong>
-        projected
-      </div>
-    </div>
-  </div>
+  <div class="block-bar-inner" id="blockBar"></div>
 </div>
 
 <!-- CONTENT -->
 <div class="content">
+
+<!-- ===== WEEK TAB ===== -->
+<div class="tab-view active" id="view-week">
 
   <!-- MOBILE TOGGLE -->
   <div class="view-toggle">
@@ -1010,163 +1137,14 @@
     <div class="desktop-main">
 
       <!-- TODAY HERO — always visible on desktop, mobile shows when Today selected -->
-      <div class="today-hero" id="today-hero">
-        <p class="today-hero-eyebrow">Thu 19 Nov · Today</p>
-        <h2 class="today-hero-title">A hard <em>intervals</em> day.</h2>
-        <p class="today-hero-sub">One swim. Plan it, do it, log it.</p>
-      </div>
+      <div class="today-hero" id="today-hero"></div>
 
-      <!-- MOBILE TODAY VIEW -->
-      <div class="mobile-only" id="mobile-today">
-        <div class="today-big-session" onclick="openSheet()">
-          <div class="today-big-session-row">
-            <h3 class="today-big-session-name">Intervals <em>8×200</em></h3>
-            <span class="intensity-badge intensity-hard">Hard</span>
-          </div>
-          <div class="today-big-session-meta">
-            <span><strong>Swim</strong></span>
-            <span>·</span>
-            <span>75 min planned</span>
-            <span>·</span>
-            <span><i class="ti ti-flag" aria-hidden="true"></i> PB attempt?</span>
-          </div>
-          <div class="today-big-session-cta">
-            <button class="btn-primary" onclick="event.stopPropagation(); openSheet();">
-              <i class="ti ti-check" aria-hidden="true"></i> Log it
-            </button>
-            <button class="btn-secondary" onclick="event.stopPropagation(); openSheet();">
-              See workout
-            </button>
-          </div>
-        </div>
-
-        <div class="today-rest-summary">
-          <strong>This week so far</strong>
-          Mon ✓ swim + strength · Tue ⚑ threshold cut short · Wed ✓ recovery swim, missed strength · <span style="color: var(--burgundy);">Today: intervals</span> · Fri 2 planned · Sat long set · Sun rest
-        </div>
-      </div>
+      <!-- MOBILE TODAY VIEW (filled by JS) -->
+      <div class="mobile-only" id="mobile-today"></div>
 
       <!-- WEEK VIEW (mobile: hidden by default; desktop: always visible) -->
       <div id="week-view" class="mobile-week-hidden">
-        <div class="week-grid">
-
-          <!-- Mon -->
-          <div class="day day-past">
-            <div class="day-header">
-              <p class="day-name">Mon <span class="day-date">16</span></p>
-              <span class="day-summary">2 done · 675au</span>
-            </div>
-            <div class="day-sessions">
-              <div class="session session-done" onclick="openSheet()">
-                <p class="session-name">Easy aerobic <em>3km</em></p>
-                <p class="session-meta"><strong>Swim</strong> · 60min · RPE 6 · 360au</p>
-                <i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i>
-              </div>
-              <div class="session session-done" onclick="openSheet()">
-                <p class="session-name">Lower body</p>
-                <p class="session-meta"><strong>Strength</strong> · 45min · RPE 7 · 315au</p>
-                <i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tue -->
-          <div class="day day-past">
-            <div class="day-header">
-              <p class="day-name">Tue <span class="day-date">17</span></p>
-              <span class="day-summary">1 modified</span>
-            </div>
-            <div class="day-sessions">
-              <div class="session session-modified" onclick="openSheet()">
-                <p class="session-name">Threshold <em class="tag">· cut short</em></p>
-                <p class="session-meta"><strong>Swim</strong> · 45min · RPE 5 · 225au</p>
-                <i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- Wed -->
-          <div class="day day-past">
-            <div class="day-header">
-              <p class="day-name">Wed <span class="day-date">18</span></p>
-              <span class="day-summary">1 done · 1 missed</span>
-            </div>
-            <div class="day-sessions">
-              <div class="session session-done" onclick="openSheet()">
-                <p class="session-name">Recovery <em>2.5km</em></p>
-                <p class="session-meta"><strong>Swim</strong> · 50min · RPE 4 · 200au</p>
-                <i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i>
-              </div>
-              <div class="session session-missed" onclick="openSheet()">
-                <p class="session-name">Upper body</p>
-                <p class="session-meta">Missed · school trip</p>
-                <i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- Thu — today -->
-          <div class="day day-today">
-            <div class="day-header">
-              <p class="day-name">Thu <span class="day-date">19</span> <span class="day-today-tag">today</span></p>
-              <span class="day-summary">1 planned</span>
-            </div>
-            <div class="day-sessions">
-              <div class="session session-planned-today" onclick="openSheet()">
-                <p class="session-name">Intervals <em>8×200</em></p>
-                <p class="session-meta"><strong>Swim</strong> · 75min · <span class="intensity-badge intensity-hard">Hard</span></p>
-                <i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- Fri -->
-          <div class="day">
-            <div class="day-header">
-              <p class="day-name">Fri <span class="day-date">20</span></p>
-              <span class="day-summary">2 planned</span>
-            </div>
-            <div class="day-sessions">
-              <div class="session session-planned" onclick="openSheet()">
-                <p class="session-name">Aerobic + drills <em>4km</em></p>
-                <p class="session-meta"><strong>Swim</strong> · 75min · <span class="intensity-badge intensity-moderate">Mod</span></p>
-                <i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i>
-              </div>
-              <div class="session session-planned" onclick="openSheet()">
-                <p class="session-name">Lower body <em>heavy</em></p>
-                <p class="session-meta"><strong>Strength</strong> · 45min · <span class="intensity-badge intensity-hard">Hard</span></p>
-                <i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sat -->
-          <div class="day">
-            <div class="day-header">
-              <p class="day-name">Sat <span class="day-date">21</span></p>
-              <span class="day-summary">1 planned</span>
-            </div>
-            <div class="day-sessions">
-              <div class="session session-planned" onclick="openSheet()">
-                <p class="session-name">Long set <em>5km</em></p>
-                <p class="session-meta"><strong>Swim</strong> · 90min · <span class="intensity-badge intensity-hard">Hard</span></p>
-                <i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sun -->
-          <div class="day">
-            <div class="day-header">
-              <p class="day-name">Sun <span class="day-date">22</span></p>
-              <span class="day-summary">Rest</span>
-            </div>
-            <div class="day-empty">
-              Recovery is training too.
-            </div>
-          </div>
-
-        </div>
+        <div class="week-grid" id="weekGrid"></div>
       </div>
 
     </div>
@@ -1176,46 +1154,26 @@
       <div class="pb-strip">
         <div class="pb-strip-header">
           <h3 class="pb-strip-title">Recent <em>PBs</em></h3>
-          <a href="#" class="pb-strip-link">See all →</a>
+          <a href="#" class="pb-strip-link" onclick="switchTab('pbs'); return false;">See all →</a>
         </div>
-        <div class="pb-list">
-          <div class="pb-item">
-            <div>
-              <p class="pb-item-name">200m freestyle</p>
-              <p class="pb-item-sub">Set 12 Nov</p>
-            </div>
-            <div>
-              <p class="pb-item-value">2:04.8</p>
-              <p class="pb-item-value-sub">↓ 3.2s</p>
-            </div>
-          </div>
-          <div class="pb-item">
-            <div>
-              <p class="pb-item-name">Back squat</p>
-              <p class="pb-item-sub">5RM · 28 Oct</p>
-            </div>
-            <div>
-              <p class="pb-item-value">85kg</p>
-              <p class="pb-item-value-sub">↑ 5kg</p>
-            </div>
-          </div>
-          <div class="pb-item">
-            <div>
-              <p class="pb-item-name">100m freestyle</p>
-              <p class="pb-item-sub">Set 5 Oct</p>
-            </div>
-            <div>
-              <p class="pb-item-value">57.4</p>
-              <p class="pb-item-value-sub">↓ 1.1s</p>
-            </div>
-          </div>
-        </div>
+        <div class="pb-list" id="weekPbList"></div>
       </div>
     </div>
 
   </div>
+</div><!-- /#view-week -->
 
-</div>
+<!-- ===== YEAR TAB ===== -->
+<div class="tab-view" id="view-year"></div>
+
+<!-- ===== LOAD TAB ===== -->
+<div class="tab-view" id="view-load"></div>
+
+<!-- ===== PBS TAB ===== -->
+<div class="tab-view" id="view-pbs"></div>
+
+</div><!-- /.content -->
+</div><!-- /#portal -->
 
 <!-- SESSION DETAIL SHEET -->
 <div class="sheet-backdrop" id="sheet-backdrop" onclick="closeSheet()"></div>
@@ -1223,8 +1181,8 @@
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <div class="sheet-header-content">
-      <p class="sheet-eyebrow">Thu 19 Nov · Swim</p>
-      <h2 class="sheet-title">Intervals <em>8×200</em></h2>
+      <p class="sheet-eyebrow" id="sheetEyebrow">—</p>
+      <h2 class="sheet-title" id="sheetTitle">—</h2>
     </div>
     <button class="sheet-close" onclick="closeSheet()" aria-label="Close">
       <i class="ti ti-x" aria-hidden="true"></i>
@@ -1233,32 +1191,31 @@
 
   <div class="sheet-body">
 
+    <div class="sheet-section" id="planHeader">
+      <p class="sheet-section-label">Session details</p>
+      <input class="duration-input plan-field" id="planName" placeholder="Session name — e.g. Intervals 8×200">
+      <div class="plan-row">
+        <input class="duration-input plan-field" id="planSport" placeholder="Sport">
+        <select class="duration-input plan-field" id="planIntensity">
+          <option value="">Intensity…</option>
+          <option value="easy">Easy</option>
+          <option value="moderate">Moderate</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="plan-row">
+        <input type="date" class="duration-input plan-field" id="planDate">
+        <div class="duration-row" style="flex:1;">
+          <input type="text" inputmode="numeric" class="duration-input plan-field" id="planDuration" placeholder="Planned min">
+          <span class="duration-suffix">min</span>
+        </div>
+      </div>
+    </div>
+
     <div class="sheet-section">
       <p class="sheet-section-label">The workout</p>
-      <ul class="workout-list">
-        <li class="workout-step">
-          <span class="workout-step-num">1</span>
-          <div class="workout-step-content">
-            <p class="workout-step-name">Warm up</p>
-            <p class="workout-step-detail">400m easy mixed strokes</p>
-          </div>
-        </li>
-        <li class="workout-step">
-          <span class="workout-step-num">2</span>
-          <div class="workout-step-content">
-            <p class="workout-step-name">Main set · 8×200</p>
-            <p class="workout-step-detail">Hold target pace. 30s rest between. Descend 1–4, 5–8.</p>
-          </div>
-        </li>
-        <li class="workout-step">
-          <span class="workout-step-num">3</span>
-          <div class="workout-step-content">
-            <p class="workout-step-name">Cool down</p>
-            <p class="workout-step-detail">400m easy + drill work</p>
-          </div>
-        </li>
-      </ul>
-      <button class="workout-edit-btn">
+      <ul class="workout-list" id="sheetWorkout"></ul>
+      <button class="workout-edit-btn" onclick="editWorkout()">
         <i class="ti ti-edit" aria-hidden="true"></i> Edit workout
       </button>
     </div>
@@ -1318,20 +1275,20 @@
             <small>Tap to flag this session</small>
           </div>
         </div>
-        <div class="toggle-switch"></div>
+        <div class="toggle-switch" id="pbToggle"></div>
       </div>
     </div>
 
     <div class="sheet-section">
       <p class="sheet-section-label">Note · optional</p>
-      <textarea class="note-input" placeholder="How did it feel? What went well or not?"></textarea>
+      <textarea class="note-input" id="sheetNote" placeholder="How did it feel? What went well or not?"></textarea>
     </div>
 
   </div>
 
   <div class="sheet-save">
     <button class="btn-secondary" onclick="closeSheet()">Cancel</button>
-    <button class="btn-primary" onclick="closeSheet()">Save session</button>
+    <button class="btn-primary" id="sheetSaveBtn" onclick="saveCurrentSession()">Save session</button>
   </div>
 </div>
 
@@ -1346,69 +1303,564 @@
     #week-view { display: block !important; }
     #mobile-today { display: none; }
   }
+
+  /* Plan/edit header inputs in the session sheet */
+  .plan-field { width: 100%; margin-bottom: 8px; }
+  .plan-row { display: flex; gap: 8px; }
+  .plan-row .plan-field { flex: 1; }
+  select.plan-field { -webkit-appearance: none; appearance: none; }
+  .day-add {
+    margin: 4px 16px 14px;
+    background: transparent; color: var(--ink-mute);
+    border: 1px dashed var(--line); border-radius: 8px;
+    padding: 8px; width: calc(100% - 32px);
+    font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .day-add:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  @media (min-width: 820px) {
+    .day-add { margin: 4px 10px 10px; width: calc(100% - 20px); }
+  }
 </style>
 
 <script>
-  // Mobile view toggle
-  const toggleButtons = document.querySelectorAll('.view-toggle button');
-  toggleButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      toggleButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      if (btn.dataset.view === 'week') {
-        document.body.classList.add('show-week');
-      } else {
-        document.body.classList.remove('show-week');
-      }
-    });
-  });
+  // ============================================================
+  // CONFIG + STATE
+  // ============================================================
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
+  const SESSION_KEY = 'aaAthletePortalUser';
+  const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
-  // RPE pips
-  const rpeRow = document.getElementById('rpe-row');
-  const loadPreview = document.getElementById('load-preview');
-  const durationInput = document.getElementById('duration-input');
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const STATE_LABEL = { build:'Build', maintain:'Maintain', peak:'Peak', recover:'Recover', off:'Off' };
 
-  function updateLoad() {
-    const selected = rpeRow.querySelector('.selected');
-    if (!selected) return;
-    const rpe = parseInt(selected.dataset.val);
-    const dur = parseInt(durationInput.value) || 0;
-    const load = rpe * dur;
-    loadPreview.innerHTML = load + ' <em>au</em>';
+  let currentUser = null;
+  let athlete = null;
+  let state = { yearMap: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} } };
+  let activeTab = 'week';
+  let editing = null;        // session currently in the sheet
+  let workoutEditing = false;
+
+  // ============================================================
+  // SMALL HELPERS
+  // ============================================================
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function val(id){ const el=document.getElementById(id); return el? el.value : ''; }
+  function numOrNull(v){ if(v===''||v==null) return null; const n=parseInt(v,10); return isNaN(n)?null:n; }
+  function fmtISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function parseISO(s){ const p=String(s).split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+  function isoToday(){ return fmtISO(new Date()); }
+  function mondayOf(d){ const x=new Date(d); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; }
+  function addDays(iso,n){ const d=parseISO(iso); d.setDate(d.getDate()+n); return fmtISO(d); }
+  function dayNum(iso){ return parseISO(iso).getDate(); }
+  function dowShort(iso){ return DOW[parseISO(iso).getDay()]; }
+  function monShort(iso){ return MONTHS[parseISO(iso).getMonth()].slice(0,3); }
+  function fmtNice(iso){ return iso ? dayNum(iso)+' '+monShort(iso) : ''; }
+
+  // ============================================================
+  // AUTH
+  // ============================================================
+  function handleCredentialResponse(resp){
+    try {
+      const payload = JSON.parse(atob(resp.credential.split('.')[1]));
+      currentUser = { email: payload.email, name: payload.name, picture: payload.picture, loginTime: Date.now() };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+      startPortal();
+    } catch(e){ showToast('Sign-in failed. Try again.', 'error'); }
+  }
+  window.handleCredentialResponse = handleCredentialResponse;
+
+  function checkExistingSession(){
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if(!raw) return false;
+      const u = JSON.parse(raw);
+      if(!u.loginTime || (Date.now() - u.loginTime) > SESSION_MAX_AGE){ localStorage.removeItem(SESSION_KEY); return false; }
+      currentUser = u; return true;
+    } catch(e){ return false; }
+  }
+  function logout(){ localStorage.removeItem(SESSION_KEY); location.reload(); }
+  window.logout = logout;
+
+  // ============================================================
+  // API
+  // ============================================================
+  async function apiGet(params){
+    const qs = Object.keys(params).map(k => k+'='+encodeURIComponent(params[k])).join('&');
+    const r = await fetch(APPS_SCRIPT_URL + '?' + qs);
+    return r.json();
+  }
+  async function apiPost(body){
+    const r = await fetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body) });
+    return r.json();
   }
 
-  rpeRow.addEventListener('click', e => {
-    const pip = e.target.closest('.rpe-pip');
-    if (!pip) return;
-    rpeRow.querySelectorAll('.rpe-pip').forEach(p => p.classList.remove('selected'));
-    pip.classList.add('selected');
-    updateLoad();
-  });
+  function setLoading(on, text){
+    const el = document.getElementById('appLoading');
+    if(text) document.getElementById('appLoadingText').textContent = text;
+    el.classList.toggle('active', !!on);
+  }
+  function showToast(msg, type){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + (type||'') + ' active';
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> t.className = 'toast ' + (type||''), 2800);
+  }
 
-  durationInput.addEventListener('input', updateLoad);
+  // ============================================================
+  // BOOTSTRAP
+  // ============================================================
+  async function startPortal(){
+    document.body.classList.add('signed-in');
+    setLoading(true, 'Loading your training…');
+    try {
+      const data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
+      if(!data.success) throw new Error(data.error || 'load failed');
+      athlete = data.athlete;
+      if(!athlete){ setLoading(false); renderNoAthlete(); return; }
+      currentUser.athleteId = athlete.Athlete_ID || currentUser.email;
+      state.yearMap = data.yearMap || null;
+      state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
+      state.pbs = data.pbs || [];
+      state.load = data.load || { weeks: [], summary: {} };
+      renderNav();
+      switchTab('week');
+      setLoading(false);
+    } catch(e){
+      setLoading(false);
+      showToast('Could not load your training. Refresh to retry.', 'error');
+    }
+  }
 
-  // Sheet
-  function openSheet() {
+  function renderNav(){
+    const name = athlete.Name || ((athlete.First_Name||'')+' '+(athlete.Last_Name||'')).trim() || currentUser.name || 'Athlete';
+    const first = name.split(' ')[0];
+    const grade = athlete.Grade || athlete.Year_Group || '';
+    const sport = athlete.Sport_1 || (state.yearMap && state.yearMap.sports && state.yearMap.sports[0] && state.yearMap.sports[0].name) || '';
+    const initials = (name.split(' ').map(w=>w[0]).join('').slice(0,2) || 'AA').toUpperCase();
+    const av = document.getElementById('navAvatar');
+    av.textContent = initials;
+    av.style.cursor = 'pointer';
+    av.title = 'Sign out';
+    av.onclick = () => { if(confirm('Sign out of the Athlete Academy?')) logout(); };
+    document.getElementById('navAthlete').innerHTML =
+      '<strong>'+esc(first)+'</strong>' + (grade? ' · '+esc(grade):'') + (sport? ' · '+esc(sport):'');
+  }
+
+  function renderNoAthlete(){
+    document.body.classList.add('signed-in');
+    document.getElementById('blockBar').innerHTML = '';
+    document.getElementById('view-week').innerHTML =
+      '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-user-question"></i></div>'+
+      '<h2 class="empty-state-title">No <em>athlete record</em> found.</h2>'+
+      '<p class="empty-state-text">Signed in as '+esc(currentUser.email)+'. Ask Mr Bain to add you to the Academy, then sign in again.</p>'+
+      '<button class="btn-primary" onclick="logout()">Sign out</button></div>';
+  }
+
+  // ============================================================
+  // TABS + BLOCK BAR
+  // ============================================================
+  function switchTab(tab){
+    activeTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-'+tab).classList.add('active');
+    renderBlockBar();
+    if(tab==='week') renderWeek();
+    else if(tab==='year') renderYear();
+    else if(tab==='load') renderLoad();
+    else if(tab==='pbs') renderPBs();
+    window.scrollTo(0,0);
+  }
+  window.switchTab = switchTab;
+
+  function currentBlock(){
+    if(!state.yearMap || !state.yearMap.sports || !state.yearMap.sports.length) return null;
+    const month = MONTHS[new Date().getMonth()];
+    const sport = state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
+    if(!sport || !sport.monthlyStates) return null;
+    const ms = sport.monthlyStates.find(m=>m.month===month);
+    return ms ? Object.assign({ sport: sport.name }, ms) : null;
+  }
+
+  function renderBlockBar(){
+    const bar = document.getElementById('blockBar');
+    const weekLoad = state.week.sessions.reduce((a,s)=> a + (s.load||0), 0);
+    const done = state.week.sessions.filter(s=> s.status==='done' || s.status==='modified').length;
+    const total = state.week.sessions.length;
+
+    if(activeTab==='year'){
+      const ap = state.yearMap && state.yearMap.aPriority;
+      const vision = state.yearMap && state.yearMap.vision;
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          '<p class="block-eyebrow">Your year · '+esc((state.yearMap&&state.yearMap.year)||'2026–27')+'</p>'+
+          '<h1 class="block-title">'+(vision? esc(vision) : 'Map your <em>year</em>.')+'</h1>'+
+          '<p class="block-sub">'+(ap&&ap.event? 'A-priority · '+esc(ap.event)+(ap.date?' · '+fmtNice(ap.date):'') : 'Set the one event your year points at.')+'</p>'+
+        '</div>';
+      return;
+    }
+
+    const blk = currentBlock();
+    if(blk){
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          '<p class="block-eyebrow">Block · '+MONTHS[new Date().getMonth()]+'</p>'+
+          '<h1 class="block-title"><em>'+(STATE_LABEL[blk.state]||'—')+'</em>.</h1>'+
+          '<p class="block-sub">'+esc(blk.focus || blk.note || 'Plan it, do it, log it.')+'</p>'+
+        '</div>'+
+        '<div class="block-meta">'+
+          '<div class="block-meta-item"><strong>'+done+' / '+total+'</strong> sessions done</div>'+
+          '<div class="block-meta-item"><strong>'+weekLoad+'</strong> au this week</div>'+
+          (blk.loadTarget? '<div class="block-meta-item"><strong>'+esc(String(blk.loadTarget))+'</strong> target</div>':'')+
+        '</div>';
+    } else {
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          '<p class="block-eyebrow">This week</p>'+
+          '<h1 class="block-title">Your <em>week</em>.</h1>'+
+          '<p class="block-sub">'+(total? 'Plan it, do it, log it.' : 'No plan yet — add a session below, or set your year.')+'</p>'+
+        '</div>'+
+        '<div class="block-meta">'+
+          '<div class="block-meta-item"><strong>'+done+' / '+total+'</strong> sessions done</div>'+
+          '<div class="block-meta-item"><strong>'+weekLoad+'</strong> au this week</div>'+
+        '</div>';
+    }
+  }
+
+  // ============================================================
+  // WEEK TAB
+  // ============================================================
+  function intensityBadge(i){
+    if(i==='hard') return '<span class="intensity-badge intensity-hard">Hard</span>';
+    if(i==='moderate') return '<span class="intensity-badge intensity-moderate">Mod</span>';
+    if(i==='easy') return '<span class="intensity-badge intensity-easy">Easy</span>';
+    return '';
+  }
+  function isLogged(s){ return s.status==='done' || s.status==='modified'; }
+
+  function renderWeek(){
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const today = isoToday();
+    const byDay = {};
+    state.week.sessions.forEach(s => { (byDay[s.date] = byDay[s.date] || []).push(s); });
+    const todays = byDay[today] || [];
+
+    renderTodayHero(todays, today);
+    renderMobileToday(todays, ws, today, byDay);
+
+    let html = '';
+    for(let i=0;i<7;i++){
+      const iso = addDays(ws, i);
+      const cls = iso===today ? 'day day-today' : (iso<today ? 'day day-past' : 'day');
+      const ds = byDay[iso] || [];
+      html += '<div class="'+cls+'"><div class="day-header">'+
+        '<p class="day-name">'+dowShort(iso)+' <span class="day-date">'+dayNum(iso)+'</span>'+(iso===today?' <span class="day-today-tag">today</span>':'')+'</p>'+
+        '<span class="day-summary">'+daySummary(ds)+'</span></div>';
+      if(ds.length){
+        html += '<div class="day-sessions">'+ds.map(s=>sessionCard(s, iso===today)).join('')+'</div>';
+      } else {
+        html += '<div class="day-empty">'+(iso<today? 'Nothing logged' : 'Nothing planned')+'</div>';
+      }
+      html += '<button class="day-add" onclick="newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>';
+      html += '</div>';
+    }
+    document.getElementById('weekGrid').innerHTML = html;
+    renderWeekPBs();
+  }
+
+  function daySummary(ds){
+    if(!ds.length) return '';
+    const done = ds.filter(s=>isLogged(s));
+    const planned = ds.filter(s=>s.status==='planned');
+    const missed = ds.filter(s=>s.status==='missed');
+    const parts = [];
+    if(done.length){ const au = done.reduce((a,s)=>a+(s.load||0),0); parts.push(done.length+' done'+(au?' · '+au+'au':'')); }
+    if(planned.length) parts.push(planned.length+' planned');
+    if(missed.length) parts.push(missed.length+' missed');
+    return parts.join(' · ');
+  }
+
+  function sessionCard(s, isToday){
+    let cls = 'session ';
+    if(s.status==='done') cls += 'session-done';
+    else if(s.status==='modified') cls += 'session-modified';
+    else if(s.status==='missed') cls += 'session-missed';
+    else cls += isToday ? 'session-planned-today' : 'session-planned';
+    let meta;
+    if(s.status==='missed'){ meta = 'Missed' + (s.note? ' · '+esc(s.note):''); }
+    else if(isLogged(s)){ meta = '<strong>'+esc(s.sport)+'</strong> · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au'; }
+    else { meta = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||0)+'min · '+intensityBadge(s.intensity); }
+    const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
+    return '<div class="'+cls+'" onclick="openSession(\''+s.id+'\')">'+
+      '<p class="session-name">'+esc(s.name)+pb+'</p>'+
+      '<p class="session-meta">'+meta+'</p>'+
+      '<i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i></div>';
+  }
+
+  function renderTodayHero(todays, today){
+    const eyebrow = dowShort(today)+' '+dayNum(today)+' '+monShort(today)+' · Today';
+    let title, sub;
+    if(!todays.length){ title = 'A <em>rest</em> day.'; sub = 'Nothing planned — recovery is training too.'; }
+    else if(todays.length===1){
+      const s = todays[0];
+      const word = s.intensity? (s.intensity==='moderate'?'moderate':s.intensity) : 'training';
+      title = 'A '+esc(word)+' <em>'+esc((s.sport||'session').toLowerCase())+'</em> day.';
+      sub = esc(s.name);
+    } else { title = todays.length+' sessions <em>today</em>.'; sub = 'Plan them, do them, log them.'; }
+    document.getElementById('today-hero').innerHTML =
+      '<p class="today-hero-eyebrow">'+eyebrow+'</p><h2 class="today-hero-title">'+title+'</h2><p class="today-hero-sub">'+sub+'</p>';
+  }
+
+  function renderMobileToday(todays, ws, today, byDay){
+    let html = '';
+    if(todays.length){
+      html += todays.map(s =>
+        '<div class="today-big-session" onclick="openSession(\''+s.id+'\')">'+
+          '<div class="today-big-session-row"><h3 class="today-big-session-name">'+esc(s.name)+'</h3>'+intensityBadge(s.intensity)+'</div>'+
+          '<div class="today-big-session-meta"><span><strong>'+esc(s.sport)+'</strong></span><span>·</span>'+
+            '<span>'+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+'</span>'+
+            (s.isPB?'<span>·</span><span><i class="ti ti-flag" aria-hidden="true"></i> PB</span>':'')+'</div>'+
+          '<div class="today-big-session-cta">'+
+            '<button class="btn-primary" onclick="event.stopPropagation(); openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(s.status==='done'?'Edit log':'Log it')+'</button>'+
+            '<button class="btn-secondary" onclick="event.stopPropagation(); openSession(\''+s.id+'\')">See workout</button>'+
+          '</div></div>').join('');
+    } else {
+      html += '<div class="today-big-session" style="border-left-color:var(--sage);">'+
+        '<div class="today-big-session-row"><h3 class="today-big-session-name">Rest day</h3></div>'+
+        '<div class="today-big-session-meta"><span>Nothing planned today.</span></div>'+
+        '<div class="today-big-session-cta"><button class="btn-secondary" onclick="newSession(\''+today+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add a session</button></div></div>';
+    }
+    html += '<div class="today-rest-summary"><strong>This week so far</strong>'+weekSoFar(ws, today, byDay)+'</div>';
+    document.getElementById('mobile-today').innerHTML = html;
+  }
+
+  function weekSoFar(ws, today, byDay){
+    const parts = [];
+    for(let i=0;i<7;i++){
+      const iso = addDays(ws, i);
+      if(iso===today){ parts.push('<span style="color:var(--burgundy);">'+dowShort(iso)+': today</span>'); continue; }
+      const ds = byDay[iso] || [];
+      let label = 'rest';
+      if(ds.length){
+        let mark = '';
+        if(ds.some(s=>s.status==='done')) mark = '✓ ';
+        else if(ds.some(s=>s.status==='modified')) mark = '⚑ ';
+        else if(ds.some(s=>s.status==='missed')) mark = '✗ ';
+        label = mark + ds.length + (ds.length>1?' sessions':' session');
+      }
+      parts.push(dowShort(iso)+' '+label);
+    }
+    return ' ' + parts.join(' · ');
+  }
+
+  function renderWeekPBs(){
+    const el = document.getElementById('weekPbList');
+    const top = (state.pbs||[]).slice(0,3);
+    if(!top.length){ el.innerHTML = '<p class="pb-item-sub" style="opacity:.75;">No PBs yet. Log a session and mark it as a PB.</p>'; return; }
+    el.innerHTML = top.map(pbStripItem).join('');
+  }
+  function pbTrend(p){
+    const cur = parseFloat(p.value), prev = parseFloat(p.previousValue);
+    if(isNaN(cur) || isNaN(prev)) return '';
+    const diff = +(cur - prev).toFixed(1);
+    if(diff===0) return '';
+    return (diff>0?'↑ ':'↓ ') + Math.abs(diff) + (p.unit?(' '+esc(p.unit)):'');
+  }
+  function pbStripItem(p){
+    const trend = pbTrend(p);
+    return '<div class="pb-item"><div>'+
+        '<p class="pb-item-name">'+esc(p.exercise)+'</p>'+
+        '<p class="pb-item-sub">'+esc(p.sport)+(p.date? ' · '+fmtNice(p.date):'')+'</p></div>'+
+      '<div><p class="pb-item-value">'+esc(String(p.value))+(p.unit?'<span style="font-size:11px;"> '+esc(p.unit)+'</span>':'')+'</p>'+
+        (trend? '<p class="pb-item-value-sub">'+trend+'</p>':'')+'</div></div>';
+  }
+
+  // ============================================================
+  // SESSION SHEET (open / fill / save)
+  // ============================================================
+  function openSheet(){
     document.getElementById('sheet-backdrop').classList.add('open');
     document.getElementById('sheet').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
-  function closeSheet() {
+  function closeSheet(){
     document.getElementById('sheet-backdrop').classList.remove('open');
     document.getElementById('sheet').classList.remove('open');
     document.body.style.overflow = '';
   }
+  window.closeSheet = closeSheet;
 
-  function togglePB(el) {
-    const sw = el.querySelector('.toggle-switch');
-    sw.classList.toggle('on');
+  function openSession(id){
+    editing = (state.week.sessions || []).find(s => s.id === id) || null;
+    if(!editing) return;
+    fillSheet(editing);
+    openSheet();
+  }
+  window.openSession = openSession;
+
+  function newSession(dateIso){
+    editing = { id:null, date:dateIso, sport:(athlete && athlete.Sport_1)||'', name:'', intensity:'',
+      plannedDuration:null, rpe:null, duration:null, status:'planned', isPB:false, workout:[], note:'' };
+    fillSheet(editing);
+    openSheet();
+  }
+  window.newSession = newSession;
+
+  function fillSheet(s){
+    document.getElementById('sheetEyebrow').textContent =
+      dowShort(s.date)+' '+dayNum(s.date)+' '+monShort(s.date)+(s.sport? ' · '+s.sport : '');
+    document.getElementById('sheetTitle').innerHTML = esc(s.name || 'New session');
+    document.getElementById('planName').value = s.name || '';
+    document.getElementById('planSport').value = s.sport || '';
+    document.getElementById('planIntensity').value = s.intensity || '';
+    document.getElementById('planDate').value = s.date || isoToday();
+    document.getElementById('planDuration').value = s.plannedDuration != null ? s.plannedDuration : '';
+    workoutEditing = false;
+    renderWorkout(s.workout || []);
+    // RPE
+    document.querySelectorAll('#rpe-row .rpe-pip').forEach(p => p.classList.toggle('selected', s.rpe!=null && +p.dataset.val===+s.rpe));
+    // duration (actual)
+    document.getElementById('duration-input').value = s.duration != null ? s.duration : (s.plannedDuration != null ? s.plannedDuration : '');
+    updateLoad();
+    // PB toggle
+    document.getElementById('pbToggle').classList.toggle('on', !!s.isPB);
+    // note
+    document.getElementById('sheetNote').value = s.note || '';
   }
 
-  document.querySelectorAll('.tab').forEach(t => {
-    t.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-      t.classList.add('active');
+  function renderWorkout(steps){
+    const ul = document.getElementById('sheetWorkout');
+    if(workoutEditing){
+      const text = (steps||[]).map(st => typeof st==='string'? st : (st.name||'')+(st.detail? ' — '+st.detail : '')).join('\n');
+      ul.innerHTML = '<textarea class="note-input" id="workoutEditor" style="min-height:120px;" placeholder="One step per line, e.g.\nWarm up — 400m easy\nMain set — 8×200">'+esc(text)+'</textarea>';
+      return;
+    }
+    if(!steps || !steps.length){
+      ul.innerHTML = '<li class="workout-step"><div class="workout-step-content"><p class="workout-step-detail">No workout steps yet. Tap “Edit workout” to add them.</p></div></li>';
+      return;
+    }
+    ul.innerHTML = steps.map((st,i) => {
+      const name = typeof st==='string'? st : (st.name||'');
+      const detail = typeof st==='string'? '' : (st.detail||'');
+      return '<li class="workout-step"><span class="workout-step-num">'+(i+1)+'</span>'+
+        '<div class="workout-step-content"><p class="workout-step-name">'+esc(name)+'</p>'+
+        (detail? '<p class="workout-step-detail">'+esc(detail)+'</p>':'')+'</div></li>';
+    }).join('');
+  }
+
+  function editWorkout(){
+    if(workoutEditing){
+      // commit
+      const raw = (document.getElementById('workoutEditor')||{}).value || '';
+      editing.workout = raw.split('\n').map(l=>l.trim()).filter(Boolean).map(l => {
+        const parts = l.split(/\s+—\s+|\s+-\s+/);
+        return parts.length>1 ? { name: parts[0], detail: parts.slice(1).join(' - ') } : { name: l, detail: '' };
+      });
+      workoutEditing = false;
+    } else {
+      workoutEditing = true;
+    }
+    renderWorkout(editing.workout || []);
+  }
+  window.editWorkout = editWorkout;
+
+  // RPE + duration live load
+  function updateLoad(){
+    const sel = document.querySelector('#rpe-row .rpe-pip.selected');
+    const rpe = sel ? parseInt(sel.dataset.val,10) : 0;
+    const dur = parseInt(document.getElementById('duration-input').value,10) || 0;
+    document.getElementById('load-preview').innerHTML = (rpe*dur) + ' <em>au</em>';
+  }
+  function togglePB(){ document.getElementById('pbToggle').classList.toggle('on'); }
+  window.togglePB = togglePB;
+
+  async function saveCurrentSession(){
+    if(!editing) return;
+    if(workoutEditing) editWorkout(); // commit any open workout edit
+    const name = val('planName').trim();
+    if(!name){ showToast('Give the session a name.', 'error'); return; }
+    const sel = document.querySelector('#rpe-row .rpe-pip.selected');
+    const rpe = sel ? parseInt(sel.dataset.val,10) : null;
+    const duration = numOrNull(val('duration-input'));
+    const logged = rpe != null && duration != null;
+    const session = {
+      id: editing.id,
+      date: val('planDate') || editing.date,
+      sport: val('planSport').trim(),
+      name: name,
+      intensity: val('planIntensity'),
+      plannedDuration: numOrNull(val('planDuration')),
+      rpe: logged ? rpe : null,
+      duration: logged ? duration : null,
+      status: logged ? 'done' : 'planned',
+      isPB: document.getElementById('pbToggle').classList.contains('on'),
+      workout: editing.workout || [],
+      note: val('sheetNote')
+    };
+    const btn = document.getElementById('sheetSaveBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const res = await apiPost({ action:'saveSession', email: currentUser.athleteId, session: session });
+      if(!res.success) throw new Error(res.error || 'save failed');
+      await refreshWeek();
+      closeSheet();
+      showToast(logged ? 'Session logged' : 'Session planned', 'success');
+    } catch(e){
+      showToast('Could not save. Try again.', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save session';
+    }
+  }
+  window.saveCurrentSession = saveCurrentSession;
+
+  async function refreshWeek(){
+    try {
+      const wk = await apiGet({ action:'getWeek', email: currentUser.athleteId, weekStart: state.week.weekStart });
+      if(wk.success){ state.week = { weekStart: wk.weekStart, sessions: wk.sessions || [] }; }
+      const ld = await apiGet({ action:'getYearLoad', email: currentUser.athleteId });
+      if(ld.success){ state.load = { weeks: ld.weeks || [], summary: ld.summary || {} }; }
+    } catch(e){ /* keep existing state on refresh failure */ }
+    if(activeTab==='week') renderWeek();
+    renderBlockBar();
+  }
+
+  // ============================================================
+  // YEAR / LOAD / PBS — placeholders (built in their own PRs)
+  // ============================================================
+  function placeholder(icon, title, text){
+    return '<div class="empty-state"><div class="empty-state-icon"><i class="ti '+icon+'" aria-hidden="true"></i></div>'+
+      '<h2 class="empty-state-title">'+title+'</h2><p class="empty-state-text">'+text+'</p></div>';
+  }
+  function renderYear(){ document.getElementById('view-year').innerHTML = placeholder('ti-calendar-month','Your <em>year</em>.','Sports, blocks and your A-priority across the season. Wiring this up next.'); }
+  function renderLoad(){ document.getElementById('view-load').innerHTML = placeholder('ti-chart-bar','<em>Load</em> across the year.','Weekly load and acute:chronic ratio. Wiring this up next.'); }
+  function renderPBs(){ document.getElementById('view-pbs').innerHTML = placeholder('ti-trophy','Personal <em>bests</em>.','Your PBs by sport and exercise. Wiring this up next.'); }
+
+  // ============================================================
+  // BINDINGS + INIT
+  // ============================================================
+  document.querySelectorAll('.view-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.body.classList.toggle('show-week', btn.dataset.view==='week');
     });
+  });
+
+  document.getElementById('rpe-row').addEventListener('click', e => {
+    const pip = e.target.closest('.rpe-pip');
+    if(!pip) return;
+    document.querySelectorAll('#rpe-row .rpe-pip').forEach(p => p.classList.remove('selected'));
+    pip.classList.add('selected');
+    updateLoad();
+  });
+  document.getElementById('duration-input').addEventListener('input', updateLoad);
+
+  window.addEventListener('load', () => {
+    if(checkExistingSession()) startPortal();
   });
 </script>
 
