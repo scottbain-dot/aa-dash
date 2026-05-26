@@ -1000,6 +1000,16 @@
     flex-direction: column; gap: 16px;
   }
   .app-loading.active { display: flex; }
+  .app-error {
+    position: fixed; inset: 0; z-index: 200; background: var(--bg);
+    display: none; align-items: center; justify-content: center;
+  }
+  .app-error.active { display: flex; }
+  .app-error .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 10px; border: none;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer;
+  }
   .spinner {
     width: 34px; height: 34px;
     border: 3px solid var(--line);
@@ -1087,6 +1097,16 @@
 <div class="app-loading" id="appLoading">
   <div class="spinner"></div>
   <p class="app-loading-text" id="appLoadingText">Loading your training…</p>
+</div>
+
+<!-- LOAD ERROR -->
+<div class="app-error" id="appError">
+  <div class="empty-state">
+    <div class="empty-state-icon"><i class="ti ti-cloud-off" aria-hidden="true"></i></div>
+    <h2 class="empty-state-title">Couldn't <em>load</em> your training.</h2>
+    <p class="empty-state-text">Check your connection and try again. Your saved work is safe.</p>
+    <button class="btn-primary" onclick="retryLoad()"><i class="ti ti-refresh" aria-hidden="true"></i> Try again</button>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -1192,6 +1212,10 @@
   </div>
 
   <div class="sheet-body">
+
+    <button class="workout-edit-btn" id="planToggle" style="display:none; margin-bottom:18px;" onclick="showPlanHeader()">
+      <i class="ti ti-pencil" aria-hidden="true"></i> Edit name, sport &amp; date
+    </button>
 
     <div class="sheet-section" id="planHeader">
       <p class="sheet-section-label">Session details</p>
@@ -1715,6 +1739,7 @@
   // ============================================================
   async function startPortal(){
     document.body.classList.add('signed-in');
+    document.getElementById('appError').classList.remove('active');
     setLoading(true, 'Loading your training…');
     try {
       const data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
@@ -1731,9 +1756,11 @@
       setLoading(false);
     } catch(e){
       setLoading(false);
-      showToast('Could not load your training. Refresh to retry.', 'error');
+      document.getElementById('appError').classList.add('active');
     }
   }
+  function retryLoad(){ document.getElementById('appError').classList.remove('active'); startPortal(); }
+  window.retryLoad = retryLoad;
 
   function renderNav(){
     const name = athlete.Name || ((athlete.First_Name||'')+' '+(athlete.Last_Name||'')).trim() || currentUser.name || 'Athlete';
@@ -2040,6 +2067,12 @@
   }
   window.openSession = openSession;
 
+  function showPlanHeader(){
+    document.getElementById('planHeader').style.display = '';
+    document.getElementById('planToggle').style.display = 'none';
+  }
+  window.showPlanHeader = showPlanHeader;
+
   function newSession(dateIso){
     editing = { id:null, date:dateIso, sport:(athlete && athlete.Sport_1)||'', name:'', intensity:'',
       plannedDuration:null, rpe:null, duration:null, status:'planned', isPB:false, workout:[], note:'' };
@@ -2057,6 +2090,10 @@
     document.getElementById('planIntensity').value = s.intensity || '';
     document.getElementById('planDate').value = s.date || isoToday();
     document.getElementById('planDuration').value = s.plannedDuration != null ? s.plannedDuration : '';
+    // Existing session → lead with logging; tuck the planning fields behind a toggle.
+    const isNew = !s.id;
+    document.getElementById('planHeader').style.display = isNew ? '' : 'none';
+    document.getElementById('planToggle').style.display = isNew ? 'none' : 'flex';
     workoutEditing = false;
     renderWorkout(s.workout || []);
     // RPE
@@ -2109,9 +2146,10 @@
   // RPE + duration live load
   function updateLoad(){
     const sel = document.querySelector('#rpe-row .rpe-pip.selected');
-    const rpe = sel ? parseInt(sel.dataset.val,10) : 0;
     const dur = parseInt(document.getElementById('duration-input').value,10) || 0;
-    document.getElementById('load-preview').innerHTML = (rpe*dur) + ' <em>au</em>';
+    const el = document.getElementById('load-preview');
+    if(!sel){ el.innerHTML = '<em>rate your effort</em>'; return; }
+    el.innerHTML = (parseInt(sel.dataset.val,10)*dur) + ' <em>au</em>';
   }
   function togglePB(){ document.getElementById('pbToggle').classList.toggle('on'); }
   window.togglePB = togglePB;
@@ -2374,8 +2412,9 @@
       const res = await apiPost({ action:'saveYearMap', email: currentUser.athleteId, yearMap: yearMap });
       if(!res.success) throw new Error(res.error||'save failed');
       state.yearMap = yearMap;
-      renderNav(); renderYear(); renderBlockBar();
-      showToast('Year set up. Now plan your week.', 'success');
+      renderNav();
+      switchTab('week');
+      showToast('Year set up — here\'s your week.', 'success');
     } catch(e){ showToast('Could not save. Try again.', 'error'); }
   }
   window.submitOnboard = submitOnboard;
