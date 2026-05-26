@@ -1351,6 +1351,52 @@
   </div>
 </div>
 
+<!-- PB ADD / EDIT SHEET -->
+<div class="sheet-backdrop" id="pb-backdrop" onclick="closePB()"></div>
+<div class="sheet" id="pbSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow" id="pbEyebrow">Personal best</p>
+      <h2 class="sheet-title" id="pbSheetTitle">New <em>PB</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closePB()" aria-label="Close">
+      <i class="ti ti-x" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="sheet-body">
+    <div class="sheet-section">
+      <p class="sheet-section-label">Sport</p>
+      <input class="duration-input plan-field" id="pbSport" placeholder="e.g. Swimming">
+    </div>
+    <div class="sheet-section">
+      <p class="sheet-section-label">Exercise or event</p>
+      <input class="duration-input plan-field" id="pbExercise" placeholder="e.g. 200m freestyle, Back squat 5RM">
+    </div>
+    <div class="sheet-section">
+      <p class="sheet-section-label">Result</p>
+      <div class="plan-row">
+        <input class="duration-input plan-field" id="pbValue" placeholder="Value — e.g. 124.8 or 85">
+        <input class="duration-input plan-field" id="pbUnit" placeholder="Unit — s, kg, m…">
+      </div>
+    </div>
+    <div class="sheet-section">
+      <p class="sheet-section-label">Date</p>
+      <input type="date" class="duration-input plan-field" id="pbDate">
+    </div>
+    <div class="sheet-section">
+      <p class="sheet-section-label">Note · optional</p>
+      <textarea class="note-input" id="pbNote" placeholder="Conditions, how it felt, anything worth remembering."></textarea>
+    </div>
+  </div>
+
+  <div class="sheet-save">
+    <button class="btn-secondary" onclick="closePB()">Cancel</button>
+    <button class="btn-primary" id="pbSaveBtn" onclick="savePBSheet()">Save PB</button>
+  </div>
+</div>
+
 <style>
   /* Mobile view toggle behaviour: when on mobile, hide week-view unless toggle says so */
   @media (max-width: 819px) {
@@ -1491,6 +1537,34 @@
     text-transform: uppercase; color: var(--ink-mute); font-weight: 500; margin-bottom: 6px;
   }
   .onboard-field .plan-field { margin-bottom: 0; }
+
+  /* ===== PBS TAB ===== */
+  .pb-page-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px;
+  }
+  .pb-group {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 14px;
+    padding: 6px 16px; margin-bottom: 12px;
+  }
+  .pb-group-head {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--burgundy); font-weight: 500; padding: 12px 0 8px; border-bottom: 1px solid var(--line-soft);
+  }
+  .pb-page-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 13px 0; border-bottom: 1px solid var(--line-soft); cursor: pointer;
+    transition: background 0.12s;
+  }
+  .pb-group .pb-page-item:last-child { border-bottom: none; }
+  .pb-page-item:hover { background: var(--cream); }
+  .pb-page-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; color: var(--ink); margin: 0; }
+  .pb-page-sub { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); margin: 2px 0 0; }
+  .pb-page-right { text-align: right; flex-shrink: 0; }
+  .pb-page-value { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 500; color: var(--burgundy); }
+  .pb-page-value small { font-size: 12px; color: var(--ink-mute); font-weight: 400; }
+  .pb-page-trend { font-family: 'Fraunces', serif; font-style: italic; font-size: 11px; color: var(--sage); margin-top: 1px; }
+  .pb-page-trend.up { color: var(--sage); }
+  .pb-page-trend.down { color: var(--burgundy); }
 </style>
 
 <script>
@@ -1670,6 +1744,19 @@
           '<h1 class="block-title">'+(vision? esc(vision) : 'Map your <em>year</em>.')+'</h1>'+
           '<p class="block-sub">'+(ap&&ap.event? 'A-priority · '+esc(ap.event)+(ap.date?' · '+fmtNice(ap.date):'') : 'Set the one event your year points at.')+'</p>'+
         '</div>';
+      return;
+    }
+
+    if(activeTab==='pbs'){
+      const n = (state.pbs||[]).length;
+      const latest = n ? state.pbs[0] : null;
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          '<p class="block-eyebrow">Personal bests</p>'+
+          '<h1 class="block-title">Your <em>bests</em>.</h1>'+
+          '<p class="block-sub">'+(latest? 'Latest · '+esc(latest.exercise)+' '+esc(String(latest.value))+(latest.unit?esc(latest.unit):'')+(latest.date?' · '+fmtNice(latest.date):'') : 'Every best you set lands here.')+'</p>'+
+        '</div>'+
+        (n? '<div class="block-meta"><div class="block-meta-item"><strong>'+n+'</strong> '+(n===1?'best':'bests')+' logged</div></div>' : '');
       return;
     }
 
@@ -1978,6 +2065,7 @@
       await refreshWeek();
       closeSheet();
       showToast(logged ? 'Session logged' : 'Session planned', 'success');
+      if(session.isPB){ openPBForm({ sport: session.sport, exercise: session.name, date: session.date, sessionId: res.id }); }
     } catch(e){
       showToast('Could not save. Try again.', 'error');
     } finally {
@@ -2247,7 +2335,109 @@
   window.saveYearGoal = saveYearGoal;
 
   function renderLoad(){ document.getElementById('view-load').innerHTML = placeholder('ti-chart-bar','<em>Load</em> across the year.','Weekly load and acute:chronic ratio. Wiring this up next.'); }
-  function renderPBs(){ document.getElementById('view-pbs').innerHTML = placeholder('ti-trophy','Personal <em>bests</em>.','Your PBs by sport and exercise. Wiring this up next.'); }
+  // ============================================================
+  // PBS TAB
+  // ============================================================
+  function renderPBs(){
+    const view = document.getElementById('view-pbs');
+    const pbs = state.pbs || [];
+    if(!pbs.length){
+      view.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-trophy" aria-hidden="true"></i></div>'+
+        '<h2 class="empty-state-title">No <em>bests</em> yet.</h2>'+
+        '<p class="empty-state-text">Log a session and mark it as a PB, or add one here. Every best you set shows up on this board.</p>'+
+        '<button class="btn-primary" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>';
+      return;
+    }
+    const groups = {};
+    pbs.forEach(p => { const k = p.sport || 'Other'; (groups[k] = groups[k] || []).push(p); });
+    let html = '<div class="pb-page-head">'+
+      '<div></div>'+
+      '<button class="year-head-btn" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>';
+    Object.keys(groups).sort().forEach(sport => {
+      html += '<div class="pb-group"><div class="pb-group-head">'+esc(sport)+'</div>';
+      groups[sport].forEach(p => { html += pbPageItem(p); });
+      html += '</div>';
+    });
+    view.innerHTML = html;
+  }
+
+  function pbPageItem(p){
+    const cur = parseFloat(p.value), prev = parseFloat(p.previousValue);
+    let trend = '';
+    if(!isNaN(cur) && !isNaN(prev) && cur !== prev){
+      const diff = +(cur - prev).toFixed(2);
+      const cls = diff > 0 ? 'up' : 'down';
+      trend = '<p class="pb-page-trend '+cls+'">'+(diff>0?'↑':'↓')+' '+Math.abs(diff)+(p.unit? ' '+esc(p.unit):'')+' · was '+esc(String(p.previousValue))+'</p>';
+    }
+    return '<div class="pb-page-item" onclick="editPB('+pbKey(p)+')">'+
+      '<div><p class="pb-page-name">'+esc(p.exercise)+'</p>'+
+        '<p class="pb-page-sub">'+(p.date? fmtNice(p.date):'')+(p.note? ' · '+esc(p.note):'')+'</p></div>'+
+      '<div class="pb-page-right"><p class="pb-page-value">'+esc(String(p.value))+(p.unit? ' <small>'+esc(p.unit)+'</small>':'')+'</p>'+trend+'</div></div>';
+  }
+  function pbKey(p){ return "'"+esc(p.sessionId||'')+"','"+esc(p.sport||'')+"','"+esc(p.exercise||'')+"'"; }
+
+  // ----- PB add / edit sheet -----
+  let pbCtx = null;
+  function openPBSheet(){ document.getElementById('pb-backdrop').classList.add('open'); document.getElementById('pbSheet').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closePB(){ document.getElementById('pb-backdrop').classList.remove('open'); document.getElementById('pbSheet').classList.remove('open'); document.body.style.overflow=''; }
+  window.closePB = closePB;
+
+  function openPBForm(prefill){
+    prefill = prefill || {};
+    pbCtx = { sessionId: prefill.sessionId || '' };
+    document.getElementById('pbSheetTitle').innerHTML = prefill.exercise ? esc(prefill.exercise) : 'New <em>PB</em>.';
+    document.getElementById('pbSport').value = prefill.sport || (athlete && athlete.Sport_1) || '';
+    document.getElementById('pbExercise').value = prefill.exercise || '';
+    document.getElementById('pbValue').value = prefill.value != null ? prefill.value : '';
+    document.getElementById('pbUnit').value = prefill.unit || '';
+    document.getElementById('pbDate').value = prefill.date || isoToday();
+    document.getElementById('pbNote').value = prefill.note || '';
+    openPBSheet();
+  }
+  function addPB(){ openPBForm({}); }
+  window.addPB = addPB;
+
+  function editPB(sessionId, sport, exercise){
+    const p = (state.pbs||[]).find(x => (sessionId && x.sessionId===sessionId) || (x.sport===sport && x.exercise===exercise));
+    if(!p){ addPB(); return; }
+    openPBForm(p);
+  }
+  window.editPB = editPB;
+
+  async function savePBSheet(){
+    const exercise = val('pbExercise').trim();
+    const value = val('pbValue').trim();
+    if(!exercise){ showToast('Name the exercise or event.', 'error'); return; }
+    if(value===''){ showToast('Add the result value.', 'error'); return; }
+    const pb = {
+      sport: val('pbSport').trim(),
+      exercise: exercise,
+      value: value,
+      unit: val('pbUnit').trim(),
+      date: val('pbDate') || isoToday(),
+      note: val('pbNote'),
+      sessionId: (pbCtx && pbCtx.sessionId) || ''
+    };
+    const btn = document.getElementById('pbSaveBtn'); btn.disabled=true; btn.textContent='Saving…';
+    try {
+      const res = await apiPost({ action:'savePB', email: currentUser.athleteId, pb: pb });
+      if(!res.success) throw new Error(res.error||'save failed');
+      await refreshPBs();
+      closePB();
+      showToast('PB saved', 'success');
+    } catch(e){ showToast('Could not save PB. Try again.', 'error'); }
+    finally { btn.disabled=false; btn.textContent='Save PB'; }
+  }
+  window.savePBSheet = savePBSheet;
+
+  async function refreshPBs(){
+    try {
+      const res = await apiGet({ action:'getPBs', email: currentUser.athleteId });
+      if(res.success) state.pbs = res.pbs || [];
+    } catch(e){ /* keep existing on failure */ }
+    if(activeTab==='pbs') renderPBs();
+    renderWeekPBs();
+  }
 
   // ============================================================
   // BINDINGS + INIT
