@@ -1292,6 +1292,65 @@
   </div>
 </div>
 
+<!-- BLOCK DETAIL SHEET -->
+<div class="sheet-backdrop" id="block-backdrop" onclick="closeBlock()"></div>
+<div class="sheet" id="blockSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow" id="blockEyebrow">—</p>
+      <h2 class="sheet-title" id="blockTitle">—</h2>
+    </div>
+    <button class="sheet-close" onclick="closeBlock()" aria-label="Close">
+      <i class="ti ti-x" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="sheet-body">
+    <div class="sheet-section">
+      <p class="sheet-section-label">Training state</p>
+      <div class="state-picker" id="statePicker">
+        <button class="state-pill" data-state="build" onclick="pickState('build')">Build</button>
+        <button class="state-pill" data-state="maintain" onclick="pickState('maintain')">Maintain</button>
+        <button class="state-pill" data-state="peak" onclick="pickState('peak')">Peak</button>
+        <button class="state-pill" data-state="recover" onclick="pickState('recover')">Recover</button>
+        <button class="state-pill" data-state="off" onclick="pickState('off')">Off</button>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Focus this block</p>
+      <input class="duration-input plan-field" id="blockFocus" placeholder="e.g. Aerobic base. Hold technique under fatigue.">
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Weekly load target · optional</p>
+      <div class="duration-row">
+        <input type="text" inputmode="numeric" class="duration-input" id="blockLoad" placeholder="e.g. 1350">
+        <span class="duration-suffix">au / week</span>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Key sessions</p>
+      <div id="blockKeyList"></div>
+      <button class="workout-edit-btn" onclick="addKeySession()">
+        <i class="ti ti-plus" aria-hidden="true"></i> Add a key session
+      </button>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Note · optional</p>
+      <textarea class="note-input" id="blockNote" placeholder="Anything to remember for this block?"></textarea>
+    </div>
+  </div>
+
+  <div class="sheet-save">
+    <button class="btn-secondary" onclick="planThisWeek()">Plan this week →</button>
+    <button class="btn-primary" id="blockSaveBtn" onclick="saveBlockSheet()">Save block</button>
+  </div>
+</div>
+
 <style>
   /* Mobile view toggle behaviour: when on mobile, hide week-view unless toggle says so */
   @media (max-width: 819px) {
@@ -1322,6 +1381,116 @@
   @media (min-width: 820px) {
     .day-add { margin: 4px 10px 10px; width: calc(100% - 20px); }
   }
+
+  /* ===== YEAR TAB ===== */
+  .year-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 14px;
+  }
+  .year-head-btn {
+    background: transparent; color: var(--burgundy);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 14px; font-family: 'Inter', sans-serif; font-size: 12px;
+    font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: border-color 0.15s, background 0.15s; white-space: nowrap;
+  }
+  .year-head-btn:hover { border-color: var(--burgundy); background: var(--cream); }
+  .year-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .year-legend-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute);
+  }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 3px; }
+
+  .year-sport {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 12px;
+  }
+  .year-sport-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  }
+  .year-sport-name {
+    font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; color: var(--ink); margin: 0;
+  }
+  .year-sport-star { color: var(--gold); font-size: 15px; }
+  .year-months {
+    display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; padding-bottom: 4px;
+  }
+  .year-months::-webkit-scrollbar { display: none; }
+  .year-month {
+    flex: 0 0 auto; width: 64px; border-radius: 10px; padding: 8px 6px;
+    background: var(--cream); border: 1px solid var(--line-soft); cursor: pointer;
+    text-align: center; transition: transform 0.12s, box-shadow 0.15s, border-color 0.15s;
+    position: relative;
+  }
+  .year-month:hover { box-shadow: 0 2px 8px rgba(26,20,17,0.06); transform: translateY(-1px); }
+  .year-month:active { transform: scale(0.97); }
+  .ym-label {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-mute); margin: 0 0 6px;
+  }
+  .ym-state {
+    font-family: 'Fraunces', serif; font-size: 11px; font-weight: 500;
+    height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    color: var(--ink);
+  }
+  .ym-build    .ym-state { background: var(--gold); color: var(--burgundy-dark); }
+  .ym-maintain .ym-state { background: var(--sage); color: var(--cream); }
+  .ym-peak     .ym-state { background: var(--burgundy); color: var(--cream); }
+  .ym-recover  .ym-state { background: var(--cream); color: var(--ink-mute); border: 1px solid var(--line); }
+  .ym-off      .ym-state {
+    background: repeating-linear-gradient(45deg, var(--cream), var(--cream) 4px, var(--line) 4px, var(--line) 5px);
+    color: var(--ink-mute);
+  }
+  .ym-empty .ym-state {
+    background: transparent; border: 1px dashed var(--line); color: var(--ink-mute);
+  }
+  .year-month.is-current { border-color: var(--burgundy); box-shadow: 0 0 0 1px var(--burgundy); }
+  .ym-markers {
+    display: flex; gap: 3px; justify-content: center; margin-top: 5px; min-height: 12px;
+  }
+  .ym-marker { font-size: 10px; line-height: 1; }
+  .ym-marker.a-priority { color: var(--gold); }
+  .ym-marker.testing { color: var(--burgundy); }
+
+  /* State picker in block sheet */
+  .state-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+  .state-pill {
+    flex: 1; min-width: 64px; padding: 10px 8px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; color: var(--ink-mute);
+    transition: all 0.15s;
+  }
+  .state-pill:hover { border-color: var(--burgundy); }
+  .state-pill.sel[data-state="build"]    { background: var(--gold); color: var(--burgundy-dark); border-color: var(--gold); }
+  .state-pill.sel[data-state="maintain"] { background: var(--sage); color: var(--cream); border-color: var(--sage); }
+  .state-pill.sel[data-state="peak"]     { background: var(--burgundy); color: var(--cream); border-color: var(--burgundy); }
+  .state-pill.sel[data-state="recover"]  { background: var(--cream); color: var(--ink); border-color: var(--ink-mute); }
+  .state-pill.sel[data-state="off"]      { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+
+  /* Key session mini-rows */
+  .key-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+  .key-row .plan-field { margin-bottom: 0; }
+  .key-row .key-name { flex: 2; }
+  .key-row .key-int { flex: 1; }
+  .key-row .key-dur { width: 64px; }
+  .key-row-del {
+    background: transparent; border: none; color: var(--ink-mute); cursor: pointer;
+    font-size: 16px; padding: 4px; flex-shrink: 0;
+  }
+  .key-row-del:hover { color: var(--burgundy); }
+
+  /* Onboarding card */
+  .onboard { max-width: 460px; margin: 0 auto; }
+  .onboard .empty-state-title { margin-bottom: 4px; }
+  .onboard-form { text-align: left; margin-top: 8px; }
+  .onboard-field { margin-bottom: 14px; }
+  .onboard-field label {
+    display: block; font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-mute); font-weight: 500; margin-bottom: 6px;
+  }
+  .onboard-field .plan-field { margin-bottom: 0; }
 </style>
 
 <script>
@@ -1427,7 +1596,7 @@
       state.pbs = data.pbs || [];
       state.load = data.load || { weeks: [], summary: {} };
       renderNav();
-      switchTab('week');
+      switchTab(hasYear() ? 'week' : 'year');
       setLoading(false);
     } catch(e){
       setLoading(false);
@@ -1835,7 +2004,248 @@
     return '<div class="empty-state"><div class="empty-state-icon"><i class="ti '+icon+'" aria-hidden="true"></i></div>'+
       '<h2 class="empty-state-title">'+title+'</h2><p class="empty-state-text">'+text+'</p></div>';
   }
-  function renderYear(){ document.getElementById('view-year').innerHTML = placeholder('ti-calendar-month','Your <em>year</em>.','Sports, blocks and your A-priority across the season. Wiring this up next.'); }
+  // ============================================================
+  // YEAR TAB
+  // ============================================================
+  const ACADEMIC_MONTHS = ['August','September','October','November','December','January','February','March','April','May','June','July'];
+  let blockCtx = null;       // { sportName, month, block }
+  let blockKeySessions = [];
+
+  function hasYear(){ return state.yearMap && state.yearMap.sports && state.yearMap.sports.length; }
+
+  function renderYear(){
+    const view = document.getElementById('view-year');
+    if(!hasYear()){ view.innerHTML = onboardHTML(); return; }
+    const curMonth = MONTHS[new Date().getMonth()];
+    let html = '<div class="year-head">'+
+      '<div class="year-legend">'+
+        legendItem('var(--gold)','Build') + legendItem('var(--sage)','Maintain') +
+        legendItem('var(--burgundy)','Peak') + legendItem('var(--cream)','Recover') +
+      '</div>'+
+      '<button class="year-head-btn" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Goal</button>'+
+    '</div>';
+    state.yearMap.sports.forEach((sport, si) => {
+      html += '<div class="year-sport"><div class="year-sport-head">'+
+        '<p class="year-sport-name">'+esc(sport.name)+'</p>'+
+        (sport.isPriority? '<i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
+        '</div><div class="year-months">';
+      ACADEMIC_MONTHS.forEach(m => { html += yearCell(sport, si, m, curMonth); });
+      html += '</div></div>';
+    });
+    html += '<button class="year-head-btn" style="width:100%; justify-content:center; margin-top:4px;" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
+    view.innerHTML = html;
+  }
+
+  function legendItem(color, label){
+    return '<span class="year-legend-item"><span class="legend-swatch" style="background:'+color+';"></span>'+label+'</span>';
+  }
+
+  function yearCell(sport, si, month, curMonth){
+    const ms = (sport.monthlyStates||[]).find(x => x.month===month);
+    const stt = ms && ms.state ? ms.state : '';
+    const cls = stt ? ('ym-'+stt) : 'ym-empty';
+    const label = stt ? (STATE_LABEL[stt]||'') : '+';
+    const ap = state.yearMap.aPriority;
+    const isA = ap && ap.event && ap.month===month && (!ap.sport || ap.sport===sport.name);
+    const tw = (state.yearMap.testingWindows||[]).some(w => (w.month||w)===month);
+    let markers = '';
+    if(isA) markers += '<span class="ym-marker a-priority" title="A-priority">★</span>';
+    if(tw) markers += '<span class="ym-marker testing" title="Testing">◆</span>';
+    return '<div class="year-month '+cls+(month===curMonth?' is-current':'')+'" onclick="openBlock('+si+',\''+month+'\')">'+
+      '<p class="ym-label">'+month.slice(0,3)+'</p>'+
+      '<div class="ym-state">'+label+'</div>'+
+      '<div class="ym-markers">'+markers+'</div></div>';
+  }
+
+  // ----- Block detail sheet -----
+  function openBlockSheet(){ document.getElementById('block-backdrop').classList.add('open'); document.getElementById('blockSheet').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeBlock(){ document.getElementById('block-backdrop').classList.remove('open'); document.getElementById('blockSheet').classList.remove('open'); document.body.style.overflow=''; }
+  window.closeBlock = closeBlock;
+
+  function openBlock(sportIdx, month){
+    const sport = state.yearMap.sports[sportIdx];
+    if(!sport) return;
+    const existing = (sport.monthlyStates||[]).find(x => x.month===month) || { month:month, state:'', focus:'', loadTarget:'', keySessions:[], note:'' };
+    blockCtx = { sportName: sport.name, month: month, block: existing };
+    blockKeySessions = (existing.keySessions||[]).map(k => typeof k==='string'? {name:k,intensity:'',duration:''} : Object.assign({name:'',intensity:'',duration:''}, k));
+    document.getElementById('blockEyebrow').textContent = sport.name + ' · ' + month;
+    document.getElementById('blockTitle').innerHTML = existing.state ? '<em>'+(STATE_LABEL[existing.state])+'</em>.' : 'Plan this <em>block</em>.';
+    document.querySelectorAll('#statePicker .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===existing.state));
+    document.getElementById('blockFocus').value = existing.focus || '';
+    document.getElementById('blockLoad').value = existing.loadTarget || '';
+    document.getElementById('blockNote').value = existing.note || '';
+    renderKeyRows();
+    openBlockSheet();
+  }
+  window.openBlock = openBlock;
+
+  function pickState(s){
+    document.querySelectorAll('#statePicker .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===s));
+    document.getElementById('blockTitle').innerHTML = '<em>'+(STATE_LABEL[s])+'</em>.';
+  }
+  window.pickState = pickState;
+
+  function renderKeyRows(){
+    const wrap = document.getElementById('blockKeyList');
+    wrap.innerHTML = blockKeySessions.map((k,i) =>
+      '<div class="key-row">'+
+        '<input class="duration-input plan-field key-name" data-i="'+i+'" data-f="name" placeholder="Session name" value="'+esc(k.name||'')+'">'+
+        '<select class="duration-input plan-field key-int" data-i="'+i+'" data-f="intensity">'+
+          ['','easy','moderate','hard'].map(v => '<option value="'+v+'"'+(k.intensity===v?' selected':'')+'>'+(v? (v==='moderate'?'Mod':v.charAt(0).toUpperCase()+v.slice(1)) : 'Int…')+'</option>').join('')+
+        '</select>'+
+        '<input class="duration-input plan-field key-dur" data-i="'+i+'" data-f="duration" inputmode="numeric" placeholder="min" value="'+esc(k.duration||'')+'">'+
+        '<button class="key-row-del" onclick="delKeySession('+i+')" aria-label="Remove"><i class="ti ti-x"></i></button>'+
+      '</div>').join('');
+  }
+  function syncKeyRows(){
+    document.querySelectorAll('#blockKeyList [data-i]').forEach(el => {
+      const i = +el.dataset.i, f = el.dataset.f;
+      if(blockKeySessions[i]) blockKeySessions[i][f] = el.value;
+    });
+  }
+  function addKeySession(){ syncKeyRows(); blockKeySessions.push({name:'',intensity:'',duration:''}); renderKeyRows(); }
+  function delKeySession(i){ syncKeyRows(); blockKeySessions.splice(i,1); renderKeyRows(); }
+  window.addKeySession = addKeySession;
+  window.delKeySession = delKeySession;
+
+  async function saveBlockSheet(){
+    if(!blockCtx) return;
+    syncKeyRows();
+    const sel = document.querySelector('#statePicker .state-pill.sel');
+    const block = {
+      month: blockCtx.month,
+      state: sel ? sel.dataset.state : '',
+      focus: val('blockFocus').trim(),
+      loadTarget: numOrNull(val('blockLoad')),
+      keySessions: blockKeySessions.filter(k => (k.name||'').trim()).map(k => ({ name:k.name.trim(), intensity:k.intensity||'', duration: numOrNull(k.duration) })),
+      note: val('blockNote')
+    };
+    const btn = document.getElementById('blockSaveBtn'); btn.disabled=true; btn.textContent='Saving…';
+    try {
+      const res = await apiPost({ action:'saveBlock', email: currentUser.athleteId, sport: blockCtx.sportName, month: blockCtx.month, block: block });
+      if(!res.success) throw new Error(res.error||'save failed');
+      applyBlockLocally(blockCtx.sportName, block);
+      closeBlock();
+      renderYear(); renderBlockBar();
+      showToast('Block saved', 'success');
+    } catch(e){ showToast('Could not save block. Try again.', 'error'); }
+    finally { btn.disabled=false; btn.textContent='Save block'; }
+  }
+  window.saveBlockSheet = saveBlockSheet;
+
+  function applyBlockLocally(sportName, block){
+    const sport = state.yearMap.sports.find(s => s.name===sportName);
+    if(!sport) return;
+    if(!sport.monthlyStates) sport.monthlyStates = [];
+    const idx = sport.monthlyStates.findIndex(m => m.month===block.month);
+    if(idx>=0) sport.monthlyStates[idx] = block; else sport.monthlyStates.push(block);
+  }
+
+  function planThisWeek(){ closeBlock(); switchTab('week'); }
+  window.planThisWeek = planThisWeek;
+
+  async function addSport(){
+    const name = (prompt('Add a sport (e.g. Athletics, Football):')||'').trim();
+    if(!name) return;
+    if(state.yearMap.sports.some(s => s.name.toLowerCase()===name.toLowerCase())){ showToast('That sport is already on your year.', 'error'); return; }
+    state.yearMap.sports.push({ name:name, isPriority:false, monthlyStates:[] });
+    try {
+      const res = await apiPost({ action:'saveYearMap', email: currentUser.athleteId, yearMap: serialiseYearMap() });
+      if(!res.success) throw new Error();
+      renderYear();
+    } catch(e){ showToast('Could not add sport.', 'error'); }
+  }
+  window.addSport = addSport;
+
+  function serialiseYearMap(){
+    const ym = state.yearMap;
+    return { year: ym.year||'2026–27', vision: ym.vision||'', aPriority: ym.aPriority||null,
+      sports: ym.sports||[], testingWindows: ym.testingWindows||[], otherCommitments: ym.otherCommitments||[] };
+  }
+
+  // ----- Onboarding (first-time) + goal editor -----
+  function onboardHTML(){
+    const sport = (athlete && athlete.Sport_1) || '';
+    return '<div class="empty-state onboard"><div class="empty-state-icon"><i class="ti ti-route" aria-hidden="true"></i></div>'+
+      '<h2 class="empty-state-title">Map your <em>year</em>.</h2>'+
+      '<p class="empty-state-text">Three quick things and you\'re set. You can change any of it later.</p>'+
+      '<div class="onboard-form">'+
+        onboardField('Your sport', '<input class="duration-input plan-field" id="obSport" value="'+esc(sport)+'" placeholder="e.g. Swimming">')+
+        onboardField('The one event your year points at', '<input class="duration-input plan-field" id="obEvent" placeholder="e.g. Regional Champs">'+
+          '<div class="plan-row" style="margin-top:8px;"><input type="date" class="duration-input plan-field" id="obDate"></div>')+
+        onboardField('This month, you\'re in…', stateMiniPicker('obState'))+
+      '</div>'+
+      '<button class="btn-primary" style="margin-top:8px;" onclick="submitOnboard()"><i class="ti ti-check" aria-hidden="true"></i> Set up my year</button>'+
+      '</div>';
+  }
+  function onboardField(label, inner){ return '<div class="onboard-field"><label>'+label+'</label>'+inner+'</div>'; }
+  function stateMiniPicker(id){
+    return '<div class="state-picker" id="'+id+'">'+
+      ['build','maintain','peak','recover','off'].map(s => '<button class="state-pill" data-state="'+s+'" onclick="miniPick(\''+id+'\',\''+s+'\')">'+STATE_LABEL[s]+'</button>').join('')+'</div>';
+  }
+  function miniPick(id, s){ document.querySelectorAll('#'+id+' .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===s)); }
+  window.miniPick = miniPick;
+
+  async function submitOnboard(){
+    const sport = val('obSport').trim();
+    if(!sport){ showToast('Add your sport first.', 'error'); return; }
+    const event = val('obEvent').trim();
+    const date = val('obDate');
+    const sel = document.querySelector('#obState .state-pill.sel');
+    const curMonth = MONTHS[new Date().getMonth()];
+    const apMonth = date ? MONTHS[parseISO(date).getMonth()] : '';
+    const yearMap = {
+      year: '2026–27', vision: '',
+      aPriority: event ? { sport: sport, event: event, date: date, month: apMonth } : null,
+      sports: [{ name: sport, isPriority: true, monthlyStates: sel ? [{ month: curMonth, state: sel.dataset.state, focus:'', loadTarget:null, keySessions:[], note:'' }] : [] }],
+      testingWindows: [], otherCommitments: []
+    };
+    try {
+      const res = await apiPost({ action:'saveYearMap', email: currentUser.athleteId, yearMap: yearMap });
+      if(!res.success) throw new Error(res.error||'save failed');
+      state.yearMap = yearMap;
+      renderNav(); renderYear(); renderBlockBar();
+      showToast('Year set up. Now plan your week.', 'success');
+    } catch(e){ showToast('Could not save. Try again.', 'error'); }
+  }
+  window.submitOnboard = submitOnboard;
+
+  function editYearGoal(){
+    const ym = state.yearMap;
+    const ap = ym.aPriority || {};
+    const tw = (ym.testingWindows||[]).map(w => w.month||w).join(', ');
+    const view = document.getElementById('view-year');
+    view.innerHTML = '<div class="empty-state onboard"><h2 class="empty-state-title">Your <em>goal</em>.</h2>'+
+      '<div class="onboard-form">'+
+        onboardField('Vision · optional', '<input class="duration-input plan-field" id="gVision" value="'+esc(ym.vision||'')+'" placeholder="e.g. Sub-58 100 free">')+
+        onboardField('A-priority event', '<input class="duration-input plan-field" id="gEvent" value="'+esc(ap.event||'')+'" placeholder="e.g. Regional Champs">'+
+          '<div class="plan-row" style="margin-top:8px;"><input type="date" class="duration-input plan-field" id="gDate" value="'+esc(ap.date||'')+'"></div>')+
+        onboardField('Testing months · comma-separated', '<input class="duration-input plan-field" id="gTesting" value="'+esc(tw)+'" placeholder="e.g. October, March">')+
+      '</div>'+
+      '<div style="display:flex; gap:10px; margin-top:8px;">'+
+        '<button class="year-head-btn" onclick="renderYear()">Cancel</button>'+
+        '<button class="btn-primary" onclick="saveYearGoal()"><i class="ti ti-check" aria-hidden="true"></i> Save goal</button>'+
+      '</div></div>';
+  }
+  window.editYearGoal = editYearGoal;
+
+  async function saveYearGoal(){
+    const ym = state.yearMap;
+    ym.vision = val('gVision').trim();
+    const event = val('gEvent').trim();
+    const date = val('gDate');
+    const apMonth = date ? MONTHS[parseISO(date).getMonth()] : '';
+    ym.aPriority = event ? { sport: (ym.sports[0]&&ym.sports[0].name)||'', event: event, date: date, month: apMonth } : null;
+    ym.testingWindows = val('gTesting').split(',').map(s=>s.trim()).filter(Boolean).map(m => ({ month: m }));
+    try {
+      const res = await apiPost({ action:'saveYearMap', email: currentUser.athleteId, yearMap: serialiseYearMap() });
+      if(!res.success) throw new Error();
+      renderYear(); renderBlockBar();
+      showToast('Goal saved', 'success');
+    } catch(e){ showToast('Could not save goal.', 'error'); }
+  }
+  window.saveYearGoal = saveYearGoal;
+
   function renderLoad(){ document.getElementById('view-load').innerHTML = placeholder('ti-chart-bar','<em>Load</em> across the year.','Weekly load and acute:chronic ratio. Wiring this up next.'); }
   function renderPBs(){ document.getElementById('view-pbs').innerHTML = placeholder('ti-trophy','Personal <em>bests</em>.','Your PBs by sport and exercise. Wiring this up next.'); }
 
