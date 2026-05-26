@@ -115,6 +115,23 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ===== ATHLETE PORTAL (G10-12) ACTIONS =====
+    if (action === 'getPortalBootstrap') {
+      return apJson(handleGetPortalBootstrap(ss, e.parameter.email));
+    }
+    if (action === 'getYearMap') {
+      return apJson(handleGetYearMap(ss, e.parameter.email));
+    }
+    if (action === 'getWeek') {
+      return apJson(handleGetWeek(ss, e.parameter.email, e.parameter.weekStart));
+    }
+    if (action === 'getYearLoad') {
+      return apJson(handleGetYearLoad(ss, e.parameter.email));
+    }
+    if (action === 'getPBs') {
+      return apJson(handleGetPBs(ss, e.parameter.email));
+    }
+
     // ===== EXISTING DASHBOARD LOGIC =====
     if (e.parameter.admin === 'true') {
       return handleAdminRequest(ss);
@@ -230,6 +247,24 @@ function doPost(e) {
       var planResult = handleSaveFuelLabPlan(ssPlan, data);
       return ContentService.createTextOutput(JSON.stringify(planResult))
         .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ===== ATHLETE PORTAL (G10-12) WRITES =====
+    if (data.action === 'saveYearMap') {
+      var ssAp = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSaveYearMap(ssAp, data.email, data.yearMap));
+    }
+    if (data.action === 'saveBlock') {
+      var ssAp2 = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSaveBlock(ssAp2, data.email, data.sport, data.month, data.block));
+    }
+    if (data.action === 'saveSession') {
+      var ssAp3 = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSaveSession(ssAp3, data.email, data.session));
+    }
+    if (data.action === 'savePB') {
+      var ssAp4 = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSavePB(ssAp4, data.email, data.pb));
     }
 
     if (data.athleteId && data.updates) {
@@ -2207,6 +2242,472 @@ function handleSaveFuelLabPlan(ss, data) {
 
     sheet.appendRow(row);
     return { success: true };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ============================================================
+// ATHLETE PORTAL (G10-12) — athlete-portal.html
+// Sheets: Year_Maps, Training_Sessions, PBs. All additive.
+// Does not touch any G9 portal logic.
+// ============================================================
+
+// Standard JSON response wrapper for portal actions
+function apJson(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Date -> 'YYYY-MM-DD' in the script timezone
+function apDateStr(d) {
+  if (!d) return '';
+  if (typeof d === 'string') {
+    var m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return m[1] + '-' + m[2] + '-' + m[3];
+    d = new Date(d);
+  }
+  return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+}
+
+// Monday of the week containing the given date, as 'YYYY-MM-DD'
+function apWeekStart(dateStr) {
+  var s = apDateStr(dateStr);
+  if (!s) return '';
+  var parts = s.split('-');
+  var dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  var dow = dt.getDay();          // 0 Sun .. 6 Sat
+  var offset = (dow + 6) % 7;     // days since Monday
+  dt.setDate(dt.getDate() - offset);
+  return Utilities.formatDate(dt, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+}
+
+// Read all rows of a sheet into header-keyed objects (excludes header row)
+function apReadObjects(sheet) {
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return [];
+  var headers = data[0];
+  var out = [];
+  for (var i = 1; i < data.length; i++) {
+    var obj = {};
+    var blank = true;
+    for (var c = 0; c < headers.length; c++) {
+      obj[headers[c]] = data[i][c];
+      if (data[i][c] !== '' && data[i][c] !== null) blank = false;
+    }
+    obj.__row = i + 1; // 1-based sheet row for in-place updates
+    if (!blank) out.push(obj);
+  }
+  return out;
+}
+
+// Build a row array aligned to the sheet's header order from a field map
+function apBuildRow(sheet, fields) {
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var row = new Array(headers.length);
+  for (var c = 0; c < headers.length; c++) {
+    row[c] = (fields.hasOwnProperty(headers[c])) ? fields[headers[c]] : '';
+  }
+  return row;
+}
+
+// Write a field map onto an existing row (header-aligned, only provided fields)
+function apUpdateRow(sheet, rowNum, fields) {
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  for (var c = 0; c < headers.length; c++) {
+    if (fields.hasOwnProperty(headers[c])) {
+      sheet.getRange(rowNum, c + 1).setValue(fields[headers[c]]);
+    }
+  }
+}
+
+// Minimal athlete lookup (name/grade/sport) for the portal nav + identity
+function apGetAthlete(ss, email) {
+  var sheet = ss.getSheetByName('Athletes');
+  if (!sheet) return null;
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var emailCol = headers.indexOf('Email');
+  if (emailCol === -1) return null;
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][emailCol] && String(data[i][emailCol]).toLowerCase() === String(email).toLowerCase()) {
+      var obj = {};
+      for (var c = 0; c < headers.length; c++) obj[headers[c]] = data[i][c];
+      return obj;
+    }
+  }
+  return null;
+}
+
+function apParse(val, fallback) {
+  if (val === '' || val === null || val === undefined) return fallback;
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val); } catch (e) { return fallback; }
+}
+
+// ----- Sheet ensure helpers -----
+function apEnsureYearMaps(ss) {
+  var sheet = ss.getSheetByName('Year_Maps');
+  if (!sheet) {
+    sheet = ss.insertSheet('Year_Maps');
+    sheet.getRange(1, 1, 1, 8).setValues([[
+      'Athlete_ID', 'Year', 'Vision', 'A_Priority_JSON', 'Sports_JSON',
+      'Testing_Windows_JSON', 'Other_Commitments_JSON', 'Updated'
+    ]]);
+    sheet.getRange('1:1').setFontWeight('bold');
+  }
+  return sheet;
+}
+
+function apEnsureTrainingSessions(ss) {
+  var sheet = ss.getSheetByName('Training_Sessions');
+  if (!sheet) {
+    sheet = ss.insertSheet('Training_Sessions');
+    sheet.getRange(1, 1, 1, 16).setValues([[
+      'Session_ID', 'Athlete_ID', 'Date', 'Week_Start', 'Sport', 'Name',
+      'Intensity', 'Planned_Duration', 'RPE', 'Duration', 'Load_au',
+      'Status', 'Is_PB', 'Planned_JSON', 'Note', 'Updated'
+    ]]);
+    sheet.getRange('1:1').setFontWeight('bold');
+  }
+  return sheet;
+}
+
+function apEnsurePBs(ss) {
+  var sheet = ss.getSheetByName('PBs');
+  if (!sheet) {
+    sheet = ss.insertSheet('PBs');
+    sheet.getRange(1, 1, 1, 10).setValues([[
+      'Athlete_ID', 'Sport', 'Exercise', 'Value', 'Unit', 'Date',
+      'Previous_Value', 'Note', 'Session_ID', 'Updated'
+    ]]);
+    sheet.getRange('1:1').setFontWeight('bold');
+  }
+  return sheet;
+}
+
+// ----- Cache helpers (per-athlete, short TTL) -----
+function apCacheGet(key) {
+  try {
+    var v = CacheService.getScriptCache().get(key);
+    return v ? JSON.parse(v) : null;
+  } catch (e) { return null; }
+}
+function apCachePut(key, obj) {
+  try { CacheService.getScriptCache().put(key, JSON.stringify(obj), 300); } catch (e) {}
+}
+function apCacheClear(athleteId) {
+  try {
+    CacheService.getScriptCache().removeAll(['ap_year_' + athleteId, 'ap_load_' + athleteId]);
+  } catch (e) {}
+}
+
+// ----- Year_Maps -----
+function apLoadYearMap(ss, athleteId) {
+  var sheet = apEnsureYearMaps(ss);
+  var rows = apReadObjects(sheet);
+  for (var i = rows.length - 1; i >= 0; i--) {
+    if (String(rows[i].Athlete_ID).trim() === String(athleteId).trim()) {
+      return {
+        __row: rows[i].__row,
+        year: rows[i].Year || '',
+        vision: rows[i].Vision || '',
+        aPriority: apParse(rows[i].A_Priority_JSON, null),
+        sports: apParse(rows[i].Sports_JSON, []),
+        testingWindows: apParse(rows[i].Testing_Windows_JSON, []),
+        otherCommitments: apParse(rows[i].Other_Commitments_JSON, []),
+        updated: rows[i].Updated || ''
+      };
+    }
+  }
+  return null;
+}
+
+function handleGetYearMap(ss, email) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: true, yearMap: null };
+    var cached = apCacheGet('ap_year_' + athleteId);
+    if (cached) return { success: true, yearMap: cached };
+    var map = apLoadYearMap(ss, athleteId);
+    if (map) { delete map.__row; apCachePut('ap_year_' + athleteId, map); }
+    return { success: true, yearMap: map };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleSaveYearMap(ss, email, yearMap) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    var sheet = apEnsureYearMaps(ss);
+    var existing = apLoadYearMap(ss, athleteId);
+    var fields = {
+      'Athlete_ID': athleteId,
+      'Year': yearMap.year || '',
+      'Vision': yearMap.vision || '',
+      'A_Priority_JSON': JSON.stringify(yearMap.aPriority || null),
+      'Sports_JSON': JSON.stringify(yearMap.sports || []),
+      'Testing_Windows_JSON': JSON.stringify(yearMap.testingWindows || []),
+      'Other_Commitments_JSON': JSON.stringify(yearMap.otherCommitments || []),
+      'Updated': new Date()
+    };
+    if (existing && existing.__row) apUpdateRow(sheet, existing.__row, fields);
+    else sheet.appendRow(apBuildRow(sheet, fields));
+    apCacheClear(athleteId);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// Patch one {sport, month} block inside the year map
+function handleSaveBlock(ss, email, sportName, month, block) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    var map = apLoadYearMap(ss, athleteId) || {
+      year: '', vision: '', aPriority: null, sports: [], testingWindows: [], otherCommitments: []
+    };
+    var sports = map.sports || [];
+    var sport = null;
+    for (var i = 0; i < sports.length; i++) {
+      if (sports[i].name === sportName) { sport = sports[i]; break; }
+    }
+    if (!sport) {
+      sport = { name: sportName, isPriority: false, monthlyStates: [] };
+      sports.push(sport);
+    }
+    if (!sport.monthlyStates) sport.monthlyStates = [];
+    var found = false;
+    for (var j = 0; j < sport.monthlyStates.length; j++) {
+      if (sport.monthlyStates[j].month === month) {
+        block.month = month;
+        sport.monthlyStates[j] = block;
+        found = true;
+        break;
+      }
+    }
+    if (!found) { block.month = month; sport.monthlyStates.push(block); }
+    map.sports = sports;
+    return handleSaveYearMap(ss, email, map);
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ----- Training_Sessions -----
+function apSessionObj(r) {
+  return {
+    id: r.Session_ID,
+    date: apDateStr(r.Date),
+    weekStart: apDateStr(r.Week_Start),
+    sport: r.Sport || '',
+    name: r.Name || '',
+    intensity: r.Intensity || '',
+    plannedDuration: r.Planned_Duration === '' ? null : Number(r.Planned_Duration),
+    rpe: r.RPE === '' ? null : Number(r.RPE),
+    duration: r.Duration === '' ? null : Number(r.Duration),
+    load: r.Load_au === '' ? null : Number(r.Load_au),
+    status: r.Status || 'planned',
+    isPB: r.Is_PB === true || r.Is_PB === 'TRUE',
+    workout: apParse(r.Planned_JSON, []),
+    note: r.Note || ''
+  };
+}
+
+function handleGetWeek(ss, email, weekStart) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: true, sessions: [] };
+    var ws = apWeekStart(weekStart || new Date());
+    var sheet = apEnsureTrainingSessions(ss);
+    var rows = apReadObjects(sheet);
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Athlete_ID).trim() === String(athleteId).trim() &&
+          apDateStr(rows[i].Week_Start) === ws) {
+        out.push(apSessionObj(rows[i]));
+      }
+    }
+    return { success: true, weekStart: ws, sessions: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleSaveSession(ss, email, session) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    var sheet = apEnsureTrainingSessions(ss);
+    var id = session.id || Utilities.getUuid();
+    var dateStr = apDateStr(session.date || new Date());
+    var rpe = (session.rpe === null || session.rpe === undefined || session.rpe === '') ? '' : Number(session.rpe);
+    var dur = (session.duration === null || session.duration === undefined || session.duration === '') ? '' : Number(session.duration);
+    var load = (rpe !== '' && dur !== '') ? rpe * dur : '';
+    var fields = {
+      'Session_ID': id,
+      'Athlete_ID': athleteId,
+      'Date': dateStr,
+      'Week_Start': apWeekStart(dateStr),
+      'Sport': session.sport || '',
+      'Name': session.name || '',
+      'Intensity': session.intensity || '',
+      'Planned_Duration': (session.plannedDuration === null || session.plannedDuration === undefined || session.plannedDuration === '') ? '' : Number(session.plannedDuration),
+      'RPE': rpe,
+      'Duration': dur,
+      'Load_au': load,
+      'Status': session.status || 'planned',
+      'Is_PB': session.isPB === true,
+      'Planned_JSON': JSON.stringify(session.workout || []),
+      'Note': session.note || '',
+      'Updated': new Date()
+    };
+    var rows = apReadObjects(sheet);
+    var targetRow = -1;
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Session_ID).trim() === String(id).trim()) { targetRow = rows[i].__row; break; }
+    }
+    if (targetRow > 0) apUpdateRow(sheet, targetRow, fields);
+    else sheet.appendRow(apBuildRow(sheet, fields));
+    apCacheClear(athleteId);
+    return { success: true, id: id, load: load === '' ? null : load };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ----- Year load aggregates + ACWR -----
+function apComputeLoad(ss, athleteId) {
+  var sheet = apEnsureTrainingSessions(ss);
+  var rows = apReadObjects(sheet);
+  var byWeek = {};
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Athlete_ID).trim() !== String(athleteId).trim()) continue;
+    var ws = apDateStr(rows[i].Week_Start);
+    if (!ws) continue;
+    var l = rows[i].Load_au === '' ? 0 : Number(rows[i].Load_au) || 0;
+    byWeek[ws] = (byWeek[ws] || 0) + l;
+  }
+  var weeks = Object.keys(byWeek).sort();
+  var series = [];
+  for (var w = 0; w < weeks.length; w++) {
+    var acute = byWeek[weeks[w]];
+    var sum = 0, n = 0;
+    for (var k = Math.max(0, w - 3); k <= w; k++) { sum += byWeek[weeks[k]]; n++; }
+    var chronic = n ? sum / n : 0;
+    var acwr = chronic > 0 ? acute / chronic : null;
+    series.push({ weekStart: weeks[w], load: acute, acwr: acwr });
+  }
+  var weeksLogged = weeks.length;
+  var thisWeekLoad = weeksLogged ? byWeek[weeks[weeksLogged - 1]] : 0;
+  var latestAcwr = weeksLogged >= 4 ? series[series.length - 1].acwr : null;
+  return { weeks: series, summary: { thisWeekLoad: thisWeekLoad, acwr: latestAcwr, weeksLogged: weeksLogged } };
+}
+
+function handleGetYearLoad(ss, email) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: true, weeks: [], summary: { thisWeekLoad: 0, acwr: null, weeksLogged: 0 } };
+    var cached = apCacheGet('ap_load_' + athleteId);
+    if (cached) return { success: true, weeks: cached.weeks, summary: cached.summary };
+    var result = apComputeLoad(ss, athleteId);
+    apCachePut('ap_load_' + athleteId, result);
+    return { success: true, weeks: result.weeks, summary: result.summary };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ----- PBs -----
+function apPBObj(r) {
+  return {
+    sport: r.Sport || '',
+    exercise: r.Exercise || '',
+    value: r.Value,
+    unit: r.Unit || '',
+    date: apDateStr(r.Date),
+    previousValue: r.Previous_Value === '' ? null : r.Previous_Value,
+    note: r.Note || '',
+    sessionId: r.Session_ID || ''
+  };
+}
+
+function handleGetPBs(ss, email) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: true, pbs: [] };
+    var sheet = apEnsurePBs(ss);
+    var rows = apReadObjects(sheet);
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Athlete_ID).trim() === String(athleteId).trim()) out.push(apPBObj(rows[i]));
+    }
+    out.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
+    return { success: true, pbs: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleSavePB(ss, email, pb) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    var sheet = apEnsurePBs(ss);
+    var rows = apReadObjects(sheet);
+    var prev = null, prevDate = '';
+    var existingRow = -1;
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Athlete_ID).trim() !== String(athleteId).trim()) continue;
+      if (pb.sessionId && String(rows[i].Session_ID).trim() === String(pb.sessionId).trim()) existingRow = rows[i].__row;
+      if ((rows[i].Sport || '') === (pb.sport || '') && (rows[i].Exercise || '') === (pb.exercise || '')) {
+        var d = apDateStr(rows[i].Date);
+        if (d >= prevDate) { prevDate = d; prev = rows[i].Value; }
+      }
+    }
+    var fields = {
+      'Athlete_ID': athleteId,
+      'Sport': pb.sport || '',
+      'Exercise': pb.exercise || '',
+      'Value': pb.value,
+      'Unit': pb.unit || '',
+      'Date': apDateStr(pb.date || new Date()),
+      'Previous_Value': (pb.previousValue !== undefined && pb.previousValue !== null) ? pb.previousValue : (prev !== null ? prev : ''),
+      'Note': pb.note || '',
+      'Session_ID': pb.sessionId || '',
+      'Updated': new Date()
+    };
+    if (existingRow > 0) apUpdateRow(sheet, existingRow, fields);
+    else sheet.appendRow(apBuildRow(sheet, fields));
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ----- Bootstrap: one round-trip for portal open -----
+function handleGetPortalBootstrap(ss, email) {
+  try {
+    var athlete = apGetAthlete(ss, email);
+    if (!athlete) return { success: true, athlete: null, firstTime: true };
+    var athleteId = athlete.Athlete_ID;
+    var map = apLoadYearMap(ss, athleteId);
+    if (map) delete map.__row;
+    var week = handleGetWeek(ss, email, new Date());
+    var load = apComputeLoad(ss, athleteId);
+    var pbsRes = handleGetPBs(ss, email);
+    return {
+      success: true,
+      athlete: athlete,
+      yearMap: map,
+      week: { weekStart: week.weekStart, sessions: week.sessions || [] },
+      pbs: pbsRes.pbs || [],
+      load: { weeks: load.weeks, summary: load.summary },
+      firstTime: !map
+    };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
