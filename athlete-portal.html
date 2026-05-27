@@ -1478,12 +1478,12 @@
   }
   .year-sport-star { color: var(--gold); font-size: 15px; }
   .year-months {
-    display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; padding-bottom: 4px;
+    display: grid; grid-template-columns: repeat(12, 60px); gap: 6px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 4px;
   }
   .year-months::-webkit-scrollbar { display: none; }
   .year-month {
-    flex: 0 0 auto; width: 64px; border-radius: 10px; padding: 8px 6px;
+    grid-column: span 1; min-height: 64px; border-radius: 10px; padding: 8px 4px;
     background: var(--cream); border: 1px solid var(--line-soft); cursor: pointer;
     text-align: center; transition: transform 0.12s, box-shadow 0.15s, border-color 0.15s;
     position: relative;
@@ -1517,6 +1517,47 @@
   .ym-marker { font-size: 10px; line-height: 1; }
   .ym-marker.a-priority { color: var(--gold); }
   .ym-marker.testing { color: var(--burgundy); }
+  .ym-marker.commitment { color: var(--ink-mute); }
+
+  /* Suggested (uncommitted) cells — desaturated chip, lighter weight, no "+" */
+  .year-month.ym-suggest { border-style: dashed; border-color: var(--line); }
+  .ym-suggest .ym-state { font-weight: 400; opacity: 0.6; }
+  .ym-suggest.ym-build    .ym-state { background: var(--gold);     color: var(--burgundy-dark); }
+  .ym-suggest.ym-maintain .ym-state { background: var(--sage);     color: var(--cream); }
+  .ym-suggest.ym-peak     .ym-state { background: var(--burgundy); color: var(--cream); }
+  .ym-suggest.ym-recover  .ym-state { background: var(--cream);    color: var(--ink-mute); border: 1px solid var(--line); }
+  .ym-suggest-edit {
+    position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-mute); opacity: 0.55; font-size: 12px; border-radius: 4px; z-index: 2;
+  }
+  .ym-suggest-edit:hover { opacity: 1; color: var(--burgundy); background: var(--bg); }
+
+  /* Merged phase block — contiguous committed cells with the same state */
+  .year-phase {
+    min-height: 64px; border-radius: 10px; background: var(--cream);
+    border: 1px solid var(--line-soft); position: relative; display: flex; overflow: hidden;
+    transition: box-shadow 0.15s;
+  }
+  .year-phase:hover { box-shadow: 0 2px 12px rgba(26,20,17,0.08); }
+  .phase-seg { flex: 1; min-width: 0; padding: 8px 2px 0; text-align: center; cursor: pointer; position: relative; }
+  .phase-seg + .phase-seg { border-left: 1px solid var(--line); }
+  .phase-seg.is-current { background: rgba(135,75,70,0.07); }
+  .phase-seg.is-current .ym-label { color: var(--burgundy); }
+  .phase-seg .ym-markers { position: absolute; left: 0; right: 0; bottom: 4px; margin: 0; }
+  .phase-bar {
+    position: absolute; left: 6px; right: 6px; top: 24px; height: 22px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; pointer-events: none;
+    font-family: 'Fraunces', serif; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden;
+  }
+  .year-phase.ym-build    .phase-bar { background: var(--gold);     color: var(--burgundy-dark); }
+  .year-phase.ym-maintain .phase-bar { background: var(--sage);     color: var(--cream); }
+  .year-phase.ym-peak     .phase-bar { background: var(--burgundy); color: var(--cream); }
+  .year-phase.ym-recover  .phase-bar { background: var(--cream);    color: var(--ink-mute); border: 1px solid var(--line); }
+  .year-phase.ym-off      .phase-bar {
+    background: repeating-linear-gradient(45deg, var(--cream), var(--cream) 4px, var(--line) 4px, var(--line) 5px);
+    color: var(--ink-mute);
+  }
 
   /* State picker in block sheet */
   .state-picker { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -2223,9 +2264,7 @@
       html += '<div class="year-sport"><div class="year-sport-head">'+
         '<p class="year-sport-name">'+esc(sport.name)+'</p>'+
         (sport.isPriority? '<i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
-        '</div><div class="year-months">';
-      ACADEMIC_MONTHS.forEach(m => { html += yearCell(sport, si, m, curMonth); });
-      html += '</div></div>';
+        '</div>'+ renderMonths(sport, si, curMonth) +'</div>';
     });
     html += '<button class="year-head-btn" style="width:100%; justify-content:center; margin-top:4px;" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
     view.innerHTML = html;
@@ -2235,22 +2274,120 @@
     return '<span class="year-legend-item"><span class="legend-swatch" style="background:'+color+';"></span>'+label+'</span>';
   }
 
-  function yearCell(sport, si, month, curMonth){
+  function monthCommittedState(sport, month){
     const ms = (sport.monthlyStates||[]).find(x => x.month===month);
-    const stt = ms && ms.state ? ms.state : '';
-    const cls = stt ? ('ym-'+stt) : 'ym-empty';
-    const label = stt ? (STATE_LABEL[stt]||'') : '+';
+    return ms && ms.state ? ms.state : '';
+  }
+  function busyMonthsSet(){
+    const s = {};
+    (state.yearMap.otherCommitments||[]).forEach(c => { s[(c.month||c)] = true; });
+    return s;
+  }
+  // Map free text ("oct", "October") to a canonical full month name; '' if unknown.
+  function normalizeMonth(str){
+    const v = String(str||'').trim().toLowerCase();
+    if(!v) return '';
+    return MONTHS.find(m => m.toLowerCase().startsWith(v.slice(0,3))) || '';
+  }
+  function parseMonthList(str){
+    return String(str||'').split(',').map(normalizeMonth).filter(Boolean).map(m => ({ month: m }));
+  }
+  // Suggested state for an empty month, given the A-priority position.
+  function suggestState(month, apIndex, busy){
+    if(apIndex < 0) return '';
+    const delta = ACADEMIC_MONTHS.indexOf(month) - apIndex;
+    let s;
+    if(delta === 0) s = 'peak';                       // A-priority month
+    else if(delta === 1 || delta === 2) s = 'recover'; // 1–2 months after
+    else s = 'build';                                  // before, and well after (re-build)
+    if(s === 'build' && busy[month]) s = 'maintain';   // downgrade on busy months
+    return s;
+  }
+  function markersFor(sport, month){
     const ap = state.yearMap.aPriority;
     const isA = ap && ap.event && ap.month===month && (!ap.sport || ap.sport===sport.name);
     const tw = (state.yearMap.testingWindows||[]).some(w => (w.month||w)===month);
-    let markers = '';
-    if(isA) markers += '<span class="ym-marker a-priority" title="A-priority">★</span>';
-    if(tw) markers += '<span class="ym-marker testing" title="Testing">◆</span>';
-    return '<div class="year-month '+cls+(month===curMonth?' is-current':'')+'" onclick="openBlock('+si+',\''+month+'\')">'+
-      '<p class="ym-label">'+month.slice(0,3)+'</p>'+
+    const busy = (state.yearMap.otherCommitments||[]).some(c => (c.month||c)===month);
+    let m = '';
+    if(isA) m += '<span class="ym-marker a-priority" title="A-priority">★</span>';
+    if(tw) m += '<span class="ym-marker testing" title="Testing window">◆</span>';
+    if(busy) m += '<span class="ym-marker commitment" title="Busy — mocks/exams/travel">▲</span>';
+    return m;
+  }
+
+  // Walk the 12 academic months: merge contiguous committed same-state runs into
+  // one phase block; render empty months as single cells (with a suggestion if set).
+  function renderMonths(sport, si, curMonth){
+    const ap = state.yearMap.aPriority;
+    const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
+    const busy = busyMonthsSet();
+    let html = '<div class="year-months">';
+    let i = 0;
+    while(i < 12){
+      const month = ACADEMIC_MONTHS[i];
+      const committed = monthCommittedState(sport, month);
+      if(committed){
+        let j = i;
+        while(j+1 < 12 && monthCommittedState(sport, ACADEMIC_MONTHS[j+1]) === committed) j++;
+        if(j > i) html += phaseBlock(sport, si, committed, i, j, curMonth);
+        else html += singleCell(sport, si, month, committed, false, curMonth);
+        i = j + 1;
+      } else {
+        html += singleCell(sport, si, month, suggestState(month, apIndex, busy), true, curMonth);
+        i++;
+      }
+    }
+    return html + '</div>';
+  }
+
+  function singleCell(sport, si, month, stt, allowSuggest, curMonth){
+    const cur = month===curMonth ? ' is-current' : '';
+    const markers = markersFor(sport, month);
+    const mLabel = month.slice(0,3);
+    if(allowSuggest && stt){
+      return '<div class="year-month ym-suggest ym-'+stt+cur+'" onclick="confirmSuggestion('+si+',\''+month+'\',\''+stt+'\')" title="Tap to confirm '+STATE_LABEL[stt]+'">'+
+        '<span class="ym-suggest-edit" onclick="event.stopPropagation(); openBlock('+si+',\''+month+'\')" title="Edit details" aria-label="Edit"><i class="ti ti-pencil" aria-hidden="true"></i></span>'+
+        '<p class="ym-label">'+mLabel+'</p>'+
+        '<div class="ym-state">'+STATE_LABEL[stt]+'</div>'+
+        '<div class="ym-markers">'+markers+'</div></div>';
+    }
+    const cls = stt ? ('ym-'+stt) : 'ym-empty';
+    const label = stt ? STATE_LABEL[stt] : '+';
+    return '<div class="year-month '+cls+cur+'" onclick="openBlock('+si+',\''+month+'\')">'+
+      '<p class="ym-label">'+mLabel+'</p>'+
       '<div class="ym-state">'+label+'</div>'+
       '<div class="ym-markers">'+markers+'</div></div>';
   }
+
+  function phaseBlock(sport, si, stt, i, j, curMonth){
+    const span = j - i + 1;
+    const barText = span >= 3
+      ? (STATE_LABEL[stt] + ' · ' + ACADEMIC_MONTHS[i].slice(0,3) + '–' + ACADEMIC_MONTHS[j].slice(0,3))
+      : STATE_LABEL[stt];
+    let segs = '';
+    for(let k=i;k<=j;k++){
+      const month = ACADEMIC_MONTHS[k];
+      const cur = month===curMonth ? ' is-current' : '';
+      segs += '<div class="phase-seg'+cur+'" onclick="openBlock('+si+',\''+month+'\')">'+
+        '<p class="ym-label">'+month.slice(0,3)+'</p>'+
+        '<div class="ym-markers">'+markersFor(sport, month)+'</div></div>';
+    }
+    return '<div class="year-phase ym-'+stt+'" style="grid-column: span '+span+';">'+
+      segs + '<div class="phase-bar">'+barText+'</div></div>';
+  }
+
+  async function confirmSuggestion(si, month, stt){
+    const sport = state.yearMap.sports[si];
+    if(!sport || !stt) return;
+    const block = { month: month, state: stt, focus:'', loadTarget:null, note:'' };
+    applyBlockLocally(sport.name, block);
+    renderYear(); renderBlockBar();
+    try {
+      const res = await apiPost({ action:'saveBlock', email: currentUser.email, sport: sport.name, month: month, block: block });
+      if(!res.success) throw new Error(res.error || 'save failed');
+    } catch(e){ console.error('confirmSuggestion', e); showToast('Saved on your device but couldn’t reach the server.', 'error'); }
+  }
+  window.confirmSuggestion = confirmSuggestion;
 
   // ----- Block detail sheet -----
   function openBlockSheet(){ document.getElementById('block-backdrop').classList.add('open'); document.getElementById('blockSheet').classList.add('open'); document.body.style.overflow='hidden'; }
@@ -2262,9 +2399,14 @@
     if(!sport) return;
     const existing = (sport.monthlyStates||[]).find(x => x.month===month) || { month:month, state:'', focus:'', loadTarget:'', note:'' };
     blockCtx = { sportName: sport.name, month: month, block: existing };
+    // For an uncommitted month, pre-select the suggested state so editing a
+    // suggestion opens the sheet ready to confirm.
+    const ap = state.yearMap.aPriority;
+    const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
+    const preState = existing.state || suggestState(month, apIndex, busyMonthsSet());
     document.getElementById('blockEyebrow').textContent = sport.name + ' · ' + month;
-    document.getElementById('blockTitle').innerHTML = existing.state ? '<em>'+(STATE_LABEL[existing.state])+'</em>.' : 'Plan this <em>block</em>.';
-    document.querySelectorAll('#statePicker .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===existing.state));
+    document.getElementById('blockTitle').innerHTML = preState ? '<em>'+(STATE_LABEL[preState])+'</em>.' : 'Plan this <em>block</em>.';
+    document.querySelectorAll('#statePicker .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===preState));
     document.getElementById('blockFocus').value = existing.focus || '';
     document.getElementById('blockLoad').value = existing.loadTarget || '';
     document.getElementById('blockNote').value = existing.note || '';
@@ -2387,6 +2529,7 @@
     const ym = state.yearMap;
     const ap = ym.aPriority || {};
     const tw = (ym.testingWindows||[]).map(w => w.month||w).join(', ');
+    const oc = (ym.otherCommitments||[]).map(w => w.month||w).join(', ');
     const view = document.getElementById('view-year');
     view.innerHTML = '<div class="empty-state onboard"><h2 class="empty-state-title">Your <em>goal</em>.</h2>'+
       '<div class="onboard-form">'+
@@ -2394,6 +2537,7 @@
         onboardField('A-priority event', '<input class="duration-input plan-field" id="gEvent" value="'+esc(ap.event||'')+'" placeholder="e.g. Regional Champs">'+
           '<div class="plan-row" style="margin-top:8px;"><input type="date" class="duration-input plan-field" id="gDate" value="'+esc(ap.date||'')+'"></div>')+
         onboardField('Testing months · comma-separated', '<input class="duration-input plan-field" id="gTesting" value="'+esc(tw)+'" placeholder="e.g. October, March">')+
+        onboardField('Busy months · mocks, exams, travel', '<input class="duration-input plan-field" id="gBusy" value="'+esc(oc)+'" placeholder="e.g. December, May">')+
       '</div>'+
       '<div style="display:flex; gap:10px; margin-top:8px;">'+
         '<button class="year-head-btn" onclick="renderYear()">Cancel</button>'+
@@ -2409,7 +2553,8 @@
     const date = val('gDate');
     const apMonth = date ? MONTHS[parseISO(date).getMonth()] : '';
     ym.aPriority = event ? { sport: (ym.sports[0]&&ym.sports[0].name)||'', event: event, date: date, month: apMonth } : null;
-    ym.testingWindows = val('gTesting').split(',').map(s=>s.trim()).filter(Boolean).map(m => ({ month: m }));
+    ym.testingWindows = parseMonthList(val('gTesting'));
+    ym.otherCommitments = parseMonthList(val('gBusy'));
     try {
       const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: serialiseYearMap() });
       if(!res.success) throw new Error();
