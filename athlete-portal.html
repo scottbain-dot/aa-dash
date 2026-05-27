@@ -1746,7 +1746,6 @@
       if(!data.success) throw new Error(data.error || 'load failed');
       athlete = data.athlete;
       if(!athlete){ setLoading(false); renderNoAthlete(); return; }
-      currentUser.athleteId = athlete.Athlete_ID || currentUser.email;
       state.yearMap = data.yearMap || null;
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
       state.pbs = data.pbs || [];
@@ -2180,7 +2179,7 @@
     const btn = document.getElementById('sheetSaveBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
     try {
-      const res = await apiPost({ action:'saveSession', email: currentUser.athleteId, session: session });
+      const res = await apiPost({ action:'saveSession', email: currentUser.email, session: session });
       if(!res.success) throw new Error(res.error || 'save failed');
       await refreshWeek();
       closeSheet();
@@ -2196,9 +2195,9 @@
 
   async function refreshWeek(){
     try {
-      const wk = await apiGet({ action:'getWeek', email: currentUser.athleteId, weekStart: state.week.weekStart });
+      const wk = await apiGet({ action:'getWeek', email: currentUser.email, weekStart: state.week.weekStart });
       if(wk.success){ state.week = { weekStart: wk.weekStart, sessions: wk.sessions || [] }; }
-      const ld = await apiGet({ action:'getYearLoad', email: currentUser.athleteId });
+      const ld = await apiGet({ action:'getYearLoad', email: currentUser.email });
       if(ld.success){ state.load = { weeks: ld.weeks || [], summary: ld.summary || {} }; }
     } catch(e){ /* keep existing state on refresh failure */ }
     if(activeTab==='week') renderWeek();
@@ -2330,7 +2329,7 @@
     };
     const btn = document.getElementById('blockSaveBtn'); btn.disabled=true; btn.textContent='Saving…';
     try {
-      const res = await apiPost({ action:'saveBlock', email: currentUser.athleteId, sport: blockCtx.sportName, month: blockCtx.month, block: block });
+      const res = await apiPost({ action:'saveBlock', email: currentUser.email, sport: blockCtx.sportName, month: blockCtx.month, block: block });
       if(!res.success) throw new Error(res.error||'save failed');
       applyBlockLocally(blockCtx.sportName, block);
       closeBlock();
@@ -2358,7 +2357,7 @@
     if(state.yearMap.sports.some(s => s.name.toLowerCase()===name.toLowerCase())){ showToast('That sport is already on your year.', 'error'); return; }
     state.yearMap.sports.push({ name:name, isPriority:false, monthlyStates:[] });
     try {
-      const res = await apiPost({ action:'saveYearMap', email: currentUser.athleteId, yearMap: serialiseYearMap() });
+      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: serialiseYearMap() });
       if(!res.success) throw new Error();
       renderYear();
     } catch(e){ showToast('Could not add sport.', 'error'); }
@@ -2409,7 +2408,7 @@
       testingWindows: [], otherCommitments: []
     };
     try {
-      const res = await apiPost({ action:'saveYearMap', email: currentUser.athleteId, yearMap: yearMap });
+      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: yearMap });
       if(!res.success) throw new Error(res.error||'save failed');
       state.yearMap = yearMap;
       renderNav();
@@ -2447,7 +2446,7 @@
     ym.aPriority = event ? { sport: (ym.sports[0]&&ym.sports[0].name)||'', event: event, date: date, month: apMonth } : null;
     ym.testingWindows = val('gTesting').split(',').map(s=>s.trim()).filter(Boolean).map(m => ({ month: m }));
     try {
-      const res = await apiPost({ action:'saveYearMap', email: currentUser.athleteId, yearMap: serialiseYearMap() });
+      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: serialiseYearMap() });
       if(!res.success) throw new Error();
       renderYear(); renderBlockBar();
       showToast('Goal saved', 'success');
@@ -2559,7 +2558,7 @@
   async function drillWeek(weekStartIso){
     setLoading(true, 'Loading that week…');
     try {
-      const wk = await apiGet({ action:'getWeek', email: currentUser.athleteId, weekStart: weekStartIso });
+      const wk = await apiGet({ action:'getWeek', email: currentUser.email, weekStart: weekStartIso });
       state.week = wk.success ? { weekStart: wk.weekStart, sessions: wk.sessions||[] } : { weekStart: weekStartIso, sessions: [] };
     } catch(e){ state.week = { weekStart: weekStartIso, sessions: [] }; }
     setLoading(false);
@@ -2654,7 +2653,7 @@
     };
     const btn = document.getElementById('pbSaveBtn'); btn.disabled=true; btn.textContent='Saving…';
     try {
-      const res = await apiPost({ action:'savePB', email: currentUser.athleteId, pb: pb });
+      const res = await apiPost({ action:'savePB', email: currentUser.email, pb: pb });
       if(!res.success) throw new Error(res.error||'save failed');
       await refreshPBs();
       closePB();
@@ -2666,7 +2665,7 @@
 
   async function refreshPBs(){
     try {
-      const res = await apiGet({ action:'getPBs', email: currentUser.athleteId });
+      const res = await apiGet({ action:'getPBs', email: currentUser.email });
       if(res.success) state.pbs = res.pbs || [];
     } catch(e){ /* keep existing on failure */ }
     if(activeTab==='pbs') renderPBs();
