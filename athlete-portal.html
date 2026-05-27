@@ -1711,14 +1711,26 @@
   // ============================================================
   // API
   // ============================================================
+  const REQ_TIMEOUT = 20000; // Apps Script can be slow; never hang forever.
+  async function apiFetch(url, opts){
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), REQ_TIMEOUT);
+    try {
+      const r = await fetch(url, Object.assign({ signal: ctrl.signal }, opts || {}));
+      const text = await r.text();
+      try { return JSON.parse(text); }
+      catch(e){ throw new Error('Unexpected response from the server'); }
+    } catch(e){
+      if(e.name === 'AbortError') throw new Error('The server took too long to respond');
+      throw e;
+    } finally { clearTimeout(timer); }
+  }
   async function apiGet(params){
     const qs = Object.keys(params).map(k => k+'='+encodeURIComponent(params[k])).join('&');
-    const r = await fetch(APPS_SCRIPT_URL + '?' + qs);
-    return r.json();
+    return apiFetch(APPS_SCRIPT_URL + '?' + qs);
   }
   async function apiPost(body){
-    const r = await fetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body) });
-    return r.json();
+    return apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body) });
   }
 
   function setLoading(on, text){
@@ -2162,8 +2174,9 @@
     const rpe = sel ? parseInt(sel.dataset.val,10) : null;
     const duration = numOrNull(val('duration-input'));
     const logged = rpe != null && duration != null;
+    const isNew = !editing.id;
     const session = {
-      id: editing.id,
+      id: editing.id || ('tmp_' + Date.now()),
       date: val('planDate') || editing.date,
       sport: val('planSport').trim(),
       name: name,
@@ -2171,37 +2184,33 @@
       plannedDuration: numOrNull(val('planDuration')),
       rpe: logged ? rpe : null,
       duration: logged ? duration : null,
+      load: logged ? rpe * duration : null,
       status: logged ? 'done' : 'planned',
       isPB: document.getElementById('pbToggle').classList.contains('on'),
       workout: editing.workout || [],
       note: val('sheetNote')
     };
-    const btn = document.getElementById('sheetSaveBtn');
-    btn.disabled = true; btn.textContent = 'Saving…';
+    // Optimistic: update the week and close now; persist in the background.
+    upsertLocalSession(session);
+    closeSheet();
+    renderWeek(); renderBlockBar();
+    showToast(logged ? 'Session logged' : 'Session planned', 'success');
     try {
-      const res = await apiPost({ action:'saveSession', email: currentUser.email, session: session });
+      const res = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, session, { id: isNew ? null : session.id }) });
       if(!res.success) throw new Error(res.error || 'save failed');
-      await refreshWeek();
-      closeSheet();
-      showToast(logged ? 'Session logged' : 'Session planned', 'success');
-      if(session.isPB){ openPBForm({ sport: session.sport, exercise: session.name, date: session.date, sessionId: res.id }); }
+      if(isNew && res.id){ session.id = res.id; renderWeek(); }
+      if(session.isPB){ openPBForm({ sport: session.sport, exercise: session.name, date: session.date, sessionId: session.id }); }
     } catch(e){
-      showToast('Could not save. Try again.', 'error');
-    } finally {
-      btn.disabled = false; btn.textContent = 'Save session';
+      console.error('saveSession', e);
+      showToast('Saved on your device but couldn’t reach the server — reopen to retry.', 'error');
     }
   }
   window.saveCurrentSession = saveCurrentSession;
 
-  async function refreshWeek(){
-    try {
-      const wk = await apiGet({ action:'getWeek', email: currentUser.email, weekStart: state.week.weekStart });
-      if(wk.success){ state.week = { weekStart: wk.weekStart, sessions: wk.sessions || [] }; }
-      const ld = await apiGet({ action:'getYearLoad', email: currentUser.email });
-      if(ld.success){ state.load = { weeks: ld.weeks || [], summary: ld.summary || {} }; }
-    } catch(e){ /* keep existing state on refresh failure */ }
-    if(activeTab==='week') renderWeek();
-    renderBlockBar();
+  function upsertLocalSession(s){
+    if(!state.week.sessions) state.week.sessions = [];
+    const i = state.week.sessions.findIndex(x => x.id === s.id);
+    if(i >= 0) state.week.sessions[i] = s; else state.week.sessions.push(s);
   }
 
   // ============================================================
@@ -2327,16 +2336,20 @@
       keySessions: blockKeySessions.filter(k => (k.name||'').trim()).map(k => ({ name:k.name.trim(), intensity:k.intensity||'', duration: numOrNull(k.duration) })),
       note: val('blockNote')
     };
-    const btn = document.getElementById('blockSaveBtn'); btn.disabled=true; btn.textContent='Saving…';
+    const sportName = blockCtx.sportName;
+    // Optimistic: reflect the change and close immediately, then persist in the
+    // background. Apps Script can take a second or two; the athlete shouldn't wait.
+    applyBlockLocally(sportName, block);
+    closeBlock();
+    renderYear(); renderBlockBar();
+    showToast('Block saved', 'success');
     try {
-      const res = await apiPost({ action:'saveBlock', email: currentUser.email, sport: blockCtx.sportName, month: blockCtx.month, block: block });
+      const res = await apiPost({ action:'saveBlock', email: currentUser.email, sport: sportName, month: block.month, block: block });
       if(!res.success) throw new Error(res.error||'save failed');
-      applyBlockLocally(blockCtx.sportName, block);
-      closeBlock();
-      renderYear(); renderBlockBar();
-      showToast('Block saved', 'success');
-    } catch(e){ showToast('Could not save block. Try again.', 'error'); }
-    finally { btn.disabled=false; btn.textContent='Save block'; }
+    } catch(e){
+      console.error('saveBlock', e);
+      showToast('Saved on your device but couldn’t reach the server — reopen to retry.', 'error');
+    }
   }
   window.saveBlockSheet = saveBlockSheet;
 
@@ -2360,7 +2373,7 @@
       const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: serialiseYearMap() });
       if(!res.success) throw new Error();
       renderYear();
-    } catch(e){ showToast('Could not add sport.', 'error'); }
+    } catch(e){ console.error('addSport', e); showToast('Could not add sport — ' + (e.message||'try again'), 'error'); }
   }
   window.addSport = addSport;
 
@@ -2414,7 +2427,7 @@
       renderNav();
       switchTab('week');
       showToast('Year set up — here\'s your week.', 'success');
-    } catch(e){ showToast('Could not save. Try again.', 'error'); }
+    } catch(e){ console.error('submitOnboard', e); showToast('Could not save — ' + (e.message||'try again'), 'error'); }
   }
   window.submitOnboard = submitOnboard;
 
@@ -2450,7 +2463,7 @@
       if(!res.success) throw new Error();
       renderYear(); renderBlockBar();
       showToast('Goal saved', 'success');
-    } catch(e){ showToast('Could not save goal.', 'error'); }
+    } catch(e){ console.error('saveYearGoal', e); showToast('Could not save goal — ' + (e.message||'try again'), 'error'); }
   }
   window.saveYearGoal = saveYearGoal;
 
@@ -2658,7 +2671,7 @@
       await refreshPBs();
       closePB();
       showToast('PB saved', 'success');
-    } catch(e){ showToast('Could not save PB. Try again.', 'error'); }
+    } catch(e){ console.error('savePB', e); showToast('Could not save PB — ' + (e.message||'try again'), 'error'); }
     finally { btn.disabled=false; btn.textContent='Save PB'; }
   }
   window.savePBSheet = savePBSheet;

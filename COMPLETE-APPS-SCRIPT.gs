@@ -2313,12 +2313,15 @@ function apBuildRow(sheet, fields) {
 
 // Write a field map onto an existing row (header-aligned, only provided fields)
 function apUpdateRow(sheet, rowNum, fields) {
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  // Read the row once, overlay provided fields, write once.
+  // (Per-cell setValue is the main source of save latency in Apps Script.)
+  var lastCol = sheet.getLastColumn();
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var row = sheet.getRange(rowNum, 1, 1, lastCol).getValues()[0];
   for (var c = 0; c < headers.length; c++) {
-    if (fields.hasOwnProperty(headers[c])) {
-      sheet.getRange(rowNum, c + 1).setValue(fields[headers[c]]);
-    }
+    if (fields.hasOwnProperty(headers[c])) row[c] = fields[headers[c]];
   }
+  sheet.getRange(rowNum, 1, 1, lastCol).setValues([row]);
 }
 
 // Minimal athlete lookup (name/grade/sport) for the portal nav + identity
