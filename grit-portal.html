@@ -1284,11 +1284,35 @@ async function submitChallenge() {
         ? customDesc
         : selectedFocus.name;
 
-    // Preserve existing sessions and home logs if editing an existing challenge
-    const existingSessions = currentChallenge ? currentChallenge.sessions : null;
-    const existingHomeLogs = currentChallenge ? currentChallenge.homeLogs : null;
-    const existingCurrent = currentChallenge ? currentChallenge.current : null;
-    const isEditing = currentChallenge && (currentChallenge.status === 'active' || currentChallenge.status === 'pending' || currentChallenge.status === 'complete');
+    // Preserve existing sessions and home logs if editing an existing challenge.
+    // `currentChallenge` may be null here even when the sheet holds real data
+    // (e.g. the initial load failed and showSetupView() ran as the fallback).
+    // Wiping sessions to 8 empty {}s in that case has destroyed real planning
+    // before — so always consult the server when local state looks empty.
+    let existingSessions = currentChallenge ? currentChallenge.sessions : null;
+    let existingHomeLogs = currentChallenge ? currentChallenge.homeLogs : null;
+    let existingCurrent = currentChallenge ? currentChallenge.current : null;
+    let existingStatus = currentChallenge ? currentChallenge.status : null;
+
+    if (!hasAnySessionContent(existingSessions)) {
+        try {
+            const url = `${GRIT_API}?action=getGritChallenge&email=${encodeURIComponent(currentUser.email)}`;
+            const resp = await fetch(url);
+            const remoteData = await resp.json();
+            if (remoteData && remoteData.success && remoteData.challenge) {
+                const remote = remoteData.challenge;
+                if (hasAnySessionContent(remote.sessions)) existingSessions = remote.sessions;
+                if (Array.isArray(remote.homeLogs) && remote.homeLogs.length) existingHomeLogs = remote.homeLogs;
+                if (existingCurrent == null && remote.current != null) existingCurrent = remote.current;
+                if (!existingStatus && remote.status) existingStatus = remote.status;
+            }
+        } catch (e) {
+            console.warn('Pre-submit server check failed (continuing):', e);
+        }
+    }
+
+    const hasSessionsToKeep = hasAnySessionContent(existingSessions);
+    const isEditing = hasSessionsToKeep || (existingStatus === 'active' || existingStatus === 'pending' || existingStatus === 'complete');
 
     currentChallenge = {
         type: selectedType,
@@ -1301,9 +1325,9 @@ async function submitChallenge() {
         level: selectedLevel || 3,
         why,
         excuses,
-        sessions: isEditing && existingSessions ? existingSessions : [{},{},{},{},{},{},{},{}],
-        homeLogs: isEditing && existingHomeLogs ? existingHomeLogs : [],
-        status: isEditing ? currentChallenge.status : 'active'
+        sessions: hasSessionsToKeep ? existingSessions : [{},{},{},{},{},{},{},{}],
+        homeLogs: existingHomeLogs && existingHomeLogs.length ? existingHomeLogs : [],
+        status: existingStatus || 'active'
     };
 
     if (isStrength) {
@@ -1331,6 +1355,21 @@ const COACH_OWNED_SESSION_FIELDS = [
     'coachRatingMindset',
     'coachRatingMentalToughness'
 ];
+
+// A session is "populated" when it contains anything beyond coach-owned fields —
+// i.e. real student planning (plan/measure/obstacle/counter/goal/baseline/etc).
+// Used as a safety check before resetting sessions on setup re-submit so that
+// a stale or empty local state can't wipe a student's existing planning.
+function hasAnySessionContent(sessions) {
+    if (!Array.isArray(sessions)) return false;
+    for (const s of sessions) {
+        if (!s || typeof s !== 'object') continue;
+        for (const k of Object.keys(s)) {
+            if (!COACH_OWNED_SESSION_FIELDS.includes(k)) return true;
+        }
+    }
+    return false;
+}
 
 async function pullCoachFieldsFromServer() {
     if (!currentChallenge || !currentUser) return;
