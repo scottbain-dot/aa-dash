@@ -6,6 +6,104 @@
 // academy-portal.html uses: getAthleteData (GET, ?email=)
 // New actions will be added in subsequent prompts
 
+// ========================================
+// CLASH OF THE CODES — CONFIG (Block 1)
+// Edit bands + norms here. Re-calibrate before the event.
+// ========================================
+
+// Track lap length used for Cooper (bands × lap + partial = total metres).
+var CLASH_LAP_LENGTH_M = 240;
+
+// Per-test scoring config. Score = (improvement_pts + norm_pts) / 2, capped 0–5.
+// norms[gender] = [t2, t3, t4, t5] thresholds. Direction sets how to compare.
+// Higher-better: result ≥ tN ⇒ norm = N (max matched). Below t2 ⇒ 1.
+// Lower-better:  result ≤ tN ⇒ norm = N (max matched). Above t2 ⇒ 1.
+var CLASH_TESTS = {
+  broad_jump: {
+    direction: 'higher',
+    unit: 'cm',
+    bandWidth: 5,            // cm  (≈ 0.05 m placeholder)
+    attempts: 2,
+    // TODO: replace with real norm thresholds before the event.
+    norms: {
+      M: [180, 200, 220, 240],
+      F: [150, 170, 190, 210]
+    }
+  },
+  sprint_40m: {
+    direction: 'lower',
+    unit: 'sec',
+    bandWidth: 0.05,         // seconds (placeholder)
+    attempts: 1,
+    // TODO: replace with real norm thresholds before the event.
+    norms: {
+      M: [6.40, 6.10, 5.80, 5.50],
+      F: [6.80, 6.50, 6.20, 5.90]
+    }
+  },
+  agility_510: {
+    direction: 'lower',
+    unit: 'sec',
+    bandWidth: 0.1,          // seconds (placeholder)
+    attempts: 2,
+    // TODO: replace with real norm thresholds before the event.
+    norms: {
+      M: [5.40, 5.20, 5.00, 4.80],
+      F: [5.70, 5.50, 5.30, 5.10]
+    }
+  },
+  cooper: {
+    direction: 'higher',
+    unit: 'm',
+    bandWidth: 150,          // metres (placeholder)
+    attempts: 1,
+    // Last year's Cooper norms.
+    norms: {
+      M: [2000, 2200, 2400, 2600],
+      F: [1600, 1800, 2000, 2200]
+    }
+  }
+};
+
+// Which column in the Performance sheet each test's baseline reads from.
+var CLASH_BASELINE_COLS = {
+  broad_jump: 'Broad_Jump_cm',
+  sprint_40m: '40m_sec',
+  agility_510: '5_10_5_sec',
+  cooper: 'Cooper_m'
+};
+
+// Ranking direction per non-fitness event. higher = bigger raw is better.
+var CLASH_EVENT_DIRECTIONS = {
+  'Warm Up': 'higher',
+  'Hype': 'higher',
+  'Tug of War': 'higher',
+  'Relays': 'lower',
+  'Game': 'higher',
+  '100m Row': 'lower',
+  '100m Sprint': 'lower',
+  'Grit Challenge': 'higher',
+  'Planning': 'higher',
+  'Snacks': 'higher'
+};
+
+// Initial event roster — seeded once when Clash_Events is empty.
+var CLASH_EVENT_SEED = [
+  { name: 'Warm Up',        type: 'whole',     hidden: false, order: 1 },
+  { name: 'Hype',           type: 'whole',     hidden: false, order: 2 },
+  { name: 'Tug of War',     type: 'whole',     hidden: false, order: 3 },
+  { name: 'Relays',         type: 'whole',     hidden: false, order: 4 },
+  { name: 'Game',           type: 'whole',     hidden: false, order: 5 },
+  { name: '100m Row',       type: 'nominated', hidden: false, order: 6 },
+  { name: '100m Sprint',    type: 'nominated', hidden: false, order: 7 },
+  { name: 'Grit Challenge', type: 'nominated', hidden: true,  order: 8 },
+  { name: 'Planning',       type: 'prejudged', hidden: false, order: 9 },
+  { name: 'Snacks',         type: 'prejudged', hidden: false, order: 10 }
+];
+
+// Points awarded by event rank (1st → 6pts, 6th → 1pt). Ties split average.
+var CLASH_POINTS_BY_RANK = [6, 5, 4, 3, 2, 1];
+
 function doGet(e) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -130,6 +228,26 @@ function doGet(e) {
     }
     if (action === 'getPBs') {
       return apJson(handleGetPBs(ss, e.parameter.email));
+    }
+
+    // ===== CLASH OF THE CODES ACTIONS =====
+    if (action === 'getClashTeams') {
+      return apJson(handleGetClashTeams(ss));
+    }
+    if (action === 'getClashEvents') {
+      return apJson(handleGetClashEvents(ss, {
+        hideHidden: e.parameter.hideHidden === 'true'
+      }));
+    }
+    if (action === 'getClashLeaderboard') {
+      return apJson(handleGetClashLeaderboard(ss));
+    }
+    if (action === 'getClashResults') {
+      return apJson(handleGetClashResults(ss, {
+        event: e.parameter.event,
+        team: e.parameter.team,
+        athleteId: e.parameter.athleteId
+      }));
     }
 
     // ===== EXISTING DASHBOARD LOGIC =====
@@ -265,6 +383,28 @@ function doPost(e) {
     if (data.action === 'savePB') {
       var ssAp4 = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSavePB(ssAp4, data.email, data.pb));
+    }
+
+    // ===== CLASH OF THE CODES WRITES =====
+    if (data.action === 'saveClashTeam') {
+      var ssClashT = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSaveClashTeam(ssClashT, data));
+    }
+    if (data.action === 'saveClashNomination') {
+      var ssClashN = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSaveClashNomination(ssClashN, data));
+    }
+    if (data.action === 'saveClashResult') {
+      var ssClashR = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSaveClashResult(ssClashR, data));
+    }
+    if (data.action === 'saveClashFitnessRetest') {
+      var ssClashF = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSaveClashFitnessRetest(ssClashF, data));
+    }
+    if (data.action === 'setClashConfig') {
+      var ssClashC = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSetClashConfig(ssClashC, data));
     }
 
     if (data.athleteId && data.updates) {
@@ -2711,6 +2851,758 @@ function handleGetPortalBootstrap(ss, email) {
       load: { weeks: load.weeks, summary: load.summary },
       firstTime: !map
     };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ============================================================
+// CLASH OF THE CODES — Block 1: Data layer + scoring engine
+// Sheets: Clash_Teams, Clash_Events, Clash_Results. All additive.
+// ============================================================
+
+// ----- Sheet ensure helpers -----
+
+function ensureClashTeamsSheet(ss) {
+  var sheet = ss.getSheetByName('Clash_Teams');
+  var headers = ['Team', 'Sport', 'Athlete_IDs', 'Chant', 'Colour', 'Nom_Row', 'Nom_Sprint', 'Nom_Hang'];
+  if (!sheet) {
+    sheet = ss.insertSheet('Clash_Teams');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  var existing = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  for (var i = 0; i < headers.length; i++) {
+    if (existing.indexOf(headers[i]) === -1) {
+      var newCol = Math.max(sheet.getLastColumn() + 1, i + 1);
+      sheet.getRange(1, newCol).setValue(headers[i]);
+    }
+  }
+  return sheet;
+}
+
+function ensureClashEventsSheet(ss) {
+  var sheet = ss.getSheetByName('Clash_Events');
+  var headers = ['Event', 'Type', 'Live', 'Slot', 'Hidden_From_Students', 'Order'];
+  if (!sheet) {
+    sheet = ss.insertSheet('Clash_Events');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  } else {
+    var existing = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+    for (var i = 0; i < headers.length; i++) {
+      if (existing.indexOf(headers[i]) === -1) {
+        var newCol = Math.max(sheet.getLastColumn() + 1, i + 1);
+        sheet.getRange(1, newCol).setValue(headers[i]);
+      }
+    }
+  }
+  // Seed the event roster the first time the sheet is created (or left empty).
+  if (sheet.getLastRow() < 2) {
+    var rows = CLASH_EVENT_SEED.map(function (ev) {
+      return [ev.name, ev.type, false, '', !!ev.hidden, ev.order];
+    });
+    if (rows.length) {
+      sheet.getRange(2, 1, rows.length, 6).setValues(rows);
+    }
+  }
+  return sheet;
+}
+
+function ensureClashResultsSheet(ss) {
+  var sheet = ss.getSheetByName('Clash_Results');
+  var headers = ['Timestamp', 'Event', 'Team', 'Athlete_ID', 'Raw_Result',
+                 'Attempt_1', 'Attempt_2', 'Cooper_Bands', 'Cooper_Partial_m',
+                 'Points', 'Rank', 'Notes'];
+  if (!sheet) {
+    sheet = ss.insertSheet('Clash_Results');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  var existing = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  for (var i = 0; i < headers.length; i++) {
+    if (existing.indexOf(headers[i]) === -1) {
+      var newCol = Math.max(sheet.getLastColumn() + 1, i + 1);
+      sheet.getRange(1, newCol).setValue(headers[i]);
+    }
+  }
+  return sheet;
+}
+
+// ----- Shared helpers -----
+
+function clashReadObjects(sheet) {
+  var lastRow = sheet.getLastRow();
+  var lastCol = Math.max(sheet.getLastColumn(), 1);
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  if (lastRow < 2) return { headers: headers, rows: [] };
+  var data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+  var rows = data.map(function (row, idx) {
+    var obj = { __row: idx + 2 };
+    for (var c = 0; c < headers.length; c++) obj[headers[c]] = row[c];
+    return obj;
+  });
+  return { headers: headers, rows: rows };
+}
+
+function clashWriteRow(sheet, headers, values, existingRow) {
+  if (existingRow > 0) {
+    for (var c = 0; c < headers.length; c++) {
+      if (Object.prototype.hasOwnProperty.call(values, headers[c])) {
+        sheet.getRange(existingRow, c + 1).setValue(values[headers[c]]);
+      }
+    }
+  } else {
+    var row = new Array(headers.length);
+    for (var c2 = 0; c2 < headers.length; c2++) {
+      row[c2] = values[headers[c2]] !== undefined ? values[headers[c2]] : '';
+    }
+    sheet.appendRow(row);
+  }
+}
+
+function clashGetAthleteInfo(ss, athleteId) {
+  var athletes = ss.getSheetByName('Athletes');
+  if (!athletes) return null;
+  var data = athletes.getDataRange().getValues();
+  if (data.length < 2) return null;
+  var hdr = data[0];
+  var idC = hdr.indexOf('Athlete_ID');
+  if (idC === -1) return null;
+  var emC = hdr.indexOf('Email');
+  var nC = hdr.indexOf('Name');
+  var fnC = hdr.indexOf('First_Name');
+  var lnC = hdr.indexOf('Last_Name');
+  var gC = hdr.indexOf('Gender');
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idC]).trim() === String(athleteId).trim()) {
+      var name = '';
+      if (nC >= 0 && data[i][nC]) {
+        name = String(data[i][nC]);
+      } else if (fnC >= 0) {
+        name = String(data[i][fnC] || '') + ' ' + (lnC >= 0 ? String(data[i][lnC] || '') : '');
+      }
+      return {
+        id: data[i][idC],
+        name: name.trim(),
+        email: emC >= 0 ? data[i][emC] : '',
+        gender: gC >= 0 ? String(data[i][gC] || '').trim().toUpperCase().charAt(0) : ''
+      };
+    }
+  }
+  return null;
+}
+
+function clashGetBaseline(ss, athleteId, testKey) {
+  var col = CLASH_BASELINE_COLS[testKey];
+  if (!col) return null;
+  var perf = ss.getSheetByName('Performance');
+  if (!perf) return null;
+  var data = perf.getDataRange().getValues();
+  if (data.length < 2) return null;
+  var hdr = data[0];
+  var idC = hdr.indexOf('Athlete_ID');
+  var dC = hdr.indexOf('Date');
+  var vC = hdr.indexOf(col);
+  if (idC < 0 || vC < 0) return null;
+  var best = null, bestDate = null;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idC]).trim() !== String(athleteId).trim()) continue;
+    var v = parseFloat(data[i][vC]);
+    if (isNaN(v) || v === 0) continue;
+    var d = dC >= 0 ? new Date(data[i][dC]) : null;
+    if (best === null || (d && (!bestDate || d > bestDate))) {
+      best = v;
+      bestDate = d;
+    }
+  }
+  return best;
+}
+
+function clashTeamForAthlete(ss, athleteId) {
+  var teamsSheet = ensureClashTeamsSheet(ss);
+  var data = teamsSheet.getDataRange().getValues();
+  if (data.length < 2) return null;
+  var hdr = data[0];
+  var teamC = hdr.indexOf('Team');
+  var idsC = hdr.indexOf('Athlete_IDs');
+  if (teamC < 0 || idsC < 0) return null;
+  var needle = String(athleteId).trim();
+  for (var i = 1; i < data.length; i++) {
+    var ids = String(data[i][idsC] || '').split(',').map(function (s) { return s.trim(); });
+    if (ids.indexOf(needle) >= 0) return data[i][teamC];
+  }
+  return null;
+}
+
+// ----- Scoring engine -----
+
+function clashImprovementPts(testKey, baseline, newResult) {
+  var cfg = CLASH_TESTS[testKey];
+  if (!cfg || baseline == null || newResult == null) return 0;
+  if (isNaN(baseline) || isNaN(newResult)) return 0;
+  var delta = cfg.direction === 'higher' ? (newResult - baseline) : (baseline - newResult);
+  if (delta <= 0) return 0;
+  var pts = Math.floor(delta / cfg.bandWidth);
+  return Math.max(0, Math.min(5, pts));
+}
+
+function clashNormPts(testKey, gender, result) {
+  var cfg = CLASH_TESTS[testKey];
+  if (!cfg || result == null || isNaN(result)) return 1;
+  var g = String(gender || '').trim().toUpperCase().charAt(0);
+  var thresholds = cfg.norms[g] || cfg.norms.M;
+  var score = 1;
+  if (cfg.direction === 'higher') {
+    for (var i = 0; i < thresholds.length; i++) {
+      if (result >= thresholds[i]) score = i + 2;
+    }
+  } else {
+    for (var j = 0; j < thresholds.length; j++) {
+      if (result <= thresholds[j]) score = j + 2;
+    }
+  }
+  return Math.max(1, Math.min(5, score));
+}
+
+function clashScoreTest(testKey, gender, baseline, newResult) {
+  var imp = clashImprovementPts(testKey, baseline, newResult);
+  var norm = clashNormPts(testKey, gender, newResult);
+  var combined = (imp + norm) / 2;
+  return {
+    improvement: imp,
+    norm: norm,
+    score: Math.max(0, Math.min(5, combined))
+  };
+}
+
+function clashBestResult(testKey, attempt1, attempt2) {
+  var cfg = CLASH_TESTS[testKey];
+  var have = [];
+  if (attempt1 != null && !isNaN(attempt1)) have.push(parseFloat(attempt1));
+  if (attempt2 != null && !isNaN(attempt2)) have.push(parseFloat(attempt2));
+  if (have.length === 0) return null;
+  if (have.length === 1) return have[0];
+  if (!cfg) return have[0];
+  return cfg.direction === 'higher' ? Math.max(have[0], have[1]) : Math.min(have[0], have[1]);
+}
+
+// Recompute Rank + Points for a single event across all rows in Clash_Results.
+// Ties share min rank; tied teams split the average of the points slots they cover.
+function clashRecomputeEventRanks(sheet, eventName) {
+  var dir = CLASH_EVENT_DIRECTIONS[eventName] || 'higher';
+  var ro = clashReadObjects(sheet);
+  var rows = ro.rows.filter(function (r) { return r.Event === eventName; });
+  rows.forEach(function (r) { r.__num = parseFloat(r.Raw_Result); });
+  var ranked = rows.filter(function (r) { return !isNaN(r.__num); });
+  ranked.sort(function (a, b) {
+    return dir === 'higher' ? (b.__num - a.__num) : (a.__num - b.__num);
+  });
+  var rankCol = ro.headers.indexOf('Rank') + 1;
+  var ptsCol = ro.headers.indexOf('Points') + 1;
+  var i = 0;
+  while (i < ranked.length) {
+    var j = i;
+    while (j + 1 < ranked.length && ranked[j + 1].__num === ranked[i].__num) j++;
+    var ptsSum = 0, slots = 0;
+    for (var k = i; k <= j; k++) {
+      var p = CLASH_POINTS_BY_RANK[k];
+      ptsSum += (p != null ? p : 0);
+      slots++;
+    }
+    var avgPts = slots > 0 ? ptsSum / slots : 0;
+    var rankNum = i + 1;
+    for (var m = i; m <= j; m++) {
+      if (rankCol > 0) sheet.getRange(ranked[m].__row, rankCol).setValue(rankNum);
+      if (ptsCol > 0) sheet.getRange(ranked[m].__row, ptsCol).setValue(avgPts);
+    }
+    i = j + 1;
+  }
+  // Rows for this event with no numeric result get blank rank/points.
+  rows.filter(function (r) { return isNaN(r.__num); }).forEach(function (r) {
+    if (rankCol > 0) sheet.getRange(r.__row, rankCol).setValue('');
+    if (ptsCol > 0) sheet.getRange(r.__row, ptsCol).setValue('');
+  });
+}
+
+// Assign rank to an array of {team,...} objects via valueFn. Ties share min rank.
+function clashAssignRank(arr, valueFn, dir) {
+  arr.forEach(function (x) { x.__val = valueFn(x); });
+  arr.sort(function (a, b) {
+    return dir === 'higher' ? (b.__val - a.__val) : (a.__val - b.__val);
+  });
+  var map = {};
+  var i = 0;
+  while (i < arr.length) {
+    var j = i;
+    while (j + 1 < arr.length && arr[j + 1].__val === arr[i].__val) j++;
+    var rank = i + 1;
+    for (var k = i; k <= j; k++) map[arr[k].team] = rank;
+    i = j + 1;
+  }
+  return map;
+}
+
+// ----- GET handlers -----
+
+function handleGetClashTeams(ss) {
+  try {
+    var sheet = ensureClashTeamsSheet(ss);
+    var ro = clashReadObjects(sheet);
+    var teams = ro.rows.filter(function (r) { return !!r.Team; }).map(function (r) {
+      return {
+        team: r.Team,
+        sport: r.Sport || '',
+        athleteIds: String(r.Athlete_IDs || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+        chant: r.Chant || '',
+        colour: r.Colour || '',
+        nomRow: r.Nom_Row || '',
+        nomSprint: r.Nom_Sprint || '',
+        nomHang: r.Nom_Hang || ''
+      };
+    });
+    return { success: true, teams: teams };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleGetClashEvents(ss, opts) {
+  try {
+    opts = opts || {};
+    var sheet = ensureClashEventsSheet(ss);
+    var ro = clashReadObjects(sheet);
+    var events = ro.rows.filter(function (r) { return !!r.Event; }).map(function (r) {
+      var liveVal = r.Live;
+      var hiddenVal = r.Hidden_From_Students;
+      return {
+        event: r.Event,
+        type: r.Type || '',
+        live: liveVal === true || String(liveVal).toUpperCase() === 'TRUE',
+        slot: r.Slot || '',
+        hidden: hiddenVal === true || String(hiddenVal).toUpperCase() === 'TRUE',
+        order: parseInt(r.Order, 10) || 0
+      };
+    });
+    if (opts.hideHidden) events = events.filter(function (e) { return !e.hidden; });
+    events.sort(function (a, b) { return a.order - b.order; });
+    return { success: true, events: events };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleGetClashResults(ss, opts) {
+  try {
+    opts = opts || {};
+    var sheet = ensureClashResultsSheet(ss);
+    var ro = clashReadObjects(sheet);
+    var rows = ro.rows.filter(function (r) { return !!r.Event; });
+    if (opts.event) rows = rows.filter(function (r) { return r.Event === opts.event; });
+    if (opts.team) rows = rows.filter(function (r) { return String(r.Team) === String(opts.team); });
+    if (opts.athleteId) {
+      rows = rows.filter(function (r) {
+        return String(r.Athlete_ID).trim() === String(opts.athleteId).trim();
+      });
+    }
+    var out = rows.map(function (r) {
+      var copy = {};
+      for (var k in r) if (k !== '__row' && Object.prototype.hasOwnProperty.call(r, k)) copy[k] = r[k];
+      return copy;
+    });
+    return { success: true, results: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleGetClashLeaderboard(ss) {
+  try {
+    var teamsSheet = ensureClashTeamsSheet(ss);
+    var eventsSheet = ensureClashEventsSheet(ss);
+    var resultsSheet = ensureClashResultsSheet(ss);
+
+    var teams = clashReadObjects(teamsSheet).rows.filter(function (r) { return !!r.Team; });
+    var events = clashReadObjects(eventsSheet).rows.filter(function (r) { return !!r.Event; });
+    var results = clashReadObjects(resultsSheet).rows.filter(function (r) { return !!r.Event; });
+
+    var testKeys = Object.keys(CLASH_TESTS);
+
+    // Group results by event for fast lookup.
+    var resByEvent = {};
+    results.forEach(function (r) {
+      if (!resByEvent[r.Event]) resByEvent[r.Event] = [];
+      resByEvent[r.Event].push(r);
+    });
+
+    function findFitnessResult(event, athleteId) {
+      var bucket = resByEvent[event] || [];
+      for (var i = 0; i < bucket.length; i++) {
+        if (String(bucket[i].Athlete_ID).trim() === String(athleteId).trim()) return bucket[i];
+      }
+      return null;
+    }
+
+    var standings = teams.map(function (t) {
+      var memberIds = String(t.Athlete_IDs || '').split(',')
+        .map(function (s) { return s.trim(); })
+        .filter(Boolean);
+
+      // Fitness total per athlete = sum of 4 test scores. Excused excluded.
+      var memberTotals = [];
+      memberIds.forEach(function (aid) {
+        var total = 0;
+        var excusedCount = 0;
+        testKeys.forEach(function (tk) {
+          var row = findFitnessResult(tk, aid);
+          if (row && String(row.Notes || '').toLowerCase().indexOf('excused') >= 0) {
+            excusedCount++;
+            return;
+          }
+          if (row) {
+            var p = parseFloat(row.Points);
+            total += isNaN(p) ? 1 : p;
+          } else {
+            total += 1; // missing → 1
+          }
+        });
+        // Only fully-excused athletes (excused on every test) drop out of the team avg.
+        if (excusedCount < testKeys.length) memberTotals.push(total);
+      });
+
+      var fitnessTeamScore = memberTotals.length
+        ? memberTotals.reduce(function (a, b) { return a + b; }, 0) / memberTotals.length
+        : 0;
+
+      // Event points: sum Points across all rows for this team in the 10 events.
+      var eventPts = 0;
+      events.forEach(function (ev) {
+        var evRows = (resByEvent[ev.Event] || []).filter(function (r) {
+          return String(r.Team).trim() === String(t.Team).trim();
+        });
+        evRows.forEach(function (r) {
+          var p = parseFloat(r.Points);
+          if (!isNaN(p)) eventPts += p;
+        });
+      });
+
+      return {
+        team: t.Team,
+        sport: t.Sport || '',
+        colour: t.Colour || '',
+        memberCount: memberIds.length,
+        scoredCount: memberTotals.length,
+        fitnessScore: fitnessTeamScore,
+        eventPoints: eventPts
+      };
+    });
+
+    var fitMap = clashAssignRank(standings.slice(), function (s) { return s.fitnessScore; }, 'higher');
+    var evMap = clashAssignRank(standings.slice(), function (s) { return s.eventPoints; }, 'higher');
+    standings.forEach(function (s) {
+      s.fitnessRank = fitMap[s.team];
+      s.eventRank = evMap[s.team];
+      s.combined = (s.fitnessRank || 0) + (s.eventRank || 0);
+    });
+    var finalMap = clashAssignRank(standings.slice(), function (s) { return s.combined; }, 'lower');
+    standings.forEach(function (s) { s.finalRank = finalMap[s.team]; });
+
+    standings.sort(function (a, b) {
+      return (a.finalRank || 99) - (b.finalRank || 99);
+    });
+
+    return { success: true, standings: standings };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ----- POST handlers -----
+
+var CLASH_TEAM_FIELD_MAP = {
+  Team: 'team',
+  Sport: 'sport',
+  Athlete_IDs: 'athleteIds',
+  Chant: 'chant',
+  Colour: 'colour',
+  Nom_Row: 'nomRow',
+  Nom_Sprint: 'nomSprint',
+  Nom_Hang: 'nomHang'
+};
+
+function handleSaveClashTeam(ss, data) {
+  try {
+    if (!data.team) return { success: false, error: 'Missing team name' };
+    var sheet = ensureClashTeamsSheet(ss);
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var teamC = headers.indexOf('Team');
+
+    var athleteIds = '';
+    if (Array.isArray(data.athleteIds)) athleteIds = data.athleteIds.join(',');
+    else if (typeof data.athleteIds === 'string') athleteIds = data.athleteIds;
+
+    var fullValues = {
+      Team: data.team,
+      Sport: data.sport != null ? data.sport : '',
+      Athlete_IDs: athleteIds,
+      Chant: data.chant != null ? data.chant : '',
+      Colour: data.colour != null ? data.colour : '',
+      Nom_Row: data.nomRow != null ? data.nomRow : '',
+      Nom_Sprint: data.nomSprint != null ? data.nomSprint : '',
+      Nom_Hang: data.nomHang != null ? data.nomHang : ''
+    };
+
+    // Locate existing row by Team name.
+    var targetRow = -1;
+    var lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+      var col = sheet.getRange(2, teamC + 1, lastRow - 1, 1).getValues();
+      for (var i = 0; i < col.length; i++) {
+        if (String(col[i][0]).trim() === String(data.team).trim()) {
+          targetRow = i + 2;
+          break;
+        }
+      }
+    }
+
+    if (targetRow > 0) {
+      // Partial update — only write fields that came in on the request.
+      for (var c = 0; c < headers.length; c++) {
+        var h = headers[c];
+        var srcKey = CLASH_TEAM_FIELD_MAP[h];
+        if (h === 'Team') {
+          sheet.getRange(targetRow, c + 1).setValue(data.team);
+        } else if (srcKey && Object.prototype.hasOwnProperty.call(data, srcKey)) {
+          sheet.getRange(targetRow, c + 1).setValue(fullValues[h]);
+        }
+      }
+    } else {
+      var row = new Array(headers.length);
+      for (var c2 = 0; c2 < headers.length; c2++) {
+        row[c2] = fullValues[headers[c2]] !== undefined ? fullValues[headers[c2]] : '';
+      }
+      sheet.appendRow(row);
+    }
+
+    return { success: true, team: data.team };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleSaveClashNomination(ss, data) {
+  try {
+    if (!data.team || !data.slot) return { success: false, error: 'Missing team or slot' };
+    var slot = String(data.slot).toLowerCase();
+    var slotMap = { row: 'Nom_Row', sprint: 'Nom_Sprint', hang: 'Nom_Hang' };
+    var slotCol = slotMap[slot];
+    if (!slotCol) return { success: false, error: 'Slot must be row|sprint|hang' };
+
+    var sheet = ensureClashTeamsSheet(ss);
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { success: false, error: 'No teams yet — call saveClashTeam first' };
+
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var teamC = headers.indexOf('Team');
+    var slotC = headers.indexOf(slotCol);
+    if (slotC < 0) return { success: false, error: slotCol + ' column missing' };
+
+    var col = sheet.getRange(2, teamC + 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < col.length; i++) {
+      if (String(col[i][0]).trim() === String(data.team).trim()) {
+        sheet.getRange(i + 2, slotC + 1).setValue(data.athleteId || '');
+        return { success: true, team: data.team, slot: slot, athleteId: data.athleteId || '' };
+      }
+    }
+    return { success: false, error: 'Team not found: ' + data.team };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleSaveClashResult(ss, data) {
+  try {
+    if (!data.event || !data.team) return { success: false, error: 'Missing event or team' };
+
+    var eventsSheet = ensureClashEventsSheet(ss);
+    var eventInfo = clashReadObjects(eventsSheet).rows.filter(function (r) {
+      return r.Event === data.event;
+    })[0];
+    if (!eventInfo) return { success: false, error: 'Unknown event: ' + data.event };
+
+    var rawResult = (data.rawResult != null && data.rawResult !== '') ? parseFloat(data.rawResult) : null;
+    if (rawResult === null || isNaN(rawResult)) return { success: false, error: 'Missing or invalid rawResult' };
+
+    var sheet = ensureClashResultsSheet(ss);
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    var nominatedAthlete = eventInfo.Type === 'nominated' ? (data.athleteId || '') : '';
+
+    // Locate any existing row for this event + team (and athlete, if nominated).
+    var existing = clashReadObjects(sheet);
+    var targetRow = -1;
+    for (var i = 0; i < existing.rows.length; i++) {
+      var r = existing.rows[i];
+      if (r.Event !== data.event) continue;
+      if (String(r.Team).trim() !== String(data.team).trim()) continue;
+      if (eventInfo.Type === 'nominated') {
+        if (String(r.Athlete_ID).trim() === String(nominatedAthlete).trim()) {
+          targetRow = r.__row;
+          break;
+        }
+      } else {
+        targetRow = r.__row;
+        break;
+      }
+    }
+
+    var values = {
+      Timestamp: new Date(),
+      Event: data.event,
+      Team: data.team,
+      Athlete_ID: nominatedAthlete,
+      Raw_Result: rawResult,
+      Attempt_1: '',
+      Attempt_2: '',
+      Cooper_Bands: '',
+      Cooper_Partial_m: '',
+      Points: '',
+      Rank: '',
+      Notes: data.notes || ''
+    };
+    clashWriteRow(sheet, headers, values, targetRow);
+
+    // Re-rank this event across all teams so points stay correct on every write.
+    clashRecomputeEventRanks(sheet, data.event);
+
+    return { success: true, event: data.event, team: data.team, rawResult: rawResult };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleSaveClashFitnessRetest(ss, data) {
+  try {
+    if (!data.athleteId || !data.test) return { success: false, error: 'Missing athleteId or test' };
+    var testKey = data.test;
+    if (!CLASH_TESTS[testKey]) return { success: false, error: 'Unknown test: ' + testKey };
+
+    var info = clashGetAthleteInfo(ss, data.athleteId);
+    if (!info) return { success: false, error: 'Athlete not found: ' + data.athleteId };
+    var team = clashTeamForAthlete(ss, data.athleteId) || '';
+
+    var sheet = ensureClashResultsSheet(ss);
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    function asFloat(v) { return (v != null && v !== '') ? parseFloat(v) : null; }
+    function asInt(v) { return (v != null && v !== '') ? parseInt(v, 10) : null; }
+
+    var attempt1 = asFloat(data.attempt1);
+    var attempt2 = asFloat(data.attempt2);
+    var cooperBands = asInt(data.cooperBands);
+    var cooperPartial = asFloat(data.cooperPartial);
+    var excused = !!data.excused;
+
+    var rawResult = null;
+    if (testKey === 'cooper') {
+      if (cooperBands != null || cooperPartial != null) {
+        rawResult = (cooperBands || 0) * CLASH_LAP_LENGTH_M + (cooperPartial || 0);
+      } else if (attempt1 != null) {
+        rawResult = attempt1;
+      }
+    } else {
+      rawResult = clashBestResult(testKey, attempt1, attempt2);
+    }
+
+    var notes = data.notes || '';
+    var points = '';
+    var improvement = null;
+    var norm = null;
+    var baseline = null;
+
+    if (excused) {
+      notes = (notes ? notes + ' ' : '') + '[excused]';
+    } else if (rawResult != null && !isNaN(rawResult)) {
+      baseline = clashGetBaseline(ss, data.athleteId, testKey);
+      var s = clashScoreTest(testKey, info.gender, baseline, rawResult);
+      points = s.score;
+      improvement = s.improvement;
+      norm = s.norm;
+    }
+
+    // Locate existing row for this athlete + test (one row per athlete per test).
+    var existing = clashReadObjects(sheet);
+    var targetRow = -1;
+    for (var i = 0; i < existing.rows.length; i++) {
+      if (existing.rows[i].Event === testKey &&
+          String(existing.rows[i].Athlete_ID).trim() === String(data.athleteId).trim()) {
+        targetRow = existing.rows[i].__row;
+        break;
+      }
+    }
+
+    var values = {
+      Timestamp: new Date(),
+      Event: testKey,
+      Team: team,
+      Athlete_ID: data.athleteId,
+      Raw_Result: rawResult != null && !isNaN(rawResult) ? rawResult : '',
+      Attempt_1: attempt1 != null ? attempt1 : '',
+      Attempt_2: attempt2 != null ? attempt2 : '',
+      Cooper_Bands: cooperBands != null ? cooperBands : '',
+      Cooper_Partial_m: cooperPartial != null ? cooperPartial : '',
+      Points: points,
+      Rank: '',
+      Notes: notes
+    };
+    clashWriteRow(sheet, headers, values, targetRow);
+
+    return {
+      success: true,
+      test: testKey,
+      athleteId: data.athleteId,
+      team: team,
+      rawResult: rawResult,
+      baseline: baseline,
+      improvement: improvement,
+      norm: norm,
+      score: points === '' ? null : points,
+      excused: excused
+    };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleSetClashConfig(ss, data) {
+  try {
+    if (!data.key) return { success: false, error: 'Missing key' };
+    var configSheet = ss.getSheetByName('Config');
+    if (!configSheet) {
+      configSheet = ss.insertSheet('Config');
+      configSheet.getRange('A1:B1').setValues([['Key', 'Value']]);
+    }
+    var key = data.key;
+    var value = data.value != null ? data.value : '';
+    var range = configSheet.getDataRange().getValues();
+    var found = false;
+    for (var i = 1; i < range.length; i++) {
+      if (range[i][0] === key) {
+        configSheet.getRange(i + 1, 2).setValue(value);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      var lastRow = configSheet.getLastRow();
+      configSheet.getRange(lastRow + 1, 1, 1, 2).setValues([[key, value]]);
+    }
+    return { success: true, key: key, value: value };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
