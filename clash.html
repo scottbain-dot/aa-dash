@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#1a1411" />
+<title>Clash of the Codes — Athlete Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  /* ============================================
+     CLASH OF THE CODES — Earthbound Editorial
+     ============================================ */
+  :root {
+    --bg: #fef8f6;
+    --bg-warm: #f5ebe5;
+    --ink: #1a1411;
+    --ink-soft: #3a2e28;
+    --ink-mute: #7a6a60;
+    --burgundy: #874B46;
+    --burgundy-dark: #6b3a36;
+    --burgundy-light: #a06b66;
+    --gold: #D4AF37;
+    --gold-soft: #e8c969;
+    --cream: #faf3ed;
+    --line: #e8d9cf;
+    --line-strong: #d4c0b3;
+    --green: #4a8a5c;
+    --amber: #e8b54a;
+    --red: #d94d3a;
+    --shadow: 0 1px 3px rgba(26,20,17,0.04), 0 8px 24px rgba(26,20,17,0.04);
+    --shadow-lift: 0 4px 12px rgba(26,20,17,0.06), 0 24px 48px rgba(26,20,17,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    font-size: 16px;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1, h2, h3, h4, .display {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea { font-family: inherit; font-size: inherit; }
+  ::placeholder { color: var(--ink-mute); opacity: 0.7; }
+
+  /* ============================================
+     COMING SOON — non-admin landing
+     ============================================ */
+  #comingSoon {
+    min-height: 100vh;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink);
+    color: var(--cream);
+    padding: 40px 24px;
+    text-align: center;
+  }
+  #comingSoon.visible { display: flex; }
+  #comingSoon .tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 24px;
+  }
+  #comingSoon h1 {
+    font-size: clamp(48px, 9vw, 96px);
+    color: var(--cream);
+    margin-bottom: 18px;
+    font-style: italic;
+  }
+  #comingSoon h1 em { font-style: normal; color: var(--gold); }
+  #comingSoon p {
+    max-width: 480px;
+    color: rgba(250,243,237,0.7);
+    font-size: 17px;
+  }
+  #comingSoon .when {
+    margin-top: 36px;
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    color: var(--gold-soft);
+    letter-spacing: 0.05em;
+  }
+
+  /* ============================================
+     AUTH GATE
+     ============================================ */
+  #authGate {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--ink);
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  #authGate.visible { display: flex; }
+  #authGate.hidden { display: none !important; }
+  .auth-card {
+    background: var(--cream);
+    border-radius: 18px;
+    padding: 40px 28px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: var(--shadow-lift);
+  }
+  .auth-card .tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+    margin-bottom: 14px;
+  }
+  .auth-card h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+    color: var(--ink);
+  }
+  .auth-card p {
+    color: var(--ink-mute);
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+  #gsiButton { display: flex; justify-content: center; }
+  .auth-error {
+    margin-top: 18px;
+    padding: 12px 14px;
+    background: rgba(217,77,58,0.08);
+    border: 1px solid rgba(217,77,58,0.3);
+    color: var(--red);
+    border-radius: 10px;
+    font-size: 14px;
+    display: none;
+  }
+  .auth-error.visible { display: block; }
+
+  /* ============================================
+     APP SHELL
+     ============================================ */
+  #appShell {
+    display: none;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  #appShell.visible { display: flex; }
+
+  /* ----- Top bar ----- */
+  .topbar {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 14px 16px;
+    position: sticky; top: 0; z-index: 80;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  }
+  .topbar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex;
+    flex-direction: column;
+    margin-right: auto;
+  }
+  .brand .label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .brand .title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--cream);
+    font-style: italic;
+  }
+  .brand .title em { font-style: normal; color: var(--gold); }
+  .user {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px;
+    color: rgba(250,243,237,0.7);
+  }
+  .logout-btn {
+    background: transparent;
+    color: rgba(250,243,237,0.8);
+    border: 1px solid rgba(250,243,237,0.2);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .logout-btn:hover { background: rgba(250,243,237,0.1); }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    background: rgba(250,243,237,0.06);
+    padding: 4px;
+    border-radius: 12px;
+  }
+  .tab-btn {
+    flex: 1;
+    background: transparent;
+    color: rgba(250,243,237,0.7);
+    border: none;
+    padding: 12px 16px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: all 0.15s ease;
+  }
+  .tab-btn.active {
+    background: var(--gold);
+    color: var(--ink);
+  }
+  .tab-btn:not(.active):hover { color: var(--cream); }
+
+  /* Event picker bar */
+  .picker-bar {
+    background: var(--bg-warm);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 16px;
+    position: sticky; top: 124px; z-index: 70;
+  }
+  .picker-bar .label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 6px;
+  }
+  .picker-bar select {
+    width: 100%;
+    background: var(--cream);
+    border: 1.5px solid var(--line-strong);
+    border-radius: 12px;
+    padding: 14px 14px;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8'><path fill='%237a6a60' d='M1 1l6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+  }
+  .picker-bar .meta {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-mute);
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .pill.whole { background: rgba(74,138,92,0.12); color: var(--green); border-color: rgba(74,138,92,0.3); }
+  .pill.nominated { background: rgba(135,75,70,0.12); color: var(--burgundy); border-color: rgba(135,75,70,0.3); }
+  .pill.prejudged { background: rgba(232,181,74,0.18); color: #8b6a1e; border-color: rgba(232,181,74,0.4); }
+  .pill.hidden { background: rgba(26,20,17,0.08); color: var(--ink-soft); }
+
+  /* ----- Main content ----- */
+  main {
+    flex: 1;
+    padding: 16px 16px 120px;
+    max-width: 640px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  h2.section-title {
+    font-size: 22px;
+    margin-bottom: 12px;
+    color: var(--ink);
+  }
+  .helper {
+    font-size: 13px;
+    color: var(--ink-mute);
+    margin-bottom: 16px;
+  }
+
+  /* ----- Team cards (whole / prejudged) ----- */
+  .team-card {
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .team-card.saved-flash { border-color: var(--green); }
+  .rank-badge {
+    flex: 0 0 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--ink);
+    color: var(--gold);
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .team-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .team-name {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .team-meta {
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-top: 2px;
+  }
+  .swatch {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+  .move-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 0 0 auto;
+  }
+  .move-btn {
+    width: 40px; height: 32px;
+    background: var(--bg-warm);
+    border: 1.5px solid var(--line-strong);
+    border-radius: 8px;
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .move-btn:active { background: var(--line); transform: scale(0.95); }
+  .move-btn:disabled { opacity: 0.35; }
+
+  /* Notes for prejudged */
+  .prejudged-notes {
+    width: 100%;
+    margin-top: 10px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--cream);
+    min-height: 60px;
+    resize: vertical;
+  }
+  .prejudged-notes:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+  .prejudged-card { flex-direction: column; align-items: stretch; }
+  .prejudged-card .row {
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  /* ----- Nominated event ----- */
+  .nominated-card {
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s ease;
+  }
+  .nominated-card.saved-flash { border-color: var(--green); }
+  .nominated-card .head {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+  }
+  .nominated-card .who {
+    font-size: 13px; color: var(--ink-mute);
+  }
+  .nominated-card .who strong {
+    color: var(--ink); font-weight: 600; font-size: 14px;
+  }
+  .input-row {
+    display: flex; gap: 8px; align-items: center;
+  }
+  .num-input {
+    flex: 1;
+    background: var(--bg-warm);
+    border: 1.5px solid var(--line-strong);
+    border-radius: 10px;
+    padding: 14px 14px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    -moz-appearance: textfield;
+    text-align: center;
+  }
+  .num-input::-webkit-outer-spin-button,
+  .num-input::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  .num-input:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: var(--cream);
+  }
+  .unit {
+    font-size: 13px;
+    color: var(--ink-mute);
+    font-weight: 600;
+    min-width: 40px;
+    text-align: left;
+  }
+  .save-btn {
+    background: var(--burgundy);
+    color: var(--cream);
+    border: none;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    min-width: 90px;
+  }
+  .save-btn:active { background: var(--burgundy-dark); transform: scale(0.97); }
+  .save-btn.saved {
+    background: var(--green);
+  }
+  .save-btn:disabled {
+    background: var(--line-strong);
+    color: var(--ink-mute);
+  }
+
+  /* Big save-ranking footer button (whole / prejudged) */
+  .save-ranking-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, var(--bg) 70%, transparent);
+    padding: 16px 16px 22px;
+    z-index: 50;
+  }
+  .save-ranking-bar.hidden { display: none; }
+  .save-ranking-btn {
+    width: 100%; max-width: 608px;
+    margin: 0 auto;
+    display: block;
+    background: var(--burgundy);
+    color: var(--cream);
+    border: none;
+    padding: 18px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    box-shadow: var(--shadow-lift);
+  }
+  .save-ranking-btn:active { background: var(--burgundy-dark); transform: translateY(1px); }
+  .save-ranking-btn:disabled { background: var(--ink-mute); }
+
+  /* ----- Fitness retest view ----- */
+  .test-picker {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .test-pill {
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    color: var(--ink-soft);
+    padding: 12px 6px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.15;
+  }
+  .test-pill.active {
+    background: var(--ink);
+    color: var(--gold);
+    border-color: var(--ink);
+  }
+  .test-pill small { display: block; font-size: 10px; opacity: 0.7; margin-top: 2px; font-weight: 500; }
+
+  .team-group {
+    margin-bottom: 18px;
+  }
+  .team-group-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .team-group-header .team-name {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .team-group-header .count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .athlete-card {
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 8px;
+    transition: border-color 0.2s ease;
+  }
+  .athlete-card.saved-flash { border-color: var(--green); }
+  .athlete-card .athlete-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .athlete-card .a-name {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 15px;
+  }
+  .athlete-card .a-gender {
+    font-size: 11px;
+    color: var(--ink-mute);
+    font-weight: 500;
+    background: var(--bg-warm);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .excused-toggle {
+    margin-left: auto;
+    display: inline-flex; align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ink-mute);
+    cursor: pointer;
+  }
+  .excused-toggle input {
+    width: 18px; height: 18px;
+    accent-color: var(--burgundy);
+  }
+  .attempt-row {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .attempt-row.single {
+    grid-template-columns: 1fr;
+  }
+  .attempt-row .lbl {
+    font-size: 11px;
+    color: var(--ink-mute);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .cooper-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .cooper-grid label {
+    font-size: 11px;
+    color: var(--ink-mute);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    display: block;
+  }
+  .live-readout {
+    background: var(--bg-warm);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 8px 0 10px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+  .live-readout .v {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .sanity-warn {
+    background: rgba(232,181,74,0.18);
+    border: 1px solid rgba(232,181,74,0.4);
+    color: #6b4d10;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    display: none;
+  }
+  .sanity-warn.show { display: block; }
+  .athlete-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .athlete-actions .save-btn { flex: 1; }
+
+  /* ----- Live standings strip ----- */
+  .standings-strip {
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: 14px;
+    padding: 14px;
+    margin-top: 18px;
+  }
+  .standings-strip .title-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .standings-strip h3 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .standings-strip .refresh {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid rgba(250,243,237,0.2);
+    color: rgba(250,243,237,0.7);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .standings-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 56px 56px 44px;
+    gap: 8px;
+    padding: 8px 4px;
+    border-top: 1px solid rgba(250,243,237,0.06);
+    align-items: center;
+    font-size: 13px;
+  }
+  .standings-row.head {
+    border: 0;
+    padding-top: 0;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(250,243,237,0.45);
+    font-weight: 600;
+  }
+  .standings-row .r {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    color: var(--gold);
+    text-align: center;
+  }
+  .standings-row .t { font-weight: 600; }
+  .standings-row .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: rgba(250,243,237,0.8);
+  }
+
+  /* ----- Toast ----- */
+  #toast {
+    position: fixed;
+    bottom: 96px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--cream);
+    padding: 12px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lift);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  #toast.success { background: var(--green); }
+  #toast.error { background: var(--red); }
+  #toast .check { font-weight: 700; }
+
+  /* Loading state */
+  .loading {
+    text-align: center;
+    color: var(--ink-mute);
+    padding: 40px 20px;
+    font-size: 14px;
+  }
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ink-mute);
+    background: var(--bg-warm);
+    border-radius: 12px;
+    font-size: 14px;
+  }
+
+  /* Tighter spacing on tiny phones */
+  @media (max-width: 360px) {
+    main { padding: 12px 12px 110px; }
+    .team-card, .nominated-card, .athlete-card { padding: 12px; }
+    .num-input { font-size: 18px; padding: 12px; }
+    .test-picker { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================
+     COMING SOON (non-admin)
+     ============================================ -->
+<div id="comingSoon">
+  <div class="tag">FIS Warriors · Athlete Academy</div>
+  <h1>Clash of the <em>Codes</em></h1>
+  <p>Thu 5 June, 08:30–12:30. Six teams, ten events, one champion. Student view coming soon.</p>
+  <div class="when">SAVE THE DATE</div>
+</div>
+
+<!-- ============================================
+     AUTH GATE (admin)
+     ============================================ -->
+<div id="authGate">
+  <div class="auth-card">
+    <div class="tag">Scoring Station</div>
+    <h1>Clash of the Codes</h1>
+    <p>Sign in with your authorised Google account to score the event.</p>
+    <div id="gsiButton"></div>
+    <div class="auth-error" id="authError">Access denied. This account is not authorised.</div>
+  </div>
+</div>
+
+<!-- ============================================
+     APP SHELL (admin, post-auth)
+     ============================================ -->
+<div id="appShell">
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <span class="label">Scoring Station</span>
+        <span class="title">Clash of the <em>Codes</em></span>
+      </div>
+      <div class="user">
+        <span id="userName"></span>
+        <button class="logout-btn" onclick="logout()">Sign out</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-view="events" onclick="switchView('events')">Events</button>
+      <button class="tab-btn" data-view="fitness" onclick="switchView('fitness')">Fitness Retests</button>
+    </div>
+  </header>
+
+  <!-- Event picker -->
+  <div class="picker-bar" id="eventPickerBar">
+    <span class="label">Current event</span>
+    <select id="eventSelect" onchange="selectEvent(this.value)"></select>
+    <div class="meta" id="eventMeta"></div>
+  </div>
+
+  <main>
+    <!-- Events view -->
+    <section class="view active" id="eventsView">
+      <div id="eventScoringArea">
+        <div class="loading">Loading…</div>
+      </div>
+      <div id="standingsContainer"></div>
+    </section>
+
+    <!-- Fitness view -->
+    <section class="view" id="fitnessView">
+      <h2 class="section-title">Fitness retests</h2>
+      <p class="helper">Re-test a single fitness score. Score recomputes against the athlete's baseline + gender norm.</p>
+      <div class="test-picker" id="testPicker"></div>
+      <div id="fitnessScoringArea">
+        <div class="loading">Loading…</div>
+      </div>
+      <div id="standingsContainerFit"></div>
+    </section>
+  </main>
+
+  <!-- Save Ranking floating bar (only for whole/prejudged events) -->
+  <div class="save-ranking-bar hidden" id="saveRankingBar">
+    <button class="save-ranking-btn" id="saveRankingBtn" onclick="saveCurrentRanking()">Save Ranking</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  // ============================================
+  // CONFIG
+  // ============================================
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
+  const GOOGLE_CLIENT_ID = '701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com';
+  const ADMIN_EMAILS = ['scott_bain@fis.edu']; // lowercase
+
+  // ============================================
+  // ROUTING — admin mode vs coming-soon
+  // ============================================
+  const isAdminMode = new URLSearchParams(location.search).get('admin') === 'true';
+
+  if (!isAdminMode) {
+    document.getElementById('comingSoon').classList.add('visible');
+  } else {
+    document.getElementById('authGate').classList.add('visible');
+  }
+
+  // ============================================
+  // AUTH
+  // ============================================
+  function decodeJwt(token) {
+    try {
+      const payload = token.split('.')[1];
+      const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(decodeURIComponent(escape(json)));
+    } catch (e) { return null; }
+  }
+
+  function isTokenValid(payload) {
+    if (!payload || !payload.email_verified) return false;
+    if (payload.exp && Date.now() / 1000 > payload.exp) return false;
+    if (payload.aud !== GOOGLE_CLIENT_ID) return false;
+    if (!ADMIN_EMAILS.includes((payload.email || '').toLowerCase())) return false;
+    return true;
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('authError');
+    if (msg) el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function unlockApp(payload) {
+    document.getElementById('authGate').classList.add('hidden');
+    document.getElementById('appShell').classList.add('visible');
+    const nameEl = document.getElementById('userName');
+    if (nameEl && payload.name) nameEl.textContent = payload.name;
+    bootstrap();
+  }
+
+  function handleCredentialResponse(response) {
+    const payload = decodeJwt(response.credential);
+    if (!isTokenValid(payload)) {
+      showAuthError('Access denied. This account is not authorised for the Clash scoring station.');
+      sessionStorage.removeItem('aa_clash_token');
+      return;
+    }
+    sessionStorage.setItem('aa_clash_token', response.credential);
+    unlockApp(payload);
+  }
+
+  function initAuthGate() {
+    if (!isAdminMode) return;
+    const cached = sessionStorage.getItem('aa_clash_token');
+    if (cached) {
+      const payload = decodeJwt(cached);
+      if (isTokenValid(payload)) { unlockApp(payload); return; }
+      sessionStorage.removeItem('aa_clash_token');
+    }
+    if (!window.google || !google.accounts || !google.accounts.id) {
+      setTimeout(initAuthGate, 200);
+      return;
+    }
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('gsiButton'),
+      { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with' }
+    );
+  }
+
+  function logout() {
+    sessionStorage.removeItem('aa_clash_token');
+    if (window.google && google.accounts && google.accounts.id) {
+      google.accounts.id.disableAutoSelect();
+    }
+    location.reload();
+  }
+
+  document.addEventListener('DOMContentLoaded', initAuthGate);
+
+  // ============================================
+  // STATE
+  // ============================================
+  const state = {
+    config: { lapLength: 240, tests: {}, sanity: {}, pointsByRank: [6,5,4,3,2,1] },
+    events: [],
+    teams: [],
+    athletesById: {},   // id -> {name, email, gender}
+    standings: [],
+    activeView: 'events',
+    activeEvent: null,  // event name
+    activeEventType: null,
+    activeTest: 'broad_jump',
+    ranking: [],        // for whole/prejudged: array of team names in current order
+    prejudgedNotes: {},
+    nominatedDraft: {}, // team -> input value
+    fitnessDraft: {}    // athleteId -> {attempt1, attempt2, cooperBands, cooperPartial, excused}
+  };
+
+  // Per-test display config + sanity defaults (fallbacks if getClashConfig is missing).
+  const TEST_DISPLAY = {
+    broad_jump:  { label: 'Broad Jump', short: 'Broad',  unit: 'cm',  attempts: 2 },
+    sprint_40m:  { label: '40m Sprint', short: '40m',    unit: 'sec', attempts: 1 },
+    agility_510: { label: '5-10-5',     short: '5-10-5', unit: 'sec', attempts: 2 },
+    cooper:      { label: 'Cooper',     short: 'Cooper', unit: 'm',   attempts: 1 }
+  };
+  const TEST_KEYS = ['broad_jump', 'sprint_40m', 'agility_510', 'cooper'];
+
+  // ============================================
+  // FETCH HELPERS
+  // ============================================
+  async function apiGet(action, params) {
+    const url = new URL(APPS_SCRIPT_URL);
+    url.searchParams.set('action', action);
+    if (params) Object.keys(params).forEach(k => {
+      if (params[k] != null && params[k] !== '') url.searchParams.set(k, params[k]);
+    });
+    url.searchParams.set('_t', Date.now());
+    const r = await fetch(url.toString());
+    return r.json();
+  }
+
+  async function apiPost(payload) {
+    // Use text/plain to avoid CORS preflight (Apps Script accepts it).
+    const r = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    return r.json();
+  }
+
+  // ============================================
+  // BOOTSTRAP — load config + events + teams + athletes + standings
+  // ============================================
+  async function bootstrap() {
+    try {
+      const [cfg, evs, tms, students, standings] = await Promise.all([
+        apiGet('getClashConfig').catch(() => ({ success: false })),
+        apiGet('getClashEvents'),
+        apiGet('getClashTeams'),
+        apiGet('getAllStudents'),
+        apiGet('getClashLeaderboard').catch(() => ({ success: false }))
+      ]);
+
+      // Config may not be deployed yet — fall back to sensible defaults.
+      if (cfg && cfg.success) {
+        state.config = {
+          lapLength: cfg.lapLength || 240,
+          tests: cfg.tests || {},
+          sanity: cfg.sanity || {},
+          pointsByRank: cfg.pointsByRank || [6,5,4,3,2,1]
+        };
+      }
+
+      state.events = (evs && evs.events) || [];
+      state.teams = (tms && tms.teams) || [];
+      state.athletesById = {};
+      ((students && students.students) || []).forEach(s => {
+        state.athletesById[String(s.Athlete_ID).trim()] = {
+          name: s.Name || 'Unknown',
+          email: s.Email || '',
+          gender: s.Gender || ''
+        };
+      });
+      state.standings = (standings && standings.standings) || [];
+
+      populateEventPicker();
+      renderTestPicker();
+      if (state.events.length) {
+        selectEvent(state.events[0].event);
+      } else {
+        document.getElementById('eventScoringArea').innerHTML =
+          '<div class="empty">No events in Clash_Events yet.</div>';
+      }
+      renderStandings();
+    } catch (e) {
+      console.error(e);
+      toast('Failed to load Clash data', 'error');
+    }
+  }
+
+  // ============================================
+  // VIEW SWITCHING
+  // ============================================
+  function switchView(view) {
+    state.activeView = view;
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.view === view);
+    });
+    document.getElementById('eventsView').classList.toggle('active', view === 'events');
+    document.getElementById('fitnessView').classList.toggle('active', view === 'fitness');
+    // The event picker only makes sense on the events view.
+    document.getElementById('eventPickerBar').style.display = view === 'events' ? 'block' : 'none';
+    // The save-ranking footer is only relevant in events view.
+    if (view !== 'events') document.getElementById('saveRankingBar').classList.add('hidden');
+    if (view === 'fitness') renderFitnessScoring();
+    renderStandings();
+  }
+
+  // ============================================
+  // EVENT PICKER
+  // ============================================
+  function populateEventPicker() {
+    const sel = document.getElementById('eventSelect');
+    sel.innerHTML = state.events
+      .map(e => `<option value="${escapeHtml(e.event)}">${escapeHtml(e.event)}</option>`)
+      .join('');
+  }
+
+  function selectEvent(name) {
+    const ev = state.events.find(e => e.event === name);
+    if (!ev) return;
+    state.activeEvent = ev.event;
+    state.activeEventType = ev.type;
+    document.getElementById('eventSelect').value = ev.event;
+    // Reset per-event drafts
+    state.ranking = state.teams.map(t => t.team);
+    state.prejudgedNotes = {};
+    state.nominatedDraft = {};
+
+    // Pre-load nominated input values from latest saved Clash_Results
+    if (ev.type === 'nominated') hydrateNominatedFromResults();
+
+    renderEventMeta(ev);
+    renderEventScoring();
+  }
+
+  function renderEventMeta(ev) {
+    const typeLabel = ev.type === 'whole' ? 'Whole team'
+                    : ev.type === 'nominated' ? 'Nominated'
+                    : 'Prejudged';
+    const parts = [`<span class="pill ${ev.type}">${typeLabel}</span>`];
+    if (ev.hidden) parts.push('<span class="pill hidden">Hidden from students</span>');
+    if (ev.slot) parts.push(`<span class="pill">Slot: ${escapeHtml(ev.slot)}</span>`);
+    document.getElementById('eventMeta').innerHTML = parts.join(' ');
+  }
+
+  async function hydrateNominatedFromResults() {
+    try {
+      const res = await apiGet('getClashResults', { event: state.activeEvent });
+      const rows = (res && res.results) || [];
+      rows.forEach(r => {
+        if (r.Team && r.Raw_Result !== '' && r.Raw_Result != null) {
+          state.nominatedDraft[r.Team] = r.Raw_Result;
+        }
+      });
+      // Re-render only if still on the same event
+      if (state.activeEventType === 'nominated') renderEventScoring();
+    } catch (e) { /* non-fatal */ }
+  }
+
+  // ============================================
+  // EVENT SCORING — dispatch on type
+  // ============================================
+  function renderEventScoring() {
+    if (!state.teams.length) {
+      document.getElementById('eventScoringArea').innerHTML =
+        '<div class="empty">No teams in Clash_Teams yet. Populate the sheet first.</div>';
+      document.getElementById('saveRankingBar').classList.add('hidden');
+      return;
+    }
+    const type = state.activeEventType;
+    if (type === 'whole') renderWholeEvent();
+    else if (type === 'nominated') renderNominatedEvent();
+    else if (type === 'prejudged') renderPrejudgedEvent();
+    else document.getElementById('eventScoringArea').innerHTML =
+      `<div class="empty">Unknown event type: ${escapeHtml(type || '')}</div>`;
+  }
+
+  // ----- WHOLE-TEAM -----
+  function renderWholeEvent() {
+    document.getElementById('saveRankingBar').classList.remove('hidden');
+    const cards = state.ranking.map((teamName, idx) => {
+      const t = teamByName(teamName);
+      return wholeCardHTML(t, idx);
+    }).join('');
+    document.getElementById('eventScoringArea').innerHTML = `
+      <h2 class="section-title">${escapeHtml(state.activeEvent)}</h2>
+      <p class="helper">Drag the arrows to set the team order — top = 1st, bottom = 6th. Save when ready.</p>
+      ${cards}
+    `;
+  }
+
+  function wholeCardHTML(t, idx) {
+    if (!t) return '';
+    const last = state.ranking.length - 1;
+    return `
+      <div class="team-card" data-team="${escapeAttr(t.team)}">
+        <div class="rank-badge">${idx + 1}</div>
+        <div class="team-info">
+          <div class="team-name">${escapeHtml(t.team)}</div>
+          <div class="team-meta">${t.colour ? `<span class="swatch" style="background:${escapeAttr(t.colour)}"></span>` : ''}${escapeHtml(t.sport || '')}</div>
+        </div>
+        <div class="move-stack">
+          <button class="move-btn" ${idx === 0 ? 'disabled' : ''} onclick="moveTeam(${idx}, -1)" aria-label="Move up">▲</button>
+          <button class="move-btn" ${idx === last ? 'disabled' : ''} onclick="moveTeam(${idx}, 1)" aria-label="Move down">▼</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function moveTeam(idx, dir) {
+    const ni = idx + dir;
+    if (ni < 0 || ni >= state.ranking.length) return;
+    const arr = state.ranking;
+    [arr[idx], arr[ni]] = [arr[ni], arr[idx]];
+    renderEventScoring(); // re-render for the active type
+  }
+
+  // ----- NOMINATED -----
+  function renderNominatedEvent() {
+    document.getElementById('saveRankingBar').classList.add('hidden');
+    const slotKey = nominationSlotForEvent(state.activeEvent);
+    const unitLabel = nominatedUnitForEvent(state.activeEvent);
+    const cards = state.teams.map(t => nominatedCardHTML(t, slotKey, unitLabel)).join('');
+    document.getElementById('eventScoringArea').innerHTML = `
+      <h2 class="section-title">${escapeHtml(state.activeEvent)}</h2>
+      <p class="helper">Enter the nominee's result for each team — save each one as you go. Ranks update automatically.</p>
+      ${cards}
+    `;
+  }
+
+  function nominatedCardHTML(t, slotKey, unitLabel) {
+    const nomId = slotKey ? String(t[slotKey] || '').trim() : '';
+    const nom = nomId ? state.athletesById[nomId] : null;
+    const nomName = nom ? nom.name : (nomId || '— no nominee —');
+    const draft = state.nominatedDraft[t.team] != null ? state.nominatedDraft[t.team] : '';
+    return `
+      <div class="nominated-card" data-team="${escapeAttr(t.team)}">
+        <div class="head">
+          <div class="rank-badge">${escapeHtml((t.team || '?').charAt(0).toUpperCase())}</div>
+          <div class="team-info">
+            <div class="team-name">${escapeHtml(t.team)}</div>
+            <div class="who">Nominee: <strong>${escapeHtml(nomName)}</strong></div>
+          </div>
+        </div>
+        <div class="input-row">
+          <input class="num-input" type="number" inputmode="decimal" step="0.01"
+                 value="${escapeAttr(draft)}"
+                 oninput="onNominatedInput(this)"
+                 placeholder="0.00" />
+          <span class="unit">${escapeHtml(unitLabel)}</span>
+          <button class="save-btn" onclick="onNominatedSave(this)">Save</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function nominationSlotForEvent(eventName) {
+    // 100m Row → Nom_Row; 100m Sprint → Nom_Sprint; Grit Challenge → Nom_Hang
+    if (/row/i.test(eventName)) return 'nomRow';
+    if (/sprint/i.test(eventName)) return 'nomSprint';
+    if (/grit|hang/i.test(eventName)) return 'nomHang';
+    return null;
+  }
+
+  function nominatedUnitForEvent(eventName) {
+    if (/row/i.test(eventName)) return 'm';
+    if (/sprint/i.test(eventName)) return 'sec';
+    if (/grit|hang/i.test(eventName)) return 'sec';
+    return '';
+  }
+
+  function onNominatedInput(input) {
+    const card = input.closest('.nominated-card');
+    if (!card) return;
+    state.nominatedDraft[card.dataset.team] = input.value;
+  }
+
+  function onPrejudgedNotes(textarea) {
+    const card = textarea.closest('.team-card');
+    if (!card) return;
+    state.prejudgedNotes[card.dataset.team] = textarea.value;
+  }
+
+  async function onNominatedSave(btn) {
+    const card = btn.closest('.nominated-card');
+    if (!card) return;
+    const teamName = card.dataset.team;
+    const raw = state.nominatedDraft[teamName];
+    if (raw == null || raw === '') {
+      toast('Enter a result first', 'error');
+      return;
+    }
+    const slotKey = nominationSlotForEvent(state.activeEvent);
+    const t = teamByName(teamName);
+    const nomId = (slotKey && t) ? (t[slotKey] || '') : '';
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const res = await apiPost({
+        action: 'saveClashResult',
+        event: state.activeEvent,
+        team: teamName,
+        athleteId: nomId,
+        rawResult: parseFloat(raw)
+      });
+      if (res && res.success) {
+        flashCard(card);
+        btn.textContent = 'Saved ✓';
+        btn.classList.add('saved');
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Save'; btn.classList.remove('saved'); }, 1200);
+        toast('Saved', 'success');
+        refreshStandings();
+      } else {
+        btn.disabled = false; btn.textContent = 'Save';
+        toast((res && res.error) || 'Save failed', 'error');
+      }
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Save';
+      toast('Network error', 'error');
+    }
+  }
+
+  // ----- PREJUDGED -----
+  function renderPrejudgedEvent() {
+    document.getElementById('saveRankingBar').classList.remove('hidden');
+    const cards = state.ranking.map((teamName, idx) => {
+      const t = teamByName(teamName);
+      return prejudgedCardHTML(t, idx);
+    }).join('');
+    document.getElementById('eventScoringArea').innerHTML = `
+      <h2 class="section-title">${escapeHtml(state.activeEvent)}</h2>
+      <p class="helper">Rank by judging order, then add a quick note per team. Save when ranking is final.</p>
+      ${cards}
+    `;
+  }
+
+  function prejudgedCardHTML(t, idx) {
+    if (!t) return '';
+    const last = state.ranking.length - 1;
+    const notes = state.prejudgedNotes[t.team] || '';
+    return `
+      <div class="team-card prejudged-card" data-team="${escapeAttr(t.team)}">
+        <div class="row">
+          <div class="rank-badge">${idx + 1}</div>
+          <div class="team-info">
+            <div class="team-name">${escapeHtml(t.team)}</div>
+            <div class="team-meta">${t.colour ? `<span class="swatch" style="background:${escapeAttr(t.colour)}"></span>` : ''}${escapeHtml(t.sport || '')}</div>
+          </div>
+          <div class="move-stack">
+            <button class="move-btn" ${idx === 0 ? 'disabled' : ''} onclick="moveTeam(${idx}, -1)" aria-label="Move up">▲</button>
+            <button class="move-btn" ${idx === last ? 'disabled' : ''} onclick="moveTeam(${idx}, 1)" aria-label="Move down">▼</button>
+          </div>
+        </div>
+        <textarea class="prejudged-notes"
+                  placeholder="Judging notes (optional)"
+                  oninput="onPrejudgedNotes(this)">${escapeHtml(notes)}</textarea>
+      </div>
+    `;
+  }
+
+  // ----- Save current ranking (whole or prejudged) -----
+  async function saveCurrentRanking() {
+    const type = state.activeEventType;
+    if (type !== 'whole' && type !== 'prejudged') return;
+    const btn = document.getElementById('saveRankingBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    // Direction-aware raw_result so the server ranks the same positions we set.
+    // Always lower=better here so position-1 team ends up at rank 1, regardless of CLASH_EVENT_DIRECTIONS.
+    // Concretely: send 1..6 for lower-better events, send 6..1 for higher-better events.
+    const isLowerBetter = isEventLowerBetter(state.activeEvent);
+
+    try {
+      const calls = state.ranking.map((teamName, idx) => {
+        const pos = idx + 1;
+        const raw = isLowerBetter ? pos : (state.ranking.length - idx);
+        const payload = {
+          action: 'saveClashResult',
+          event: state.activeEvent,
+          team: teamName,
+          rawResult: raw
+        };
+        if (type === 'prejudged' && state.prejudgedNotes[teamName]) {
+          payload.notes = state.prejudgedNotes[teamName];
+        }
+        return apiPost(payload);
+      });
+      const results = await Promise.all(calls);
+      const failed = results.filter(r => !r || !r.success);
+      if (failed.length) {
+        toast(`${failed.length} of ${results.length} saves failed`, 'error');
+      } else {
+        toast(`Ranking saved`, 'success');
+        flashAllCards();
+      }
+    } catch (e) {
+      toast('Network error saving ranking', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save Ranking';
+      refreshStandings();
+    }
+  }
+
+  function isEventLowerBetter(eventName) {
+    // Mirror CLASH_EVENT_DIRECTIONS server-side.
+    return /^(relays|100m row|100m sprint)$/i.test(String(eventName).trim());
+  }
+
+  function flashAllCards() {
+    document.querySelectorAll('#eventScoringArea .team-card').forEach(c => flashCard(c));
+  }
+
+  function flashCard(card) {
+    if (!card) return;
+    card.classList.add('saved-flash');
+    setTimeout(() => card.classList.remove('saved-flash'), 1500);
+  }
+
+  // ============================================
+  // FITNESS RETESTS
+  // ============================================
+  function renderTestPicker() {
+    document.getElementById('testPicker').innerHTML = TEST_KEYS.map(k => {
+      const d = TEST_DISPLAY[k];
+      const active = state.activeTest === k ? 'active' : '';
+      return `<button class="test-pill ${active}" onclick="selectTest('${k}')">${escapeHtml(d.short)}<small>${escapeHtml(d.unit)}</small></button>`;
+    }).join('');
+  }
+
+  function selectTest(testKey) {
+    state.activeTest = testKey;
+    state.fitnessDraft = {}; // clear drafts when switching tests
+    renderTestPicker();
+    renderFitnessScoring();
+    hydrateFitnessFromResults();
+  }
+
+  async function hydrateFitnessFromResults() {
+    try {
+      const res = await apiGet('getClashResults', { event: state.activeTest });
+      const rows = (res && res.results) || [];
+      rows.forEach(r => {
+        const aid = String(r.Athlete_ID || '').trim();
+        if (!aid) return;
+        const isExcused = /excused/i.test(String(r.Notes || ''));
+        state.fitnessDraft[aid] = {
+          attempt1: r.Attempt_1 != null ? r.Attempt_1 : '',
+          attempt2: r.Attempt_2 != null ? r.Attempt_2 : '',
+          cooperBands: r.Cooper_Bands != null ? r.Cooper_Bands : '',
+          cooperPartial: r.Cooper_Partial_m != null ? r.Cooper_Partial_m : '',
+          excused: isExcused
+        };
+      });
+      renderFitnessScoring();
+    } catch (e) { /* non-fatal */ }
+  }
+
+  function renderFitnessScoring() {
+    if (!state.teams.length) {
+      document.getElementById('fitnessScoringArea').innerHTML =
+        '<div class="empty">No teams in Clash_Teams yet.</div>';
+      return;
+    }
+    const groups = state.teams.map(t => fitnessTeamGroupHTML(t)).join('');
+    document.getElementById('fitnessScoringArea').innerHTML = groups;
+  }
+
+  function fitnessTeamGroupHTML(t) {
+    const test = state.activeTest;
+    const display = TEST_DISPLAY[test];
+    const ids = (t.athleteIds || []).filter(Boolean);
+    if (!ids.length) {
+      return `
+        <div class="team-group">
+          <div class="team-group-header">
+            <div class="team-name">${escapeHtml(t.team)}</div>
+            <span class="count">No athletes</span>
+          </div>
+        </div>
+      `;
+    }
+    const athleteCards = ids.map(id => fitnessAthleteCardHTML(id, t, test, display)).join('');
+    return `
+      <div class="team-group">
+        <div class="team-group-header">
+          <div class="team-name">${escapeHtml(t.team)}</div>
+          <span class="count">${ids.length} athlete${ids.length === 1 ? '' : 's'} · ${escapeHtml(display.label)}</span>
+        </div>
+        ${athleteCards}
+      </div>
+    `;
+  }
+
+  function fitnessAthleteCardHTML(aid, team, testKey, display) {
+    const info = state.athletesById[aid] || { name: aid, gender: '' };
+    const draft = state.fitnessDraft[aid] || {};
+    const ex = !!draft.excused;
+    const cooperLapLength = state.config.lapLength || 240;
+
+    let inputHTML = '';
+    if (testKey === 'cooper') {
+      const bands = draft.cooperBands !== '' && draft.cooperBands != null ? Number(draft.cooperBands) : '';
+      const partial = draft.cooperPartial !== '' && draft.cooperPartial != null ? Number(draft.cooperPartial) : '';
+      const total = (Number(bands) || 0) * cooperLapLength + (Number(partial) || 0);
+      inputHTML = `
+        <div class="cooper-grid">
+          <div>
+            <label>Bands</label>
+            <input class="num-input" type="number" inputmode="numeric" step="1" min="0"
+                   value="${escapeAttr(bands)}"
+                   oninput="updateFitnessInput('${escapeAttr(aid)}', 'cooperBands', this.value); refreshCooperReadout('${escapeAttr(aid)}')"
+                   ${ex ? 'disabled' : ''} placeholder="0" />
+          </div>
+          <div>
+            <label>Partial (m)</label>
+            <input class="num-input" type="number" inputmode="decimal" step="1" min="0"
+                   value="${escapeAttr(partial)}"
+                   oninput="updateFitnessInput('${escapeAttr(aid)}', 'cooperPartial', this.value); refreshCooperReadout('${escapeAttr(aid)}')"
+                   ${ex ? 'disabled' : ''} placeholder="0" />
+          </div>
+        </div>
+        <div class="live-readout" id="cooperReadout-${escapeAttr(aid)}">
+          <span>Total distance</span>
+          <span class="v">${total ? total.toLocaleString() + ' m' : '—'}</span>
+        </div>
+        <div class="live-readout" id="cooperLap-${escapeAttr(aid)}">
+          <span>Lap length</span>
+          <span class="v">${cooperLapLength} m</span>
+        </div>
+      `;
+    } else if (display.attempts === 2) {
+      const a1 = draft.attempt1 != null ? draft.attempt1 : '';
+      const a2 = draft.attempt2 != null ? draft.attempt2 : '';
+      inputHTML = `
+        <div class="attempt-row">
+          <div class="lbl">Try 1</div>
+          <input class="num-input" type="number" inputmode="decimal" step="0.01"
+                 value="${escapeAttr(a1)}"
+                 oninput="updateFitnessInput('${escapeAttr(aid)}', 'attempt1', this.value); refreshBestOf('${escapeAttr(aid)}', '${testKey}')"
+                 ${ex ? 'disabled' : ''} placeholder="0" />
+          <input class="num-input" type="number" inputmode="decimal" step="0.01"
+                 value="${escapeAttr(a2)}"
+                 oninput="updateFitnessInput('${escapeAttr(aid)}', 'attempt2', this.value); refreshBestOf('${escapeAttr(aid)}', '${testKey}')"
+                 ${ex ? 'disabled' : ''} placeholder="0" />
+        </div>
+        <div class="live-readout" id="bestOf-${escapeAttr(aid)}">
+          <span>Best of</span>
+          <span class="v">${bestOfDisplay(testKey, a1, a2)}</span>
+        </div>
+      `;
+    } else {
+      const a1 = draft.attempt1 != null ? draft.attempt1 : '';
+      inputHTML = `
+        <div class="attempt-row single">
+          <input class="num-input" type="number" inputmode="decimal" step="0.01"
+                 value="${escapeAttr(a1)}"
+                 oninput="updateFitnessInput('${escapeAttr(aid)}', 'attempt1', this.value)"
+                 ${ex ? 'disabled' : ''} placeholder="0.00" />
+        </div>
+      `;
+    }
+
+    return `
+      <div class="athlete-card" id="athcard-${escapeAttr(aid)}">
+        <div class="athlete-head">
+          <div class="a-name">${escapeHtml(info.name)}</div>
+          ${info.gender ? `<span class="a-gender">${escapeHtml(info.gender)}</span>` : ''}
+          <label class="excused-toggle">
+            <input type="checkbox" ${ex ? 'checked' : ''}
+                   onchange="updateFitnessInput('${escapeAttr(aid)}', 'excused', this.checked); renderFitnessScoring()">
+            Excused
+          </label>
+        </div>
+        ${inputHTML}
+        <div class="sanity-warn" id="sanity-${escapeAttr(aid)}"></div>
+        <div class="athlete-actions">
+          <button class="save-btn" onclick="saveFitnessRetest('${escapeAttr(aid)}', this)">Save</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function updateFitnessInput(aid, field, value) {
+    if (!state.fitnessDraft[aid]) state.fitnessDraft[aid] = {};
+    state.fitnessDraft[aid][field] = value;
+    // Sanity check on text fields
+    if (['attempt1', 'attempt2', 'cooperBands', 'cooperPartial'].includes(field)) {
+      runSanityCheck(aid);
+    }
+  }
+
+  function refreshBestOf(aid, testKey) {
+    const draft = state.fitnessDraft[aid] || {};
+    const el = document.getElementById('bestOf-' + aid);
+    if (el) {
+      el.querySelector('.v').textContent = bestOfDisplay(testKey, draft.attempt1, draft.attempt2);
+    }
+  }
+
+  function refreshCooperReadout(aid) {
+    const draft = state.fitnessDraft[aid] || {};
+    const lap = state.config.lapLength || 240;
+    const total = (Number(draft.cooperBands) || 0) * lap + (Number(draft.cooperPartial) || 0);
+    const el = document.getElementById('cooperReadout-' + aid);
+    if (el) el.querySelector('.v').textContent = total ? total.toLocaleString() + ' m' : '—';
+  }
+
+  function bestOfDisplay(testKey, a1, a2) {
+    const cfg = state.config.tests[testKey] || { direction: 'higher' };
+    const have = [];
+    [a1, a2].forEach(v => {
+      const n = parseFloat(v);
+      if (!isNaN(n)) have.push(n);
+    });
+    if (!have.length) return '—';
+    if (have.length === 1) return have[0];
+    return cfg.direction === 'lower' ? Math.min(...have) : Math.max(...have);
+  }
+
+  function runSanityCheck(aid) {
+    const draft = state.fitnessDraft[aid] || {};
+    const testKey = state.activeTest;
+    const s = (state.config.sanity || {})[testKey] || {};
+    const lap = state.config.lapLength || 240;
+    const warnEl = document.getElementById('sanity-' + aid);
+    if (!warnEl) return;
+    const issues = [];
+
+    if (testKey === 'broad_jump') {
+      [draft.attempt1, draft.attempt2].forEach((v, i) => {
+        const n = parseFloat(v);
+        if (!isNaN(n) && s.maxCm && n > s.maxCm) {
+          issues.push(`Attempt ${i+1} is ${n} cm — over ${s.maxCm} cm. Are you sure?`);
+        }
+      });
+    } else if (testKey === 'sprint_40m') {
+      const n = parseFloat(draft.attempt1);
+      if (!isNaN(n) && s.minSec && n < s.minSec) {
+        issues.push(`${n} sec is below ${s.minSec} sec. Are you sure?`);
+      }
+    } else if (testKey === 'agility_510') {
+      [draft.attempt1, draft.attempt2].forEach((v, i) => {
+        const n = parseFloat(v);
+        if (!isNaN(n) && s.minSec && n < s.minSec) {
+          issues.push(`Attempt ${i+1} is ${n} sec — below ${s.minSec} sec. Are you sure?`);
+        }
+      });
+    } else if (testKey === 'cooper') {
+      const bands = parseInt(draft.cooperBands, 10);
+      const partial = parseFloat(draft.cooperPartial);
+      if (!isNaN(bands) && s.maxBands && bands > s.maxBands) {
+        issues.push(`${bands} bands is over ${s.maxBands}. Are you sure?`);
+      }
+      if (!isNaN(partial) && partial > lap) {
+        issues.push(`Partial ${partial} m is more than one lap (${lap} m). Are you sure?`);
+      }
+    }
+
+    if (issues.length) {
+      warnEl.innerHTML = issues.map(escapeHtml).join('<br>');
+      warnEl.classList.add('show');
+    } else {
+      warnEl.classList.remove('show');
+      warnEl.innerHTML = '';
+    }
+  }
+
+  async function saveFitnessRetest(aid, btn) {
+    const draft = state.fitnessDraft[aid] || {};
+    const testKey = state.activeTest;
+    const payload = {
+      action: 'saveClashFitnessRetest',
+      athleteId: aid,
+      test: testKey,
+      excused: !!draft.excused
+    };
+    if (testKey === 'cooper') {
+      if (draft.cooperBands !== '' && draft.cooperBands != null) payload.cooperBands = draft.cooperBands;
+      if (draft.cooperPartial !== '' && draft.cooperPartial != null) payload.cooperPartial = draft.cooperPartial;
+    } else {
+      if (draft.attempt1 !== '' && draft.attempt1 != null) payload.attempt1 = draft.attempt1;
+      const display = TEST_DISPLAY[testKey];
+      if (display.attempts === 2 && draft.attempt2 !== '' && draft.attempt2 != null) payload.attempt2 = draft.attempt2;
+    }
+
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const res = await apiPost(payload);
+      if (res && res.success) {
+        const card = document.getElementById('athcard-' + aid);
+        flashCard(card);
+        btn.textContent = res.score != null ? `Saved ✓  ${roundDisplay(res.score)} / 5` : 'Saved ✓';
+        btn.classList.add('saved');
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Save'; btn.classList.remove('saved'); }, 1800);
+        toast('Saved', 'success');
+        refreshStandings();
+      } else {
+        btn.disabled = false; btn.textContent = 'Save';
+        toast((res && res.error) || 'Save failed', 'error');
+      }
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Save';
+      toast('Network error', 'error');
+    }
+  }
+
+  function roundDisplay(n) {
+    if (n == null || isNaN(n)) return '—';
+    return Math.round(Number(n) * 10) / 10;
+  }
+
+  // ============================================
+  // LIVE STANDINGS STRIP
+  // ============================================
+  async function refreshStandings() {
+    try {
+      const res = await apiGet('getClashLeaderboard');
+      if (res && res.success) {
+        state.standings = res.standings || [];
+        renderStandings();
+      }
+    } catch (e) { /* non-fatal */ }
+  }
+
+  function renderStandings() {
+    const html = standingsHTML();
+    const a = document.getElementById('standingsContainer');
+    const b = document.getElementById('standingsContainerFit');
+    if (a) a.innerHTML = html;
+    if (b) b.innerHTML = html;
+  }
+
+  function standingsHTML() {
+    if (!state.standings.length) {
+      return `
+        <div class="standings-strip">
+          <div class="title-row">
+            <h3>Current standings</h3>
+            <button class="refresh" onclick="refreshStandings()">Refresh</button>
+          </div>
+          <div style="color: rgba(250,243,237,0.6); font-size: 13px; padding: 8px 4px;">No results yet — leaderboard fills in as scores come in.</div>
+        </div>
+      `;
+    }
+    const rows = state.standings.map(s => `
+      <div class="standings-row">
+        <div class="r">${s.finalRank != null ? s.finalRank : '–'}</div>
+        <div class="t">${escapeHtml(s.team)}</div>
+        <div class="num">${roundDisplay(s.fitnessScore)}</div>
+        <div class="num">${roundDisplay(s.eventPoints)}</div>
+        <div class="num">${s.combined != null ? s.combined : '–'}</div>
+      </div>
+    `).join('');
+    return `
+      <div class="standings-strip">
+        <div class="title-row">
+          <h3>Current standings</h3>
+          <button class="refresh" onclick="refreshStandings()">Refresh</button>
+        </div>
+        <div class="standings-row head">
+          <div class="r">#</div>
+          <div class="t">Team</div>
+          <div class="num">Fit</div>
+          <div class="num">Evt</div>
+          <div class="num">Σ</div>
+        </div>
+        ${rows}
+      </div>
+    `;
+  }
+
+  // ============================================
+  // HELPERS
+  // ============================================
+  function teamByName(name) {
+    return state.teams.find(t => t.team === name);
+  }
+
+  let toastTimer;
+  function toast(msg, type) {
+    const el = document.getElementById('toast');
+    el.className = '';
+    if (type) el.classList.add(type);
+    const check = type === 'success' ? '<span class="check">✓</span> ' : '';
+    el.innerHTML = check + escapeHtml(msg);
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  function escapeAttr(s) {
+    if (s == null) return '';
+    return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+</script>
+</body>
+</html>
