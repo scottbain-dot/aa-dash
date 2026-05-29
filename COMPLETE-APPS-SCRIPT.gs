@@ -104,6 +104,15 @@ var CLASH_EVENT_SEED = [
 // Points awarded by event rank (1st → 6pts, 6th → 1pt). Ties split average.
 var CLASH_POINTS_BY_RANK = [6, 5, 4, 3, 2, 1];
 
+// Sanity thresholds — fitness retest UI uses these to flag absurd entries.
+// Inclusive bounds; outside them prompts a confirm rather than blocking.
+var CLASH_SANITY = {
+  broad_jump: { maxCm: 400 },
+  sprint_40m: { minSec: 4 },
+  agility_510: { minSec: 4 },
+  cooper:     { maxBands: 10 }
+};
+
 function doGet(e) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -248,6 +257,9 @@ function doGet(e) {
         team: e.parameter.team,
         athleteId: e.parameter.athleteId
       }));
+    }
+    if (action === 'getClashConfig') {
+      return apJson(handleGetClashConfig());
     }
 
     // ===== EXISTING DASHBOARD LOGIC =====
@@ -3603,6 +3615,34 @@ function handleSetClashConfig(ss, data) {
       configSheet.getRange(lastRow + 1, 1, 1, 2).setValues([[key, value]]);
     }
     return { success: true, key: key, value: value };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// Surface the slice of CLASH config the front-end needs (lap length,
+// per-test direction/unit/attempts/bandWidth/norms, sanity thresholds).
+// Lets the scoring UI avoid hard-coding lap length or sanity bounds.
+function handleGetClashConfig() {
+  try {
+    var tests = {};
+    Object.keys(CLASH_TESTS).forEach(function (k) {
+      var t = CLASH_TESTS[k];
+      tests[k] = {
+        direction: t.direction,
+        unit: t.unit,
+        bandWidth: t.bandWidth,
+        attempts: t.attempts,
+        norms: t.norms
+      };
+    });
+    return {
+      success: true,
+      lapLength: CLASH_LAP_LENGTH_M,
+      tests: tests,
+      sanity: CLASH_SANITY,
+      pointsByRank: CLASH_POINTS_BY_RANK
+    };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
