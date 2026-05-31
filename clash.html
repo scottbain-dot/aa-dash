@@ -876,6 +876,125 @@
   .how-panel p:last-child { margin-bottom: 0; }
   .how-panel strong { color: var(--ink); font-weight: 600; }
 
+  /* Section 1.5 — The Day hero block (warmer, more editorial) */
+  .stu-section-day {
+    background: linear-gradient(135deg, #fef8f6 0%, #f5ebe5 100%);
+    border-color: rgba(135,75,70,0.18);
+  }
+  .stu-section-day .day-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+    margin-bottom: 10px;
+  }
+  .stu-section-day .day-headline {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(22px, 4vw, 28px);
+    color: var(--ink);
+    line-height: 1.15;
+    margin-bottom: 14px;
+    letter-spacing: -0.01em;
+  }
+  .stu-section-day .day-body {
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .stu-section-day .day-body strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Section 1.6 — How you'll be scored cards */
+  .score-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .score-card {
+    background: var(--bg-warm);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex; flex-direction: column;
+  }
+  .score-card-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .score-card-line {
+    color: var(--ink-soft);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .score-card-toggle {
+    background: transparent;
+    border: none;
+    color: var(--burgundy);
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 8px;
+    padding: 4px 0;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+  .score-card-toggle::before { content: '▸ '; }
+  .score-card-detail {
+    display: none;
+    margin-top: 6px;
+    padding: 10px 12px;
+    background: var(--cream);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .score-card-detail.open { display: block; }
+
+  /* Section 1.7 — Plan checklist */
+  .plan-list {
+    display: flex; flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .plan-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg-warm);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .plan-item input[type="checkbox"] {
+    width: 20px; height: 20px;
+    accent-color: var(--burgundy);
+    margin-top: 1px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .plan-item.done {
+    background: rgba(74, 138, 92, 0.08);
+    border-color: rgba(74, 138, 92, 0.3);
+    color: var(--ink-mute);
+  }
+  .plan-item.done span {
+    text-decoration: line-through;
+    text-decoration-color: rgba(74, 138, 92, 0.5);
+  }
+
   /* Empty state when athlete isn't on a team */
   .no-team {
     text-align: center;
@@ -1598,6 +1717,231 @@
     .num-input { font-size: 18px; padding: 12px; }
     .test-picker { grid-template-columns: repeat(2, 1fr); }
   }
+
+  /* ============================================
+     TEAMS BUILDER (admin)
+     ============================================ */
+  .teams-builder {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 760px) {
+    .teams-builder { grid-template-columns: 1fr; }
+  }
+  .tb-pane {
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .tb-pane > h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .tb-pane > .tb-sub {
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-bottom: 10px;
+  }
+  .tb-unassigned-list {
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: calc(100vh - 280px);
+    min-height: 200px;
+    overflow-y: auto;
+    padding: 4px;
+    border-radius: 10px;
+    background: var(--bg-warm);
+  }
+  .tb-unassigned-list.drag-over,
+  .tb-team-roster.drag-over {
+    background: rgba(212, 175, 55, 0.14);
+    box-shadow: inset 0 0 0 2px rgba(212, 175, 55, 0.5);
+  }
+  .tb-athlete {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .tb-athlete:active { cursor: grabbing; }
+  .tb-athlete.dragging { opacity: 0.4; }
+  .tb-athlete .a-name {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.2;
+    flex: 1;
+    min-width: 0;
+  }
+  .tb-athlete .a-sport {
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .tb-athlete .move-btn-sm {
+    background: var(--bg-warm);
+    border: 1px solid var(--line-strong);
+    color: var(--ink-soft);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .tb-athlete .move-btn-sm:hover { background: var(--gold-soft); }
+
+  .tb-teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .tb-teams-header {
+    display: flex; align-items: center;
+    margin-bottom: 10px;
+  }
+  .tb-teams-header h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .tb-teams-header .add-team {
+    margin-left: auto;
+    background: var(--burgundy);
+    color: var(--cream);
+    border: none;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tb-teams-header .add-team:active { background: var(--burgundy-dark); }
+  .tb-team {
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 10px;
+    display: flex; flex-direction: column;
+    gap: 8px;
+  }
+  .tb-team-meta { display: flex; flex-direction: column; gap: 6px; }
+  .tb-team-meta input[type="text"] {
+    border: 1.5px solid var(--line);
+    background: var(--bg-warm);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    color: var(--ink);
+    width: 100%;
+  }
+  .tb-team-meta input[type="text"]:focus {
+    outline: none; border-color: var(--gold);
+    background: var(--cream);
+  }
+  .tb-team-meta .name-row {
+    display: flex; gap: 8px; align-items: center;
+  }
+  .tb-team-meta .name-row input[type="text"].name {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .tb-team-meta input[type="color"] {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+  }
+  .tb-team-roster {
+    display: flex; flex-direction: column; gap: 6px;
+    min-height: 80px;
+    padding: 6px;
+    background: var(--bg-warm);
+    border-radius: 8px;
+  }
+  .tb-team-roster:empty::before {
+    content: 'Drop athletes here';
+    color: var(--ink-mute);
+    font-size: 12px;
+    font-style: italic;
+    padding: 8px;
+    text-align: center;
+    display: block;
+  }
+
+  .tb-noms {
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .tb-noms .noms-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-mute);
+  }
+  .tb-noms .nom-row {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+  .tb-noms .nom-row label {
+    font-size: 11px; font-weight: 600;
+    color: var(--ink-soft);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .tb-noms .nom-row select {
+    border: 1.5px solid var(--line);
+    background: var(--cream);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 12px;
+    color: var(--ink);
+    width: 100%;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8'><path fill='%237a6a60' d='M1 1l6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 28px;
+  }
+  .tb-team-delete {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid rgba(217, 77, 58, 0.4);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+  .tb-team-delete:hover { background: rgba(217, 77, 58, 0.08); }
+  .tb-info {
+    font-size: 11px;
+    color: var(--ink-mute);
+    margin-top: 8px;
+    font-style: italic;
+  }
 </style>
 </head>
 <body>
@@ -1708,6 +2052,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-view="events" onclick="switchView('events')">Events</button>
       <button class="tab-btn" data-view="fitness" onclick="switchView('fitness')">Fitness Retests</button>
+      <button class="tab-btn" data-view="teams" onclick="switchView('teams')">Teams</button>
     </div>
   </header>
 
@@ -1736,6 +2081,13 @@
         <div class="loading">Loading…</div>
       </div>
       <div id="standingsContainerFit"></div>
+    </section>
+
+    <!-- Teams view -->
+    <section class="view" id="teamsView">
+      <div class="teams-builder" id="teamsBuilder">
+        <div class="loading">Loading roster…</div>
+      </div>
     </section>
   </main>
 
@@ -2021,11 +2373,13 @@
     });
     document.getElementById('eventsView').classList.toggle('active', view === 'events');
     document.getElementById('fitnessView').classList.toggle('active', view === 'fitness');
+    document.getElementById('teamsView').classList.toggle('active', view === 'teams');
     // The event picker only makes sense on the events view.
     document.getElementById('eventPickerBar').style.display = view === 'events' ? 'block' : 'none';
     // The save-ranking footer is only relevant in events view.
     if (view !== 'events') document.getElementById('saveRankingBar').classList.add('hidden');
     if (view === 'fitness') renderFitnessScoring();
+    if (view === 'teams') loadTeamsBuilder();
     renderStandings();
   }
 
@@ -2726,6 +3080,417 @@
   }
 
   // ============================================
+  // TEAMS BUILDER (admin Teams tab)
+  // ============================================
+  const teamsState = {
+    unassigned: [],         // [{ athleteId, name, gender, sports[] }]
+    teams: [],              // mirrors state.teams but mutable for the builder
+    byId: {},               // athleteId -> athlete display obj
+    saving: false,
+    busy: false,            // true while a server write is in flight
+    debounceTimers: {}
+  };
+
+  async function loadTeamsBuilder() {
+    const host = document.getElementById('teamsBuilder');
+    if (!host) return;
+    host.innerHTML = '<div class="loading">Loading roster…</div>';
+    try {
+      const [unRes, teamsRes] = await Promise.all([
+        apiGet('getUnassignedAthletes'),
+        apiGet('getClashTeams')
+      ]);
+      teamsState.unassigned = (unRes && unRes.athletes) || [];
+      teamsState.teams = (teamsRes && teamsRes.teams) || [];
+      // Cache name lookup. Roster cards need names for athletes already on a team,
+      // so include both the unassigned pool and the all-students roster.
+      teamsState.byId = {};
+      teamsState.unassigned.forEach(a => { teamsState.byId[a.athleteId] = a; });
+      ((state.athletesById && Object.keys(state.athletesById)) || []).forEach(id => {
+        if (!teamsState.byId[id]) {
+          const s = state.athletesById[id];
+          teamsState.byId[id] = { athleteId: id, name: s.name, gender: s.gender, sports: [] };
+        }
+      });
+      renderTeamsBuilder();
+    } catch (e) {
+      console.error(e);
+      host.innerHTML = '<div class="empty">Couldn\'t load the roster. Try again.</div>';
+    }
+  }
+
+  function renderTeamsBuilder() {
+    const host = document.getElementById('teamsBuilder');
+    if (!host) return;
+
+    const unassignedHTML = teamsState.unassigned.length
+      ? teamsState.unassigned.map(a => athleteCardHTML(a, null)).join('')
+      : '<div style="padding: 16px; color: var(--ink-mute); font-size: 13px; text-align: center;">Every G9 athlete is on a team.</div>';
+
+    const teamsHTML = teamsState.teams.map(t => teamColumnHTML(t)).join('');
+
+    host.innerHTML = `
+      <div class="tb-pane">
+        <h3>Unassigned</h3>
+        <div class="tb-sub">G9 athletes not yet on a team. Drag to a team — or tap "Move" on mobile.</div>
+        <div class="tb-unassigned-list" id="tbUnassigned"
+             ondragover="onTbDragOver(event)"
+             ondragleave="onTbDragLeave(event)"
+             ondrop="onTbDrop(event, null)">
+          ${unassignedHTML}
+        </div>
+        <div class="tb-info">Athlete IDs are stored as a comma-separated list under the hood — this UI handles formatting for you.</div>
+      </div>
+      <div>
+        <div class="tb-teams-header">
+          <h3>Teams</h3>
+          <button class="add-team" onclick="onTbAddTeam()">+ Add team</button>
+        </div>
+        <div class="tb-teams-grid" id="tbTeamsGrid">${teamsHTML}</div>
+      </div>
+    `;
+  }
+
+  function athleteCardHTML(a, currentTeam) {
+    const sportLine = (a.sports && a.sports.length) ? a.sports.join(' · ') : '';
+    return `
+      <div class="tb-athlete" draggable="true"
+           data-athlete-id="${escapeAttr(a.athleteId)}"
+           data-from-team="${escapeAttr(currentTeam || '')}"
+           ondragstart="onTbDragStart(event)"
+           ondragend="onTbDragEnd(event)">
+        <div style="flex: 1; min-width: 0;">
+          <div class="a-name">${escapeHtml(a.name || a.athleteId)}</div>
+          ${sportLine ? `<div class="a-sport">${escapeHtml(sportLine)}</div>` : ''}
+        </div>
+        <button class="move-btn-sm" onclick="onTbMoveMenu(this, event)">Move</button>
+      </div>
+    `;
+  }
+
+  function teamColumnHTML(t) {
+    const memberCards = (t.athleteIds || []).map(id => {
+      const a = teamsState.byId[id] || { athleteId: id, name: id, sports: [] };
+      return athleteCardHTML(a, t.team);
+    }).join('');
+
+    const nomOptions = (selected) => (t.athleteIds || []).map(id => {
+      const a = teamsState.byId[id] || { name: id };
+      const sel = String(selected || '').trim() === String(id).trim() ? ' selected' : '';
+      return `<option value="${escapeAttr(id)}"${sel}>${escapeHtml(a.name || id)}</option>`;
+    }).join('');
+
+    return `
+      <div class="tb-team" data-team="${escapeAttr(t.team)}">
+        <div class="tb-team-meta">
+          <div class="name-row">
+            <input type="color" value="${escapeAttr(t.colour || '#874B46')}"
+                   oninput="onTbFieldEdit(this, 'colour')"
+                   onchange="onTbFieldEdit(this, 'colour', true)" />
+            <input type="text" class="name" value="${escapeAttr(t.team)}"
+                   data-original="${escapeAttr(t.team)}"
+                   onblur="onTbRenameTeam(this)"
+                   onkeydown="if(event.key==='Enter')this.blur()" />
+          </div>
+          <input type="text" placeholder="Sport" value="${escapeAttr(t.sport || '')}"
+                 onblur="onTbFieldEdit(this, 'sport', true)" />
+          <input type="text" placeholder="Team chant" value="${escapeAttr(t.chant || '')}"
+                 onblur="onTbFieldEdit(this, 'chant', true)" />
+        </div>
+        <div class="tb-team-roster"
+             ondragover="onTbDragOver(event)"
+             ondragleave="onTbDragLeave(event)"
+             ondrop="onTbDrop(event, '${escapeAttr(t.team)}')">${memberCards}</div>
+        <div class="tb-noms">
+          <div class="noms-label">Nominations</div>
+          <div class="nom-row">
+            <label>Row</label>
+            <select onchange="onTbSetNom(this, 'row')">
+              <option value="">— none —</option>
+              ${nomOptions(t.nomRow)}
+            </select>
+          </div>
+          <div class="nom-row">
+            <label>Sprint</label>
+            <select onchange="onTbSetNom(this, 'sprint')">
+              <option value="">— none —</option>
+              ${nomOptions(t.nomSprint)}
+            </select>
+          </div>
+          <div class="nom-row">
+            <label>Hang</label>
+            <select onchange="onTbSetNom(this, 'hang')">
+              <option value="">— none —</option>
+              ${nomOptions(t.nomHang)}
+            </select>
+          </div>
+        </div>
+        <button class="tb-team-delete" onclick="onTbDeleteTeam(this)">Delete team</button>
+      </div>
+    `;
+  }
+
+  // ----- Drag-and-drop handlers -----
+  let tbDragPayload = null;
+  function onTbDragStart(ev) {
+    const card = ev.currentTarget;
+    tbDragPayload = {
+      athleteId: card.dataset.athleteId,
+      from: card.dataset.fromTeam || null
+    };
+    card.classList.add('dragging');
+    try { ev.dataTransfer.setData('text/plain', tbDragPayload.athleteId); } catch (e) {}
+    ev.dataTransfer.effectAllowed = 'move';
+  }
+  function onTbDragEnd(ev) {
+    ev.currentTarget.classList.remove('dragging');
+  }
+  function onTbDragOver(ev) {
+    ev.preventDefault();
+    ev.currentTarget.classList.add('drag-over');
+    ev.dataTransfer.dropEffect = 'move';
+  }
+  function onTbDragLeave(ev) {
+    ev.currentTarget.classList.remove('drag-over');
+  }
+  async function onTbDrop(ev, toTeamName) {
+    ev.preventDefault();
+    ev.currentTarget.classList.remove('drag-over');
+    const payload = tbDragPayload;
+    tbDragPayload = null;
+    if (!payload) return;
+    if ((payload.from || null) === (toTeamName || null)) return;
+    await moveAthlete(payload.athleteId, payload.from || null, toTeamName || null);
+  }
+
+  // ----- Mobile/keyboard move menu -----
+  function onTbMoveMenu(btn, ev) {
+    ev.stopPropagation();
+    const card = btn.closest('.tb-athlete');
+    const aid = card.dataset.athleteId;
+    const from = card.dataset.fromTeam || null;
+    const choices = [{ label: 'Unassigned', value: null }]
+      .concat(teamsState.teams
+        .filter(t => t.team !== from)
+        .map(t => ({ label: t.team, value: t.team })));
+    const labelText = choices.map((c, i) => `${i + 1}. ${c.label}`).join('\n');
+    const pick = window.prompt(`Move ${nameForId(aid)} to:\n\n${labelText}\n\nEnter the number:`);
+    if (!pick) return;
+    const idx = parseInt(pick, 10) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= choices.length) return;
+    moveAthlete(aid, from, choices[idx].value);
+  }
+
+  function nameForId(aid) {
+    const a = teamsState.byId[aid];
+    return a && a.name ? a.name : aid;
+  }
+
+  // Move an athlete between teams (or Unassigned). Persists by re-saving the
+  // affected teams' Athlete_IDs lists.
+  async function moveAthlete(athleteId, fromTeam, toTeam) {
+    if (teamsState.busy) return;
+    teamsState.busy = true;
+    try {
+      // Update local state.
+      const calls = [];
+      if (fromTeam) {
+        const tf = teamsState.teams.find(t => t.team === fromTeam);
+        if (tf) {
+          tf.athleteIds = (tf.athleteIds || []).filter(id => id !== athleteId);
+          // If nominee was the moved athlete, clear it.
+          if (tf.nomRow === athleteId) tf.nomRow = '';
+          if (tf.nomSprint === athleteId) tf.nomSprint = '';
+          if (tf.nomHang === athleteId) tf.nomHang = '';
+          calls.push(apiPost({
+            action: 'saveClashTeam',
+            team: tf.team,
+            athleteIds: tf.athleteIds,
+            nomRow: tf.nomRow || '',
+            nomSprint: tf.nomSprint || '',
+            nomHang: tf.nomHang || ''
+          }));
+        }
+      } else {
+        teamsState.unassigned = teamsState.unassigned.filter(a => a.athleteId !== athleteId);
+      }
+
+      if (toTeam) {
+        const tt = teamsState.teams.find(t => t.team === toTeam);
+        if (tt) {
+          tt.athleteIds = (tt.athleteIds || []).slice();
+          if (tt.athleteIds.indexOf(athleteId) === -1) tt.athleteIds.push(athleteId);
+          calls.push(apiPost({
+            action: 'saveClashTeam',
+            team: tt.team,
+            athleteIds: tt.athleteIds
+          }));
+        }
+      } else {
+        // Going back to Unassigned — make sure the athlete shows up in the pool.
+        if (!teamsState.unassigned.find(a => a.athleteId === athleteId)) {
+          const cached = teamsState.byId[athleteId] ||
+            { athleteId, name: athleteId, gender: '', sports: [] };
+          teamsState.unassigned.push(cached);
+          teamsState.unassigned.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        }
+      }
+
+      renderTeamsBuilder();
+      const results = await Promise.all(calls);
+      const failed = results.filter(r => !r || !r.success);
+      if (failed.length) toast(`${failed.length} save${failed.length === 1 ? '' : 's'} failed`, 'error');
+      else toast('Moved', 'success');
+    } catch (e) {
+      toast('Network error', 'error');
+    } finally {
+      teamsState.busy = false;
+    }
+  }
+
+  // ----- Edits to team fields (sport, colour, chant) -----
+  function onTbFieldEdit(input, key, immediate) {
+    const card = input.closest('.tb-team');
+    const teamName = card && card.dataset.team;
+    if (!teamName) return;
+    const t = teamsState.teams.find(x => x.team === teamName);
+    if (!t) return;
+    const value = input.value;
+    t[key] = value;
+    // Debounce colour input (fires on every drag); blur saves are immediate.
+    const debKey = teamName + ':' + key;
+    clearTimeout(teamsState.debounceTimers[debKey]);
+    const fire = () => {
+      const payload = { action: 'saveClashTeam', team: teamName };
+      payload[key === 'sport' ? 'sport'
+            : key === 'chant' ? 'chant'
+            : 'colour'] = value;
+      apiPost(payload).then(res => {
+        if (!res || !res.success) toast('Save failed', 'error');
+      });
+    };
+    if (immediate) fire();
+    else teamsState.debounceTimers[debKey] = setTimeout(fire, 400);
+  }
+
+  async function onTbRenameTeam(input) {
+    const card = input.closest('.tb-team');
+    if (!card) return;
+    const oldName = input.dataset.original;
+    const newName = input.value.trim();
+    if (!newName || newName === oldName) {
+      input.value = oldName;
+      return;
+    }
+    // Rename = delete old + create new (Clash_Teams keys by Team name).
+    const t = teamsState.teams.find(x => x.team === oldName);
+    if (!t) return;
+    teamsState.busy = true;
+    try {
+      const createRes = await apiPost({
+        action: 'saveClashTeam',
+        team: newName,
+        sport: t.sport || '',
+        colour: t.colour || '',
+        chant: t.chant || '',
+        athleteIds: t.athleteIds || [],
+        nomRow: t.nomRow || '',
+        nomSprint: t.nomSprint || '',
+        nomHang: t.nomHang || ''
+      });
+      if (!createRes || !createRes.success) {
+        toast('Rename failed', 'error');
+        input.value = oldName;
+        return;
+      }
+      await apiPost({ action: 'deleteClashTeam', team: oldName });
+      t.team = newName;
+      input.dataset.original = newName;
+      card.dataset.team = newName;
+      toast('Team renamed', 'success');
+      renderTeamsBuilder();
+    } finally {
+      teamsState.busy = false;
+    }
+  }
+
+  async function onTbSetNom(select, slot) {
+    const card = select.closest('.tb-team');
+    if (!card) return;
+    const teamName = card.dataset.team;
+    const t = teamsState.teams.find(x => x.team === teamName);
+    if (!t) return;
+    const aid = select.value || '';
+    const res = await apiPost({
+      action: 'saveClashNomination',
+      team: teamName,
+      slot: slot,
+      athleteId: aid
+    });
+    if (res && res.success) {
+      if (slot === 'row') t.nomRow = aid;
+      if (slot === 'sprint') t.nomSprint = aid;
+      if (slot === 'hang') t.nomHang = aid;
+      toast('Nomination saved', 'success');
+    } else {
+      toast((res && res.error) || 'Save failed', 'error');
+    }
+  }
+
+  async function onTbAddTeam() {
+    const name = window.prompt('New team name:');
+    if (!name || !name.trim()) return;
+    const trimmed = name.trim();
+    if (teamsState.teams.find(t => t.team === trimmed)) {
+      toast('That team already exists', 'error');
+      return;
+    }
+    const res = await apiPost({
+      action: 'saveClashTeam',
+      team: trimmed,
+      sport: '',
+      colour: '#874B46',
+      chant: '',
+      athleteIds: []
+    });
+    if (res && res.success) {
+      teamsState.teams.push({
+        team: trimmed, sport: '', colour: '#874B46', chant: '',
+        athleteIds: [], nomRow: '', nomSprint: '', nomHang: ''
+      });
+      renderTeamsBuilder();
+      toast('Team added', 'success');
+    } else {
+      toast((res && res.error) || 'Save failed', 'error');
+    }
+  }
+
+  async function onTbDeleteTeam(btn) {
+    const card = btn.closest('.tb-team');
+    if (!card) return;
+    const teamName = card.dataset.team;
+    if (!window.confirm(`Delete the team "${teamName}"? Its athletes will go back to Unassigned. Past Clash_Results rows stay intact.`)) return;
+    const t = teamsState.teams.find(x => x.team === teamName);
+    if (!t) return;
+    const res = await apiPost({ action: 'deleteClashTeam', team: teamName });
+    if (res && res.success) {
+      // Push the team's athletes back into Unassigned locally.
+      (t.athleteIds || []).forEach(id => {
+        const cached = teamsState.byId[id] || { athleteId: id, name: id, gender: '', sports: [] };
+        if (!teamsState.unassigned.find(a => a.athleteId === id)) {
+          teamsState.unassigned.push(cached);
+        }
+      });
+      teamsState.unassigned.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      teamsState.teams = teamsState.teams.filter(x => x.team !== teamName);
+      renderTeamsBuilder();
+      toast('Team deleted', 'success');
+    } else {
+      toast((res && res.error) || 'Delete failed', 'error');
+    }
+  }
+
+  // ============================================
   // DISPLAY MODE — big-screen scoreboard
   // ============================================
   // Names match the labels used in admin's "Latest Results" formatting.
@@ -3319,6 +4084,9 @@
 
     document.getElementById('stuMain').innerHTML = [
       renderStuSec1Team(),
+      renderStuSec15Day(),
+      renderStuSec16Scoring(),
+      renderStuSec17Plan(),
       renderStuSec2Targets(),
       renderStuSec3Nominations(),
       renderStuSec4Lunch(),
@@ -3348,6 +4116,96 @@
         </div>
         <div class="roster">${rosterCards}</div>
         ${chantBlock}
+      </section>
+    `;
+  }
+
+  // ----- Section 1.5: The Day -----
+  function renderStuSec15Day() {
+    return `
+      <section class="stu-section stu-section-day">
+        <div class="day-eyebrow">The day</div>
+        <h2 class="day-headline">Clash of the Codes — Thursday 5 June, 08:30&#8211;12:30</h2>
+        <p class="day-body">This is the day that pulls a year of training together. Your fitness retests, the team events, and the way you fuel and recover all feed into your final grades across <strong>Physiology</strong>, <strong>Psychology</strong>, and <strong>Health &amp; Skills</strong>. It's competitive, but it's also the assessment — so the prep counts as much as the day itself.</p>
+      </section>
+    `;
+  }
+
+  // ----- Section 1.6: How you'll be scored -----
+  const STU_SCORE_CARDS = [
+    {
+      title: 'Planning',
+      line: 'Your team\'s plan for the day — how you organise yourselves before the event.',
+      detail: 'Warm-up, hype, nominations, recovery, lunch. Submitted before the day, judged on quality and detail. A team that has thought it through scores higher than a team that improvises.'
+    },
+    {
+      title: 'Performance',
+      line: 'Your fitness retests on the day and how your team finishes in the team events.',
+      detail: 'The 50/50 model rewards both how much you improve on your last score and the standard you reach for your age and gender. Beat your last result, and hit a strong number — both halves count.'
+    },
+    {
+      title: 'Nutrition',
+      line: 'Your recovery lunch and the team share-out.',
+      detail: 'What you eat, why it works, and how you explain it. Build on what you already know from Fuel Lab. The reasoning is what we grade — anyone can pack a sandwich, fewer can tell you why it\'s the right one for a four-hour morning.'
+    },
+    {
+      title: 'Technique',
+      line: 'Your movement quality across the year — sourced from your strength sessions.',
+      detail: 'Not tested separately on the day. Your technique scores come from the work you\'ve done all year in the strength portal. Show up to your last sessions — they still count toward this grade.'
+    }
+  ];
+
+  function renderStuSec16Scoring() {
+    const cards = STU_SCORE_CARDS.map((c, i) => `
+      <div class="score-card">
+        <div class="score-card-head">
+          <div class="score-card-title">${escapeHtml(c.title)}</div>
+          <div class="score-card-line">${escapeHtml(c.line)}</div>
+        </div>
+        <button class="score-card-toggle" onclick="toggleScoreCard(${i}, this)">More detail</button>
+        <div class="score-card-detail" id="scoreCardDetail-${i}">${escapeHtml(c.detail)}</div>
+      </div>
+    `).join('');
+    return `
+      <section class="stu-section">
+        <h2>How you'll be scored</h2>
+        <p class="lede">Four pieces feed your final grade. Some you build over the year, some you set up before the day, some happen on the day.</p>
+        <div class="score-cards">${cards}</div>
+      </section>
+    `;
+  }
+
+  function toggleScoreCard(i, btn) {
+    const el = document.getElementById('scoreCardDetail-' + i);
+    if (!el) return;
+    const open = el.classList.toggle('open');
+    btn.textContent = open ? 'Less detail' : 'More detail';
+  }
+
+  // ----- Section 1.7: What you need to plan -----
+  // Grit hang stays masked: "team challenge representative".
+  const STU_PLAN_ITEMS = [
+    'Agree your team chant',
+    'Pick your warm-up routine (3–5 minutes, includes everyone)',
+    'Decide your hype moment',
+    'Nominate your rower, sprinter, and team challenge representative',
+    'Plan your team snacks for between events',
+    'Plan your recovery lunch',
+    'Submit your team plan (link or instructions TBC)'
+  ];
+
+  function renderStuSec17Plan() {
+    const items = STU_PLAN_ITEMS.map((label, i) => `
+      <label class="plan-item">
+        <input type="checkbox" onchange="this.parentElement.classList.toggle('done', this.checked)" />
+        <span>${escapeHtml(label)}</span>
+      </label>
+    `).join('');
+    return `
+      <section class="stu-section">
+        <h2>What you need to plan</h2>
+        <p class="lede">Work through this with your team. Tick things off as you go — the checkboxes are just for you, they don't save.</p>
+        <div class="plan-list">${items}</div>
       </section>
     `;
   }
@@ -3437,7 +4295,7 @@
   function renderStuSec3Nominations() {
     const cards = STU_NOMS.map(n => nomCardHTML(n)).join('');
     return `
-      <section class="stu-section">
+      <section class="stu-section" data-stu-section="nominations">
         <h2>Team nominations</h2>
         <p class="lede">Pick the right teammate for each event. You can change a pick any time before the day.</p>
         ${cards}
@@ -3525,15 +4383,13 @@
   }
 
   function rerenderNominations() {
-    // Find and replace just the nominations section so the rest of the page
-    // (and any open toggles) doesn't blink.
-    const sections = document.querySelectorAll('#stuMain .stu-section');
-    if (sections.length >= 3) {
-      const newHTML = renderStuSec3Nominations();
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = newHTML;
-      sections[2].replaceWith(wrapper.firstElementChild);
-    }
+    // Replace just the nominations section so the rest of the page
+    // (and any open toggles, in-progress lunch text) doesn't blink.
+    const target = document.querySelector('#stuMain [data-stu-section="nominations"]');
+    if (!target) return;
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderStuSec3Nominations();
+    target.replaceWith(wrapper.firstElementChild);
   }
 
   // ----- Section 4: Recovery lunch planner -----
