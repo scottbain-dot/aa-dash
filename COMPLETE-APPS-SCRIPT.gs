@@ -261,6 +261,9 @@ function doGet(e) {
     if (action === 'getClashConfig') {
       return apJson(handleGetClashConfig());
     }
+    if (action === 'getUnassignedAthletes') {
+      return apJson(handleGetUnassignedAthletes(ss));
+    }
     if (action === 'getClashLunchPlan') {
       return apJson(handleGetClashLunchPlan(ss, e.parameter.email, e.parameter.athleteId));
     }
@@ -420,6 +423,10 @@ function doPost(e) {
     if (data.action === 'setClashConfig') {
       var ssClashC = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSetClashConfig(ssClashC, data));
+    }
+    if (data.action === 'deleteClashTeam') {
+      var ssClashD = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleDeleteClashTeam(ssClashD, data));
     }
     if (data.action === 'saveClashLunchPlan') {
       var ssClashL = SpreadsheetApp.getActiveSpreadsheet();
@@ -3715,6 +3722,120 @@ function handleSaveClashLunchPlan(ss, data) {
     };
     clashWriteRow(sheet, headers, values, targetRow);
     return { success: true, plan: values };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ----- Team-builder helpers -----
+
+// Returns every G9 athlete not currently in any Clash_Teams.Athlete_IDs list.
+// Treats Grade and Year_Group as interchangeable, accepts "9", 9, or "G9".
+function handleGetUnassignedAthletes(ss) {
+  try {
+    var athletes = ss.getSheetByName('Athletes');
+    if (!athletes) return { success: true, athletes: [] };
+    var data = athletes.getDataRange().getValues();
+    if (data.length < 2) return { success: true, athletes: [] };
+    var hdr = data[0];
+    var idC = hdr.indexOf('Athlete_ID');
+    var emC = hdr.indexOf('Email');
+    var nC = hdr.indexOf('Name');
+    var fnC = hdr.indexOf('First_Name');
+    var lnC = hdr.indexOf('Last_Name');
+    var gC = hdr.indexOf('Gender');
+    var grC = hdr.indexOf('Grade');
+    var ygC = hdr.indexOf('Year_Group');
+    var sport1C = hdr.indexOf('Sport_1');
+    var sport2C = hdr.indexOf('Sport_2');
+    var sport3C = hdr.indexOf('Sport_3');
+    if (idC < 0) return { success: false, error: 'Athlete_ID column missing' };
+
+    function isG9(v) {
+      if (v == null) return false;
+      var s = String(v).trim().toUpperCase().replace(/^G/, '');
+      return s === '9';
+    }
+
+    // Build a set of assigned IDs from Clash_Teams.
+    var assigned = {};
+    var teamsSheet = ss.getSheetByName('Clash_Teams');
+    if (teamsSheet) {
+      var tData = teamsSheet.getDataRange().getValues();
+      if (tData.length >= 2) {
+        var tHdr = tData[0];
+        var idsC = tHdr.indexOf('Athlete_IDs');
+        if (idsC >= 0) {
+          for (var t = 1; t < tData.length; t++) {
+            String(tData[t][idsC] || '').split(',').forEach(function (s) {
+              var id = String(s).trim();
+              if (id) assigned[id] = true;
+            });
+          }
+        }
+      }
+    }
+
+    var out = [];
+    for (var i = 1; i < data.length; i++) {
+      var aid = data[i][idC];
+      if (!aid) continue;
+      var key = String(aid).trim();
+      if (assigned[key]) continue;
+
+      var gradeVal = grC >= 0 ? data[i][grC] : null;
+      var ygVal = ygC >= 0 ? data[i][ygC] : null;
+      if (!isG9(gradeVal) && !isG9(ygVal)) continue;
+
+      var name = '';
+      if (nC >= 0 && data[i][nC]) {
+        name = String(data[i][nC]);
+      } else if (fnC >= 0) {
+        name = String(data[i][fnC] || '') + ' ' + (lnC >= 0 ? String(data[i][lnC] || '') : '');
+      }
+      var sports = [];
+      [sport1C, sport2C, sport3C].forEach(function (c) {
+        if (c >= 0 && data[i][c]) sports.push(String(data[i][c]).trim());
+      });
+
+      out.push({
+        athleteId: key,
+        name: name.trim(),
+        email: emC >= 0 ? data[i][emC] : '',
+        gender: gC >= 0 ? String(data[i][gC] || '').trim().toUpperCase().charAt(0) : '',
+        sports: sports.filter(Boolean)
+      });
+    }
+    out.sort(function (a, b) {
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    return { success: true, athletes: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// Delete a team row from Clash_Teams by name. No cascade — Clash_Results
+// rows for past events remain intact (their Team field still references the
+// old name, which is the right behaviour for an audit trail).
+function handleDeleteClashTeam(ss, data) {
+  try {
+    if (!data.team) return { success: false, error: 'Missing team name' };
+    var sheet = ss.getSheetByName('Clash_Teams');
+    if (!sheet) return { success: false, error: 'Clash_Teams sheet not found' };
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { success: false, error: 'No teams to delete' };
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var teamC = headers.indexOf('Team');
+    if (teamC < 0) return { success: false, error: 'Team column missing' };
+    var col = sheet.getRange(2, teamC + 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < col.length; i++) {
+      if (String(col[i][0]).trim() === String(data.team).trim()) {
+        sheet.deleteRow(i + 2);
+        return { success: true, team: data.team };
+      }
+    }
+    return { success: false, error: 'Team not found: ' + data.team };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
