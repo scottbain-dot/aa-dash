@@ -261,6 +261,9 @@ function doGet(e) {
     if (action === 'getClashConfig') {
       return apJson(handleGetClashConfig());
     }
+    if (action === 'getClashLunchPlan') {
+      return apJson(handleGetClashLunchPlan(ss, e.parameter.email, e.parameter.athleteId));
+    }
 
     // ===== EXISTING DASHBOARD LOGIC =====
     if (e.parameter.admin === 'true') {
@@ -417,6 +420,10 @@ function doPost(e) {
     if (data.action === 'setClashConfig') {
       var ssClashC = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSetClashConfig(ssClashC, data));
+    }
+    if (data.action === 'saveClashLunchPlan') {
+      var ssClashL = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSaveClashLunchPlan(ssClashL, data));
     }
 
     if (data.athleteId && data.updates) {
@@ -3615,6 +3622,99 @@ function handleSetClashConfig(ss, data) {
       configSheet.getRange(lastRow + 1, 1, 1, 2).setValues([[key, value]]);
     }
     return { success: true, key: key, value: value };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ----- Clash_Lunch_Plans (student-facing recovery-lunch planner) -----
+// One row per athlete, updated in place on every save. Stored as its own
+// sheet (rather than adding per-student columns to Clash_Teams) because the
+// data is per-athlete and needs to be capturable for grading later.
+
+function ensureClashLunchPlansSheet(ss) {
+  var sheet = ss.getSheetByName('Clash_Lunch_Plans');
+  var headers = ['Timestamp', 'Athlete_ID', 'Email', 'Name', 'Team', 'Bringing', 'Why'];
+  if (!sheet) {
+    sheet = ss.insertSheet('Clash_Lunch_Plans');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  var existing = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  for (var i = 0; i < headers.length; i++) {
+    if (existing.indexOf(headers[i]) === -1) {
+      var newCol = Math.max(sheet.getLastColumn() + 1, i + 1);
+      sheet.getRange(1, newCol).setValue(headers[i]);
+    }
+  }
+  return sheet;
+}
+
+function handleGetClashLunchPlan(ss, email, athleteId) {
+  try {
+    if (!email && !athleteId) return { success: false, error: 'Provide email or athleteId' };
+    var aid = athleteId || lookupAthleteIdByEmail(ss, email);
+    if (!aid) return { success: true, plan: null };
+    var sheet = ensureClashLunchPlansSheet(ss);
+    var ro = clashReadObjects(sheet);
+    // Most recent row wins (read from bottom up).
+    for (var i = ro.rows.length - 1; i >= 0; i--) {
+      var r = ro.rows[i];
+      if (String(r.Athlete_ID).trim() === String(aid).trim()) {
+        return {
+          success: true,
+          plan: {
+            athleteId: r.Athlete_ID,
+            email: r.Email || '',
+            name: r.Name || '',
+            team: r.Team || '',
+            bringing: r.Bringing || '',
+            why: r.Why || '',
+            timestamp: r.Timestamp || null
+          }
+        };
+      }
+    }
+    return { success: true, plan: null };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleSaveClashLunchPlan(ss, data) {
+  try {
+    if (!data.email && !data.athleteId) return { success: false, error: 'Missing email or athleteId' };
+    var aid = data.athleteId || lookupAthleteIdByEmail(ss, data.email);
+    if (!aid) return { success: false, error: 'Athlete not found' };
+
+    var info = clashGetAthleteInfo(ss, aid) || {};
+    var team = clashTeamForAthlete(ss, aid) || '';
+
+    var sheet = ensureClashLunchPlansSheet(ss);
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    var existing = clashReadObjects(sheet);
+    var targetRow = -1;
+    for (var i = 0; i < existing.rows.length; i++) {
+      if (String(existing.rows[i].Athlete_ID).trim() === String(aid).trim()) {
+        targetRow = existing.rows[i].__row;
+        break;
+      }
+    }
+
+    var values = {
+      Timestamp: new Date(),
+      Athlete_ID: aid,
+      Email: data.email || info.email || '',
+      Name: info.name || '',
+      Team: team,
+      Bringing: data.bringing || '',
+      Why: data.why || ''
+    };
+    clashWriteRow(sheet, headers, values, targetRow);
+    return { success: true, plan: values };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
