@@ -56,6 +56,376 @@
   ::placeholder { color: var(--ink-mute); opacity: 0.7; }
 
   /* ============================================
+     DISPLAY MODE — big-screen scoreboard
+     ============================================ */
+  #displayView {
+    display: none;
+    position: fixed; inset: 0;
+    background: var(--ink);
+    color: var(--cream);
+    overflow: hidden;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  #displayView.visible { display: grid; }
+  #displayView {
+    grid-template-rows: 15% 60% 25%;
+  }
+
+  /* radial accents like the editorial hero */
+  .display-bg {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(212,175,55,0.10), transparent 38%),
+      radial-gradient(circle at 88% 82%, rgba(135,75,70,0.22), transparent 50%);
+  }
+
+  /* ----- HEADER (top 15%) ----- */
+  .display-header {
+    position: relative;
+    padding: 28px 56px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-bottom: 1px solid rgba(250,243,237,0.08);
+  }
+  .display-header .brand-row {
+    display: flex; align-items: baseline;
+    gap: 24px;
+    margin-bottom: 16px;
+  }
+  .display-header .warriors-tag {
+    font-size: clamp(11px, 0.9vw, 14px);
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .display-header h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: clamp(48px, 5.5vw, 84px);
+    line-height: 1;
+    color: var(--cream);
+    font-style: italic;
+    letter-spacing: -0.02em;
+  }
+  .display-header h1 em { font-style: normal; color: var(--gold); }
+  .display-header .year {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    color: rgba(250,243,237,0.5);
+    font-size: clamp(20px, 2.2vw, 32px);
+    margin-left: auto;
+    letter-spacing: 0.04em;
+  }
+  .display-header .now-row {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    color: rgba(250,243,237,0.75);
+    font-size: clamp(16px, 1.5vw, 22px);
+  }
+  .display-header .now-tag {
+    font-size: clamp(11px, 0.9vw, 14px);
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    padding: 4px 12px;
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .display-header .now-event {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(24px, 2.4vw, 36px);
+    color: var(--cream);
+  }
+  .display-header .clock {
+    margin-left: auto;
+    font-family: 'Fraunces', serif;
+    font-feature-settings: 'tnum';
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: clamp(36px, 4vw, 64px);
+    color: var(--gold);
+  }
+
+  /* ----- MIDDLE (standings table) ----- */
+  .display-middle {
+    position: relative;
+    padding: 24px 56px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .table-head {
+    display: grid;
+    grid-template-columns: 88px 1fr 110px 110px 110px;
+    gap: 24px;
+    padding: 0 28px 14px;
+    color: rgba(250,243,237,0.45);
+    font-size: clamp(11px, 0.85vw, 13px);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(250,243,237,0.08);
+  }
+  .table-head .col-rank { text-align: center; }
+  .table-head .col-num { text-align: right; }
+  .standings {
+    position: relative;
+    flex: 1;
+    margin-top: 8px;
+  }
+  .standings-row-d {
+    position: absolute;
+    left: 0; right: 0;
+    height: var(--row-h, 86px);
+    display: grid;
+    grid-template-columns: 88px 1fr 110px 110px 110px;
+    gap: 24px;
+    align-items: center;
+    padding: 0 28px;
+    background: rgba(250,243,237,0.03);
+    border: 1px solid rgba(250,243,237,0.06);
+    border-left: 6px solid var(--row-accent, var(--burgundy));
+    border-radius: 14px;
+    margin-top: 8px;
+    transition: top 0.7s cubic-bezier(0.4, 0.0, 0.2, 1),
+                box-shadow 1.2s ease,
+                background 1.2s ease;
+  }
+  .standings-row-d .rank-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: clamp(48px, 5vw, 72px);
+    color: var(--gold);
+    line-height: 1;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .standings-row-d .rank-num.tied::before {
+    content: 'T';
+    font-size: 0.45em;
+    vertical-align: super;
+    color: rgba(212,175,55,0.7);
+    margin-right: 4px;
+    font-weight: 600;
+  }
+  .standings-row-d .team-block { min-width: 0; }
+  .standings-row-d .team-name-d {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(28px, 2.6vw, 40px);
+    color: var(--cream);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .standings-row-d .team-sport {
+    font-size: clamp(12px, 1vw, 16px);
+    color: rgba(250,243,237,0.5);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .standings-row-d .num-col {
+    text-align: right;
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(28px, 2.4vw, 38px);
+    color: rgba(250,243,237,0.85);
+    line-height: 1;
+  }
+  .standings-row-d .num-col .lbl {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(9px, 0.7vw, 11px);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(250,243,237,0.4);
+    margin-top: 6px;
+  }
+
+  /* Gold flash when a team's score lands or rank changes */
+  @keyframes goldFlash {
+    0% { background: rgba(212,175,55,0.18); box-shadow: 0 0 0 rgba(212,175,55,0); }
+    25% { background: rgba(212,175,55,0.28); box-shadow: 0 0 40px rgba(212,175,55,0.45); }
+    100% { background: rgba(250,243,237,0.03); box-shadow: 0 0 0 rgba(212,175,55,0); }
+  }
+  .standings-row-d.flash {
+    animation: goldFlash 2.2s ease-out;
+  }
+
+  /* Pre-event schedule replaces standings until first result */
+  .schedule-pane {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 8px 0;
+    align-content: start;
+  }
+  .schedule-item {
+    background: rgba(250,243,237,0.04);
+    border: 1px solid rgba(250,243,237,0.08);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .schedule-item .slot {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(22px, 1.8vw, 28px);
+    color: var(--gold);
+    min-width: 110px;
+    font-variant-numeric: tabular-nums;
+  }
+  .schedule-item .ev {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(18px, 1.5vw, 24px);
+    color: var(--cream);
+  }
+  .schedule-item .ty {
+    margin-left: auto;
+    font-size: clamp(10px, 0.7vw, 12px);
+    color: rgba(250,243,237,0.45);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .schedule-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: rgba(250,243,237,0.4);
+    font-size: clamp(14px, 1.2vw, 18px);
+    padding: 40px 20px;
+  }
+
+  /* ----- FOOTER (latest results + individual awards) ----- */
+  .display-footer {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 16px 56px 28px;
+    border-top: 1px solid rgba(250,243,237,0.08);
+    overflow: hidden;
+  }
+  .footer-pane {
+    background: rgba(250,243,237,0.03);
+    border: 1px solid rgba(250,243,237,0.06);
+    border-radius: 14px;
+    padding: 18px 22px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .footer-pane h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(11px, 0.9vw, 14px);
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .ticker-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+  }
+  .ticker-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 6px 0;
+    border-bottom: 1px dashed rgba(250,243,237,0.06);
+    font-size: clamp(15px, 1.25vw, 19px);
+    color: rgba(250,243,237,0.85);
+  }
+  .ticker-list li:last-child { border-bottom: 0; }
+  .ticker-list li .who {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    color: var(--cream);
+    flex-shrink: 0;
+  }
+  .ticker-list li .what {
+    flex: 1;
+    color: rgba(250,243,237,0.7);
+  }
+  .ticker-list li .v {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .awards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 18px;
+    overflow: hidden;
+  }
+  .award-cell {
+    padding: 8px 4px;
+    border-bottom: 1px dashed rgba(250,243,237,0.06);
+  }
+  .award-cell .test {
+    font-size: clamp(10px, 0.75vw, 12px);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(250,243,237,0.45);
+    margin-bottom: 3px;
+  }
+  .award-cell .winner {
+    display: flex; gap: 8px; align-items: baseline;
+    font-size: clamp(14px, 1.15vw, 18px);
+  }
+  .award-cell .winner .nm {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    color: var(--cream);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .award-cell .winner .vl {
+    margin-left: auto;
+    font-family: 'Fraunces', serif;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+  }
+  .award-empty {
+    font-size: clamp(11px, 0.9vw, 14px);
+    color: rgba(250,243,237,0.3);
+    font-style: italic;
+  }
+
+  /* Tall-narrow projector fallback: don't break layout below 1280×720 */
+  @media (max-width: 1280px) {
+    .display-header { padding: 20px 32px 0; }
+    .display-middle { padding: 18px 32px 12px; }
+    .display-footer { padding: 12px 32px 20px; }
+    .table-head, .standings-row-d {
+      grid-template-columns: 72px 1fr 90px 90px 90px;
+      gap: 16px;
+    }
+  }
+
+  /* ============================================
      COMING SOON — non-admin landing
      ============================================ */
   #comingSoon {
@@ -779,6 +1149,41 @@
 </div>
 
 <!-- ============================================
+     DISPLAY MODE (?display=true)
+     ============================================ -->
+<div id="displayView">
+  <div class="display-bg"></div>
+
+  <header class="display-header">
+    <div class="brand-row">
+      <span class="warriors-tag">FIS Warriors</span>
+      <h1>Clash of the <em>Codes</em></h1>
+      <span class="year">2026</span>
+    </div>
+    <div class="now-row">
+      <span class="now-tag">Now</span>
+      <span class="now-event" id="dNowEvent">—</span>
+      <span class="clock" id="dClock">00:00</span>
+    </div>
+  </header>
+
+  <section class="display-middle">
+    <div id="dMiddle"></div>
+  </section>
+
+  <footer class="display-footer">
+    <div class="footer-pane">
+      <h2>Latest Results</h2>
+      <ul class="ticker-list" id="dResults"></ul>
+    </div>
+    <div class="footer-pane">
+      <h2>Individual Awards So Far</h2>
+      <div class="awards-grid" id="dAwards"></div>
+    </div>
+  </footer>
+</div>
+
+<!-- ============================================
      AUTH GATE (admin)
      ============================================ -->
 <div id="authGate">
@@ -858,14 +1263,19 @@
   const ADMIN_EMAILS = ['scott_bain@fis.edu']; // lowercase
 
   // ============================================
-  // ROUTING — admin mode vs coming-soon
+  // ROUTING — display / admin / coming-soon
   // ============================================
-  const isAdminMode = new URLSearchParams(location.search).get('admin') === 'true';
+  const urlParams = new URLSearchParams(location.search);
+  const isAdminMode = urlParams.get('admin') === 'true';
+  const isDisplayMode = urlParams.get('display') === 'true';
 
-  if (!isAdminMode) {
-    document.getElementById('comingSoon').classList.add('visible');
-  } else {
+  if (isDisplayMode) {
+    document.getElementById('displayView').classList.add('visible');
+    bootstrapDisplay();
+  } else if (isAdminMode) {
     document.getElementById('authGate').classList.add('visible');
+  } else {
+    document.getElementById('comingSoon').classList.add('visible');
   }
 
   // ============================================
@@ -913,7 +1323,7 @@
   }
 
   function initAuthGate() {
-    if (!isAdminMode) return;
+    if (!isAdminMode || isDisplayMode) return;
     const cached = sessionStorage.getItem('aa_clash_token');
     if (cached) {
       const payload = decodeJwt(cached);
@@ -1758,6 +2168,436 @@
   function escapeAttr(s) {
     if (s == null) return '';
     return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // ============================================
+  // DISPLAY MODE — big-screen scoreboard
+  // ============================================
+  // Names match the labels used in admin's "Latest Results" formatting.
+  const TEST_LABELS_D = {
+    broad_jump:  { label: 'Broad Jump', unit: 'cm' },
+    sprint_40m:  { label: '40m Sprint', unit: 'sec' },
+    agility_510: { label: '5-10-5',     unit: 'sec' },
+    cooper:      { label: 'Cooper',     unit: 'm' }
+  };
+  const FITNESS_KEYS_D = Object.keys(TEST_LABELS_D);
+
+  const displayState = {
+    events: [],
+    teams: [],
+    athletesById: {},
+    results: [],
+    standings: [],
+    prevStandings: {},     // team -> { finalRank, fitnessScore, eventPoints }
+    rowHeightPx: 96
+  };
+
+  async function bootstrapDisplay() {
+    startClock();
+    try {
+      await loadDisplayStatic();
+      await refreshDisplay();
+    } catch (e) {
+      console.error(e);
+    }
+    setInterval(refreshDisplay, 10000);
+    // Recompute "current event" once a minute so the title bar tracks the schedule
+    // without waiting on a full refresh.
+    setInterval(updateNowEvent, 60000);
+    // Re-render the layout on window resize so row height tracks middle-zone size.
+    window.addEventListener('resize', () => {
+      computeRowHeight();
+      renderDisplayMiddle();
+    });
+  }
+
+  async function loadDisplayStatic() {
+    const [tms, students] = await Promise.all([
+      apiGet('getClashTeams'),
+      apiGet('getAllStudents').catch(() => ({ students: [] }))
+    ]);
+    displayState.teams = (tms && tms.teams) || [];
+    displayState.athletesById = {};
+    ((students && students.students) || []).forEach(s => {
+      displayState.athletesById[String(s.Athlete_ID).trim()] = {
+        name: s.Name || 'Unknown',
+        email: s.Email || '',
+        gender: s.Gender || ''
+      };
+    });
+  }
+
+  async function refreshDisplay() {
+    try {
+      const [evs, lb, res] = await Promise.all([
+        apiGet('getClashEvents'),
+        apiGet('getClashLeaderboard'),
+        apiGet('getClashResults')
+      ]);
+      displayState.events = (evs && evs.events) || [];
+      const standings = (lb && lb.standings) || [];
+      displayState.results = (res && res.results) || [];
+
+      // Diff against the previous standings to find rows worth flashing.
+      const changed = {};
+      standings.forEach(s => {
+        const prev = displayState.prevStandings[s.team];
+        if (!prev) return; // first paint — no flash so the screen isn't a disco
+        if (prev.finalRank !== s.finalRank ||
+            prev.eventPoints !== s.eventPoints ||
+            prev.fitnessScore !== s.fitnessScore) {
+          changed[s.team] = true;
+        }
+      });
+
+      displayState.standings = standings;
+      displayState.prevStandings = {};
+      standings.forEach(s => {
+        displayState.prevStandings[s.team] = {
+          finalRank: s.finalRank,
+          fitnessScore: s.fitnessScore,
+          eventPoints: s.eventPoints
+        };
+      });
+
+      computeRowHeight();
+      renderDisplayMiddle(changed);
+      renderDisplayResults();
+      renderDisplayAwards();
+      updateNowEvent();
+    } catch (e) {
+      console.error('display refresh failed', e);
+    }
+  }
+
+  function computeRowHeight() {
+    const middle = document.querySelector('.display-middle');
+    if (!middle) return;
+    // 6 rows, 8px gap between each — leave ~28px for header inside middle.
+    const inner = middle.clientHeight - 28 - 16;
+    const teams = Math.max(6, displayState.standings.length || displayState.teams.length || 6);
+    displayState.rowHeightPx = Math.max(60, Math.floor((inner - (teams - 1) * 8) / teams));
+  }
+
+  // ---------- Title bar / clock / "now" event ----------
+  function startClock() {
+    const tick = () => {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const el = document.getElementById('dClock');
+      if (el) el.textContent = `${hh}:${mm}`;
+    };
+    tick();
+    setInterval(tick, 15000);
+  }
+
+  function updateNowEvent() {
+    const el = document.getElementById('dNowEvent');
+    if (!el) return;
+    const nowMin = nowMinutes();
+    const ev = pickCurrentEvent(nowMin);
+    if (!ev) {
+      el.textContent = 'Starting soon';
+      return;
+    }
+    // Hide-the-surprise: never name a hidden event.
+    el.textContent = ev.hidden ? 'Team Challenge — TBC' : ev.event;
+  }
+
+  function nowMinutes() {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  }
+
+  // Slot can be "HH:MM" (start time) or "HH:MM-HH:MM" (window).
+  // Live=true wins outright if any event is flagged live.
+  function pickCurrentEvent(nowMin) {
+    const evs = (displayState.events || []).slice().sort((a, b) => a.order - b.order);
+    if (!evs.length) return null;
+    const live = evs.find(e => e.live);
+    if (live) return live;
+    // Find an event whose window covers now, else the most recently-started one.
+    let lastStarted = null;
+    for (const e of evs) {
+      const range = parseSlotRange(e.slot);
+      if (!range) continue;
+      if (nowMin >= range.start && nowMin <= range.end) return e;
+      if (nowMin >= range.start) lastStarted = e;
+    }
+    return lastStarted;
+  }
+
+  function parseSlotRange(slot) {
+    if (!slot) return null;
+    const s = String(slot).trim();
+    const range = s.match(/^(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})$/);
+    if (range) {
+      return {
+        start: parseInt(range[1], 10) * 60 + parseInt(range[2], 10),
+        end:   parseInt(range[3], 10) * 60 + parseInt(range[4], 10)
+      };
+    }
+    const single = s.match(/^(\d{1,2}):(\d{2})$/);
+    if (single) {
+      const m = parseInt(single[1], 10) * 60 + parseInt(single[2], 10);
+      // single-time slot acts as a start; covers a 20-minute default window
+      return { start: m, end: m + 20 };
+    }
+    return null;
+  }
+
+  // ---------- Middle zone: standings table OR pre-event schedule ----------
+  function renderDisplayMiddle(changed) {
+    const host = document.getElementById('dMiddle');
+    if (!host) return;
+    const hasResults = (displayState.results || []).length > 0;
+
+    if (!hasResults) {
+      host.innerHTML = renderSchedulePane();
+      return;
+    }
+
+    host.innerHTML = `
+      <div class="table-head">
+        <div class="col-rank">Rank</div>
+        <div>Team</div>
+        <div class="col-num">Fitness</div>
+        <div class="col-num">Events</div>
+        <div class="col-num">Combined</div>
+      </div>
+      <div class="standings" id="dStandings"></div>
+    `;
+    renderStandingsRows(changed || {});
+  }
+
+  function renderSchedulePane() {
+    const evs = (displayState.events || []).slice()
+      .filter(e => !!e.event)
+      .sort((a, b) => a.order - b.order);
+    if (!evs.length) {
+      return `<div class="schedule-pane"><div class="schedule-empty">Schedule pending.</div></div>`;
+    }
+    const items = evs.map(e => {
+      const slot = e.slot ? escapeHtml(String(e.slot)) : '—';
+      const name = e.hidden ? 'Team Challenge — TBC' : e.event;
+      const ty = e.type ? e.type.toUpperCase() : '';
+      return `
+        <div class="schedule-item">
+          <div class="slot">${slot}</div>
+          <div class="ev">${escapeHtml(name)}</div>
+          <div class="ty">${escapeHtml(ty)}</div>
+        </div>
+      `;
+    }).join('');
+    return `<div class="schedule-pane">${items}</div>`;
+  }
+
+  function renderStandingsRows(changed) {
+    const host = document.getElementById('dStandings');
+    if (!host) return;
+
+    const rows = (displayState.standings || []).slice().sort((a, b) => {
+      return (a.finalRank || 99) - (b.finalRank || 99);
+    });
+
+    // Detect ties on combined so we can label "T1" / "T2" etc.
+    const rankCounts = {};
+    rows.forEach(r => {
+      const k = r.finalRank;
+      if (k != null) rankCounts[k] = (rankCounts[k] || 0) + 1;
+    });
+
+    const rowH = displayState.rowHeightPx;
+    const existing = {};
+    Array.from(host.querySelectorAll('.standings-row-d')).forEach(el => {
+      existing[el.dataset.team] = el;
+    });
+
+    rows.forEach((r, idx) => {
+      const top = idx * (rowH + 8);
+      let node = existing[r.team];
+      if (!node) {
+        node = document.createElement('div');
+        node.className = 'standings-row-d';
+        node.dataset.team = r.team;
+        host.appendChild(node);
+      } else {
+        delete existing[r.team];
+      }
+      const accent = r.colour || '#874B46';
+      node.style.cssText = `top: ${top}px; --row-h: ${rowH}px; --row-accent: ${accent};`;
+      const tied = (r.finalRank != null && rankCounts[r.finalRank] > 1);
+      node.innerHTML = `
+        <div class="rank-num ${tied ? 'tied' : ''}">${r.finalRank != null ? r.finalRank : '—'}</div>
+        <div class="team-block">
+          <div class="team-name-d">${escapeHtml(r.team)}</div>
+          <div class="team-sport">${escapeHtml(r.sport || '')}</div>
+        </div>
+        <div class="num-col">${roundDisplay(r.fitnessScore)}<span class="lbl">Fit Rank ${r.fitnessRank != null ? r.fitnessRank : '—'}</span></div>
+        <div class="num-col">${roundDisplay(r.eventPoints)}<span class="lbl">Evt Rank ${r.eventRank != null ? r.eventRank : '—'}</span></div>
+        <div class="num-col">${r.combined != null ? r.combined : '—'}<span class="lbl">Sum</span></div>
+      `;
+      if (changed[r.team]) {
+        // restart animation
+        node.classList.remove('flash');
+        void node.offsetWidth;
+        node.classList.add('flash');
+      }
+    });
+
+    // Remove any rows that no longer belong (e.g. team renamed).
+    Object.values(existing).forEach(el => el.remove());
+  }
+
+  // ---------- Footer: latest results + individual awards ----------
+  function renderDisplayResults() {
+    const host = document.getElementById('dResults');
+    if (!host) return;
+    const rows = (displayState.results || []).slice();
+    rows.sort((a, b) => {
+      const ta = new Date(a.Timestamp).getTime() || 0;
+      const tb = new Date(b.Timestamp).getTime() || 0;
+      return tb - ta;
+    });
+    const eventsByName = {};
+    (displayState.events || []).forEach(e => { eventsByName[e.event] = e; });
+
+    const visible = rows.filter(r => {
+      // Drop excused fitness rows — they're not "results" worth advertising.
+      if (FITNESS_KEYS_D.indexOf(r.Event) >= 0 && /excused/i.test(String(r.Notes || ''))) return false;
+      // Drop rows with no usable result.
+      if (r.Raw_Result == null || r.Raw_Result === '') return false;
+      return true;
+    }).slice(0, 5);
+
+    if (!visible.length) {
+      host.innerHTML = `<li><span class="what" style="color: rgba(250,243,237,0.4);">Waiting for the first result…</span></li>`;
+      return;
+    }
+
+    host.innerHTML = visible.map(r => {
+      // Fitness retest row
+      if (FITNESS_KEYS_D.indexOf(r.Event) >= 0) {
+        const t = TEST_LABELS_D[r.Event];
+        const info = displayState.athletesById[String(r.Athlete_ID || '').trim()];
+        const who = info ? info.name : (r.Athlete_ID || 'Athlete');
+        const val = formatFitnessResult(r);
+        return `
+          <li>
+            <span class="who">${escapeHtml(who)}</span>
+            <span class="what">${escapeHtml(t.label)}</span>
+            <span class="v">${escapeHtml(val)}</span>
+          </li>
+        `;
+      }
+      // Team event row — show team + position. Respect hide-the-surprise.
+      const evMeta = eventsByName[r.Event];
+      const eventName = evMeta && evMeta.hidden ? 'Team Challenge' : (r.Event || '');
+      const rank = parseFloat(r.Rank);
+      const rankText = isNaN(rank) ? '' : ordinal(Math.round(rank));
+      return `
+        <li>
+          <span class="who">${escapeHtml(r.Team || '')}</span>
+          <span class="what">${rankText ? rankText + ' in ' : 'Result · '}${escapeHtml(eventName)}</span>
+          <span class="v"></span>
+        </li>
+      `;
+    }).join('');
+  }
+
+  function formatFitnessResult(r) {
+    const t = TEST_LABELS_D[r.Event];
+    if (!t) return '';
+    const raw = parseFloat(r.Raw_Result);
+    if (isNaN(raw)) return '';
+    if (r.Event === 'broad_jump') {
+      // Stored in cm — display as metres for the audience.
+      return (raw / 100).toFixed(2) + ' m';
+    }
+    if (r.Event === 'cooper') {
+      return Math.round(raw).toLocaleString() + ' m';
+    }
+    // sprint_40m / agility_510 are seconds
+    return raw.toFixed(2) + ' s';
+  }
+
+  function ordinal(n) {
+    if (!n || isNaN(n)) return '';
+    const s = ['th','st','nd','rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
+  function renderDisplayAwards() {
+    const host = document.getElementById('dAwards');
+    if (!host) return;
+    const rows = (displayState.results || []).filter(r => FITNESS_KEYS_D.indexOf(r.Event) >= 0);
+    if (!rows.length) {
+      host.innerHTML = `<div class="award-empty">Awards appear here as fitness scores come in.</div>`;
+      return;
+    }
+
+    // bucket by test → gender → best athlete (by Points, tiebreak by direction-aware raw)
+    const directions = { broad_jump: 'higher', sprint_40m: 'lower', agility_510: 'lower', cooper: 'higher' };
+    const buckets = {};
+    FITNESS_KEYS_D.forEach(k => { buckets[k] = { M: null, F: null }; });
+
+    rows.forEach(r => {
+      if (/excused/i.test(String(r.Notes || ''))) return;
+      const info = displayState.athletesById[String(r.Athlete_ID || '').trim()];
+      const g = String((info && info.gender) || '').toUpperCase().charAt(0);
+      if (g !== 'M' && g !== 'F') return;
+      const pts = parseFloat(r.Points);
+      const raw = parseFloat(r.Raw_Result);
+      if (isNaN(pts) && isNaN(raw)) return;
+      const test = r.Event;
+      const cur = buckets[test][g];
+      const beat = !cur
+        || (pts > cur.pts)
+        || (pts === cur.pts && betterRaw(raw, cur.raw, directions[test]));
+      if (beat) {
+        buckets[test][g] = {
+          name: info ? info.name : (r.Athlete_ID || 'Athlete'),
+          pts: isNaN(pts) ? null : pts,
+          raw: isNaN(raw) ? null : raw,
+          test: test
+        };
+      }
+    });
+
+    const cells = [];
+    FITNESS_KEYS_D.forEach(k => {
+      ['F', 'M'].forEach(g => {
+        const w = buckets[k][g];
+        const t = TEST_LABELS_D[k];
+        if (!w) {
+          cells.push(`
+            <div class="award-cell">
+              <div class="test">${escapeHtml(t.label)} · ${g}</div>
+              <div class="award-empty">—</div>
+            </div>
+          `);
+          return;
+        }
+        cells.push(`
+          <div class="award-cell">
+            <div class="test">${escapeHtml(t.label)} · ${g}</div>
+            <div class="winner">
+              <span class="nm">${escapeHtml(w.name)}</span>
+              <span class="vl">${escapeHtml(formatFitnessResult({ Event: k, Raw_Result: w.raw }))}</span>
+            </div>
+          </div>
+        `);
+      });
+    });
+    host.innerHTML = cells.join('');
+  }
+
+  function betterRaw(a, b, direction) {
+    if (a == null || isNaN(a)) return false;
+    if (b == null || isNaN(b)) return true;
+    return direction === 'lower' ? a < b : a > b;
   }
 </script>
 </body>
