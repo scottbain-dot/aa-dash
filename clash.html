@@ -4000,14 +4000,17 @@
       }
       studentState.events = (events && events.events) || [];
 
-      // Athlete lookup from getAthleteData. Fields come straight off the Athletes sheet.
-      if (!me || me.error || !me.Athlete_ID) {
+      // Athlete lookup from getAthleteData. The endpoint wraps the row as
+      // { authenticated: true, athlete: {...} } when found, or returns
+      // { error, authenticated: false } when not — handle both shapes.
+      const athlete = (me && me.athlete) ? me.athlete : me;
+      if (!athlete || (me && me.error) || !athlete.Athlete_ID) {
         renderNoAthleteState();
         return;
       }
-      studentState.athleteId = String(me.Athlete_ID).trim();
-      studentState.gender = String(me.Gender || '').trim().toUpperCase().charAt(0);
-      studentState.performance = me.performance || {};
+      studentState.athleteId = String(athlete.Athlete_ID).trim();
+      studentState.gender = String(athlete.Gender || '').trim().toUpperCase().charAt(0);
+      studentState.performance = athlete.performance || {};
 
       // Match team via membership in athleteIds.
       const teamsList = (teams && teams.teams) || [];
