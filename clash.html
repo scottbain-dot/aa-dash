@@ -4458,33 +4458,37 @@
         renderNoAthleteState();
         return;
       }
-      studentState.athleteId = String(athlete.Athlete_ID).trim();
+      studentState.athleteId = asId(athlete.Athlete_ID);
       studentState.gender = String(athlete.Gender || '').trim().toUpperCase().charAt(0);
       studentState.performance = athlete.performance || {};
 
-      // Match team via membership in athleteIds.
+      // Build the system-wide athlete map first so ID -> name lookups work
+      // even for athletes that aren't on the current team's roster (e.g. if
+      // a stray ID slipped into a role/nomination column).
+      const studentList = (students && students.students) || [];
+      const byId = {};
+      studentList.forEach(s => { byId[asId(s.Athlete_ID)] = s; });
+      studentState.athletesById = byId;
+
+      // Match team via membership in athleteIds — normalize both sides.
       const teamsList = (teams && teams.teams) || [];
-      studentState.team = teamsList.find(t =>
-        (t.athleteIds || []).map(String).map(s => s.trim()).includes(studentState.athleteId)
-      ) || null;
+      studentState.team = teamsList
+        .map(normalizeTeam)
+        .find(t => (t.athleteIds || []).some(id => sameId(id, studentState.athleteId))) || null;
 
       if (!studentState.team) {
         renderNoTeamState();
         return;
       }
 
-      // Build roster with names from getAllStudents.
-      const studentList = (students && students.students) || [];
-      const byId = {};
-      studentList.forEach(s => { byId[String(s.Athlete_ID).trim()] = s; });
       studentState.teamRoster = (studentState.team.athleteIds || []).map(aid => {
-        const id = String(aid).trim();
+        const id = asId(aid);
         const s = byId[id] || {};
         return {
           Athlete_ID: id,
-          Name: s.Name || id,
+          Name: displayName(s) || 'Athlete',
           Gender: s.Gender || '',
-          isMe: id === studentState.athleteId
+          isMe: sameId(id, studentState.athleteId)
         };
       });
 
@@ -4593,9 +4597,9 @@
     try {
       const r = await apiGet('getClashTeams');
       if (r && r.success) {
-        const me = (r.teams || []).find(t =>
-          (t.athleteIds || []).map(String).map(s => s.trim()).includes(studentState.athleteId)
-        );
+        const me = (r.teams || [])
+          .map(normalizeTeam)
+          .find(t => (t.athleteIds || []).some(id => sameId(id, studentState.athleteId)));
         if (me) studentState.team = me;
       }
     } catch (e) { /* keep existing state */ }
@@ -4607,24 +4611,63 @@
   }
 
   // ----- Shared team helpers -----
-  function nameForAthlete(aid) {
-    if (!aid) return '';
-    const m = studentState.teamRoster.find(x => x.Athlete_ID === aid);
-    return m ? m.Name : aid;
+  // Athlete_IDs come off Google Sheets as either strings or numbers and may
+  // carry stray whitespace. Coerce both sides of every ID comparison through
+  // asId() / sameId() so a number/string mismatch never silently fails.
+  function asId(x) { return x == null ? '' : String(x).trim(); }
+  function sameId(a, b) { const A = asId(a); return !!A && A === asId(b); }
+
+  // Resolve an Athlete record (from Athletes sheet) to a display name.
+  // Prefers Name; falls back to First_Name + Last_Name. NEVER returns an ID.
+  function displayName(s) {
+    if (!s) return '';
+    const nm = s.Name && String(s.Name).trim();
+    if (nm) return nm;
+    const fn = (s.First_Name || '').toString().trim();
+    const ln = (s.Last_Name || '').toString().trim();
+    const both = (fn + ' ' + ln).trim();
+    return both || '';
   }
+
+  // Resolve an Athlete_ID to a name. Tries the team roster first, then the
+  // wider athletesById map of every student in the system. Falls back to a
+  // neutral placeholder — never the raw ID, never an empty cell.
+  function nameForAthlete(aid) {
+    const id = asId(aid);
+    if (!id) return '';
+    const m = (studentState.teamRoster || []).find(x => sameId(x.Athlete_ID, id));
+    if (m && m.Name) return m.Name;
+    const s = (studentState.athletesById || {})[id];
+    const nm = displayName(s);
+    return nm || 'Athlete';
+  }
+
   function amCaptain() {
-    return !!studentState.athleteId && studentState.team.roleCaptain === studentState.athleteId;
+    return !!studentState.athleteId && sameId(studentState.team && studentState.team.roleCaptain, studentState.athleteId);
   }
   function myCurrentRole() {
     const t = studentState.team;
     const me = studentState.athleteId;
-    if (!me) return null;
-    if (t.roleCaptain === me) return 'captain';
-    if (t.roleTrainer === me) return 'trainer';
-    if (t.roleManager === me) return 'manager';
-    if (t.roleNutrition === me) return 'nutrition';
-    if (t.roleHype1 === me || t.roleHype2 === me) return 'hype';
+    if (!me || !t) return null;
+    if (sameId(t.roleCaptain, me))   return 'captain';
+    if (sameId(t.roleTrainer, me))   return 'trainer';
+    if (sameId(t.roleManager, me))   return 'manager';
+    if (sameId(t.roleNutrition, me)) return 'nutrition';
+    if (sameId(t.roleHype1, me) || sameId(t.roleHype2, me)) return 'hype';
     return null;
+  }
+
+  // Coerce every ID-bearing field on a team object to a trimmed string so
+  // downstream comparisons can use plain equality safely.
+  function normalizeTeam(t) {
+    if (!t) return t;
+    ['nomRow', 'nomSprint', 'nomHang',
+     'roleCaptain', 'roleTrainer', 'roleManager', 'roleNutrition', 'roleHype1', 'roleHype2']
+      .forEach(k => { if (t[k] != null) t[k] = asId(t[k]); });
+    ['athleteIds', 'volunteersRow', 'volunteersSprint', 'volunteersHang'].forEach(k => {
+      if (Array.isArray(t[k])) t[k] = t[k].map(asId).filter(Boolean);
+    });
+    return t;
   }
 
   // ----- Section: Team roles -----
@@ -4653,10 +4696,10 @@
       } else holders = [];
 
       const openSlots = r.slots - holders.length;
-      const iAmHere = holders.includes(studentState.athleteId);
+      const iAmHere = holders.some(h => sameId(h, studentState.athleteId));
 
       let holderHTML = holders.map(aid => {
-        const isMe = aid === studentState.athleteId;
+        const isMe = sameId(aid, studentState.athleteId);
         return `<span><strong>${escapeHtml(nameForAthlete(aid))}</strong>${isMe ? ' <span class="badge">You</span>' : ''}</span>`;
       }).join('<span>·</span>');
       if (openSlots > 0) {
@@ -4804,7 +4847,6 @@
     return `
       <section class="stu-section">
         <h2>Your team</h2>
-        <p class="lede">This is who you're with on the day. Know them, trust them, look out for them.</p>
         <div class="team-strip">
           ${t.colour ? `<div class="strip-swatch" style="background:${escapeAttr(t.colour)}"></div>` : ''}
           <div>
@@ -5028,15 +5070,15 @@
     const t = studentState.team;
     const me = studentState.athleteId;
     const captain = amCaptain();
-    const confirmedId = String(t[nom.teamField] || '').trim();
-    const volunteers = (t[volsFieldForSlot(nom.slot)] || []).map(String);
-    const iVolunteered = volunteers.includes(me);
+    const confirmedId = asId(t[nom.teamField]);
+    const volunteers = (t[volsFieldForSlot(nom.slot)] || []).map(asId).filter(Boolean);
+    const iVolunteered = volunteers.some(v => sameId(v, me));
     const elsewhere = confirmedElsewhereMap(nom.slot);
 
     let body = '';
     if (confirmedId) {
       const cname = nameForAthlete(confirmedId);
-      const isMe = confirmedId === me;
+      const isMe = sameId(confirmedId, me);
       body = `
         <div class="confirmed">
           <span>Confirmed: <strong>${escapeHtml(cname)}${isMe ? ' (you)' : ''}</strong></span>
@@ -5046,7 +5088,7 @@
     } else {
       if (volunteers.length) {
         const pills = volunteers.map(aid => {
-          const isMe = aid === me;
+          const isMe = sameId(aid, me);
           const locked = elsewhere[aid];
           const lockedNote = locked ? ` · in ${escapeHtml(locked)}` : '';
           const cls = isMe ? 'me' : locked ? 'locked' : '';
