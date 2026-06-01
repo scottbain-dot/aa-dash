@@ -2908,12 +2908,17 @@ function handleGetPortalBootstrap(ss, email) {
 
 function ensureClashTeamsSheet(ss) {
   var sheet = ss.getSheetByName('Clash_Teams');
+  // Team Challenge is a whole-team event, so Nom_Game / Volunteers_Game are
+  // no longer in this canonical list — ensureClashTeamsSheet won't add them
+  // to fresh sheets. If those columns already exist on a sheet from an
+  // earlier deploy they're left in place (this helper only adds missing
+  // columns; it never removes). Nom_Sprint stays as legacy/unused.
   var headers = [
     'Team', 'Sport', 'Athlete_IDs', 'Chant', 'Colour',
-    'Nom_Row', 'Nom_Sprint', 'Nom_Hang', 'Nom_Game',
+    'Nom_Row', 'Nom_Sprint', 'Nom_Hang',
     'Role_Captain', 'Role_Trainer', 'Role_Manager', 'Role_Nutrition', 'Role_Hype_1', 'Role_Hype_2',
     'Plan_Doc_URL',
-    'Volunteers_Row', 'Volunteers_Sprint', 'Volunteers_Hang', 'Volunteers_Game'
+    'Volunteers_Row', 'Volunteers_Sprint', 'Volunteers_Hang'
   ];
   if (!sheet) {
     sheet = ss.insertSheet('Clash_Teams');
@@ -3213,7 +3218,6 @@ function handleGetClashTeams(ss) {
         nomRow: r.Nom_Row || '',
         nomSprint: r.Nom_Sprint || '',
         nomHang: r.Nom_Hang || '',
-        nomGame: r.Nom_Game || '',
         roleCaptain: r.Role_Captain || '',
         roleTrainer: r.Role_Trainer || '',
         roleManager: r.Role_Manager || '',
@@ -3223,8 +3227,7 @@ function handleGetClashTeams(ss) {
         planDocUrl: r.Plan_Doc_URL || '',
         volunteersRow: String(r.Volunteers_Row || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
         volunteersSprint: String(r.Volunteers_Sprint || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
-        volunteersHang: String(r.Volunteers_Hang || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
-        volunteersGame: String(r.Volunteers_Game || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+        volunteersHang: String(r.Volunteers_Hang || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean)
       };
     });
     return { success: true, teams: teams };
@@ -3394,7 +3397,6 @@ var CLASH_TEAM_FIELD_MAP = {
   Nom_Row: 'nomRow',
   Nom_Sprint: 'nomSprint',
   Nom_Hang: 'nomHang',
-  Nom_Game: 'nomGame',
   Role_Captain: 'roleCaptain',
   Role_Trainer: 'roleTrainer',
   Role_Manager: 'roleManager',
@@ -3404,8 +3406,7 @@ var CLASH_TEAM_FIELD_MAP = {
   Plan_Doc_URL: 'planDocUrl',
   Volunteers_Row: 'volunteersRow',
   Volunteers_Sprint: 'volunteersSprint',
-  Volunteers_Hang: 'volunteersHang',
-  Volunteers_Game: 'volunteersGame'
+  Volunteers_Hang: 'volunteersHang'
 };
 
 // Role -> column header (Hype is a list resolved at write time).
@@ -3417,10 +3418,10 @@ var CLASH_ROLE_COLS = {
 };
 var CLASH_HYPE_COLS = ['Role_Hype_1', 'Role_Hype_2'];
 var CLASH_ALL_ROLE_COLS = ['Role_Captain', 'Role_Trainer', 'Role_Manager', 'Role_Nutrition', 'Role_Hype_1', 'Role_Hype_2'];
-var CLASH_VOLUNTEER_COLS = { row: 'Volunteers_Row', sprint: 'Volunteers_Sprint', hang: 'Volunteers_Hang', game: 'Volunteers_Game' };
+var CLASH_VOLUNTEER_COLS = { row: 'Volunteers_Row', sprint: 'Volunteers_Sprint', hang: 'Volunteers_Hang' };
 
 // Display labels used in nomination error messages.
-var CLASH_NOM_LABELS = { row: '100 m Row', sprint: '100 m Sprint', hang: 'Grit Challenge', game: 'Team Challenge' };
+var CLASH_NOM_LABELS = { row: '100 m Row', sprint: '100 m Sprint', hang: 'Grit Challenge' };
 
 function handleSaveClashTeam(ss, data) {
   try {
@@ -3441,8 +3442,7 @@ function handleSaveClashTeam(ss, data) {
       Colour: data.colour != null ? data.colour : '',
       Nom_Row: data.nomRow != null ? data.nomRow : '',
       Nom_Sprint: data.nomSprint != null ? data.nomSprint : '',
-      Nom_Hang: data.nomHang != null ? data.nomHang : '',
-      Nom_Game: data.nomGame != null ? data.nomGame : ''
+      Nom_Hang: data.nomHang != null ? data.nomHang : ''
     };
 
     // Locate existing row by Team name.
@@ -3487,9 +3487,9 @@ function handleSaveClashNomination(ss, data) {
   try {
     if (!data.team || !data.slot) return { success: false, error: 'Missing team or slot' };
     var slot = String(data.slot).toLowerCase();
-    var slotMap = { row: 'Nom_Row', sprint: 'Nom_Sprint', hang: 'Nom_Hang', game: 'Nom_Game' };
+    var slotMap = { row: 'Nom_Row', sprint: 'Nom_Sprint', hang: 'Nom_Hang' };
     var slotCol = slotMap[slot];
-    if (!slotCol) return { success: false, error: 'Slot must be row|sprint|hang|game' };
+    if (!slotCol) return { success: false, error: 'Slot must be row|sprint|hang' };
 
     var sheet = ensureClashTeamsSheet(ss);
     var lastRow = sheet.getLastRow();
@@ -3521,7 +3521,9 @@ function handleSaveClashNomination(ss, data) {
         // Skip the check when clearing the slot (athleteId === '').
         var newId = String(data.athleteId || '').trim();
         if (newId) {
-          var liveSlots = ['row', 'hang', 'game'];
+          // Two live nominated events: 100 m Row and Grit Challenge.
+          // Team Challenge is a whole-team event, not a nomination.
+          var liveSlots = ['row', 'hang'];
           for (var s = 0; s < liveSlots.length; s++) {
             var otherSlot = liveSlots[s];
             if (otherSlot === slot) continue;
