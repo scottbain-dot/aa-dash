@@ -450,7 +450,7 @@
   .student-hero {
     background: var(--ink);
     color: var(--cream);
-    padding: 32px 24px 28px;
+    padding: 72px 32px 64px;
     position: relative;
     overflow: hidden;
   }
@@ -464,69 +464,82 @@
   }
   .student-hero .inner {
     position: relative;
-    max-width: 720px;
+    max-width: 1080px;
     margin: 0 auto;
   }
   .student-hero .eyebrow {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.28em;
     text-transform: uppercase;
     color: var(--gold);
-    margin-bottom: 14px;
+    margin-bottom: 20px;
   }
   .student-hero h1 {
     font-family: 'Fraunces', serif;
     font-weight: 700;
     font-style: italic;
-    font-size: clamp(38px, 7vw, 64px);
+    font-size: clamp(40px, 6vw, 80px);
     color: var(--cream);
-    line-height: 1.05;
-    margin-bottom: 12px;
+    line-height: 1.02;
+    margin-bottom: 18px;
+    letter-spacing: -0.02em;
   }
   .student-hero h1 em { font-style: normal; color: var(--gold); }
   .student-hero .meta {
     color: rgba(250,243,237,0.7);
-    font-size: 15px;
-    display: flex; gap: 14px; flex-wrap: wrap;
+    font-size: 16px;
+    display: flex; gap: 18px; flex-wrap: wrap;
     align-items: center;
   }
   .student-hero .meta .swatch {
-    width: 12px; height: 12px; border-radius: 50%;
+    width: 14px; height: 14px; border-radius: 50%;
     border: 1px solid rgba(250,243,237,0.2);
     display: inline-block;
   }
   .student-hero .logout-link {
-    position: absolute; top: 18px; right: 18px;
+    position: absolute; top: 24px; right: 24px;
     background: transparent;
     color: rgba(250,243,237,0.6);
     border: 1px solid rgba(250,243,237,0.2);
-    padding: 6px 12px; border-radius: 999px;
+    padding: 8px 16px; border-radius: 999px;
     font-size: 12px; font-weight: 500;
     cursor: pointer;
+    z-index: 1;
+  }
+  @media (max-width: 720px) {
+    .student-hero { padding: 40px 24px 36px; }
+    .student-hero .logout-link { top: 16px; right: 16px; padding: 6px 12px; }
+    .student-hero .eyebrow { margin-bottom: 14px; letter-spacing: 0.22em; }
   }
 
   .student-main {
-    max-width: 720px;
+    max-width: 1080px;
     margin: 0 auto;
-    padding: 24px 20px 80px;
+    padding: 40px 32px 100px;
     width: 100%;
   }
   .stu-section {
     background: var(--cream);
     border: 1px solid var(--line);
     border-radius: 18px;
-    padding: 24px 22px;
-    margin-bottom: 18px;
+    padding: 32px 36px;
+    margin-bottom: 24px;
     box-shadow: var(--shadow);
   }
   .stu-section h2 {
     font-family: 'Fraunces', serif;
     font-weight: 600;
-    font-size: 24px;
+    font-size: 32px;
     color: var(--ink);
-    margin-bottom: 6px;
-    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+  }
+  @media (max-width: 720px) {
+    .student-main { padding: 24px 20px 80px; }
+    .stu-section { padding: 22px 20px; border-radius: 14px; margin-bottom: 16px; }
+    .stu-section h2 { font-size: 24px; }
   }
   .stu-section .lede {
     color: var(--ink-mute);
@@ -819,128 +832,126 @@
     border-bottom: 1px solid var(--burgundy-light);
   }
 
-  /* Section 5 — schedule */
-  .sched-row {
-    display: grid;
-    grid-template-columns: 86px 1fr auto;
-    gap: 14px;
-    align-items: center;
-    padding: 10px 0;
-    border-top: 1px solid var(--line);
+  /* Section — The schedule (timeline) */
+  .timeline {
+    position: relative;
+    margin-top: 4px;
   }
-  .sched-row:first-child { border-top: 0; }
-  .sched-row .time {
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 110px 28px 1fr;
+    gap: 18px;
+    align-items: flex-start;
+    padding: 14px 0;
+    position: relative;
+  }
+  .timeline-time {
     font-family: 'Fraunces', serif;
     font-weight: 600;
+    font-size: 19px;
     color: var(--ink);
     font-variant-numeric: tabular-nums;
+    padding-top: 2px;
+    letter-spacing: -0.01em;
   }
-  .sched-row .ev-name {
-    font-size: 15px;
+  .timeline-time.placeholder {
+    color: var(--ink-mute);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 16px;
+  }
+  .timeline-marker {
+    position: relative;
+    align-self: stretch;
+    display: flex;
+    justify-content: center;
+  }
+  .timeline-marker::before {
+    content: '';
+    position: absolute;
+    top: 18px;
+    bottom: -14px;
+    left: 50%;
+    width: 1.5px;
+    background: var(--line-strong);
+    transform: translateX(-50%);
+  }
+  .timeline-row:last-child .timeline-marker::before { display: none; }
+  .timeline-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--burgundy);
+    margin-top: 8px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 0 4px var(--cream);
+  }
+  .timeline-row.hidden-event .timeline-dot {
+    background: transparent;
+    border: 2px dashed var(--gold);
+    box-shadow: 0 0 0 3px var(--cream);
+  }
+  .timeline-event-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 19px;
     color: var(--ink);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
   }
-  .sched-row .ev-name.hidden-event {
+  .timeline-row.hidden-event .timeline-event-name {
     color: var(--ink-soft);
     font-style: italic;
   }
-  .sched-row .ev-type {
-    font-size: 11px;
+  .timeline-event-type {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
     color: var(--ink-mute);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-  .how-toggle {
-    background: transparent;
-    border: none;
-    color: var(--burgundy);
-    font-size: 14px;
-    font-weight: 600;
-    margin-top: 14px;
-    padding: 6px 0;
-    cursor: pointer;
-  }
-  .how-toggle::before { content: '▸ '; }
-  .how-toggle.open::before { content: '▾ '; }
-  .how-panel {
-    display: none;
-    margin-top: 10px;
-    padding: 14px 16px;
-    background: var(--bg-warm);
-    border-radius: 10px;
-    font-size: 14px;
-    color: var(--ink-soft);
-    line-height: 1.6;
-  }
-  .how-panel.open { display: block; }
-  .how-panel p { margin-bottom: 8px; }
-  .how-panel p:last-child { margin-bottom: 0; }
-  .how-panel strong { color: var(--ink); font-weight: 600; }
-
-  /* Section 1.5 — The Day hero block (warmer, more editorial) */
-  .stu-section-day {
-    background: linear-gradient(135deg, #fef8f6 0%, #f5ebe5 100%);
-    border-color: rgba(135,75,70,0.18);
-  }
-  .stu-section-day .day-eyebrow {
-    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--burgundy);
-    margin-bottom: 10px;
   }
-  .stu-section-day .day-headline {
-    font-family: 'Fraunces', serif;
-    font-weight: 600;
-    font-size: clamp(22px, 4vw, 28px);
-    color: var(--ink);
-    line-height: 1.15;
-    margin-bottom: 14px;
-    letter-spacing: -0.01em;
-  }
-  .stu-section-day .day-body {
-    color: var(--ink-soft);
-    font-size: 15px;
-    line-height: 1.65;
-  }
-  .stu-section-day .day-body strong {
-    color: var(--ink);
-    font-weight: 600;
+  @media (max-width: 480px) {
+    .timeline-row { grid-template-columns: 78px 20px 1fr; gap: 12px; padding: 12px 0; }
+    .timeline-time { font-size: 16px; }
+    .timeline-event-name { font-size: 16px; }
   }
 
-  /* Section 1.6 — How you'll be scored cards */
+  /* Scoring — three cards stacked vertically */
   .score-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     margin-top: 14px;
   }
   .score-card {
     background: var(--bg-warm);
     border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 14px 16px;
+    border-radius: 14px;
+    padding: 20px 24px;
     display: flex; flex-direction: column;
   }
   .score-card-title {
     font-family: 'Fraunces', serif;
     font-weight: 600;
-    font-size: 17px;
+    font-size: 22px;
     color: var(--ink);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
   }
   .score-card-line {
     color: var(--ink-soft);
-    font-size: 13px;
-    line-height: 1.45;
+    font-size: 15px;
+    line-height: 1.55;
   }
   .score-card-toggle {
     background: transparent;
     border: none;
     color: var(--burgundy);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    margin-top: 8px;
+    margin-top: 12px;
     padding: 4px 0;
     cursor: pointer;
     align-self: flex-start;
@@ -948,16 +959,21 @@
   .score-card-toggle::before { content: '▸ '; }
   .score-card-detail {
     display: none;
-    margin-top: 6px;
-    padding: 10px 12px;
+    margin-top: 8px;
+    padding: 14px 18px;
     background: var(--cream);
     border-left: 3px solid var(--gold);
-    border-radius: 0 8px 8px 0;
-    font-size: 13px;
+    border-radius: 0 10px 10px 0;
+    font-size: 14px;
     color: var(--ink-soft);
-    line-height: 1.55;
+    line-height: 1.6;
   }
   .score-card-detail.open { display: block; }
+  @media (max-width: 720px) {
+    .score-card { padding: 16px 18px; }
+    .score-card-title { font-size: 18px; }
+    .score-card-line { font-size: 14px; }
+  }
 
   /* Section 1.7 — Plan checklist */
   .plan-list {
@@ -993,6 +1009,140 @@
   .plan-item.done span {
     text-decoration: line-through;
     text-decoration-color: rgba(74, 138, 92, 0.5);
+  }
+
+  /* Section — Records to Chase (last year's heroes) */
+  .records-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .records-intro {
+    color: var(--ink-mute);
+    font-size: 15px;
+    margin-bottom: 22px;
+    line-height: 1.55;
+  }
+  .records-team-result {
+    background: var(--bg-warm);
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .records-team-result .lbl {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+    flex-shrink: 0;
+  }
+  .records-team-result .val {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .records-team-result .val em {
+    font-style: normal;
+    color: var(--gold);
+  }
+  .records-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  @media (max-width: 720px) {
+    .records-grid { grid-template-columns: 1fr; gap: 10px; }
+  }
+  .record-card {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 22px;
+  }
+  .record-card .test-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 12px;
+  }
+  .record-card .record-row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 12px;
+    align-items: baseline;
+    padding: 8px 0;
+  }
+  .record-card .record-row + .record-row {
+    border-top: 1px dashed var(--line);
+  }
+  .record-card .record-row .g {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+  .record-card .record-row .name {
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .record-card .record-row .val {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    color: var(--burgundy);
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .record-card .record-row .val em {
+    font-style: normal;
+    color: var(--gold);
+    font-size: 14px;
+    margin-left: 4px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  .records-most-improved {
+    background: linear-gradient(135deg, rgba(212,175,55,0.10), rgba(212,175,55,0.04));
+    border: 1px solid rgba(212,175,55,0.30);
+    border-radius: 14px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .records-most-improved .lbl {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+  .records-most-improved .val {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .records-most-improved .val strong {
+    font-weight: 700;
+    color: var(--burgundy);
   }
 
   /* Empty state when athlete isn't on a team */
@@ -4086,14 +4236,14 @@
       `${swatch}<span>${sport}</span><span>${studentState.teamRoster.length} athletes</span>`;
 
     document.getElementById('stuMain').innerHTML = [
-      renderStuSec1Team(),
-      renderStuSec15Day(),
-      renderStuSec16Scoring(),
-      renderStuSec17Plan(),
-      renderStuSec2Targets(),
-      renderStuSec3Nominations(),
-      renderStuSec4Lunch(),
-      renderStuSec5Schedule()
+      renderStuSec1Team(),         // 2. Your team
+      renderStuSec5Schedule(),     // 3. The schedule (moved up + redesigned)
+      renderStuSec16Scoring(),     // 4. How you'll be scored (now 3 cards, stacked)
+      renderStuSec17Plan(),        // 5. What you need to plan
+      renderStuSec2Targets(),      // 6. Your fitness targets
+      renderStuSec3Nominations(),  // 7. Team nominations
+      renderStuSec4Lunch(),        // 8. Recovery lunch
+      renderStuSec6Records()       // 9. Records to Chase (new)
     ].join('');
   }
 
@@ -4123,38 +4273,24 @@
     `;
   }
 
-  // ----- Section 1.5: The Day -----
-  function renderStuSec15Day() {
-    return `
-      <section class="stu-section stu-section-day">
-        <div class="day-eyebrow">The day</div>
-        <h2 class="day-headline">Clash of the Codes — Thursday 5 June, 08:30&#8211;12:30</h2>
-        <p class="day-body">This is the day that pulls a year of training together. Your fitness retests, the team events, and the way you fuel and recover all feed into your final grades across <strong>Physiology</strong>, <strong>Psychology</strong>, and <strong>Health &amp; Skills</strong>. It's competitive, but it's also the assessment — so the prep counts as much as the day itself.</p>
-      </section>
-    `;
-  }
-
-  // ----- Section 1.6: How you'll be scored -----
+  // ----- Section: How you'll be scored -----
+  // Three vertical cards. Technique was previously included but is no longer
+  // assessed on the day — its grade comes from the strength portal.
   const STU_SCORE_CARDS = [
     {
       title: 'Planning',
-      line: 'Your team\'s plan for the day — how you organise yourselves before the event.',
-      detail: 'Warm-up, hype, nominations, recovery, lunch. Submitted before the day, judged on quality and detail. A team that has thought it through scores higher than a team that improvises.'
+      line: 'Your team\'s plan for the day — how you organise warm-up, hype, nominations, and recovery. Submitted before the day, judged on quality and detail.',
+      detail: 'A team that has thought it through scores higher than a team that improvises. Plan together, write it down, justify your choices — that\'s what gets the credit.'
     },
     {
       title: 'Performance',
-      line: 'Your fitness retests on the day and how your team finishes in the team events.',
-      detail: 'The 50/50 model rewards both how much you improve on your last score and the standard you reach for your age and gender. Beat your last result, and hit a strong number — both halves count.'
+      line: 'Your fitness retests on the day and how your team finishes in the team events. The 50/50 model rewards both how much you improve and the standard you reach.',
+      detail: 'Half of each fitness score is how much you improved on your last result. The other half is how strong the new score is for your age and gender. Beat your last result, and hit a strong number — both halves count.'
     },
     {
       title: 'Nutrition',
-      line: 'Your recovery lunch and the team share-out.',
-      detail: 'What you eat, why it works, and how you explain it. Build on what you already know from Fuel Lab. The reasoning is what we grade — anyone can pack a sandwich, fewer can tell you why it\'s the right one for a four-hour morning.'
-    },
-    {
-      title: 'Technique',
-      line: 'Your movement quality across the year — sourced from your strength sessions.',
-      detail: 'Not tested separately on the day. Your technique scores come from the work you\'ve done all year in the strength portal. Show up to your last sessions — they still count toward this grade.'
+      line: 'Your recovery lunch and the team share-out. What you eat, why it works, how you explain it. Links to your Fuel Lab work.',
+      detail: 'Anyone can pack a sandwich, fewer can tell you why it\'s the right one for a four-hour morning. The reasoning is what we grade — timing, protein, carbs, hydration. Build on what you already know.'
     }
   ];
 
@@ -4172,7 +4308,7 @@
     return `
       <section class="stu-section">
         <h2>How you'll be scored</h2>
-        <p class="lede">Four pieces feed your final grade. Some you build over the year, some you set up before the day, some happen on the day.</p>
+        <p class="lede">Three pieces feed your final grade. One you plan before the day, two land on the day itself.</p>
         <div class="score-cards">${cards}</div>
       </section>
     `;
@@ -4457,48 +4593,91 @@
   }
 
   // ----- Section 5: The day -----
+  // ----- Section: The schedule (vertical timeline) -----
   function renderStuSec5Schedule() {
     const evs = (studentState.events || []).slice()
       .filter(e => !!e.event)
       .sort((a, b) => a.order - b.order);
+
     const rows = evs.length
       ? evs.map(e => {
-          const time = e.slot ? escapeHtml(String(e.slot)) : '—';
           const isHidden = !!e.hidden;
+          const time = e.slot ? escapeHtml(String(e.slot)) : 'TBC';
+          const timeClass = e.slot ? '' : 'placeholder';
           const name = isHidden ? 'Team Challenge — TBC' : e.event;
           const ty = e.type ? e.type.replace(/_/g, ' ') : '';
           return `
-            <div class="sched-row">
-              <div class="time">${time}</div>
-              <div class="ev-name ${isHidden ? 'hidden-event' : ''}">${escapeHtml(name)}</div>
-              <div class="ev-type">${escapeHtml(ty)}</div>
+            <div class="timeline-row ${isHidden ? 'hidden-event' : ''}">
+              <div class="timeline-time ${timeClass}">${time}</div>
+              <div class="timeline-marker"><div class="timeline-dot"></div></div>
+              <div>
+                <div class="timeline-event-name">${escapeHtml(name)}</div>
+                ${ty ? `<div class="timeline-event-type">${escapeHtml(ty)}</div>` : ''}
+              </div>
             </div>
           `;
         }).join('')
-      : `<div class="sched-row"><div class="time">—</div><div class="ev-name">Schedule lands closer to the day.</div><div class="ev-type"></div></div>`;
+      : `<div class="timeline-row"><div class="timeline-time placeholder">TBC</div><div class="timeline-marker"><div class="timeline-dot"></div></div><div><div class="timeline-event-name">Schedule lands closer to the day.</div></div></div>`;
 
     return `
       <section class="stu-section">
-        <h2>The day</h2>
-        <p class="lede">Ten events across the morning. Stay with your team, cheer loud, take recovery seriously between events.</p>
-        ${rows}
-        <button class="how-toggle" onclick="toggleHow(this)">How scoring works</button>
-        <div class="how-panel" id="howPanel">
-          <p>Your final position comes from <strong>two scores combined</strong>:</p>
-          <p><strong>Fitness</strong> — your team's average across the four re-tests (broad jump, 40 m, 5-10-5, Cooper). Each athlete gets a score out of five per test. Half of that score is how much you improved on your last result. The other half is how strong the new score is for your age and gender. Improvement and a strong score both count.</p>
-          <p><strong>Events</strong> — the ten team events on the day. Each event ranks the six teams. 1st = 6 points, 6th = 1 point. Add them all up for your event total.</p>
-          <p>Each team gets a <strong>fitness rank (1–6)</strong> and an <strong>event rank (1–6)</strong>. Add those two ranks together — lowest total wins the day. Ties share a position.</p>
-          <p>What this means: you don't need to dominate everything. A team that finishes second in fitness and second in events beats a team that wins one and loses the other.</p>
-        </div>
+        <h2>The schedule</h2>
+        <p class="lede">The shape of the morning at a glance. Stay with your team between events, cheer loud, take recovery seriously.</p>
+        <div class="timeline">${rows}</div>
       </section>
     `;
   }
 
-  function toggleHow(btn) {
-    const panel = document.getElementById('howPanel');
-    if (!panel) return;
-    const open = panel.classList.toggle('open');
-    btn.classList.toggle('open', open);
+  // ----- Section: Records to Chase (last year's heroes) -----
+  // Hard-coded for now — pulls last year's results. Becomes a query against
+  // a "Clash_Records" sheet once we have a second year of data.
+  const STU_RECORDS_DATA = {
+    teamResult: 'Tennis and Volleyball — tied for first.',
+    tests: [
+      { label: '5-10-5 (sec)',     male: { name: 'Andrew Lamb',       value: '4.77' },  female: { name: 'Caroline Mouritsen', value: '5.02' } },
+      { label: '40m Sprint (sec)', male: { name: 'Jasper Michiels',   value: '5.24' },  female: { name: 'Elizabeth Talmadge', value: '5.73' } },
+      { label: 'Broad Jump (m)',   male: { name: 'Asa Cowley',        value: '2.63' },  female: { name: 'Caroline Mouritsen', value: '1.96' } },
+      { label: 'Cooper Run (m)',   male: { name: 'Andrew Lamb',       value: '3,080' }, female: { name: 'Caroline Mouritsen', value: '2,440' } }
+    ],
+    mostImproved: { name: 'Oscar Anderson', detail: '+9 points across the four tests' }
+  };
+
+  function renderStuSec6Records() {
+    const cards = STU_RECORDS_DATA.tests.map(t => `
+      <div class="record-card">
+        <div class="test-label">${escapeHtml(t.label)}</div>
+        <div class="record-row">
+          <div class="g">M</div>
+          <div class="name">${escapeHtml(t.male.name)}</div>
+          <div class="val">${escapeHtml(t.male.value)}</div>
+        </div>
+        <div class="record-row">
+          <div class="g">F</div>
+          <div class="name">${escapeHtml(t.female.name)}</div>
+          <div class="val">${escapeHtml(t.female.value)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    return `
+      <section class="stu-section">
+        <div class="records-eyebrow">Last year's bar</div>
+        <h2>Records to Chase</h2>
+        <p class="records-intro">These are the bars set last year. Aim higher.</p>
+
+        <div class="records-team-result">
+          <span class="lbl">Team result</span>
+          <span class="val">${escapeHtml(STU_RECORDS_DATA.teamResult)}</span>
+        </div>
+
+        <div class="records-grid">${cards}</div>
+
+        <div class="records-most-improved">
+          <span class="lbl">Most Improved</span>
+          <span class="val"><strong>${escapeHtml(STU_RECORDS_DATA.mostImproved.name)}</strong> · ${escapeHtml(STU_RECORDS_DATA.mostImproved.detail)}.</span>
+        </div>
+      </section>
+    `;
   }
 </script>
 </body>
