@@ -4836,9 +4836,6 @@
   window.onClaimRole = onClaimRole;
 
   // ----- Section: Team planning doc -----
-  // TODO: Scott — replace PLACEHOLDER below with the real template doc ID.
-  const STU_PLAN_TEMPLATE_URL = 'https://docs.google.com/document/d/PLACEHOLDER/copy';
-
   function renderStuSecPlanDoc() {
     const t = studentState.team;
     const url = (t.planDocUrl || '').trim();
@@ -4849,7 +4846,6 @@
         <div class="plan-doc-row">
           <input type="url" id="planDocInput" placeholder="https://docs.google.com/document/d/..." value="${escapeAttr(url)}">
           <button class="doc-btn" id="planDocSaveBtn" onclick="onSavePlanDoc(this)">Save</button>
-          <a class="doc-btn-ghost" href="${escapeAttr(STU_PLAN_TEMPLATE_URL)}" target="_blank" rel="noopener">Use the template</a>
         </div>
         ${url ? `<div style="margin-top:8px;"><a class="doc-btn-ghost" href="${escapeAttr(url)}" target="_blank" rel="noopener">Open plan ↗</a></div>` : ''}
       `;
@@ -4861,17 +4857,12 @@
         </div>
       `;
     } else {
-      body = `
-        <p class="plan-doc-empty">Your captain hasn't added the plan link yet.</p>
-        <div class="plan-doc-row">
-          <a class="doc-btn-ghost" href="${escapeAttr(STU_PLAN_TEMPLATE_URL)}" target="_blank" rel="noopener">Use the template</a>
-        </div>
-      `;
+      body = `<p class="plan-doc-empty">Your captain hasn't added the plan link yet.</p>`;
     }
     return `
       <section class="stu-section">
         <h2>Your team plan</h2>
-        <p class="lede">Your team plans together in one Google Doc. The Captain creates it from the template, shares it with everyone in the team, and pastes the link here. Edit it together — chant, warm-up, hype moment, snacks, strategy, lunch.</p>
+        <p class="lede">Your team plans together in one Google Doc. The Captain creates it, shares it with everyone in the team, and pastes the link here. Edit it together — chant, warm-up, hype moment, snacks, strategy, lunch.</p>
         ${body}
       </section>
     `;
