@@ -1864,6 +1864,253 @@
   @media (max-width: 360px) {
     main { padding: 12px 12px 110px; }
     .team-card, .nominated-card, .athlete-card { padding: 12px; }
+  }
+
+  /* ============================================
+     STUDENT VIEW — TABBED LAYOUT
+     ============================================ */
+  .stu-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--cream);
+    padding: 4px;
+    border-radius: 14px;
+    margin: 0 auto 24px;
+    max-width: 480px;
+    border: 1px solid var(--line);
+  }
+  .stu-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--ink-mute);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  }
+  .stu-tab-btn:not(.active):hover { color: var(--burgundy); }
+  .stu-tab-btn.active {
+    background: var(--bg);
+    color: var(--burgundy);
+    box-shadow: 0 1px 3px rgba(26,20,17,0.06);
+  }
+  .stu-tabview { display: none; }
+  .stu-tabview.active { display: block; }
+
+  /* Section A — Team roles */
+  .roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .role-card {
+    background: var(--bg-warm);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .role-card.is-mine {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold);
+    background: #fffbf2;
+  }
+  .role-card .role-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--ink);
+  }
+  .role-card .role-line {
+    font-size: 12.5px;
+    color: var(--ink-mute);
+    line-height: 1.45;
+  }
+  .role-card .role-detail {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    font-style: italic;
+    line-height: 1.45;
+  }
+  .role-card .holder {
+    margin-top: auto;
+    font-size: 13px;
+    color: var(--ink);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    align-items: center;
+  }
+  .role-card .holder strong { font-weight: 600; }
+  .role-card .holder .badge {
+    background: var(--gold);
+    color: var(--burgundy-dark);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+  .role-card .holder .open-slot {
+    color: var(--ink-mute);
+    font-style: italic;
+  }
+  .role-card .claim-btn {
+    background: var(--burgundy);
+    color: var(--cream);
+    border: none;
+    padding: 8px 14px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+  .role-card .claim-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .role-card .claim-btn.ghost {
+    background: transparent;
+    color: var(--burgundy);
+    border: 1.5px solid var(--burgundy);
+  }
+
+  /* Section B — Team planning doc */
+  .plan-doc-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: stretch;
+    margin-top: 12px;
+  }
+  .plan-doc-row input[type="url"] {
+    flex: 1;
+    min-width: 220px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--line-strong);
+    background: var(--bg);
+    font-size: 14px;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+  }
+  .plan-doc-row input[type="url"]:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: #fffaf3;
+  }
+  .plan-doc-row input[type="url"][readonly] {
+    background: var(--cream);
+    color: var(--ink-soft);
+    cursor: text;
+  }
+  .plan-doc-row .doc-btn,
+  .plan-doc-row .doc-btn-ghost {
+    border: none;
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+  .plan-doc-row .doc-btn {
+    background: var(--burgundy);
+    color: var(--cream);
+  }
+  .plan-doc-row .doc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .plan-doc-row .doc-btn-ghost {
+    background: transparent;
+    color: var(--burgundy);
+    border: 1.5px solid var(--burgundy);
+  }
+  .plan-doc-empty {
+    margin-top: 10px;
+    color: var(--ink-mute);
+    font-style: italic;
+    font-size: 14px;
+  }
+
+  /* Nomination card — volunteer + confirm */
+  .nom-card .volunteers {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .nom-card .vol-pill {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+  .nom-card .vol-pill.me {
+    background: rgba(212,175,55,0.18);
+    border-color: var(--gold);
+    color: var(--burgundy-dark);
+    font-weight: 600;
+  }
+  .nom-card .vol-empty {
+    color: var(--ink-mute);
+    font-size: 13px;
+    font-style: italic;
+  }
+  .nom-card .confirmed {
+    margin-top: 10px;
+    background: rgba(135,75,70,0.08);
+    border: 1px solid rgba(135,75,70,0.25);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .nom-card .confirmed strong { font-weight: 600; }
+  .nom-card .change-btn {
+    background: transparent;
+    color: var(--burgundy);
+    border: 1.5px solid var(--burgundy);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .nom-card .confirm-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .nom-card .confirm-row select { flex: 1; min-width: 160px; }
+  .nom-card .role-locked-note {
+    margin-top: 10px;
+    color: var(--ink-mute);
+    font-size: 12.5px;
+    font-style: italic;
+  }
+
+  /* Tabs on small screens — make them feel mobile-friendly. */
+  @media (max-width: 720px) {
+    .stu-tabs { max-width: 100%; margin-bottom: 18px; }
+    .student-main { padding: 24px 16px 80px; }
+    .stu-section { padding: 22px 18px; }
     .num-input { font-size: 18px; padding: 12px; }
     .test-picker { grid-template-columns: repeat(2, 1fr); }
   }
@@ -4224,6 +4471,28 @@
     return String(full).trim().split(/\s+/)[0];
   }
 
+  // ============================================
+  // Tabbed student view — three tabs, URL-hash state.
+  // ============================================
+  const STU_TAB_NAMES = ['day', 'team', 'records'];
+
+  function currentStuTab() {
+    const h = (location.hash || '').replace('#', '').toLowerCase();
+    return STU_TAB_NAMES.indexOf(h) >= 0 ? h : 'day';
+  }
+  function switchStudentTab(tab) {
+    if (STU_TAB_NAMES.indexOf(tab) < 0) tab = 'day';
+    document.querySelectorAll('.stu-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.stu-tabview').forEach(v => v.classList.toggle('active', v.id === 'stuTab-' + tab));
+    if (history.replaceState) history.replaceState(null, '', '#' + tab);
+    if (window.scrollY > 200) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  window.switchStudentTab = switchStudentTab;
+  window.addEventListener('hashchange', () => {
+    if (!studentState.team) return; // tabs only exist for in-roster students
+    switchStudentTab(currentStuTab());
+  });
+
   function renderStudent() {
     // Hero
     document.getElementById('stuHeroTitle').innerHTML =
@@ -4235,17 +4504,241 @@
     document.getElementById('stuHeroMeta').innerHTML =
       `${swatch}<span>${sport}</span><span>${studentState.teamRoster.length} athletes</span>`;
 
-    document.getElementById('stuMain').innerHTML = [
-      renderStuSec1Team(),         // 2. Your team
-      renderStuSec5Schedule(),     // 3. The schedule (moved up + redesigned)
-      renderStuSec16Scoring(),     // 4. How you'll be scored (now 3 cards, stacked)
-      renderStuSec17Plan(),        // 5. What you need to plan
-      renderStuSec2Targets(),      // 6. Your fitness targets
-      renderStuSec3Nominations(),  // 7. Team nominations
-      renderStuSec4Lunch(),        // 8. Recovery lunch
-      renderStuSec6Records()       // 9. Records to Chase (new)
-    ].join('');
+    const tab = currentStuTab();
+    const tabBar = `
+      <div class="stu-tabs" role="tablist">
+        <button class="stu-tab-btn ${tab==='day'?'active':''}" data-tab="day" onclick="switchStudentTab('day')">The Day</button>
+        <button class="stu-tab-btn ${tab==='team'?'active':''}" data-tab="team" onclick="switchStudentTab('team')">Your Team</button>
+        <button class="stu-tab-btn ${tab==='records'?'active':''}" data-tab="records" onclick="switchStudentTab('records')">Records</button>
+      </div>`;
+
+    document.getElementById('stuMain').innerHTML = tabBar + `
+      <div class="stu-tabview ${tab==='day'?'active':''}" id="stuTab-day">
+        ${renderStuSec1Team()}
+        ${renderStuSec5Schedule()}
+        ${renderStuSec16Scoring()}
+        ${renderStuSec17Plan()}
+      </div>
+      <div class="stu-tabview ${tab==='team'?'active':''}" id="stuTab-team">
+        <div id="stuTeamDynamic">
+          ${renderStuSecRoles()}
+          ${renderStuSecPlanDoc()}
+          ${renderStuSec3Nominations()}
+        </div>
+        ${renderStuSec2Targets()}
+        ${renderStuSec4Lunch()}
+      </div>
+      <div class="stu-tabview ${tab==='records'?'active':''}" id="stuTab-records">
+        ${renderStuSec6Records()}
+      </div>
+    `;
   }
+
+  // After a write that changes role / plan-doc / nominations / volunteers,
+  // refresh the team object from the server and re-render only the dynamic
+  // Team-tab block — keeps the lunch textarea (etc.) intact mid-edit.
+  async function refreshTeamData() {
+    try {
+      const r = await apiGet('getClashTeams');
+      if (r && r.success) {
+        const me = (r.teams || []).find(t =>
+          (t.athleteIds || []).map(String).map(s => s.trim()).includes(studentState.athleteId)
+        );
+        if (me) studentState.team = me;
+      }
+    } catch (e) { /* keep existing state */ }
+  }
+  function rerenderTeamDynamic() {
+    const el = document.getElementById('stuTeamDynamic');
+    if (!el) return;
+    el.innerHTML = renderStuSecRoles() + renderStuSecPlanDoc() + renderStuSec3Nominations();
+  }
+
+  // ----- Shared team helpers -----
+  function nameForAthlete(aid) {
+    if (!aid) return '';
+    const m = studentState.teamRoster.find(x => x.Athlete_ID === aid);
+    return m ? m.Name : aid;
+  }
+  function amCaptain() {
+    return !!studentState.athleteId && studentState.team.roleCaptain === studentState.athleteId;
+  }
+  function myCurrentRole() {
+    const t = studentState.team;
+    const me = studentState.athleteId;
+    if (!me) return null;
+    if (t.roleCaptain === me) return 'captain';
+    if (t.roleTrainer === me) return 'trainer';
+    if (t.roleManager === me) return 'manager';
+    if (t.roleNutrition === me) return 'nutrition';
+    if (t.roleHype1 === me || t.roleHype2 === me) return 'hype';
+    return null;
+  }
+
+  // ----- Section: Team roles -----
+  const STU_ROLES_INTRO = "Everyone takes a role. These are the floor — not the ceiling. Great Trainers don't just lead the warm-up, they study what the body needs. Great Hype Squad don't just chant, they design a whole team identity. Pick something. Then make it yours.";
+  const STU_ROLES = [
+    { key: 'captain',   slots: 1, name: 'Captain',        line: 'Leadership on the day. Strategy and decisions.', detail: 'Own the plan. Confirm nominations. Make the calls when the team can\'t agree.' },
+    { key: 'trainer',   slots: 1, name: 'Trainer',        line: 'Warm-up and recovery.',                          detail: 'Design and lead the team warm-up. Keep the team moving between events. Own hydration.' },
+    { key: 'manager',   slots: 1, name: 'Manager',        line: 'Logistics and timing.',                          detail: 'Track the schedule. Get the team where they need to be. Manage admin and equipment.' },
+    { key: 'nutrition', slots: 1, name: 'Nutrition Lead', line: 'Fuel for the day.',                              detail: 'Own the team snacks plan. Contribute to the recovery lunch. Bring the Fuel Lab knowledge.' },
+    { key: 'hype',      slots: 2, name: 'Hype Squad',     line: 'Energy and identity.',                           detail: 'Lead the chant. Design the team\'s look and kit. Bring the moments that score.' }
+  ];
+
+  function renderStuSecRoles() {
+    const t = studentState.team;
+    const myRole = myCurrentRole();
+    const cards = STU_ROLES.map(r => {
+      let holders;
+      if (r.key === 'captain')        holders = t.roleCaptain   ? [t.roleCaptain]   : [];
+      else if (r.key === 'trainer')   holders = t.roleTrainer   ? [t.roleTrainer]   : [];
+      else if (r.key === 'manager')   holders = t.roleManager   ? [t.roleManager]   : [];
+      else if (r.key === 'nutrition') holders = t.roleNutrition ? [t.roleNutrition] : [];
+      else if (r.key === 'hype') {
+        holders = [];
+        if (t.roleHype1) holders.push(t.roleHype1);
+        if (t.roleHype2) holders.push(t.roleHype2);
+      } else holders = [];
+
+      const openSlots = r.slots - holders.length;
+      const iAmHere = holders.includes(studentState.athleteId);
+
+      let holderHTML = holders.map(aid => {
+        const isMe = aid === studentState.athleteId;
+        return `<span><strong>${escapeHtml(nameForAthlete(aid))}</strong>${isMe ? ' <span class="badge">You</span>' : ''}</span>`;
+      }).join('<span>·</span>');
+      if (openSlots > 0) {
+        const openText = `<span class="open-slot">${holders.length ? openSlots + ' more open' : 'Open'}</span>`;
+        holderHTML = holderHTML ? holderHTML + '<span>·</span>' + openText : openText;
+      }
+
+      let btnHTML = '';
+      if (openSlots > 0 && !myRole) {
+        btnHTML = `<button class="claim-btn" onclick="onClaimRole('${escapeAttr(r.key)}', this)">Take this role</button>`;
+      } else if (openSlots > 0 && myRole && myRole !== r.key) {
+        btnHTML = `<button class="claim-btn ghost" disabled>You're already in a role</button>`;
+      }
+
+      const slotLabel = r.slots > 1 ? ` <span class="open-slot" style="font-weight:400; font-size:13px;">· ${r.slots} slots</span>` : '';
+      return `
+        <div class="role-card${iAmHere ? ' is-mine' : ''}">
+          <div class="role-name">${escapeHtml(r.name)}${slotLabel}</div>
+          <div class="role-line">${escapeHtml(r.line)}</div>
+          <div class="role-detail">${escapeHtml(r.detail)}</div>
+          <div class="holder">${holderHTML}</div>
+          ${btnHTML}
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <section class="stu-section">
+        <h2>Team roles</h2>
+        <p class="lede">${escapeHtml(STU_ROLES_INTRO)}</p>
+        <div class="roles-grid">${cards}</div>
+      </section>
+    `;
+  }
+
+  async function onClaimRole(role, btn) {
+    if (studentState.saving) return;
+    studentState.saving = true;
+    const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const res = await apiPost({
+        action: 'claimRole',
+        email: studentState.email,
+        team: studentState.team.team,
+        role: role
+      });
+      if (res && res.success) {
+        await refreshTeamData();
+        rerenderTeamDynamic();
+        toast('Role claimed', 'success');
+      } else {
+        btn.disabled = false; btn.textContent = orig;
+        toast((res && res.error) || 'Could not claim role', 'error');
+      }
+    } catch (e) {
+      btn.disabled = false; btn.textContent = orig;
+      toast('Network error', 'error');
+    } finally {
+      studentState.saving = false;
+    }
+  }
+  window.onClaimRole = onClaimRole;
+
+  // ----- Section: Team planning doc -----
+  // TODO: Scott — replace PLACEHOLDER below with the real template doc ID.
+  const STU_PLAN_TEMPLATE_URL = 'https://docs.google.com/document/d/PLACEHOLDER/copy';
+
+  function renderStuSecPlanDoc() {
+    const t = studentState.team;
+    const url = (t.planDocUrl || '').trim();
+    const captain = amCaptain();
+    let body;
+    if (captain) {
+      body = `
+        <div class="plan-doc-row">
+          <input type="url" id="planDocInput" placeholder="https://docs.google.com/document/d/..." value="${escapeAttr(url)}">
+          <button class="doc-btn" id="planDocSaveBtn" onclick="onSavePlanDoc(this)">Save</button>
+          <a class="doc-btn-ghost" href="${escapeAttr(STU_PLAN_TEMPLATE_URL)}" target="_blank" rel="noopener">Use the template</a>
+        </div>
+        ${url ? `<div style="margin-top:8px;"><a class="doc-btn-ghost" href="${escapeAttr(url)}" target="_blank" rel="noopener">Open plan ↗</a></div>` : ''}
+      `;
+    } else if (url) {
+      body = `
+        <div class="plan-doc-row">
+          <input type="url" readonly value="${escapeAttr(url)}">
+          <a class="doc-btn" href="${escapeAttr(url)}" target="_blank" rel="noopener">Open plan ↗</a>
+        </div>
+      `;
+    } else {
+      body = `
+        <p class="plan-doc-empty">Your captain hasn't added the plan link yet.</p>
+        <div class="plan-doc-row">
+          <a class="doc-btn-ghost" href="${escapeAttr(STU_PLAN_TEMPLATE_URL)}" target="_blank" rel="noopener">Use the template</a>
+        </div>
+      `;
+    }
+    return `
+      <section class="stu-section">
+        <h2>Your team plan</h2>
+        <p class="lede">Your team plans together in one Google Doc. The Captain creates it from the template, shares it with everyone in the team, and pastes the link here. Edit it together — chant, warm-up, hype moment, snacks, strategy, lunch.</p>
+        ${body}
+      </section>
+    `;
+  }
+
+  async function onSavePlanDoc(btn) {
+    const input = document.getElementById('planDocInput');
+    if (!input || studentState.saving) return;
+    const url = (input.value || '').trim();
+    studentState.saving = true;
+    const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const res = await apiPost({
+        action: 'setPlanDocUrl',
+        email: studentState.email,
+        team: studentState.team.team,
+        url: url
+      });
+      if (res && res.success) {
+        studentState.team.planDocUrl = url;
+        toast('Plan link saved', 'success');
+        rerenderTeamDynamic();
+      } else {
+        btn.disabled = false; btn.textContent = orig;
+        toast((res && res.error) || 'Could not save', 'error');
+      }
+    } catch (e) {
+      btn.disabled = false; btn.textContent = orig;
+      toast('Network error', 'error');
+    } finally {
+      studentState.saving = false;
+    }
+  }
+  window.onSavePlanDoc = onSavePlanDoc;
 
   // ----- Section 1: Your team -----
   function renderStuSec1Team() {
@@ -4431,28 +4924,69 @@
     }
   ];
 
+  // Volunteer + Captain-confirm flow. Anyone on the team can volunteer or
+  // withdraw; only the Captain can confirm a volunteer to the nomination
+  // slot, or change a confirmed pick.
   function renderStuSec3Nominations() {
     const cards = STU_NOMS.map(n => nomCardHTML(n)).join('');
     return `
       <section class="stu-section" data-stu-section="nominations">
         <h2>Team nominations</h2>
-        <p class="lede">Pick the right teammate for each event. You can change a pick any time before the day.</p>
+        <p class="lede">Volunteer for the events that fit you. The Captain confirms one volunteer per event before the day.</p>
         ${cards}
       </section>
     `;
   }
 
+  function volsFieldForSlot(slot) {
+    return slot === 'row' ? 'volunteersRow' : slot === 'sprint' ? 'volunteersSprint' : 'volunteersHang';
+  }
+
   function nomCardHTML(nom) {
     const t = studentState.team;
-    const currentId = String(t[nom.teamField] || '').trim();
-    const current = currentId
-      ? (studentState.teamRoster.find(m => m.Athlete_ID === currentId) || { Name: currentId })
-      : null;
-    const meIsCurrent = current && current.Athlete_ID === studentState.athleteId;
-    const teammateOptions = studentState.teamRoster
-      .filter(m => !m.isMe)
-      .map(m => `<option value="${escapeAttr(m.Athlete_ID)}" ${currentId === m.Athlete_ID ? 'selected' : ''}>${escapeHtml(m.Name)}</option>`)
-      .join('');
+    const me = studentState.athleteId;
+    const captain = amCaptain();
+    const confirmedId = String(t[nom.teamField] || '').trim();
+    const volunteers = (t[volsFieldForSlot(nom.slot)] || []).map(String);
+    const iVolunteered = volunteers.includes(me);
+
+    let body = '';
+    if (confirmedId) {
+      const cname = nameForAthlete(confirmedId);
+      const isMe = confirmedId === me;
+      body = `
+        <div class="confirmed">
+          <span>Confirmed: <strong>${escapeHtml(cname)}${isMe ? ' (you)' : ''}</strong></span>
+          ${captain ? `<button class="change-btn" onclick="onChangeNomination('${escapeAttr(nom.slot)}', this)">Change</button>` : ''}
+        </div>
+      `;
+    } else {
+      if (volunteers.length) {
+        const pills = volunteers.map(aid => {
+          const isMe = aid === me;
+          return `<span class="vol-pill ${isMe ? 'me' : ''}">${escapeHtml(nameForAthlete(aid))}${isMe ? ' · you' : ''}</span>`;
+        }).join('');
+        body += `<div class="volunteers">${pills}</div>`;
+      } else {
+        body += `<div class="volunteers"><span class="vol-empty">No volunteers yet — be the first.</span></div>`;
+      }
+      body += `<div class="nom-controls">`;
+      if (iVolunteered) {
+        body += `<button class="ghost" onclick="onWithdrawVolunteer('${escapeAttr(nom.slot)}', this)">Withdraw</button>`;
+      } else {
+        body += `<button onclick="onVolunteerForNom('${escapeAttr(nom.slot)}', this)">Volunteer for this</button>`;
+      }
+      body += `</div>`;
+      if (captain && volunteers.length) {
+        const opts = volunteers.map(aid => `<option value="${escapeAttr(aid)}">${escapeHtml(nameForAthlete(aid))}</option>`).join('');
+        body += `
+          <div class="nom-controls">
+            <select id="confirm-${escapeAttr(nom.slot)}" aria-label="Pick a volunteer to confirm"><option value="">— confirm a volunteer —</option>${opts}</select>
+            <button onclick="onConfirmNomination('${escapeAttr(nom.slot)}', this)">Confirm</button>
+          </div>
+        `;
+      }
+    }
 
     return `
       <div class="nom-card" data-slot="${escapeAttr(nom.slot)}">
@@ -4462,73 +4996,47 @@
             <div class="nom-tease">${escapeHtml(nom.tease)}</div>
           </div>
         </div>
-        <div class="current">
-          ${current
-            ? `Currently nominated: <strong>${escapeHtml(current.Name)}${meIsCurrent ? ' (you)' : ''}</strong>`
-            : `<span class="none">No one nominated yet.</span>`}
-        </div>
-        <div class="nom-controls">
-          <button class="ghost" ${meIsCurrent ? 'disabled' : ''} onclick="onNominateMe('${escapeAttr(nom.slot)}', this)">${meIsCurrent ? 'You\'re nominated' : 'Nominate me'}</button>
-          <select aria-label="Pick a teammate"><option value="">— pick a teammate —</option>${teammateOptions}</select>
-          <button onclick="onNominateTeammate('${escapeAttr(nom.slot)}', this)">Nominate</button>
-        </div>
+        ${body}
       </div>
     `;
   }
 
-  async function onNominateMe(slot, btn) {
-    return submitNomination(slot, studentState.athleteId, btn);
+  async function onVolunteerForNom(slot, btn) { return runNomAction(btn, { action: 'addVolunteer', email: studentState.email, team: studentState.team.team, slot: slot }, 'You volunteered'); }
+  async function onWithdrawVolunteer(slot, btn) { return runNomAction(btn, { action: 'removeVolunteer', email: studentState.email, team: studentState.team.team, slot: slot }, 'Withdrawn'); }
+  async function onConfirmNomination(slot, btn) {
+    const sel = document.getElementById('confirm-' + slot);
+    const aid = sel && sel.value;
+    if (!aid) { toast('Pick a volunteer to confirm', 'error'); return; }
+    return runNomAction(btn, { action: 'saveClashNomination', email: studentState.email, team: studentState.team.team, slot: slot, athleteId: aid }, 'Nomination confirmed');
   }
-
-  async function onNominateTeammate(slot, btn) {
-    const select = btn.parentElement.querySelector('select');
-    const aid = select && select.value;
-    if (!aid) {
-      toast('Pick a teammate first', 'error');
-      return;
-    }
-    return submitNomination(slot, aid, btn);
+  async function onChangeNomination(slot, btn) {
+    return runNomAction(btn, { action: 'saveClashNomination', email: studentState.email, team: studentState.team.team, slot: slot, athleteId: '' }, 'Reopened — pick again');
   }
+  window.onVolunteerForNom = onVolunteerForNom;
+  window.onWithdrawVolunteer = onWithdrawVolunteer;
+  window.onConfirmNomination = onConfirmNomination;
+  window.onChangeNomination = onChangeNomination;
 
-  async function submitNomination(slot, athleteId, btn) {
+  async function runNomAction(btn, payload, successMsg) {
     if (studentState.saving) return;
     studentState.saving = true;
-    const original = btn.textContent;
-    btn.disabled = true; btn.textContent = 'Saving…';
+    const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Saving…';
     try {
-      const res = await apiPost({
-        action: 'saveClashNomination',
-        team: studentState.team.team,
-        slot: slot,
-        athleteId: athleteId
-      });
+      const res = await apiPost(payload);
       if (res && res.success) {
-        // Update local state and re-render section 3 in place.
-        if (slot === 'row') studentState.team.nomRow = athleteId;
-        if (slot === 'sprint') studentState.team.nomSprint = athleteId;
-        if (slot === 'hang') studentState.team.nomHang = athleteId;
-        toast('Nomination saved', 'success');
-        rerenderNominations();
+        await refreshTeamData();
+        rerenderTeamDynamic();
+        toast(successMsg, 'success');
       } else {
-        btn.disabled = false; btn.textContent = original;
+        btn.disabled = false; btn.textContent = orig;
         toast((res && res.error) || 'Save failed', 'error');
       }
     } catch (e) {
-      btn.disabled = false; btn.textContent = original;
+      btn.disabled = false; btn.textContent = orig;
       toast('Network error', 'error');
     } finally {
       studentState.saving = false;
     }
-  }
-
-  function rerenderNominations() {
-    // Replace just the nominations section so the rest of the page
-    // (and any open toggles, in-progress lunch text) doesn't blink.
-    const target = document.querySelector('#stuMain [data-stu-section="nominations"]');
-    if (!target) return;
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = renderStuSec3Nominations();
-    target.replaceWith(wrapper.firstElementChild);
   }
 
   // ----- Section 4: Recovery lunch planner -----
