@@ -4961,9 +4961,9 @@
     }
   ];
 
-  // Team-side scoring explainer — sits below the individual-grade cards.
-  // No card-internal title; the "Your team's score" subheading above it
-  // serves that role.
+  // Team-side scoring explainer — sits below the personal-scoring cards.
+  // No card-internal title; the "Team scoring" subheading above it serves
+  // that role.
   const STU_TEAM_SCORE = {
     line: "Every event on the day is ranked — 1st place down to last. The higher your team finishes, the more points you earn. Points add up across every event, and the team with the most at the end wins.",
     detail: "There are two halves to the team score. The team events — Warm-Up, Hype, Snacks, Planning, Tug of War, Relays, Team Challenge, Grit Challenge, 100m Row — each give points based on where your team finishes. And your fitness retests feed in too: every person's improvement and score adds to the team total. Both halves matter, so every event and every effort counts toward the win."
@@ -4994,10 +4994,10 @@
     return `
       <section class="stu-section">
         <h2>How you'll be scored</h2>
-        <p class="lede">Two things are happening at once — your own grade, and your team's race for the win. Here's how both work.</p>
-        <h3 class="scoring-subheading">Your grade</h3>
+        <p class="lede">Two things are happening at once — how you score personally, and how your team scores. Here's how both work.</p>
+        <h3 class="scoring-subheading">Personal scoring</h3>
         <div class="score-cards">${cards}</div>
-        <h3 class="scoring-subheading">Your team's score</h3>
+        <h3 class="scoring-subheading">Team scoring</h3>
         <div class="score-cards">${teamCard}</div>
       </section>
     `;
