@@ -839,7 +839,7 @@
   }
   .timeline-row {
     display: grid;
-    grid-template-columns: 110px 28px 1fr;
+    grid-template-columns: 128px 28px 1fr;
     gap: 18px;
     align-items: flex-start;
     padding: 14px 0;
@@ -853,6 +853,7 @@
     font-variant-numeric: tabular-nums;
     padding-top: 2px;
     letter-spacing: -0.01em;
+    white-space: nowrap;
   }
   .timeline-time.placeholder {
     color: var(--ink-mute);
@@ -913,8 +914,8 @@
     font-weight: 700;
   }
   @media (max-width: 480px) {
-    .timeline-row { grid-template-columns: 78px 20px 1fr; gap: 12px; padding: 12px 0; }
-    .timeline-time { font-size: 16px; }
+    .timeline-row { grid-template-columns: 100px 20px 1fr; gap: 12px; padding: 12px 0; }
+    .timeline-time { font-size: 15px; }
     .timeline-event-name { font-size: 16px; }
   }
 
@@ -1143,6 +1144,41 @@
   .records-most-improved .val strong {
     font-weight: 700;
     color: var(--burgundy);
+  }
+
+  /* Records tab: framing intro + two-column layout */
+  .records-frame-intro {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 18px;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .records-frame-intro strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .records-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .records-two-col > .stu-section { margin-bottom: 0; }
+  /* In the two-column wrapper the records grid collapses to one column so
+     each test card fits comfortably in the narrower side. */
+  .records-two-col .records-grid { grid-template-columns: 1fr; gap: 10px; }
+  @media (max-width: 920px) {
+    .records-two-col { grid-template-columns: 1fr; gap: 0; }
+    .records-two-col > .stu-section { margin-bottom: 24px; }
+    .records-two-col .records-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  }
+  @media (max-width: 720px) {
+    .records-two-col .records-grid { grid-template-columns: 1fr; gap: 10px; }
   }
 
   /* Empty state when athlete isn't on a team */
@@ -2366,7 +2402,7 @@
 <div id="comingSoon">
   <div class="tag">FIS Warriors · Athlete Academy</div>
   <h1>Clash of the <em>Codes</em></h1>
-  <p>Thu 5 June, 08:30–12:30. Six teams, ten events, one champion.</p>
+  <p>Tue 17 June, 08:30–12:30. Six teams, ten events, one champion.</p>
   <div class="when">SAVE THE DATE</div>
 </div>
 
@@ -2390,8 +2426,8 @@
   <header class="student-hero">
     <button class="logout-link" onclick="studentLogout()">Sign out</button>
     <div class="inner">
-      <div class="eyebrow">Clash of the Codes · Thu 5 June</div>
-      <h1 id="stuHeroTitle">Your <em>day</em>.</h1>
+      <div class="eyebrow">Tue 17 June</div>
+      <h1 id="stuHeroTitle">Clash of the <em>Codes</em>.</h1>
       <div class="meta" id="stuHeroMeta"></div>
     </div>
   </header>
@@ -4535,18 +4571,17 @@
         <div id="stuTeamDynamic">
           ${renderStuSecRoles()}
           ${renderStuSecPlanDoc()}
+          ${renderStuSec17Plan()}
           ${renderStuSec3Nominations()}
         </div>
-        ${renderStuSec2Targets()}
         ${renderStuSec4Lunch()}
       </div>
       <div class="stu-tabview ${tab==='day'?'active':''}" id="stuTab-day">
         ${renderStuSec5Schedule()}
         ${renderStuSec16Scoring()}
-        ${renderStuSec17Plan()}
       </div>
       <div class="stu-tabview ${tab==='records'?'active':''}" id="stuTab-records">
-        ${renderStuSec6Records()}
+        ${renderStuSecRecordsWithScores()}
       </div>
     `;
   }
@@ -4568,7 +4603,7 @@
   function rerenderTeamDynamic() {
     const el = document.getElementById('stuTeamDynamic');
     if (!el) return;
-    el.innerHTML = renderStuSecRoles() + renderStuSecPlanDoc() + renderStuSec3Nominations();
+    el.innerHTML = renderStuSecRoles() + renderStuSecPlanDoc() + renderStuSec17Plan() + renderStuSec3Nominations();
   }
 
   // ----- Shared team helpers -----
@@ -4593,7 +4628,7 @@
   }
 
   // ----- Section: Team roles -----
-  const STU_ROLES_INTRO = "Everyone takes a role. These are the floor — not the ceiling. Great Trainers don't just lead the warm-up, they study what the body needs. Great Hype Squad don't just chant, they design a whole team identity. Pick something. Then make it yours.";
+  const STU_ROLES_INTRO = 'Everyone takes a role. Step up. Make it yours.';
   const STU_ROLES = [
     { key: 'captain',   slots: 1, name: 'Captain',        line: 'Leadership on the day. Strategy and decisions.', detail: 'Own the plan. Confirm nominations. Make the calls when the team can\'t agree.' },
     { key: 'trainer',   slots: 1, name: 'Trainer',        line: 'Warm-up and recovery.',                          detail: 'Design and lead the team warm-up. Keep the team moving between events. Own hydration.' },
@@ -4843,13 +4878,26 @@
     'Submit your team plan (link or instructions TBC)'
   ];
 
+  // Personal-only checklist state. Survives re-renders of the Team-tab
+  // dynamic block (role/plan-doc/nomination saves) but doesn't persist
+  // server-side — the original behaviour.
+  const stuPlanChecks = {};
+  function onPlanItemToggle(i, el) {
+    stuPlanChecks[i] = el.checked;
+    el.parentElement.classList.toggle('done', el.checked);
+  }
+  window.onPlanItemToggle = onPlanItemToggle;
+
   function renderStuSec17Plan() {
-    const items = STU_PLAN_ITEMS.map((label, i) => `
-      <label class="plan-item">
-        <input type="checkbox" onchange="this.parentElement.classList.toggle('done', this.checked)" />
-        <span>${escapeHtml(label)}</span>
-      </label>
-    `).join('');
+    const items = STU_PLAN_ITEMS.map((label, i) => {
+      const checked = !!stuPlanChecks[i];
+      return `
+        <label class="plan-item${checked ? ' done' : ''}">
+          <input type="checkbox" ${checked ? 'checked' : ''} onchange="onPlanItemToggle(${i}, this)" />
+          <span>${escapeHtml(label)}</span>
+        </label>
+      `;
+    }).join('');
     return `
       <section class="stu-section">
         <h2>What you need to plan</h2>
@@ -4881,8 +4929,8 @@
     }).join('');
     return `
       <section class="stu-section">
-        <h2>Your fitness targets</h2>
-        <p class="lede">On the day you'll get one re-test per event. Aim to beat your last score — that's where the easy points are.</p>
+        <h2>Your scores now</h2>
+        <p class="lede">Where you are today. On the day you'll get one re-test per event — beat your last score and the easy points are yours.</p>
         ${items}
       </section>
     `;
@@ -4918,9 +4966,9 @@
   }
 
   // ----- Section 3: Team nominations -----
-  // Three nominated events: 100 m Row, Grit Challenge, Team Challenge.
-  // For Grit Challenge and Team Challenge we deliberately keep the tease
-  // generic — names only, no description of what the events involve.
+  // Two nominated events: 100 m Row and Grit Challenge. Team Challenge is a
+  // whole-team event, not a nomination. For Grit Challenge the tease is
+  // deliberately generic — name only, no description of what it involves.
   const STU_NOMS = [
     {
       slot: 'row',
@@ -4933,12 +4981,6 @@
       title: 'Grit Challenge',
       teamField: 'nomHang',
       tease: 'One athlete represents the team. Pick someone tough.'
-    },
-    {
-      slot: 'game',
-      title: 'Team Challenge',
-      teamField: 'nomGame',
-      tease: 'One athlete represents the team. Pick someone sharp.'
     }
   ];
 
@@ -4956,7 +4998,7 @@
     return `
       <section class="stu-section" data-stu-section="nominations">
         <h2>Team nominations</h2>
-        <p class="lede">Volunteer for the events that fit you. The Captain confirms one volunteer per event before the day. Each person can only be confirmed for one nominated event.</p>
+        <p class="lede">Volunteer for the events that fit you. The Captain confirms one volunteer per event before the day. The same person can't be confirmed for both — one event each.</p>
         ${cards}
       </section>
     `;
@@ -4964,17 +5006,16 @@
 
   function volsFieldForSlot(slot) {
     return slot === 'row' ? 'volunteersRow'
-      : slot === 'sprint' ? 'volunteersSprint'
       : slot === 'hang' ? 'volunteersHang'
-      : 'volunteersGame';
+      : 'volunteersSprint'; // legacy slot — unused in student view
   }
 
   // Map { athleteId → "Grit Challenge" } for athletes already confirmed in
-  // some other nominated slot.
+  // the other nominated slot. With only two slots, this is "the other one".
   function confirmedElsewhereMap(currentSlot) {
     const t = studentState.team;
     const map = {};
-    const slotToLabel = { row: '100 m Row', hang: 'Grit Challenge', game: 'Team Challenge' };
+    const slotToLabel = { row: '100 m Row', hang: 'Grit Challenge' };
     STU_NOMS.forEach(n => {
       if (n.slot === currentSlot) return;
       const aid = String(t[n.teamField] || '').trim();
@@ -5207,6 +5248,21 @@
     ],
     mostImproved: { name: 'Oscar Anderson', detail: '+9 points across the four tests' }
   };
+
+  // Records tab wrapper: framing intro + two-column layout (last year's
+  // records on the left, the student's current scores on the right). Stacks
+  // on mobile via CSS.
+  function renderStuSecRecordsWithScores() {
+    return `
+      <div class="records-frame-intro">
+        <strong>Last year's records are the bar.</strong> Your current scores are where you are today. Pick a number on the left, find yourself on the right — then chase it.
+      </div>
+      <div class="records-two-col">
+        ${renderStuSec6Records()}
+        ${renderStuSec2Targets()}
+      </div>
+    `;
+  }
 
   function renderStuSec6Records() {
     const cards = STU_RECORDS_DATA.tests.map(t => `
