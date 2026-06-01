@@ -264,6 +264,11 @@ function doGet(e) {
     if (action === 'getUnassignedAthletes') {
       return apJson(handleGetUnassignedAthletes(ss));
     }
+    if (action === 'getTeamRoles') {
+      return ContentService.createTextOutput(JSON.stringify(handleGetTeamRoles(ss, e.parameter.team)))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (action === 'getClashLunchPlan') {
       return apJson(handleGetClashLunchPlan(ss, e.parameter.email, e.parameter.athleteId));
     }
@@ -411,6 +416,18 @@ function doPost(e) {
     if (data.action === 'saveClashNomination') {
       var ssClashN = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSaveClashNomination(ssClashN, data));
+    }
+    if (data.action === 'claimRole') {
+      return apJson(handleClaimRole(SpreadsheetApp.getActiveSpreadsheet(), data));
+    }
+    if (data.action === 'setPlanDocUrl') {
+      return apJson(handleSetPlanDocUrl(SpreadsheetApp.getActiveSpreadsheet(), data));
+    }
+    if (data.action === 'addVolunteer') {
+      return apJson(handleAddVolunteer(SpreadsheetApp.getActiveSpreadsheet(), data));
+    }
+    if (data.action === 'removeVolunteer') {
+      return apJson(handleRemoveVolunteer(SpreadsheetApp.getActiveSpreadsheet(), data));
     }
     if (data.action === 'saveClashResult') {
       var ssClashR = SpreadsheetApp.getActiveSpreadsheet();
@@ -2891,7 +2908,13 @@ function handleGetPortalBootstrap(ss, email) {
 
 function ensureClashTeamsSheet(ss) {
   var sheet = ss.getSheetByName('Clash_Teams');
-  var headers = ['Team', 'Sport', 'Athlete_IDs', 'Chant', 'Colour', 'Nom_Row', 'Nom_Sprint', 'Nom_Hang'];
+  var headers = [
+    'Team', 'Sport', 'Athlete_IDs', 'Chant', 'Colour',
+    'Nom_Row', 'Nom_Sprint', 'Nom_Hang',
+    'Role_Captain', 'Role_Trainer', 'Role_Manager', 'Role_Nutrition', 'Role_Hype_1', 'Role_Hype_2',
+    'Plan_Doc_URL',
+    'Volunteers_Row', 'Volunteers_Sprint', 'Volunteers_Hang'
+  ];
   if (!sheet) {
     sheet = ss.insertSheet('Clash_Teams');
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -3189,7 +3212,17 @@ function handleGetClashTeams(ss) {
         colour: r.Colour || '',
         nomRow: r.Nom_Row || '',
         nomSprint: r.Nom_Sprint || '',
-        nomHang: r.Nom_Hang || ''
+        nomHang: r.Nom_Hang || '',
+        roleCaptain: r.Role_Captain || '',
+        roleTrainer: r.Role_Trainer || '',
+        roleManager: r.Role_Manager || '',
+        roleNutrition: r.Role_Nutrition || '',
+        roleHype1: r.Role_Hype_1 || '',
+        roleHype2: r.Role_Hype_2 || '',
+        planDocUrl: r.Plan_Doc_URL || '',
+        volunteersRow: String(r.Volunteers_Row || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+        volunteersSprint: String(r.Volunteers_Sprint || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+        volunteersHang: String(r.Volunteers_Hang || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean)
       };
     });
     return { success: true, teams: teams };
@@ -3358,8 +3391,29 @@ var CLASH_TEAM_FIELD_MAP = {
   Colour: 'colour',
   Nom_Row: 'nomRow',
   Nom_Sprint: 'nomSprint',
-  Nom_Hang: 'nomHang'
+  Nom_Hang: 'nomHang',
+  Role_Captain: 'roleCaptain',
+  Role_Trainer: 'roleTrainer',
+  Role_Manager: 'roleManager',
+  Role_Nutrition: 'roleNutrition',
+  Role_Hype_1: 'roleHype1',
+  Role_Hype_2: 'roleHype2',
+  Plan_Doc_URL: 'planDocUrl',
+  Volunteers_Row: 'volunteersRow',
+  Volunteers_Sprint: 'volunteersSprint',
+  Volunteers_Hang: 'volunteersHang'
 };
+
+// Role -> column header (Hype is a list resolved at write time).
+var CLASH_ROLE_COLS = {
+  captain: 'Role_Captain',
+  trainer: 'Role_Trainer',
+  manager: 'Role_Manager',
+  nutrition: 'Role_Nutrition'
+};
+var CLASH_HYPE_COLS = ['Role_Hype_1', 'Role_Hype_2'];
+var CLASH_ALL_ROLE_COLS = ['Role_Captain', 'Role_Trainer', 'Role_Manager', 'Role_Nutrition', 'Role_Hype_1', 'Role_Hype_2'];
+var CLASH_VOLUNTEER_COLS = { row: 'Volunteers_Row', sprint: 'Volunteers_Sprint', hang: 'Volunteers_Hang' };
 
 function handleSaveClashTeam(ss, data) {
   try {
@@ -3436,11 +3490,22 @@ function handleSaveClashNomination(ss, data) {
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     var teamC = headers.indexOf('Team');
     var slotC = headers.indexOf(slotCol);
+    var capC = headers.indexOf('Role_Captain');
     if (slotC < 0) return { success: false, error: slotCol + ' column missing' };
 
     var col = sheet.getRange(2, teamC + 1, lastRow - 1, 1).getValues();
     for (var i = 0; i < col.length; i++) {
       if (String(col[i][0]).trim() === String(data.team).trim()) {
+        // Captain-only check fires when an athlete email is on the request
+        // (i.e. the call came from the student view). The admin/staff scoring
+        // station never sends an email, so it stays unrestricted.
+        if (data.email) {
+          var requesterId = lookupAthleteIdByEmail(ss, data.email);
+          var captainId = capC >= 0 ? String(sheet.getRange(i + 2, capC + 1).getValue() || '').trim() : '';
+          if (!captainId || !requesterId || String(requesterId).trim() !== captainId) {
+            return { success: false, error: 'Only the Captain can confirm a nomination.' };
+          }
+        }
         sheet.getRange(i + 2, slotC + 1).setValue(data.athleteId || '');
         return { success: true, team: data.team, slot: slot, athleteId: data.athleteId || '' };
       }
@@ -3449,6 +3514,164 @@ function handleSaveClashNomination(ss, data) {
   } catch (error) {
     return { success: false, error: error.toString() };
   }
+}
+
+// ----- Roles, plan doc, volunteers -----
+
+// Locate the {row, sheet, headers} for a team by name, or null.
+function clashFindTeamRow(ss, teamName) {
+  var sheet = ensureClashTeamsSheet(ss);
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+  var lastCol = sheet.getLastColumn();
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var teamC = headers.indexOf('Team');
+  if (teamC < 0) return null;
+  var col = sheet.getRange(2, teamC + 1, lastRow - 1, 1).getValues();
+  for (var i = 0; i < col.length; i++) {
+    if (String(col[i][0]).trim() === String(teamName).trim()) {
+      return { sheet: sheet, headers: headers, rowNum: i + 2 };
+    }
+  }
+  return null;
+}
+
+function clashReadTeamCell(loc, header) {
+  var c = loc.headers.indexOf(header);
+  if (c < 0) return '';
+  return String(loc.sheet.getRange(loc.rowNum, c + 1).getValue() || '').trim();
+}
+
+function clashWriteTeamCell(loc, header, value) {
+  var c = loc.headers.indexOf(header);
+  if (c < 0) return false;
+  loc.sheet.getRange(loc.rowNum, c + 1).setValue(value == null ? '' : value);
+  return true;
+}
+
+// GET — return the role assignments for one team.
+function handleGetTeamRoles(ss, teamName) {
+  try {
+    if (!teamName) return { success: false, error: 'Missing team' };
+    var loc = clashFindTeamRow(ss, teamName);
+    if (!loc) return { success: false, error: 'Team not found: ' + teamName };
+    return {
+      success: true,
+      team: teamName,
+      roles: {
+        captain: clashReadTeamCell(loc, 'Role_Captain'),
+        trainer: clashReadTeamCell(loc, 'Role_Trainer'),
+        manager: clashReadTeamCell(loc, 'Role_Manager'),
+        nutrition: clashReadTeamCell(loc, 'Role_Nutrition'),
+        hype1: clashReadTeamCell(loc, 'Role_Hype_1'),
+        hype2: clashReadTeamCell(loc, 'Role_Hype_2')
+      }
+    };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// POST — claim a role for the requesting athlete. One role per athlete.
+function handleClaimRole(ss, data) {
+  try {
+    if (!data.team || !data.role || !data.email) return { success: false, error: 'Missing team, role or email' };
+    var athleteId = lookupAthleteIdByEmail(ss, data.email);
+    if (!athleteId) return { success: false, error: 'No athlete found for ' + data.email };
+    athleteId = String(athleteId).trim();
+
+    var loc = clashFindTeamRow(ss, data.team);
+    if (!loc) return { success: false, error: 'Team not found: ' + data.team };
+
+    // Athlete must be on this team's roster.
+    var rosterRaw = clashReadTeamCell(loc, 'Athlete_IDs');
+    var roster = rosterRaw.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    if (roster.indexOf(athleteId) === -1) {
+      return { success: false, error: 'You\'re not on this team — can\'t claim a role here.' };
+    }
+
+    // Already holds a role? Block (one role per student).
+    for (var i = 0; i < CLASH_ALL_ROLE_COLS.length; i++) {
+      if (clashReadTeamCell(loc, CLASH_ALL_ROLE_COLS[i]) === athleteId) {
+        return { success: false, error: 'You\'re already in a role for this team.' };
+      }
+    }
+
+    var role = String(data.role).toLowerCase();
+    var targetCol = CLASH_ROLE_COLS[role];
+    if (role === 'hype') {
+      // First empty hype slot wins.
+      for (var h = 0; h < CLASH_HYPE_COLS.length; h++) {
+        if (!clashReadTeamCell(loc, CLASH_HYPE_COLS[h])) { targetCol = CLASH_HYPE_COLS[h]; break; }
+      }
+      if (!targetCol || clashReadTeamCell(loc, targetCol)) {
+        return { success: false, error: 'Both Hype Squad slots are taken.' };
+      }
+    } else {
+      if (!targetCol) return { success: false, error: 'Unknown role: ' + role };
+      if (clashReadTeamCell(loc, targetCol)) {
+        return { success: false, error: 'That role is already taken.' };
+      }
+    }
+
+    clashWriteTeamCell(loc, targetCol, athleteId);
+    return { success: true, team: data.team, role: role, slot: targetCol, athleteId: athleteId };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// POST — Captain-only: set the team's planning Google Doc URL.
+function handleSetPlanDocUrl(ss, data) {
+  try {
+    if (!data.team || !data.email) return { success: false, error: 'Missing team or email' };
+    var loc = clashFindTeamRow(ss, data.team);
+    if (!loc) return { success: false, error: 'Team not found: ' + data.team };
+    var requesterId = String(lookupAthleteIdByEmail(ss, data.email) || '').trim();
+    var captainId = clashReadTeamCell(loc, 'Role_Captain');
+    if (!captainId || !requesterId || requesterId !== captainId) {
+      return { success: false, error: 'Only the Captain can update the plan link.' };
+    }
+    var url = (data.url == null ? '' : String(data.url)).trim();
+    clashWriteTeamCell(loc, 'Plan_Doc_URL', url);
+    return { success: true, team: data.team, url: url };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// POST — add or remove the requesting athlete from a nomination volunteer list.
+function clashUpdateVolunteer(ss, data, mode) {
+  if (!data.team || !data.slot || !data.email) return { success: false, error: 'Missing team, slot or email' };
+  var slot = String(data.slot).toLowerCase();
+  var col = CLASH_VOLUNTEER_COLS[slot];
+  if (!col) return { success: false, error: 'Slot must be row|sprint|hang' };
+  var loc = clashFindTeamRow(ss, data.team);
+  if (!loc) return { success: false, error: 'Team not found: ' + data.team };
+  var athleteId = String(lookupAthleteIdByEmail(ss, data.email) || '').trim();
+  if (!athleteId) return { success: false, error: 'No athlete found for ' + data.email };
+  // Athlete must be on the team.
+  var roster = clashReadTeamCell(loc, 'Athlete_IDs').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  if (roster.indexOf(athleteId) === -1) {
+    return { success: false, error: 'You\'re not on this team.' };
+  }
+  var current = clashReadTeamCell(loc, col).split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  var idx = current.indexOf(athleteId);
+  if (mode === 'add') {
+    if (idx === -1) current.push(athleteId);
+  } else if (mode === 'remove') {
+    if (idx >= 0) current.splice(idx, 1);
+  }
+  clashWriteTeamCell(loc, col, current.join(','));
+  return { success: true, team: data.team, slot: slot, volunteers: current };
+}
+function handleAddVolunteer(ss, data) {
+  try { return clashUpdateVolunteer(ss, data, 'add'); }
+  catch (error) { return { success: false, error: error.toString() }; }
+}
+function handleRemoveVolunteer(ss, data) {
+  try { return clashUpdateVolunteer(ss, data, 'remove'); }
+  catch (error) { return { success: false, error: error.toString() }; }
 }
 
 function handleSaveClashResult(ss, data) {
