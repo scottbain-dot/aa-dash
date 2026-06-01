@@ -998,10 +998,25 @@
     line-height: 1.6;
   }
   .score-card-detail.open { display: block; }
+  /* Structural subheading between the section lede and a card group. Sits
+     between H2 and the Fraunces card titles in visual weight — italic
+     Fraunces signals "section divider", not "card title". */
+  .scoring-subheading {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 20px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    margin: 28px 0 4px;
+  }
+  .scoring-subheading:first-of-type { margin-top: 16px; }
   @media (max-width: 720px) {
     .score-card { padding: 16px 18px; }
     .score-card-title { font-size: 18px; }
     .score-card-line { font-size: 14px; }
+    .scoring-subheading { font-size: 18px; margin-top: 22px; }
   }
 
   /* Section 1.7 — Plan checklist */
@@ -4946,6 +4961,14 @@
     }
   ];
 
+  // Team-side scoring explainer — sits below the individual-grade cards.
+  // No card-internal title; the "Your team's score" subheading above it
+  // serves that role.
+  const STU_TEAM_SCORE = {
+    line: "Every event on the day is ranked — 1st place down to last. The higher your team finishes, the more points you earn. Points add up across every event, and the team with the most at the end wins.",
+    detail: "There are two halves to the team score. The team events — Warm-Up, Hype, Snacks, Planning, Tug of War, Relays, Team Challenge, Grit Challenge, 100m Row — each give points based on where your team finishes. And your fitness retests feed in too: every person's improvement and score adds to the team total. Both halves matter, so every event and every effort counts toward the win."
+  };
+
   function renderStuSec16Scoring() {
     const cards = STU_SCORE_CARDS.map((c, i) => `
       <div class="score-card">
@@ -4957,11 +4980,25 @@
         <div class="score-card-detail" id="scoreCardDetail-${i}">${escapeHtml(c.detail)}</div>
       </div>
     `).join('');
+    // String key keeps the team card's toggle id distinct from the three
+    // numeric ones above ('scoreCardDetail-team' vs 'scoreCardDetail-0').
+    const teamCard = `
+      <div class="score-card">
+        <div class="score-card-head">
+          <div class="score-card-line">${escapeHtml(STU_TEAM_SCORE.line)}</div>
+        </div>
+        <button class="score-card-toggle" onclick="toggleScoreCard('team', this)">More detail</button>
+        <div class="score-card-detail" id="scoreCardDetail-team">${escapeHtml(STU_TEAM_SCORE.detail)}</div>
+      </div>
+    `;
     return `
       <section class="stu-section">
         <h2>How you'll be scored</h2>
-        <p class="lede">Three pieces feed your final grade. One you plan before the day, two land on the day itself.</p>
+        <p class="lede">Two things are happening at once — your own grade, and your team's race for the win. Here's how both work.</p>
+        <h3 class="scoring-subheading">Your grade</h3>
         <div class="score-cards">${cards}</div>
+        <h3 class="scoring-subheading">Your team's score</h3>
+        <div class="score-cards">${teamCard}</div>
       </section>
     `;
   }
