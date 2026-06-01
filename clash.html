@@ -462,6 +462,19 @@
       radial-gradient(circle at 85% 70%, rgba(135,75,70,0.18), transparent 50%);
     pointer-events: none;
   }
+  .student-hero .hero-silhouette {
+    position: absolute;
+    bottom: 0;
+    right: -30px;
+    height: 200px;
+    width: auto;
+    opacity: 0.12;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+    /* gradient bg fade is on ::before; this img sits on top of it but
+       below the .inner content (which has its own position: relative). */
+  }
   .student-hero .inner {
     position: relative;
     max-width: 1080px;
@@ -511,6 +524,21 @@
     .student-hero { padding: 40px 24px 36px; }
     .student-hero .logout-link { top: 16px; right: 16px; padding: 6px 12px; }
     .student-hero .eyebrow { margin-bottom: 14px; letter-spacing: 0.22em; }
+    .student-hero .hero-silhouette { height: 140px; right: -20px; }
+  }
+
+  /* "Your team" heading — small sport silhouette inline with the title. */
+  .team-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .team-heading h2 { margin: 0; }
+  .team-silhouette {
+    height: 48px;
+    width: auto;
+    flex-shrink: 0;
+    user-select: none;
   }
 
   .student-main {
@@ -2425,6 +2453,7 @@
 <div id="studentApp">
   <header class="student-hero">
     <button class="logout-link" onclick="studentLogout()">Sign out</button>
+    <img class="hero-silhouette" id="stuHeroSilhouette" alt="" aria-hidden="true" style="display:none;">
     <div class="inner">
       <div class="eyebrow">Tue 17 June</div>
       <h1 id="stuHeroTitle">Clash of the <em>Codes</em>.</h1>
@@ -4383,6 +4412,40 @@
   // ============================================
   // STUDENT VIEW — default route
   // ============================================
+
+  // Sport silhouettes. Multi-sport teams ("Football, Rugby" / "XC, T&F, Swim")
+  // resolve to the first recognised sport in the field. Lookup is
+  // case-insensitive. Unmapped sports (e.g. Ice Hockey, Golf) fall through
+  // to the default — that's intentional.
+  const SPORT_SILHOUETTES = {
+    rugby:      'assets/rugby.png',
+    football:   'assets/football.png',
+    soccer:     'assets/football.png',
+    tennis:     'assets/tennis.png',
+    volleyball: 'assets/volleyball.png',
+    baseball:   'assets/baseball.png',
+    softball:   'assets/baseball.png',
+    track:      'assets/track.png',
+    't&f':      'assets/track.png',
+    athletics:  'assets/track.png',
+    xc:         'assets/running.png',
+    running:    'assets/running.png',
+    swim:       'assets/swimming.png',
+    swimming:   'assets/swimming.png',
+    skiing:     'assets/skiing.png',
+    ski:        'assets/skiing.png'
+  };
+  const DEFAULT_SILHOUETTE = 'assets/running.png';
+
+  function silhouetteForSport(sportField) {
+    if (!sportField) return DEFAULT_SILHOUETTE;
+    const sports = String(sportField).split(',').map(s => s.trim().toLowerCase());
+    for (let i = 0; i < sports.length; i++) {
+      if (SPORT_SILHOUETTES[sports[i]]) return SPORT_SILHOUETTES[sports[i]];
+    }
+    return DEFAULT_SILHOUETTE;
+  }
+
   const studentState = {
     email: '',
     athleteId: '',
@@ -4560,6 +4623,13 @@
       : '';
     document.getElementById('stuHeroMeta').innerHTML =
       `${swatch}<span>${sport}</span><span>${studentState.teamRoster.length} athletes</span>`;
+
+    // Faint sport silhouette at bottom-right of the hero — atmosphere only.
+    const heroSil = document.getElementById('stuHeroSilhouette');
+    if (heroSil) {
+      heroSil.src = silhouetteForSport(studentState.team.sport);
+      heroSil.style.display = 'block';
+    }
 
     const tab = currentStuTab();
     const tabBar = `
@@ -4846,7 +4916,10 @@
       : `<div class="chant-empty">Your team hasn't agreed a chant yet — talk to your team.</div>`;
     return `
       <section class="stu-section">
-        <h2>Your team</h2>
+        <div class="team-heading">
+          <img class="team-silhouette" src="${escapeAttr(silhouetteForSport(t.sport))}" alt="" aria-hidden="true">
+          <h2>Your team</h2>
+        </div>
         <div class="team-strip">
           ${t.colour ? `<div class="strip-swatch" style="background:${escapeAttr(t.colour)}"></div>` : ''}
           <div>
