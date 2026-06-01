@@ -2062,6 +2062,23 @@
     color: var(--burgundy-dark);
     font-weight: 600;
   }
+  .nom-card .vol-pill.locked {
+    background: var(--bg-warm);
+    color: var(--ink-mute);
+    border-style: dashed;
+    text-decoration: line-through;
+    text-decoration-color: rgba(135,75,70,0.45);
+  }
+  .nom-card .nom-error {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(135,75,70,0.07);
+    border: 1px solid rgba(135,75,70,0.3);
+    border-radius: 10px;
+    color: var(--burgundy-dark);
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
   .nom-card .vol-empty {
     color: var(--ink-mute);
     font-size: 13px;
@@ -4474,14 +4491,14 @@
   // ============================================
   // Tabbed student view — three tabs, URL-hash state.
   // ============================================
-  const STU_TAB_NAMES = ['day', 'team', 'records'];
+  const STU_TAB_NAMES = ['team', 'day', 'records'];
 
   function currentStuTab() {
     const h = (location.hash || '').replace('#', '').toLowerCase();
-    return STU_TAB_NAMES.indexOf(h) >= 0 ? h : 'day';
+    return STU_TAB_NAMES.indexOf(h) >= 0 ? h : 'team';
   }
   function switchStudentTab(tab) {
-    if (STU_TAB_NAMES.indexOf(tab) < 0) tab = 'day';
+    if (STU_TAB_NAMES.indexOf(tab) < 0) tab = 'team';
     document.querySelectorAll('.stu-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     document.querySelectorAll('.stu-tabview').forEach(v => v.classList.toggle('active', v.id === 'stuTab-' + tab));
     if (history.replaceState) history.replaceState(null, '', '#' + tab);
@@ -4507,19 +4524,14 @@
     const tab = currentStuTab();
     const tabBar = `
       <div class="stu-tabs" role="tablist">
-        <button class="stu-tab-btn ${tab==='day'?'active':''}" data-tab="day" onclick="switchStudentTab('day')">The Day</button>
         <button class="stu-tab-btn ${tab==='team'?'active':''}" data-tab="team" onclick="switchStudentTab('team')">Your Team</button>
+        <button class="stu-tab-btn ${tab==='day'?'active':''}" data-tab="day" onclick="switchStudentTab('day')">The Day</button>
         <button class="stu-tab-btn ${tab==='records'?'active':''}" data-tab="records" onclick="switchStudentTab('records')">Records</button>
       </div>`;
 
     document.getElementById('stuMain').innerHTML = tabBar + `
-      <div class="stu-tabview ${tab==='day'?'active':''}" id="stuTab-day">
-        ${renderStuSec1Team()}
-        ${renderStuSec5Schedule()}
-        ${renderStuSec16Scoring()}
-        ${renderStuSec17Plan()}
-      </div>
       <div class="stu-tabview ${tab==='team'?'active':''}" id="stuTab-team">
+        ${renderStuSec1Team()}
         <div id="stuTeamDynamic">
           ${renderStuSecRoles()}
           ${renderStuSecPlanDoc()}
@@ -4527,6 +4539,11 @@
         </div>
         ${renderStuSec2Targets()}
         ${renderStuSec4Lunch()}
+      </div>
+      <div class="stu-tabview ${tab==='day'?'active':''}" id="stuTab-day">
+        ${renderStuSec5Schedule()}
+        ${renderStuSec16Scoring()}
+        ${renderStuSec17Plan()}
       </div>
       <div class="stu-tabview ${tab==='records'?'active':''}" id="stuTab-records">
         ${renderStuSec6Records()}
@@ -4820,7 +4837,7 @@
     'Agree your team chant',
     'Pick your warm-up routine (3–5 minutes, includes everyone)',
     'Decide your hype moment',
-    'Nominate your rower, sprinter, and team challenge representative',
+    'Nominate one teammate for each of the three nominated events',
     'Plan your team snacks for between events',
     'Plan your recovery lunch',
     'Submit your team plan (link or instructions TBC)'
@@ -4901,45 +4918,69 @@
   }
 
   // ----- Section 3: Team nominations -----
-  // Three nomination cards. The Grit Challenge is masked as "Team Challenge —
-  // surprise event" so the hang doesn't leak before the day.
+  // Three nominated events: 100 m Row, Grit Challenge, Team Challenge.
+  // For Grit Challenge and Team Challenge we deliberately keep the tease
+  // generic — names only, no description of what the events involve.
   const STU_NOMS = [
     {
       slot: 'row',
       title: '100 m Row',
       teamField: 'nomRow',
-      tease: 'One athlete, 100 metres on the rower. Fast and ugly.'
-    },
-    {
-      slot: 'sprint',
-      title: '100 m Sprint',
-      teamField: 'nomSprint',
-      tease: 'Pure speed. Pick your quickest runner.'
+      tease: '100 metres on the rower. Fast and ugly.'
     },
     {
       slot: 'hang',
-      title: 'Team Challenge — surprise event',
+      title: 'Grit Challenge',
       teamField: 'nomHang',
-      tease: 'One of you will represent the team. Pick someone tough.'
+      tease: 'One athlete represents the team. Pick someone tough.'
+    },
+    {
+      slot: 'game',
+      title: 'Team Challenge',
+      teamField: 'nomGame',
+      tease: 'One athlete represents the team. Pick someone sharp.'
     }
   ];
 
+  // Per-slot inline error message (e.g. "X is already representing the team
+  // in Grit Challenge"). Cleared on success or when the slot is re-rendered.
+  const stuNomErrors = {};
+
   // Volunteer + Captain-confirm flow. Anyone on the team can volunteer or
   // withdraw; only the Captain can confirm a volunteer to the nomination
-  // slot, or change a confirmed pick.
+  // slot, or change a confirmed pick. A single athlete can only be confirmed
+  // for ONE of the three nominated events — already-confirmed athletes are
+  // filtered out of the other slots' confirm dropdowns.
   function renderStuSec3Nominations() {
     const cards = STU_NOMS.map(n => nomCardHTML(n)).join('');
     return `
       <section class="stu-section" data-stu-section="nominations">
         <h2>Team nominations</h2>
-        <p class="lede">Volunteer for the events that fit you. The Captain confirms one volunteer per event before the day.</p>
+        <p class="lede">Volunteer for the events that fit you. The Captain confirms one volunteer per event before the day. Each person can only be confirmed for one nominated event.</p>
         ${cards}
       </section>
     `;
   }
 
   function volsFieldForSlot(slot) {
-    return slot === 'row' ? 'volunteersRow' : slot === 'sprint' ? 'volunteersSprint' : 'volunteersHang';
+    return slot === 'row' ? 'volunteersRow'
+      : slot === 'sprint' ? 'volunteersSprint'
+      : slot === 'hang' ? 'volunteersHang'
+      : 'volunteersGame';
+  }
+
+  // Map { athleteId → "Grit Challenge" } for athletes already confirmed in
+  // some other nominated slot.
+  function confirmedElsewhereMap(currentSlot) {
+    const t = studentState.team;
+    const map = {};
+    const slotToLabel = { row: '100 m Row', hang: 'Grit Challenge', game: 'Team Challenge' };
+    STU_NOMS.forEach(n => {
+      if (n.slot === currentSlot) return;
+      const aid = String(t[n.teamField] || '').trim();
+      if (aid) map[aid] = slotToLabel[n.slot] || n.title;
+    });
+    return map;
   }
 
   function nomCardHTML(nom) {
@@ -4949,6 +4990,7 @@
     const confirmedId = String(t[nom.teamField] || '').trim();
     const volunteers = (t[volsFieldForSlot(nom.slot)] || []).map(String);
     const iVolunteered = volunteers.includes(me);
+    const elsewhere = confirmedElsewhereMap(nom.slot);
 
     let body = '';
     if (confirmedId) {
@@ -4964,7 +5006,10 @@
       if (volunteers.length) {
         const pills = volunteers.map(aid => {
           const isMe = aid === me;
-          return `<span class="vol-pill ${isMe ? 'me' : ''}">${escapeHtml(nameForAthlete(aid))}${isMe ? ' · you' : ''}</span>`;
+          const locked = elsewhere[aid];
+          const lockedNote = locked ? ` · in ${escapeHtml(locked)}` : '';
+          const cls = isMe ? 'me' : locked ? 'locked' : '';
+          return `<span class="vol-pill ${cls}" title="${locked ? escapeAttr('Already confirmed in ' + locked) : ''}">${escapeHtml(nameForAthlete(aid))}${isMe ? ' · you' : ''}${lockedNote}</span>`;
         }).join('');
         body += `<div class="volunteers">${pills}</div>`;
       } else {
@@ -4977,14 +5022,22 @@
         body += `<button onclick="onVolunteerForNom('${escapeAttr(nom.slot)}', this)">Volunteer for this</button>`;
       }
       body += `</div>`;
-      if (captain && volunteers.length) {
-        const opts = volunteers.map(aid => `<option value="${escapeAttr(aid)}">${escapeHtml(nameForAthlete(aid))}</option>`).join('');
-        body += `
-          <div class="nom-controls">
-            <select id="confirm-${escapeAttr(nom.slot)}" aria-label="Pick a volunteer to confirm"><option value="">— confirm a volunteer —</option>${opts}</select>
-            <button onclick="onConfirmNomination('${escapeAttr(nom.slot)}', this)">Confirm</button>
-          </div>
-        `;
+      if (captain) {
+        const selectable = volunteers.filter(aid => !elsewhere[aid]);
+        if (selectable.length) {
+          const opts = selectable.map(aid => `<option value="${escapeAttr(aid)}">${escapeHtml(nameForAthlete(aid))}</option>`).join('');
+          body += `
+            <div class="nom-controls">
+              <select id="confirm-${escapeAttr(nom.slot)}" aria-label="Pick a volunteer to confirm"><option value="">— confirm a volunteer —</option>${opts}</select>
+              <button onclick="onConfirmNomination('${escapeAttr(nom.slot)}', this)">Confirm</button>
+            </div>
+          `;
+        } else if (volunteers.length) {
+          body += `<div class="nom-error">Every volunteer here is already representing the team in another event. Ask someone else to volunteer.</div>`;
+        }
+      }
+      if (stuNomErrors[nom.slot]) {
+        body += `<div class="nom-error">${escapeHtml(stuNomErrors[nom.slot])}</div>`;
       }
     }
 
@@ -5020,6 +5073,8 @@
   async function runNomAction(btn, payload, successMsg) {
     if (studentState.saving) return;
     studentState.saving = true;
+    const slot = payload && payload.slot;
+    if (slot) delete stuNomErrors[slot];
     const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Saving…';
     try {
       const res = await apiPost(payload);
@@ -5029,7 +5084,13 @@
         toast(successMsg, 'success');
       } else {
         btn.disabled = false; btn.textContent = orig;
-        toast((res && res.error) || 'Save failed', 'error');
+        const msg = (res && res.error) || 'Save failed';
+        toast(msg, 'error');
+        // Surface server-side duplicate-confirmation errors inline.
+        if (slot && payload.action === 'saveClashNomination' && /already representing/i.test(msg)) {
+          stuNomErrors[slot] = msg;
+          rerenderTeamDynamic();
+        }
       }
     } catch (e) {
       btn.disabled = false; btn.textContent = orig;
@@ -5102,35 +5163,32 @@
 
   // ----- Section 5: The day -----
   // ----- Section: The schedule (vertical timeline) -----
+  // Hard-coded schedule. Intentionally describes "Grit Challenge" and
+  // "Team Challenge" by name only — no mention of what either event involves.
+  const STU_SCHEDULE = [
+    { time: '08:32–09:00', name: 'Arrival, Intro & Team Warm-Ups' },
+    { time: '09:00–09:45', name: 'Fitness: Broad Jump / 40m / 5-10-5' },
+    { time: '09:45–10:10', name: 'Cooper Run (mass start)' },
+    { time: '10:10–10:25', name: 'Reset & water' },
+    { time: '10:25–12:00', name: 'Team events: Relays, Grit Challenge, 100m Row, Team Challenge, Tug of War' },
+    { time: '12:00–12:30', name: 'Recovery lunch, Nutrition Share-Out & Awards' },
+    { time: '12:45–13:15', name: 'Walk to pool' },
+    { time: '13:15–14:45', name: 'Recovery pool session' },
+    { time: '14:45–15:10', name: 'Walk back to school' }
+  ];
+
   function renderStuSec5Schedule() {
-    const evs = (studentState.events || []).slice()
-      .filter(e => !!e.event)
-      .sort((a, b) => a.order - b.order);
-
-    const rows = evs.length
-      ? evs.map(e => {
-          const isHidden = !!e.hidden;
-          const time = e.slot ? escapeHtml(String(e.slot)) : 'TBC';
-          const timeClass = e.slot ? '' : 'placeholder';
-          const name = isHidden ? 'Team Challenge — TBC' : e.event;
-          const ty = e.type ? e.type.replace(/_/g, ' ') : '';
-          return `
-            <div class="timeline-row ${isHidden ? 'hidden-event' : ''}">
-              <div class="timeline-time ${timeClass}">${time}</div>
-              <div class="timeline-marker"><div class="timeline-dot"></div></div>
-              <div>
-                <div class="timeline-event-name">${escapeHtml(name)}</div>
-                ${ty ? `<div class="timeline-event-type">${escapeHtml(ty)}</div>` : ''}
-              </div>
-            </div>
-          `;
-        }).join('')
-      : `<div class="timeline-row"><div class="timeline-time placeholder">TBC</div><div class="timeline-marker"><div class="timeline-dot"></div></div><div><div class="timeline-event-name">Schedule lands closer to the day.</div></div></div>`;
-
+    const rows = STU_SCHEDULE.map(s => `
+      <div class="timeline-row">
+        <div class="timeline-time">${escapeHtml(s.time)}</div>
+        <div class="timeline-marker"><div class="timeline-dot"></div></div>
+        <div><div class="timeline-event-name">${escapeHtml(s.name)}</div></div>
+      </div>
+    `).join('');
     return `
       <section class="stu-section">
         <h2>The schedule</h2>
-        <p class="lede">The shape of the morning at a glance. Stay with your team between events, cheer loud, take recovery seriously.</p>
+        <p class="lede">The shape of the day at a glance. Stay with your team between events, cheer loud, take recovery seriously.</p>
         <div class="timeline">${rows}</div>
       </section>
     `;
