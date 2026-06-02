@@ -2645,7 +2645,7 @@
 <div id="comingSoon">
   <div class="tag">FIS Warriors · Athlete Academy</div>
   <h1>Clash of the <em>Codes</em></h1>
-  <p>Tue 17 June, 08:30–12:30. Six teams, ten events, one champion.</p>
+  <p>Wed 17 June, 08:30–12:30. Six teams, ten events, one champion.</p>
   <div class="when">SAVE THE DATE</div>
 </div>
 
@@ -2670,7 +2670,7 @@
     <button class="logout-link" onclick="studentLogout()">Sign out</button>
     <img class="hero-silhouette" id="stuHeroSilhouette" alt="" aria-hidden="true" style="display:none;">
     <div class="inner">
-      <div class="eyebrow">Tue 17 June</div>
+      <div class="eyebrow">Wed 17 June</div>
       <h1 id="stuHeroTitle">Clash of the <em>Codes</em>.</h1>
       <div class="meta" id="stuHeroMeta"></div>
     </div>
@@ -5580,7 +5580,11 @@
     { time: '09:00–09:45', name: 'Fitness: Broad Jump / 40m / 5-10-5' },
     { time: '09:45–10:10', name: 'Cooper Run (mass start)' },
     { time: '10:10–10:25', name: 'Reset & water' },
-    { time: '10:25–12:00', name: 'Team events: Relays, Grit Challenge, 100m Row, Team Challenge, Tug of War' },
+    { time: '10:25–10:35', name: '100m Row' },
+    { time: '10:35–10:45', name: 'Grit Challenge' },
+    { time: '10:45–11:05', name: 'Relays' },
+    { time: '11:05–11:25', name: 'Team Challenge' },
+    { time: '11:25–12:00', name: 'Tug of War' },
     { time: '12:00–12:30', name: 'Recovery lunch, Nutrition Share-Out & Awards' },
     { time: '12:45–13:15', name: 'Walk to pool' },
     { time: '13:15–14:45', name: 'Recovery pool session' },
@@ -5634,18 +5638,38 @@
     },
     { time: '10:10–10:25', name: 'Reset & water' },
     {
-      time: '10:25–12:00', name: 'Team events: Relays, Grit Challenge, 100m Row, Team Challenge, Tug of War',
+      time: '10:25–10:35', name: '100m Row',
       roles: [
-        { id: 'Tug of War — lead', slots: 1, desc: '' },
-        { id: 'Tug of War — assist', slots: 1, desc: 'Assist the lead.' },
-        { id: 'Relays — lead', slots: 1, desc: '' },
-        { id: 'Relays — assist', slots: 1, desc: 'Assist the lead.' },
-        { id: 'Team Challenge — lead', slots: 1, desc: '' },
-        { id: 'Team Challenge — assist', slots: 1, desc: 'Assist the lead.' },
-        { id: 'Grit Challenge — lead', slots: 1, desc: '' },
-        { id: 'Grit Challenge — assist', slots: 1, desc: 'Assist the lead.' },
         { id: '100m Row — lead', slots: 1, desc: '' },
         { id: '100m Row — assist', slots: 1, desc: 'Assist the lead.' }
+      ]
+    },
+    {
+      time: '10:35–10:45', name: 'Grit Challenge',
+      roles: [
+        { id: 'Grit Challenge — lead', slots: 1, desc: '' },
+        { id: 'Grit Challenge — assist', slots: 1, desc: 'Assist the lead.' }
+      ]
+    },
+    {
+      time: '10:45–11:05', name: 'Relays',
+      roles: [
+        { id: 'Relays — lead', slots: 1, desc: '' },
+        { id: 'Relays — assist', slots: 1, desc: 'Assist the lead.' }
+      ]
+    },
+    {
+      time: '11:05–11:25', name: 'Team Challenge',
+      roles: [
+        { id: 'Team Challenge — lead', slots: 1, desc: '' },
+        { id: 'Team Challenge — assist', slots: 1, desc: 'Assist the lead.' }
+      ]
+    },
+    {
+      time: '11:25–12:00', name: 'Tug of War',
+      roles: [
+        { id: 'Tug of War — lead', slots: 1, desc: '' },
+        { id: 'Tug of War — assist', slots: 1, desc: 'Assist the lead.' }
       ]
     },
     { time: '12:00–12:30', name: 'Recovery lunch, Nutrition Share-Out & Awards' },
