@@ -25,6 +25,10 @@
     --sage-soft: #a3b8a1;
     --cream: #faf3ed;
     --surface: #ffffff;
+    /* Intensity = traffic lights (own system, separate from the phase palette) */
+    --int-easy: #2fa86a;
+    --int-mod:  #e6a32b;
+    --int-hard: #d64a45;
     --line: #e8d9cf;
     --line-soft: #f0e4dc;
     --shadow-soft: 0 1px 3px rgba(26,20,17,0.04), 0 8px 24px rgba(26,20,17,0.04);
@@ -1814,10 +1818,10 @@
   .plan-row.is-today .plan-dow, .plan-row.is-today .plan-date { color: var(--burgundy); }
   .plan-today-tag { font-family: 'Fraunces', serif; font-style: italic; font-size: 9px; color: var(--burgundy); }
   .plan-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); justify-self: center; }
-  /* Intensity = a single burgundy effort-ramp (light→dark), kept separate from the phase palette */
-  .plan-dot.easy { background: rgba(135,75,70,0.32); }
-  .plan-dot.moderate { background: var(--burgundy-light); }
-  .plan-dot.hard { background: var(--burgundy); }
+  /* Intensity = traffic lights (own system, separate from the phase palette) */
+  .plan-dot.easy { background: var(--int-easy); }
+  .plan-dot.moderate { background: var(--int-mod); }
+  .plan-dot.hard { background: var(--int-hard); }
   .plan-dot.is-empty { background: transparent; border: 1.5px dashed var(--line); width: 11px; height: 11px; }
   .plan-row.is-done .plan-dot { box-shadow: 0 0 0 3px rgba(122,144,120,0.22); }
   .plan-info { min-width: 0; }
@@ -1877,9 +1881,9 @@
   }
   .load-strip-squares { display: flex; gap: 6px; margin: 12px 0 10px; flex-wrap: wrap; }
   .load-strip-square { width: 30px; height: 30px; border-radius: 8px; background: var(--line-soft); }
-  .load-strip-square.easy { background: rgba(135,75,70,0.32); }
-  .load-strip-square.moderate { background: var(--burgundy-light); }
-  .load-strip-square.hard { background: var(--burgundy); }
+  .load-strip-square.easy { background: var(--int-easy); }
+  .load-strip-square.moderate { background: var(--int-mod); }
+  .load-strip-square.hard { background: var(--int-hard); }
   .load-strip-key { display: flex; gap: 14px; margin-top: 10px; }
   .load-strip-key-item { display: inline-flex; align-items: center; gap: 5px; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); }
   .load-strip-key-sq { width: 11px; height: 11px; border-radius: 3px; }
@@ -2525,9 +2529,9 @@
       '<div class="load-strip-squares">'+squares+'</div>'+
       '<p class="load-strip-label">'+counts.hard+' hard · '+counts.moderate+' moderate · '+counts.easy+' easy — '+balance+'</p>'+
       '<div class="load-strip-key">'+
-        '<span class="load-strip-key-item"><span class="load-strip-key-sq easy" style="background:rgba(135,75,70,0.32);"></span>easy</span>'+
-        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--burgundy-light);"></span>moderate</span>'+
-        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--burgundy);"></span>hard</span>'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--int-easy);"></span>easy</span>'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--int-mod);"></span>moderate</span>'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--int-hard);"></span>hard</span>'+
       '</div>'+
       (maxRun >= 3 ? '<div class="load-strip-warning"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Three hard days in a row — build in some recovery.</div>' : '');
   }
