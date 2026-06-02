@@ -1227,7 +1227,7 @@
 
       <!-- WEEK VIEW (mobile: hidden by default; desktop: always visible) -->
       <div id="week-view" class="mobile-week-hidden">
-        <div class="week-grid" id="weekGrid"></div>
+        <div id="weekGrid"></div>
       </div>
 
       <!-- WEEKLY LOAD STRIP (intensity balance, mockup-style) -->
@@ -1741,6 +1741,62 @@
     padding: 6px 12px; white-space: nowrap;
   }
   .week-banner button:hover { border-color: var(--burgundy); }
+
+  /* ============================
+     TRAINING PLAN LIST (Week tab) — single clean card, one row per session
+     ============================ */
+  .plan-card {
+    background: var(--surface); border-radius: 24px; box-shadow: var(--shadow-card);
+    padding: 22px 26px;
+  }
+  .plan-head { margin-bottom: 6px; }
+  .plan-week-range {
+    font-family: 'Fraunces', serif; font-style: italic; font-size: 0.62em;
+    color: var(--ink-mute); font-weight: 400; margin-left: 8px; letter-spacing: 0;
+  }
+  .plan-list { margin-top: 12px; }
+  .plan-row {
+    display: grid; grid-template-columns: 46px 14px 1fr 30px; align-items: center; gap: 14px;
+    padding: 14px 8px; border-bottom: 1px solid var(--line-soft); cursor: pointer;
+    border-radius: 10px; transition: background 0.15s;
+  }
+  .plan-list .plan-row:last-child { border-bottom: none; }
+  .plan-row:hover { background: var(--cream); }
+  .plan-day { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+  .plan-dow {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; font-weight: 700; color: var(--ink-mute);
+  }
+  .plan-date { font-family: 'Fraunces', serif; font-size: 15px; color: var(--ink); }
+  .plan-row.is-today .plan-dow, .plan-row.is-today .plan-date { color: var(--burgundy); }
+  .plan-today-tag { font-family: 'Fraunces', serif; font-style: italic; font-size: 9px; color: var(--burgundy); }
+  .plan-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); justify-self: center; }
+  .plan-dot.hard { background: var(--burgundy); }
+  .plan-dot.moderate { background: var(--gold); }
+  .plan-dot.easy { background: var(--sage); }
+  .plan-dot.is-empty { background: transparent; border: 1.5px dashed var(--line); width: 11px; height: 11px; }
+  .plan-row.is-done .plan-dot { box-shadow: 0 0 0 3px rgba(122,144,120,0.22); }
+  .plan-info { min-width: 0; }
+  .plan-name {
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink);
+    display: flex; align-items: center; gap: 8px; line-height: 1.25;
+  }
+  .plan-name.muted { font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; color: var(--ink-mute); }
+  .plan-detail { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute); margin-top: 2px; }
+  .plan-row.is-missed { opacity: 0.55; }
+  .plan-add {
+    background: transparent; border: none; color: var(--ink-mute);
+    width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 15px; opacity: 0; transition: opacity 0.15s, background 0.15s, color 0.15s;
+  }
+  .plan-row:hover .plan-add { opacity: 0.55; }
+  .plan-add:hover { background: var(--surface); color: var(--burgundy); opacity: 1; }
+  .plan-rest .plan-add { opacity: 0.4; }
+  @media (max-width: 560px) {
+    .plan-card { padding: 18px 18px; }
+    .plan-row { padding: 13px 4px; gap: 10px; grid-template-columns: 42px 12px 1fr 28px; }
+    .plan-add { opacity: 0.45; }
+  }
 
   /* ============================
      WEEKLY LOAD STRIP (Week tab) — mockup-style intensity balance
@@ -2276,25 +2332,55 @@
     renderTodayHero(todays, today);
     renderMobileToday(todays, ws, today, byDay);
 
-    let html = '';
+    let rows = '';
     for(let i=0;i<7;i++){
       const iso = addDays(ws, i);
-      const cls = iso===today ? 'day day-today' : (iso<today ? 'day day-past' : 'day');
+      const isToday = iso===today;
       const ds = byDay[iso] || [];
-      html += '<div class="'+cls+'"><div class="day-header">'+
-        '<p class="day-name">'+dowShort(iso)+' <span class="day-date">'+dayNum(iso)+'</span>'+(iso===today?' <span class="day-today-tag">today</span>':'')+'</p>'+
-        '<span class="day-summary">'+daySummary(ds)+'</span></div>';
+      const dayLabel = '<span class="plan-dow">'+dowShort(iso)+'</span><span class="plan-date">'+dayNum(iso)+'</span>'+
+        (isToday? '<span class="plan-today-tag">today</span>' : '');
       if(ds.length){
-        html += '<div class="day-sessions">'+ds.map(s=>sessionCard(s, iso===today)).join('')+'</div>';
+        ds.forEach((s, idx) => { rows += planRow(s, idx===0 ? dayLabel : '', iso, isToday); });
       } else {
-        html += '<div class="day-empty">'+(iso<today? 'Nothing logged' : 'Nothing planned')+'</div>';
+        rows += planRestRow(dayLabel, iso, isToday, iso<today);
       }
-      html += '<button class="day-add" onclick="newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>';
-      html += '</div>';
     }
-    document.getElementById('weekGrid').innerHTML = html;
+    document.getElementById('weekGrid').innerHTML =
+      '<div class="plan-card">'+
+        '<div class="plan-head"><p class="overline">This week</p>'+
+          '<h2 class="section-heading">Training plan <span class="plan-week-range">Week of '+fmtNice(ws)+'</span></h2></div>'+
+        '<div class="plan-list">'+rows+'</div>'+
+      '</div>';
     renderWeekPBs();
     renderLoadStrip();
+  }
+
+  // One clean row per session (mockup-style: day · dot · name + detail).
+  function planRow(s, dayLabelHTML, iso, isToday){
+    let statusCls = '';
+    if(s.status==='done' || s.status==='modified') statusCls = ' is-done';
+    else if(s.status==='missed') statusCls = ' is-missed';
+    const dotCls = s.intensity ? ' '+s.intensity : '';
+    let meta;
+    if(s.status==='missed') meta = 'Missed' + (s.note? ' · '+esc(s.note) : '');
+    else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au';
+    else meta = esc(s.sport)+' · '+(s.plannedDuration||0)+'min planned';
+    const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
+    return '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
+      '<span class="plan-day">'+dayLabelHTML+'</span>'+
+      '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
+      '<div class="plan-info"><div class="plan-name">'+esc(s.name)+pb+'</div><div class="plan-detail">'+meta+'</div></div>'+
+      '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
+    '</div>';
+  }
+  function planRestRow(dayLabelHTML, iso, isToday, isPast){
+    return '<div class="plan-row plan-rest'+(isToday?' is-today':'')+'" onclick="newSession(\''+iso+'\')">'+
+      '<span class="plan-day">'+dayLabelHTML+'</span>'+
+      '<span class="plan-dot is-empty" aria-hidden="true"></span>'+
+      '<div class="plan-info"><div class="plan-name muted">'+(isPast?'Nothing logged':'Rest day')+'</div>'+
+        '<div class="plan-detail">'+(isPast?'No session this day':'Nothing planned — tap to add')+'</div></div>'+
+      '<button class="plan-add" title="Add a session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
+    '</div>';
   }
 
   // Weekly intensity balance — coloured squares + balance label + overload warning.
