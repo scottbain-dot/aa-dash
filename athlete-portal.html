@@ -929,6 +929,14 @@
   .workout-step-detail { font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; color: var(--ink-mute); margin: 2px 0 0; }
   .workout-edit-btn { margin-top: 8px; background: transparent; color: var(--burgundy); border: 1px dashed var(--line); padding: 8px; border-radius: 8px; width: 100%; font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: border-color 0.15s; }
   .workout-edit-btn:hover { border-color: var(--burgundy); }
+  /* Tickable exercise checklist */
+  .workout-step.tickable { cursor: pointer; transition: background 0.15s; }
+  .workout-step.tickable:hover { background: var(--line-soft); }
+  .workout-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: transparent; font-size: 12px; margin-top: 1px; transition: all 0.15s; }
+  .workout-step.done .workout-check { background: var(--sage); border-color: var(--sage); color: var(--cream); }
+  .workout-step.done .workout-step-name { text-decoration: line-through; color: var(--ink-mute); }
+  .workout-progress { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: var(--ink-mute); margin: 8px 2px 0; text-align: right; }
+  .workout-progress.complete { color: var(--sage); }
 
   .rpe-row { display: flex; gap: 4px; justify-content: space-between; }
   .rpe-pip { flex: 1; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 13px; color: var(--ink); cursor: pointer; transition: all 0.15s; min-width: 0; max-width: 36px; }
@@ -1311,6 +1319,7 @@
     <div class="sheet-section">
       <p class="sheet-section-label">The workout</p>
       <ul class="workout-list" id="sheetWorkout"></ul>
+      <p class="workout-progress" id="workoutProgress"></p>
       <button class="workout-edit-btn" onclick="editWorkout()">
         <i class="ti ti-edit" aria-hidden="true"></i> Edit workout
       </button>
@@ -1378,6 +1387,12 @@
     <div class="sheet-section">
       <p class="sheet-section-label">Note · optional</p>
       <textarea class="note-input" id="sheetNote" placeholder="How did it feel? What went well or not?"></textarea>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Reflection · optional</p>
+      <input class="duration-input plan-field" id="sheetNoticed" placeholder="What did you do well, or notice?">
+      <input class="duration-input plan-field" id="sheetBlocker" placeholder="What got in the way?" style="margin-top:8px;">
     </div>
 
   </div>
@@ -1482,6 +1497,23 @@
   <div class="sheet-save">
     <button class="btn-secondary" onclick="closePB()">Cancel</button>
     <button class="btn-primary" id="pbSaveBtn" onclick="savePBSheet()">Save PB</button>
+  </div>
+</div>
+
+<!-- PLAN LIBRARY SHEET -->
+<div class="sheet-backdrop" id="plan-backdrop" onclick="closePlan()"></div>
+<div class="sheet" id="planSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">Training plans</p>
+      <h2 class="sheet-title">Choose a <em>plan</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closePlan()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <p class="plan-pick-note">Pick a plan and it fills your week. You can tweak or log any session after.</p>
+    <div class="plan-grid" id="planGrid"></div>
   </div>
 </div>
 
@@ -1783,6 +1815,32 @@
     .plan-row { padding: 13px 4px; gap: 10px; grid-template-columns: 42px 12px 1fr 28px; }
     .plan-add { opacity: 0.45; }
   }
+  /* Plan-card header row + Change-plan button + plan label */
+  .plan-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .plan-label-line { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); margin: 4px 0 0; }
+  .plan-label-line strong { color: var(--burgundy); font-weight: 600; }
+  .change-plan-btn {
+    background: var(--burgundy); color: var(--cream); border: none; padding: 8px 14px; border-radius: 9px;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+    flex-shrink: 0; transition: background 0.15s;
+  }
+  .change-plan-btn:hover { background: var(--burgundy-dark); }
+
+  /* Plan library sheet */
+  .plan-pick-note { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); margin: 0 0 16px; }
+  .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .plan-grid { grid-template-columns: 1fr; } }
+  .plan-pick {
+    background: var(--cream); border-radius: 16px; padding: 16px; cursor: pointer; position: relative;
+    border: 2px solid transparent; transition: box-shadow 0.15s, transform 0.12s, border-color 0.15s;
+  }
+  .plan-pick:hover { box-shadow: 0 6px 18px rgba(135,75,70,0.10); transform: translateY(-1px); }
+  .plan-pick.active { border-color: var(--burgundy); }
+  .plan-pick-name { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; color: var(--ink); }
+  .plan-pick-goal { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); margin-top: 3px; line-height: 1.4; }
+  .plan-pick-freq { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; color: var(--burgundy); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .plan-diff { height: 6px; background: var(--line-soft); border-radius: 999px; margin-top: 8px; overflow: hidden; }
+  .plan-diff-fill { height: 100%; background: var(--gold); border-radius: 999px; }
 
   /* ============================
      WEEKLY LOAD STRIP (Week tab) — mockup-style intensity balance
@@ -1893,7 +1951,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, booking: null };
+  let state = { yearMap: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, booking: null, planName: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -2030,6 +2088,7 @@
     state.pbs = demo.pbs;
     state.load = demo.load;
     state.booking = demo.booking;
+    state.planName = 'Swimming Performance';
     document.body.classList.add('signed-in');
     document.getElementById('appError').classList.remove('active');
     setLoading(false);
@@ -2336,8 +2395,13 @@
     }
     document.getElementById('weekGrid').innerHTML =
       '<div class="plan-card">'+
-        '<div class="plan-head"><p class="overline">This week</p>'+
-          '<h2 class="section-heading">Training plan <span class="plan-week-range">Week of '+fmtNice(ws)+'</span></h2></div>'+
+        '<div class="plan-head"><div class="plan-head-row">'+
+          '<div><p class="overline">This week</p>'+
+            '<h2 class="section-heading">Training plan <span class="plan-week-range">Week of '+fmtNice(ws)+'</span></h2>'+
+            (state.planName? '<p class="plan-label-line">Plan · <strong>'+esc(state.planName)+'</strong></p>' : '')+
+          '</div>'+
+          '<button class="change-plan-btn" onclick="openPlanSheet()">Change plan</button>'+
+        '</div></div>'+
         '<div class="plan-list">'+rows+'</div>'+
       '</div>';
     renderWeekPBs();
@@ -2565,6 +2629,7 @@
     document.getElementById('planHeader').style.display = isNew ? '' : 'none';
     document.getElementById('planToggle').style.display = isNew ? 'none' : 'flex';
     workoutEditing = false;
+    if(!s._checked || s._checked.length !== (s.workout||[]).length){ s._checked = (s.workout||[]).map((_,i)=> (s._checked && s._checked[i]) || false); }
     renderWorkout(s.workout || []);
     // RPE
     document.querySelectorAll('#rpe-row .rpe-pip').forEach(p => p.classList.toggle('selected', s.rpe!=null && +p.dataset.val===+s.rpe));
@@ -2575,10 +2640,15 @@
     document.getElementById('pbToggle').classList.toggle('on', !!s.isPB);
     // note
     document.getElementById('sheetNote').value = s.note || '';
+    // reflection
+    document.getElementById('sheetNoticed').value = s.noticed || '';
+    document.getElementById('sheetBlocker').value = s.blocker || '';
   }
 
   function renderWorkout(steps){
     const ul = document.getElementById('sheetWorkout');
+    const prog = document.getElementById('workoutProgress');
+    if(prog) prog.textContent = '';
     if(workoutEditing){
       const text = (steps||[]).map(st => typeof st==='string'? st : (st.name||'')+(st.detail? ' — '+st.detail : '')).join('\n');
       ul.innerHTML = '<textarea class="note-input" id="workoutEditor" style="min-height:120px;" placeholder="One step per line, e.g.\nWarm up — 400m easy\nMain set — 8×200">'+esc(text)+'</textarea>';
@@ -2588,14 +2658,30 @@
       ul.innerHTML = '<li class="workout-step"><div class="workout-step-content"><p class="workout-step-detail">No workout steps yet. Tap “Edit workout” to add them.</p></div></li>';
       return;
     }
+    const checked = (editing && editing._checked) || [];
+    let done = 0;
     ul.innerHTML = steps.map((st,i) => {
       const name = typeof st==='string'? st : (st.name||'');
       const detail = typeof st==='string'? '' : (st.detail||'');
-      return '<li class="workout-step"><span class="workout-step-num">'+(i+1)+'</span>'+
+      const isDone = !!checked[i]; if(isDone) done++;
+      return '<li class="workout-step tickable'+(isDone?' done':'')+'" onclick="toggleStep('+i+')">'+
+        '<span class="workout-check"><i class="ti ti-check" aria-hidden="true"></i></span>'+
         '<div class="workout-step-content"><p class="workout-step-name">'+esc(name)+'</p>'+
         (detail? '<p class="workout-step-detail">'+esc(detail)+'</p>':'')+'</div></li>';
     }).join('');
+    if(prog){
+      const all = steps.length;
+      prog.textContent = done+' / '+all+' done'+(done===all? ' · nice work' : '');
+      prog.classList.toggle('complete', done===all);
+    }
   }
+  function toggleStep(i){
+    if(!editing) return;
+    if(!editing._checked) editing._checked = [];
+    editing._checked[i] = !editing._checked[i];
+    renderWorkout(editing.workout || []);
+  }
+  window.toggleStep = toggleStep;
 
   function editWorkout(){
     if(workoutEditing){
@@ -2647,7 +2733,10 @@
       status: logged ? 'done' : 'planned',
       isPB: document.getElementById('pbToggle').classList.contains('on'),
       workout: editing.workout || [],
-      note: val('sheetNote')
+      _checked: editing._checked || [],
+      note: val('sheetNote'),
+      noticed: val('sheetNoticed'),
+      blocker: val('sheetBlocker')
     };
     // Optimistic: update the week and close now; persist in the background.
     upsertLocalSession(session);
@@ -2671,6 +2760,80 @@
     const i = state.week.sessions.findIndex(x => x.id === s.id);
     if(i >= 0) state.week.sessions[i] = s; else state.week.sessions.push(s);
   }
+
+  // ============================================================
+  // PLAN LIBRARY (Change Plan) — fills the week from a template.
+  // Visual/local for now; tweak or log any session after applying.
+  // day: 0 = Mon … 6 = Sun
+  // ============================================================
+  const PLAN_LIBRARY = [
+    { id:'general', name:'General Strength', goal:'All-round strength, three lifts a week', freq:'3× / week', diff:45, sessions:[
+      { day:0, name:'Upper Strength', sport:'Gym', intensity:'hard', duration:50, workout:[{name:'Back Squat',detail:'4×5'},{name:'DB Row',detail:'3×10'},{name:'DB Press',detail:'3×8'},{name:'Core',detail:'3 rounds'}] },
+      { day:2, name:'Conditioning', sport:'Gym', intensity:'moderate', duration:40, workout:[{name:'Intervals',detail:'6×400m'},{name:'Core circuit',detail:'3 rounds'}] },
+      { day:4, name:'Lower Strength', sport:'Gym', intensity:'hard', duration:50, workout:[{name:'Deadlift',detail:'4×5'},{name:'DB Lunge',detail:'3×10'},{name:'Mobility',detail:'10 min'}] }
+    ]},
+    { id:'swim', name:'Swimming Performance', goal:'Aerobic base plus sprint speed', freq:'5× / week', diff:75, sessions:[
+      { day:0, name:'Aerobic swim', sport:'Swimming', intensity:'moderate', duration:60, workout:[{name:'Warm up',detail:'600m'},{name:'Main set',detail:'10×200'},{name:'Cool down',detail:'400m'}] },
+      { day:1, name:'Sprint sets', sport:'Swimming', intensity:'hard', duration:60, workout:[{name:'Warm up',detail:'800m'},{name:'Sprints',detail:'8×50 max'},{name:'Race pace',detail:'6×100'}] },
+      { day:2, name:'Technique', sport:'Swimming', intensity:'easy', duration:45, workout:[{name:'Drills',detail:'1km'},{name:'Easy swim',detail:'1km'}] },
+      { day:4, name:'Threshold', sport:'Swimming', intensity:'hard', duration:60, workout:[{name:'Warm up',detail:'600m'},{name:'Threshold',detail:'5×300'},{name:'Cool down',detail:'400m'}] },
+      { day:5, name:'Long aerobic', sport:'Swimming', intensity:'moderate', duration:90, workout:[{name:'Steady swim',detail:'3km'}] }
+    ]},
+    { id:'run', name:'Running / Cross-Country', goal:'Endurance with tempo and intervals', freq:'4× / week', diff:60, sessions:[
+      { day:0, name:'Easy run', sport:'Running', intensity:'easy', duration:40, workout:[{name:'Easy run',detail:'40 min'}] },
+      { day:2, name:'Intervals', sport:'Running', intensity:'hard', duration:45, workout:[{name:'Warm up',detail:'10 min'},{name:'Intervals',detail:'6×800m'},{name:'Cool down',detail:'10 min'}] },
+      { day:4, name:'Tempo run', sport:'Running', intensity:'hard', duration:40, workout:[{name:'Warm up',detail:'10 min'},{name:'Tempo',detail:'20 min'},{name:'Cool down',detail:'10 min'}] },
+      { day:6, name:'Long run', sport:'Running', intensity:'moderate', duration:70, workout:[{name:'Long run',detail:'60–75 min easy'}] }
+    ]},
+    { id:'team', name:'Team Sport (in-season)', goal:'Power, agility and keeping sharp', freq:'4× / week', diff:65, sessions:[
+      { day:0, name:'Lower power', sport:'Gym', intensity:'hard', duration:50, workout:[{name:'Broad Jump',detail:'5×3'},{name:'Back Squat',detail:'4×5'}] },
+      { day:1, name:'Skills & games', sport:'Team', intensity:'moderate', duration:75, workout:[{name:'Skill drills',detail:'30 min'},{name:'Small games',detail:'30 min'}] },
+      { day:3, name:'Upper power + core', sport:'Gym', intensity:'moderate', duration:45, workout:[{name:'DB Press',detail:'4×6'},{name:'Pull-ups',detail:'4×6'},{name:'Core',detail:'3 rounds'}] },
+      { day:5, name:'Match', sport:'Team', intensity:'hard', duration:90, workout:[{name:'Match',detail:'Full game'}] }
+    ]},
+    { id:'custom', name:'Build your own', goal:'Start from a blank week and add your own sessions', freq:'Flexible', diff:25, blank:true, sessions:[] }
+  ];
+
+  function openPlanSheet(){ renderPlanGrid(); document.getElementById('plan-backdrop').classList.add('open'); document.getElementById('planSheet').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closePlan(){ document.getElementById('plan-backdrop').classList.remove('open'); document.getElementById('planSheet').classList.remove('open'); document.body.style.overflow=''; }
+  window.openPlanSheet = openPlanSheet;
+  window.closePlan = closePlan;
+
+  function renderPlanGrid(){
+    const grid = document.getElementById('planGrid');
+    grid.innerHTML = PLAN_LIBRARY.map(p =>
+      '<div class="plan-pick'+(state.planName===p.name?' active':'')+'" onclick="applyPlan(\''+p.id+'\')">'+
+        '<div class="plan-pick-name">'+esc(p.name)+'</div>'+
+        '<div class="plan-pick-goal">'+esc(p.goal)+'</div>'+
+        '<div class="plan-pick-freq">'+esc(p.freq)+'</div>'+
+        '<div class="plan-diff"><div class="plan-diff-fill" style="width:'+(p.diff||25)+'%;"></div></div>'+
+      '</div>').join('');
+  }
+
+  function applyPlan(id){
+    const plan = PLAN_LIBRARY.find(p => p.id===id);
+    if(!plan) return;
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const hasLogged = (state.week.sessions||[]).some(s => s.status==='done' || s.status==='modified');
+    if(hasLogged && !confirm('Applying the '+plan.name+' plan replaces this week’s sessions, including ones you’ve logged. Continue?')) return;
+    if(plan.blank){
+      state.week.sessions = [];
+    } else {
+      state.week.sessions = plan.sessions.map((t, idx) => ({
+        id: 'tmp_plan_'+Date.now()+'_'+idx,
+        date: addDays(ws, t.day),
+        sport: t.sport||'', name: t.name, intensity: t.intensity||'',
+        plannedDuration: t.duration||null, rpe:null, duration:null, load:null,
+        status:'planned', isPB:false, workout:(t.workout||[]).map(x=>Object.assign({},x)),
+        _checked:[], note:'', noticed:'', blocker:''
+      }));
+    }
+    state.planName = plan.name;
+    closePlan();
+    renderWeek(); renderBlockBar();
+    showToast(plan.blank ? 'Cleared — build your week' : plan.name+' plan applied', 'success');
+  }
+  window.applyPlan = applyPlan;
 
   // ============================================================
   // YEAR / LOAD / PBS — placeholders (built in their own PRs)
