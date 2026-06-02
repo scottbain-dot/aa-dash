@@ -947,6 +947,203 @@
     .timeline-event-name { font-size: 16px; }
   }
 
+  /* ============================================
+     STAFF COORDINATION VIEW (?staff=true)
+     Reuses .student-hero / .student-main / .stu-section / .timeline.
+     ============================================ */
+  #staffApp {
+    display: none;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--bg);
+  }
+  #staffApp.visible { display: flex; }
+  #staffApp .student-hero .meta {
+    display: block;
+    max-width: 640px;
+    line-height: 1.55;
+  }
+
+  /* Section header with an inline refresh control */
+  .staff-sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .staff-refresh {
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    color: var(--burgundy);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .staff-refresh:hover { background: var(--bg-warm); border-color: var(--burgundy-light); }
+  .staff-refresh:disabled { opacity: 0.5; cursor: default; }
+
+  /* A block of roles grouped under a time window */
+  .role-block { margin-top: 26px; }
+  .role-block:first-of-type { margin-top: 8px; }
+  .role-block-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+    border-bottom: 1.5px solid var(--line);
+  }
+  .role-block-head h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .role-block-head .role-window {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--burgundy);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .role-card {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--bg);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .role-card.is-full {
+    background: var(--bg-warm);
+    border-color: var(--line-strong);
+  }
+  .role-card .role-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .role-card h4 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--ink);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .role-count {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--ink-mute);
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+  .role-count.full { color: var(--green); }
+  .role-desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .role-helpers {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 2px;
+  }
+  .role-helper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .role-helper .tick {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--green);
+    color: #fff;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .role-helper .who { font-weight: 600; }
+  .role-release {
+    background: none;
+    border: none;
+    color: var(--ink-mute);
+    font-size: 12px;
+    font-family: 'Inter', system-ui, sans-serif;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .role-release:hover { color: var(--red); }
+  .role-claim {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .role-claim input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: 9px;
+    padding: 9px 12px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--cream);
+  }
+  .role-claim input:focus {
+    outline: none;
+    border-color: var(--burgundy-light);
+    box-shadow: 0 0 0 3px rgba(135,75,70,0.1);
+  }
+  .role-claim-btn {
+    background: var(--burgundy);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 9px 16px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .role-claim-btn:hover { background: var(--burgundy-dark); }
+  .role-claim-btn:disabled { opacity: 0.55; cursor: default; }
+
+  /* Notes block */
+  .staff-notes {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  @media (max-width: 480px) {
+    .role-grid { grid-template-columns: 1fr; }
+  }
+
   /* Scoring — three cards stacked vertically */
   .score-cards {
     display: flex;
@@ -2481,6 +2678,22 @@
 </div>
 
 <!-- ============================================
+     STAFF COORDINATION (?staff=true, open access)
+     ============================================ -->
+<div id="staffApp">
+  <header class="student-hero">
+    <div class="inner">
+      <div class="eyebrow">Clash of the Codes · Staff · Tue 17 June</div>
+      <h1>Help run the <em>day</em>.</h1>
+      <div class="meta">Thanks for helping make the day run. Grab a role below — Scott's on a few already, the rest are open.</div>
+    </div>
+  </header>
+  <main class="student-main" id="staffMain">
+    <div style="text-align:center; color: var(--ink-mute); padding: 60px 20px;">Loading roles…</div>
+  </main>
+</div>
+
+<!-- ============================================
      DISPLAY MODE (?display=true)
      ============================================ -->
 <div id="displayView">
@@ -2605,11 +2818,21 @@
   // ============================================
   // ROUTING — display / admin / coming-soon
   // ============================================
+  // Staff coordination state (declared before routing so the inline
+  // bootstrapStaff() call below can safely reference it).
+  let staffHelpers = [];      // [{ role, name, timestamp }]
+  let staffListenerBound = false;
+
   const urlParams = new URLSearchParams(location.search);
   const isAdminMode = urlParams.get('admin') === 'true';
   const isDisplayMode = urlParams.get('display') === 'true';
+  const isStaffMode = urlParams.get('staff') === 'true';
 
-  if (isDisplayMode) {
+  if (isStaffMode) {
+    // Open-access staff coordination view — no sign-in required.
+    document.getElementById('staffApp').classList.add('visible');
+    bootstrapStaff();
+  } else if (isDisplayMode) {
     document.getElementById('displayView').classList.add('visible');
     bootstrapDisplay();
   } else if (isAdminMode) {
@@ -5377,6 +5600,251 @@
         <div class="timeline">${rows}</div>
       </section>
     `;
+  }
+
+  // ============================================
+  // STAFF COORDINATION VIEW (?staff=true, open access)
+  // Schedule + claimable roles, backed by the Clash_Helpers sheet.
+  // ============================================
+
+  // Hard-coded schedule (mirrors the student timeline; pool names Taunabad).
+  const STAFF_SCHEDULE = [
+    { time: '08:32–09:00', name: 'Arrival, Intro & Team Warm-Ups' },
+    { time: '09:00–09:45', name: 'Fitness: Broad Jump / 40m / 5-10-5' },
+    { time: '09:45–10:10', name: 'Cooper Run (mass start)' },
+    { time: '10:10–10:25', name: 'Reset & water' },
+    { time: '10:25–12:00', name: 'Team events: Relays, Grit Challenge, 100m Row, Team Challenge, Tug of War' },
+    { time: '12:00–12:30', name: 'Recovery lunch, Nutrition Share-Out & Awards' },
+    { time: '12:45–13:15', name: 'Walk to pool' },
+    { time: '13:15–14:45', name: 'Recovery pool session (Taunabad)' },
+    { time: '14:45–15:10', name: 'Walk back to school' }
+  ];
+
+  // Role definitions, grouped by block. Each role `id` MUST match the Role
+  // string stored in the Clash_Helpers sheet (incl. the seeded pre-claims).
+  const STAFF_ROLE_BLOCKS = [
+    {
+      block: 'Fitness block',
+      window: '09:00–10:10',
+      roles: [
+        { id: 'Broad Jump — lead', slots: 1, desc: 'Run the station, record 2 attempts per athlete, best counts.' },
+        { id: 'Broad Jump — assist', slots: 1, desc: 'Assist the lead.' },
+        { id: '40m timer — lead', slots: 1, desc: 'Run the station, time and record the sprint, one attempt each.' },
+        { id: '40m timer — assist', slots: 1, desc: 'Assist the lead.' },
+        { id: '5-10-5 timer — lead', slots: 1, desc: 'Run the station, time the agility test, 2 attempts, best counts.' },
+        { id: '5-10-5 timer — assist', slots: 1, desc: 'Assist the lead.' },
+        { id: 'Cooper Run — lead', slots: 1, desc: 'Run the mass-start Cooper.' },
+        { id: 'Cooper — band handout & recording', slots: 2, desc: 'Hand a band to each runner per lap; count bands and record distance at the finish.' }
+      ]
+    },
+    {
+      block: 'Team events',
+      window: '10:25–12:00',
+      roles: [
+        { id: 'Tug of War — lead', slots: 1, desc: '' },
+        { id: 'Tug of War — assist', slots: 1, desc: 'Assist the lead.' },
+        { id: 'Relays — lead', slots: 1, desc: '' },
+        { id: 'Relays — assist', slots: 1, desc: 'Assist the lead.' },
+        { id: 'Team Challenge — lead', slots: 1, desc: '' },
+        { id: 'Team Challenge — assist', slots: 1, desc: 'Assist the lead.' },
+        { id: 'Grit Challenge — lead', slots: 1, desc: '' },
+        { id: 'Grit Challenge — assist', slots: 1, desc: 'Assist the lead.' },
+        { id: '100m Row — lead', slots: 1, desc: '' },
+        { id: '100m Row — assist', slots: 1, desc: 'Assist the lead.' }
+      ]
+    },
+    {
+      block: 'Pool',
+      window: '13:15–14:45',
+      roles: [
+        { id: 'Pool supervision — Taunabad', slots: 3, desc: 'Three chaperones needed to meet the student:chaperone ratio.' }
+      ]
+    }
+  ];
+
+  async function bootstrapStaff() {
+    bindStaffListener();
+    await loadStaffHelpers();
+    renderStaff();
+  }
+
+  async function loadStaffHelpers() {
+    try {
+      const res = await apiGet('getHelpers');
+      staffHelpers = (res && res.success && Array.isArray(res.helpers)) ? res.helpers : [];
+    } catch (e) {
+      staffHelpers = [];
+    }
+  }
+
+  // All helper names claimed for a given role id (case-insensitive match).
+  function helpersForRole(roleId) {
+    const key = String(roleId).trim().toLowerCase();
+    return staffHelpers
+      .filter(h => String(h.role || '').trim().toLowerCase() === key)
+      .map(h => String(h.name || '').trim())
+      .filter(Boolean);
+  }
+
+  function renderStaff() {
+    const scheduleRows = STAFF_SCHEDULE.map(s => `
+      <div class="timeline-row">
+        <div class="timeline-time">${escapeHtml(s.time)}</div>
+        <div class="timeline-marker"><div class="timeline-dot"></div></div>
+        <div><div class="timeline-event-name">${escapeHtml(s.name)}</div></div>
+      </div>
+    `).join('');
+
+    const blocksHtml = STAFF_ROLE_BLOCKS.map(block => {
+      const cards = block.roles.map((role, idx) => renderRoleCard(role, idx)).join('');
+      return `
+        <div class="role-block">
+          <div class="role-block-head">
+            <h3>${escapeHtml(block.block)}</h3>
+            <span class="role-window">${escapeHtml(block.window)}</span>
+          </div>
+          <div class="role-grid">${cards}</div>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('staffMain').innerHTML = `
+      <section class="stu-section">
+        <h2>The schedule</h2>
+        <p class="lede">The shape of the day. Times are a guide — we'll flex on the ground.</p>
+        <div class="timeline">${scheduleRows}</div>
+      </section>
+
+      <section class="stu-section">
+        <div class="staff-sec-head">
+          <h2>Roles</h2>
+          <button class="staff-refresh" id="staffRefreshBtn" onclick="refreshStaff()">↻ Refresh</button>
+        </div>
+        <p class="lede">Pop your name in and claim a role. It saves straight away — refresh any time to see who else has signed up.</p>
+        ${blocksHtml}
+      </section>
+
+      <section class="stu-section">
+        <h2>Notes</h2>
+        <p class="staff-notes">Wear suitable outdoor kit. Stopwatches and clipboards provided. Briefing at 08:15 on Upper Field. Any questions — find Scott.</p>
+      </section>
+    `;
+  }
+
+  function renderRoleCard(role, idx) {
+    const claimed = helpersForRole(role.id);
+    const isFull = claimed.length >= role.slots;
+    const multi = role.slots > 1;
+
+    const countLabel = multi
+      ? `${claimed.length} of ${role.slots} claimed`
+      : (isFull ? 'Claimed' : 'Open');
+
+    const helpersHtml = claimed.map(name => `
+      <div class="role-helper">
+        <span class="tick">✓</span>
+        <span class="who">${escapeHtml(name)}</span>
+        <button class="role-release" data-action="release"
+                data-role="${escapeAttr(role.id)}" data-name="${escapeAttr(name)}">release</button>
+      </div>
+    `).join('');
+
+    // Show a claim input whenever there's at least one open slot.
+    let claimHtml = '';
+    if (!isFull) {
+      const inputId = `claim-${escapeAttr(role.id).replace(/[^a-zA-Z0-9]/g, '')}-${idx}`;
+      claimHtml = `
+        <div class="role-claim">
+          <input type="text" id="${inputId}" placeholder="Your name"
+                 autocomplete="name" maxlength="60"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();this.nextElementSibling.click();}">
+          <button class="role-claim-btn" data-action="claim"
+                  data-role="${escapeAttr(role.id)}" data-input="${inputId}">Claim this</button>
+        </div>
+      `;
+    }
+
+    const descHtml = role.desc ? `<p class="role-desc">${escapeHtml(role.desc)}</p>` : '';
+
+    return `
+      <div class="role-card ${isFull ? 'is-full' : ''}">
+        <div class="role-top">
+          <h4>${escapeHtml(role.id)}</h4>
+          <span class="role-count ${isFull ? 'full' : ''}">${escapeHtml(countLabel)}</span>
+        </div>
+        ${descHtml}
+        ${helpersHtml ? `<div class="role-helpers">${helpersHtml}</div>` : ''}
+        ${claimHtml}
+      </div>
+    `;
+  }
+
+  function bindStaffListener() {
+    if (staffListenerBound) return;
+    const main = document.getElementById('staffMain');
+    main.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-action');
+      const role = btn.getAttribute('data-role');
+      if (action === 'claim') {
+        const input = document.getElementById(btn.getAttribute('data-input'));
+        staffClaim(role, input, btn);
+      } else if (action === 'release') {
+        staffRelease(role, btn.getAttribute('data-name'), btn);
+      }
+    });
+    staffListenerBound = true;
+  }
+
+  async function staffClaim(role, input, btn) {
+    const name = input ? input.value.trim() : '';
+    if (!name) {
+      toast('Add your name first', 'error');
+      if (input) input.focus();
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    try {
+      const res = await apiPost({ action: 'claimHelperRole', role: role, name: name });
+      if (res && res.success) {
+        await loadStaffHelpers();
+        renderStaff();
+        toast('Thanks — you\'re signed up', 'success');
+      } else {
+        throw new Error(res && res.error ? res.error : 'Save failed');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Claim this';
+      toast('Could not save — try again', 'error');
+    }
+  }
+
+  async function staffRelease(role, name, btn) {
+    if (btn) btn.disabled = true;
+    try {
+      const res = await apiPost({ action: 'unclaimHelperRole', role: role, name: name });
+      if (res && res.success) {
+        await loadStaffHelpers();
+        renderStaff();
+        toast('Role released', 'success');
+      } else {
+        throw new Error(res && res.error ? res.error : 'Release failed');
+      }
+    } catch (err) {
+      if (btn) btn.disabled = false;
+      toast('Could not release — try again', 'error');
+    }
+  }
+
+  async function refreshStaff() {
+    const btn = document.getElementById('staffRefreshBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '↻ Refreshing…'; }
+    await loadStaffHelpers();
+    renderStaff();
+    toast('Up to date', 'success');
   }
 
   // ----- Section: Records to Chase (last year's heroes) -----
