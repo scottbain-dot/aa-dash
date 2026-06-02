@@ -147,6 +147,30 @@
   }
 
   /* ============================
+     SHARED PHASE STRIP (Week / Year / Load)
+     ============================ */
+  #phaseStrip { background: var(--bg); border-bottom: 1px solid var(--line-soft); transition: background 0.15s; }
+  #phaseStrip.tappable { cursor: pointer; }
+  #phaseStrip.tappable:hover { background: var(--cream); }
+  .phase-strip-inner {
+    max-width: 1280px; margin: 0 auto; display: flex; align-items: center; gap: 12px;
+    padding: 9px 20px; font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute);
+  }
+  @media (min-width: 820px) { .phase-strip-inner { padding: 9px 32px; } }
+  .phase-strip-chip {
+    display: inline-flex; align-items: center; gap: 6px; font-weight: 600;
+    padding: 4px 11px; border-radius: 9999px; white-space: nowrap;
+  }
+  .ps-emoji { font-size: 13px; }
+  #phaseStrip.ym-build .phase-strip-chip    { background: var(--gold);     color: var(--burgundy-dark); }
+  #phaseStrip.ym-maintain .phase-strip-chip { background: var(--sage);     color: var(--cream); }
+  #phaseStrip.ym-peak .phase-strip-chip     { background: var(--burgundy); color: var(--cream); }
+  #phaseStrip.ym-recover .phase-strip-chip  { background: var(--cream);    color: var(--ink); border: 1px solid var(--line); }
+  #phaseStrip.ym-off .phase-strip-chip      { background: var(--ink);      color: var(--cream); }
+  .phase-strip-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .phase-strip-link { color: var(--burgundy); font-weight: 600; white-space: nowrap; }
+
+  /* ============================
      BLOCK CONTEXT BAR
      ============================ */
   .block-bar {
@@ -1204,6 +1228,9 @@
   </div>
 </div>
 
+<!-- SHARED PHASE STRIP (Week / Year / Load) — the one heartbeat tying them together -->
+<div id="phaseStrip" style="display:none;"></div>
+
 <!-- BLOCK CONTEXT BAR (filled per active tab by JS) -->
 <div class="block-bar">
   <div class="block-bar-inner" id="blockBar"></div>
@@ -1789,9 +1816,10 @@
   .plan-row.is-today .plan-dow, .plan-row.is-today .plan-date { color: var(--burgundy); }
   .plan-today-tag { font-family: 'Fraunces', serif; font-style: italic; font-size: 9px; color: var(--burgundy); }
   .plan-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); justify-self: center; }
+  /* Intensity = a single burgundy effort-ramp (light→dark), kept separate from the phase palette */
+  .plan-dot.easy { background: rgba(135,75,70,0.32); }
+  .plan-dot.moderate { background: var(--burgundy-light); }
   .plan-dot.hard { background: var(--burgundy); }
-  .plan-dot.moderate { background: var(--gold); }
-  .plan-dot.easy { background: var(--sage); }
   .plan-dot.is-empty { background: transparent; border: 1.5px dashed var(--line); width: 11px; height: 11px; }
   .plan-row.is-done .plan-dot { box-shadow: 0 0 0 3px rgba(122,144,120,0.22); }
   .plan-info { min-width: 0; }
@@ -1851,9 +1879,12 @@
   }
   .load-strip-squares { display: flex; gap: 6px; margin: 12px 0 10px; flex-wrap: wrap; }
   .load-strip-square { width: 30px; height: 30px; border-radius: 8px; background: var(--line-soft); }
+  .load-strip-square.easy { background: rgba(135,75,70,0.32); }
+  .load-strip-square.moderate { background: var(--burgundy-light); }
   .load-strip-square.hard { background: var(--burgundy); }
-  .load-strip-square.moderate { background: var(--gold); }
-  .load-strip-square.easy { background: var(--sage); }
+  .load-strip-key { display: flex; gap: 14px; margin-top: 10px; }
+  .load-strip-key-item { display: inline-flex; align-items: center; gap: 5px; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); }
+  .load-strip-key-sq { width: 11px; height: 11px; border-radius: 3px; }
   .load-strip-label { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
   .load-strip-warning {
     display: flex; align-items: center; gap: 8px; margin-top: 12px;
@@ -2240,6 +2271,7 @@
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-'+tab).classList.add('active');
+    renderPhaseStrip(tab);
     renderBlockBar();
     if(tab==='week') renderWeek();
     else if(tab==='year') renderYear();
@@ -2257,6 +2289,35 @@
     if(!sport || !sport.monthlyStates) return null;
     const ms = sport.monthlyStates.find(m=>m.month===month);
     return ms ? Object.assign({ sport: sport.name }, ms) : null;
+  }
+
+  // The single shared phase (priority sport, this month) used to tie Week/Year/Load together.
+  function currentPhaseInfo(){
+    if(!state.yearMap || !state.yearMap.sports || !state.yearMap.sports.length) return null;
+    const month = MONTHS[new Date().getMonth()];
+    const sport = state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
+    const phase = currentSportPhase(sport, month);
+    if(!phase) return null;
+    const ms = (sport.monthlyStates||[]).find(m=>m.month===month) || {};
+    return { sport: sport.name, month: month, phase: phase, focus: ms.focus||'', loadTarget: ms.loadTarget||null };
+  }
+
+  // Slim context ribbon shown on Week / Year / Load so all three share one heartbeat.
+  function renderPhaseStrip(tab){
+    const el = document.getElementById('phaseStrip');
+    if(!el) return;
+    const info = (tab==='week'||tab==='year'||tab==='load') ? currentPhaseInfo() : null;
+    if(!info){ el.style.display='none'; el.innerHTML=''; el.onclick=null; return; }
+    const tappable = tab !== 'year';
+    el.style.display = '';
+    el.className = 'ym-'+info.phase + (tappable ? ' tappable' : '');
+    el.onclick = tappable ? (function(){ switchTab('year'); }) : null;
+    el.innerHTML =
+      '<div class="phase-strip-inner">'+
+        '<span class="phase-strip-chip"><span class="ps-emoji">'+PHASE_EMOJI[info.phase]+'</span> '+PHASE_FRIENDLY[info.phase]+'</span>'+
+        '<span class="phase-strip-text">'+esc(info.month)+' · '+esc(info.focus || 'your focus this month')+'</span>'+
+        '<span class="phase-strip-link">'+(tappable ? 'Your year →' : 'This month') +'</span>'+
+      '</div>';
   }
 
   function renderBlockBar(){
@@ -2280,17 +2341,25 @@
     if(activeTab==='load'){
       const s = (state.load && state.load.summary) || {};
       const acwr = s.acwr;
-      const sub = acwr==null ? 'Log four weeks to see your acute:chronic ratio.'
-        : (acwr>1.3 ? 'Ramping up fast — watch the jump in load.' : (acwr<0.8 ? 'Load is dropping — you may be detraining.' : 'Load is in a healthy range.'));
+      const info = currentPhaseInfo();
+      const tgt = info && info.loadTarget;
+      let sub;
+      if(tgt){
+        const phaseTxt = PHASE_EMOJI[info.phase]+' '+PHASE_FRIENDLY[info.phase];
+        sub = "You're in "+phaseTxt+" — aim for about "+tgt+" a week. You're at "+(s.thisWeekLoad||0)+".";
+      } else {
+        sub = acwr==null ? 'Log a few weeks and your training load builds here.'
+          : (acwr>1.3 ? 'Ramping up fast — watch the jump.' : (acwr<0.8 ? 'Easing off — your load is dropping.' : 'Your load is in a healthy range.'));
+      }
       bar.innerHTML =
         '<div class="block-bar-left">'+
           '<p class="block-eyebrow">Training load</p>'+
           '<h1 class="block-title">Your <em>load</em>.</h1>'+
-          '<p class="block-sub">'+sub+'</p>'+
+          '<p class="block-sub">'+esc(sub)+'</p>'+
         '</div>'+
         '<div class="block-meta">'+
-          '<div class="block-meta-item"><strong>'+(s.thisWeekLoad||0)+'</strong> au this week</div>'+
-          '<div class="block-meta-item"><strong>'+(acwr==null?'—':acwr.toFixed(2))+'</strong> acute:chronic</div>'+
+          '<div class="block-meta-item"><strong>'+(s.thisWeekLoad||0)+'</strong> load this week</div>'+
+          (tgt? '<div class="block-meta-item"><strong>'+esc(String(tgt))+'</strong> weekly target</div>' : '')+
         '</div>';
       return;
     }
@@ -2329,13 +2398,13 @@
     if(blk){
       bar.innerHTML =
         '<div class="block-bar-left">'+
-          '<p class="block-eyebrow">Block · '+MONTHS[new Date().getMonth()]+'</p>'+
-          '<h1 class="block-title"><em>'+(STATE_LABEL[blk.state]||'—')+'</em>.</h1>'+
+          '<p class="block-eyebrow">This week</p>'+
+          '<h1 class="block-title">Your <em>week</em>.</h1>'+
           '<p class="block-sub">'+esc(blk.focus || blk.note || 'Plan it, do it, log it.')+'</p>'+
         '</div>'+
         '<div class="block-meta">'+
           '<div class="block-meta-item"><strong>'+done+' / '+total+'</strong> sessions done</div>'+
-          '<div class="block-meta-item"><strong>'+weekLoad+'</strong> au this week</div>'+
+          '<div class="block-meta-item"><strong>'+weekLoad+'</strong> load this week</div>'+
           (blk.loadTarget? '<div class="block-meta-item"><strong>'+esc(String(blk.loadTarget))+'</strong> target</div>':'')+
         '</div>';
     } else {
@@ -2347,7 +2416,7 @@
         '</div>'+
         '<div class="block-meta">'+
           '<div class="block-meta-item"><strong>'+done+' / '+total+'</strong> sessions done</div>'+
-          '<div class="block-meta-item"><strong>'+weekLoad+'</strong> au this week</div>'+
+          '<div class="block-meta-item"><strong>'+weekLoad+'</strong> load this week</div>'+
         '</div>';
     }
   }
@@ -2461,9 +2530,14 @@
     else balance = 'steady';
     el.className = 'load-strip-card';
     el.innerHTML =
-      '<p class="overline">Weekly load</p>'+
+      '<p class="overline">This week’s mix</p>'+
       '<div class="load-strip-squares">'+squares+'</div>'+
       '<p class="load-strip-label">'+counts.hard+' hard · '+counts.moderate+' moderate · '+counts.easy+' easy — '+balance+'</p>'+
+      '<div class="load-strip-key">'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq easy" style="background:rgba(135,75,70,0.32);"></span>easy</span>'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--burgundy-light);"></span>moderate</span>'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--burgundy);"></span>hard</span>'+
+      '</div>'+
       (maxRun >= 3 ? '<div class="load-strip-warning"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Three hard days in a row — build in some recovery.</div>' : '');
   }
 
@@ -3185,26 +3259,27 @@
     const view = document.getElementById('view-load');
     const sum = (state.load && state.load.summary) || { thisWeekLoad:0, acwr:null, weeksLogged:0 };
     const acwr = sum.acwr;
-    const acwrText = acwr==null ? '—' : acwr.toFixed(2);
-    const acwrFlag = acwr!=null && (acwr < 0.8 || acwr > 1.3);
-    const acwrSub = acwr==null ? 'Needs 4 weeks logged' : (acwr>1.3 ? 'Ramping up fast' : (acwr<0.8 ? 'Detraining' : 'In the sweet spot'));
+    const flag = acwr!=null && (acwr < 0.8 || acwr > 1.3);
+    // Plain-language read of the acute:chronic ratio (kept under the hood).
+    const word = acwr==null ? '—' : (acwr>1.3 ? 'High' : (acwr<0.8 ? 'Low' : 'Good'));
+    const wordSub = acwr==null ? 'log a few weeks' : (acwr>1.3 ? 'ramping up fast' : (acwr<0.8 ? 'easing off' : 'in a healthy range'));
 
     let html =
       '<div class="load-cards">'+
-        loadCard('This week', sum.thisWeekLoad||0, '<small>au</small>', 'effort × minutes', false)+
-        loadCard('Acute : Chronic', acwrText, '', acwrSub, acwrFlag)+
+        loadCard('Load this week', sum.thisWeekLoad||0, '', 'effort × minutes', false)+
+        loadCard('Doing too much?', word, '', wordSub, flag)+
         loadCard('Weeks logged', sum.weeksLogged||0, '', 'this season', false)+
       '</div>';
     html += '<div class="section-head">'+
         '<div><p class="overline">Across the season</p>'+
-        '<h2 class="section-heading">Weekly <em style="font-style:italic; color:var(--burgundy);">load</em></h2></div>'+
+        '<h2 class="section-heading">Training <em style="font-style:italic; color:var(--burgundy);">load</em> over time</h2></div>'+
       '</div>';
     html += '<div class="load-chart-wrap">'+
-      '<p class="load-chart-title">Weekly load'+
-        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--gold);"></span>Build</span>'+
-        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--sage);"></span>Maintain</span>'+
-        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--burgundy);"></span>Peak</span>'+
-        '<span class="load-acwr-key"><i class="ti ti-wave-sine" aria-hidden="true"></i> ACWR</span>'+
+      '<p class="load-chart-title">Bars = how much you trained each week · colour = your phase'+
+        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--gold);"></span>💪 Build</span>'+
+        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--sage);"></span>⚡ Keep sharp</span>'+
+        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--burgundy);"></span>🏆 Race ready</span>'+
+        '<span class="load-acwr-key"><i class="ti ti-wave-sine" aria-hidden="true"></i> Workload trend</span>'+
       '</p>' + loadChartSVG() + '</div>';
     view.innerHTML = html;
   }
