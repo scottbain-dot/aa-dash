@@ -272,6 +272,9 @@ function doGet(e) {
     if (action === 'getClashLunchPlan') {
       return apJson(handleGetClashLunchPlan(ss, e.parameter.email, e.parameter.athleteId));
     }
+    if (action === 'getHelpers') {
+      return apJson(handleGetHelpers(ss));
+    }
 
     // ===== EXISTING DASHBOARD LOGIC =====
     if (e.parameter.admin === 'true') {
@@ -448,6 +451,12 @@ function doPost(e) {
     if (data.action === 'saveClashLunchPlan') {
       var ssClashL = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSaveClashLunchPlan(ssClashL, data));
+    }
+    if (data.action === 'claimHelperRole') {
+      return apJson(handleClaimHelperRole(SpreadsheetApp.getActiveSpreadsheet(), data));
+    }
+    if (data.action === 'unclaimHelperRole') {
+      return apJson(handleUnclaimHelperRole(SpreadsheetApp.getActiveSpreadsheet(), data));
     }
 
     if (data.athleteId && data.updates) {
@@ -2986,6 +2995,130 @@ function ensureClashResultsSheet(ss) {
     }
   }
   return sheet;
+}
+
+// ----- Clash of the Codes: staff helper sign-up -----
+//
+// Open-access (no sign-in) coordination sheet for colleagues helping on the
+// day. One row per claim — multi-slot roles (e.g. pool supervision ×3) simply
+// hold multiple rows. The Role strings below MUST match the role ids defined
+// in clash.html's staff view so pre-claimed leads render as already taken.
+
+// Roles pre-claimed by Scott Bain when the sheet is first created.
+var CLASH_HELPER_SEED_ROLES = [
+  'Broad Jump — lead',
+  'Cooper Run — lead',
+  'Tug of War — lead',
+  'Relays — lead',
+  'Team Challenge — lead',
+  'Grit Challenge — lead',
+  '100m Row — lead'
+];
+
+function ensureClashHelpers(ss) {
+  var sheet = ss.getSheetByName('Clash_Helpers');
+  var headers = ['Role', 'Helper_Name', 'Timestamp'];
+  if (!sheet) {
+    sheet = ss.insertSheet('Clash_Helpers');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    // Seed pre-claimed leads for Scott Bain.
+    var now = new Date();
+    var seedRows = CLASH_HELPER_SEED_ROLES.map(function (role) {
+      return [role, 'Scott Bain', now];
+    });
+    if (seedRows.length) {
+      sheet.getRange(2, 1, seedRows.length, headers.length).setValues(seedRows);
+    }
+    return sheet;
+  }
+  var existing = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  for (var i = 0; i < headers.length; i++) {
+    if (existing.indexOf(headers[i]) === -1) {
+      var newCol = Math.max(sheet.getLastColumn() + 1, i + 1);
+      sheet.getRange(1, newCol).setValue(headers[i]);
+    }
+  }
+  return sheet;
+}
+
+// GET — return every helper claim row.
+function handleGetHelpers(ss) {
+  try {
+    var sheet = ensureClashHelpers(ss);
+    var ro = clashReadObjects(sheet);
+    var helpers = ro.rows
+      .filter(function (r) { return String(r.Role || '').trim() !== ''; })
+      .map(function (r) {
+        return {
+          role: String(r.Role || '').trim(),
+          name: String(r.Helper_Name || '').trim(),
+          timestamp: r.Timestamp || ''
+        };
+      });
+    return { success: true, helpers: helpers };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// POST — claim a helper role (append one row).
+function handleClaimHelperRole(ss, data) {
+  try {
+    var role = String(data.role || '').trim();
+    var name = String(data.name || '').trim();
+    if (!role || !name) {
+      return { success: false, error: 'Missing role or name' };
+    }
+    var sheet = ensureClashHelpers(ss);
+    // Avoid an accidental exact-duplicate (same name already on this role).
+    var ro = clashReadObjects(sheet);
+    for (var i = 0; i < ro.rows.length; i++) {
+      var r = ro.rows[i];
+      if (String(r.Role || '').trim().toLowerCase() === role.toLowerCase() &&
+          String(r.Helper_Name || '').trim().toLowerCase() === name.toLowerCase()) {
+        return { success: true, role: role, name: name, alreadyClaimed: true };
+      }
+    }
+    sheet.appendRow([role, name, new Date()]);
+    return { success: true, role: role, name: name };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// POST — release a helper role (delete the first matching row).
+function handleUnclaimHelperRole(ss, data) {
+  try {
+    var role = String(data.role || '').trim();
+    var name = String(data.name || '').trim();
+    if (!role || !name) {
+      return { success: false, error: 'Missing role or name' };
+    }
+    var sheet = ensureClashHelpers(ss);
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return { success: false, error: 'No helpers found' };
+    }
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var roleC = headers.indexOf('Role');
+    var nameC = headers.indexOf('Helper_Name');
+    if (roleC < 0 || nameC < 0) {
+      return { success: false, error: 'Required columns missing in Clash_Helpers' };
+    }
+    var values = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+    for (var i = 0; i < values.length; i++) {
+      if (String(values[i][roleC] || '').trim().toLowerCase() === role.toLowerCase() &&
+          String(values[i][nameC] || '').trim().toLowerCase() === name.toLowerCase()) {
+        sheet.deleteRow(i + 2);
+        return { success: true, role: role, name: name };
+      }
+    }
+    return { success: false, error: 'Helper claim not found' };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
 }
 
 // ----- Shared helpers -----
