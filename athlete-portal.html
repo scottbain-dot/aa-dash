@@ -1190,6 +1190,7 @@
       <button class="tab" data-tab="year" onclick="switchTab('year')">Year</button>
       <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
       <button class="tab active" data-tab="week" onclick="switchTab('week')">Week</button>
+      <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
       <button class="tab" data-tab="pbs" onclick="switchTab('pbs')">PBs</button>
     </div>
   </div>
@@ -1229,6 +1230,9 @@
         <div class="week-grid" id="weekGrid"></div>
       </div>
 
+      <!-- WEEKLY LOAD STRIP (intensity balance, mockup-style) -->
+      <div id="weekLoadStrip"></div>
+
     </div>
 
     <!-- DESKTOP SIDE: PB strip + week-note placeholder -->
@@ -1253,6 +1257,9 @@
 
 <!-- ===== LOAD TAB ===== -->
 <div class="tab-view" id="view-load"></div>
+
+<!-- ===== BOOK TAB ===== -->
+<div class="tab-view" id="view-book"></div>
 
 <!-- ===== PBS TAB ===== -->
 <div class="tab-view" id="view-pbs"></div>
@@ -1734,6 +1741,97 @@
     padding: 6px 12px; white-space: nowrap;
   }
   .week-banner button:hover { border-color: var(--burgundy); }
+
+  /* ============================
+     WEEKLY LOAD STRIP (Week tab) — mockup-style intensity balance
+     ============================ */
+  .load-strip-card {
+    background: var(--surface); border-radius: 22px; box-shadow: var(--shadow-card);
+    padding: 18px 20px 16px; margin-top: 16px;
+  }
+  .load-strip-squares { display: flex; gap: 6px; margin: 12px 0 10px; flex-wrap: wrap; }
+  .load-strip-square { width: 30px; height: 30px; border-radius: 8px; background: var(--line-soft); }
+  .load-strip-square.hard { background: var(--burgundy); }
+  .load-strip-square.moderate { background: var(--gold); }
+  .load-strip-square.easy { background: var(--sage); }
+  .load-strip-label { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
+  .load-strip-warning {
+    display: flex; align-items: center; gap: 8px; margin-top: 12px;
+    background: rgba(135,75,70,0.08); color: var(--burgundy); border-radius: 12px;
+    padding: 10px 14px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
+  }
+
+  /* ============================
+     BOOK TAB — coach check-ins + month calendar (mockup-style)
+     ============================ */
+  .book-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 920px) { .book-grid { grid-template-columns: 1.1fr 1fr; align-items: start; } }
+  .book-card { background: var(--surface); border-radius: 22px; box-shadow: var(--shadow-card); padding: 20px 22px; }
+
+  .slot-card {
+    border-radius: 14px; background: var(--cream); padding: 14px 16px; margin-bottom: 10px;
+    transition: box-shadow 0.15s, background 0.15s;
+  }
+  .slot-card:last-child { margin-bottom: 0; }
+  .slot-card.available { cursor: pointer; }
+  .slot-card.available:hover { box-shadow: 0 6px 18px rgba(135,75,70,0.10); }
+  .slot-card.booked { background: rgba(135,75,70,0.08); }
+  .slot-card.full { opacity: 0.6; }
+  .slot-card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .slot-badge {
+    font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 700; padding: 3px 8px; border-radius: 9999px; color: var(--cream); white-space: nowrap;
+  }
+  .slot-badge.type-checkin { background: var(--burgundy); }
+  .slot-badge.type-technique { background: var(--gold); color: var(--burgundy-dark); }
+  .slot-badge.type-testing { background: var(--ink); }
+  .slot-badge.type-group { background: var(--sage); }
+  .slot-card-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; color: var(--ink); }
+  .slot-card-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
+  .slot-card-time { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-mute); font-weight: 500; }
+  .slot-card-time strong { color: var(--ink); font-weight: 600; }
+  .book-btn {
+    background: var(--burgundy); color: var(--cream); border: none; padding: 8px 16px; border-radius: 9px;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s;
+  }
+  .book-btn:hover { background: var(--burgundy-dark); }
+  .slot-status { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .slot-status.booked-label { color: var(--burgundy); }
+  .slot-status.full-label { color: var(--ink-mute); }
+  .booking-note {
+    margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line);
+    font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; color: var(--ink-mute); text-align: center;
+  }
+
+  .cal-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .cal-tabs { display: flex; gap: 4px; background: var(--cream); padding: 4px; border-radius: 11px; margin-bottom: 14px; }
+  .cal-tab {
+    flex: 1; border: none; background: transparent; padding: 8px 10px; border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-mute); cursor: pointer; transition: all 0.15s;
+  }
+  .cal-tab.active { background: var(--surface); color: var(--burgundy); box-shadow: 0 1px 3px rgba(26,20,17,0.08); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .cal-dayhead {
+    font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 700; color: var(--ink-mute); text-align: center; padding: 2px 0 6px;
+  }
+  .cal-day {
+    aspect-ratio: 1; border-radius: 9px; background: var(--cream);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    font-family: 'Fraunces', serif; font-size: 13px; font-weight: 500; color: var(--ink); position: relative;
+  }
+  .cal-day.blank { background: transparent; }
+  .cal-day.today { background: var(--burgundy); color: var(--cream); }
+  .cal-dots { display: flex; gap: 2px; height: 5px; }
+  .cal-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .cal-dot.type-checkin { background: var(--burgundy); }
+  .cal-dot.type-technique { background: var(--gold); }
+  .cal-dot.type-testing { background: var(--ink); }
+  .cal-dot.type-group { background: var(--sage); }
+  .cal-day.today .cal-dot { box-shadow: 0 0 0 1.5px var(--cream); }
+  .cal-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+  .cal-legend-item { display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); font-weight: 500; }
+  .cal-legend-swatch { width: 8px; height: 8px; border-radius: 50%; }
 </style>
 
 <script>
@@ -1750,7 +1848,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} } };
+  let state = { yearMap: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, booking: null };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -1886,6 +1984,7 @@
     state.week = demo.week;
     state.pbs = demo.pbs;
     state.load = demo.load;
+    state.booking = demo.booking;
     document.body.classList.add('signed-in');
     document.getElementById('appError').classList.remove('active');
     setLoading(false);
@@ -1981,7 +2080,27 @@
       weeksLogged: list.length
     }};
 
-    return { athlete, yearMap, week, pbs, load };
+    // Coach check-ins + a personal calendar (demo/visual only).
+    const booking = {
+      calTitle: 'June & July 2026',
+      calYear: 2026,
+      months: [5, 6],
+      slots: [
+        { title:'Check-in with Mr Bain',       type:'checkin',   day:'Wed 3 Jun',  time:'15:30–16:00', coach:'Mr Bain', status:'available', eventDate:'2026-06-03' },
+        { title:'Freestyle technique review',   type:'technique', day:'Fri 5 Jun',  time:'16:00–16:30', coach:'Mr Bain', status:'available', eventDate:'2026-06-05' },
+        { title:'Cooper retest',                type:'testing',   day:'Tue 9 Jun',  time:'14:00–15:00', coach:null,      status:'available', eventDate:'2026-06-09' },
+        { title:'Mobility assessment',          type:'testing',   day:'Thu 11 Jun', time:'14:00–14:45', coach:null,      status:'booked',    eventDate:'2026-06-11' },
+        { title:'Group conditioning',           type:'group',     day:'Sat 13 Jun', time:'09:00–10:00', coach:null,      status:'full',      eventDate:'2026-06-13' }
+      ],
+      events: [
+        { date:'2026-06-11', type:'testing',   name:'Mobility assessment' },
+        { date:'2026-06-19', type:'checkin',   name:'Check-in with Mr Bain' },
+        { date:'2026-06-25', type:'group',     name:'Group conditioning' },
+        { date:'2026-07-02', type:'technique', name:'Stroke review' }
+      ]
+    };
+
+    return { athlete, yearMap, week, pbs, load, booking };
   }
 
   function renderNav(){
@@ -2021,6 +2140,7 @@
     if(tab==='week') renderWeek();
     else if(tab==='year') renderYear();
     else if(tab==='load') renderLoad();
+    else if(tab==='book') renderBook();
     else if(tab==='pbs') renderPBs();
     window.scrollTo(0,0);
   }
@@ -2081,6 +2201,23 @@
           '<p class="block-sub">'+(latest? 'Latest · '+esc(latest.exercise)+' '+esc(String(latest.value))+(latest.unit?esc(latest.unit):'')+(latest.date?' · '+fmtNice(latest.date):'') : 'Every best you set lands here.')+'</p>'+
         '</div>'+
         (n? '<div class="block-meta"><div class="block-meta-item"><strong>'+n+'</strong> '+(n===1?'best':'bests')+' logged</div></div>' : '');
+      return;
+    }
+
+    if(activeTab==='book'){
+      const bk = state.booking;
+      const open = bk ? (bk.slots||[]).filter(s=>s.status==='available').length : 0;
+      const booked = bk ? (bk.slots||[]).filter(s=>s.status==='booked').length : 0;
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          '<p class="block-eyebrow">Coaching</p>'+
+          '<h1 class="block-title">Book a <em>session</em>.</h1>'+
+          '<p class="block-sub">'+(bk? 'Check-ins, technique reviews and testing — booked with Mr Bain.' : 'Coming soon — book coach time right here.')+'</p>'+
+        '</div>'+
+        (bk? '<div class="block-meta">'+
+          '<div class="block-meta-item"><strong>'+open+'</strong> slots open</div>'+
+          '<div class="block-meta-item"><strong>'+booked+'</strong> booked</div>'+
+        '</div>' : '');
       return;
     }
 
@@ -2157,6 +2294,38 @@
     }
     document.getElementById('weekGrid').innerHTML = html;
     renderWeekPBs();
+    renderLoadStrip();
+  }
+
+  // Weekly intensity balance — coloured squares + balance label + overload warning.
+  function renderLoadStrip(){
+    const el = document.getElementById('weekLoadStrip');
+    if(!el) return;
+    const sessions = (state.week.sessions || []).filter(s => s.status !== 'missed');
+    if(!sessions.length){ el.innerHTML = ''; return; }
+    const ordered = sessions.slice().sort((a,b)=> (a.date<b.date?-1:a.date>b.date?1:0));
+    const counts = { hard:0, moderate:0, easy:0 };
+    let squares = '';
+    ordered.forEach(s => {
+      const i = (s.intensity==='hard'||s.intensity==='moderate'||s.intensity==='easy') ? s.intensity : '';
+      if(i) counts[i]++;
+      squares += '<div class="load-strip-square'+(i?' '+i:'')+'"></div>';
+    });
+    // overload: 3+ consecutive hard sessions
+    let run = 0, maxRun = 0;
+    ordered.forEach(s => { if(s.intensity==='hard'){ run++; maxRun = Math.max(maxRun, run); } else run = 0; });
+    const total = counts.hard + counts.moderate + counts.easy;
+    let balance;
+    if(counts.hard >= 4) balance = 'heavy load';
+    else if(total && counts.easy === 0) balance = 'needs more recovery';
+    else if(counts.hard >= 2 && counts.easy >= 1) balance = 'well balanced';
+    else balance = 'steady';
+    el.className = 'load-strip-card';
+    el.innerHTML =
+      '<p class="overline">Weekly load</p>'+
+      '<div class="load-strip-squares">'+squares+'</div>'+
+      '<p class="load-strip-label">'+counts.hard+' hard · '+counts.moderate+' moderate · '+counts.easy+' easy — '+balance+'</p>'+
+      (maxRun >= 3 ? '<div class="load-strip-warning"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Three hard days in a row — build in some recovery.</div>' : '');
   }
 
   function daySummary(ds){
@@ -2981,6 +3150,121 @@
     if(activeTab==='pbs') renderPBs();
     renderWeekPBs();
   }
+
+  // ============================================================
+  // BOOK TAB — coach check-ins + month calendar (demo/visual only)
+  // ============================================================
+  const SLOT_TYPE = {
+    checkin:   { label:'Check-in',         cls:'type-checkin' },
+    technique: { label:'Technique Review', cls:'type-technique' },
+    testing:   { label:'Testing Day',      cls:'type-testing' },
+    group:     { label:'Group Session',    cls:'type-group' }
+  };
+  let calMonth = null;   // active calendar month index (0–11)
+
+  function renderBook(){
+    const view = document.getElementById('view-book');
+    const bk = state.booking;
+    if(!bk){
+      view.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-calendar-plus" aria-hidden="true"></i></div>'+
+        '<h2 class="empty-state-title">Booking is <em>coming soon</em>.</h2>'+
+        '<p class="empty-state-text">Soon you\'ll book check-ins, technique reviews and testing days with Mr Bain right here — and see them on your own calendar. Want a preview? Open this page with <strong>?demo=1</strong>.</p></div>';
+      return;
+    }
+    if(calMonth==null) calMonth = (bk.months && bk.months[0] != null) ? bk.months[0] : new Date().getMonth();
+    view.innerHTML =
+      '<div class="book-grid">'+
+        '<div class="book-card">'+
+          '<p class="overline">Coach check-ins</p>'+
+          '<h2 class="section-heading">Book a <em style="font-style:italic;color:var(--burgundy);">session</em></h2>'+
+          '<div id="slotList" style="margin-top:16px;">'+ (bk.slots||[]).map(slotCardHTML).join('') +'</div>'+
+          '<div class="booking-note">Slots open two weeks in advance.</div>'+
+        '</div>'+
+        '<div class="book-card">'+
+          '<div class="cal-head"><div><p class="overline">Your schedule</p>'+
+            '<h2 class="section-heading">'+esc(bk.calTitle || 'This term')+'</h2></div></div>'+
+          calTabsHTML(bk.months)+
+          '<div class="cal-grid" id="calGrid">'+calGridHTML(calMonth)+'</div>'+
+          calLegendHTML()+
+        '</div>'+
+      '</div>';
+  }
+
+  function slotCardHTML(s, i){
+    const t = SLOT_TYPE[s.type] || SLOT_TYPE.checkin;
+    const cls = 'slot-card ' + (s.status||'available');
+    let foot;
+    if(s.status==='booked') foot = '<span class="slot-status booked-label"><i class="ti ti-check" aria-hidden="true"></i> Booked</span>';
+    else if(s.status==='full') foot = '<span class="slot-status full-label">Full</span>';
+    else foot = '<button class="book-btn" onclick="event.stopPropagation(); bookSlot('+i+')">Book</button>';
+    return '<div class="'+cls+'"'+(s.status==='booked'?' onclick="cancelSlot('+i+')"':'')+'>'+
+      '<div class="slot-card-head">'+
+        '<span class="slot-card-title">'+esc(s.title)+'</span>'+
+        '<span class="slot-badge '+t.cls+'">'+t.label+'</span>'+
+      '</div>'+
+      '<div class="slot-card-foot">'+
+        '<span class="slot-card-time"><strong>'+esc(s.day)+'</strong> · '+esc(s.time)+(s.coach?' · '+esc(s.coach):'')+'</span>'+
+        foot+
+      '</div></div>';
+  }
+
+  function calTabsHTML(months){
+    if(!months || months.length<2) return '';
+    return '<div class="cal-tabs">'+months.map(m =>
+      '<button class="cal-tab'+(m===calMonth?' active':'')+'" onclick="pickCalMonth('+m+')">'+MONTHS[m]+'</button>').join('')+'</div>';
+  }
+  function pickCalMonth(m){ calMonth = m; document.getElementById('view-book') && renderBook(); }
+  window.pickCalMonth = pickCalMonth;
+
+  function calGridHTML(monthIdx){
+    const bk = state.booking;
+    const year = bk.calYear || new Date().getFullYear();
+    const first = new Date(year, monthIdx, 1);
+    const startDow = (first.getDay()+6)%7;   // Monday-first
+    const daysIn = new Date(year, monthIdx+1, 0).getDate();
+    const today = isoToday();
+    const evByDay = {};
+    (bk.events||[]).forEach(e => { if(parseISO(e.date).getMonth()===monthIdx){ (evByDay[dayNum(e.date)] = evByDay[dayNum(e.date)]||[]).push(e); } });
+    let html = ['Mo','Tu','We','Th','Fr','Sa','Su'].map(d=>'<div class="cal-dayhead">'+d+'</div>').join('');
+    for(let i=0;i<startDow;i++) html += '<div class="cal-day blank"></div>';
+    for(let d=1; d<=daysIn; d++){
+      const iso = fmtISO(new Date(year, monthIdx, d));
+      const evs = evByDay[d] || [];
+      const dots = evs.slice(0,3).map(e=>'<span class="cal-dot '+((SLOT_TYPE[e.type]||SLOT_TYPE.checkin).cls)+'"></span>').join('');
+      html += '<div class="cal-day'+(iso===today?' today':'')+'" title="'+(evs.map(e=>esc(e.name)).join(', '))+'">'+
+        '<span>'+d+'</span><span class="cal-dots">'+dots+'</span></div>';
+    }
+    return html;
+  }
+  function calLegendHTML(){
+    return '<div class="cal-legend">'+
+      '<span class="cal-legend-item"><span class="cal-legend-swatch" style="background:var(--burgundy);"></span>Check-in</span>'+
+      '<span class="cal-legend-item"><span class="cal-legend-swatch" style="background:var(--gold);"></span>Technique</span>'+
+      '<span class="cal-legend-item"><span class="cal-legend-swatch" style="background:var(--ink);"></span>Testing</span>'+
+      '<span class="cal-legend-item"><span class="cal-legend-swatch" style="background:var(--sage);"></span>Group</span>'+
+    '</div>';
+  }
+
+  function bookSlot(i){
+    const s = state.booking && state.booking.slots[i];
+    if(!s || s.status!=='available') return;
+    s.status = 'booked';
+    // reflect the booking on the calendar
+    if(s.eventDate){ (state.booking.events = state.booking.events||[]).push({ date:s.eventDate, type:s.type, name:s.title }); }
+    renderBook(); renderBlockBar();
+    showToast('Booked — '+s.title, 'success');
+  }
+  window.bookSlot = bookSlot;
+  function cancelSlot(i){
+    const s = state.booking && state.booking.slots[i];
+    if(!s || s.status!=='booked') return;
+    if(!confirm('Cancel this booking?')) return;
+    s.status = 'available';
+    if(s.eventDate && state.booking.events){ state.booking.events = state.booking.events.filter(e=>!(e.date===s.eventDate && e.name===s.title)); }
+    renderBook(); renderBlockBar();
+    showToast('Booking cancelled', 'success');
+  }
+  window.cancelSlot = cancelSlot;
 
   // ============================================================
   // BINDINGS + INIT
