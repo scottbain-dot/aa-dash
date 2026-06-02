@@ -24,9 +24,12 @@
     --sage: #7a9078;
     --sage-soft: #a3b8a1;
     --cream: #faf3ed;
+    --surface: #ffffff;
     --line: #e8d9cf;
     --line-soft: #f0e4dc;
     --shadow-soft: 0 1px 3px rgba(26,20,17,0.04), 0 8px 24px rgba(26,20,17,0.04);
+    /* Warmed editorial card shadow, toward the profile-mockup look */
+    --shadow-card: 0 8px 28px rgba(135,75,70,0.06);
     --shadow-lift: 0 4px 12px rgba(26,20,17,0.06), 0 24px 48px rgba(26,20,17,0.08);
   }
 
@@ -242,6 +245,39 @@
   }
 
   /* ============================
+     OVERLINE + SECTION HEADING
+     (editorial pairing, shared across all four tabs)
+     ============================ */
+  .overline {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink-mute);
+    margin: 0;
+  }
+  .overline.gold { color: var(--gold); }
+  .overline.burgundy { color: var(--burgundy); }
+  .section-heading {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin: 4px 0 0;
+    line-height: 1.15;
+  }
+  .section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .section-head .section-heading { margin-bottom: 0; }
+
+  /* ============================
      MOBILE VIEW TOGGLE
      ============================ */
   .view-toggle {
@@ -278,13 +314,13 @@
      TODAY HERO (mobile + desktop strip)
      ============================ */
   .today-hero {
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 20px 22px 18px;
+    background: var(--surface);
+    border-radius: 22px;
+    padding: 22px 24px 20px;
     margin-bottom: 16px;
     position: relative;
     overflow: hidden;
+    box-shadow: var(--shadow-card);
   }
   .today-hero-eyebrow {
     font-family: 'Inter', sans-serif;
@@ -459,22 +495,20 @@
     gap: 10px;
   }
   .day {
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: 14px;
+    background: var(--surface);
+    border-radius: 20px;
     overflow: hidden;
-    transition: box-shadow 0.15s, border-color 0.15s;
+    transition: box-shadow 0.15s;
+    box-shadow: var(--shadow-card);
   }
   .day:hover {
-    border-color: var(--burgundy);
-    box-shadow: 0 2px 12px rgba(26,20,17,0.04);
+    box-shadow: 0 10px 32px rgba(135,75,70,0.10);
   }
   .day-today {
-    border-color: var(--burgundy);
-    box-shadow: 0 4px 16px rgba(135,75,70,0.10);
+    box-shadow: 0 0 0 2px var(--burgundy), 0 10px 28px rgba(135,75,70,0.12);
   }
   .day-today:hover {
-    box-shadow: 0 6px 20px rgba(135,75,70,0.14);
+    box-shadow: 0 0 0 2px var(--burgundy), 0 12px 32px rgba(135,75,70,0.16);
   }
   .day-past .day-sessions { opacity: 0.85; }
   .day-header {
@@ -516,10 +550,10 @@
     color: var(--ink-mute);
   }
   .day-sessions {
-    padding: 0 16px 14px;
+    padding: 0 16px 10px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
   }
   .day-empty {
     padding: 18px 16px;
@@ -542,11 +576,11 @@
       min-height: 320px;
     }
     .day-header {
-      padding: 12px 12px 8px;
+      padding: 14px 12px 8px;
       flex-direction: column;
       align-items: flex-start;
       gap: 4px;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 1px solid var(--line-soft);
     }
     .day-name {
       font-size: 15px;
@@ -555,8 +589,8 @@
       font-size: 11px;
     }
     .day-sessions {
-      padding: 10px 10px 12px;
-      gap: 6px;
+      padding: 4px 12px 12px;
+      gap: 0;
       flex: 1;
     }
   }
@@ -564,35 +598,37 @@
   /* ============================
      SESSION CARDS
      ============================ */
+  /* Session rows — flat list, hairline dividers, intensity dot (no boxes-in-boxes) */
   .session {
-    background: var(--cream);
-    border-radius: 10px;
-    padding: 11px 13px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    background: transparent;
+    border-radius: 8px;
+    padding: 0.85rem 24px 0.85rem 8px;
+    display: grid;
+    grid-template-columns: 14px 1fr;
+    align-items: center;
+    gap: 12px;
     position: relative;
     cursor: pointer;
-    transition: transform 0.12s, box-shadow 0.15s, background 0.15s;
-    border-left: 3px solid transparent;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--line-soft);
   }
-  .session:active { transform: scale(0.985); }
-  .session:hover {
-    box-shadow: 0 2px 8px rgba(26,20,17,0.06);
-    transform: translateY(-1px);
+  .session:last-child { border-bottom: none; }
+  .session:hover { background: var(--cream); }
+  .session-row-content { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .session-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--line); flex-shrink: 0;
   }
-  .session-done { border-left-color: var(--sage); background: rgba(122,144,120,0.10); }
-  .session-modified { border-left-color: var(--gold); background: rgba(212,175,55,0.12); }
-  .session-planned { border-left-color: var(--line); background: var(--cream); }
-  .session-planned-today { 
-    border-left-color: var(--burgundy);
-    background: rgba(135,75,70,0.06);
-  }
-  .session-missed { 
-    border-left: 3px dashed var(--ink-mute);
-    background: var(--cream);
-    opacity: 0.55;
-  }
+  .session-dot.hard { background: var(--burgundy); }
+  .session-dot.moderate { background: var(--gold); }
+  .session-dot.easy { background: var(--sage); }
+  .session-done .session-dot,
+  .session-modified .session-dot { box-shadow: 0 0 0 3px rgba(122,144,120,0.22); }
+  .session-done .session-dot { background: var(--sage); }
+  .session-modified .session-dot { background: var(--gold); }
+  .session-planned-today .session-dot { box-shadow: 0 0 0 3px rgba(135,75,70,0.16); }
+  .session-missed .session-dot { background: transparent; border: 1.5px dashed var(--ink-mute); width: 11px; height: 11px; }
+  .session-missed { opacity: 0.55; }
   .session-name {
     font-family: 'Fraunces', serif;
     font-size: 14px;
@@ -646,11 +682,12 @@
   .pb-strip {
     background: var(--ink);
     color: var(--cream);
-    border-radius: 16px;
-    padding: 18px 20px 16px;
+    border-radius: 22px;
+    padding: 20px 22px 18px;
     position: relative;
     overflow: hidden;
     margin-top: 16px;
+    box-shadow: 0 12px 32px rgba(53,15,13,0.14);
   }
   .pb-strip::after {
     content: '';
@@ -662,7 +699,7 @@
   .pb-strip-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: flex-start;
     margin-bottom: 12px;
     position: relative;
     z-index: 2;
@@ -805,7 +842,7 @@
       bottom: 32px;
       width: 440px;
       max-height: calc(100vh - 64px);
-      border-radius: 16px;
+      border-radius: 20px;
       transform: translateY(calc(100% + 32px));
     }
     .sheet.open {
@@ -873,10 +910,10 @@
   .sheet-section-label {
     font-family: 'Inter', sans-serif;
     font-size: 10px;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--ink-mute);
-    font-weight: 500;
+    font-weight: 700;
     margin: 0 0 10px;
     display: flex;
     align-items: center;
@@ -1038,6 +1075,26 @@
   .toast.error { background: var(--burgundy); }
   .toast.success { background: var(--sage); }
 
+  /* Demo "Example" pill — subtle, corner-pinned, never mistaken for a real account */
+  .demo-pill {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    right: 12px;
+    z-index: 250;
+    background: rgba(212,175,55,0.92);
+    color: var(--burgundy-dark);
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    box-shadow: 0 4px 12px rgba(53,15,13,0.14);
+    pointer-events: none;
+  }
+  .demo-pill[hidden] { display: none; }
+
   /* Tab view show/hide */
   .tab-view { display: none; }
   .tab-view.active { display: block; }
@@ -1112,6 +1169,9 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- DEMO "EXAMPLE" PILL (shown only in ?demo=1; easily removable) -->
+<div class="demo-pill" id="demoPill" hidden>Example</div>
+
 <div id="portal">
 
 <!-- DARK NAV HEADER -->
@@ -1175,7 +1235,10 @@
     <div class="desktop-side">
       <div class="pb-strip">
         <div class="pb-strip-header">
-          <h3 class="pb-strip-title">Recent <em>PBs</em></h3>
+          <div>
+            <p class="overline" style="color:rgba(250,243,237,0.5); margin-bottom:3px;">Personal bests</p>
+            <h3 class="pb-strip-title">Recent <em>PBs</em></h3>
+          </div>
           <a href="#" class="pb-strip-link" onclick="switchTab('pbs'); return false;">See all →</a>
         </div>
         <div class="pb-list" id="weekPbList"></div>
@@ -1467,8 +1530,9 @@
   .legend-swatch { width: 12px; height: 12px; border-radius: 3px; }
 
   .year-sport {
-    background: var(--bg); border: 1px solid var(--line); border-radius: 14px;
-    padding: 14px 16px; margin-bottom: 12px;
+    background: var(--surface); border-radius: 20px;
+    padding: 18px 18px; margin-bottom: 14px;
+    box-shadow: var(--shadow-card);
   }
   .year-sport-head {
     display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
@@ -1590,12 +1654,13 @@
     display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px;
   }
   .pb-group {
-    background: var(--bg); border: 1px solid var(--line); border-radius: 14px;
-    padding: 6px 16px; margin-bottom: 12px;
+    background: var(--surface); border-radius: 20px;
+    padding: 8px 20px; margin-bottom: 14px;
+    box-shadow: var(--shadow-card);
   }
   .pb-group-head {
-    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
-    color: var(--burgundy); font-weight: 500; padding: 12px 0 8px; border-bottom: 1px solid var(--line-soft);
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-mute); font-weight: 700; padding: 14px 0 10px; border-bottom: 1px solid var(--line-soft);
   }
   .pb-page-item {
     display: flex; align-items: center; justify-content: space-between; gap: 14px;
@@ -1614,15 +1679,16 @@
   .pb-page-trend.down { color: var(--burgundy); }
 
   /* ===== LOAD TAB ===== */
-  .load-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+  .load-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
   .load-card {
-    background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 16px 14px;
+    background: var(--surface); border-radius: 20px; padding: 18px 18px;
+    box-shadow: var(--shadow-card);
   }
   .load-card-label {
     font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--ink-mute); font-weight: 500; margin: 0 0 8px;
+    color: var(--ink-mute); font-weight: 700; margin: 0 0 8px;
   }
-  .load-card-value { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 500; color: var(--ink); line-height: 1; }
+  .load-card-value { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 500; color: var(--ink); line-height: 1; }
   .load-card-value small { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
   .load-card-sub { font-family: 'Fraunces', serif; font-style: italic; font-size: 11px; color: var(--ink-mute); margin: 6px 0 0; }
   .load-card.flag .load-card-value { color: var(--burgundy); }
@@ -1634,8 +1700,9 @@
   }
 
   .load-chart-wrap {
-    background: var(--bg); border: 1px solid var(--line); border-radius: 14px;
-    padding: 16px 14px 10px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    background: var(--surface); border-radius: 20px;
+    padding: 18px 18px 12px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    box-shadow: var(--shadow-card);
   }
   .load-chart-wrap::-webkit-scrollbar { height: 6px; }
   .load-chart-wrap::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
@@ -1684,6 +1751,7 @@
   let currentUser = null;
   let athlete = null;
   let state = { yearMap: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} } };
+  let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
   let workoutEditing = false;
@@ -1747,11 +1815,22 @@
     } finally { clearTimeout(timer); }
   }
   async function apiGet(params){
+    if(DEMO_MODE) return demoApi(params);
     const qs = Object.keys(params).map(k => k+'='+encodeURIComponent(params[k])).join('&');
     return apiFetch(APPS_SCRIPT_URL + '?' + qs);
   }
   async function apiPost(body){
+    if(DEMO_MODE) return demoApi(body);
     return apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body) });
+  }
+  // Demo short-circuit: keep every interaction local, never touch the network.
+  function demoApi(payload){
+    const action = (payload && payload.action) || '';
+    if(action==='getWeek') return Promise.resolve({ success:true, weekStart: payload.weekStart,
+      sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
+    if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
+    if(action==='saveSession') return Promise.resolve({ success:true, id: 'demo_'+Date.now() });
+    return Promise.resolve({ success:true });
   }
 
   function setLoading(on, text){
@@ -1793,6 +1872,117 @@
   }
   function retryLoad(){ document.getElementById('appError').classList.remove('active'); startPortal(); }
   window.retryLoad = retryLoad;
+
+  // ============================================================
+  // DEMO MODE (?demo=1) — purely additive: no auth, no fetch.
+  // Renders every tab from hardcoded data so it's never empty.
+  // ============================================================
+  function startDemo(){
+    DEMO_MODE = true;
+    const demo = buildDemoState();
+    currentUser = { email: 'demo@athlete.academy', name: demo.athlete.Name, loginTime: Date.now() };
+    athlete = demo.athlete;
+    state.yearMap = demo.yearMap;
+    state.week = demo.week;
+    state.pbs = demo.pbs;
+    state.load = demo.load;
+    document.body.classList.add('signed-in');
+    document.getElementById('appError').classList.remove('active');
+    setLoading(false);
+    const pill = document.getElementById('demoPill'); if(pill) pill.hidden = false;
+    renderNav();
+    switchTab('week');
+  }
+
+  function buildDemoState(){
+    const athlete = { Name: 'Maya Hoffmann', Grade: 'G11', Sport_1: 'Swimming' };
+
+    // Full academic-year block map (Aug→Jul) for the priority sport.
+    const yearMap = {
+      year: '2025–26',
+      vision: 'Final at Regionals — sub-58 in the 100 free.',
+      aPriority: { sport: 'Swimming', event: 'Regional Championships', date: '2026-04-18', month: 'April' },
+      sports: [
+        { name: 'Swimming', isPriority: true, monthlyStates: [
+          { month:'August',   state:'build',    focus:'Aerobic base — rebuild after summer.', loadTarget:1100, note:'' },
+          { month:'September',state:'build',    focus:'Volume up, technique under fatigue.',  loadTarget:1200, note:'' },
+          { month:'October',  state:'build',    focus:'', loadTarget:1250, note:'' },
+          { month:'November', state:'maintain', focus:'Hold fitness through exams.', loadTarget:900, note:'' },
+          { month:'December', state:'maintain', focus:'', loadTarget:800, note:'' },
+          { month:'January',  state:'build',    focus:'Second build — add speed work.', loadTarget:1200, note:'' },
+          { month:'February', state:'build',    focus:'', loadTarget:1250, note:'' },
+          { month:'March',    state:'peak',     focus:'Sharpen — race-pace sets.', loadTarget:1000, note:'' },
+          { month:'April',    state:'peak',     focus:'Taper into Regionals.', loadTarget:700, note:'' },
+          { month:'May',      state:'recover',  focus:'Active recovery, mobility.', loadTarget:500, note:'' },
+          { month:'June',     state:'maintain', focus:'Easy aerobic + skill work.', loadTarget:800, note:'' },
+          { month:'July',     state:'off',      focus:'Off-season break.', loadTarget:null, note:'' }
+        ]},
+        { name: 'Athletics', isPriority: false, monthlyStates: [
+          { month:'April', state:'maintain', focus:'Sprints cross-training.', loadTarget:null, note:'' },
+          { month:'May',   state:'build',    focus:'', loadTarget:null, note:'' },
+          { month:'June',  state:'build',    focus:'', loadTarget:null, note:'' }
+        ]}
+      ],
+      testingWindows: [{ month:'October' }, { month:'March' }],
+      otherCommitments: [{ month:'December' }, { month:'May' }]
+    };
+
+    // This week — mixed intensities, a couple logged, the rest planned.
+    const mon = fmtISO(mondayOf(new Date()));
+    const week = { weekStart: mon, sessions: [
+      { id:'demo-s1', date: mon, sport:'Swimming', name:'Aerobic swim — 3km', intensity:'moderate',
+        plannedDuration:60, rpe:6, duration:62, load:372, status:'done', isPB:false,
+        workout:[{name:'Warm up',detail:'600m mixed'},{name:'Main set',detail:'10×200 @ pace'},{name:'Cool down',detail:'400m easy'}], note:'Felt smooth.' },
+      { id:'demo-s2', date: addDays(mon,1), sport:'Gym', name:'Lower-body strength', intensity:'hard',
+        plannedDuration:50, rpe:8, duration:48, load:384, status:'done', isPB:false,
+        workout:[{name:'Back squat',detail:'4×5'},{name:'RDL',detail:'3×8'},{name:'Box jumps',detail:'4×4'}], note:'' },
+      { id:'demo-s3', date: addDays(mon,2), sport:'Swimming', name:'Sprint sets — 50s & 100s', intensity:'hard',
+        plannedDuration:75, rpe:null, duration:null, load:null, status:'planned', isPB:false,
+        workout:[{name:'Warm up',detail:'800m'},{name:'Sprints',detail:'8×50 max'},{name:'Race pace',detail:'6×100'}], note:'' },
+      { id:'demo-s4', date: addDays(mon,3), sport:'Swimming', name:'Easy recovery swim', intensity:'easy',
+        plannedDuration:40, rpe:null, duration:null, load:null, status:'planned', isPB:false, workout:[], note:'' },
+      { id:'demo-s5', date: addDays(mon,5), sport:'Swimming', name:'Long aerobic + technique', intensity:'moderate',
+        plannedDuration:90, rpe:null, duration:null, load:null, status:'planned', isPB:false,
+        workout:[{name:'Technique drills',detail:'1km'},{name:'Aerobic',detail:'2km steady'}], note:'' }
+    ]};
+
+    const pbs = [
+      { sport:'Swimming', exercise:'100m Freestyle', value:'58.4', unit:'s', date:'2026-04-18', note:'Regional final', previousValue:'59.7', sessionId:'' },
+      { sport:'Swimming', exercise:'200m Freestyle', value:'2:09.8', unit:'', date:'2026-03-21', note:'', previousValue:'', sessionId:'' },
+      { sport:'Swimming', exercise:'50m Butterfly', value:'29.1', unit:'s', date:'2026-02-14', note:'', previousValue:'29.9', sessionId:'' },
+      { sport:'Gym', exercise:'Back squat 5RM', value:'72', unit:'kg', date:'2026-05-02', note:'', previousValue:'67.5', sessionId:'' }
+    ];
+
+    // Season-long weekly load with a rolling acute:chronic overlay.
+    const start = fmtISO(mondayOf(new Date(2025, 7, 1)));   // first Monday on/after 1 Aug 2025
+    const list = [];
+    for(let i=0;i<60;i++){ const w = addDays(start, i*7); if(parseISO(w) > parseISO(mon)) break; list.push(w); }
+    const stateLoad = { build:1180, maintain:850, peak:1000, recover:480, off:120 };
+    const loads = list.map(w => {
+      const month = MONTHS[parseISO(w).getMonth()];
+      const ms = yearMap.sports[0].monthlyStates.find(m => m.month===month);
+      const base = ms ? (stateLoad[ms.state] || 800) : 800;
+      const jitter = ((parseISO(w).getDate()*37) % 220) - 110;   // deterministic ±110
+      return Math.max(0, Math.round(base + jitter));
+    });
+    // Make the latest week match the sessions actually logged above.
+    const doneLoad = week.sessions.filter(s => s.status==='done' || s.status==='modified')
+      .reduce((a,s)=> a + (s.load||0), 0);
+    if(loads.length) loads[loads.length-1] = doneLoad;
+    const weeks = loads.map((ld, i) => {
+      const from = Math.max(0, i-3);
+      const window = loads.slice(from, i+1);
+      const chronic = window.reduce((a,b)=>a+b,0) / window.length;
+      return { weekStart: list[i], load: ld, acwr: (i>=3 && chronic>0) ? +(ld/chronic).toFixed(2) : null };
+    });
+    const load = { weeks: weeks, summary: {
+      thisWeekLoad: doneLoad,
+      acwr: weeks.length ? weeks[weeks.length-1].acwr : null,
+      weeksLogged: list.length
+    }};
+
+    return { athlete, yearMap, week, pbs, load };
+  }
 
   function renderNav(){
     const name = athlete.Name || ((athlete.First_Name||'')+' '+(athlete.Last_Name||'')).trim() || currentUser.name || 'Athlete';
@@ -1990,11 +2180,15 @@
     let meta;
     if(s.status==='missed'){ meta = 'Missed' + (s.note? ' · '+esc(s.note):''); }
     else if(isLogged(s)){ meta = '<strong>'+esc(s.sport)+'</strong> · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au'; }
-    else { meta = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||0)+'min · '+intensityBadge(s.intensity); }
+    else { meta = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||0)+'min planned'; }
     const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
+    const dotCls = s.intensity ? (' '+s.intensity) : '';
     return '<div class="'+cls+'" onclick="openSession(\''+s.id+'\')">'+
-      '<p class="session-name">'+esc(s.name)+pb+'</p>'+
-      '<p class="session-meta">'+meta+'</p>'+
+      '<span class="session-dot'+dotCls+'" aria-hidden="true"></span>'+
+      '<div class="session-row-content">'+
+        '<p class="session-name">'+esc(s.name)+pb+'</p>'+
+        '<p class="session-meta">'+meta+'</p>'+
+      '</div>'+
       '<i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i></div>';
   }
 
@@ -2261,7 +2455,9 @@
       '<button class="year-head-btn" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Goal</button>'+
     '</div>';
     state.yearMap.sports.forEach((sport, si) => {
-      html += '<div class="year-sport"><div class="year-sport-head">'+
+      html += '<div class="year-sport">'+
+        '<p class="overline" style="margin-bottom:4px;">'+(sport.isPriority? 'Priority sport' : 'Sport')+'</p>'+
+        '<div class="year-sport-head">'+
         '<p class="year-sport-name">'+esc(sport.name)+'</p>'+
         (sport.isPriority? '<i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
         '</div>'+ renderMonths(sport, si, curMonth) +'</div>';
@@ -2601,6 +2797,10 @@
         loadCard('Acute : Chronic', acwrText, '', acwrSub, acwrFlag)+
         loadCard('Weeks logged', sum.weeksLogged||0, '', 'this season', false)+
       '</div>';
+    html += '<div class="section-head">'+
+        '<div><p class="overline">Across the season</p>'+
+        '<h2 class="section-heading">Weekly <em style="font-style:italic; color:var(--burgundy);">load</em></h2></div>'+
+      '</div>';
     html += '<div class="load-chart-wrap">'+
       '<p class="load-chart-title">Weekly load'+
         '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--gold);"></span>Build</span>'+
@@ -2803,6 +3003,8 @@
   document.getElementById('duration-input').addEventListener('input', updateLoad);
 
   window.addEventListener('load', () => {
+    const params = new URLSearchParams(location.search);
+    if(params.get('demo') === '1'){ startDemo(); return; }
     if(checkExistingSession()) startPortal();
   });
 </script>
