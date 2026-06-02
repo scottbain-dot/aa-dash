@@ -147,28 +147,29 @@
   }
 
   /* ============================
-     SHARED PHASE STRIP (Week / Year / Load)
+     PHASE CONTEXT IN THE HERO (eyebrow row) — Week / Load
      ============================ */
-  #phaseStrip { background: var(--bg); border-bottom: 1px solid var(--line-soft); transition: background 0.15s; }
-  #phaseStrip.tappable { cursor: pointer; }
-  #phaseStrip.tappable:hover { background: var(--cream); }
-  .phase-strip-inner {
-    max-width: 1280px; margin: 0 auto; display: flex; align-items: center; gap: 12px;
-    padding: 9px 20px; font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute);
-  }
-  @media (min-width: 820px) { .phase-strip-inner { padding: 9px 32px; } }
-  .phase-strip-chip {
-    display: inline-flex; align-items: center; gap: 6px; font-weight: 600;
+  .block-eyebrow-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .block-phase-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
     padding: 4px 11px; border-radius: 9999px; white-space: nowrap;
   }
-  .ps-emoji { font-size: 13px; }
-  #phaseStrip.ym-build .phase-strip-chip    { background: var(--gold);     color: var(--burgundy-dark); }
-  #phaseStrip.ym-maintain .phase-strip-chip { background: var(--sage);     color: var(--cream); }
-  #phaseStrip.ym-peak .phase-strip-chip     { background: var(--burgundy); color: var(--cream); }
-  #phaseStrip.ym-recover .phase-strip-chip  { background: var(--cream);    color: var(--ink); border: 1px solid var(--line); }
-  #phaseStrip.ym-off .phase-strip-chip      { background: var(--ink);      color: var(--cream); }
-  .phase-strip-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .phase-strip-link { color: var(--burgundy); font-weight: 600; white-space: nowrap; }
+  .block-phase-chip > span { font-size: 12px; line-height: 1; }
+  .block-phase-chip.ym-build    { background: var(--gold);     color: var(--burgundy-dark); }
+  .block-phase-chip.ym-maintain { background: var(--sage);     color: var(--cream); }
+  .block-phase-chip.ym-peak     { background: var(--burgundy); color: var(--cream); }
+  .block-phase-chip.ym-recover  { background: var(--cream);    color: var(--ink); border: 1px solid var(--line); }
+  .block-phase-chip.ym-off      { background: var(--ink);      color: var(--cream); }
+  .block-phase-month {
+    font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 600; color: var(--ink-mute);
+  }
+  .block-phase-link {
+    margin-left: auto; background: none; border: none; cursor: pointer; padding: 0;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: var(--burgundy); white-space: nowrap;
+  }
+  .block-phase-link:hover { text-decoration: underline; }
 
   /* ============================
      BLOCK CONTEXT BAR
@@ -1228,9 +1229,6 @@
   </div>
 </div>
 
-<!-- SHARED PHASE STRIP (Week / Year / Load) — the one heartbeat tying them together -->
-<div id="phaseStrip" style="display:none;"></div>
-
 <!-- BLOCK CONTEXT BAR (filled per active tab by JS) -->
 <div class="block-bar">
   <div class="block-bar-inner" id="blockBar"></div>
@@ -2271,7 +2269,6 @@
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-'+tab).classList.add('active');
-    renderPhaseStrip(tab);
     renderBlockBar();
     if(tab==='week') renderWeek();
     else if(tab==='year') renderYear();
@@ -2302,22 +2299,16 @@
     return { sport: sport.name, month: month, phase: phase, focus: ms.focus||'', loadTarget: ms.loadTarget||null };
   }
 
-  // Slim context ribbon shown on Week / Year / Load so all three share one heartbeat.
-  function renderPhaseStrip(tab){
-    const el = document.getElementById('phaseStrip');
-    if(!el) return;
-    const info = (tab==='week'||tab==='year'||tab==='load') ? currentPhaseInfo() : null;
-    if(!info){ el.style.display='none'; el.innerHTML=''; el.onclick=null; return; }
-    const tappable = tab !== 'year';
-    el.style.display = '';
-    el.className = 'ym-'+info.phase + (tappable ? ' tappable' : '');
-    el.onclick = tappable ? (function(){ switchTab('year'); }) : null;
-    el.innerHTML =
-      '<div class="phase-strip-inner">'+
-        '<span class="phase-strip-chip"><span class="ps-emoji">'+PHASE_EMOJI[info.phase]+'</span> '+PHASE_FRIENDLY[info.phase]+'</span>'+
-        '<span class="phase-strip-text">'+esc(info.month)+' · '+esc(info.focus || 'your focus this month')+'</span>'+
-        '<span class="phase-strip-link">'+(tappable ? 'Your year →' : 'This month') +'</span>'+
-      '</div>';
+  // Phase context woven into a tab's hero (eyebrow row): a coloured phase chip,
+  // the month, and a quiet link across to the Year plan it comes from.
+  function phaseEyebrowRow(){
+    const info = currentPhaseInfo();
+    if(!info) return '<p class="block-eyebrow">This week</p>';
+    return '<div class="block-eyebrow-row">'+
+      '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+PHASE_FRIENDLY[info.phase]+'</span>'+
+      '<span class="block-phase-month">'+esc(info.month)+'</span>'+
+      '<button class="block-phase-link" onclick="switchTab(\'year\')">Your year →</button>'+
+    '</div>';
   }
 
   function renderBlockBar(){
@@ -2353,7 +2344,7 @@
       }
       bar.innerHTML =
         '<div class="block-bar-left">'+
-          '<p class="block-eyebrow">Training load</p>'+
+          (info ? phaseEyebrowRow() : '<p class="block-eyebrow">Training load</p>')+
           '<h1 class="block-title">Your <em>load</em>.</h1>'+
           '<p class="block-sub">'+esc(sub)+'</p>'+
         '</div>'+
@@ -2398,7 +2389,7 @@
     if(blk){
       bar.innerHTML =
         '<div class="block-bar-left">'+
-          '<p class="block-eyebrow">This week</p>'+
+          phaseEyebrowRow()+
           '<h1 class="block-title">Your <em>week</em>.</h1>'+
           '<p class="block-sub">'+esc(blk.focus || blk.note || 'Plan it, do it, log it.')+'</p>'+
         '</div>'+
