@@ -1869,6 +1869,200 @@
   }
 
   /* ============================================
+     SCORE MODE (?score=true) — open scoring station
+     One-handed phone use, no sign-in. Reuses the admin shell but
+     strips clutter and enlarges every tap target.
+     ============================================ */
+
+  /* Strip clutter */
+  body.score-mode .topbar .user { display: none; }
+  body.score-mode .tab-btn[data-view="teams"] { display: none; }
+  body.score-mode .standings-strip,
+  body.score-mode #standingsContainer,
+  body.score-mode #standingsContainerFit { display: none; }
+
+  /* Brand row — drop the "Scoring Station" eyebrow and keep the title clear */
+  body.score-mode .brand .label { font-size: 11px; letter-spacing: 0.28em; }
+  body.score-mode .brand .title { font-size: 22px; }
+
+  /* Tabs — only two now (Events + Fitness Retests), make them obvious */
+  body.score-mode .tabs { gap: 8px; padding: 5px; margin-top: 14px; }
+  body.score-mode .tab-btn {
+    font-size: 16px;
+    padding: 14px 18px;
+    min-height: 48px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+
+  /* Event picker bar — big thumb-friendly target */
+  body.score-mode .picker-bar { padding: 18px 18px; top: 130px; }
+  body.score-mode .picker-bar .label { font-size: 12px; letter-spacing: 0.18em; margin-bottom: 8px; }
+  body.score-mode .picker-bar select {
+    padding: 20px 18px;
+    padding-right: 48px;
+    font-size: 22px;
+    font-weight: 700;
+    border-radius: 14px;
+    border-width: 2px;
+    background-position: right 18px center;
+    background-size: 18px 12px;
+    min-height: 64px;
+  }
+  body.score-mode .picker-bar .meta { gap: 10px; margin-top: 12px; }
+  body.score-mode .pill { font-size: 13px; padding: 5px 12px; letter-spacing: 0.08em; }
+
+  /* Main content — more breathing room */
+  body.score-mode main { padding: 20px 18px 160px; max-width: 720px; }
+  body.score-mode h2.section-title { font-size: 26px; margin-bottom: 14px; }
+  body.score-mode .helper { font-size: 15px; margin-bottom: 22px; line-height: 1.55; }
+
+  /* Whole / prejudged — team cards */
+  body.score-mode .team-card {
+    padding: 18px 18px;
+    border-radius: 18px;
+    margin-bottom: 14px;
+    gap: 16px;
+    border-width: 2px;
+    min-height: 84px;
+  }
+  body.score-mode .rank-badge {
+    flex: 0 0 60px;
+    height: 60px;
+    border-radius: 14px;
+    font-size: 32px;
+  }
+  body.score-mode .team-name { font-size: 22px; }
+  body.score-mode .team-meta { font-size: 14px; margin-top: 4px; }
+  body.score-mode .move-stack { gap: 6px; }
+  body.score-mode .move-btn {
+    width: 56px; height: 46px;
+    border-radius: 12px;
+    font-size: 20px;
+    border-width: 2px;
+  }
+  body.score-mode .prejudged-notes {
+    font-size: 16px;
+    padding: 14px 16px;
+    min-height: 76px;
+    border-radius: 12px;
+    border-width: 2px;
+    margin-top: 14px;
+  }
+
+  /* Nominated event cards */
+  body.score-mode .nominated-card {
+    padding: 18px;
+    border-radius: 18px;
+    margin-bottom: 14px;
+    border-width: 2px;
+  }
+  body.score-mode .nominated-card .head { gap: 14px; margin-bottom: 14px; }
+  body.score-mode .nominated-card .who { font-size: 15px; }
+  body.score-mode .nominated-card .who strong { font-size: 18px; }
+  body.score-mode .input-row { gap: 12px; }
+  body.score-mode .num-input {
+    font-size: 30px;
+    padding: 20px 14px;
+    border-radius: 14px;
+    border-width: 2px;
+    min-height: 72px;
+  }
+  body.score-mode .unit { font-size: 16px; min-width: 52px; }
+  body.score-mode .save-btn {
+    font-size: 17px;
+    padding: 18px 22px;
+    border-radius: 14px;
+    min-width: 108px;
+    min-height: 64px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  /* Whole / prejudged save-ranking footer button */
+  body.score-mode .save-ranking-bar { padding: 22px 18px 28px; }
+  body.score-mode .save-ranking-btn {
+    padding: 24px;
+    font-size: 20px;
+    border-radius: 16px;
+    min-height: 76px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Fitness retests — bigger picker pills and athlete cards */
+  body.score-mode .test-picker { gap: 8px; margin-bottom: 22px; }
+  body.score-mode .test-pill {
+    padding: 18px 8px;
+    font-size: 16px;
+    border-radius: 14px;
+    border-width: 2px;
+    min-height: 64px;
+  }
+  body.score-mode .test-pill small { font-size: 12px; margin-top: 4px; }
+  body.score-mode .team-group { margin-bottom: 28px; }
+  body.score-mode .team-group-header { padding: 12px 6px; margin-bottom: 10px; }
+  body.score-mode .team-group-header .team-name { font-size: 19px; }
+  body.score-mode .team-group-header .count { font-size: 12px; }
+
+  body.score-mode .athlete-card {
+    padding: 18px;
+    border-radius: 18px;
+    margin-bottom: 12px;
+    border-width: 2px;
+  }
+  body.score-mode .athlete-card .athlete-head { gap: 12px; margin-bottom: 14px; }
+  body.score-mode .athlete-card .a-name { font-size: 18px; }
+  body.score-mode .athlete-card .a-gender { font-size: 13px; padding: 3px 10px; }
+  body.score-mode .excused-toggle { font-size: 14px; gap: 8px; }
+  body.score-mode .excused-toggle input { width: 24px; height: 24px; }
+
+  /* Make the live "best of" / Cooper total prominent — this is the
+     reassurance a lead needs before they tap save. */
+  body.score-mode .live-readout {
+    padding: 16px 18px;
+    font-size: 17px;
+    border-radius: 12px;
+    margin: 12px 0;
+  }
+  body.score-mode .live-readout .v {
+    font-size: 22px;
+  }
+  body.score-mode .cooper-grid { gap: 12px; margin-bottom: 12px; }
+  body.score-mode .cooper-grid label { font-size: 12px; margin-bottom: 6px; }
+  body.score-mode .attempt-row { gap: 10px; margin-bottom: 12px; }
+  body.score-mode .attempt-row .lbl { font-size: 13px; }
+  body.score-mode .athlete-actions { gap: 12px; margin-top: 6px; }
+
+  /* Big sanity warning if it triggers */
+  body.score-mode .sanity-warn { padding: 12px 14px; font-size: 14px; line-height: 1.45; }
+
+  /* The save confirmation banner — top of the viewport, large, unmissable.
+     Replaces the small bottom pill that the admin route uses. */
+  body.score-mode #toast {
+    position: fixed;
+    top: 16px;
+    bottom: auto;
+    left: 12px; right: 12px;
+    transform: translateY(-160%);
+    padding: 22px 28px;
+    font-size: 22px;
+    font-weight: 700;
+    border-radius: 18px;
+    box-shadow: 0 12px 40px rgba(26,20,17,0.35);
+    max-width: 720px;
+    margin: 0 auto;
+    line-height: 1.25;
+    letter-spacing: 0.01em;
+    text-align: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  body.score-mode #toast.show {
+    transform: translateY(0);
+  }
+  body.score-mode #toast .check { font-size: 28px; }
+
+  /* ============================================
      TEAMS BUILDER (admin)
      ============================================ */
   .teams-builder {
@@ -2259,17 +2453,25 @@
   const ADMIN_EMAILS = ['scott_bain@fis.edu']; // lowercase
 
   // ============================================
-  // ROUTING — display / admin / coming-soon
+  // ROUTING — display / admin / score / coming-soon
   // ============================================
   const urlParams = new URLSearchParams(location.search);
   const isAdminMode = urlParams.get('admin') === 'true';
   const isDisplayMode = urlParams.get('display') === 'true';
+  const isScoreMode = urlParams.get('score') === 'true';
 
   if (isDisplayMode) {
     document.getElementById('displayView').classList.add('visible');
     bootstrapDisplay();
   } else if (isAdminMode) {
     document.getElementById('authGate').classList.add('visible');
+  } else if (isScoreMode) {
+    // Open scoring station — no sign-in. Reuses the same scoring UI as the
+    // gated admin route but with a body class that strips it back for
+    // one-handed phone use outdoors.
+    document.body.classList.add('score-mode');
+    document.getElementById('appShell').classList.add('visible');
+    bootstrap();
   } else {
     document.getElementById('studentAuthGate').classList.add('visible');
   }
@@ -2320,6 +2522,7 @@
 
   function initAuthGate() {
     if (isDisplayMode) return;
+    if (isScoreMode) return;          // open route, no auth, bootstrap already fired above
     if (isAdminMode) return initAdminAuthGate();
     return initStudentAuthGate();
   }
@@ -2735,7 +2938,7 @@
         btn.textContent = 'Saved ✓';
         btn.classList.add('saved');
         setTimeout(() => { btn.disabled = false; btn.textContent = 'Save'; btn.classList.remove('saved'); }, 1200);
-        toast('Saved', 'success');
+        confirmSave(`${state.activeEvent} — ${teamName}`);
         refreshStandings();
       } else {
         btn.disabled = false; btn.textContent = 'Save';
@@ -2817,7 +3020,7 @@
       if (failed.length) {
         toast(`${failed.length} of ${results.length} saves failed`, 'error');
       } else {
-        toast(`Ranking saved`, 'success');
+        confirmSave(`${state.activeEvent} — ranking`);
         flashAllCards();
       }
     } catch (e) {
@@ -3119,7 +3322,8 @@
         btn.textContent = res.score != null ? `Saved ✓  ${roundDisplay(res.score)} / 5` : 'Saved ✓';
         btn.classList.add('saved');
         setTimeout(() => { btn.disabled = false; btn.textContent = 'Save'; btn.classList.remove('saved'); }, 1800);
-        toast('Saved', 'success');
+        const athName = (state.athletesById[aid] && state.athletesById[aid].name) || aid;
+        confirmSave(`${TEST_DISPLAY[testKey].label} — ${athName}`);
         refreshStandings();
       } else {
         btn.disabled = false; btn.textContent = 'Save';
@@ -3212,7 +3416,16 @@
     el.innerHTML = check + escapeHtml(msg);
     el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+    // Score-mode wants the banner to hold long enough to be unmissable
+    // even when a lead glances down between events.
+    const hold = document.body.classList.contains('score-mode') ? 3500 : 1800;
+    toastTimer = setTimeout(() => el.classList.remove('show'), hold);
+  }
+
+  // Wrapper for save confirmations. Always passes through to toast but with
+  // a "Saved · <detail>" format that's loud enough to read at a glance.
+  function confirmSave(detail) {
+    toast('Saved · ' + detail, 'success');
   }
 
   function escapeHtml(s) {
