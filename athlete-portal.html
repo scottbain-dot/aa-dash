@@ -1529,106 +1529,91 @@
     transition: border-color 0.15s, background 0.15s; white-space: nowrap;
   }
   .year-head-btn:hover { border-color: var(--burgundy); background: var(--cream); }
-  .year-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .year-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 4px; }
   .year-legend-item {
     display: inline-flex; align-items: center; gap: 6px;
-    font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute);
+    font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-mute);
   }
-  .legend-swatch { width: 12px; height: 12px; border-radius: 3px; }
+  .year-legend-item strong { color: var(--ink); font-weight: 600; }
+  .legend-emoji { font-size: 14px; line-height: 1; }
 
   .year-sport {
-    background: var(--surface); border-radius: 20px;
-    padding: 18px 18px; margin-bottom: 14px;
+    background: var(--surface); border-radius: 22px;
+    padding: 20px 22px; margin-bottom: 16px;
     box-shadow: var(--shadow-card);
   }
   .year-sport-head {
-    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px;
   }
+  .year-sport-titles .overline { margin-bottom: 2px; }
   .year-sport-name {
-    font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; color: var(--ink); margin: 0;
+    font-family: 'Fraunces', serif; font-size: 21px; font-weight: 500; color: var(--ink); margin: 0;
+    display: flex; align-items: center; gap: 8px; line-height: 1.1;
   }
-  .year-sport-star { color: var(--gold); font-size: 15px; }
+  .year-sport-star { color: var(--gold); font-size: 16px; }
+  .year-now-chip {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; white-space: nowrap;
+    padding: 6px 12px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  }
+  .year-now-chip .nc-emoji { font-size: 13px; }
+  .year-now-chip.ym-build    { background: var(--gold);     color: var(--burgundy-dark); }
+  .year-now-chip.ym-maintain { background: var(--sage);     color: var(--cream); }
+  .year-now-chip.ym-peak     { background: var(--burgundy); color: var(--cream); }
+  .year-now-chip.ym-recover  { background: var(--cream);    color: var(--ink); border: 1px solid var(--line); }
+  .year-now-chip.ym-off      { background: var(--ink);      color: var(--cream); }
+  .year-sport-goal {
+    font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute);
+    margin: 0 0 14px; display: flex; align-items: center; gap: 6px;
+  }
+  .year-sport-goal strong { color: var(--ink); font-weight: 600; }
+  .year-sport-goal .ti { color: var(--burgundy); }
+
   .year-months {
-    display: grid; grid-template-columns: repeat(12, 60px); gap: 6px;
-    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 4px;
+    display: grid; grid-template-columns: repeat(12, minmax(42px, 1fr)); gap: 5px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 12px 0 2px;
   }
   .year-months::-webkit-scrollbar { display: none; }
   .year-month {
-    grid-column: span 1; min-height: 64px; border-radius: 10px; padding: 8px 4px;
-    background: var(--cream); border: 1px solid var(--line-soft); cursor: pointer;
-    text-align: center; transition: transform 0.12s, box-shadow 0.15s, border-color 0.15s;
-    position: relative;
+    min-height: 64px; border-radius: 13px; padding: 7px 3px; cursor: pointer; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    text-align: center; background: var(--cream); transition: transform 0.12s, box-shadow 0.15s;
   }
-  .year-month:hover { box-shadow: 0 2px 8px rgba(26,20,17,0.06); transform: translateY(-1px); }
+  .year-month:hover { box-shadow: 0 4px 14px rgba(26,20,17,0.10); transform: translateY(-1px); }
   .year-month:active { transform: scale(0.97); }
   .ym-label {
-    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--ink-mute); margin: 0 0 6px;
+    font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 0;
   }
-  .ym-state {
-    font-family: 'Fraunces', serif; font-size: 11px; font-weight: 500;
-    height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
-    color: var(--ink);
+  .ym-emoji { font-size: 19px; line-height: 1; }
+  .ym-plus { font-family: 'Fraunces', serif; font-size: 18px; color: var(--ink-mute); line-height: 1; }
+  /* whole-tile phase colours */
+  .ym-build    { background: var(--gold); }     .ym-build .ym-label    { color: var(--burgundy-dark); }
+  .ym-maintain { background: var(--sage); }     .ym-maintain .ym-label { color: var(--cream); }
+  .ym-peak     { background: var(--burgundy); } .ym-peak .ym-label     { color: var(--cream); }
+  .ym-recover  { background: var(--cream); border: 1px solid var(--line); }
+  .ym-off      { background: repeating-linear-gradient(45deg, var(--cream), var(--cream) 5px, var(--line-soft) 5px, var(--line-soft) 6px); }
+  .ym-empty    { background: var(--cream); border: 1px dashed var(--line); }
+  .year-month.ym-suggest { opacity: 0.5; }
+  .year-month.is-current { box-shadow: 0 0 0 2px var(--burgundy); }
+  .ym-now {
+    position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--cream); font-family: 'Inter', sans-serif;
+    font-size: 7.5px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700;
+    padding: 2px 7px; border-radius: 9999px; white-space: nowrap; z-index: 3;
   }
-  .ym-build    .ym-state { background: var(--gold); color: var(--burgundy-dark); }
-  .ym-maintain .ym-state { background: var(--sage); color: var(--cream); }
-  .ym-peak     .ym-state { background: var(--burgundy); color: var(--cream); }
-  .ym-recover  .ym-state { background: var(--cream); color: var(--ink-mute); border: 1px solid var(--line); }
-  .ym-off      .ym-state {
-    background: repeating-linear-gradient(45deg, var(--cream), var(--cream) 4px, var(--line) 4px, var(--line) 5px);
-    color: var(--ink-mute);
-  }
-  .ym-empty .ym-state {
-    background: transparent; border: 1px dashed var(--line); color: var(--ink-mute);
-  }
-  .year-month.is-current { border-color: var(--burgundy); box-shadow: 0 0 0 1px var(--burgundy); }
-  .ym-markers {
-    display: flex; gap: 3px; justify-content: center; margin-top: 5px; min-height: 12px;
-  }
-  .ym-marker { font-size: 10px; line-height: 1; }
+  .ym-markers { display: flex; gap: 2px; justify-content: center; min-height: 10px; }
+  .ym-marker { font-size: 9px; line-height: 1; }
   .ym-marker.a-priority { color: var(--gold); }
-  .ym-marker.testing { color: var(--burgundy); }
+  .ym-marker.testing { color: var(--ink); }
   .ym-marker.commitment { color: var(--ink-mute); }
-
-  /* Suggested (uncommitted) cells — desaturated chip, lighter weight, no "+" */
-  .year-month.ym-suggest { border-style: dashed; border-color: var(--line); }
-  .ym-suggest .ym-state { font-weight: 400; opacity: 0.6; }
-  .ym-suggest.ym-build    .ym-state { background: var(--gold);     color: var(--burgundy-dark); }
-  .ym-suggest.ym-maintain .ym-state { background: var(--sage);     color: var(--cream); }
-  .ym-suggest.ym-peak     .ym-state { background: var(--burgundy); color: var(--cream); }
-  .ym-suggest.ym-recover  .ym-state { background: var(--cream);    color: var(--ink-mute); border: 1px solid var(--line); }
+  .ym-peak .ym-marker.testing { color: var(--cream); }
   .ym-suggest-edit {
-    position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;
+    position: absolute; top: 2px; right: 2px; width: 16px; height: 16px;
     display: flex; align-items: center; justify-content: center;
-    color: var(--ink-mute); opacity: 0.55; font-size: 12px; border-radius: 4px; z-index: 2;
+    color: var(--ink-mute); opacity: 0.6; font-size: 11px; border-radius: 4px; z-index: 2;
   }
-  .ym-suggest-edit:hover { opacity: 1; color: var(--burgundy); background: var(--bg); }
+  .ym-suggest-edit:hover { opacity: 1; color: var(--burgundy); }
 
-  /* Merged phase block — contiguous committed cells with the same state */
-  .year-phase {
-    min-height: 64px; border-radius: 10px; background: var(--cream);
-    border: 1px solid var(--line-soft); position: relative; display: flex; overflow: hidden;
-    transition: box-shadow 0.15s;
-  }
-  .year-phase:hover { box-shadow: 0 2px 12px rgba(26,20,17,0.08); }
-  .phase-seg { flex: 1; min-width: 0; padding: 8px 2px 0; text-align: center; cursor: pointer; position: relative; }
-  .phase-seg + .phase-seg { border-left: 1px solid var(--line); }
-  .phase-seg.is-current { background: rgba(135,75,70,0.07); }
-  .phase-seg.is-current .ym-label { color: var(--burgundy); }
-  .phase-seg .ym-markers { position: absolute; left: 0; right: 0; bottom: 4px; margin: 0; }
-  .phase-bar {
-    position: absolute; left: 6px; right: 6px; top: 24px; height: 22px; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center; pointer-events: none;
-    font-family: 'Fraunces', serif; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden;
-  }
-  .year-phase.ym-build    .phase-bar { background: var(--gold);     color: var(--burgundy-dark); }
-  .year-phase.ym-maintain .phase-bar { background: var(--sage);     color: var(--cream); }
-  .year-phase.ym-peak     .phase-bar { background: var(--burgundy); color: var(--cream); }
-  .year-phase.ym-recover  .phase-bar { background: var(--cream);    color: var(--ink-mute); border: 1px solid var(--line); }
-  .year-phase.ym-off      .phase-bar {
-    background: repeating-linear-gradient(45deg, var(--cream), var(--cream) 4px, var(--line) 4px, var(--line) 5px);
-    color: var(--ink-mute);
-  }
 
   /* State picker in block sheet */
   .state-picker { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1718,6 +1703,7 @@
     color: var(--ink-mute); font-weight: 500; margin: 0 0 12px;
     display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
   }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
   .load-chart-legend { display: inline-flex; align-items: center; gap: 5px; text-transform: none; letter-spacing: 0; }
   .load-chart-legend .legend-swatch { width: 10px; height: 10px; }
   .load-acwr-key { display: inline-flex; align-items: center; gap: 5px; text-transform: none; letter-spacing: 0; }
@@ -1901,6 +1887,9 @@
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const STATE_LABEL = { build:'Build', maintain:'Maintain', peak:'Peak', recover:'Recover', off:'Off' };
+  // Kid-friendly labels + emoji for the Year tab (underlying state keys unchanged).
+  const PHASE_FRIENDLY = { build:'Build', maintain:'Keep sharp', peak:'Race ready', recover:'Recover', off:'Off' };
+  const PHASE_EMOJI = { build:'💪', maintain:'⚡', peak:'🏆', recover:'🌙', off:'⏸️' };
 
   let currentUser = null;
   let athlete = null;
@@ -2704,25 +2693,42 @@
     const curMonth = MONTHS[new Date().getMonth()];
     let html = '<div class="year-head">'+
       '<div class="year-legend">'+
-        legendItem('var(--gold)','Build') + legendItem('var(--sage)','Maintain') +
-        legendItem('var(--burgundy)','Peak') + legendItem('var(--cream)','Recover') +
+        legendItem('build','get fitter') + legendItem('maintain','') +
+        legendItem('peak','big event') + legendItem('recover','rest') +
       '</div>'+
       '<button class="year-head-btn" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Goal</button>'+
     '</div>';
     state.yearMap.sports.forEach((sport, si) => {
+      const ap = state.yearMap.aPriority;
+      const evt = (ap && ap.event && (!ap.sport || ap.sport===sport.name)) ? ap : null;
+      const nowPhase = currentSportPhase(sport, curMonth);
       html += '<div class="year-sport">'+
-        '<p class="overline" style="margin-bottom:4px;">'+(sport.isPriority? 'Priority sport' : 'Sport')+'</p>'+
         '<div class="year-sport-head">'+
-        '<p class="year-sport-name">'+esc(sport.name)+'</p>'+
-        (sport.isPriority? '<i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
-        '</div>'+ renderMonths(sport, si, curMonth) +'</div>';
+          '<div class="year-sport-titles">'+
+            '<p class="overline">'+(sport.isPriority? 'Priority sport' : 'Sport')+'</p>'+
+            '<p class="year-sport-name">'+esc(sport.name)+
+              (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+'</p>'+
+          '</div>'+
+          (nowPhase? '<span class="year-now-chip ym-'+nowPhase+'"><span class="nc-emoji">'+PHASE_EMOJI[nowPhase]+'</span> Right now · '+PHASE_FRIENDLY[nowPhase]+'</span>' : '')+
+        '</div>'+
+        (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
+        renderMonths(sport, si, curMonth) +'</div>';
     });
     html += '<button class="year-head-btn" style="width:100%; justify-content:center; margin-top:4px;" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
     view.innerHTML = html;
   }
 
-  function legendItem(color, label){
-    return '<span class="year-legend-item"><span class="legend-swatch" style="background:'+color+';"></span>'+label+'</span>';
+  function legendItem(stt, meaning){
+    return '<span class="year-legend-item"><span class="legend-emoji">'+PHASE_EMOJI[stt]+'</span><strong>'+PHASE_FRIENDLY[stt]+'</strong>'+(meaning?' · '+meaning:'')+'</span>';
+  }
+
+  // The phase a sport is in this month — committed if set, otherwise the suggestion.
+  function currentSportPhase(sport, curMonth){
+    const committed = monthCommittedState(sport, curMonth);
+    if(committed) return committed;
+    const ap = state.yearMap.aPriority;
+    const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
+    return suggestState(curMonth, apIndex, busyMonthsSet()) || '';
   }
 
   function monthCommittedState(sport, month){
@@ -2766,65 +2772,39 @@
     return m;
   }
 
-  // Walk the 12 academic months: merge contiguous committed same-state runs into
-  // one phase block; render empty months as single cells (with a suggestion if set).
+  // Render all 12 academic months as clean, colour-coded tiles (one per month).
   function renderMonths(sport, si, curMonth){
     const ap = state.yearMap.aPriority;
     const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
     const busy = busyMonthsSet();
     let html = '<div class="year-months">';
-    let i = 0;
-    while(i < 12){
-      const month = ACADEMIC_MONTHS[i];
+    ACADEMIC_MONTHS.forEach(month => {
       const committed = monthCommittedState(sport, month);
-      if(committed){
-        let j = i;
-        while(j+1 < 12 && monthCommittedState(sport, ACADEMIC_MONTHS[j+1]) === committed) j++;
-        if(j > i) html += phaseBlock(sport, si, committed, i, j, curMonth);
-        else html += singleCell(sport, si, month, committed, false, curMonth);
-        i = j + 1;
-      } else {
-        html += singleCell(sport, si, month, suggestState(month, apIndex, busy), true, curMonth);
-        i++;
-      }
-    }
+      if(committed) html += monthTile(sport, si, month, committed, false, curMonth);
+      else html += monthTile(sport, si, month, suggestState(month, apIndex, busy), true, curMonth);
+    });
     return html + '</div>';
   }
 
-  function singleCell(sport, si, month, stt, allowSuggest, curMonth){
-    const cur = month===curMonth ? ' is-current' : '';
+  function monthTile(sport, si, month, stt, isSuggest, curMonth){
+    const isNow = month===curMonth;
     const markers = markersFor(sport, month);
     const mLabel = month.slice(0,3);
-    if(allowSuggest && stt){
-      return '<div class="year-month ym-suggest ym-'+stt+cur+'" onclick="confirmSuggestion('+si+',\''+month+'\',\''+stt+'\')" title="Tap to confirm '+STATE_LABEL[stt]+'">'+
-        '<span class="ym-suggest-edit" onclick="event.stopPropagation(); openBlock('+si+',\''+month+'\')" title="Edit details" aria-label="Edit"><i class="ti ti-pencil" aria-hidden="true"></i></span>'+
-        '<p class="ym-label">'+mLabel+'</p>'+
-        '<div class="ym-state">'+STATE_LABEL[stt]+'</div>'+
-        '<div class="ym-markers">'+markers+'</div></div>';
-    }
-    const cls = stt ? ('ym-'+stt) : 'ym-empty';
-    const label = stt ? STATE_LABEL[stt] : '+';
-    return '<div class="year-month '+cls+cur+'" onclick="openBlock('+si+',\''+month+'\')">'+
-      '<p class="ym-label">'+mLabel+'</p>'+
-      '<div class="ym-state">'+label+'</div>'+
-      '<div class="ym-markers">'+markers+'</div></div>';
-  }
-
-  function phaseBlock(sport, si, stt, i, j, curMonth){
-    const span = j - i + 1;
-    const barText = span >= 3
-      ? (STATE_LABEL[stt] + ' · ' + ACADEMIC_MONTHS[i].slice(0,3) + '–' + ACADEMIC_MONTHS[j].slice(0,3))
-      : STATE_LABEL[stt];
-    let segs = '';
-    for(let k=i;k<=j;k++){
-      const month = ACADEMIC_MONTHS[k];
-      const cur = month===curMonth ? ' is-current' : '';
-      segs += '<div class="phase-seg'+cur+'" onclick="openBlock('+si+',\''+month+'\')">'+
-        '<p class="ym-label">'+month.slice(0,3)+'</p>'+
-        '<div class="ym-markers">'+markersFor(sport, month)+'</div></div>';
-    }
-    return '<div class="year-phase ym-'+stt+'" style="grid-column: span '+span+';">'+
-      segs + '<div class="phase-bar">'+barText+'</div></div>';
+    const cls = 'year-month ' + (stt ? 'ym-'+stt : 'ym-empty') + (isSuggest && stt ? ' ym-suggest' : '') + (isNow ? ' is-current' : '');
+    const onclick = (isSuggest && stt)
+      ? 'confirmSuggestion('+si+',\''+month+'\',\''+stt+'\')'
+      : 'openBlock('+si+',\''+month+'\')';
+    const title = month + (stt ? ' · '+PHASE_FRIENDLY[stt] + (isSuggest?' (suggested — tap to confirm)':'') : ' · tap to plan');
+    const inner = stt ? '<span class="ym-emoji">'+PHASE_EMOJI[stt]+'</span>' : '<span class="ym-plus">+</span>';
+    const editIcon = (isSuggest && stt)
+      ? '<span class="ym-suggest-edit" onclick="event.stopPropagation(); openBlock('+si+',\''+month+'\')" title="Edit details" aria-label="Edit"><i class="ti ti-pencil" aria-hidden="true"></i></span>'
+      : '';
+    return '<div class="'+cls+'" onclick="'+onclick+'" title="'+esc(title)+'">'+
+      editIcon +
+      (isNow ? '<span class="ym-now">Now</span>' : '') +
+      '<span class="ym-label">'+mLabel+'</span>'+
+      inner +
+      '<span class="ym-markers">'+markers+'</span></div>';
   }
 
   async function confirmSuggestion(si, month, stt){
