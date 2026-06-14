@@ -1143,8 +1143,183 @@
     color: var(--ink-soft);
     line-height: 1.6;
   }
+
+  /* Arrival banner — burgundy left border, warm background */
+  .staff-arrival-banner {
+    background: var(--bg-warm);
+    border-left: 4px solid var(--burgundy);
+    border-radius: 0 12px 12px 0;
+    padding: 16px 20px;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .staff-arrival-banner strong { color: var(--ink); font-weight: 700; }
+
+  /* "Your day" panel — type a name to pull out just your roles */
+  .yourday-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .yourday-input-row label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .yourday-name {
+    flex: 1;
+    min-width: 200px;
+    border: 1px solid var(--line-strong);
+    border-radius: 9px;
+    padding: 10px 14px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--cream);
+  }
+  .yourday-name:focus {
+    outline: none;
+    border-color: var(--burgundy-light);
+    box-shadow: 0 0 0 3px rgba(135,75,70,0.1);
+  }
+  .yourday-body {
+    background: var(--bg-warm);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 22px;
+  }
+  .yourday-heading {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 20px;
+    color: var(--ink);
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  .yourday-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .yourday-list li {
+    font-size: 14.5px;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  .yourday-when {
+    font-weight: 700;
+    color: var(--burgundy);
+    font-variant-numeric: tabular-nums;
+  }
+  .yourday-block { color: var(--ink-mute); font-size: 13px; }
+  .yourday-empty {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  /* Per-station "be there by" pill in the run of the day */
+  .arrive-pill {
+    display: inline-block;
+    background: var(--burgundy);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    vertical-align: middle;
+    margin-left: 8px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* Highlight the current helper's own claimed cards (scoped to staff view —
+     deliberately NOT shared with the student team-roles section). */
+  #staffApp .role-card.is-mine {
+    border-color: var(--burgundy);
+    box-shadow: 0 0 0 2px rgba(135,75,70,0.18);
+    background: var(--cream);
+  }
+
+  /* Staffing at a glance — roster grouped by block */
+  .roster {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 14px;
+  }
+  .roster-block {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 18px;
+    background: var(--bg);
+  }
+  .roster-block-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .roster-time {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--burgundy);
+    font-variant-numeric: tabular-nums;
+  }
+  .roster-event {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .roster-role {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 12px;
+    align-items: baseline;
+    padding: 6px 0;
+    font-size: 14px;
+  }
+  .roster-count {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--green);
+  }
+  .roster-role.is-open {
+    background: rgba(232,181,74,0.12);
+    border-radius: 8px;
+    padding: 6px 8px;
+    margin: 0 -8px;
+  }
+  .roster-role.is-open .roster-count { color: var(--amber); }
+  .roster-role-name { color: var(--ink); }
+  .roster-names { color: var(--ink-soft); text-align: right; }
+  .roster-none { color: var(--ink-mute); }
+  .roster-summary {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .roster-summary.has-open { background: rgba(232,181,74,0.18); color: #8a5a12; }
+  .roster-summary.full { background: rgba(74,138,92,0.15); color: var(--green); }
+
   @media (max-width: 480px) {
     .role-grid { grid-template-columns: 1fr; }
+    .roster-role { grid-template-columns: 40px 1fr; }
+    .roster-names { grid-column: 2; text-align: left; }
   }
 
   /* Scoring — three cards stacked vertically */
@@ -2824,6 +2999,7 @@
   // bootstrapStaff() call below can safely reference it).
   let staffHelpers = [];      // [{ role, name, timestamp }]
   let staffListenerBound = false;
+  let staffName = '';         // "Your day" filter name (persisted in localStorage)
 
   const urlParams = new URLSearchParams(location.search);
   const isAdminMode = urlParams.get('admin') === 'true';
@@ -5619,7 +5795,7 @@
   const STAFF_DAY = [
     { time: '08:32–09:00', name: 'Arrival, Intro & Team Warm-Ups' },
     {
-      time: '09:00–09:45', name: 'Fitness: Broad Jump / 40m / 5-10-5',
+      time: '09:00–09:45', name: 'Fitness: Broad Jump / 40m / 5-10-5', arrive: '08:50',
       roles: [
         { id: 'Broad Jump — lead', slots: 1, desc: 'Run the station, record 2 attempts per athlete, best counts.' },
         { id: 'Broad Jump — assist', slots: 1, desc: 'Assist the lead.' },
@@ -5630,7 +5806,7 @@
       ]
     },
     {
-      time: '09:45–10:10', name: 'Cooper Run (mass start)',
+      time: '09:45–10:10', name: 'Cooper Run (mass start)', arrive: '09:40',
       roles: [
         { id: 'Cooper Run — lead', slots: 1, desc: 'Run the mass-start Cooper.' },
         { id: 'Cooper — band handout & recording', slots: 2, desc: 'Hand a band to each runner per lap; count bands and record distance at the finish.' }
@@ -5638,44 +5814,44 @@
     },
     { time: '10:10–10:25', name: 'Reset & water' },
     {
-      time: '10:25–10:35', name: '100m Row',
+      time: '10:25–10:35', name: '100m Row', arrive: '10:20',
       roles: [
-        { id: '100m Row — lead', slots: 1, desc: '' },
+        { id: '100m Row — lead', slots: 1, desc: 'One nominee per team on the rowing erg. Record metres or time on the paper sheet.' },
         { id: '100m Row — assist', slots: 1, desc: 'Assist the lead.' }
       ]
     },
     {
-      time: '10:35–10:45', name: 'Grit Challenge',
+      time: '10:35–10:45', name: 'Grit Challenge', arrive: '10:30',
       roles: [
-        { id: 'Grit Challenge — lead', slots: 1, desc: '' },
+        { id: 'Grit Challenge — lead', slots: 1, desc: "One nominee per team. You'll be briefed on the format on the morning — please keep it under wraps with students." },
         { id: 'Grit Challenge — assist', slots: 1, desc: 'Assist the lead.' }
       ]
     },
     {
-      time: '10:45–11:05', name: 'Relays',
+      time: '10:45–11:05', name: 'Relays', arrive: '10:40',
       roles: [
-        { id: 'Relays — lead', slots: 1, desc: '' },
+        { id: 'Relays — lead', slots: 1, desc: 'Run the whole-team relay. Rank teams by finish order, 1st to last.' },
         { id: 'Relays — assist', slots: 1, desc: 'Assist the lead.' }
       ]
     },
     {
-      time: '11:05–11:25', name: 'Team Challenge',
+      time: '11:05–11:25', name: 'Team Challenge', arrive: '11:00',
       roles: [
-        { id: 'Team Challenge — lead', slots: 1, desc: '' },
+        { id: 'Team Challenge — lead', slots: 1, desc: 'Run the cone game — each team has a goal, a ball and 5 cones; score in any goal to take a cone back; most cones after ~10 min wins. Rank all six teams. Full run-through on the paper sheet.' },
         { id: 'Team Challenge — assist', slots: 1, desc: 'Assist the lead.' }
       ]
     },
     {
-      time: '11:25–12:00', name: 'Tug of War',
+      time: '11:25–12:00', name: 'Tug of War', arrive: '11:20',
       roles: [
-        { id: 'Tug of War — lead', slots: 1, desc: '' },
+        { id: 'Tug of War — lead', slots: 1, desc: 'Run the pools format — two pools of three, round-robin then crossover finals, 9 pulls on one rope. Match order is printed on the paper sheet.' },
         { id: 'Tug of War — assist', slots: 1, desc: 'Assist the lead.' }
       ]
     },
     { time: '12:00–12:30', name: 'Recovery lunch, Nutrition Share-Out & Awards' },
     { time: '12:45–13:15', name: 'Walk to pool' },
     {
-      time: '13:15–14:45', name: 'Recovery pool session (Taunabad)',
+      time: '13:15–14:45', name: 'Recovery pool session (Taunabad)', arrive: '12:45 — walk over together',
       roles: [
         { id: 'Pool supervision — Taunabad', slots: 3, desc: 'Three chaperones needed to meet the student:chaperone ratio.' }
       ]
@@ -5685,6 +5861,8 @@
 
   async function bootstrapStaff() {
     bindStaffListener();
+    try { staffName = (localStorage.getItem('clashStaffName') || '').trim(); }
+    catch (e) { staffName = ''; }
     await loadStaffHelpers();
     renderStaff();
   }
@@ -5707,17 +5885,137 @@
       .filter(Boolean);
   }
 
+  // Save the "Your day" name, persist it, and re-render so the summary card,
+  // is-mine highlights and prefilled claim inputs all pick it up.
+  function staffSetName(val) {
+    staffName = String(val || '').trim();
+    try {
+      if (staffName) localStorage.setItem('clashStaffName', staffName);
+      else localStorage.removeItem('clashStaffName');
+    } catch (e) { /* localStorage unavailable — keep in-memory only */ }
+    renderStaff();
+  }
+
+  // Roles currently claimed by `name` (case-insensitive), in schedule order.
+  // `when` is the block's arrive time if set, else the block start time.
+  function staffRolesForName(name) {
+    const key = String(name || '').trim().toLowerCase();
+    if (!key) return [];
+    const out = [];
+    STAFF_DAY.forEach(item => {
+      if (!item.roles || !item.roles.length) return;
+      const start = String(item.time).split('–')[0].trim();
+      item.roles.forEach(role => {
+        const mine = helpersForRole(role.id).some(n => n.toLowerCase() === key);
+        if (mine) out.push({ roleId: role.id, when: item.arrive || start, blockTime: item.time });
+      });
+    });
+    return out;
+  }
+
+  // Top-of-page arrival callout. Burgundy left border, warm background.
+  function renderArrivalBanner() {
+    return `
+      <div class="staff-arrival-banner">
+        <strong>Arrivals</strong> — on the 09:00 fitness rotation (Broad Jump / 40m / 5-10-5 / Cooper)?
+        On site at the Upper Field by <strong>08:15</strong> to help set up. Everyone else: by <strong>08:30</strong>.
+        Each station below shows the time to be there, ready.
+      </div>
+    `;
+  }
+
+  // "Your day" panel — name input + a compact summary of just this person's roles.
+  function renderYourDay() {
+    let body;
+    if (!staffName) {
+      body = `<p class="yourday-empty">Enter your name to pull out just your roles and times.</p>`;
+    } else {
+      const mine = staffRolesForName(staffName);
+      if (!mine.length) {
+        body = `<p class="yourday-empty">No roles yet — claim one below and it'll appear here.</p>`;
+      } else {
+        const lines = mine.map(m =>
+          `<li><span class="yourday-when">${escapeHtml(m.when)}</span> · ${escapeHtml(m.roleId)} <span class="yourday-block">(${escapeHtml(m.blockTime)})</span></li>`
+        ).join('');
+        body = `<h3 class="yourday-heading">Your day, ${escapeHtml(staffName)}</h3><ul class="yourday-list">${lines}</ul>`;
+      }
+    }
+    return `
+      <section class="stu-section">
+        <div class="yourday-input-row">
+          <label for="staffNameInput">Your name</label>
+          <input type="text" id="staffNameInput" class="yourday-name" placeholder="Type your name"
+                 autocomplete="name" maxlength="60" value="${escapeAttr(staffName)}"
+                 onchange="staffSetName(this.value)"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();staffSetName(this.value);}">
+        </div>
+        <div class="yourday-body">${body}</div>
+      </section>
+    `;
+  }
+
+  // Staffing at a glance — every role grouped by block, with filled/slots,
+  // claimed names, open slots flagged amber, and a still-needed count up top.
+  function renderRoster() {
+    let openCount = 0;
+    const blocks = STAFF_DAY.filter(i => i.roles && i.roles.length).map(item => {
+      const roleRows = item.roles.map(role => {
+        const claimed = helpersForRole(role.id);
+        const isOpen = claimed.length < role.slots;
+        if (isOpen) openCount++;
+        const names = claimed.length
+          ? escapeHtml(claimed.join(', '))
+          : '<span class="roster-none">—</span>';
+        return `
+          <div class="roster-role${isOpen ? ' is-open' : ''}">
+            <span class="roster-count">${claimed.length}/${role.slots}</span>
+            <span class="roster-role-name">${escapeHtml(role.id)}</span>
+            <span class="roster-names">${names}</span>
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="roster-block">
+          <div class="roster-block-head">
+            <span class="roster-time">${escapeHtml(item.time)}</span>
+            <span class="roster-event">${escapeHtml(item.name)}</span>
+          </div>
+          ${roleRows}
+        </div>
+      `;
+    }).join('');
+
+    const summary = openCount > 0
+      ? `${openCount} role${openCount === 1 ? '' : 's'} still need helpers`
+      : 'Fully staffed 🎉';
+
+    return `
+      <section class="stu-section">
+        <div class="staff-sec-head">
+          <h2>Staffing at a glance</h2>
+          <span class="roster-summary ${openCount > 0 ? 'has-open' : 'full'}">${escapeHtml(summary)}</span>
+        </div>
+        <div class="roster">${blocks}</div>
+      </section>
+    `;
+  }
+
   function renderStaff() {
     const rows = STAFF_DAY.map(item => {
-      const rolesHtml = (item.roles && item.roles.length)
+      const hasRoles = item.roles && item.roles.length;
+      const rolesHtml = hasRoles
         ? `<div class="role-grid timeline-roles">${item.roles.map(r => renderRoleCard(r)).join('')}</div>`
+        : '';
+      // "Be there by" pill — only on blocks that have roles AND an arrive time.
+      const arriveHtml = (hasRoles && item.arrive)
+        ? ` <span class="arrive-pill">Be there by ${escapeHtml(item.arrive)}</span>`
         : '';
       return `
         <div class="timeline-row${rolesHtml ? ' has-roles' : ''}">
           <div class="timeline-time">${escapeHtml(item.time)}</div>
           <div class="timeline-marker"><div class="timeline-dot"></div></div>
           <div>
-            <div class="timeline-event-name">${escapeHtml(item.name)}</div>
+            <div class="timeline-event-name">${escapeHtml(item.name)}${arriveHtml}</div>
             ${rolesHtml}
           </div>
         </div>
@@ -5725,6 +6023,9 @@
     }).join('');
 
     document.getElementById('staffMain').innerHTML = `
+      ${renderArrivalBanner()}
+      ${renderYourDay()}
+
       <section class="stu-section">
         <div class="staff-sec-head">
           <h2>Run of the day</h2>
@@ -5733,9 +6034,11 @@
         <div class="timeline">${rows}</div>
       </section>
 
+      ${renderRoster()}
+
       <section class="stu-section">
         <h2>Notes</h2>
-        <p class="staff-notes">Wear suitable outdoor kit. Stopwatches and clipboards provided. Briefing at 08:15 on Upper Field. Any questions — find Scott.</p>
+        <p class="staff-notes">Wear suitable outdoor kit. Stopwatches and clipboards provided. Any questions — find Scott.</p>
       </section>
     `;
   }
@@ -5744,6 +6047,7 @@
     const claimed = helpersForRole(role.id);
     const isFull = claimed.length >= role.slots;
     const multi = role.slots > 1;
+    const isMine = staffName && claimed.some(n => n.toLowerCase() === staffName.toLowerCase());
 
     const countLabel = multi
       ? `${claimed.length} of ${role.slots} claimed`
@@ -5765,7 +6069,7 @@
       claimHtml = `
         <div class="role-claim">
           <input type="text" id="${inputId}" placeholder="Your name"
-                 autocomplete="name" maxlength="60"
+                 autocomplete="name" maxlength="60" value="${escapeAttr(staffName)}"
                  onkeydown="if(event.key==='Enter'){event.preventDefault();this.nextElementSibling.click();}">
           <button class="role-claim-btn" data-action="claim"
                   data-role="${escapeAttr(role.id)}" data-input="${inputId}">Claim this</button>
@@ -5776,7 +6080,7 @@
     const descHtml = role.desc ? `<p class="role-desc">${escapeHtml(role.desc)}</p>` : '';
 
     return `
-      <div class="role-card ${isFull ? 'is-full' : ''}">
+      <div class="role-card ${isFull ? 'is-full' : ''}${isMine ? ' is-mine' : ''}">
         <div class="role-top">
           <h4>${escapeHtml(role.id)}</h4>
           <span class="role-count ${isFull ? 'full' : ''}">${escapeHtml(countLabel)}</span>
