@@ -1014,9 +1014,12 @@
     letter-spacing: 0.01em;
   }
 
+  /* Two columns so each station's lead + assist sit together on one row
+     (e.g. Broad Jump lead | Broad Jump assist), rather than wrapping
+     arbitrarily across the width. */
   .role-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
   }
   /* Sign-ups attached to a schedule part */
@@ -1088,54 +1091,6 @@
     flex-shrink: 0;
   }
   .role-helper .who { font-weight: 600; }
-  .role-release {
-    background: none;
-    border: none;
-    color: var(--ink-mute);
-    font-size: 12px;
-    font-family: 'Inter', system-ui, sans-serif;
-    cursor: pointer;
-    padding: 0;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-  .role-release:hover { color: var(--red); }
-  .role-claim {
-    display: flex;
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .role-claim input {
-    flex: 1;
-    min-width: 0;
-    border: 1px solid var(--line-strong);
-    border-radius: 9px;
-    padding: 9px 12px;
-    font-family: 'Inter', system-ui, sans-serif;
-    font-size: 14px;
-    color: var(--ink);
-    background: var(--cream);
-  }
-  .role-claim input:focus {
-    outline: none;
-    border-color: var(--burgundy-light);
-    box-shadow: 0 0 0 3px rgba(135,75,70,0.1);
-  }
-  .role-claim-btn {
-    background: var(--burgundy);
-    color: #fff;
-    border: none;
-    border-radius: 9px;
-    padding: 9px 16px;
-    font-family: 'Inter', system-ui, sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.15s;
-  }
-  .role-claim-btn:hover { background: var(--burgundy-dark); }
-  .role-claim-btn:disabled { opacity: 0.55; cursor: default; }
 
   /* Notes block */
   .staff-notes {
@@ -2823,7 +2778,6 @@
   // Staff coordination state (declared before routing so the inline
   // bootstrapStaff() call below can safely reference it).
   let staffHelpers = [];      // [{ role, name, timestamp }]
-  let staffListenerBound = false;
 
   const urlParams = new URLSearchParams(location.search);
   const isAdminMode = urlParams.get('admin') === 'true';
@@ -5683,8 +5637,10 @@
     { time: '14:45–15:10', name: 'Walk back to school' }
   ];
 
+  // Organiser who covers any role nobody else has signed up for.
+  const STAFF_DEFAULT_OWNER = 'Scott Bain';
+
   async function bootstrapStaff() {
-    bindStaffListener();
     await loadStaffHelpers();
     renderStaff();
   }
@@ -5730,7 +5686,7 @@
           <h2>Run of the day</h2>
           <button class="staff-refresh" id="staffRefreshBtn" onclick="refreshStaff()">↻ Refresh</button>
         </div>
-        <p class="lede">Please aim to be at your station about 10 minutes before your event so we can brief you. Each card below shows what the job involves.</p>
+        <p class="lede">It all takes place on the <strong>Upper Field</strong>. Please aim to be at your station about 10 minutes before your event so I can brief you. I'll have the paper recording sheets at each station — just write the results down there. Each card below shows what the job involves.</p>
         <div class="timeline">${rows}</div>
       </section>
 
@@ -5741,112 +5697,35 @@
     `;
   }
 
+  // Read-only role card. Sign-up has been removed: every role shows who's
+  // assigned. Real sign-ups come from the Clash_Helpers sheet; any role left
+  // open is covered by the organiser (Scott Bain) so there are no blank spaces.
   function renderRoleCard(role) {
     const claimed = helpersForRole(role.id);
-    const isFull = claimed.length >= role.slots;
-    const multi = role.slots > 1;
+    // Fill any open space with the default owner, then de-duplicate names.
+    const names = [...claimed];
+    if (names.length < role.slots) names.push(STAFF_DEFAULT_OWNER);
+    const uniqueNames = names.filter((n, i) => names.indexOf(n) === i);
 
-    const countLabel = multi
-      ? `${claimed.length} of ${role.slots} claimed`
-      : (isFull ? 'Claimed' : 'Open');
-
-    const helpersHtml = claimed.map(name => `
+    const helpersHtml = uniqueNames.map(name => `
       <div class="role-helper">
         <span class="tick">✓</span>
         <span class="who">${escapeHtml(name)}</span>
-        <button class="role-release" data-action="release"
-                data-role="${escapeAttr(role.id)}" data-name="${escapeAttr(name)}">release</button>
       </div>
     `).join('');
-
-    // Show a claim input whenever there's at least one open slot.
-    let claimHtml = '';
-    if (!isFull) {
-      const inputId = `claim-${role.id.replace(/[^a-zA-Z0-9]/g, '')}`;
-      claimHtml = `
-        <div class="role-claim">
-          <input type="text" id="${inputId}" placeholder="Your name"
-                 autocomplete="name" maxlength="60"
-                 onkeydown="if(event.key==='Enter'){event.preventDefault();this.nextElementSibling.click();}">
-          <button class="role-claim-btn" data-action="claim"
-                  data-role="${escapeAttr(role.id)}" data-input="${inputId}">Claim this</button>
-        </div>
-      `;
-    }
 
     const descHtml = role.desc ? `<p class="role-desc">${escapeHtml(role.desc)}</p>` : '';
 
     return `
-      <div class="role-card ${isFull ? 'is-full' : ''}">
+      <div class="role-card is-full">
         <div class="role-top">
           <h4>${escapeHtml(role.id)}</h4>
-          <span class="role-count ${isFull ? 'full' : ''}">${escapeHtml(countLabel)}</span>
+          <span class="role-count full">Assigned</span>
         </div>
         ${descHtml}
-        ${helpersHtml ? `<div class="role-helpers">${helpersHtml}</div>` : ''}
-        ${claimHtml}
+        <div class="role-helpers">${helpersHtml}</div>
       </div>
     `;
-  }
-
-  function bindStaffListener() {
-    if (staffListenerBound) return;
-    const main = document.getElementById('staffMain');
-    main.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-action]');
-      if (!btn) return;
-      const action = btn.getAttribute('data-action');
-      const role = btn.getAttribute('data-role');
-      if (action === 'claim') {
-        const input = document.getElementById(btn.getAttribute('data-input'));
-        staffClaim(role, input, btn);
-      } else if (action === 'release') {
-        staffRelease(role, btn.getAttribute('data-name'), btn);
-      }
-    });
-    staffListenerBound = true;
-  }
-
-  async function staffClaim(role, input, btn) {
-    const name = input ? input.value.trim() : '';
-    if (!name) {
-      toast('Add your name first', 'error');
-      if (input) input.focus();
-      return;
-    }
-    btn.disabled = true;
-    btn.textContent = 'Saving…';
-    try {
-      const res = await apiPost({ action: 'claimHelperRole', role: role, name: name });
-      if (res && res.success) {
-        await loadStaffHelpers();
-        renderStaff();
-        toast('Thanks — you\'re signed up', 'success');
-      } else {
-        throw new Error(res && res.error ? res.error : 'Save failed');
-      }
-    } catch (err) {
-      btn.disabled = false;
-      btn.textContent = 'Claim this';
-      toast('Could not save — try again', 'error');
-    }
-  }
-
-  async function staffRelease(role, name, btn) {
-    if (btn) btn.disabled = true;
-    try {
-      const res = await apiPost({ action: 'unclaimHelperRole', role: role, name: name });
-      if (res && res.success) {
-        await loadStaffHelpers();
-        renderStaff();
-        toast('Role released', 'success');
-      } else {
-        throw new Error(res && res.error ? res.error : 'Release failed');
-      }
-    } catch (err) {
-      if (btn) btn.disabled = false;
-      toast('Could not release — try again', 'error');
-    }
   }
 
   async function refreshStaff() {
