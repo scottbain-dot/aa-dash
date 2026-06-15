@@ -22,45 +22,41 @@ var CLASH_TESTS = {
   broad_jump: {
     direction: 'higher',
     unit: 'cm',
-    bandWidth: 5,            // cm  (≈ 0.05 m placeholder)
+    bandWidth: 6,            // cm per improvement band
     attempts: 2,
-    // TODO: replace with real norm thresholds before the event.
     norms: {
-      M: [180, 200, 220, 240],
-      F: [150, 170, 190, 210]
+      M: [185, 200, 215, 230],
+      F: [155, 170, 182, 195]
     }
   },
   sprint_40m: {
     direction: 'lower',
     unit: 'sec',
-    bandWidth: 0.05,         // seconds (placeholder)
+    bandWidth: 0.15,         // seconds per improvement band
     attempts: 1,
-    // TODO: replace with real norm thresholds before the event.
     norms: {
-      M: [6.40, 6.10, 5.80, 5.50],
-      F: [6.80, 6.50, 6.20, 5.90]
+      M: [6.15, 5.95, 5.70, 5.45],
+      F: [6.65, 6.40, 6.15, 5.90]
     }
   },
   agility_510: {
     direction: 'lower',
     unit: 'sec',
-    bandWidth: 0.1,          // seconds (placeholder)
+    bandWidth: 0.20,         // seconds per improvement band
     attempts: 2,
-    // TODO: replace with real norm thresholds before the event.
     norms: {
-      M: [5.40, 5.20, 5.00, 4.80],
-      F: [5.70, 5.50, 5.30, 5.10]
+      M: [5.45, 5.30, 5.15, 5.00],
+      F: [6.20, 6.00, 5.80, 5.55]
     }
   },
   cooper: {
     direction: 'higher',
     unit: 'm',
-    bandWidth: 150,          // metres (placeholder)
+    bandWidth: 90,           // metres per improvement band
     attempts: 1,
-    // Last year's Cooper norms.
     norms: {
-      M: [2000, 2200, 2400, 2600],
-      F: [1600, 1800, 2000, 2200]
+      M: [2200, 2400, 2700, 3000],
+      F: [1700, 1900, 2100, 2300]
     }
   }
 };
@@ -80,8 +76,7 @@ var CLASH_EVENT_DIRECTIONS = {
   'Tug of War': 'higher',
   'Relays': 'lower',
   'Game': 'higher',
-  '100m Row': 'lower',
-  '100m Sprint': 'lower',
+  '60s Row': 'higher',
   'Grit Challenge': 'higher',
   'Planning': 'higher',
   'Snacks': 'higher'
@@ -94,8 +89,7 @@ var CLASH_EVENT_SEED = [
   { name: 'Tug of War',     type: 'whole',     hidden: false, order: 3 },
   { name: 'Relays',         type: 'whole',     hidden: false, order: 4 },
   { name: 'Game',           type: 'whole',     hidden: false, order: 5 },
-  { name: '100m Row',       type: 'nominated', hidden: false, order: 6 },
-  { name: '100m Sprint',    type: 'nominated', hidden: false, order: 7 },
+  { name: '60s Row',        type: 'nominated', hidden: false, order: 6 },
   { name: 'Grit Challenge', type: 'nominated', hidden: true,  order: 8 },
   { name: 'Planning',       type: 'prejudged', hidden: false, order: 9 },
   { name: 'Snacks',         type: 'prejudged', hidden: false, order: 10 }
@@ -3012,7 +3006,7 @@ var CLASH_HELPER_SEED_ROLES = [
   'Relays — lead',
   'Team Challenge — lead',
   'Grit Challenge — lead',
-  '100m Row — lead'
+  '60s Row — lead'
 ];
 
 function ensureClashHelpers(ss) {
@@ -3450,30 +3444,32 @@ function handleGetClashLeaderboard(ss) {
         .map(function (s) { return s.trim(); })
         .filter(Boolean);
 
-      // Fitness total per athlete = sum of 4 test scores. Excused excluded.
-      var memberTotals = [];
+      // Fitness per athlete = AVERAGE of the tests actually done (0–5 scale).
+      // Excused tests are dropped from the average (neither help nor hurt);
+      // a genuinely missing entry counts as 0 so it shows as a low score.
+      var memberAverages = [];
       memberIds.forEach(function (aid) {
-        var total = 0;
+        var sum = 0;
+        var counted = 0;
         var excusedCount = 0;
         testKeys.forEach(function (tk) {
           var row = findFitnessResult(tk, aid);
           if (row && String(row.Notes || '').toLowerCase().indexOf('excused') >= 0) {
             excusedCount++;
-            return;
+            return; // drop from the average
           }
-          if (row) {
-            var p = parseFloat(row.Points);
-            total += isNaN(p) ? 1 : p;
-          } else {
-            total += 1; // missing → 1
-          }
+          var p = row ? parseFloat(row.Points) : NaN;
+          sum += isNaN(p) ? 0 : p; // missing / non-numeric → 0
+          counted++;
         });
-        // Only fully-excused athletes (excused on every test) drop out of the team avg.
-        if (excusedCount < testKeys.length) memberTotals.push(total);
+        // Drop athletes excused from every test; otherwise average the counted tests.
+        if (excusedCount < testKeys.length && counted > 0) {
+          memberAverages.push(sum / counted);
+        }
       });
 
-      var fitnessTeamScore = memberTotals.length
-        ? memberTotals.reduce(function (a, b) { return a + b; }, 0) / memberTotals.length
+      var fitnessTeamScore = memberAverages.length
+        ? memberAverages.reduce(function (a, b) { return a + b; }, 0) / memberAverages.length
         : 0;
 
       // Event points: sum Points across all rows for this team in the 10 events.
@@ -3493,7 +3489,7 @@ function handleGetClashLeaderboard(ss) {
         sport: t.Sport || '',
         colour: t.Colour || '',
         memberCount: memberIds.length,
-        scoredCount: memberTotals.length,
+        scoredCount: memberAverages.length,
         fitnessScore: fitnessTeamScore,
         eventPoints: eventPts
       };
@@ -3506,12 +3502,31 @@ function handleGetClashLeaderboard(ss) {
       s.eventRank = evMap[s.team];
       s.combined = (s.fitnessRank || 0) + (s.eventRank || 0);
     });
-    var finalMap = clashAssignRank(standings.slice(), function (s) { return s.combined; }, 'lower');
-    standings.forEach(function (s) { s.finalRank = finalMap[s.team]; });
-
+    // Final standings tie-break: combined rank ASC, then fitnessScore DESC,
+    // then eventPoints DESC. Head-to-head (Tug) is NOT usable as a tie-break
+    // because pools mean tied teams may never have pulled each other. Only
+    // teams equal on ALL THREE share a finalRank — a true tie left for a
+    // manual call.
     standings.sort(function (a, b) {
-      return (a.finalRank || 99) - (b.finalRank || 99);
+      if (a.combined !== b.combined) return a.combined - b.combined;
+      if (b.fitnessScore !== a.fitnessScore) return b.fitnessScore - a.fitnessScore;
+      return b.eventPoints - a.eventPoints;
     });
+
+    var fr = 0;
+    for (var i = 0; i < standings.length; i++) {
+      var prev = standings[i - 1];
+      var cur = standings[i];
+      if (i > 0 &&
+          prev.combined === cur.combined &&
+          prev.fitnessScore === cur.fitnessScore &&
+          prev.eventPoints === cur.eventPoints) {
+        cur.finalRank = prev.finalRank; // genuine tie shares a rank
+      } else {
+        fr = i + 1;
+        cur.finalRank = fr;
+      }
+    }
 
     return { success: true, standings: standings };
   } catch (error) {

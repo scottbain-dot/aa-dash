@@ -2738,6 +2738,7 @@
       <div id="fitnessScoringArea">
         <div class="loading">Loading…</div>
       </div>
+      <div id="notEnteredPanel"></div>
       <div id="standingsContainerFit"></div>
     </section>
 
@@ -3045,7 +3046,7 @@
     document.getElementById('eventPickerBar').style.display = view === 'events' ? 'block' : 'none';
     // The save-ranking footer is only relevant in events view.
     if (view !== 'events') document.getElementById('saveRankingBar').classList.add('hidden');
-    if (view === 'fitness') renderFitnessScoring();
+    if (view === 'fitness') { renderFitnessScoring(); renderNotEnteredPanel(); }
     if (view === 'teams') loadTeamsBuilder();
     renderStandings();
   }
@@ -3200,16 +3201,14 @@
   }
 
   function nominationSlotForEvent(eventName) {
-    // 100m Row → Nom_Row; 100m Sprint → Nom_Sprint; Grit Challenge → Nom_Hang
+    // 60s Row → Nom_Row; Grit Challenge → Nom_Hang
     if (/row/i.test(eventName)) return 'nomRow';
-    if (/sprint/i.test(eventName)) return 'nomSprint';
     if (/grit|hang/i.test(eventName)) return 'nomHang';
     return null;
   }
 
   function nominatedUnitForEvent(eventName) {
     if (/row/i.test(eventName)) return 'm';
-    if (/sprint/i.test(eventName)) return 'sec';
     if (/grit|hang/i.test(eventName)) return 'sec';
     return '';
   }
@@ -3346,8 +3345,9 @@
   }
 
   function isEventLowerBetter(eventName) {
-    // Mirror CLASH_EVENT_DIRECTIONS server-side.
-    return /^(relays|100m row|100m sprint)$/i.test(String(eventName).trim());
+    // Mirror CLASH_EVENT_DIRECTIONS server-side. 60s Row is higher-better
+    // (more metres = better), so only Relays ranks lower-better here.
+    return /^relays$/i.test(String(eventName).trim());
   }
 
   function flashAllCards() {
@@ -3664,6 +3664,89 @@
         renderStandings();
       }
     } catch (e) { /* non-fatal */ }
+    // Keep the not-entered gaps panel in step with the same refresh.
+    renderNotEnteredPanel();
+  }
+
+  // Additive: flag missing entries before standings are treated as final.
+  // (a) per fitness test, roster athletes with no result row yet; and
+  // (b) team events with any team missing a result. Reads live from
+  // Clash_Results vs the roster — does not change how scores render.
+  async function renderNotEnteredPanel() {
+    const el = document.getElementById('notEnteredPanel');
+    if (!el) return;
+    let rows = [];
+    try {
+      const res = await apiGet('getClashResults'); // all events
+      rows = (res && res.results) || [];
+    } catch (e) { el.innerHTML = ''; return; }
+
+    // Index which (event, athlete) and (event, team) combinations have a row.
+    const athletesByEvent = {}; // event -> Set(athleteId)
+    const teamsByEvent = {};    // event -> Set(team)
+    rows.forEach(r => {
+      const ev = String(r.Event || '').trim();
+      if (!ev) return;
+      const aid = String(r.Athlete_ID || '').trim();
+      const team = String(r.Team || '').trim();
+      if (aid) (athletesByEvent[ev] = athletesByEvent[ev] || new Set()).add(aid);
+      if (team) (teamsByEvent[ev] = teamsByEvent[ev] || new Set()).add(team);
+    });
+
+    // (a) Fitness gaps — every roster athlete should have a row per test.
+    const fitnessGaps = TEST_KEYS.map(tk => {
+      const have = athletesByEvent[tk] || new Set();
+      const missing = [];
+      (state.teams || []).forEach(t => {
+        (t.athleteIds || []).filter(Boolean).forEach(aid => {
+          if (!have.has(String(aid).trim())) {
+            const info = state.athletesById[aid] || { name: aid };
+            missing.push(`${info.name} (${t.team})`);
+          }
+        });
+      });
+      return { label: (TEST_DISPLAY[tk] && TEST_DISPLAY[tk].label) || tk, missing };
+    }).filter(g => g.missing.length);
+
+    // (b) Team-event gaps — every team should have a row per event.
+    const allTeamNames = (state.teams || []).map(t => t.team);
+    const eventGaps = (state.events || []).map(ev => {
+      const name = ev.event;
+      const have = teamsByEvent[name] || new Set();
+      const missing = allTeamNames.filter(tn => !have.has(String(tn).trim()));
+      return { label: name, missing };
+    }).filter(g => g.missing.length);
+
+    if (!fitnessGaps.length && !eventGaps.length) {
+      el.innerHTML = `
+        <div style="background:#143d2b;border:1px solid #1f6b48;border-radius:12px;padding:12px 14px;margin:14px 0;color:#bdf0d2;font-size:13px;">
+          <strong style="color:#7fe3a8;">✓ All entries in.</strong>
+          Every roster athlete has a result for each fitness test, and every team has a result for each event.
+        </div>`;
+      return;
+    }
+
+    const fitHTML = fitnessGaps.map(g => `
+      <div style="margin-bottom:8px;">
+        <div style="font-weight:600;color:#fde2c0;">${escapeHtml(g.label)} — ${g.missing.length} not entered</div>
+        <div style="color:rgba(250,243,237,0.8);font-size:13px;">${g.missing.map(escapeHtml).join(' · ')}</div>
+      </div>`).join('');
+
+    const evHTML = eventGaps.map(g => `
+      <div style="margin-bottom:8px;">
+        <div style="font-weight:600;color:#fde2c0;">${escapeHtml(g.label)} — ${g.missing.length} team${g.missing.length === 1 ? '' : 's'} missing</div>
+        <div style="color:rgba(250,243,237,0.8);font-size:13px;">${g.missing.map(escapeHtml).join(' · ')}</div>
+      </div>`).join('');
+
+    el.innerHTML = `
+      <div style="background:#3a2410;border:1px solid #7a4d18;border-radius:12px;padding:14px 16px;margin:14px 0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
+          <h3 style="margin:0;font-size:15px;color:#f5c46b;">⚠ Not entered yet — check before standings are final</h3>
+          <button class="refresh" onclick="renderNotEnteredPanel()">Refresh</button>
+        </div>
+        ${fitnessGaps.length ? `<div style="margin-bottom:${eventGaps.length ? '12px' : '0'};"><div style="font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#f5c46b;margin-bottom:6px;">Fitness tests</div>${fitHTML}</div>` : ''}
+        ${eventGaps.length ? `<div><div style="font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#f5c46b;margin-bottom:6px;">Team events</div>${evHTML}</div>` : ''}
+      </div>`;
   }
 
   function renderStandings() {
@@ -5139,7 +5222,7 @@
   // that role.
   const STU_TEAM_SCORE = {
     line: "Every event on the day is ranked — 1st place down to last. The higher your team finishes, the more points you earn. Points add up across every event, and the team with the most at the end wins.",
-    detail: "There are two halves to the team score. The team events — Warm-Up, Hype, Snacks, Planning, Tug of War, Relays, Team Challenge, Grit Challenge, 100m Row — each give points based on where your team finishes. And your fitness retests feed in too: every person's improvement and score adds to the team total. Both halves matter, so every event and every effort counts toward the win."
+    detail: "There are two halves to the team score. The team events — Warm-Up, Hype, Snacks, Planning, Tug of War, Relays, Team Challenge, Grit Challenge, 60s Row — each give points based on where your team finishes. And your fitness retests feed in too: every person's improvement and score adds to the team total. Both halves matter, so every event and every effort counts toward the win."
   };
 
   function renderStuSec16Scoring() {
@@ -5528,7 +5611,7 @@
     { time: '09:00–09:45', name: 'Fitness: Broad Jump / 40m / 5-10-5' },
     { time: '09:45–10:10', name: 'Cooper Run (mass start)' },
     { time: '10:10–10:25', name: 'Reset & water' },
-    { time: '10:25–10:35', name: '100m Row' },
+    { time: '10:25–10:35', name: '60s Row' },
     { time: '10:35–10:45', name: 'Grit Challenge' },
     { time: '10:45–11:05', name: 'Relays' },
     { time: '11:05–11:25', name: 'Team Challenge' },
@@ -5586,10 +5669,10 @@
     },
     { time: '10:10–10:25', name: 'Reset & water' },
     {
-      time: '10:25–10:35', name: '100m Row',
+      time: '10:25–10:35', name: '60s Row',
       roles: [
-        { id: '100m Row — lead', slots: 1, desc: 'One nominee per team on the rowing erg. Record metres or time on the paper sheet.' },
-        { id: '100m Row — assist', slots: 1, desc: 'Assist the lead.' }
+        { id: '60s Row — lead', slots: 1, desc: 'One nominee per team on the rowing erg. Record the metres covered in 60 seconds on the paper sheet.' },
+        { id: '60s Row — assist', slots: 1, desc: 'Assist the lead.' }
       ]
     },
     {
