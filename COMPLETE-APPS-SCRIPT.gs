@@ -12,7 +12,7 @@
 // ========================================
 
 // Track lap length used for Cooper (bands × lap + partial = total metres).
-var CLASH_LAP_LENGTH_M = 240;
+var CLASH_LAP_LENGTH_M = 300;
 
 // Per-test scoring config. Score = (improvement_pts + norm_pts) / 2, capped 0–5.
 // norms[gender] = [t2, t3, t4, t5] thresholds. Direction sets how to compare.
@@ -104,7 +104,7 @@ var CLASH_SANITY = {
   broad_jump: { maxCm: 400 },
   sprint_40m: { minSec: 4 },
   agility_510: { minSec: 4 },
-  cooper:     { maxBands: 10 }
+  cooper:     { maxBands: 12 }
 };
 
 function doGet(e) {
