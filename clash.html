@@ -1495,7 +1495,7 @@
   .topbar {
     background: var(--ink);
     color: var(--cream);
-    padding: 14px 16px;
+    padding: 9px 14px;
     position: sticky; top: 0; z-index: 80;
     box-shadow: 0 1px 0 rgba(0,0,0,0.2);
   }
@@ -1520,10 +1520,11 @@
   }
   .brand .title {
     font-family: 'Fraunces', serif;
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 600;
     color: var(--cream);
     font-style: italic;
+    line-height: 1.1;
   }
   .brand .title em { font-style: normal; color: var(--gold); }
   .user {
@@ -1544,22 +1545,23 @@
 
   .tabs {
     display: flex;
-    gap: 6px;
-    margin-top: 12px;
+    gap: 4px;
+    margin-top: 8px;
     background: rgba(250,243,237,0.06);
-    padding: 4px;
-    border-radius: 12px;
+    padding: 3px;
+    border-radius: 10px;
   }
   .tab-btn {
     flex: 1;
     background: transparent;
     color: rgba(250,243,237,0.7);
     border: none;
-    padding: 12px 16px;
-    border-radius: 9px;
-    font-size: 14px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
+    line-height: 1.15;
     transition: all 0.15s ease;
   }
   .tab-btn.active {
@@ -1572,39 +1574,39 @@
   .picker-bar {
     background: var(--bg-warm);
     border-bottom: 1px solid var(--line);
-    padding: 14px 16px;
-    position: sticky; top: 124px; z-index: 70;
+    padding: 10px 14px;
+    position: sticky; top: 100px; z-index: 70;
   }
   .picker-bar .label {
     display: block;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.15em;
     text-transform: uppercase;
     color: var(--ink-mute);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   .picker-bar select {
     width: 100%;
     background: var(--cream);
     border: 1.5px solid var(--line-strong);
-    border-radius: 12px;
-    padding: 14px 14px;
-    font-size: 17px;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--ink);
     -webkit-appearance: none;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8'><path fill='%237a6a60' d='M1 1l6 6 6-6'/></svg>");
     background-repeat: no-repeat;
-    background-position: right 16px center;
-    padding-right: 40px;
+    background-position: right 14px center;
+    padding-right: 36px;
   }
   .picker-bar .meta {
-    margin-top: 8px;
+    margin-top: 6px;
     font-size: 12px;
     color: var(--ink-mute);
     display: flex;
-    gap: 14px;
+    gap: 12px;
     flex-wrap: wrap;
   }
   .pill {
@@ -1628,7 +1630,7 @@
   /* ----- Main content ----- */
   main {
     flex: 1;
-    padding: 16px 16px 120px;
+    padding: 12px 14px 96px;
     max-width: 640px;
     margin: 0 auto;
     width: 100%;
@@ -1637,37 +1639,37 @@
   .view.active { display: block; }
 
   h2.section-title {
-    font-size: 22px;
-    margin-bottom: 12px;
+    font-size: 17px;
+    margin-bottom: 8px;
     color: var(--ink);
   }
   .helper {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--ink-mute);
-    margin-bottom: 16px;
+    margin-bottom: 10px;
   }
 
   /* ----- Team cards (whole / prejudged) ----- */
   .team-card {
     background: var(--cream);
     border: 1.5px solid var(--line);
-    border-radius: 14px;
-    padding: 14px 14px;
-    margin-bottom: 10px;
+    border-radius: 12px;
+    padding: 9px 11px;
+    margin-bottom: 7px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     transition: border-color 0.15s ease, transform 0.15s ease;
   }
   .team-card.saved-flash { border-color: var(--green); }
   .rank-badge {
-    flex: 0 0 44px;
-    height: 44px;
-    border-radius: 12px;
+    flex: 0 0 34px;
+    height: 34px;
+    border-radius: 9px;
     background: var(--ink);
     color: var(--gold);
     font-family: 'Fraunces', serif;
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 700;
     display: flex; align-items: center; justify-content: center;
   }
@@ -1677,15 +1679,15 @@
   }
   .team-name {
     font-family: 'Fraunces', serif;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--ink);
-    line-height: 1.1;
+    line-height: 1.15;
   }
   .team-meta {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--ink-mute);
-    margin-top: 2px;
+    margin-top: 1px;
   }
   .swatch {
     display: inline-block;
@@ -1740,14 +1742,14 @@
   .nominated-card {
     background: var(--cream);
     border: 1.5px solid var(--line);
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 10px;
+    border-radius: 12px;
+    padding: 11px;
+    margin-bottom: 7px;
     transition: border-color 0.2s ease;
   }
   .nominated-card.saved-flash { border-color: var(--green); }
   .nominated-card .head {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
   }
   .nominated-card .who {
     font-size: 13px; color: var(--ink-mute);
@@ -1762,9 +1764,9 @@
     flex: 1;
     background: var(--bg-warm);
     border: 1.5px solid var(--line-strong);
-    border-radius: 10px;
-    padding: 14px 14px;
-    font-size: 20px;
+    border-radius: 9px;
+    padding: 10px 12px;
+    font-size: 17px;
     font-weight: 600;
     color: var(--ink);
     -moz-appearance: textfield;
@@ -1837,14 +1839,14 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 6px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
   .test-pill {
     background: var(--cream);
     border: 1.5px solid var(--line);
     color: var(--ink-soft);
-    padding: 12px 6px;
-    border-radius: 12px;
+    padding: 8px 6px;
+    border-radius: 10px;
     font-size: 12px;
     font-weight: 600;
     text-align: center;
@@ -1858,13 +1860,13 @@
   .test-pill small { display: block; font-size: 10px; opacity: 0.7; margin-top: 2px; font-weight: 500; }
 
   .team-group {
-    margin-bottom: 18px;
+    margin-bottom: 14px;
   }
   .team-group-header {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 4px;
+    padding: 6px 4px;
     margin-bottom: 6px;
     border-bottom: 1px solid var(--line);
   }
@@ -1884,20 +1886,20 @@
   .athlete-card {
     background: var(--cream);
     border: 1.5px solid var(--line);
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 8px;
+    border-radius: 12px;
+    padding: 11px;
+    margin-bottom: 7px;
     transition: border-color 0.2s ease;
   }
   .athlete-card.saved-flash { border-color: var(--green); }
   .athlete-card .athlete-head {
     display: flex; align-items: center; gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   .athlete-card .a-name {
     font-weight: 600;
     color: var(--ink);
-    font-size: 15px;
+    font-size: 14px;
   }
   .athlete-card .a-gender {
     font-size: 11px;
@@ -1924,7 +1926,7 @@
     grid-template-columns: auto 1fr 1fr;
     gap: 8px;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   .attempt-row.single {
     grid-template-columns: 1fr;
@@ -1953,12 +1955,12 @@
   }
   .live-readout {
     background: var(--bg-warm);
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin: 8px 0 10px;
+    border-radius: 9px;
+    padding: 7px 11px;
+    margin: 6px 0 8px;
     display: flex;
     justify-content: space-between;
-    font-size: 13px;
+    font-size: 12.5px;
   }
   .live-readout .v {
     font-family: 'Fraunces', serif;
@@ -1987,14 +1989,15 @@
   .save-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 5px;
+    font-size: 11.5px;
     font-weight: 600;
-    padding: 6px 10px;
+    padding: 5px 9px;
     border-radius: 999px;
     white-space: nowrap;
     border: 1.5px solid transparent;
   }
+  .save-badge:empty { display: none; }
   .save-badge.idle { color: var(--ink-mute); }
   .save-badge.saving { color: var(--ink-soft); background: rgba(232,181,74,0.16); border-color: var(--amber); }
   .save-badge.saved { color: #fff; background: var(--green); }
@@ -2015,9 +2018,9 @@
     background: var(--cream);
     border: 1.5px solid var(--line-strong);
     color: var(--ink-soft);
-    padding: 12px 14px;
-    border-radius: 10px;
-    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 9px;
+    font-size: 12.5px;
     font-weight: 600;
   }
   .excuse-all-btn.on { background: var(--amber); border-color: var(--amber); color: var(--ink); }
@@ -2029,15 +2032,15 @@
     bottom: 0; left: 0; right: 0;
     display: none;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     background: var(--ink);
     color: var(--cream);
-    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 14px calc(8px + env(safe-area-inset-bottom, 0px));
     z-index: 60;
     box-shadow: 0 -4px 16px rgba(26,20,17,0.18);
   }
   .status-bar.visible { display: flex; }
-  .status-bar .msg { flex: 1; font-size: 14px; font-weight: 600; }
+  .status-bar .msg { flex: 1; font-size: 13px; font-weight: 600; }
   .status-bar.allsaved .msg { color: #9fe3b0; }
   .status-bar.busy .msg { color: var(--gold); }
   .status-bar.haserr .msg { color: #ffb3a8; }
@@ -2045,14 +2048,14 @@
     background: var(--burgundy);
     color: var(--cream);
     border: none;
-    padding: 10px 16px;
-    border-radius: 10px;
-    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 9px;
+    font-size: 12.5px;
     font-weight: 700;
   }
   .status-bar .retry-all:active { background: var(--burgundy-dark); }
   /* keep scrolling content clear of the fixed bar */
-  body.has-status-bar #appShell main { padding-bottom: 84px; }
+  body.has-status-bar #appShell main { padding-bottom: 64px; }
 
   /* ----- Fitness team tabs ----- */
   .fitness-team-tabs {
@@ -2060,17 +2063,17 @@
     gap: 6px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
-    margin-bottom: 14px;
+    padding-bottom: 3px;
+    margin-bottom: 10px;
   }
   .fit-team-tab {
     flex: 0 0 auto;
     background: var(--cream);
     border: 1.5px solid var(--line);
     color: var(--ink-soft);
-    padding: 9px 14px;
+    padding: 7px 12px;
     border-radius: 999px;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     white-space: nowrap;
   }
@@ -2080,11 +2083,11 @@
 
   /* ----- Drag-to-reorder team cards ----- */
   .team-card .drag-handle {
-    flex: 0 0 36px;
-    height: 44px;
+    flex: 0 0 26px;
+    height: 38px;
     display: flex; align-items: center; justify-content: center;
     color: var(--ink-mute);
-    font-size: 20px;
+    font-size: 18px;
     cursor: grab;
     touch-action: none;        /* let pointer drag work on touch without scrolling */
     user-select: none;
@@ -2203,8 +2206,8 @@
 
   /* Tighter spacing on tiny phones */
   @media (max-width: 360px) {
-    main { padding: 12px 12px 110px; }
-    .team-card, .nominated-card, .athlete-card { padding: 12px; }
+    main { padding: 10px 10px 64px; }
+    .team-card, .nominated-card, .athlete-card { padding: 9px; }
   }
 
   /* ============================================
@@ -2469,7 +2472,7 @@
     .stu-tabs { max-width: 100%; margin-bottom: 18px; }
     .student-main { padding: 24px 16px 80px; }
     .stu-section { padding: 22px 18px; }
-    .num-input { font-size: 18px; padding: 12px; }
+    .num-input { font-size: 16px; padding: 10px; }
     .test-picker { grid-template-columns: repeat(2, 1fr); }
   }
 
