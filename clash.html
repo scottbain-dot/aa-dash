@@ -1790,6 +1790,7 @@
   }
   .num-input {
     flex: 1;
+    min-width: 0;
     background: var(--bg-warm);
     border: 1.5px solid var(--line-strong);
     border-radius: 9px;
@@ -1949,23 +1950,26 @@
     width: 18px; height: 18px;
     accent-color: var(--burgundy);
   }
-  .attempt-row {
+  .attempt-grid {
     display: grid;
-    grid-template-columns: auto 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
-    align-items: center;
     margin-bottom: 6px;
   }
-  .attempt-row.single {
+  .attempt-grid.single {
     grid-template-columns: 1fr;
   }
-  .attempt-row .lbl {
+  .attempt-field { min-width: 0; }
+  .attempt-field label {
+    display: block;
     font-size: 11px;
     color: var(--ink-mute);
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    margin-bottom: 4px;
   }
+  .attempt-field .num-input { width: 100%; }
   .cooper-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -3924,16 +3928,21 @@
       const a1 = draft.attempt1 != null ? draft.attempt1 : '';
       const a2 = draft.attempt2 != null ? draft.attempt2 : '';
       inputHTML = `
-        <div class="attempt-row">
-          <div class="lbl">Try 1</div>
-          <input class="num-input" type="number" inputmode="decimal" step="0.01"
-                 value="${escapeAttr(a1)}"
-                 oninput="updateFitnessInput('${escapeAttr(aid)}', 'attempt1', this.value); refreshBestOf('${escapeAttr(aid)}', '${testKey}')"
-                 ${ex ? 'disabled' : ''} placeholder="0" />
-          <input class="num-input" type="number" inputmode="decimal" step="0.01"
-                 value="${escapeAttr(a2)}"
-                 oninput="updateFitnessInput('${escapeAttr(aid)}', 'attempt2', this.value); refreshBestOf('${escapeAttr(aid)}', '${testKey}')"
-                 ${ex ? 'disabled' : ''} placeholder="0" />
+        <div class="attempt-grid">
+          <div class="attempt-field">
+            <label>Try 1</label>
+            <input class="num-input" type="number" inputmode="decimal" step="0.01"
+                   value="${escapeAttr(a1)}"
+                   oninput="updateFitnessInput('${escapeAttr(aid)}', 'attempt1', this.value); refreshBestOf('${escapeAttr(aid)}', '${testKey}')"
+                   ${ex ? 'disabled' : ''} placeholder="0" />
+          </div>
+          <div class="attempt-field">
+            <label>Try 2</label>
+            <input class="num-input" type="number" inputmode="decimal" step="0.01"
+                   value="${escapeAttr(a2)}"
+                   oninput="updateFitnessInput('${escapeAttr(aid)}', 'attempt2', this.value); refreshBestOf('${escapeAttr(aid)}', '${testKey}')"
+                   ${ex ? 'disabled' : ''} placeholder="0" />
+          </div>
         </div>
         <div class="live-readout" id="bestOf-${escapeAttr(aid)}">
           <span>Best of</span>
@@ -3943,11 +3952,14 @@
     } else {
       const a1 = draft.attempt1 != null ? draft.attempt1 : '';
       inputHTML = `
-        <div class="attempt-row single">
-          <input class="num-input" type="number" inputmode="decimal" step="0.01"
-                 value="${escapeAttr(a1)}"
-                 oninput="updateFitnessInput('${escapeAttr(aid)}', 'attempt1', this.value)"
-                 ${ex ? 'disabled' : ''} placeholder="0.00" />
+        <div class="attempt-grid single">
+          <div class="attempt-field">
+            <label>Result (${escapeHtml(display.unit)})</label>
+            <input class="num-input" type="number" inputmode="decimal" step="0.01"
+                   value="${escapeAttr(a1)}"
+                   oninput="updateFitnessInput('${escapeAttr(aid)}', 'attempt1', this.value)"
+                   ${ex ? 'disabled' : ''} placeholder="0.00" />
+          </div>
         </div>
       `;
     }
