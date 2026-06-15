@@ -3089,7 +3089,21 @@
 
   // ============================================
   // FETCH HELPERS
+  // ----------------------------------------------------------------
+  // Apps Script responses routinely take ~5s and occasionally stall on
+  // the 302 → googleusercontent redirect. Every request gets an
+  // AbortController timeout so it ALWAYS settles — a stalled POST can
+  // never leave the single-in-flight save queue jammed forever.
   // ============================================
+  const FETCH_TIMEOUT_MS = 25000;
+
+  function fetchWithTimeout(url, opts, timeoutMs) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs || FETCH_TIMEOUT_MS);
+    return fetch(url, Object.assign({}, opts, { signal: ctrl.signal }))
+      .finally(() => clearTimeout(t));
+  }
+
   async function apiGet(action, params) {
     const url = new URL(APPS_SCRIPT_URL);
     url.searchParams.set('action', action);
@@ -3097,13 +3111,13 @@
       if (params[k] != null && params[k] !== '') url.searchParams.set(k, params[k]);
     });
     url.searchParams.set('_t', Date.now());
-    const r = await fetch(url.toString());
+    const r = await fetchWithTimeout(url.toString());
     return r.json();
   }
 
   async function apiPost(payload) {
     // Use text/plain to avoid CORS preflight (Apps Script accepts it).
-    const r = await fetch(APPS_SCRIPT_URL, {
+    const r = await fetchWithTimeout(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload)
@@ -3186,46 +3200,58 @@
     if (!item) return;
     item.status = 'saving';
     saveQueue.inFlight = true;
-    const sentVersion = item.version;
-    refreshAllBadges();
-    updateStatusBar();
-    apiPost(item.payload)
-      .then(res => onSaveDone(item, sentVersion, res, null))
-      .catch(err => onSaveDone(item, sentVersion, null, err));
+    safeUI();
+    // apiPost always settles (timeout). onSaveDone is wrapped so inFlight is
+    // released and the queue continues no matter what — it can never freeze.
+    Promise.resolve()
+      .then(() => apiPost(item.payload))
+      .then(res => onSaveDone(item, res, null))
+      .catch(err => onSaveDone(item, null, err));
   }
 
-  function onSaveDone(item, sentVersion, res, err) {
-    saveQueue.inFlight = false;
-    // If a newer payload for this key was queued while we were in flight, the
-    // map now holds a different object — leave that newer item to be saved and
-    // discard this stale result (never delete the fresh one).
-    const superseded = saveQueue.items[item.key] !== item;
-    const ok = res && res.success;
-    if (!superseded) {
-      if (ok) {
-        delete saveQueue.items[item.key];
-        saveQueue.saved[item.key] = Date.now();
-        setTimeout(() => { delete saveQueue.saved[item.key]; refreshAllBadges(); updateStatusBar(); }, 2200);
-        scheduleStandingsRefresh();
-      } else {
-        item.attempts++;
-        if (item.attempts < MAX_ATTEMPTS) {
-          item.status = 'backoff';
-          const delay = BACKOFF_MS[Math.min(item.attempts - 1, BACKOFF_MS.length - 1)];
-          setTimeout(() => {
-            if (saveQueue.items[item.key] === item && item.status === 'backoff') {
-              item.status = 'pending';
-              refreshAllBadges(); updateStatusBar(); processQueue();
-            }
-          }, delay);
+  function onSaveDone(item, res, err) {
+    try {
+      // If a newer payload for this key was queued while we were in flight, the
+      // map now holds a different object — leave that newer item to be saved and
+      // discard this stale result (never delete the fresh one).
+      const superseded = saveQueue.items[item.key] !== item;
+      const ok = res && res.success;
+      if (!superseded) {
+        if (ok) {
+          delete saveQueue.items[item.key];
+          saveQueue.saved[item.key] = Date.now();
+          setTimeout(() => { delete saveQueue.saved[item.key]; safeUI(); }, 2200);
+          scheduleStandingsRefresh();
         } else {
-          item.status = 'failed';
+          item.attempts++;
+          if (item.attempts < MAX_ATTEMPTS) {
+            item.status = 'backoff';
+            const delay = BACKOFF_MS[Math.min(item.attempts - 1, BACKOFF_MS.length - 1)];
+            setTimeout(() => {
+              if (saveQueue.items[item.key] === item && item.status === 'backoff') {
+                item.status = 'pending';
+                safeUI(); processQueue();
+              }
+            }, delay);
+          } else {
+            item.status = 'failed';
+          }
         }
       }
+    } catch (e) {
+      // Never let a UI/logic error strand the queue.
+      if (saveQueue.items[item.key] === item && item.status === 'saving') item.status = 'pending';
+    } finally {
+      saveQueue.inFlight = false;
+      safeUI();
+      processQueue();
     }
-    refreshAllBadges();
-    updateStatusBar();
-    processQueue();
+  }
+
+  // Refresh badges + status bar without ever throwing into the caller.
+  function safeUI() {
+    try { refreshAllBadges(); } catch (_) {}
+    try { updateStatusBar(); } catch (_) {}
   }
 
   function retrySave(key) {
@@ -3308,9 +3334,16 @@
   function scheduleStandingsRefresh() {
     if (standingsRefreshTimer) clearTimeout(standingsRefreshTimer);
     standingsRefreshTimer = setTimeout(() => {
+      // Only refresh once the queue has drained, so the standings GET (~5s)
+      // doesn't pile up behind a burst of saves. Deliberately does NOT reload
+      // the fitness cards — re-rendering mid-entry would wipe the field the
+      // user is currently typing in. The excused map stays current locally.
+      if (saveQueue.inFlight || Object.keys(saveQueue.items).length || Object.keys(saveQueue.pending).length) {
+        scheduleStandingsRefresh();
+        return;
+      }
       refreshStandings();
-      if (state.activeView === 'fitness') loadFitnessResults();
-    }, 1200);
+    }, 1500);
   }
 
   window.addEventListener('beforeunload', function (e) {
@@ -3651,17 +3684,21 @@
     const area = card && card.parentElement;
     if (!card || !area) return;
     e.preventDefault();
-    dragState = { card, area, handle, pointerId: e.pointerId };
+    dragState = { card, area, moved: false };
     card.classList.add('dragging');
-    try { handle.setPointerCapture(e.pointerId); } catch (_) {}
-    handle.addEventListener('pointermove', onDragPointerMove);
-    handle.addEventListener('pointerup', onDragPointerUp);
-    handle.addEventListener('pointercancel', onDragPointerUp);
+    // Listen on document — a mouse has no implicit pointer capture, so
+    // handle-bound move events stop the instant the cursor leaves the handle.
+    // document-level listeners track the pointer everywhere; touch still works
+    // because the handle has touch-action:none so the gesture isn't a scroll.
+    document.addEventListener('pointermove', onDragPointerMove);
+    document.addEventListener('pointerup', onDragPointerUp);
+    document.addEventListener('pointercancel', onDragPointerUp);
   }
 
   function onDragPointerMove(e) {
     if (!dragState) return;
     e.preventDefault();
+    dragState.moved = true;
     const { card, area } = dragState;
     const after = getDragAfterElement(area, e.clientY);
     if (after == null) area.appendChild(card);
@@ -3675,13 +3712,13 @@
 
   function onDragPointerUp() {
     if (!dragState) return;
-    const { card, area, handle, pointerId } = dragState;
+    const { card, area, moved } = dragState;
     card.classList.remove('dragging');
-    try { handle.releasePointerCapture(pointerId); } catch (_) {}
-    handle.removeEventListener('pointermove', onDragPointerMove);
-    handle.removeEventListener('pointerup', onDragPointerUp);
-    handle.removeEventListener('pointercancel', onDragPointerUp);
+    document.removeEventListener('pointermove', onDragPointerMove);
+    document.removeEventListener('pointerup', onDragPointerUp);
+    document.removeEventListener('pointercancel', onDragPointerUp);
     dragState = null;
+    if (!moved) return; // a plain tap/click on the handle — nothing reordered
     // Commit the new order from the DOM and auto-save it.
     state.ranking = [...area.querySelectorAll('.team-card')].map(c => c.dataset.team);
     scheduleRankingSave();
