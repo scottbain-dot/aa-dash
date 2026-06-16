@@ -2920,10 +2920,6 @@
   // ============================================
   // ROUTING — display / admin / coming-soon
   // ============================================
-  // Staff coordination state (declared before routing so the inline
-  // bootstrapStaff() call below can safely reference it).
-  let staffHelpers = [];      // [{ role, name, timestamp }]
-
   const urlParams = new URLSearchParams(location.search);
   const isAdminMode = urlParams.get('admin') === 'true';
   const isDisplayMode = urlParams.get('display') === 'true';
@@ -6171,55 +6167,55 @@
     {
       time: '09:00–09:45', name: 'Fitness: Broad Jump / 40m / 5-10-5',
       roles: [
-        { id: 'Broad Jump — lead', slots: 1, desc: 'Run the station, record 2 attempts per athlete, best counts.' },
-        { id: 'Broad Jump — assist', slots: 1, desc: 'Assist the lead.' },
-        { id: '40m timer — lead', slots: 1, desc: 'Run the station, time and record the sprint, one attempt each.' },
-        { id: '40m timer — assist', slots: 1, desc: 'Assist the lead.' },
-        { id: '5-10-5 timer — lead', slots: 1, desc: 'Run the station, time the agility test, 2 attempts, best counts.' },
-        { id: '5-10-5 timer — assist', slots: 1, desc: 'Assist the lead.' }
+        { id: 'Broad Jump — lead', slots: 1, desc: 'Run the station, record 2 attempts per athlete, best counts.', assignees: ['Scott McNeil'] },
+        { id: 'Broad Jump — assist', slots: 1, desc: 'Assist the lead.', assignees: ['Scott Bain'] },
+        { id: '40m timer — lead', slots: 1, desc: 'Run the station, time and record the sprint, one attempt each.', assignees: ['Chrissy Moncrief'] },
+        { id: '40m timer — assist', slots: 1, desc: 'Assist the lead.', assignees: ['Scott Bain'] },
+        { id: '5-10-5 timer — lead', slots: 1, desc: 'Run the station, time the agility test, 2 attempts, best counts.', assignees: ['V'] },
+        { id: '5-10-5 timer — assist', slots: 1, desc: 'Assist the lead.', assignees: ['Scott Bain'] }
       ]
     },
     {
       time: '09:45–10:10', name: 'Cooper Run (mass start)',
       roles: [
-        { id: 'Cooper Run — lead', slots: 1, desc: 'Run the mass-start Cooper.' },
-        { id: 'Cooper — band handout & recording', slots: 2, desc: 'Hand a band to each runner per lap; count bands and record distance at the finish.' }
+        { id: 'Cooper Run — lead', slots: 1, desc: 'Run the mass-start Cooper.', assignees: ['Scott Bain'] },
+        { id: 'Cooper — band handout & recording', slots: 2, desc: 'Hand a band to each runner per lap; count bands and record distance at the finish.', assignees: ['V', 'Scott McNeil'] }
       ]
     },
     { time: '10:10–10:25', name: 'Reset & water' },
     {
       time: '10:25–10:35', name: '60s Row',
       roles: [
-        { id: '60s Row — lead', slots: 1, desc: 'One nominee per team on the rowing erg. Record the metres covered in 60 seconds on the paper sheet.' },
-        { id: '60s Row — assist', slots: 1, desc: 'Assist the lead.' }
+        { id: '60s Row — lead', slots: 1, desc: 'One nominee per team on the rowing erg. Record the metres covered in 60 seconds on the paper sheet.', assignees: ['Scott Bain'] },
+        { id: '60s Row — assist', slots: 1, desc: 'Assist the lead.', assignees: ['Scott McNeil'] }
       ]
     },
     {
       time: '10:35–10:45', name: 'Grit Challenge',
       roles: [
-        { id: 'Grit Challenge — lead', slots: 1, desc: "One nominee per team. You'll be briefed on the format on the morning — please keep it under wraps with students." },
-        { id: 'Grit Challenge — assist', slots: 1, desc: 'Assist the lead.' }
+        { id: 'Grit Challenge — lead', slots: 1, desc: "One nominee per team. You'll be briefed on the format on the morning — please keep it under wraps with students.", assignees: ['Scott Bain'] },
+        { id: 'Grit Challenge — assist', slots: 1, desc: 'Assist the lead.', assignees: ['Scott McNeil'] }
       ]
     },
     {
       time: '10:45–11:05', name: 'Relays',
       roles: [
-        { id: 'Relays — lead', slots: 1, desc: 'Run the whole-team relay. Rank teams by finish order, 1st to last.' },
-        { id: 'Relays — assist', slots: 1, desc: 'Assist the lead.' }
+        { id: 'Relays — lead', slots: 1, desc: 'Run the whole-team relay. Rank teams by finish order, 1st to last.', assignees: ['Scott Bain'] },
+        { id: 'Relays — assist', slots: 1, desc: 'Assist the lead.', assignees: ['Adam Martin'] }
       ]
     },
     {
       time: '11:05–11:25', name: 'Team Challenge',
       roles: [
-        { id: 'Team Challenge — lead', slots: 1, desc: 'Run the cone game — each team has a goal, a ball and 5 cones; score in any goal to take a cone back; most cones after ~10 min wins. Rank all six teams. Full run-through on the paper sheet.' },
-        { id: 'Team Challenge — assist', slots: 1, desc: 'Assist the lead.' }
+        { id: 'Team Challenge — lead', slots: 1, desc: 'Run the cone game — each team has a goal, a ball and 5 cones; score in any goal to take a cone back; most cones after ~10 min wins. Rank all six teams. Full run-through on the paper sheet.', assignees: ['Scott Bain'] },
+        { id: 'Team Challenge — assist', slots: 1, desc: 'Assist the lead.', assignees: ['Rob Holmyard'] }
       ]
     },
     {
       time: '11:25–12:00', name: 'Tug of War',
       roles: [
-        { id: 'Tug of War — lead', slots: 1, desc: 'Run the pools format — two pools of three, round-robin then crossover finals, 9 pulls on one rope. Match order is printed on the paper sheet.' },
-        { id: 'Tug of War — assist', slots: 1, desc: 'Assist the lead.' }
+        { id: 'Tug of War — lead', slots: 1, desc: 'Run the pools format — two pools of three, round-robin then crossover finals, 9 pulls on one rope. Match order is printed on the paper sheet.', assignees: ['Scott Bain'] },
+        { id: 'Tug of War — assist', slots: 1, desc: 'Assist the lead.', assignees: ['Scott McNeil'] }
       ]
     },
     { time: '12:00–12:30', name: 'Recovery lunch, Nutrition Share-Out & Awards' },
@@ -6227,36 +6223,19 @@
     {
       time: '13:15–14:45', name: 'Recovery pool session (Taunabad)',
       roles: [
-        { id: 'Pool supervision — Taunabad', slots: 3, desc: 'Purely a supervisory role — three chaperones to meet the student:chaperone ratio. Please meet outside Stroth centre at 12:45, or on the Upper Field any time before that.' }
+        { id: 'Pool supervision — Taunabad', slots: 3, desc: 'Purely a supervisory role — three chaperones to meet the student:chaperone ratio. Please meet outside Stroth centre at 12:45, or on the Upper Field any time before that.', assignees: ['Zina Sawabini', 'Ashley van der Meer', 'Scott Bain'] }
       ]
     },
     { time: '14:45–15:10', name: 'Walk back to school' }
   ];
 
-  // Organiser who covers any role nobody else has signed up for.
-  const STAFF_DEFAULT_OWNER = 'Scott Bain';
-
   async function bootstrapStaff() {
-    await loadStaffHelpers();
+    // Assignees are finalised and hard-coded in STAFF_DAY — no runtime fetch,
+    // so the page can't fail to populate on the day. Defer one microtask so the
+    // STAFF_DAY const (declared lower in this script) is initialised first —
+    // routing calls bootstrapStaff() before that declaration is reached.
+    await Promise.resolve();
     renderStaff();
-  }
-
-  async function loadStaffHelpers() {
-    try {
-      const res = await apiGet('getHelpers');
-      staffHelpers = (res && res.success && Array.isArray(res.helpers)) ? res.helpers : [];
-    } catch (e) {
-      staffHelpers = [];
-    }
-  }
-
-  // All helper names claimed for a given role id (case-insensitive match).
-  function helpersForRole(roleId) {
-    const key = String(roleId).trim().toLowerCase();
-    return staffHelpers
-      .filter(h => String(h.role || '').trim().toLowerCase() === key)
-      .map(h => String(h.name || '').trim())
-      .filter(Boolean);
   }
 
   function renderStaff() {
@@ -6288,17 +6267,10 @@
     `;
   }
 
-  // Read-only role card. Sign-up has been removed: every role shows who's
-  // assigned. Real sign-ups come from the Clash_Helpers sheet; any role left
-  // open is covered by the organiser (Scott Bain) so there are no blank spaces.
+  // Read-only role card. Assignees are finalised and hard-coded on each role,
+  // so the card renders them directly with no network dependency.
   function renderRoleCard(role) {
-    const claimed = helpersForRole(role.id);
-    // Fill any open space with the default owner, then de-duplicate names.
-    const names = [...claimed];
-    if (names.length < role.slots) names.push(STAFF_DEFAULT_OWNER);
-    const uniqueNames = names.filter((n, i) => names.indexOf(n) === i);
-
-    const helpersHtml = uniqueNames.map(name => `
+    const helpersHtml = (role.assignees || []).map(name => `
       <div class="role-helper">
         <span class="tick">✓</span>
         <span class="who">${escapeHtml(name)}</span>
@@ -6319,10 +6291,8 @@
     `;
   }
 
-  async function refreshStaff() {
-    const btn = document.getElementById('staffRefreshBtn');
-    if (btn) { btn.disabled = true; btn.textContent = '↻ Refreshing…'; }
-    await loadStaffHelpers();
+  function refreshStaff() {
+    // No network — assignees are hard-coded. Just re-render.
     renderStaff();
     toast('Up to date', 'success');
   }
