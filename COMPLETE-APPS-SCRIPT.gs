@@ -3191,18 +3191,38 @@ function clashGetBaseline(ss, athleteId, testKey) {
   var dC = hdr.indexOf('Date');
   var vC = hdr.indexOf(col);
   if (idC < 0 || vC < 0) return null;
-  var best = null, bestDate = null;
+
+  // Baseline = the athlete's EARLIEST recorded non-zero mark for this test, so
+  // improvement is measured over the longest span. Collect every non-zero value
+  // with a sortable date key + its row index, then pick the smallest key
+  // (ties: earliest row). Matches the printed result sheets exactly.
+  var candidates = [];
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idC]).trim() !== String(athleteId).trim()) continue;
     var v = parseFloat(data[i][vC]);
     if (isNaN(v) || v === 0) continue;
-    var d = dC >= 0 ? new Date(data[i][dC]) : null;
-    if (best === null || (d && (!bestDate || d > bestDate))) {
-      best = v;
-      bestDate = d;
-    }
+    var dateKey = (dC >= 0) ? clashParseDateMs_(data[i][dC]) : Number.POSITIVE_INFINITY;
+    candidates.push({ val: v, key: dateKey, row: i });
   }
-  return best;
+  if (!candidates.length) return null;
+
+  var best = candidates[0];
+  for (var j = 1; j < candidates.length; j++) {
+    var c = candidates[j];
+    if (c.key < best.key || (c.key === best.key && c.row < best.row)) best = c;
+  }
+  return best.val;
+}
+
+// Robust date key for Performance rows. Real Date cell -> its time; a "dd/mm/yy"
+// or "dd/mm/yyyy" string -> day/month/year (NOT US m/d); anything unparseable ->
+// +Infinity so it sorts last (and earliest-row tie-break still applies).
+function clashParseDateMs_(val) {
+  if (val instanceof Date && !isNaN(val)) return val.getTime();
+  var s = String(val).trim();
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (m) { var yy = +m[3]; if (yy < 100) yy += 2000; var d = new Date(yy, (+m[2]) - 1, +m[1]); if (!isNaN(d)) return d.getTime(); }
+  var d2 = new Date(s); return isNaN(d2) ? Number.POSITIVE_INFINITY : d2.getTime();
 }
 
 function clashTeamForAthlete(ss, athleteId) {
