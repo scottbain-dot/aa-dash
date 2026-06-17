@@ -5174,28 +5174,24 @@
       .sort((a, b) => a.order - b.order);
     // points[team][event]
     const pts = {};
-    let latest = null, latestT = -1;
     (displayState.results || []).forEach(r => {
       if (FITNESS_KEYS_D.indexOf(r.Event) >= 0) return;
       const p = parseFloat(r.Points);
       if (!isNaN(p)) (pts[r.Team] = pts[r.Team] || {})[r.Event] = p;
-      const t = new Date(r.Timestamp).getTime() || 0;
-      if (t > latestT && r.Raw_Result !== '' && r.Raw_Result != null) { latestT = t; latest = r.Event; }
     });
     // teams ordered by total event points (this board is about the event race)
     const teams = (displayState.standings || []).slice().sort((a, b) => (b.eventPoints || 0) - (a.eventPoints || 0));
-    const head = evList.map(e => `<th class="${e.event === latest ? 'latest' : ''}">${escapeHtml(EVENT_ABBR_D[e.event] || e.event.slice(0, 5))}</th>`).join('');
+    const head = evList.map(e => `<th>${escapeHtml(EVENT_ABBR_D[e.event] || e.event.slice(0, 5))}</th>`).join('');
     const body = teams.map(s => {
       const cells = evList.map(e => {
         const v = (pts[s.team] || {})[e.event];
-        return `<td class="${e.event === latest ? 'latest' : ''}">${v == null ? '·' : roundDisplay(v)}</td>`;
+        return `<td>${v == null ? '·' : roundDisplay(v)}</td>`;
       }).join('');
       return `<tr><td class="team">${escapeHtml(s.team.replace('Team ', ''))}</td>${cells}<td class="total">${roundDisplay(s.eventPoints || 0)}</td></tr>`;
     }).join('');
-    const latestName = latest ? ((evList.find(e => e.event === latest) || {}).hidden ? 'Team Challenge' : latest) : '';
     host.innerHTML = `
       <div class="dboard-title">Event points — building the table</div>
-      ${latest ? `<div class="dboard-sub">Just in: <b>${escapeHtml(latestName)}</b> — every event adds 6·5·4·3·2·1 down the field.</div>` : '<div class="dboard-sub">Each event adds 6·5·4·3·2·1 points down the field.</div>'}
+      <div class="dboard-sub">Each event adds 6·5·4·3·2·1 points down the field.</div>
       <table class="evt-matrix">
         <thead><tr><th class="team-h">Team</th>${head}<th class="total">Pts</th></tr></thead>
         <tbody>${body}</tbody>
