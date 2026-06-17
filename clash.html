@@ -2859,6 +2859,7 @@
       <button class="tab-btn active" data-view="events" onclick="switchView('events')">Events</button>
       <button class="tab-btn" data-view="fitness" onclick="switchView('fitness')">Fitness Retests</button>
       <button class="tab-btn" data-view="teams" onclick="switchView('teams')">Teams</button>
+      <button class="tab-btn" data-view="schedule" onclick="switchView('schedule')">Running order</button>
     </div>
   </header>
 
@@ -2896,6 +2897,13 @@
       <div class="teams-builder" id="teamsBuilder">
         <div class="loading">Loading roster…</div>
       </div>
+    </section>
+
+    <!-- Running order view -->
+    <section class="view" id="scheduleView">
+      <h2 class="section-title">Running order</h2>
+      <p class="helper">The shape of the day — times are a guide; each event is called on the field.</p>
+      <div class="timeline" id="scheduleTimeline"></div>
     </section>
   </main>
 
@@ -3447,6 +3455,7 @@
     document.getElementById('eventsView').classList.toggle('active', view === 'events');
     document.getElementById('fitnessView').classList.toggle('active', view === 'fitness');
     document.getElementById('teamsView').classList.toggle('active', view === 'teams');
+    document.getElementById('scheduleView').classList.toggle('active', view === 'schedule');
     // The event picker only makes sense on the events view.
     document.getElementById('eventPickerBar').style.display = view === 'events' ? 'block' : 'none';
     if (view === 'fitness') {
@@ -3456,7 +3465,21 @@
       renderNotEnteredPanel();
     }
     if (view === 'teams') loadTeamsBuilder();
+    if (view === 'schedule') renderRunningOrder();
     renderStandings();
+  }
+
+  // Running order tab — static run of the day (time + event) from STAFF_DAY.
+  function renderRunningOrder() {
+    const host = document.getElementById('scheduleTimeline');
+    if (!host) return;
+    host.innerHTML = STAFF_DAY.map(item => `
+      <div class="timeline-row">
+        <div class="timeline-time">${escapeHtml(item.time)}</div>
+        <div class="timeline-marker"><div class="timeline-dot"></div></div>
+        <div><div class="timeline-event-name">${escapeHtml(item.name)}</div></div>
+      </div>
+    `).join('');
   }
 
   // ============================================
