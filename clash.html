@@ -2859,7 +2859,7 @@
 
   <header class="display-header">
     <div class="brand-row">
-      <span class="warriors-tag">FIS Warriors</span>
+      <span class="warriors-tag">FIS G9 Athlete Academy</span>
       <h1>Clash of the <em>Codes</em></h1>
       <span class="year">2026</span>
     </div>
@@ -5190,8 +5190,7 @@
       return `<tr><td class="team">${escapeHtml(s.team.replace('Team ', ''))}</td>${cells}<td class="total">${roundDisplay(s.eventPoints || 0)}</td></tr>`;
     }).join('');
     host.innerHTML = `
-      <div class="dboard-title">Event points — building the table</div>
-      <div class="dboard-sub">Each event adds 6·5·4·3·2·1 points down the field.</div>
+      <div class="dboard-title">Event points</div>
       <table class="evt-matrix">
         <thead><tr><th class="team-h">Team</th>${head}<th class="total">Pts</th></tr></thead>
         <tbody>${body}</tbody>
