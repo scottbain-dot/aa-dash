@@ -68,7 +68,7 @@
   }
   #displayView.visible { display: grid; }
   #displayView {
-    grid-template-rows: 15% 60% 25%;
+    grid-template-rows: 15% 85%;
   }
 
   /* radial accents like the editorial hero */
@@ -2852,27 +2852,11 @@
       <h1>Clash of the <em>Codes</em></h1>
       <span class="year">2026</span>
     </div>
-    <div class="now-row">
-      <span class="now-tag">Now</span>
-      <span class="now-event" id="dNowEvent">—</span>
-      <span class="clock" id="dClock">00:00</span>
-    </div>
   </header>
 
   <section class="display-middle">
     <div id="dMiddle"></div>
   </section>
-
-  <footer class="display-footer">
-    <div class="footer-pane">
-      <h2>Latest Results</h2>
-      <ul class="ticker-list" id="dResults"></ul>
-    </div>
-    <div class="footer-pane">
-      <h2>Records Watch</h2>
-      <div class="rec-list" id="dAwards"></div>
-    </div>
-  </footer>
 </div>
 
 <!-- ============================================
@@ -4871,7 +4855,6 @@
   };
 
   async function bootstrapDisplay() {
-    startClock();
     try {
       await loadDisplayStatic();
       await refreshDisplay();
@@ -4881,9 +4864,6 @@
     setInterval(refreshDisplay, 10000);
     // Rotate the main board (standings → events → fitness) every 12s.
     setInterval(rotateBoard, 12000);
-    // Recompute "current event" once a minute so the title bar tracks the schedule
-    // without waiting on a full refresh.
-    setInterval(updateNowEvent, 60000);
     // Re-render the layout on window resize so row height tracks middle-zone size.
     window.addEventListener('resize', () => {
       computeRowHeight();
@@ -4942,9 +4922,6 @@
 
       computeRowHeight();
       renderDisplayMiddle(changed);
-      renderDisplayResults();
-      renderDisplayAwards();
-      updateNowEvent();
     } catch (e) {
       console.error('display refresh failed', e);
     }
