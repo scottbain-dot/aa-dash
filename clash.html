@@ -480,6 +480,17 @@
   .record-line { font-size: clamp(10px, 0.85vw, 13px); color: rgba(250,243,237,0.45); margin-top: 4px; }
   .record-line.broken { color: #ffd76a; font-weight: 700; }
 
+  /* Most Improved podium (under the fitness leaders) */
+  .most-improved { margin-top: 14px; }
+  .most-improved .mi-title { font-family: 'Inter', sans-serif; font-size: clamp(12px, 1vw, 15px); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+  .mi-podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .mi-card { display: flex; align-items: center; gap: 14px; background: rgba(212,175,55,0.06); border: 1px solid rgba(212,175,55,0.18); border-radius: 14px; padding: 12px 18px; min-width: 0; }
+  .mi-card .mi-medal { font-size: clamp(22px, 2.2vw, 34px); flex-shrink: 0; }
+  .mi-card .mi-body { min-width: 0; }
+  .mi-card .mi-name { font-family: 'Fraunces', serif; font-weight: 600; color: var(--cream); font-size: clamp(16px, 1.5vw, 24px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mi-card .mi-gain { color: var(--gold); font-variant-numeric: tabular-nums; font-size: clamp(13px, 1.1vw, 18px); }
+  .mi-empty { color: rgba(250,243,237,0.3); font-style: italic; font-size: clamp(12px, 1vw, 15px); }
+
   /* Footer records tracker */
   .rec-list { display: flex; flex-direction: column; overflow: hidden; }
   .rec-row { display: flex; align-items: baseline; gap: 10px; padding: 5px 0; border-bottom: 1px dashed rgba(250,243,237,0.06); font-size: clamp(13px, 1.05vw, 17px); }
@@ -5148,9 +5159,38 @@
       }).join('');
       return `<div class="fit-card"><h3>${escapeHtml(TEST_LABELS_D[tk].label)}</h3>${genders}</div>`;
     }).join('');
+
+    // ----- Most Improved: top 3 athletes by total improvement across tests -----
+    // ImpScore (delta ÷ band width) is comparable across tests, so summing it is
+    // fair; the headline shows each athlete's single biggest gain in real units.
+    const imp = {};
+    (displayState.results || []).forEach(r => {
+      if (FITNESS_KEYS_D.indexOf(r.Event) < 0) return;
+      if (/excused/i.test(r.Notes || '')) return;
+      const sc = parseFloat(r.ImpScore);
+      if (isNaN(sc) || sc <= 0) return;
+      const id = String(r.Athlete_ID || '').trim();
+      const e = imp[id] || (imp[id] = { name: (displayState.athletesById[id] || {}).name || r.Athlete_ID, total: 0, best: null });
+      e.total += sc;
+      if (!e.best || sc > e.best.score) e.best = { tk: r.Event, delta: parseFloat(r.Improvement), score: sc };
+    });
+    const ranked = Object.keys(imp).map(k => imp[k]).sort((a, b) => b.total - a.total).slice(0, 3);
+    const fmtDelta = (tk, d) => {
+      const u = TEST_LABELS_D[tk].unit;
+      if (u === 'sec') return '+' + d.toFixed(2) + 's';
+      return '+' + Math.round(d) + (u === 'cm' ? 'cm' : 'm');
+    };
+    const miCards = ranked.length
+      ? ranked.map((a, i) => `<div class="mi-card"><span class="mi-medal">${medal[i]}</span><span class="mi-body"><div class="mi-name">${escapeHtml(a.name)}</div><div class="mi-gain">${a.best ? escapeHtml(TEST_LABELS_D[a.best.tk].label + ' ' + fmtDelta(a.best.tk, a.best.delta)) : ''}</div></span></div>`).join('')
+      : '<div class="mi-empty">Most improved appears once retests are scored against baselines.</div>';
+
     host.innerHTML = `
       <div class="dboard-title">Fitness leaders &amp; records</div>
       <div class="fit-grid">${cards}</div>
+      <div class="most-improved">
+        <div class="mi-title">Most Improved</div>
+        <div class="mi-podium">${miCards}</div>
+      </div>
     `;
   }
 

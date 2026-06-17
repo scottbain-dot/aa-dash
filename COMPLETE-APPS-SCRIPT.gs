@@ -3214,6 +3214,46 @@ function clashGetBaseline(ss, athleteId, testKey) {
   return best.val;
 }
 
+// Build { athleteId -> { testKey -> earliest-non-zero baseline } } in a single
+// Performance-sheet pass, mirroring clashGetBaseline's earliest-non-zero rule.
+// Used to enrich fitness results with improvement without a per-row sheet read.
+function clashBuildBaselineMap(ss) {
+  var map = {};
+  var perf = ss.getSheetByName('Performance');
+  if (!perf) return map;
+  var data = perf.getDataRange().getValues();
+  if (data.length < 2) return map;
+  var hdr = data[0];
+  var idC = hdr.indexOf('Athlete_ID');
+  var dC = hdr.indexOf('Date');
+  if (idC < 0) return map;
+  var cols = {}; // testKey -> column index
+  for (var tk in CLASH_BASELINE_COLS) {
+    var ci = hdr.indexOf(CLASH_BASELINE_COLS[tk]);
+    if (ci >= 0) cols[tk] = ci;
+  }
+  var picks = {}; // id -> test -> {val,key,row}
+  for (var i = 1; i < data.length; i++) {
+    var id = String(data[i][idC]).trim();
+    if (!id) continue;
+    var dateKey = (dC >= 0) ? clashParseDateMs_(data[i][dC]) : Number.POSITIVE_INFINITY;
+    for (var t in cols) {
+      var v = parseFloat(data[i][cols[t]]);
+      if (isNaN(v) || v === 0) continue;
+      if (!picks[id]) picks[id] = {};
+      var cur = picks[id][t];
+      if (!cur || dateKey < cur.key || (dateKey === cur.key && i < cur.row)) {
+        picks[id][t] = { val: v, key: dateKey, row: i };
+      }
+    }
+  }
+  for (var pid in picks) {
+    map[pid] = {};
+    for (var pt in picks[pid]) map[pid][pt] = picks[pid][pt].val;
+  }
+  return map;
+}
+
 // Robust date key for Performance rows. Real Date cell -> its time; a "dd/mm/yy"
 // or "dd/mm/yyyy" string -> day/month/year (NOT US m/d); anything unparseable ->
 // +Infinity so it sorts last (and earliest-row tie-break still applies).
@@ -3421,9 +3461,23 @@ function handleGetClashResults(ss, opts) {
         return String(r.Athlete_ID).trim() === String(opts.athleteId).trim();
       });
     }
+    // Baseline map (one Performance read) so fitness rows can carry improvement
+    // vs the athlete's earliest mark — powers the display's "Most Improved" board.
+    var baselines = clashBuildBaselineMap(ss);
     var out = rows.map(function (r) {
       var copy = {};
       for (var k in r) if (k !== '__row' && Object.prototype.hasOwnProperty.call(r, k)) copy[k] = r[k];
+      var cfg = CLASH_TESTS[r.Event];
+      if (cfg) {
+        var newResult = parseFloat(r.Raw_Result);
+        var bl = (baselines[String(r.Athlete_ID).trim()] || {})[r.Event];
+        if (!isNaN(newResult) && bl != null && !isNaN(bl)) {
+          var delta = cfg.direction === 'higher' ? (newResult - bl) : (bl - newResult);
+          copy.Baseline = bl;
+          copy.Improvement = delta;                                  // raw units, signed
+          copy.ImpScore = delta > 0 ? (delta / cfg.bandWidth) : 0;   // continuous, cross-test comparable
+        }
+      }
       return copy;
     });
     return { success: true, results: out };
