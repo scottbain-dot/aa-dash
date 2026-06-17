@@ -3161,7 +3161,14 @@
     activeFitTeam: null,    // fitness view: which team tab is showing
     fitnessResults: {},     // test -> aid -> {attempt1, attempt2, cooperBands, cooperPartial, excused} (server cache)
     excusedByTest: {},      // test -> aid -> bool (for the excuse-all label across all four tests)
-    fitnessLoadedOnce: false
+    fitnessLoadedOnce: false,
+    // Local-authoritative caches so leaving an event/tab and coming back never
+    // reverts an entry to a stale server read while a save is still in flight.
+    draftsTouched: {},        // key ('fit:test:aid' / 'evt:event:team') -> edited this session
+    fitnessDraftByTest: {},   // test -> {aid: draft}  (persist across test switches)
+    rankingByEvent: {},       // event -> [team order]  (persist drag order locally)
+    prejudgedNotesByEvent: {},// event -> {team: notes}
+    nominatedDraftByEvent: {} // event -> {team: value}
   };
 
   // Per-test display config + sanity defaults (fallbacks if getClashConfig is missing).
@@ -3360,6 +3367,12 @@
     processQueue();
   }
 
+  // True while a save for this key is queued or in flight (not yet confirmed
+  // on the server). Used to stop a re-read from clobbering an unsaved entry.
+  function isQueued(key) {
+    return !!(saveQueue.items[key] || saveQueue.pending[key]);
+  }
+
   function keyStatus(key) {
     const it = saveQueue.items[key];
     if (it) {
@@ -3545,13 +3558,18 @@
     state.activeEvent = ev.event;
     state.activeEventType = ev.type;
     document.getElementById('eventSelect').value = ev.event;
-    // Reset per-event drafts
-    state.ranking = state.teams.map(t => t.team);
-    state.prejudgedNotes = {};
-    state.nominatedDraft = {};
+    // Per-event drafts persist for the session, so leaving and returning never
+    // loses what you set. Hold references to the per-event caches.
+    state.prejudgedNotes = (state.prejudgedNotesByEvent[ev.event] = state.prejudgedNotesByEvent[ev.event] || {});
+    state.nominatedDraft = (state.nominatedDraftByEvent[ev.event] = state.nominatedDraftByEvent[ev.event] || {});
+    state.ranking = state.rankingByEvent[ev.event]
+      ? state.rankingByEvent[ev.event].slice()
+      : state.teams.map(t => t.team);
 
-    // Pre-load nominated input values from latest saved Clash_Results
+    // Restore from the server only when there's no local edit yet this session
+    // (e.g. a fresh page load) — otherwise the local entry wins.
     if (ev.type === 'nominated') hydrateNominatedFromResults();
+    else if (!state.rankingByEvent[ev.event]) hydrateRankingFromResults();
 
     renderEventMeta(ev);
     renderEventScoring();
@@ -3568,16 +3586,54 @@
   }
 
   async function hydrateNominatedFromResults() {
+    const ev = state.activeEvent;
     try {
-      const res = await apiGet('getClashResults', { event: state.activeEvent });
+      const res = await apiGet('getClashResults', { event: ev });
       const rows = (res && res.results) || [];
+      const cache = (state.nominatedDraftByEvent[ev] = state.nominatedDraftByEvent[ev] || {});
       rows.forEach(r => {
-        if (r.Team && r.Raw_Result !== '' && r.Raw_Result != null) {
-          state.nominatedDraft[r.Team] = r.Raw_Result;
-        }
+        if (!(r.Team && r.Raw_Result !== '' && r.Raw_Result != null)) return;
+        const key = 'evt:' + ev + ':' + r.Team;
+        // Never overwrite a value the user has entered or that's still saving.
+        if (state.draftsTouched[key] || isQueued(key)) return;
+        cache[r.Team] = r.Raw_Result;
       });
-      // Re-render only if still on the same event
-      if (state.activeEventType === 'nominated') renderEventScoring();
+      // Re-render only if still on the same nominated event
+      if (state.activeEvent === ev && state.activeEventType === 'nominated') renderEventScoring();
+    } catch (e) { /* non-fatal */ }
+  }
+
+  // Reconstruct the saved team order for whole/prejudged events from the server,
+  // so a fresh load shows the real order (and restores judging notes). Skipped
+  // once the user has dragged this session — the local order wins then.
+  async function hydrateRankingFromResults() {
+    const ev = state.activeEvent;
+    try {
+      const res = await apiGet('getClashResults', { event: ev });
+      const rows = (res && res.results) || [];
+      if (state.activeEvent !== ev || state.rankingByEvent[ev]) return; // local order set meanwhile
+      const raw = {}, notes = {};
+      rows.forEach(r => {
+        if (r.Team == null) return;
+        if (r.Raw_Result !== '' && r.Raw_Result != null) raw[r.Team] = parseFloat(r.Raw_Result);
+        if (r.Notes) notes[r.Team] = String(r.Notes);
+      });
+      if (Object.keys(raw).length) {
+        const lower = isEventLowerBetter(ev);
+        // Saved Raw_Result encodes finishing position; recover first→last order.
+        state.ranking = state.teams.map(t => t.team).slice().sort((a, b) => {
+          const ra = raw[a], rb = raw[b], ha = ra != null, hb = rb != null;
+          if (ha && hb) return lower ? ra - rb : rb - ra;
+          if (ha) return -1; if (hb) return 1; return 0;
+        });
+      }
+      const nd = (state.prejudgedNotesByEvent[ev] = state.prejudgedNotesByEvent[ev] || {});
+      Object.keys(notes).forEach(team => {
+        const key = 'evt:' + ev + ':' + team;
+        if (!state.draftsTouched[key] && !isQueued(key) && nd[team] == null) nd[team] = notes[team];
+      });
+      state.prejudgedNotes = nd;
+      if (state.activeEvent === ev && (state.activeEventType === 'whole' || state.activeEventType === 'prejudged')) renderEventScoring();
     } catch (e) { /* non-fatal */ }
   }
 
@@ -3683,6 +3739,7 @@
     if (!card) return;
     const teamName = card.dataset.team;
     state.nominatedDraft[teamName] = input.value;
+    state.draftsTouched['evt:' + state.activeEvent + ':' + teamName] = true;
     scheduleNominatedSave(teamName);
   }
 
@@ -3706,7 +3763,9 @@
   function onPrejudgedNotes(textarea) {
     const card = textarea.closest('.team-card');
     if (!card) return;
-    state.prejudgedNotes[card.dataset.team] = textarea.value;
+    const teamName = card.dataset.team;
+    state.prejudgedNotes[teamName] = textarea.value;
+    state.draftsTouched['evt:' + state.activeEvent + ':' + teamName] = true;
     scheduleRankingSave();
   }
 
@@ -3820,8 +3879,10 @@
     document.removeEventListener('pointercancel', onDragPointerUp);
     dragState = null;
     if (!moved) return; // a plain tap/click on the handle — nothing reordered
-    // Commit the new order from the DOM and auto-save it.
+    // Commit the new order from the DOM, cache it locally (so returning to this
+    // event keeps it), and auto-save it.
     state.ranking = [...area.querySelectorAll('.team-card')].map(c => c.dataset.team);
+    state.rankingByEvent[state.activeEvent] = state.ranking.slice();
     scheduleRankingSave();
   }
 
@@ -3866,7 +3927,8 @@
   function selectTest(testKey) {
     flushPendingDebounces();   // commit any debounced saves for the old test first
     state.activeTest = testKey;
-    state.fitnessDraft = {};    // clear drafts when switching tests (payloads already captured)
+    // Persist drafts per test so switching tabs and back keeps what was entered.
+    state.fitnessDraft = (state.fitnessDraftByTest[testKey] = state.fitnessDraftByTest[testKey] || {});
     renderTestPicker();
     renderFitnessScoring();
     hydrateFitnessFromResults();
@@ -3876,9 +3938,13 @@
     try {
       const res = await apiGet('getClashResults', { event: state.activeTest });
       const rows = (res && res.results) || [];
+      const tk = state.activeTest;
       rows.forEach(r => {
         const aid = String(r.Athlete_ID || '').trim();
         if (!aid) return;
+        // Don't overwrite an entry the user has touched this session or that's
+        // still saving — that was the cause of values reverting on tab switch.
+        if (state.draftsTouched['fit:' + tk + ':' + aid] || isQueued('fit:' + tk + ':' + aid)) return;
         const isExcused = /excused/i.test(String(r.Notes || ''));
         state.fitnessDraft[aid] = {
           attempt1: r.Attempt_1 != null ? r.Attempt_1 : '',
@@ -3887,9 +3953,9 @@
           cooperPartial: r.Cooper_Partial_m != null ? r.Cooper_Partial_m : '',
           excused: isExcused
         };
-        setExcused(state.activeTest, aid, isExcused);
+        setExcused(tk, aid, isExcused);
       });
-      renderFitnessScoring();
+      if (state.activeTest === tk) renderFitnessScoring();
     } catch (e) { /* non-fatal */ }
   }
 
@@ -4057,6 +4123,7 @@
   function updateFitnessInput(aid, field, value) {
     if (!state.fitnessDraft[aid]) state.fitnessDraft[aid] = {};
     state.fitnessDraft[aid][field] = value;
+    state.draftsTouched['fit:' + state.activeTest + ':' + aid] = true; // local entry wins over re-reads
     if (field === 'excused') setExcused(state.activeTest, aid, !!value);
     // Sanity check on text fields
     if (['attempt1', 'attempt2', 'cooperBands', 'cooperPartial'].includes(field)) {
@@ -4110,6 +4177,7 @@
     const makeAll = !isAthleteAllExcused(aid);
     TEST_KEYS.forEach(tk => {
       setExcused(tk, aid, makeAll);
+      state.draftsTouched['fit:' + tk + ':' + aid] = true;
       const data = (tk === state.activeTest)
         ? (state.fitnessDraft[aid] || {})
         : ((state.fitnessResults[tk] || {})[String(aid)] || {});
@@ -4151,6 +4219,14 @@
           excused: isEx
         };
         (excused[tk] = excused[tk] || {})[aid] = isEx;
+      });
+      // Keep locally-edited excused flags (a stale read must not flip them).
+      Object.keys(state.fitnessDraftByTest).forEach(tk => {
+        Object.keys(state.fitnessDraftByTest[tk]).forEach(aid => {
+          if (state.draftsTouched['fit:' + tk + ':' + aid]) {
+            (excused[tk] = excused[tk] || {})[aid] = !!state.fitnessDraftByTest[tk][aid].excused;
+          }
+        });
       });
       state.fitnessResults = byTest;
       state.excusedByTest = excused;
