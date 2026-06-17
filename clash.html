@@ -565,6 +565,20 @@
     .schedule-item .ev { font-size: 15px; }
   }
 
+  /* ----- Short viewports (landscape phones, short windows): the fixed 15%
+     header band is too short, so the big title wraps and overlaps the boards.
+     Collapse the header to its content height and keep the title on one line. */
+  @media (max-height: 520px) {
+    #displayView { grid-template-rows: auto 1fr; }
+    .display-header { padding: 8px 22px 6px; }
+    .display-header .brand-row { gap: 4px 14px; margin-bottom: 0; align-items: baseline; flex-wrap: nowrap; }
+    .display-header .warriors-tag { width: auto; font-size: 10px; }
+    .display-header h1 { font-size: clamp(20px, 4vh, 30px); white-space: nowrap; }
+    .display-header .year { font-size: 16px; margin-left: auto; }
+    .display-middle { padding: 10px 22px 14px; overflow-y: auto; }
+    .board-indicator { top: 2px; }
+  }
+
   /* ============================================
      STUDENT VIEW — default route (signed in)
      ============================================ */
