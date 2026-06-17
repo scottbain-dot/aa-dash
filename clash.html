@@ -442,6 +442,54 @@
     font-style: italic;
   }
 
+  /* ----- Rotating display boards (standings / events / fitness) ----- */
+  .board-indicator {
+    position: absolute; top: 8px; right: 24px; z-index: 3;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .board-indicator .dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(250,243,237,0.22); transition: background .3s; }
+  .board-indicator .dot.on { background: var(--gold); }
+  .dboard { display: none; flex: 1; min-height: 0; flex-direction: column; }
+  .dboard.active { display: flex; }
+  .dboard-title { font-family: 'Inter', sans-serif; font-size: clamp(12px, 1vw, 15px); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+  .dboard-sub { font-size: clamp(12px, 1vw, 16px); color: rgba(250,243,237,0.6); margin: 0 0 14px; }
+  .dboard-sub b { color: var(--cream); font-weight: 600; }
+
+  /* Event points matrix */
+  .evt-matrix { width: 100%; border-collapse: collapse; }
+  .evt-matrix th, .evt-matrix td { padding: 6px 8px; text-align: center; font-variant-numeric: tabular-nums; }
+  .evt-matrix th { font-size: clamp(10px, 0.85vw, 13px); color: rgba(250,243,237,0.45); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+  .evt-matrix th.team-h, .evt-matrix td.team { text-align: left; }
+  .evt-matrix td.team { font-family: 'Fraunces', serif; font-weight: 600; color: var(--cream); font-size: clamp(15px, 1.5vw, 24px); white-space: nowrap; }
+  .evt-matrix td { color: rgba(250,243,237,0.85); font-size: clamp(14px, 1.4vw, 22px); }
+  .evt-matrix td.total, .evt-matrix th.total { color: var(--gold); font-weight: 700; font-family: 'Fraunces', serif; }
+  .evt-matrix col.latest, .evt-matrix th.latest, .evt-matrix td.latest { background: rgba(212,175,55,0.14); }
+  .evt-matrix tbody tr + tr td { border-top: 1px solid rgba(250,243,237,0.06); }
+
+  /* Fitness leaders podiums */
+  .fit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; flex: 1; align-content: start; }
+  .fit-card { background: rgba(250,243,237,0.03); border: 1px solid rgba(250,243,237,0.07); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .fit-card h3 { font-family: 'Fraunces', serif; font-size: clamp(16px, 1.5vw, 24px); color: var(--cream); font-weight: 600; }
+  .fit-gender { margin-top: 6px; }
+  .fit-gender .glab { font-size: clamp(9px, 0.75vw, 12px); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(250,243,237,0.4); }
+  .podium-row { display: flex; align-items: baseline; gap: 8px; font-size: clamp(13px, 1.1vw, 18px); padding: 2px 0; }
+  .podium-row .medal { flex: 0 0 1.4em; }
+  .podium-row .nm { color: var(--cream); font-family: 'Fraunces', serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .podium-row .mk { color: var(--gold); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .podium-empty { font-size: clamp(11px, 0.9vw, 14px); color: rgba(250,243,237,0.3); font-style: italic; padding: 2px 0; }
+  .record-line { font-size: clamp(10px, 0.85vw, 13px); color: rgba(250,243,237,0.45); margin-top: 4px; }
+  .record-line.broken { color: #ffd76a; font-weight: 700; }
+
+  /* Footer records tracker */
+  .rec-list { display: flex; flex-direction: column; overflow: hidden; }
+  .rec-row { display: flex; align-items: baseline; gap: 10px; padding: 5px 0; border-bottom: 1px dashed rgba(250,243,237,0.06); font-size: clamp(13px, 1.05vw, 17px); }
+  .rec-row:last-child { border-bottom: 0; }
+  .rec-row .rtest { width: 120px; flex-shrink: 0; font-size: clamp(10px, 0.78vw, 12px); text-transform: uppercase; letter-spacing: 0.1em; color: rgba(250,243,237,0.45); }
+  .rec-row .holder { flex: 1; font-family: 'Fraunces', serif; color: rgba(250,243,237,0.82); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rec-row .mk { font-family: 'Fraunces', serif; color: var(--gold); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .rec-row .badge { flex-shrink: 0; background: var(--gold); color: var(--ink); font-size: clamp(9px, 0.7vw, 11px); font-weight: 800; padding: 1px 7px; border-radius: 6px; letter-spacing: 0.06em; }
+  .rec-row.broken .holder { color: #ffd76a; }
+
   /* Tall-narrow projector fallback: don't break layout below 1280×720 */
   @media (max-width: 1280px) {
     .display-header { padding: 20px 32px 0; }
@@ -2821,8 +2869,8 @@
       <ul class="ticker-list" id="dResults"></ul>
     </div>
     <div class="footer-pane">
-      <h2>Individual Awards So Far</h2>
-      <div class="awards-grid" id="dAwards"></div>
+      <h2>Records Watch</h2>
+      <div class="rec-list" id="dAwards"></div>
     </div>
   </footer>
 </div>
@@ -2942,7 +2990,11 @@
     bootstrapStaff();
   } else if (isDisplayMode) {
     document.getElementById('displayView').classList.add('visible');
-    bootstrapDisplay();
+    // Defer one tick so the fetch helpers' consts (declared lower in this
+    // script) are initialised before the first load — otherwise the initial
+    // bootstrap hits a temporal-dead-zone on FETCH_TIMEOUT_MS and the first
+    // data load (team roster, names) silently fails.
+    setTimeout(bootstrapDisplay, 0);
   } else if (isAdminMode || isScoreMode) {
     document.getElementById('authGate').classList.add('visible');
   } else {
@@ -4791,6 +4843,20 @@
   };
   const FITNESS_KEYS_D = Object.keys(TEST_LABELS_D);
 
+  // Last year's individual records, in each test's stored units (cm / sec / m),
+  // so this year's best marks can be compared and "broken" flagged on screen.
+  const DISPLAY_RECORDS = {
+    broad_jump:  { dir: 'higher', M: { name: 'Asa Cowley',      v: 263 },  F: { name: 'Caroline Mouritsen', v: 196 } },
+    sprint_40m:  { dir: 'lower',  M: { name: 'Jasper Michiels',  v: 5.24 }, F: { name: 'Elizabeth Talmadge',  v: 5.73 } },
+    agility_510: { dir: 'lower',  M: { name: 'Andrew Lamb',      v: 4.77 }, F: { name: 'Caroline Mouritsen',  v: 5.02 } },
+    cooper:      { dir: 'higher', M: { name: 'Andrew Lamb',      v: 3080 }, F: { name: 'Caroline Mouritsen',  v: 2440 } }
+  };
+  // Short column headers for the event points matrix (hidden event stays masked).
+  const EVENT_ABBR_D = {
+    'Warm Up': 'Warm', 'Hype': 'Hype', 'Tug of War': 'Tug', 'Relays': 'Relay', 'Game': 'Game',
+    '60s Row': 'Row', 'Grit Challenge': 'Team Ch', 'Planning': 'Plan', 'Snacks': 'Snack'
+  };
+
   const displayState = {
     events: [],
     teams: [],
@@ -4798,7 +4864,10 @@
     results: [],
     standings: [],
     prevStandings: {},     // team -> { finalRank, fitnessScore, eventPoints }
-    rowHeightPx: 96
+    rowHeightPx: 96,
+    boards: ['standings'], // which boards are in the rotation (data-dependent)
+    boardIndex: 0,
+    boardBuilt: false
   };
 
   async function bootstrapDisplay() {
@@ -4810,6 +4879,8 @@
       console.error(e);
     }
     setInterval(refreshDisplay, 10000);
+    // Rotate the main board (standings → events → fitness) every 12s.
+    setInterval(rotateBoard, 12000);
     // Recompute "current event" once a minute so the title bar tracks the schedule
     // without waiting on a full refresh.
     setInterval(updateNowEvent, 60000);
@@ -4967,25 +5038,143 @@
     if (!host) return;
     const targetMode = (displayState.results || []).length > 0 ? 'standings' : 'schedule';
 
-    if (currentMiddleMode !== targetMode && targetMode === 'standings') {
-      // Build the persistent standings shell exactly once when switching in.
-      host.innerHTML = `
-        <div class="table-head">
-          <div class="col-rank">Rank</div>
-          <div>Team</div>
-          <div class="col-standing">Standing</div>
-        </div>
-        <div class="standings" id="dStandings"></div>
-      `;
-    }
-    currentMiddleMode = targetMode;
-
     if (targetMode === 'schedule') {
-      // Schedule can change (admin edits events) — cheap to redraw, no animation needed.
+      currentMiddleMode = 'schedule';
+      displayState.boardBuilt = false;
       host.innerHTML = renderSchedulePane();
-    } else {
-      renderStandingsRows(changed || {});
+      return;
     }
+
+    // Build the 3-board shell once. The standings board keeps its rows in the
+    // DOM so `transition: top` still animates the reorder; events/fitness are
+    // rebuilt each refresh. Rotation just toggles which board is visible.
+    if (currentMiddleMode !== 'standings' || !displayState.boardBuilt) {
+      host.innerHTML = `
+        <div class="board-indicator" id="dBoardDots"></div>
+        <div class="dboard active" id="boardStandings">
+          <div class="table-head">
+            <div class="col-rank">Rank</div>
+            <div>Team</div>
+            <div class="col-standing">Standing</div>
+          </div>
+          <div class="standings" id="dStandings"></div>
+        </div>
+        <div class="dboard" id="boardEvents"></div>
+        <div class="dboard" id="boardFitness"></div>
+      `;
+      displayState.boardBuilt = true;
+    }
+    currentMiddleMode = 'standings';
+
+    // Which boards have data to show.
+    const boards = ['standings'];
+    const hasTeamEvents = (displayState.results || []).some(r => FITNESS_KEYS_D.indexOf(r.Event) < 0 && r.Points !== '' && r.Points != null);
+    const hasFitness = (displayState.results || []).some(r => FITNESS_KEYS_D.indexOf(r.Event) >= 0 && r.Raw_Result !== '' && r.Raw_Result != null && !/excused/i.test(r.Notes || ''));
+    if (hasTeamEvents) boards.push('events');
+    if (hasFitness) boards.push('fitness');
+    displayState.boards = boards;
+    if (displayState.boardIndex >= boards.length) displayState.boardIndex = 0;
+
+    renderStandingsRows(changed || {});
+    renderEventsBoard();
+    renderFitnessBoard();
+    showActiveBoard();
+  }
+
+  function rotateBoard() {
+    if (currentMiddleMode !== 'standings') return;     // pre-results: schedule only
+    const n = (displayState.boards || []).length;
+    if (n < 2) return;
+    displayState.boardIndex = (displayState.boardIndex + 1) % n;
+    showActiveBoard();
+  }
+
+  function showActiveBoard() {
+    const map = { standings: 'boardStandings', events: 'boardEvents', fitness: 'boardFitness' };
+    const active = displayState.boards[displayState.boardIndex] || 'standings';
+    Object.keys(map).forEach(k => {
+      const el = document.getElementById(map[k]);
+      if (el) el.classList.toggle('active', k === active);
+    });
+    const dots = document.getElementById('dBoardDots');
+    if (dots) dots.innerHTML = displayState.boards
+      .map((b, i) => `<span class="dot ${i === displayState.boardIndex ? 'on' : ''}"></span>`).join('');
+  }
+
+  // ---------- Board: event points matrix (results + contribution) ----------
+  function renderEventsBoard() {
+    const host = document.getElementById('boardEvents');
+    if (!host) return;
+    const evList = (displayState.events || []).slice()
+      .filter(e => !!e.event)
+      .sort((a, b) => a.order - b.order);
+    // points[team][event]
+    const pts = {};
+    let latest = null, latestT = -1;
+    (displayState.results || []).forEach(r => {
+      if (FITNESS_KEYS_D.indexOf(r.Event) >= 0) return;
+      const p = parseFloat(r.Points);
+      if (!isNaN(p)) (pts[r.Team] = pts[r.Team] || {})[r.Event] = p;
+      const t = new Date(r.Timestamp).getTime() || 0;
+      if (t > latestT && r.Raw_Result !== '' && r.Raw_Result != null) { latestT = t; latest = r.Event; }
+    });
+    // teams ordered by total event points (this board is about the event race)
+    const teams = (displayState.standings || []).slice().sort((a, b) => (b.eventPoints || 0) - (a.eventPoints || 0));
+    const head = evList.map(e => `<th class="${e.event === latest ? 'latest' : ''}">${escapeHtml(EVENT_ABBR_D[e.event] || e.event.slice(0, 5))}</th>`).join('');
+    const body = teams.map(s => {
+      const cells = evList.map(e => {
+        const v = (pts[s.team] || {})[e.event];
+        return `<td class="${e.event === latest ? 'latest' : ''}">${v == null ? '·' : roundDisplay(v)}</td>`;
+      }).join('');
+      return `<tr><td class="team">${escapeHtml(s.team.replace('Team ', ''))}</td>${cells}<td class="total">${roundDisplay(s.eventPoints || 0)}</td></tr>`;
+    }).join('');
+    const latestName = latest ? ((evList.find(e => e.event === latest) || {}).hidden ? 'Team Challenge' : latest) : '';
+    host.innerHTML = `
+      <div class="dboard-title">Event points — building the table</div>
+      ${latest ? `<div class="dboard-sub">Just in: <b>${escapeHtml(latestName)}</b> — every event adds 6·5·4·3·2·1 down the field.</div>` : '<div class="dboard-sub">Each event adds 6·5·4·3·2·1 points down the field.</div>'}
+      <table class="evt-matrix">
+        <thead><tr><th class="team-h">Team</th>${head}<th class="total">Pts</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    `;
+  }
+
+  // ---------- Board: fitness leaders (1·2·3) + records ----------
+  function renderFitnessBoard() {
+    const host = document.getElementById('boardFitness');
+    if (!host) return;
+    const medal = ['🥇', '🥈', '🥉'];
+    const cards = FITNESS_KEYS_D.map(tk => {
+      const dir = DISPLAY_RECORDS[tk].dir;
+      const genders = ['F', 'M'].map(g => {
+        const list = (displayState.results || []).filter(r => {
+          if (r.Event !== tk) return false;
+          if (/excused/i.test(r.Notes || '')) return false;
+          if (r.Raw_Result === '' || r.Raw_Result == null || isNaN(parseFloat(r.Raw_Result))) return false;
+          const info = displayState.athletesById[String(r.Athlete_ID || '').trim()];
+          return String((info && info.gender) || '').toUpperCase().charAt(0) === g;
+        }).map(r => ({
+          name: (displayState.athletesById[String(r.Athlete_ID || '').trim()] || {}).name || r.Athlete_ID,
+          raw: parseFloat(r.Raw_Result)
+        })).sort((a, b) => dir === 'lower' ? a.raw - b.raw : b.raw - a.raw);
+        const top = list.slice(0, 3);
+        const rec = DISPLAY_RECORDS[tk][g];
+        const broken = top[0] && betterRaw(top[0].raw, rec.v, dir);
+        const rows = top.length
+          ? top.map((p, i) => `<div class="podium-row"><span class="medal">${medal[i]}</span><span class="nm">${escapeHtml(p.name)}</span><span class="mk">${escapeHtml(formatFitnessResult({ Event: tk, Raw_Result: p.raw }))}</span></div>`).join('')
+          : '<div class="podium-empty">No results yet</div>';
+        const recMark = formatFitnessResult({ Event: tk, Raw_Result: rec.v });
+        const recLine = broken
+          ? `★ RECORD BROKEN — was ${escapeHtml(rec.name)} ${escapeHtml(recMark)}`
+          : `Record: ${escapeHtml(rec.name)} ${escapeHtml(recMark)}`;
+        return `<div class="fit-gender"><div class="glab">${g === 'F' ? 'Girls' : 'Boys'}</div>${rows}<div class="record-line ${broken ? 'broken' : ''}">${recLine}</div></div>`;
+      }).join('');
+      return `<div class="fit-card"><h3>${escapeHtml(TEST_LABELS_D[tk].label)}</h3>${genders}</div>`;
+    }).join('');
+    host.innerHTML = `
+      <div class="dboard-title">Fitness leaders &amp; records</div>
+      <div class="fit-grid">${cards}</div>
+    `;
   }
 
   function renderSchedulePane() {
@@ -5114,11 +5303,13 @@
       const eventName = evMeta && evMeta.hidden ? 'Team Challenge' : (r.Event || '');
       const rank = parseFloat(r.Rank);
       const rankText = isNaN(rank) ? '' : ordinal(Math.round(rank));
+      const pts = parseFloat(r.Points);
+      const ptsText = isNaN(pts) ? '' : '+' + roundDisplay(pts);
       return `
         <li>
           <span class="who">${escapeHtml(r.Team || '')}</span>
           <span class="what">${rankText ? rankText + ' in ' : 'Result · '}${escapeHtml(eventName)}</span>
-          <span class="v"></span>
+          <span class="v">${ptsText}</span>
         </li>
       `;
     }).join('');
@@ -5147,69 +5338,39 @@
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   }
 
+  // Footer: persistent records tracker — every test/gender record, flashing
+  // BROKEN (with the new holder + mark) the moment this year's best beats it.
   function renderDisplayAwards() {
     const host = document.getElementById('dAwards');
     if (!host) return;
-    const rows = (displayState.results || []).filter(r => FITNESS_KEYS_D.indexOf(r.Event) >= 0);
-    if (!rows.length) {
-      host.innerHTML = `<div class="award-empty">Awards appear here as fitness scores come in.</div>`;
-      return;
-    }
-
-    // bucket by test → gender → best athlete (by Points, tiebreak by direction-aware raw)
-    const directions = { broad_jump: 'higher', sprint_40m: 'lower', agility_510: 'lower', cooper: 'higher' };
-    const buckets = {};
-    FITNESS_KEYS_D.forEach(k => { buckets[k] = { M: null, F: null }; });
-
-    rows.forEach(r => {
+    const best = {}; // 'test:g' -> {name, raw}
+    (displayState.results || []).forEach(r => {
+      if (FITNESS_KEYS_D.indexOf(r.Event) < 0) return;
       if (/excused/i.test(String(r.Notes || ''))) return;
+      const raw = parseFloat(r.Raw_Result);
+      if (isNaN(raw)) return;
       const info = displayState.athletesById[String(r.Athlete_ID || '').trim()];
       const g = String((info && info.gender) || '').toUpperCase().charAt(0);
       if (g !== 'M' && g !== 'F') return;
-      const pts = parseFloat(r.Points);
-      const raw = parseFloat(r.Raw_Result);
-      if (isNaN(pts) && isNaN(raw)) return;
-      const test = r.Event;
-      const cur = buckets[test][g];
-      const beat = !cur
-        || (pts > cur.pts)
-        || (pts === cur.pts && betterRaw(raw, cur.raw, directions[test]));
-      if (beat) {
-        buckets[test][g] = {
-          name: info ? info.name : (r.Athlete_ID || 'Athlete'),
-          pts: isNaN(pts) ? null : pts,
-          raw: isNaN(raw) ? null : raw,
-          test: test
-        };
-      }
+      const k = r.Event + ':' + g, dir = DISPLAY_RECORDS[r.Event].dir, cur = best[k];
+      if (!cur || betterRaw(raw, cur.raw, dir)) best[k] = { name: (info && info.name) || r.Athlete_ID, raw: raw };
     });
 
-    const cells = [];
+    const rows = [];
     FITNESS_KEYS_D.forEach(k => {
       ['F', 'M'].forEach(g => {
-        const w = buckets[k][g];
-        const t = TEST_LABELS_D[k];
-        if (!w) {
-          cells.push(`
-            <div class="award-cell">
-              <div class="test">${escapeHtml(t.label)} · ${g}</div>
-              <div class="award-empty">—</div>
-            </div>
-          `);
-          return;
+        const rec = DISPLAY_RECORDS[k][g], dir = DISPLAY_RECORDS[k].dir;
+        const b = best[k + ':' + g];
+        const broken = b && betterRaw(b.raw, rec.v, dir);
+        const test = TEST_LABELS_D[k].label + ' · ' + (g === 'F' ? '♀' : '♂');
+        if (broken) {
+          rows.push(`<div class="rec-row broken"><span class="rtest">${escapeHtml(test)}</span><span class="holder">${escapeHtml(b.name)}</span><span class="mk">${escapeHtml(formatFitnessResult({ Event: k, Raw_Result: b.raw }))}</span><span class="badge">RECORD</span></div>`);
+        } else {
+          rows.push(`<div class="rec-row"><span class="rtest">${escapeHtml(test)}</span><span class="holder">${escapeHtml(rec.name)}</span><span class="mk">${escapeHtml(formatFitnessResult({ Event: k, Raw_Result: rec.v }))}</span></div>`);
         }
-        cells.push(`
-          <div class="award-cell">
-            <div class="test">${escapeHtml(t.label)} · ${g}</div>
-            <div class="winner">
-              <span class="nm">${escapeHtml(w.name)}</span>
-              <span class="vl">${escapeHtml(formatFitnessResult({ Event: k, Raw_Result: w.raw }))}</span>
-            </div>
-          </div>
-        `);
       });
     });
-    host.innerHTML = cells.join('');
+    host.innerHTML = rows.join('');
   }
 
   function betterRaw(a, b, direction) {
