@@ -512,6 +512,59 @@
     }
   }
 
+  /* ----- Phones / narrow portrait: reflow the big-screen layout ----- */
+  @media (max-width: 640px) {
+    /* Header auto-height, middle takes the rest and scrolls internally */
+    #displayView { grid-template-rows: auto 1fr; }
+    .display-header { padding: 14px 16px 10px; }
+    .display-header .brand-row { flex-wrap: wrap; gap: 4px 12px; margin-bottom: 0; }
+    .display-header .warriors-tag { width: 100%; font-size: 11px; letter-spacing: 0.18em; }
+    .display-header h1 { font-size: 30px; }
+    .display-header .year { font-size: 18px; margin-left: auto; }
+
+    .display-middle { padding: 12px 14px 20px; overflow-y: auto; overflow-x: hidden; }
+    .board-indicator { top: 0; right: 14px; }
+    .dboard.active { overflow-y: auto; min-height: 0; }
+    .dboard-title { font-size: 12px; margin-bottom: 8px; }
+
+    /* Standings: smaller rank/name, let the worded standing wrap */
+    .table-head { grid-template-columns: 42px 1fr auto; gap: 10px; padding: 0 12px 10px; font-size: 10px; letter-spacing: 0.1em; }
+    .standings-row-d { grid-template-columns: 42px 1fr auto; gap: 10px; padding: 0 12px; border-radius: 10px; border-left-width: 5px; }
+    .standings-row-d .rank-num { font-size: 30px; }
+    .standings-row-d .team-name-d { font-size: 18px; }
+    .standings-row-d .team-sport { font-size: 10px; margin-top: 2px; }
+    .standings-row-d .standing-line { font-size: 13px; white-space: normal; line-height: 1.2; }
+    .standings-row-d .fitness-mini { font-size: 11px; margin-top: 3px; }
+
+    /* Event matrix: swipe horizontally, keep columns legible */
+    #boardEvents { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .evt-matrix { min-width: 540px; }
+    .evt-matrix th { font-size: 10px; padding: 5px 6px; }
+    .evt-matrix td { font-size: 14px; padding: 5px 6px; }
+    .evt-matrix td.team { font-size: 14px; }
+
+    /* Fitness leaders: two columns, scroll within the board */
+    .fit-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; flex: none; }
+    .fit-card { padding: 10px 12px; }
+    .fit-card h3 { font-size: 16px; }
+    .fit-gender .glab { font-size: 10px; }
+    .podium-row { font-size: 13px; }
+    .record-line { font-size: 10px; }
+
+    /* Most improved: stack into one column */
+    .most-improved .mi-title { font-size: 12px; }
+    .mi-podium { grid-template-columns: 1fr; gap: 8px; }
+    .mi-card { padding: 10px 14px; }
+    .mi-card .mi-name { font-size: 16px; }
+    .mi-card .mi-gain { font-size: 13px; }
+
+    /* Pre-event schedule: single column */
+    .schedule-pane { grid-template-columns: 1fr; }
+    .schedule-item { padding: 12px 14px; gap: 12px; }
+    .schedule-item .slot { min-width: 78px; font-size: 17px; }
+    .schedule-item .ev { font-size: 15px; }
+  }
+
   /* ============================================
      STUDENT VIEW — default route (signed in)
      ============================================ */
