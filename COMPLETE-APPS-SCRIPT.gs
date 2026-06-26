@@ -2559,7 +2559,25 @@ function apEnsureTrainingSessions(ss) {
     ]]);
     sheet.getRange('1:1').setFontWeight('bold');
   }
+  // Ensure the optional LAB columns exist on the live sheet. Appends by NAME,
+  // so an existing sheet (which may not be a fresh 16-column one) is upgraded
+  // in place without disturbing existing columns or data.
+  apEnsureColumns(sheet, ['Target', 'Readiness_JSON']);
   return sheet;
+}
+
+// Append any missing headers by name at the end of the sheet. Idempotent.
+function apEnsureColumns(sheet, names) {
+  var lastCol = sheet.getLastColumn();
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var toAdd = [];
+  for (var i = 0; i < names.length; i++) {
+    if (headers.indexOf(names[i]) === -1) toAdd.push(names[i]);
+  }
+  if (toAdd.length) {
+    sheet.getRange(1, lastCol + 1, 1, toAdd.length).setValues([toAdd]);
+    sheet.getRange(1, 1, 1, lastCol + toAdd.length).setFontWeight('bold');
+  }
 }
 
 function apEnsurePBs(ss) {
@@ -2702,7 +2720,9 @@ function apSessionObj(r) {
     status: r.Status || 'planned',
     isPB: r.Is_PB === true || r.Is_PB === 'TRUE',
     workout: apParse(r.Planned_JSON, []),
-    note: r.Note || ''
+    note: r.Note || '',
+    target: r.Target || '',
+    readiness: apParse(r.Readiness_JSON, null)
   };
 }
 
@@ -2752,6 +2772,8 @@ function handleSaveSession(ss, email, session) {
       'Is_PB': session.isPB === true,
       'Planned_JSON': JSON.stringify(session.workout || []),
       'Note': session.note || '',
+      'Target': session.target || '',
+      'Readiness_JSON': session.readiness ? JSON.stringify(session.readiness) : '',
       'Updated': new Date()
     };
     var rows = apReadObjects(sheet);

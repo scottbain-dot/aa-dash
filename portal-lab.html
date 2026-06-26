@@ -1,0 +1,3996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1411">
+<title>AA · Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --bg: #fef8f6;
+    --bg-warm: #f5ebe5;
+    --ink: #1a1411;
+    --ink-soft: #3a2e28;
+    --ink-mute: #7a6a60;
+    --burgundy: #874B46;
+    --burgundy-dark: #6b3a36;
+    --gold: #D4AF37;
+    --gold-soft: #e8c969;
+    --sage: #7a9078;
+    --sage-soft: #a3b8a1;
+    --cream: #faf3ed;
+    --surface: #ffffff;
+    --line: #e8d9cf;
+    --line-soft: #f0e4dc;
+    --shadow-soft: 0 1px 3px rgba(26,20,17,0.04), 0 8px 24px rgba(26,20,17,0.04);
+    /* Warmed editorial card shadow, toward the profile-mockup look */
+    --shadow-card: 0 8px 28px rgba(135,75,70,0.06);
+    --shadow-lift: 0 4px 12px rgba(26,20,17,0.06), 0 24px 48px rgba(26,20,17,0.08);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  /* ============================
+     DARK NAV HEADER
+     ============================ */
+  .nav {
+    background: var(--ink);
+    color: var(--cream);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  .nav-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 14px 20px 0;
+  }
+  .nav-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .nav-brand-mark {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--cream);
+    letter-spacing: -0.01em;
+  }
+  .nav-brand-mark em {
+    color: var(--gold);
+    font-style: italic;
+  }
+  .nav-athlete {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: rgba(250,243,237,0.55);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-athlete-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--burgundy);
+    color: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .nav-athlete strong {
+    color: var(--cream);
+    font-weight: 500;
+  }
+  .tabs {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin: 0 -20px;
+    padding: 0 20px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 12px 0;
+    margin-right: 24px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(250,243,237,0.55);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .tab:last-child { margin-right: 0; }
+  .tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+  .tab:hover:not(.active) {
+    color: var(--cream);
+  }
+
+  /* ============================
+     PHASE CONTEXT IN THE HERO (eyebrow row) — Week / Load
+     ============================ */
+  .block-eyebrow-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .block-phase-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    padding: 4px 11px; border-radius: 9999px; white-space: nowrap;
+  }
+  .block-phase-chip > span { font-size: 12px; line-height: 1; }
+  .block-phase-chip.ym-build    { background: var(--gold);     color: var(--burgundy-dark); }
+  .block-phase-chip.ym-maintain { background: var(--sage);     color: var(--cream); }
+  .block-phase-chip.ym-peak     { background: var(--burgundy); color: var(--cream); }
+  .block-phase-chip.ym-recover  { background: var(--cream);    color: var(--ink); border: 1px solid var(--line); }
+  .block-phase-chip.ym-off      { background: var(--ink);      color: var(--cream); }
+  .block-phase-month {
+    font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 600; color: var(--ink-mute);
+  }
+  .block-phase-link {
+    margin-left: auto; background: none; border: none; cursor: pointer; padding: 0;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: var(--burgundy); white-space: nowrap;
+  }
+  .block-phase-link:hover { text-decoration: underline; }
+
+  /* ============================
+     BLOCK CONTEXT BAR
+     ============================ */
+  .block-bar {
+    padding: 24px 20px 22px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  .block-bar-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .block-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+    font-weight: 500;
+    margin: 0 0 8px;
+  }
+  .block-title {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--ink);
+    margin: 0 0 6px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .block-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .block-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-mute);
+    margin: 0;
+    line-height: 1.4;
+  }
+  .block-meta {
+    display: flex;
+    gap: 20px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--ink-mute);
+  }
+  .block-meta-item strong {
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 18px;
+    display: block;
+    margin-bottom: 1px;
+  }
+
+  @media (min-width: 820px) {
+    .block-bar {
+      padding: 32px 32px 28px;
+    }
+    .block-bar-inner {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 32px;
+    }
+    .block-bar-left {
+      flex: 1;
+    }
+    .block-title {
+      font-size: 42px;
+    }
+    .block-meta {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+      flex-shrink: 0;
+    }
+  }
+
+  /* ============================
+     CONTENT WRAPPER
+     ============================ */
+  .content {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 16px 20px 24px;
+  }
+  @media (min-width: 820px) {
+    .content {
+      padding: 24px 32px 40px;
+    }
+  }
+
+  /* ============================
+     OVERLINE + SECTION HEADING
+     (editorial pairing, shared across all four tabs)
+     ============================ */
+  .overline {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink-mute);
+    margin: 0;
+  }
+  .overline.gold { color: var(--gold); }
+  .overline.burgundy { color: var(--burgundy); }
+  .section-heading {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin: 4px 0 0;
+    line-height: 1.15;
+  }
+  .section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .section-head .section-heading { margin-bottom: 0; }
+
+  /* ============================
+     MOBILE VIEW TOGGLE
+     ============================ */
+  .view-toggle {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    padding: 4px;
+    background: var(--cream);
+    border-radius: 12px;
+  }
+  .view-toggle button {
+    flex: 1;
+    padding: 9px 12px;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-mute);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .view-toggle button.active {
+    background: var(--bg);
+    color: var(--burgundy);
+    box-shadow: 0 1px 3px rgba(26,20,17,0.06);
+  }
+  @media (min-width: 820px) {
+    .view-toggle { display: none; }
+  }
+
+  /* ============================
+     TODAY HERO (mobile + desktop strip)
+     ============================ */
+  .today-hero {
+    background: var(--surface);
+    border-radius: 22px;
+    padding: 22px 24px 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+  }
+  .today-hero-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+    font-weight: 500;
+    margin: 0 0 6px;
+  }
+  .today-hero-title {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 400;
+    margin: 0 0 4px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .today-hero-title em {
+    font-style: italic;
+    color: var(--burgundy);
+  }
+  .today-hero-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-mute);
+    margin: 0;
+  }
+  @media (min-width: 820px) {
+    .today-hero {
+      padding: 22px 26px 20px;
+    }
+    .today-hero-title { font-size: 28px; }
+  }
+
+  /* ============================
+     TODAY VIEW (mobile-specific big session)
+     ============================ */
+  .today-big-session {
+    background: var(--cream);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.15s;
+    border-left: 4px solid var(--burgundy);
+  }
+  .today-big-session:active { transform: scale(0.985); }
+  .today-big-session-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+  .today-big-session-name {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.2;
+    flex: 1;
+  }
+  .today-big-session-name em {
+    color: var(--ink-mute);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 15px;
+  }
+  .today-big-session-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .today-big-session-meta strong {
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 13px;
+  }
+  .today-big-session-cta {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .today-big-session-cta button {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .today-big-session-cta button:active { transform: scale(0.98); }
+  .btn-primary { background: var(--burgundy); color: var(--cream); }
+  .btn-primary:hover { background: var(--burgundy-dark); }
+  .btn-secondary { background: transparent; color: var(--ink-mute); border: 1px solid var(--line); }
+  .btn-secondary:hover { background: var(--cream); }
+
+  .today-rest-summary {
+    margin-top: 18px;
+    padding: 14px 16px;
+    background: var(--cream);
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--ink-mute);
+    line-height: 1.5;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+  }
+  .today-rest-summary strong {
+    color: var(--ink);
+    font-weight: 500;
+    font-style: normal;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  /* ============================
+     INTENSITY BADGES & PB FLAG
+     ============================ */
+  .intensity-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .intensity-hard { background: var(--burgundy); color: var(--cream); }
+  .intensity-moderate { background: var(--gold); color: var(--burgundy-dark); }
+  .intensity-easy { background: var(--sage); color: var(--cream); }
+  .pb-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    background: var(--gold);
+    color: var(--burgundy-dark);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* ============================
+     WEEK VIEW
+     mobile: vertical day cards
+     desktop: 7-column grid
+     ============================ */
+  .week-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .day {
+    background: var(--surface);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+    box-shadow: var(--shadow-card);
+  }
+  .day:hover {
+    box-shadow: 0 10px 32px rgba(135,75,70,0.10);
+  }
+  .day-today {
+    box-shadow: 0 0 0 2px var(--burgundy), 0 10px 28px rgba(135,75,70,0.12);
+  }
+  .day-today:hover {
+    box-shadow: 0 0 0 2px var(--burgundy), 0 12px 32px rgba(135,75,70,0.16);
+  }
+  .day-past .day-sessions { opacity: 0.85; }
+  .day-header {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .day-name {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .day-today .day-name {
+    color: var(--burgundy);
+  }
+  .day-date {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-weight: 400;
+  }
+  .day-today-tag {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--burgundy);
+    margin-left: 4px;
+  }
+  .day-summary {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-mute);
+  }
+  .day-sessions {
+    padding: 0 16px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .day-empty {
+    padding: 18px 16px;
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-mute);
+  }
+
+  @media (min-width: 820px) {
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    .day {
+      display: flex;
+      flex-direction: column;
+      min-height: 320px;
+    }
+    .day-header {
+      padding: 14px 12px 8px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .day-name {
+      font-size: 15px;
+    }
+    .day-summary {
+      font-size: 11px;
+    }
+    .day-sessions {
+      padding: 4px 12px 12px;
+      gap: 0;
+      flex: 1;
+    }
+  }
+
+  /* ============================
+     SESSION CARDS
+     ============================ */
+  /* Session rows — flat list, hairline dividers, intensity dot (no boxes-in-boxes) */
+  .session {
+    background: transparent;
+    border-radius: 8px;
+    padding: 0.85rem 24px 0.85rem 8px;
+    display: grid;
+    grid-template-columns: 14px 1fr;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .session:last-child { border-bottom: none; }
+  .session:hover { background: var(--cream); }
+  .session-row-content { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .session-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--line); flex-shrink: 0;
+  }
+  .session-dot.hard { background: var(--burgundy); }
+  .session-dot.moderate { background: var(--gold); }
+  .session-dot.easy { background: var(--sage); }
+  .session-done .session-dot,
+  .session-modified .session-dot { box-shadow: 0 0 0 3px rgba(122,144,120,0.22); }
+  .session-done .session-dot { background: var(--sage); }
+  .session-modified .session-dot { background: var(--gold); }
+  .session-planned-today .session-dot { box-shadow: 0 0 0 3px rgba(135,75,70,0.16); }
+  .session-missed .session-dot { background: transparent; border: 1.5px dashed var(--ink-mute); width: 11px; height: 11px; }
+  .session-missed { opacity: 0.55; }
+  .session-name {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.25;
+  }
+  .session-name em {
+    color: var(--ink-mute);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+  }
+  .session-modified .session-name em.tag {
+    color: var(--gold);
+    font-weight: 500;
+  }
+  .session-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--ink-mute);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .session-meta strong {
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 12px;
+  }
+  .session-action-hint {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-mute);
+    font-size: 14px;
+    opacity: 0.4;
+  }
+  @media (min-width: 820px) {
+    .session-action-hint { opacity: 0; transition: opacity 0.15s; }
+    .session:hover .session-action-hint { opacity: 0.5; }
+  }
+
+  /* ============================
+     PB STRIP (sidebar on desktop)
+     ============================ */
+  .pb-strip {
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: 22px;
+    padding: 20px 22px 18px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 16px;
+    box-shadow: 0 12px 32px rgba(53,15,13,0.14);
+  }
+  .pb-strip::after {
+    content: '';
+    position: absolute;
+    right: -30px; top: -30px;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, rgba(212,175,55,0.15) 0%, transparent 70%);
+  }
+  .pb-strip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 2;
+  }
+  .pb-strip-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--cream);
+    margin: 0;
+  }
+  .pb-strip-title em {
+    color: var(--gold);
+    font-style: italic;
+  }
+  .pb-strip-link {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .pb-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    z-index: 2;
+  }
+  .pb-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(250,243,237,0.12);
+  }
+  .pb-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .pb-item-name {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    color: var(--cream);
+    margin: 0;
+  }
+  .pb-item-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: rgba(250,243,237,0.5);
+    margin: 1px 0 0;
+  }
+  .pb-item-value {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    color: var(--gold);
+    font-weight: 500;
+    text-align: right;
+  }
+  .pb-item-value-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 10px;
+    color: rgba(250,243,237,0.5);
+    text-align: right;
+    margin: 1px 0 0;
+  }
+
+  /* ============================
+     DESKTOP LAYOUT
+     ============================ */
+  @media (min-width: 820px) {
+    .desktop-grid {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      align-items: start;
+    }
+    .desktop-main {
+      min-width: 0;
+    }
+    .desktop-side {
+      position: sticky;
+      top: 110px;
+    }
+    .today-rest-summary { display: none; }
+    .pb-strip { margin-top: 0; }
+  }
+  @media (min-width: 1100px) {
+    .desktop-grid {
+      grid-template-columns: 1fr 360px;
+    }
+  }
+
+  /* ============================
+     MOBILE / DESKTOP VIEW SHOW/HIDE
+     ============================ */
+  .mobile-only { display: block; }
+  .desktop-only { display: none; }
+  @media (min-width: 820px) {
+    .mobile-only { display: none; }
+    .desktop-only { display: block; }
+  }
+
+  /* ============================
+     SESSION DETAIL SHEET
+     ============================ */
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,20,17,0.5);
+    z-index: 80;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .sheet-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    border-radius: 20px 20px 0 0;
+    z-index: 90;
+    max-height: 92vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(.2,.8,.2,1);
+    box-shadow: 0 -8px 32px rgba(26,20,17,0.18);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .sheet.open {
+    transform: translateY(0);
+  }
+  @media (min-width: 820px) {
+    .sheet {
+      left: auto;
+      right: 32px;
+      bottom: 32px;
+      width: 440px;
+      max-height: calc(100vh - 64px);
+      border-radius: 20px;
+      transform: translateY(calc(100% + 32px));
+    }
+    .sheet.open {
+      transform: translateY(0);
+    }
+  }
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    margin: 10px auto 6px;
+  }
+  @media (min-width: 820px) {
+    .sheet-handle { display: none; }
+  }
+  .sheet-header {
+    padding: 14px 22px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .sheet-header-content { flex: 1; }
+  .sheet-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+    font-weight: 500;
+    margin: 0 0 6px;
+  }
+  .sheet-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .sheet-title em {
+    font-style: italic;
+    color: var(--burgundy);
+  }
+  .sheet-close {
+    background: var(--cream);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-mute);
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .sheet-close:hover { background: var(--line); }
+  .sheet-body { padding: 20px 22px; }
+  .sheet-section { margin-bottom: 22px; }
+  .sheet-section-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    font-weight: 700;
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .info-i { color: var(--burgundy); font-size: 12px; cursor: help; }
+
+  .workout-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .workout-step { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; background: var(--cream); border-radius: 8px; }
+  .workout-step-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--burgundy); color: var(--cream); font-family: 'Fraunces', serif; font-size: 11px; font-weight: 500; flex-shrink: 0; margin-top: 1px; }
+  .workout-step-content { flex: 1; }
+  .workout-step-name { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink); margin: 0; }
+  .workout-step-detail { font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; color: var(--ink-mute); margin: 2px 0 0; }
+  .workout-edit-btn { margin-top: 8px; background: transparent; color: var(--burgundy); border: 1px dashed var(--line); padding: 8px; border-radius: 8px; width: 100%; font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: border-color 0.15s; }
+  .workout-edit-btn:hover { border-color: var(--burgundy); }
+  /* Tickable exercise checklist */
+  .workout-step.tickable { cursor: pointer; transition: background 0.15s; }
+  .workout-step.tickable:hover { background: var(--line-soft); }
+  .workout-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: transparent; font-size: 12px; margin-top: 1px; transition: all 0.15s; }
+  .workout-step.done .workout-check { background: var(--sage); border-color: var(--sage); color: var(--cream); }
+  .workout-step.done .workout-step-name { text-decoration: line-through; color: var(--ink-mute); }
+  .workout-progress { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: var(--ink-mute); margin: 8px 2px 0; text-align: right; }
+  .workout-progress.complete { color: var(--sage); }
+
+  .rpe-row { display: flex; gap: 4px; justify-content: space-between; }
+  .rpe-pip { flex: 1; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 13px; color: var(--ink); cursor: pointer; transition: all 0.15s; min-width: 0; max-width: 36px; }
+  .rpe-pip:hover { border-color: var(--burgundy); }
+  .rpe-pip.selected { background: var(--burgundy); color: var(--cream); border-color: var(--burgundy); }
+  .rpe-scale-hint { display: flex; justify-content: space-between; margin-top: 5px; font-family: 'Fraunces', serif; font-style: italic; font-size: 10px; color: var(--ink-mute); }
+
+  .duration-row { display: flex; align-items: center; gap: 10px; }
+  .duration-input { flex: 1; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 14px; background: var(--bg); color: var(--ink); }
+  .duration-input:focus { outline: none; border-color: var(--burgundy); }
+  .duration-suffix { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
+
+  .load-preview { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--cream); border-radius: 8px; }
+  .load-preview-label { font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mute); }
+  .load-preview-value { font-family: 'Fraunces', serif; font-size: 22px; color: var(--burgundy); }
+  .load-preview-value em { font-style: italic; font-size: 12px; color: var(--ink-mute); }
+
+  .pb-toggle { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--cream); border-radius: 10px; cursor: pointer; transition: background 0.15s; }
+  .pb-toggle:hover { background: var(--line-soft); }
+  .pb-toggle-content { display: flex; align-items: center; gap: 12px; }
+  .pb-toggle-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; color: var(--burgundy-dark); font-size: 18px; }
+  .pb-toggle-text { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink); }
+  .pb-toggle-text strong { display: block; font-weight: 500; margin-bottom: 1px; }
+  .pb-toggle-text small { font-family: 'Fraunces', serif; font-style: italic; color: var(--ink-mute); font-size: 11px; }
+  .toggle-switch { width: 44px; height: 26px; background: var(--line); border-radius: 13px; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-switch::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  .toggle-switch.on { background: var(--gold); }
+  .toggle-switch.on::after { left: 21px; }
+
+  .note-input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 8px; font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; background: var(--cream); color: var(--ink); min-height: 60px; resize: vertical; }
+  .note-input:focus { outline: none; border-color: var(--burgundy); background: var(--bg); }
+
+  .sheet-save {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg);
+    padding: 14px 22px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 10px;
+  }
+  .sheet-save button {
+    flex: 1;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sheet-save .btn-secondary {
+    border: 1px solid var(--line);
+  }
+
+  /* ============================
+     AUTH GATE + APP SHELL
+     ============================ */
+  #portal { display: none; }
+  body.signed-in #portal { display: block; }
+  body.signed-in #welcome { display: none; }
+
+  .welcome {
+    min-height: 100vh;
+    background: var(--ink);
+    color: var(--cream);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+  }
+  .welcome-mark {
+    font-family: 'Fraunces', serif;
+    font-size: 30px;
+    font-weight: 500;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .welcome-mark em { color: var(--gold); font-style: italic; }
+  .welcome-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: rgba(250,243,237,0.6);
+    margin: 0 0 32px;
+    max-width: 320px;
+    line-height: 1.5;
+  }
+  .welcome-signin { min-height: 44px; }
+  .welcome-foot {
+    margin-top: 28px;
+    font-size: 11px;
+    color: rgba(250,243,237,0.35);
+    letter-spacing: 0.04em;
+  }
+
+  /* App-wide loading veil */
+  .app-loading {
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--bg);
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+  }
+  .app-loading.active { display: flex; }
+  .app-error {
+    position: fixed; inset: 0; z-index: 200; background: var(--bg);
+    display: none; align-items: center; justify-content: center;
+  }
+  .app-error.active { display: flex; }
+  .app-error .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 10px; border: none;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer;
+  }
+  .spinner {
+    width: 34px; height: 34px;
+    border: 3px solid var(--line);
+    border-top-color: var(--burgundy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .app-loading-text {
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: 14px; color: var(--ink-mute);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 24px;
+    transform: translate(-50%, 80px);
+    background: var(--ink); color: var(--cream);
+    padding: 12px 20px; border-radius: 10px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-lift); z-index: 300;
+    opacity: 0; transition: transform 0.28s cubic-bezier(.2,.8,.2,1), opacity 0.28s;
+    max-width: calc(100vw - 40px);
+  }
+  .toast.active { transform: translate(-50%, 0); opacity: 1; }
+  .toast.error { background: var(--burgundy); }
+  .toast.success { background: var(--sage); }
+
+  /* Demo "Example" pill — subtle, corner-pinned, never mistaken for a real account */
+  .demo-pill {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    right: 12px;
+    z-index: 250;
+    background: rgba(212,175,55,0.92);
+    color: var(--burgundy-dark);
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    box-shadow: 0 4px 12px rgba(53,15,13,0.14);
+    pointer-events: none;
+  }
+  .demo-pill[hidden] { display: none; }
+
+  /* LAB build marker — reuses the demo-pill look but sits inline in the nav. */
+  .nav-lab-pill {
+    position: static;
+    bottom: auto; right: auto;
+    margin-left: 2px;
+    align-self: center;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  /* ============================
+     LAB — read-only Target (shown at log time) + Readiness block
+     ============================ */
+  .target-readonly {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--cream); border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 18px;
+    border-left: 4px solid var(--gold);
+  }
+  .target-readonly .ti { color: var(--burgundy); font-size: 16px; margin-top: 1px; }
+  .target-readonly-text { min-width: 0; }
+  .target-readonly-label {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-mute); font-weight: 700; margin: 0 0 3px;
+  }
+  .target-readonly-value {
+    font-family: 'Fraunces', serif; font-size: 14px; color: var(--ink); margin: 0; line-height: 1.35;
+  }
+
+  /* Collapsible Readiness section */
+  .readiness-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    cursor: pointer; user-select: none;
+  }
+  .readiness-head .sheet-section-label { margin-bottom: 0; }
+  .readiness-chevron { color: var(--ink-mute); font-size: 16px; transition: transform 0.2s; }
+  .readiness-section.open .readiness-chevron { transform: rotate(90deg); }
+  .readiness-body { display: none; margin-top: 14px; }
+  .readiness-section.open .readiness-body { display: block; }
+  .readiness-sub-label {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-mute); font-weight: 700; margin: 0 0 8px;
+  }
+  .feel-row { display: flex; gap: 6px; }
+  .feel-pip {
+    flex: 1; aspect-ratio: 1; max-width: 52px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-size: 15px; color: var(--ink);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .feel-pip:hover { border-color: var(--burgundy); }
+  .feel-pip.selected { background: var(--burgundy); color: var(--cream); border-color: var(--burgundy); }
+  .feel-scale-hint {
+    display: flex; justify-content: space-between; margin-top: 5px;
+    font-family: 'Fraunces', serif; font-style: italic; font-size: 10px; color: var(--ink-mute);
+  }
+  .niggle-toggle {
+    display: flex; align-items: center; gap: 8px; margin-top: 18px;
+    background: transparent; border: 1px dashed var(--line); border-radius: 10px;
+    padding: 11px 14px; width: 100%; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink-mute);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .niggle-toggle:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .niggle-toggle .ti { font-size: 16px; }
+  .niggle-body { display: none; margin-top: 12px; }
+  .readiness-section.niggle-open .niggle-body { display: block; }
+  .readiness-section.niggle-open .niggle-toggle { display: none; }
+  .severity-row { display: flex; gap: 4px; }
+  .severity-pip {
+    flex: 1; aspect-ratio: 1; max-width: 34px; min-width: 0; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-size: 12px; color: var(--ink);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .severity-pip:hover { border-color: var(--burgundy); }
+  .severity-pip.selected { background: var(--burgundy); color: var(--cream); border-color: var(--burgundy); }
+
+  /* ============================
+     LAB — "From my plan" quick-add palette
+     ============================ */
+  .plan-head-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .from-plan-btn {
+    background: var(--gold); color: var(--burgundy-dark); border: none; padding: 8px 14px; border-radius: 9px;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px; transition: filter 0.15s;
+  }
+  .from-plan-btn:hover { filter: brightness(0.96); }
+  .lab-day-picker { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-bottom: 18px; }
+  .lab-day-picker::-webkit-scrollbar { display: none; }
+  .lab-day-chip {
+    flex: 1 0 auto; min-width: 48px; padding: 8px 6px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; text-align: center;
+    transition: all 0.15s;
+  }
+  .lab-day-chip.sel { background: var(--burgundy); border-color: var(--burgundy); }
+  .lab-day-chip-dow {
+    display: block; font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 700; color: var(--ink-mute);
+  }
+  .lab-day-chip-num { display: block; font-family: 'Fraunces', serif; font-size: 16px; color: var(--ink); }
+  .lab-day-chip.sel .lab-day-chip-dow, .lab-day-chip.sel .lab-day-chip-num { color: var(--cream); }
+  .lab-tpl-list { display: flex; flex-direction: column; gap: 8px; }
+  .lab-tpl {
+    display: flex; align-items: center; gap: 12px; text-align: left;
+    background: var(--cream); border: 1px solid transparent; border-radius: 14px;
+    padding: 14px 16px; width: 100%; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .lab-tpl:hover { box-shadow: 0 6px 18px rgba(135,75,70,0.10); border-color: var(--line); }
+  .lab-tpl:active { transform: scale(0.99); }
+  .lab-tpl-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); flex-shrink: 0; }
+  .lab-tpl-dot.easy { background: rgba(135,75,70,0.32); }
+  .lab-tpl-dot.moderate { background: var(--burgundy-light); }
+  .lab-tpl-dot.hard { background: var(--burgundy); }
+  .lab-tpl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .lab-tpl-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .lab-tpl-meta { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); margin-top: 2px; }
+  .lab-tpl-target { font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; color: var(--ink-mute); margin-top: 3px; line-height: 1.35; }
+  .lab-tpl-add { color: var(--burgundy); font-size: 18px; flex-shrink: 0; }
+
+  /* Tab view show/hide */
+  .tab-view { display: none; }
+  .tab-view.active { display: block; }
+
+  /* Generic empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+  .empty-state-icon {
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--cream); color: var(--burgundy);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; margin: 0 auto 16px;
+  }
+  .empty-state-title {
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 400;
+    color: var(--ink); margin: 0 0 8px; line-height: 1.2;
+  }
+  .empty-state-title em { font-style: italic; color: var(--burgundy); }
+  .empty-state-text {
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: 14px; color: var(--ink-mute); margin: 0 0 22px; line-height: 1.5;
+  }
+  .empty-state .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 10px; border: none;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- SIGN-IN GATE -->
+<div class="welcome" id="welcome">
+  <p class="welcome-mark">Athlete <em>Academy</em></p>
+  <p class="welcome-sub">Your year, your weeks, your bests. Sign in to plan and log your training.</p>
+  <div class="welcome-signin">
+    <div id="g_id_onload"
+         data-client_id="701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com"
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false"></div>
+    <div class="g_id_signin"
+         data-type="standard" data-shape="pill"
+         data-theme="filled_black" data-text="signin_with"
+         data-size="large" data-logo_alignment="left"></div>
+  </div>
+  <p class="welcome-foot">FIS Warriors · Grades 10–12</p>
+</div>
+
+<!-- LOADING VEIL -->
+<div class="app-loading" id="appLoading">
+  <div class="spinner"></div>
+  <p class="app-loading-text" id="appLoadingText">Loading your training…</p>
+</div>
+
+<!-- LOAD ERROR -->
+<div class="app-error" id="appError">
+  <div class="empty-state">
+    <div class="empty-state-icon"><i class="ti ti-cloud-off" aria-hidden="true"></i></div>
+    <h2 class="empty-state-title">Couldn't <em>load</em> your training.</h2>
+    <p class="empty-state-text">Check your connection and try again. Your saved work is safe.</p>
+    <button class="btn-primary" onclick="retryLoad()"><i class="ti ti-refresh" aria-hidden="true"></i> Try again</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- DEMO "EXAMPLE" PILL (shown only in ?demo=1; easily removable) -->
+<div class="demo-pill" id="demoPill" hidden>Example</div>
+
+<div id="portal">
+
+<!-- DARK NAV HEADER -->
+<div class="nav">
+  <div class="nav-inner">
+    <div class="nav-top">
+      <div class="nav-brand">
+        <span class="nav-brand-mark">Athlete <em>Academy</em></span>
+        <span class="demo-pill nav-lab-pill">LAB</span>
+      </div>
+      <div class="nav-athlete">
+        <div class="nav-athlete-avatar" id="navAvatar">··</div>
+        <span id="navAthlete"><strong>—</strong></span>
+      </div>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="week" onclick="switchTab('week')">Week</button>
+      <button class="tab" data-tab="year" onclick="switchTab('year')">Year</button>
+      <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
+      <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
+      <button class="tab" data-tab="pbs" onclick="switchTab('pbs')">PBs</button>
+    </div>
+  </div>
+</div>
+
+<!-- BLOCK CONTEXT BAR (filled per active tab by JS) -->
+<div class="block-bar">
+  <div class="block-bar-inner" id="blockBar"></div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ===== WEEK TAB ===== -->
+<div class="tab-view active" id="view-week">
+
+  <div id="weekBanner"></div>
+
+  <!-- MOBILE TOGGLE -->
+  <div class="view-toggle">
+    <button class="active" data-view="today">Today</button>
+    <button data-view="week">Week</button>
+  </div>
+
+  <div class="desktop-grid">
+
+    <div class="desktop-main">
+
+      <!-- TODAY HERO — always visible on desktop, mobile shows when Today selected -->
+      <div class="today-hero" id="today-hero"></div>
+
+      <!-- MOBILE TODAY VIEW (filled by JS) -->
+      <div class="mobile-only" id="mobile-today"></div>
+
+      <!-- WEEK VIEW (mobile: hidden by default; desktop: always visible) -->
+      <div id="week-view" class="mobile-week-hidden">
+        <div id="weekGrid"></div>
+      </div>
+
+      <!-- WEEKLY LOAD STRIP (intensity balance, mockup-style) -->
+      <div id="weekLoadStrip"></div>
+
+    </div>
+
+    <!-- DESKTOP SIDE: PB strip + week-note placeholder -->
+    <div class="desktop-side">
+      <div class="pb-strip">
+        <div class="pb-strip-header">
+          <div>
+            <p class="overline" style="color:rgba(250,243,237,0.5); margin-bottom:3px;">Personal bests</p>
+            <h3 class="pb-strip-title">Recent <em>PBs</em></h3>
+          </div>
+          <a href="#" class="pb-strip-link" onclick="switchTab('pbs'); return false;">See all →</a>
+        </div>
+        <div class="pb-list" id="weekPbList"></div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /#view-week -->
+
+<!-- ===== YEAR TAB ===== -->
+<div class="tab-view" id="view-year"></div>
+
+<!-- ===== LOAD TAB ===== -->
+<div class="tab-view" id="view-load"></div>
+
+<!-- ===== BOOK TAB ===== -->
+<div class="tab-view" id="view-book"></div>
+
+<!-- ===== PBS TAB ===== -->
+<div class="tab-view" id="view-pbs"></div>
+
+</div><!-- /.content -->
+</div><!-- /#portal -->
+
+<!-- SESSION DETAIL SHEET -->
+<div class="sheet-backdrop" id="sheet-backdrop" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow" id="sheetEyebrow">—</p>
+      <h2 class="sheet-title" id="sheetTitle">—</h2>
+    </div>
+    <button class="sheet-close" onclick="closeSheet()" aria-label="Close">
+      <i class="ti ti-x" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="sheet-body">
+
+    <button class="workout-edit-btn" id="planToggle" style="display:none; margin-bottom:18px;" onclick="showPlanHeader()">
+      <i class="ti ti-pencil" aria-hidden="true"></i> Edit name, sport &amp; date
+    </button>
+
+    <div class="sheet-section" id="planHeader">
+      <p class="sheet-section-label">Session details</p>
+      <input class="duration-input plan-field" id="planName" placeholder="Session name — e.g. Intervals 8×200">
+      <div class="plan-row">
+        <input class="duration-input plan-field" id="planSport" placeholder="Sport">
+        <select class="duration-input plan-field" id="planIntensity">
+          <option value="">Intensity…</option>
+          <option value="easy">Easy</option>
+          <option value="moderate">Moderate</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="plan-row">
+        <input type="date" class="duration-input plan-field" id="planDate">
+        <div class="duration-row" style="flex:1;">
+          <input type="text" inputmode="numeric" class="duration-input plan-field" id="planDuration" placeholder="Planned min">
+          <span class="duration-suffix">min</span>
+        </div>
+      </div>
+      <input class="duration-input plan-field" id="planTarget" placeholder="Target · optional — e.g. HR 130–141 · ~6:00/km">
+    </div>
+
+    <!-- LAB: read-only target shown at log time (actual-vs-target) -->
+    <div class="target-readonly" id="targetReadonly" style="display:none;">
+      <i class="ti ti-target" aria-hidden="true"></i>
+      <div class="target-readonly-text">
+        <p class="target-readonly-label">Today's target</p>
+        <p class="target-readonly-value" id="targetReadonlyValue">—</p>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">The workout</p>
+      <ul class="workout-list" id="sheetWorkout"></ul>
+      <p class="workout-progress" id="workoutProgress"></p>
+      <button class="workout-edit-btn" onclick="editWorkout()">
+        <i class="ti ti-edit" aria-hidden="true"></i> Edit workout
+      </button>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">
+        Effort
+        <i class="ti ti-info-circle info-i" title="1 = very easy, 5 = moderate, 10 = max effort"></i>
+      </p>
+      <div class="rpe-row" id="rpe-row">
+        <div class="rpe-pip" data-val="1">1</div>
+        <div class="rpe-pip" data-val="2">2</div>
+        <div class="rpe-pip" data-val="3">3</div>
+        <div class="rpe-pip" data-val="4">4</div>
+        <div class="rpe-pip" data-val="5">5</div>
+        <div class="rpe-pip" data-val="6">6</div>
+        <div class="rpe-pip selected" data-val="7">7</div>
+        <div class="rpe-pip" data-val="8">8</div>
+        <div class="rpe-pip" data-val="9">9</div>
+        <div class="rpe-pip" data-val="10">10</div>
+      </div>
+      <div class="rpe-scale-hint">
+        <span>easy</span>
+        <span>moderate</span>
+        <span>max</span>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Actual duration</p>
+      <div class="duration-row">
+        <input type="text" class="duration-input" value="75" id="duration-input">
+        <span class="duration-suffix">minutes</span>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">
+        Load
+        <i class="ti ti-info-circle info-i" title="Load = effort × duration. Used to track training stress over time."></i>
+      </p>
+      <div class="load-preview">
+        <span class="load-preview-label">This session</span>
+        <span class="load-preview-value" id="load-preview">525 <em>au</em></span>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Mark as a PB?</p>
+      <div class="pb-toggle" onclick="togglePB(this)">
+        <div class="pb-toggle-content">
+          <div class="pb-toggle-icon">
+            <i class="ti ti-trophy" aria-hidden="true"></i>
+          </div>
+          <div class="pb-toggle-text">
+            <strong>New personal best</strong>
+            <small>Tap to flag this session</small>
+          </div>
+        </div>
+        <div class="toggle-switch" id="pbToggle"></div>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Note · optional</p>
+      <textarea class="note-input" id="sheetNote" placeholder="How did it feel? What went well or not?"></textarea>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Reflection · optional</p>
+      <input class="duration-input plan-field" id="sheetNoticed" placeholder="What did you do well, or notice?">
+      <input class="duration-input plan-field" id="sheetBlocker" placeholder="What got in the way?" style="margin-top:8px;">
+    </div>
+
+    <!-- LAB: readiness — collapsed by default, one tap to skip when fine -->
+    <div class="sheet-section readiness-section" id="readinessSection">
+      <div class="readiness-head" onclick="toggleReadiness()">
+        <p class="sheet-section-label">Readiness · optional</p>
+        <i class="ti ti-chevron-right readiness-chevron" aria-hidden="true"></i>
+      </div>
+      <div class="readiness-body">
+        <p class="readiness-sub-label">How do you feel?</p>
+        <div class="feel-row" id="feel-row">
+          <div class="feel-pip" data-val="1">1</div>
+          <div class="feel-pip" data-val="2">2</div>
+          <div class="feel-pip" data-val="3">3</div>
+          <div class="feel-pip" data-val="4">4</div>
+          <div class="feel-pip" data-val="5">5</div>
+        </div>
+        <div class="feel-scale-hint"><span>rough</span><span>ok</span><span>great</span></div>
+
+        <button class="niggle-toggle" onclick="openNiggle()">
+          <i class="ti ti-plus" aria-hidden="true"></i> Add a niggle
+        </button>
+        <div class="niggle-body">
+          <p class="readiness-sub-label" style="margin-top:6px;">Where?</p>
+          <input class="duration-input plan-field" id="niggleArea" placeholder="Area — e.g. left knee, lower back">
+          <p class="readiness-sub-label" style="margin-top:14px;">How bad? <span style="font-weight:400; text-transform:none; letter-spacing:0;">(0 = fine, 10 = severe)</span></p>
+          <div class="severity-row" id="severity-row">
+            <div class="severity-pip" data-val="0">0</div>
+            <div class="severity-pip" data-val="1">1</div>
+            <div class="severity-pip" data-val="2">2</div>
+            <div class="severity-pip" data-val="3">3</div>
+            <div class="severity-pip" data-val="4">4</div>
+            <div class="severity-pip" data-val="5">5</div>
+            <div class="severity-pip" data-val="6">6</div>
+            <div class="severity-pip" data-val="7">7</div>
+            <div class="severity-pip" data-val="8">8</div>
+            <div class="severity-pip" data-val="9">9</div>
+            <div class="severity-pip" data-val="10">10</div>
+          </div>
+          <textarea class="note-input" id="niggleNote" placeholder="Note · optional — how it feels, when it shows up" style="margin-top:14px;"></textarea>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sheet-save">
+    <button class="btn-secondary" onclick="closeSheet()">Cancel</button>
+    <button class="btn-primary" id="sheetSaveBtn" onclick="saveCurrentSession()">Save session</button>
+  </div>
+</div>
+
+<!-- BLOCK DETAIL SHEET -->
+<div class="sheet-backdrop" id="block-backdrop" onclick="closeBlock()"></div>
+<div class="sheet" id="blockSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow" id="blockEyebrow">—</p>
+      <h2 class="sheet-title" id="blockTitle">—</h2>
+    </div>
+    <button class="sheet-close" onclick="closeBlock()" aria-label="Close">
+      <i class="ti ti-x" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="sheet-body">
+    <div class="sheet-section">
+      <p class="sheet-section-label">Training state</p>
+      <div class="state-picker" id="statePicker">
+        <button class="state-pill" data-state="build" onclick="pickState('build')">Build</button>
+        <button class="state-pill" data-state="maintain" onclick="pickState('maintain')">Maintain</button>
+        <button class="state-pill" data-state="peak" onclick="pickState('peak')">Peak</button>
+        <button class="state-pill" data-state="recover" onclick="pickState('recover')">Recover</button>
+        <button class="state-pill" data-state="off" onclick="pickState('off')">Off</button>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Focus this block</p>
+      <input class="duration-input plan-field" id="blockFocus" placeholder="e.g. Aerobic base. Hold technique under fatigue.">
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Weekly load target · optional</p>
+      <div class="duration-row">
+        <input type="text" inputmode="numeric" class="duration-input" id="blockLoad" placeholder="e.g. 1350">
+        <span class="duration-suffix">au / week</span>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Note · optional</p>
+      <textarea class="note-input" id="blockNote" placeholder="Anything to remember for this block?"></textarea>
+    </div>
+  </div>
+
+  <div class="sheet-save">
+    <button class="btn-secondary" onclick="planThisWeek()">Plan this week →</button>
+    <button class="btn-primary" id="blockSaveBtn" onclick="saveBlockSheet()">Save block</button>
+  </div>
+</div>
+
+<!-- PB ADD / EDIT SHEET -->
+<div class="sheet-backdrop" id="pb-backdrop" onclick="closePB()"></div>
+<div class="sheet" id="pbSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow" id="pbEyebrow">Personal best</p>
+      <h2 class="sheet-title" id="pbSheetTitle">New <em>PB</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closePB()" aria-label="Close">
+      <i class="ti ti-x" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="sheet-body">
+    <div class="sheet-section">
+      <p class="sheet-section-label">Sport</p>
+      <input class="duration-input plan-field" id="pbSport" placeholder="e.g. Swimming">
+    </div>
+    <div class="sheet-section">
+      <p class="sheet-section-label">Exercise or event</p>
+      <input class="duration-input plan-field" id="pbExercise" placeholder="e.g. 200m freestyle, Back squat 5RM">
+    </div>
+    <div class="sheet-section">
+      <p class="sheet-section-label">Result</p>
+      <div class="plan-row">
+        <input class="duration-input plan-field" id="pbValue" placeholder="Value — e.g. 124.8 or 85">
+        <input class="duration-input plan-field" id="pbUnit" placeholder="Unit — s, kg, m…">
+      </div>
+    </div>
+    <div class="sheet-section">
+      <p class="sheet-section-label">Date</p>
+      <input type="date" class="duration-input plan-field" id="pbDate">
+    </div>
+    <div class="sheet-section">
+      <p class="sheet-section-label">Note · optional</p>
+      <textarea class="note-input" id="pbNote" placeholder="Conditions, how it felt, anything worth remembering."></textarea>
+    </div>
+  </div>
+
+  <div class="sheet-save">
+    <button class="btn-secondary" onclick="closePB()">Cancel</button>
+    <button class="btn-primary" id="pbSaveBtn" onclick="savePBSheet()">Save PB</button>
+  </div>
+</div>
+
+<!-- PLAN LIBRARY SHEET -->
+<div class="sheet-backdrop" id="plan-backdrop" onclick="closePlan()"></div>
+<div class="sheet" id="planSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">Training plans</p>
+      <h2 class="sheet-title">Choose a <em>plan</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closePlan()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <p class="plan-pick-note">Pick a plan and it fills your week. You can tweak or log any session after.</p>
+    <div class="plan-grid" id="planGrid"></div>
+  </div>
+</div>
+
+<!-- LAB: "From my plan" quick-add palette -->
+<div class="sheet-backdrop" id="labtpl-backdrop" onclick="closeLabTemplates()"></div>
+<div class="sheet" id="labTemplateSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">From my plan</p>
+      <h2 class="sheet-title">Quick-<em>add</em> a session.</h2>
+    </div>
+    <button class="sheet-close" onclick="closeLabTemplates()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <p class="readiness-sub-label">Add to</p>
+    <div class="lab-day-picker" id="labDayPicker"></div>
+    <div class="lab-tpl-list" id="labTemplateList"></div>
+  </div>
+</div>
+
+<style>
+  /* Mobile view toggle behaviour: when on mobile, hide week-view unless toggle says so */
+  @media (max-width: 819px) {
+    body.show-week #mobile-today { display: none; }
+    body.show-week #week-view { display: block; }
+    body:not(.show-week) #week-view { display: none; }
+  }
+  @media (min-width: 820px) {
+    #week-view { display: block !important; }
+    #mobile-today { display: none; }
+  }
+
+  /* Plan/edit header inputs in the session sheet */
+  .plan-field { width: 100%; margin-bottom: 8px; }
+  .plan-row { display: flex; gap: 8px; }
+  .plan-row .plan-field { flex: 1; }
+  select.plan-field { -webkit-appearance: none; appearance: none; }
+  .day-add {
+    margin: 4px 16px 14px;
+    background: transparent; color: var(--ink-mute);
+    border: 1px dashed var(--line); border-radius: 8px;
+    padding: 8px; width: calc(100% - 32px);
+    font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .day-add:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  @media (min-width: 820px) {
+    .day-add { margin: 4px 10px 10px; width: calc(100% - 20px); }
+  }
+
+  /* ===== YEAR TAB ===== */
+  .year-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 14px;
+  }
+  .year-head-btn {
+    background: transparent; color: var(--burgundy);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 14px; font-family: 'Inter', sans-serif; font-size: 12px;
+    font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: border-color 0.15s, background 0.15s; white-space: nowrap;
+  }
+  .year-head-btn:hover { border-color: var(--burgundy); background: var(--cream); }
+  .year-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 4px; }
+  .year-legend-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-mute);
+  }
+  .year-legend-item strong { color: var(--ink); font-weight: 600; }
+  .legend-emoji { font-size: 14px; line-height: 1; }
+
+  .year-sport {
+    background: var(--surface); border-radius: 22px;
+    padding: 20px 22px; margin-bottom: 16px;
+    box-shadow: var(--shadow-card);
+  }
+  .year-sport-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px;
+  }
+  .year-sport-titles .overline { margin-bottom: 2px; }
+  .year-sport-name {
+    font-family: 'Fraunces', serif; font-size: 21px; font-weight: 500; color: var(--ink); margin: 0;
+    display: flex; align-items: center; gap: 8px; line-height: 1.1;
+  }
+  .year-sport-star { color: var(--gold); font-size: 16px; }
+  .year-now-chip {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; white-space: nowrap;
+    padding: 6px 12px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  }
+  .year-now-chip .nc-emoji { font-size: 13px; }
+  .year-now-chip.ym-build    { background: var(--gold);     color: var(--burgundy-dark); }
+  .year-now-chip.ym-maintain { background: var(--sage);     color: var(--cream); }
+  .year-now-chip.ym-peak     { background: var(--burgundy); color: var(--cream); }
+  .year-now-chip.ym-recover  { background: var(--cream);    color: var(--ink); border: 1px solid var(--line); }
+  .year-now-chip.ym-off      { background: var(--ink);      color: var(--cream); }
+  .year-sport-goal {
+    font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute);
+    margin: 0 0 14px; display: flex; align-items: center; gap: 6px;
+  }
+  .year-sport-goal strong { color: var(--ink); font-weight: 600; }
+  .year-sport-goal .ti { color: var(--burgundy); }
+
+  .year-months {
+    display: grid; grid-template-columns: repeat(12, minmax(42px, 1fr)); gap: 5px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 12px 0 2px;
+  }
+  .year-months::-webkit-scrollbar { display: none; }
+  .year-month {
+    min-height: 64px; border-radius: 13px; padding: 7px 3px; cursor: pointer; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    text-align: center; background: var(--cream); transition: transform 0.12s, box-shadow 0.15s;
+  }
+  .year-month:hover { box-shadow: 0 4px 14px rgba(26,20,17,0.10); transform: translateY(-1px); }
+  .year-month:active { transform: scale(0.97); }
+  .ym-label {
+    font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 0;
+  }
+  .ym-emoji { font-size: 19px; line-height: 1; }
+  .ym-plus { font-family: 'Fraunces', serif; font-size: 18px; color: var(--ink-mute); line-height: 1; }
+  /* whole-tile phase colours */
+  .ym-build    { background: var(--gold); }     .ym-build .ym-label    { color: var(--burgundy-dark); }
+  .ym-maintain { background: var(--sage); }     .ym-maintain .ym-label { color: var(--cream); }
+  .ym-peak     { background: var(--burgundy); } .ym-peak .ym-label     { color: var(--cream); }
+  .ym-recover  { background: var(--cream); border: 1px solid var(--line); }
+  .ym-off      { background: repeating-linear-gradient(45deg, var(--cream), var(--cream) 5px, var(--line-soft) 5px, var(--line-soft) 6px); }
+  .ym-empty    { background: var(--cream); border: 1px dashed var(--line); }
+  .year-month.ym-suggest { opacity: 0.5; }
+  .year-month.is-current { box-shadow: 0 0 0 2px var(--burgundy); }
+  .ym-now {
+    position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--cream); font-family: 'Inter', sans-serif;
+    font-size: 7.5px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700;
+    padding: 2px 7px; border-radius: 9999px; white-space: nowrap; z-index: 3;
+  }
+  .ym-markers { display: flex; gap: 2px; justify-content: center; min-height: 10px; }
+  .ym-marker { font-size: 9px; line-height: 1; }
+  .ym-marker.a-priority { color: var(--gold); }
+  .ym-marker.testing { color: var(--ink); }
+  .ym-marker.commitment { color: var(--ink-mute); }
+  .ym-peak .ym-marker.testing { color: var(--cream); }
+  .ym-suggest-edit {
+    position: absolute; top: 2px; right: 2px; width: 16px; height: 16px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-mute); opacity: 0.6; font-size: 11px; border-radius: 4px; z-index: 2;
+  }
+  .ym-suggest-edit:hover { opacity: 1; color: var(--burgundy); }
+
+
+  /* State picker in block sheet */
+  .state-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+  .state-pill {
+    flex: 1; min-width: 64px; padding: 10px 8px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; color: var(--ink-mute);
+    transition: all 0.15s;
+  }
+  .state-pill:hover { border-color: var(--burgundy); }
+  .state-pill.sel[data-state="build"]    { background: var(--gold); color: var(--burgundy-dark); border-color: var(--gold); }
+  .state-pill.sel[data-state="maintain"] { background: var(--sage); color: var(--cream); border-color: var(--sage); }
+  .state-pill.sel[data-state="peak"]     { background: var(--burgundy); color: var(--cream); border-color: var(--burgundy); }
+  .state-pill.sel[data-state="recover"]  { background: var(--cream); color: var(--ink); border-color: var(--ink-mute); }
+  .state-pill.sel[data-state="off"]      { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+
+  /* Onboarding card */
+  .onboard { max-width: 460px; margin: 0 auto; }
+  .onboard .empty-state-title { margin-bottom: 4px; }
+  .onboard-form { text-align: left; margin-top: 8px; }
+  .onboard-field { margin-bottom: 14px; }
+  .onboard-field label {
+    display: block; font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-mute); font-weight: 500; margin-bottom: 6px;
+  }
+  .onboard-field .plan-field { margin-bottom: 0; }
+
+  /* ===== PBS TAB ===== */
+  .pb-page-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px;
+  }
+  .pb-group {
+    background: var(--surface); border-radius: 20px;
+    padding: 8px 20px; margin-bottom: 14px;
+    box-shadow: var(--shadow-card);
+  }
+  .pb-group-head {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-mute); font-weight: 700; padding: 14px 0 10px; border-bottom: 1px solid var(--line-soft);
+  }
+  .pb-page-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 13px 0; border-bottom: 1px solid var(--line-soft); cursor: pointer;
+    transition: background 0.12s;
+  }
+  .pb-group .pb-page-item:last-child { border-bottom: none; }
+  .pb-page-item:hover { background: var(--cream); }
+  .pb-page-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; color: var(--ink); margin: 0; }
+  .pb-page-sub { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); margin: 2px 0 0; }
+  .pb-page-right { text-align: right; flex-shrink: 0; }
+  .pb-page-value { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 500; color: var(--burgundy); }
+  .pb-page-value small { font-size: 12px; color: var(--ink-mute); font-weight: 400; }
+  .pb-page-trend { font-family: 'Fraunces', serif; font-style: italic; font-size: 11px; color: var(--sage); margin-top: 1px; }
+  .pb-page-trend.up { color: var(--sage); }
+  .pb-page-trend.down { color: var(--burgundy); }
+
+  /* ===== LOAD TAB ===== */
+  .load-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+  .load-card {
+    background: var(--surface); border-radius: 20px; padding: 18px 18px;
+    box-shadow: var(--shadow-card);
+  }
+  .load-card-label {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-mute); font-weight: 700; margin: 0 0 8px;
+  }
+  .load-card-value { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 500; color: var(--ink); line-height: 1; }
+  .load-card-value small { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
+  .load-card-sub { font-family: 'Fraunces', serif; font-style: italic; font-size: 11px; color: var(--ink-mute); margin: 6px 0 0; }
+  .load-card.flag .load-card-value { color: var(--burgundy); }
+  @media (max-width: 560px) {
+    .load-cards { grid-template-columns: 1fr; }
+    .load-card { display: flex; align-items: baseline; justify-content: space-between; padding: 13px 16px; }
+    .load-card-label { margin: 0; }
+    .load-card-sub { display: none; }
+  }
+
+  .load-chart-wrap {
+    background: var(--surface); border-radius: 20px;
+    padding: 18px 18px 12px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    box-shadow: var(--shadow-card);
+  }
+  .load-chart-wrap::-webkit-scrollbar { height: 6px; }
+  .load-chart-wrap::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  .load-chart-title {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-mute); font-weight: 500; margin: 0 0 12px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .load-chart-legend { display: inline-flex; align-items: center; gap: 5px; text-transform: none; letter-spacing: 0; }
+  .load-chart-legend .legend-swatch { width: 10px; height: 10px; }
+  .load-acwr-key { display: inline-flex; align-items: center; gap: 5px; text-transform: none; letter-spacing: 0; }
+  .load-bar { cursor: pointer; transition: opacity 0.12s; }
+  .load-bar:hover { opacity: 0.78; }
+  .load-empty-note {
+    font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute);
+    text-align: center; padding: 28px 16px;
+  }
+
+  /* Week tab: viewing a non-current week banner */
+  .week-banner {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--cream); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 14px;
+    font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute);
+  }
+  .week-banner button {
+    background: transparent; border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; color: var(--burgundy);
+    padding: 6px 12px; white-space: nowrap;
+  }
+  .week-banner button:hover { border-color: var(--burgundy); }
+
+  /* ============================
+     TRAINING PLAN LIST (Week tab) — single clean card, one row per session
+     ============================ */
+  .plan-card {
+    background: var(--surface); border-radius: 24px; box-shadow: var(--shadow-card);
+    padding: 22px 26px;
+  }
+  .plan-head { margin-bottom: 6px; }
+  .plan-week-range {
+    font-family: 'Fraunces', serif; font-style: italic; font-size: 0.62em;
+    color: var(--ink-mute); font-weight: 400; margin-left: 8px; letter-spacing: 0;
+  }
+  .plan-list { margin-top: 12px; }
+  .plan-row {
+    display: grid; grid-template-columns: 46px 14px 1fr 30px; align-items: center; gap: 14px;
+    padding: 14px 8px; border-bottom: 1px solid var(--line-soft); cursor: pointer;
+    border-radius: 10px; transition: background 0.15s;
+  }
+  .plan-list .plan-row:last-child { border-bottom: none; }
+  .plan-row:hover { background: var(--cream); }
+  .plan-day { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+  .plan-dow {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; font-weight: 700; color: var(--ink-mute);
+  }
+  .plan-date { font-family: 'Fraunces', serif; font-size: 15px; color: var(--ink); }
+  .plan-row.is-today .plan-dow, .plan-row.is-today .plan-date { color: var(--burgundy); }
+  .plan-today-tag { font-family: 'Fraunces', serif; font-style: italic; font-size: 9px; color: var(--burgundy); }
+  .plan-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); justify-self: center; }
+  /* Intensity = a single burgundy effort-ramp (light→dark), kept separate from the phase palette */
+  .plan-dot.easy { background: rgba(135,75,70,0.32); }
+  .plan-dot.moderate { background: var(--burgundy-light); }
+  .plan-dot.hard { background: var(--burgundy); }
+  .plan-dot.is-empty { background: transparent; border: 1.5px dashed var(--line); width: 11px; height: 11px; }
+  .plan-row.is-done .plan-dot { box-shadow: 0 0 0 3px rgba(122,144,120,0.22); }
+  .plan-info { min-width: 0; }
+  .plan-name {
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink);
+    display: flex; align-items: center; gap: 8px; line-height: 1.25;
+  }
+  .plan-name.muted { font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; color: var(--ink-mute); }
+  .plan-detail { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute); margin-top: 2px; }
+  .plan-row.is-missed { opacity: 0.55; }
+  .plan-add {
+    background: transparent; border: none; color: var(--ink-mute);
+    width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 15px; opacity: 0; transition: opacity 0.15s, background 0.15s, color 0.15s;
+  }
+  .plan-row:hover .plan-add { opacity: 0.55; }
+  .plan-add:hover { background: var(--surface); color: var(--burgundy); opacity: 1; }
+  .plan-rest .plan-add { opacity: 0.4; }
+  @media (max-width: 560px) {
+    .plan-card { padding: 18px 18px; }
+    .plan-row { padding: 13px 4px; gap: 10px; grid-template-columns: 42px 12px 1fr 28px; }
+    .plan-add { opacity: 0.45; }
+  }
+  /* Plan-card header row + Change-plan button + plan label */
+  .plan-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .plan-label-line { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); margin: 4px 0 0; }
+  .plan-label-line strong { color: var(--burgundy); font-weight: 600; }
+  .change-plan-btn {
+    background: var(--burgundy); color: var(--cream); border: none; padding: 8px 14px; border-radius: 9px;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+    flex-shrink: 0; transition: background 0.15s;
+  }
+  .change-plan-btn:hover { background: var(--burgundy-dark); }
+
+  /* Plan library sheet */
+  .plan-pick-note { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); margin: 0 0 16px; }
+  .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .plan-grid { grid-template-columns: 1fr; } }
+  .plan-pick {
+    background: var(--cream); border-radius: 16px; padding: 16px; cursor: pointer; position: relative;
+    border: 2px solid transparent; transition: box-shadow 0.15s, transform 0.12s, border-color 0.15s;
+  }
+  .plan-pick:hover { box-shadow: 0 6px 18px rgba(135,75,70,0.10); transform: translateY(-1px); }
+  .plan-pick.active { border-color: var(--burgundy); }
+  .plan-pick-name { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; color: var(--ink); }
+  .plan-pick-goal { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); margin-top: 3px; line-height: 1.4; }
+  .plan-pick-freq { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; color: var(--burgundy); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .plan-diff { height: 6px; background: var(--line-soft); border-radius: 999px; margin-top: 8px; overflow: hidden; }
+  .plan-diff-fill { height: 100%; background: var(--gold); border-radius: 999px; }
+
+  /* ============================
+     WEEKLY LOAD STRIP (Week tab) — mockup-style intensity balance
+     ============================ */
+  .load-strip-card {
+    background: var(--surface); border-radius: 22px; box-shadow: var(--shadow-card);
+    padding: 18px 20px 16px; margin-top: 16px;
+  }
+  .load-strip-squares { display: flex; gap: 6px; margin: 12px 0 10px; flex-wrap: wrap; }
+  .load-strip-square { width: 30px; height: 30px; border-radius: 8px; background: var(--line-soft); }
+  .load-strip-square.easy { background: rgba(135,75,70,0.32); }
+  .load-strip-square.moderate { background: var(--burgundy-light); }
+  .load-strip-square.hard { background: var(--burgundy); }
+  .load-strip-key { display: flex; gap: 14px; margin-top: 10px; }
+  .load-strip-key-item { display: inline-flex; align-items: center; gap: 5px; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); }
+  .load-strip-key-sq { width: 11px; height: 11px; border-radius: 3px; }
+  .load-strip-label { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
+  .load-strip-warning {
+    display: flex; align-items: center; gap: 8px; margin-top: 12px;
+    background: rgba(135,75,70,0.08); color: var(--burgundy); border-radius: 12px;
+    padding: 10px 14px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
+  }
+
+  /* ============================
+     BOOK TAB — coach check-ins + month calendar (mockup-style)
+     ============================ */
+  .book-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 920px) { .book-grid { grid-template-columns: 1.1fr 1fr; align-items: start; } }
+  .book-card { background: var(--surface); border-radius: 22px; box-shadow: var(--shadow-card); padding: 20px 22px; }
+
+  .slot-card {
+    border-radius: 14px; background: var(--cream); padding: 14px 16px; margin-bottom: 10px;
+    transition: box-shadow 0.15s, background 0.15s;
+  }
+  .slot-card:last-child { margin-bottom: 0; }
+  .slot-card.available { cursor: pointer; }
+  .slot-card.available:hover { box-shadow: 0 6px 18px rgba(135,75,70,0.10); }
+  .slot-card.booked { background: rgba(135,75,70,0.08); }
+  .slot-card.full { opacity: 0.6; }
+  .slot-card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .slot-badge {
+    font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 700; padding: 3px 8px; border-radius: 9999px; color: var(--cream); white-space: nowrap;
+  }
+  .slot-badge.type-checkin { background: var(--burgundy); }
+  .slot-badge.type-technique { background: var(--gold); color: var(--burgundy-dark); }
+  .slot-badge.type-testing { background: var(--ink); }
+  .slot-badge.type-group { background: var(--sage); }
+  .slot-card-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; color: var(--ink); }
+  .slot-card-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
+  .slot-card-time { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-mute); font-weight: 500; }
+  .slot-card-time strong { color: var(--ink); font-weight: 600; }
+  .book-btn {
+    background: var(--burgundy); color: var(--cream); border: none; padding: 8px 16px; border-radius: 9px;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s;
+  }
+  .book-btn:hover { background: var(--burgundy-dark); }
+  .slot-status { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .slot-status.booked-label { color: var(--burgundy); }
+  .slot-status.full-label { color: var(--ink-mute); }
+  .booking-note {
+    margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line);
+    font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; color: var(--ink-mute); text-align: center;
+  }
+
+  .cal-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .cal-tabs { display: flex; gap: 4px; background: var(--cream); padding: 4px; border-radius: 11px; margin-bottom: 14px; }
+  .cal-tab {
+    flex: 1; border: none; background: transparent; padding: 8px 10px; border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-mute); cursor: pointer; transition: all 0.15s;
+  }
+  .cal-tab.active { background: var(--surface); color: var(--burgundy); box-shadow: 0 1px 3px rgba(26,20,17,0.08); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .cal-dayhead {
+    font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 700; color: var(--ink-mute); text-align: center; padding: 2px 0 6px;
+  }
+  .cal-day {
+    aspect-ratio: 1; border-radius: 9px; background: var(--cream);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    font-family: 'Fraunces', serif; font-size: 13px; font-weight: 500; color: var(--ink); position: relative;
+  }
+  .cal-day.blank { background: transparent; }
+  .cal-day.today { background: var(--burgundy); color: var(--cream); }
+  .cal-dots { display: flex; gap: 2px; height: 5px; }
+  .cal-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .cal-dot.type-checkin { background: var(--burgundy); }
+  .cal-dot.type-technique { background: var(--gold); }
+  .cal-dot.type-testing { background: var(--ink); }
+  .cal-dot.type-group { background: var(--sage); }
+  .cal-day.today .cal-dot { box-shadow: 0 0 0 1.5px var(--cream); }
+  .cal-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+  .cal-legend-item { display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); font-weight: 500; }
+  .cal-legend-swatch { width: 8px; height: 8px; border-radius: 50%; }
+</style>
+
+<script>
+  // ============================================================
+  // CONFIG + STATE
+  // ============================================================
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
+  const SESSION_KEY = 'aaAthletePortalUser';
+  const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const STATE_LABEL = { build:'Build', maintain:'Maintain', peak:'Peak', recover:'Recover', off:'Off' };
+  // Kid-friendly labels + emoji for the Year tab (underlying state keys unchanged).
+  const PHASE_FRIENDLY = { build:'Build', maintain:'Keep sharp', peak:'Race ready', recover:'Recover', off:'Off' };
+  const PHASE_EMOJI = { build:'💪', maintain:'⚡', peak:'🏆', recover:'🌙', off:'⏸️' };
+
+  let currentUser = null;
+  let athlete = null;
+  let state = { yearMap: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, booking: null, planName: '' };
+  let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
+  let activeTab = 'week';
+  let editing = null;        // session currently in the sheet
+  let workoutEditing = false;
+
+  // ============================================================
+  // LAB — Scott's personal plan (hardcoded; stable data, lab file only)
+  // ============================================================
+  // Quick-add palette: tap a template → pre-fills a planned session on the
+  // chosen day (sport, name, planned duration, intensity, default Target).
+  const LAB_TEMPLATES = [
+    { sport:'Run',      name:'Z2 base (outdoor)',            intensity:'easy',     duration:50, target:'Z2 · HR 130–141 · ~6:00–6:30/km · 6→8km ladder' },
+    { sport:'Run',      name:'Threshold – curve reps',       intensity:'hard',     duration:45, target:'15 km/h · HR 160–166 · 3-min walk recoveries' },
+    { sport:'Run',      name:'Threshold – outdoor intervals',intensity:'hard',     duration:45, target:'~4:20–4:40/km · 5×3–4 min' },
+    { sport:'Bike',     name:'Threshold – bike',             intensity:'hard',     duration:45, target:'4×5 min ~250W · 95rpm · HR 154–165' },
+    { sport:'Run',      name:'VO2 – curve SIT',              intensity:'hard',     duration:30, target:'4–5×30s @ 20–22 km/h' },
+    { sport:'Bike',     name:'VO2 – bike',                   intensity:'hard',     duration:35, target:'30/15s off MAP' },
+    { sport:'Strength', name:'Push A',                       intensity:'moderate', duration:50, target:'Hex squat · DB bench · BB push press · SL squat-to-bench · hip airplane' },
+    { sport:'Strength', name:'Pull B',                       intensity:'moderate', duration:50, target:'Hex deadlift · power clean · DB snatch · KB row · ecc hammer curls · slider reverse lunge' },
+    { sport:'Power',    name:'Power',                        intensity:'hard',     duration:40, target:'Sled push+pull · DB ¼-squat jumps · Wattbike 8s sprints' },
+    { sport:'Mobility', name:'Daily constant (~10 min)',     intensity:'easy',     duration:10, target:'Hip airplane · slider reverse lunge · bent-knee calf raises 4×12–15 · short-foot balance · pre-run soleus' },
+    { sport:'Test',     name:'Wattbike 5-min MAP',           intensity:'hard',     duration:15, target:'5-min max average power' }
+  ];
+
+  // Loose block plan applied to the Year tab on first load (month-grain).
+  // Finer intent (early Jul Maintain / late Jul Build / early Aug Maintain /
+  // mid-Aug Peak) is collapsed to one state per month: Build → Maintain → Peak.
+  const LAB_YEAR = [
+    { month:'June',   state:'build'    },
+    { month:'July',   state:'maintain' },
+    { month:'August', state:'peak'     }
+  ];
+
+  let labQuickDay = null;    // ISO date selected in the quick-add palette
+
+  // Seed Scott's near-term phases locally on first load. Never overwrites a
+  // month he's already committed, and stays editable as normal (edits persist
+  // through the usual saveBlock flow).
+  function applyLabYear(){
+    if(!state.yearMap){
+      state.yearMap = {
+        year: '2025–26', vision: '',
+        aPriority: null,
+        sports: [{ name:(athlete && athlete.Sport_1) || 'Running', isPriority:true, monthlyStates:[] }],
+        testingWindows: [], otherCommitments: []
+      };
+    }
+    let sport = (state.yearMap.sports||[]).find(s=>s.isPriority) || (state.yearMap.sports||[])[0];
+    if(!sport){
+      sport = { name:(athlete && athlete.Sport_1) || 'Running', isPriority:true, monthlyStates:[] };
+      state.yearMap.sports = [sport];
+    }
+    if(!sport.monthlyStates) sport.monthlyStates = [];
+    LAB_YEAR.forEach(seed => {
+      const existing = sport.monthlyStates.find(m => m.month===seed.month);
+      if(existing){ if(!existing.state) existing.state = seed.state; }    // keep any committed state
+      else sport.monthlyStates.push({ month:seed.month, state:seed.state, focus:'', loadTarget:null, note:'' });
+    });
+  }
+
+  // ============================================================
+  // SMALL HELPERS
+  // ============================================================
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function val(id){ const el=document.getElementById(id); return el? el.value : ''; }
+  function numOrNull(v){ if(v===''||v==null) return null; const n=parseInt(v,10); return isNaN(n)?null:n; }
+  function fmtISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function parseISO(s){ const p=String(s).split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+  function isoToday(){ return fmtISO(new Date()); }
+  function mondayOf(d){ const x=new Date(d); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; }
+  function addDays(iso,n){ const d=parseISO(iso); d.setDate(d.getDate()+n); return fmtISO(d); }
+  function dayNum(iso){ return parseISO(iso).getDate(); }
+  function dowShort(iso){ return DOW[parseISO(iso).getDay()]; }
+  function monShort(iso){ return MONTHS[parseISO(iso).getMonth()].slice(0,3); }
+  function fmtNice(iso){ return iso ? dayNum(iso)+' '+monShort(iso) : ''; }
+
+  // ============================================================
+  // AUTH
+  // ============================================================
+  function handleCredentialResponse(resp){
+    try {
+      const payload = JSON.parse(atob(resp.credential.split('.')[1]));
+      currentUser = { email: payload.email, name: payload.name, picture: payload.picture, loginTime: Date.now() };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+      startPortal();
+    } catch(e){ showToast('Sign-in failed. Try again.', 'error'); }
+  }
+  window.handleCredentialResponse = handleCredentialResponse;
+
+  function checkExistingSession(){
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if(!raw) return false;
+      const u = JSON.parse(raw);
+      if(!u.loginTime || (Date.now() - u.loginTime) > SESSION_MAX_AGE){ localStorage.removeItem(SESSION_KEY); return false; }
+      currentUser = u; return true;
+    } catch(e){ return false; }
+  }
+  function logout(){ localStorage.removeItem(SESSION_KEY); location.reload(); }
+  window.logout = logout;
+
+  // ============================================================
+  // API
+  // ============================================================
+  const REQ_TIMEOUT = 20000; // Apps Script can be slow; never hang forever.
+  async function apiFetch(url, opts){
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), REQ_TIMEOUT);
+    try {
+      const r = await fetch(url, Object.assign({ signal: ctrl.signal }, opts || {}));
+      const text = await r.text();
+      try { return JSON.parse(text); }
+      catch(e){ throw new Error('Unexpected response from the server'); }
+    } catch(e){
+      if(e.name === 'AbortError') throw new Error('The server took too long to respond');
+      throw e;
+    } finally { clearTimeout(timer); }
+  }
+  async function apiGet(params){
+    if(DEMO_MODE) return demoApi(params);
+    const qs = Object.keys(params).map(k => k+'='+encodeURIComponent(params[k])).join('&');
+    return apiFetch(APPS_SCRIPT_URL + '?' + qs);
+  }
+  async function apiPost(body){
+    if(DEMO_MODE) return demoApi(body);
+    return apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body) });
+  }
+  // Demo short-circuit: keep every interaction local, never touch the network.
+  function demoApi(payload){
+    const action = (payload && payload.action) || '';
+    if(action==='getWeek') return Promise.resolve({ success:true, weekStart: payload.weekStart,
+      sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
+    if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
+    if(action==='saveSession') return Promise.resolve({ success:true, id: 'demo_'+Date.now() });
+    return Promise.resolve({ success:true });
+  }
+
+  function setLoading(on, text){
+    const el = document.getElementById('appLoading');
+    if(text) document.getElementById('appLoadingText').textContent = text;
+    el.classList.toggle('active', !!on);
+  }
+  function showToast(msg, type){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + (type||'') + ' active';
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> t.className = 'toast ' + (type||''), 2800);
+  }
+
+  // ============================================================
+  // BOOTSTRAP
+  // ============================================================
+  async function startPortal(){
+    document.body.classList.add('signed-in');
+    document.getElementById('appError').classList.remove('active');
+    setLoading(true, 'Loading your training…');
+    try {
+      const data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
+      if(!data.success) throw new Error(data.error || 'load failed');
+      athlete = data.athlete;
+      if(!athlete){ setLoading(false); renderNoAthlete(); return; }
+      state.yearMap = data.yearMap || null;
+      state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
+      state.pbs = data.pbs || [];
+      state.load = data.load || { weeks: [], summary: {} };
+      applyLabYear();   // LAB: seed Scott's near-term phases (local, editable)
+      renderNav();
+      switchTab(hasYear() ? 'week' : 'year');
+      setLoading(false);
+    } catch(e){
+      setLoading(false);
+      document.getElementById('appError').classList.add('active');
+    }
+  }
+  function retryLoad(){ document.getElementById('appError').classList.remove('active'); startPortal(); }
+  window.retryLoad = retryLoad;
+
+  // ============================================================
+  // DEMO MODE (?demo=1) — purely additive: no auth, no fetch.
+  // Renders every tab from hardcoded data so it's never empty.
+  // ============================================================
+  function startDemo(){
+    DEMO_MODE = true;
+    const demo = buildDemoState();
+    currentUser = { email: 'demo@athlete.academy', name: demo.athlete.Name, loginTime: Date.now() };
+    athlete = demo.athlete;
+    state.yearMap = demo.yearMap;
+    state.week = demo.week;
+    state.pbs = demo.pbs;
+    state.load = demo.load;
+    state.booking = demo.booking;
+    state.planName = 'Swimming Performance';
+    document.body.classList.add('signed-in');
+    document.getElementById('appError').classList.remove('active');
+    setLoading(false);
+    const pill = document.getElementById('demoPill'); if(pill) pill.hidden = false;
+    renderNav();
+    switchTab('week');
+  }
+
+  function buildDemoState(){
+    const athlete = { Name: 'Maya Hoffmann', Grade: 'G11', Sport_1: 'Swimming' };
+
+    // Full academic-year block map (Aug→Jul) for the priority sport.
+    const yearMap = {
+      year: '2025–26',
+      vision: 'Final at Regionals — sub-58 in the 100 free.',
+      aPriority: { sport: 'Swimming', event: 'Regional Championships', date: '2026-04-18', month: 'April' },
+      sports: [
+        { name: 'Swimming', isPriority: true, monthlyStates: [
+          { month:'August',   state:'build',    focus:'Aerobic base — rebuild after summer.', loadTarget:1100, note:'' },
+          { month:'September',state:'build',    focus:'Volume up, technique under fatigue.',  loadTarget:1200, note:'' },
+          { month:'October',  state:'build',    focus:'', loadTarget:1250, note:'' },
+          { month:'November', state:'maintain', focus:'Hold fitness through exams.', loadTarget:900, note:'' },
+          { month:'December', state:'maintain', focus:'', loadTarget:800, note:'' },
+          { month:'January',  state:'build',    focus:'Second build — add speed work.', loadTarget:1200, note:'' },
+          { month:'February', state:'build',    focus:'', loadTarget:1250, note:'' },
+          { month:'March',    state:'peak',     focus:'Sharpen — race-pace sets.', loadTarget:1000, note:'' },
+          { month:'April',    state:'peak',     focus:'Taper into Regionals.', loadTarget:700, note:'' },
+          { month:'May',      state:'recover',  focus:'Active recovery, mobility.', loadTarget:500, note:'' },
+          { month:'June',     state:'maintain', focus:'Easy aerobic + skill work.', loadTarget:800, note:'' },
+          { month:'July',     state:'off',      focus:'Off-season break.', loadTarget:null, note:'' }
+        ]},
+        { name: 'Athletics', isPriority: false, monthlyStates: [
+          { month:'April', state:'maintain', focus:'Sprints cross-training.', loadTarget:null, note:'' },
+          { month:'May',   state:'build',    focus:'', loadTarget:null, note:'' },
+          { month:'June',  state:'build',    focus:'', loadTarget:null, note:'' }
+        ]}
+      ],
+      testingWindows: [{ month:'October' }, { month:'March' }],
+      otherCommitments: [{ month:'December' }, { month:'May' }]
+    };
+
+    // This week — mixed intensities, a couple logged, the rest planned.
+    const mon = fmtISO(mondayOf(new Date()));
+    const week = { weekStart: mon, sessions: [
+      { id:'demo-s1', date: mon, sport:'Swimming', name:'Aerobic swim — 3km', intensity:'moderate',
+        plannedDuration:60, rpe:6, duration:62, load:372, status:'done', isPB:false,
+        workout:[{name:'Warm up',detail:'600m mixed'},{name:'Main set',detail:'10×200 @ pace'},{name:'Cool down',detail:'400m easy'}], note:'Felt smooth.' },
+      { id:'demo-s2', date: addDays(mon,1), sport:'Gym', name:'Lower-body strength', intensity:'hard',
+        plannedDuration:50, rpe:8, duration:48, load:384, status:'done', isPB:false,
+        workout:[{name:'Back squat',detail:'4×5'},{name:'RDL',detail:'3×8'},{name:'Box jumps',detail:'4×4'}], note:'' },
+      { id:'demo-s3', date: addDays(mon,2), sport:'Swimming', name:'Sprint sets — 50s & 100s', intensity:'hard',
+        plannedDuration:75, rpe:null, duration:null, load:null, status:'planned', isPB:false,
+        workout:[{name:'Warm up',detail:'800m'},{name:'Sprints',detail:'8×50 max'},{name:'Race pace',detail:'6×100'}], note:'' },
+      { id:'demo-s4', date: addDays(mon,3), sport:'Swimming', name:'Easy recovery swim', intensity:'easy',
+        plannedDuration:40, rpe:null, duration:null, load:null, status:'planned', isPB:false, workout:[], note:'' },
+      { id:'demo-s5', date: addDays(mon,5), sport:'Swimming', name:'Long aerobic + technique', intensity:'moderate',
+        plannedDuration:90, rpe:null, duration:null, load:null, status:'planned', isPB:false,
+        workout:[{name:'Technique drills',detail:'1km'},{name:'Aerobic',detail:'2km steady'}], note:'' }
+    ]};
+
+    const pbs = [
+      { sport:'Swimming', exercise:'100m Freestyle', value:'58.4', unit:'s', date:'2026-04-18', note:'Regional final', previousValue:'59.7', sessionId:'' },
+      { sport:'Swimming', exercise:'200m Freestyle', value:'2:09.8', unit:'', date:'2026-03-21', note:'', previousValue:'', sessionId:'' },
+      { sport:'Swimming', exercise:'50m Butterfly', value:'29.1', unit:'s', date:'2026-02-14', note:'', previousValue:'29.9', sessionId:'' },
+      { sport:'Gym', exercise:'Back squat 5RM', value:'72', unit:'kg', date:'2026-05-02', note:'', previousValue:'67.5', sessionId:'' }
+    ];
+
+    // Season-long weekly load with a rolling acute:chronic overlay.
+    const start = fmtISO(mondayOf(new Date(2025, 7, 1)));   // first Monday on/after 1 Aug 2025
+    const list = [];
+    for(let i=0;i<60;i++){ const w = addDays(start, i*7); if(parseISO(w) > parseISO(mon)) break; list.push(w); }
+    const stateLoad = { build:1180, maintain:850, peak:1000, recover:480, off:120 };
+    const loads = list.map(w => {
+      const month = MONTHS[parseISO(w).getMonth()];
+      const ms = yearMap.sports[0].monthlyStates.find(m => m.month===month);
+      const base = ms ? (stateLoad[ms.state] || 800) : 800;
+      const jitter = ((parseISO(w).getDate()*37) % 220) - 110;   // deterministic ±110
+      return Math.max(0, Math.round(base + jitter));
+    });
+    // Make the latest week match the sessions actually logged above.
+    const doneLoad = week.sessions.filter(s => s.status==='done' || s.status==='modified')
+      .reduce((a,s)=> a + (s.load||0), 0);
+    if(loads.length) loads[loads.length-1] = doneLoad;
+    const weeks = loads.map((ld, i) => {
+      const from = Math.max(0, i-3);
+      const window = loads.slice(from, i+1);
+      const chronic = window.reduce((a,b)=>a+b,0) / window.length;
+      return { weekStart: list[i], load: ld, acwr: (i>=3 && chronic>0) ? +(ld/chronic).toFixed(2) : null };
+    });
+    const load = { weeks: weeks, summary: {
+      thisWeekLoad: doneLoad,
+      acwr: weeks.length ? weeks[weeks.length-1].acwr : null,
+      weeksLogged: list.length
+    }};
+
+    // Coach check-ins + a personal calendar (demo/visual only).
+    const booking = {
+      calTitle: 'June & July 2026',
+      calYear: 2026,
+      months: [5, 6],
+      slots: [
+        { title:'Check-in with Mr Bain',       type:'checkin',   day:'Wed 3 Jun',  time:'15:30–16:00', coach:'Mr Bain', status:'available', eventDate:'2026-06-03' },
+        { title:'Freestyle technique review',   type:'technique', day:'Fri 5 Jun',  time:'16:00–16:30', coach:'Mr Bain', status:'available', eventDate:'2026-06-05' },
+        { title:'Cooper retest',                type:'testing',   day:'Tue 9 Jun',  time:'14:00–15:00', coach:null,      status:'available', eventDate:'2026-06-09' },
+        { title:'Mobility assessment',          type:'testing',   day:'Thu 11 Jun', time:'14:00–14:45', coach:null,      status:'booked',    eventDate:'2026-06-11' },
+        { title:'Group conditioning',           type:'group',     day:'Sat 13 Jun', time:'09:00–10:00', coach:null,      status:'full',      eventDate:'2026-06-13' }
+      ],
+      events: [
+        { date:'2026-06-11', type:'testing',   name:'Mobility assessment' },
+        { date:'2026-06-19', type:'checkin',   name:'Check-in with Mr Bain' },
+        { date:'2026-06-25', type:'group',     name:'Group conditioning' },
+        { date:'2026-07-02', type:'technique', name:'Stroke review' }
+      ]
+    };
+
+    return { athlete, yearMap, week, pbs, load, booking };
+  }
+
+  function renderNav(){
+    const name = athlete.Name || ((athlete.First_Name||'')+' '+(athlete.Last_Name||'')).trim() || currentUser.name || 'Athlete';
+    const first = name.split(' ')[0];
+    const grade = athlete.Grade || athlete.Year_Group || '';
+    const sport = athlete.Sport_1 || (state.yearMap && state.yearMap.sports && state.yearMap.sports[0] && state.yearMap.sports[0].name) || '';
+    const initials = (name.split(' ').map(w=>w[0]).join('').slice(0,2) || 'AA').toUpperCase();
+    const av = document.getElementById('navAvatar');
+    av.textContent = initials;
+    av.style.cursor = 'pointer';
+    av.title = 'Sign out';
+    av.onclick = () => { if(confirm('Sign out of the Athlete Academy?')) logout(); };
+    document.getElementById('navAthlete').innerHTML =
+      '<strong>'+esc(first)+'</strong>' + (grade? ' · '+esc(grade):'') + (sport? ' · '+esc(sport):'');
+  }
+
+  function renderNoAthlete(){
+    document.body.classList.add('signed-in');
+    document.getElementById('blockBar').innerHTML = '';
+    document.getElementById('view-week').innerHTML =
+      '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-user-question"></i></div>'+
+      '<h2 class="empty-state-title">No <em>athlete record</em> found.</h2>'+
+      '<p class="empty-state-text">Signed in as '+esc(currentUser.email)+'. Ask Mr Bain to add you to the Academy, then sign in again.</p>'+
+      '<button class="btn-primary" onclick="logout()">Sign out</button></div>';
+  }
+
+  // ============================================================
+  // TABS + BLOCK BAR
+  // ============================================================
+  function switchTab(tab){
+    activeTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-'+tab).classList.add('active');
+    renderBlockBar();
+    if(tab==='week') renderWeek();
+    else if(tab==='year') renderYear();
+    else if(tab==='load') renderLoad();
+    else if(tab==='book') renderBook();
+    else if(tab==='pbs') renderPBs();
+    window.scrollTo(0,0);
+  }
+  window.switchTab = switchTab;
+
+  function currentBlock(){
+    if(!state.yearMap || !state.yearMap.sports || !state.yearMap.sports.length) return null;
+    const month = MONTHS[new Date().getMonth()];
+    const sport = state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
+    if(!sport || !sport.monthlyStates) return null;
+    const ms = sport.monthlyStates.find(m=>m.month===month);
+    return ms ? Object.assign({ sport: sport.name }, ms) : null;
+  }
+
+  // The single shared phase (priority sport, this month) used to tie Week/Year/Load together.
+  function currentPhaseInfo(){
+    if(!state.yearMap || !state.yearMap.sports || !state.yearMap.sports.length) return null;
+    const month = MONTHS[new Date().getMonth()];
+    const sport = state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
+    const phase = currentSportPhase(sport, month);
+    if(!phase) return null;
+    const ms = (sport.monthlyStates||[]).find(m=>m.month===month) || {};
+    return { sport: sport.name, month: month, phase: phase, focus: ms.focus||'', loadTarget: ms.loadTarget||null };
+  }
+
+  // Phase context woven into a tab's hero (eyebrow row): a coloured phase chip,
+  // the month, and a quiet link across to the Year plan it comes from.
+  function phaseEyebrowRow(){
+    const info = currentPhaseInfo();
+    if(!info) return '<p class="block-eyebrow">This week</p>';
+    return '<div class="block-eyebrow-row">'+
+      '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+PHASE_FRIENDLY[info.phase]+'</span>'+
+      '<span class="block-phase-month">'+esc(info.month)+'</span>'+
+      '<button class="block-phase-link" onclick="switchTab(\'year\')">Your year →</button>'+
+    '</div>';
+  }
+
+  function renderBlockBar(){
+    const bar = document.getElementById('blockBar');
+    const weekLoad = state.week.sessions.reduce((a,s)=> a + (s.load||0), 0);
+    const done = state.week.sessions.filter(s=> s.status==='done' || s.status==='modified').length;
+    const total = state.week.sessions.length;
+
+    if(activeTab==='year'){
+      const ap = state.yearMap && state.yearMap.aPriority;
+      const vision = state.yearMap && state.yearMap.vision;
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          '<p class="block-eyebrow">Your year · '+esc((state.yearMap&&state.yearMap.year)||'2026–27')+'</p>'+
+          '<h1 class="block-title">'+(vision? esc(vision) : 'Map your <em>year</em>.')+'</h1>'+
+          '<p class="block-sub">'+(ap&&ap.event? 'A-priority · '+esc(ap.event)+(ap.date?' · '+fmtNice(ap.date):'') : 'Set the one event your year points at.')+'</p>'+
+        '</div>';
+      return;
+    }
+
+    if(activeTab==='load'){
+      const s = (state.load && state.load.summary) || {};
+      const acwr = s.acwr;
+      const info = currentPhaseInfo();
+      const tgt = info && info.loadTarget;
+      let sub;
+      if(tgt){
+        const phaseTxt = PHASE_EMOJI[info.phase]+' '+PHASE_FRIENDLY[info.phase];
+        sub = "You're in "+phaseTxt+" — aim for about "+tgt+" a week. You're at "+(s.thisWeekLoad||0)+".";
+      } else {
+        sub = acwr==null ? 'Log a few weeks and your training load builds here.'
+          : (acwr>1.3 ? 'Ramping up fast — watch the jump.' : (acwr<0.8 ? 'Easing off — your load is dropping.' : 'Your load is in a healthy range.'));
+      }
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          (info ? phaseEyebrowRow() : '<p class="block-eyebrow">Training load</p>')+
+          '<h1 class="block-title">Your <em>load</em>.</h1>'+
+          '<p class="block-sub">'+esc(sub)+'</p>'+
+        '</div>'+
+        '<div class="block-meta">'+
+          '<div class="block-meta-item"><strong>'+(s.thisWeekLoad||0)+'</strong> load this week</div>'+
+          (tgt? '<div class="block-meta-item"><strong>'+esc(String(tgt))+'</strong> weekly target</div>' : '')+
+        '</div>';
+      return;
+    }
+
+    if(activeTab==='pbs'){
+      const n = (state.pbs||[]).length;
+      const latest = n ? state.pbs[0] : null;
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          '<p class="block-eyebrow">Personal bests</p>'+
+          '<h1 class="block-title">Your <em>bests</em>.</h1>'+
+          '<p class="block-sub">'+(latest? 'Latest · '+esc(latest.exercise)+' '+esc(String(latest.value))+(latest.unit?esc(latest.unit):'')+(latest.date?' · '+fmtNice(latest.date):'') : 'Every best you set lands here.')+'</p>'+
+        '</div>'+
+        (n? '<div class="block-meta"><div class="block-meta-item"><strong>'+n+'</strong> '+(n===1?'best':'bests')+' logged</div></div>' : '');
+      return;
+    }
+
+    if(activeTab==='book'){
+      const bk = state.booking;
+      const open = bk ? (bk.slots||[]).filter(s=>s.status==='available').length : 0;
+      const booked = bk ? (bk.slots||[]).filter(s=>s.status==='booked').length : 0;
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          '<p class="block-eyebrow">Coaching</p>'+
+          '<h1 class="block-title">Book a <em>session</em>.</h1>'+
+          '<p class="block-sub">'+(bk? 'Check-ins, technique reviews and testing — booked with Mr Bain.' : 'Coming soon — book coach time right here.')+'</p>'+
+        '</div>'+
+        (bk? '<div class="block-meta">'+
+          '<div class="block-meta-item"><strong>'+open+'</strong> slots open</div>'+
+          '<div class="block-meta-item"><strong>'+booked+'</strong> booked</div>'+
+        '</div>' : '');
+      return;
+    }
+
+    const blk = currentBlock();
+    if(blk){
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          phaseEyebrowRow()+
+          '<h1 class="block-title">Your <em>week</em>.</h1>'+
+          '<p class="block-sub">'+esc(blk.focus || blk.note || 'Plan it, do it, log it.')+'</p>'+
+        '</div>'+
+        '<div class="block-meta">'+
+          '<div class="block-meta-item"><strong>'+done+' / '+total+'</strong> sessions done</div>'+
+          '<div class="block-meta-item"><strong>'+weekLoad+'</strong> load this week</div>'+
+          (blk.loadTarget? '<div class="block-meta-item"><strong>'+esc(String(blk.loadTarget))+'</strong> target</div>':'')+
+        '</div>';
+    } else {
+      bar.innerHTML =
+        '<div class="block-bar-left">'+
+          '<p class="block-eyebrow">This week</p>'+
+          '<h1 class="block-title">Your <em>week</em>.</h1>'+
+          '<p class="block-sub">'+(total? 'Plan it, do it, log it.' : 'No plan yet — add a session below, or set your year.')+'</p>'+
+        '</div>'+
+        '<div class="block-meta">'+
+          '<div class="block-meta-item"><strong>'+done+' / '+total+'</strong> sessions done</div>'+
+          '<div class="block-meta-item"><strong>'+weekLoad+'</strong> load this week</div>'+
+        '</div>';
+    }
+  }
+
+  // ============================================================
+  // WEEK TAB
+  // ============================================================
+  function intensityBadge(i){
+    if(i==='hard') return '<span class="intensity-badge intensity-hard">Hard</span>';
+    if(i==='moderate') return '<span class="intensity-badge intensity-moderate">Mod</span>';
+    if(i==='easy') return '<span class="intensity-badge intensity-easy">Easy</span>';
+    return '';
+  }
+  function isLogged(s){ return s.status==='done' || s.status==='modified'; }
+
+  function renderWeek(){
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const today = isoToday();
+    const curMon = fmtISO(mondayOf(new Date()));
+    const byDay = {};
+    state.week.sessions.forEach(s => { (byDay[s.date] = byDay[s.date] || []).push(s); });
+    const todays = byDay[today] || [];
+
+    const banner = document.getElementById('weekBanner');
+    if(ws !== curMon){
+      banner.innerHTML = '<div class="week-banner"><span>Week of '+fmtNice(ws)+' – '+fmtNice(addDays(ws,6))+'</span>'+
+        '<button onclick="goToThisWeek()">Back to this week</button></div>';
+    } else { banner.innerHTML = ''; }
+
+    renderTodayHero(todays, today);
+    renderMobileToday(todays, ws, today, byDay);
+
+    let rows = '';
+    for(let i=0;i<7;i++){
+      const iso = addDays(ws, i);
+      const isToday = iso===today;
+      const ds = byDay[iso] || [];
+      const dayLabel = '<span class="plan-dow">'+dowShort(iso)+'</span><span class="plan-date">'+dayNum(iso)+'</span>'+
+        (isToday? '<span class="plan-today-tag">today</span>' : '');
+      if(ds.length){
+        ds.forEach((s, idx) => { rows += planRow(s, idx===0 ? dayLabel : '', iso, isToday); });
+      } else {
+        rows += planRestRow(dayLabel, iso, isToday, iso<today);
+      }
+    }
+    document.getElementById('weekGrid').innerHTML =
+      '<div class="plan-card">'+
+        '<div class="plan-head"><div class="plan-head-row">'+
+          '<div><p class="overline">This week</p>'+
+            '<h2 class="section-heading">Training plan <span class="plan-week-range">Week of '+fmtNice(ws)+'</span></h2>'+
+            (state.planName? '<p class="plan-label-line">Plan · <strong>'+esc(state.planName)+'</strong></p>' : '')+
+          '</div>'+
+          '<div class="plan-head-actions">'+
+            '<button class="from-plan-btn" onclick="openLabTemplates()"><i class="ti ti-bolt" aria-hidden="true"></i> From my plan</button>'+
+            '<button class="change-plan-btn" onclick="openPlanSheet()">Change plan</button>'+
+          '</div>'+
+        '</div></div>'+
+        '<div class="plan-list">'+rows+'</div>'+
+      '</div>';
+    renderWeekPBs();
+    renderLoadStrip();
+  }
+
+  // One clean row per session (mockup-style: day · dot · name + detail).
+  function planRow(s, dayLabelHTML, iso, isToday){
+    let statusCls = '';
+    if(s.status==='done' || s.status==='modified') statusCls = ' is-done';
+    else if(s.status==='missed') statusCls = ' is-missed';
+    const dotCls = s.intensity ? ' '+s.intensity : '';
+    let meta;
+    if(s.status==='missed') meta = 'Missed' + (s.note? ' · '+esc(s.note) : '');
+    else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au';
+    else meta = esc(s.sport)+' · '+(s.plannedDuration||0)+'min planned';
+    const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
+    return '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
+      '<span class="plan-day">'+dayLabelHTML+'</span>'+
+      '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
+      '<div class="plan-info"><div class="plan-name">'+esc(s.name)+pb+'</div><div class="plan-detail">'+meta+'</div></div>'+
+      '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
+    '</div>';
+  }
+  function planRestRow(dayLabelHTML, iso, isToday, isPast){
+    return '<div class="plan-row plan-rest'+(isToday?' is-today':'')+'" onclick="newSession(\''+iso+'\')">'+
+      '<span class="plan-day">'+dayLabelHTML+'</span>'+
+      '<span class="plan-dot is-empty" aria-hidden="true"></span>'+
+      '<div class="plan-info"><div class="plan-name muted">'+(isPast?'Nothing logged':'Rest day')+'</div>'+
+        '<div class="plan-detail">'+(isPast?'No session this day':'Nothing planned — tap to add')+'</div></div>'+
+      '<button class="plan-add" title="Add a session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
+    '</div>';
+  }
+
+  // Weekly intensity balance — coloured squares + balance label + overload warning.
+  function renderLoadStrip(){
+    const el = document.getElementById('weekLoadStrip');
+    if(!el) return;
+    const sessions = (state.week.sessions || []).filter(s => s.status !== 'missed');
+    if(!sessions.length){ el.innerHTML = ''; return; }
+    const ordered = sessions.slice().sort((a,b)=> (a.date<b.date?-1:a.date>b.date?1:0));
+    const counts = { hard:0, moderate:0, easy:0 };
+    let squares = '';
+    ordered.forEach(s => {
+      const i = (s.intensity==='hard'||s.intensity==='moderate'||s.intensity==='easy') ? s.intensity : '';
+      if(i) counts[i]++;
+      squares += '<div class="load-strip-square'+(i?' '+i:'')+'"></div>';
+    });
+    // overload: 3+ consecutive hard sessions
+    let run = 0, maxRun = 0;
+    ordered.forEach(s => { if(s.intensity==='hard'){ run++; maxRun = Math.max(maxRun, run); } else run = 0; });
+    const total = counts.hard + counts.moderate + counts.easy;
+    let balance;
+    if(counts.hard >= 4) balance = 'heavy load';
+    else if(total && counts.easy === 0) balance = 'needs more recovery';
+    else if(counts.hard >= 2 && counts.easy >= 1) balance = 'well balanced';
+    else balance = 'steady';
+    el.className = 'load-strip-card';
+    el.innerHTML =
+      '<p class="overline">This week’s mix</p>'+
+      '<div class="load-strip-squares">'+squares+'</div>'+
+      '<p class="load-strip-label">'+counts.hard+' hard · '+counts.moderate+' moderate · '+counts.easy+' easy — '+balance+'</p>'+
+      '<div class="load-strip-key">'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq easy" style="background:rgba(135,75,70,0.32);"></span>easy</span>'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--burgundy-light);"></span>moderate</span>'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--burgundy);"></span>hard</span>'+
+      '</div>'+
+      (maxRun >= 3 ? '<div class="load-strip-warning"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Three hard days in a row — build in some recovery.</div>' : '');
+  }
+
+  function daySummary(ds){
+    if(!ds.length) return '';
+    const done = ds.filter(s=>isLogged(s));
+    const planned = ds.filter(s=>s.status==='planned');
+    const missed = ds.filter(s=>s.status==='missed');
+    const parts = [];
+    if(done.length){ const au = done.reduce((a,s)=>a+(s.load||0),0); parts.push(done.length+' done'+(au?' · '+au+'au':'')); }
+    if(planned.length) parts.push(planned.length+' planned');
+    if(missed.length) parts.push(missed.length+' missed');
+    return parts.join(' · ');
+  }
+
+  function sessionCard(s, isToday){
+    let cls = 'session ';
+    if(s.status==='done') cls += 'session-done';
+    else if(s.status==='modified') cls += 'session-modified';
+    else if(s.status==='missed') cls += 'session-missed';
+    else cls += isToday ? 'session-planned-today' : 'session-planned';
+    let meta;
+    if(s.status==='missed'){ meta = 'Missed' + (s.note? ' · '+esc(s.note):''); }
+    else if(isLogged(s)){ meta = '<strong>'+esc(s.sport)+'</strong> · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au'; }
+    else { meta = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||0)+'min planned'; }
+    const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
+    const dotCls = s.intensity ? (' '+s.intensity) : '';
+    return '<div class="'+cls+'" onclick="openSession(\''+s.id+'\')">'+
+      '<span class="session-dot'+dotCls+'" aria-hidden="true"></span>'+
+      '<div class="session-row-content">'+
+        '<p class="session-name">'+esc(s.name)+pb+'</p>'+
+        '<p class="session-meta">'+meta+'</p>'+
+      '</div>'+
+      '<i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i></div>';
+  }
+
+  function renderTodayHero(todays, today){
+    const eyebrow = dowShort(today)+' '+dayNum(today)+' '+monShort(today)+' · Today';
+    let title, sub;
+    if(!todays.length){ title = 'A <em>rest</em> day.'; sub = 'Nothing planned — recovery is training too.'; }
+    else if(todays.length===1){
+      const s = todays[0];
+      const word = s.intensity? (s.intensity==='moderate'?'moderate':s.intensity) : 'training';
+      title = 'A '+esc(word)+' <em>'+esc((s.sport||'session').toLowerCase())+'</em> day.';
+      sub = esc(s.name);
+    } else { title = todays.length+' sessions <em>today</em>.'; sub = 'Plan them, do them, log them.'; }
+    document.getElementById('today-hero').innerHTML =
+      '<p class="today-hero-eyebrow">'+eyebrow+'</p><h2 class="today-hero-title">'+title+'</h2><p class="today-hero-sub">'+sub+'</p>';
+  }
+
+  function renderMobileToday(todays, ws, today, byDay){
+    // LAB: quick-add lives here too so the plan → log loop is one tap on a phone
+    // (the Week-view plan card is hidden on mobile until you switch views).
+    let html = '<button class="from-plan-btn" style="width:100%; justify-content:center; padding:13px; margin-bottom:12px; border-radius:12px;" onclick="openLabTemplates()"><i class="ti ti-bolt" aria-hidden="true"></i> From my plan</button>';
+    if(todays.length){
+      html += todays.map(s =>
+        '<div class="today-big-session" onclick="openSession(\''+s.id+'\')">'+
+          '<div class="today-big-session-row"><h3 class="today-big-session-name">'+esc(s.name)+'</h3>'+intensityBadge(s.intensity)+'</div>'+
+          '<div class="today-big-session-meta"><span><strong>'+esc(s.sport)+'</strong></span><span>·</span>'+
+            '<span>'+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+'</span>'+
+            (s.isPB?'<span>·</span><span><i class="ti ti-flag" aria-hidden="true"></i> PB</span>':'')+'</div>'+
+          '<div class="today-big-session-cta">'+
+            '<button class="btn-primary" onclick="event.stopPropagation(); openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(s.status==='done'?'Edit log':'Log it')+'</button>'+
+            '<button class="btn-secondary" onclick="event.stopPropagation(); openSession(\''+s.id+'\')">See workout</button>'+
+          '</div></div>').join('');
+    } else {
+      html += '<div class="today-big-session" style="border-left-color:var(--sage);">'+
+        '<div class="today-big-session-row"><h3 class="today-big-session-name">Rest day</h3></div>'+
+        '<div class="today-big-session-meta"><span>Nothing planned today.</span></div>'+
+        '<div class="today-big-session-cta"><button class="btn-secondary" onclick="newSession(\''+today+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add a session</button></div></div>';
+    }
+    html += '<div class="today-rest-summary"><strong>This week so far</strong>'+weekSoFar(ws, today, byDay)+'</div>';
+    document.getElementById('mobile-today').innerHTML = html;
+  }
+
+  function weekSoFar(ws, today, byDay){
+    const parts = [];
+    for(let i=0;i<7;i++){
+      const iso = addDays(ws, i);
+      if(iso===today){ parts.push('<span style="color:var(--burgundy);">'+dowShort(iso)+': today</span>'); continue; }
+      const ds = byDay[iso] || [];
+      let label = 'rest';
+      if(ds.length){
+        let mark = '';
+        if(ds.some(s=>s.status==='done')) mark = '✓ ';
+        else if(ds.some(s=>s.status==='modified')) mark = '⚑ ';
+        else if(ds.some(s=>s.status==='missed')) mark = '✗ ';
+        label = mark + ds.length + (ds.length>1?' sessions':' session');
+      }
+      parts.push(dowShort(iso)+' '+label);
+    }
+    return ' ' + parts.join(' · ');
+  }
+
+  function renderWeekPBs(){
+    const el = document.getElementById('weekPbList');
+    const top = (state.pbs||[]).slice(0,3);
+    if(!top.length){ el.innerHTML = '<p class="pb-item-sub" style="opacity:.75;">No PBs yet. Log a session and mark it as a PB.</p>'; return; }
+    el.innerHTML = top.map(pbStripItem).join('');
+  }
+  function pbTrend(p){
+    const cur = parseFloat(p.value), prev = parseFloat(p.previousValue);
+    if(isNaN(cur) || isNaN(prev)) return '';
+    const diff = +(cur - prev).toFixed(1);
+    if(diff===0) return '';
+    return (diff>0?'↑ ':'↓ ') + Math.abs(diff) + (p.unit?(' '+esc(p.unit)):'');
+  }
+  function pbStripItem(p){
+    const trend = pbTrend(p);
+    return '<div class="pb-item"><div>'+
+        '<p class="pb-item-name">'+esc(p.exercise)+'</p>'+
+        '<p class="pb-item-sub">'+esc(p.sport)+(p.date? ' · '+fmtNice(p.date):'')+'</p></div>'+
+      '<div><p class="pb-item-value">'+esc(String(p.value))+(p.unit?'<span style="font-size:11px;"> '+esc(p.unit)+'</span>':'')+'</p>'+
+        (trend? '<p class="pb-item-value-sub">'+trend+'</p>':'')+'</div></div>';
+  }
+
+  // ============================================================
+  // SESSION SHEET (open / fill / save)
+  // ============================================================
+  function openSheet(){
+    document.getElementById('sheet-backdrop').classList.add('open');
+    document.getElementById('sheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSheet(){
+    document.getElementById('sheet-backdrop').classList.remove('open');
+    document.getElementById('sheet').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  window.closeSheet = closeSheet;
+
+  function openSession(id){
+    editing = (state.week.sessions || []).find(s => s.id === id) || null;
+    if(!editing) return;
+    fillSheet(editing);
+    openSheet();
+  }
+  window.openSession = openSession;
+
+  function showPlanHeader(){
+    document.getElementById('planHeader').style.display = '';
+    document.getElementById('planToggle').style.display = 'none';
+  }
+  window.showPlanHeader = showPlanHeader;
+
+  function newSession(dateIso){
+    editing = { id:null, date:dateIso, sport:(athlete && athlete.Sport_1)||'', name:'', intensity:'',
+      plannedDuration:null, rpe:null, duration:null, status:'planned', isPB:false, workout:[], note:'',
+      target:'', readiness:null };
+    fillSheet(editing);
+    openSheet();
+  }
+  window.newSession = newSession;
+
+  function fillSheet(s){
+    document.getElementById('sheetEyebrow').textContent =
+      dowShort(s.date)+' '+dayNum(s.date)+' '+monShort(s.date)+(s.sport? ' · '+s.sport : '');
+    document.getElementById('sheetTitle').innerHTML = esc(s.name || 'New session');
+    document.getElementById('planName').value = s.name || '';
+    document.getElementById('planSport').value = s.sport || '';
+    document.getElementById('planIntensity').value = s.intensity || '';
+    document.getElementById('planDate').value = s.date || isoToday();
+    document.getElementById('planDuration').value = s.plannedDuration != null ? s.plannedDuration : '';
+    // Existing session → lead with logging; tuck the planning fields behind a toggle.
+    const isNew = !s.id;
+    document.getElementById('planHeader').style.display = isNew ? '' : 'none';
+    document.getElementById('planToggle').style.display = isNew ? 'none' : 'flex';
+    workoutEditing = false;
+    if(!s._checked || s._checked.length !== (s.workout||[]).length){ s._checked = (s.workout||[]).map((_,i)=> (s._checked && s._checked[i]) || false); }
+    renderWorkout(s.workout || []);
+    // RPE
+    document.querySelectorAll('#rpe-row .rpe-pip').forEach(p => p.classList.toggle('selected', s.rpe!=null && +p.dataset.val===+s.rpe));
+    // duration (actual)
+    document.getElementById('duration-input').value = s.duration != null ? s.duration : (s.plannedDuration != null ? s.plannedDuration : '');
+    updateLoad();
+    // PB toggle
+    document.getElementById('pbToggle').classList.toggle('on', !!s.isPB);
+    // note
+    document.getElementById('sheetNote').value = s.note || '';
+    // reflection
+    document.getElementById('sheetNoticed').value = s.noticed || '';
+    document.getElementById('sheetBlocker').value = s.blocker || '';
+    // LAB: target — editable in the plan header, read-only at log time
+    document.getElementById('planTarget').value = s.target || '';
+    const tro = document.getElementById('targetReadonly');
+    if(!isNew && s.target){
+      document.getElementById('targetReadonlyValue').textContent = s.target;
+      tro.style.display = '';
+    } else {
+      tro.style.display = 'none';
+    }
+    // LAB: readiness — collapsed by default
+    fillReadiness(s.readiness);
+  }
+
+  // LAB: readiness sheet helpers
+  function fillReadiness(r){
+    const sec = document.getElementById('readinessSection');
+    sec.classList.remove('open');
+    sec.classList.remove('niggle-open');
+    document.querySelectorAll('#feel-row .feel-pip').forEach(p => p.classList.remove('selected'));
+    document.querySelectorAll('#severity-row .severity-pip').forEach(p => p.classList.remove('selected'));
+    document.getElementById('niggleArea').value = '';
+    document.getElementById('niggleNote').value = '';
+    if(!r) return;
+    if(r.feel != null){
+      const fp = document.querySelector('#feel-row .feel-pip[data-val="'+r.feel+'"]');
+      if(fp) fp.classList.add('selected');
+      sec.classList.add('open');   // had data → expand so it's visible
+    }
+    if(r.niggle){
+      sec.classList.add('open');
+      sec.classList.add('niggle-open');
+      document.getElementById('niggleArea').value = r.niggle.area || '';
+      if(r.niggle.severity != null){
+        const sp = document.querySelector('#severity-row .severity-pip[data-val="'+r.niggle.severity+'"]');
+        if(sp) sp.classList.add('selected');
+      }
+      document.getElementById('niggleNote').value = r.niggle.note || '';
+    }
+  }
+  function toggleReadiness(){ document.getElementById('readinessSection').classList.toggle('open'); }
+  window.toggleReadiness = toggleReadiness;
+  function openNiggle(){ document.getElementById('readinessSection').classList.add('niggle-open'); }
+  window.openNiggle = openNiggle;
+  function collectReadiness(){
+    const fp = document.querySelector('#feel-row .feel-pip.selected');
+    const feel = fp ? parseInt(fp.dataset.val, 10) : null;
+    const area = val('niggleArea').trim();
+    const sp = document.querySelector('#severity-row .severity-pip.selected');
+    const note = val('niggleNote').trim();
+    let niggle = null;
+    if(area || sp || note){
+      niggle = { area: area, severity: sp ? parseInt(sp.dataset.val, 10) : null, note: note };
+    }
+    if(feel == null && !niggle) return null;
+    return { feel: feel, niggle: niggle };
+  }
+
+  function renderWorkout(steps){
+    const ul = document.getElementById('sheetWorkout');
+    const prog = document.getElementById('workoutProgress');
+    if(prog) prog.textContent = '';
+    if(workoutEditing){
+      const text = (steps||[]).map(st => typeof st==='string'? st : (st.name||'')+(st.detail? ' — '+st.detail : '')).join('\n');
+      ul.innerHTML = '<textarea class="note-input" id="workoutEditor" style="min-height:120px;" placeholder="One step per line, e.g.\nWarm up — 400m easy\nMain set — 8×200">'+esc(text)+'</textarea>';
+      return;
+    }
+    if(!steps || !steps.length){
+      ul.innerHTML = '<li class="workout-step"><div class="workout-step-content"><p class="workout-step-detail">No workout steps yet. Tap “Edit workout” to add them.</p></div></li>';
+      return;
+    }
+    const checked = (editing && editing._checked) || [];
+    let done = 0;
+    ul.innerHTML = steps.map((st,i) => {
+      const name = typeof st==='string'? st : (st.name||'');
+      const detail = typeof st==='string'? '' : (st.detail||'');
+      const isDone = !!checked[i]; if(isDone) done++;
+      return '<li class="workout-step tickable'+(isDone?' done':'')+'" onclick="toggleStep('+i+')">'+
+        '<span class="workout-check"><i class="ti ti-check" aria-hidden="true"></i></span>'+
+        '<div class="workout-step-content"><p class="workout-step-name">'+esc(name)+'</p>'+
+        (detail? '<p class="workout-step-detail">'+esc(detail)+'</p>':'')+'</div></li>';
+    }).join('');
+    if(prog){
+      const all = steps.length;
+      prog.textContent = done+' / '+all+' done'+(done===all? ' · nice work' : '');
+      prog.classList.toggle('complete', done===all);
+    }
+  }
+  function toggleStep(i){
+    if(!editing) return;
+    if(!editing._checked) editing._checked = [];
+    editing._checked[i] = !editing._checked[i];
+    renderWorkout(editing.workout || []);
+  }
+  window.toggleStep = toggleStep;
+
+  function editWorkout(){
+    if(workoutEditing){
+      // commit
+      const raw = (document.getElementById('workoutEditor')||{}).value || '';
+      editing.workout = raw.split('\n').map(l=>l.trim()).filter(Boolean).map(l => {
+        const parts = l.split(/\s+—\s+|\s+-\s+/);
+        return parts.length>1 ? { name: parts[0], detail: parts.slice(1).join(' - ') } : { name: l, detail: '' };
+      });
+      workoutEditing = false;
+    } else {
+      workoutEditing = true;
+    }
+    renderWorkout(editing.workout || []);
+  }
+  window.editWorkout = editWorkout;
+
+  // RPE + duration live load
+  function updateLoad(){
+    const sel = document.querySelector('#rpe-row .rpe-pip.selected');
+    const dur = parseInt(document.getElementById('duration-input').value,10) || 0;
+    const el = document.getElementById('load-preview');
+    if(!sel){ el.innerHTML = '<em>rate your effort</em>'; return; }
+    el.innerHTML = (parseInt(sel.dataset.val,10)*dur) + ' <em>au</em>';
+  }
+  function togglePB(){ document.getElementById('pbToggle').classList.toggle('on'); }
+  window.togglePB = togglePB;
+
+  async function saveCurrentSession(){
+    if(!editing) return;
+    if(workoutEditing) editWorkout(); // commit any open workout edit
+    const name = val('planName').trim();
+    if(!name){ showToast('Give the session a name.', 'error'); return; }
+    const sel = document.querySelector('#rpe-row .rpe-pip.selected');
+    const rpe = sel ? parseInt(sel.dataset.val,10) : null;
+    const duration = numOrNull(val('duration-input'));
+    const logged = rpe != null && duration != null;
+    const isNew = !editing.id;
+    const session = {
+      id: editing.id || ('tmp_' + Date.now()),
+      date: val('planDate') || editing.date,
+      sport: val('planSport').trim(),
+      name: name,
+      intensity: val('planIntensity'),
+      plannedDuration: numOrNull(val('planDuration')),
+      rpe: logged ? rpe : null,
+      duration: logged ? duration : null,
+      load: logged ? rpe * duration : null,
+      status: logged ? 'done' : 'planned',
+      isPB: document.getElementById('pbToggle').classList.contains('on'),
+      workout: editing.workout || [],
+      _checked: editing._checked || [],
+      note: val('sheetNote'),
+      noticed: val('sheetNoticed'),
+      blocker: val('sheetBlocker'),
+      target: val('planTarget').trim(),
+      readiness: collectReadiness()
+    };
+    // Optimistic: update the week and close now; persist in the background.
+    upsertLocalSession(session);
+    closeSheet();
+    renderWeek(); renderBlockBar();
+    showToast(logged ? 'Session logged' : 'Session planned', 'success');
+    try {
+      const res = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, session, { id: isNew ? null : session.id }) });
+      if(!res.success) throw new Error(res.error || 'save failed');
+      if(isNew && res.id){ session.id = res.id; renderWeek(); }
+      if(session.isPB){ openPBForm({ sport: session.sport, exercise: session.name, date: session.date, sessionId: session.id }); }
+    } catch(e){
+      console.error('saveSession', e);
+      showToast('Saved on your device but couldn’t reach the server — reopen to retry.', 'error');
+    }
+  }
+  window.saveCurrentSession = saveCurrentSession;
+
+  function upsertLocalSession(s){
+    if(!state.week.sessions) state.week.sessions = [];
+    const i = state.week.sessions.findIndex(x => x.id === s.id);
+    if(i >= 0) state.week.sessions[i] = s; else state.week.sessions.push(s);
+  }
+
+  // ============================================================
+  // PLAN LIBRARY (Change Plan) — fills the week from a template.
+  // Visual/local for now; tweak or log any session after applying.
+  // day: 0 = Mon … 6 = Sun
+  // ============================================================
+  const PLAN_LIBRARY = [
+    { id:'general', name:'General Strength', goal:'All-round strength, three lifts a week', freq:'3× / week', diff:45, sessions:[
+      { day:0, name:'Upper Strength', sport:'Gym', intensity:'hard', duration:50, workout:[{name:'Back Squat',detail:'4×5'},{name:'DB Row',detail:'3×10'},{name:'DB Press',detail:'3×8'},{name:'Core',detail:'3 rounds'}] },
+      { day:2, name:'Conditioning', sport:'Gym', intensity:'moderate', duration:40, workout:[{name:'Intervals',detail:'6×400m'},{name:'Core circuit',detail:'3 rounds'}] },
+      { day:4, name:'Lower Strength', sport:'Gym', intensity:'hard', duration:50, workout:[{name:'Deadlift',detail:'4×5'},{name:'DB Lunge',detail:'3×10'},{name:'Mobility',detail:'10 min'}] }
+    ]},
+    { id:'swim', name:'Swimming Performance', goal:'Aerobic base plus sprint speed', freq:'5× / week', diff:75, sessions:[
+      { day:0, name:'Aerobic swim', sport:'Swimming', intensity:'moderate', duration:60, workout:[{name:'Warm up',detail:'600m'},{name:'Main set',detail:'10×200'},{name:'Cool down',detail:'400m'}] },
+      { day:1, name:'Sprint sets', sport:'Swimming', intensity:'hard', duration:60, workout:[{name:'Warm up',detail:'800m'},{name:'Sprints',detail:'8×50 max'},{name:'Race pace',detail:'6×100'}] },
+      { day:2, name:'Technique', sport:'Swimming', intensity:'easy', duration:45, workout:[{name:'Drills',detail:'1km'},{name:'Easy swim',detail:'1km'}] },
+      { day:4, name:'Threshold', sport:'Swimming', intensity:'hard', duration:60, workout:[{name:'Warm up',detail:'600m'},{name:'Threshold',detail:'5×300'},{name:'Cool down',detail:'400m'}] },
+      { day:5, name:'Long aerobic', sport:'Swimming', intensity:'moderate', duration:90, workout:[{name:'Steady swim',detail:'3km'}] }
+    ]},
+    { id:'run', name:'Running / Cross-Country', goal:'Endurance with tempo and intervals', freq:'4× / week', diff:60, sessions:[
+      { day:0, name:'Easy run', sport:'Running', intensity:'easy', duration:40, workout:[{name:'Easy run',detail:'40 min'}] },
+      { day:2, name:'Intervals', sport:'Running', intensity:'hard', duration:45, workout:[{name:'Warm up',detail:'10 min'},{name:'Intervals',detail:'6×800m'},{name:'Cool down',detail:'10 min'}] },
+      { day:4, name:'Tempo run', sport:'Running', intensity:'hard', duration:40, workout:[{name:'Warm up',detail:'10 min'},{name:'Tempo',detail:'20 min'},{name:'Cool down',detail:'10 min'}] },
+      { day:6, name:'Long run', sport:'Running', intensity:'moderate', duration:70, workout:[{name:'Long run',detail:'60–75 min easy'}] }
+    ]},
+    { id:'team', name:'Team Sport (in-season)', goal:'Power, agility and keeping sharp', freq:'4× / week', diff:65, sessions:[
+      { day:0, name:'Lower power', sport:'Gym', intensity:'hard', duration:50, workout:[{name:'Broad Jump',detail:'5×3'},{name:'Back Squat',detail:'4×5'}] },
+      { day:1, name:'Skills & games', sport:'Team', intensity:'moderate', duration:75, workout:[{name:'Skill drills',detail:'30 min'},{name:'Small games',detail:'30 min'}] },
+      { day:3, name:'Upper power + core', sport:'Gym', intensity:'moderate', duration:45, workout:[{name:'DB Press',detail:'4×6'},{name:'Pull-ups',detail:'4×6'},{name:'Core',detail:'3 rounds'}] },
+      { day:5, name:'Match', sport:'Team', intensity:'hard', duration:90, workout:[{name:'Match',detail:'Full game'}] }
+    ]},
+    { id:'custom', name:'Build your own', goal:'Start from a blank week and add your own sessions', freq:'Flexible', diff:25, blank:true, sessions:[] }
+  ];
+
+  function openPlanSheet(){ renderPlanGrid(); document.getElementById('plan-backdrop').classList.add('open'); document.getElementById('planSheet').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closePlan(){ document.getElementById('plan-backdrop').classList.remove('open'); document.getElementById('planSheet').classList.remove('open'); document.body.style.overflow=''; }
+  window.openPlanSheet = openPlanSheet;
+  window.closePlan = closePlan;
+
+  function renderPlanGrid(){
+    const grid = document.getElementById('planGrid');
+    grid.innerHTML = PLAN_LIBRARY.map(p =>
+      '<div class="plan-pick'+(state.planName===p.name?' active':'')+'" onclick="applyPlan(\''+p.id+'\')">'+
+        '<div class="plan-pick-name">'+esc(p.name)+'</div>'+
+        '<div class="plan-pick-goal">'+esc(p.goal)+'</div>'+
+        '<div class="plan-pick-freq">'+esc(p.freq)+'</div>'+
+        '<div class="plan-diff"><div class="plan-diff-fill" style="width:'+(p.diff||25)+'%;"></div></div>'+
+      '</div>').join('');
+  }
+
+  function applyPlan(id){
+    const plan = PLAN_LIBRARY.find(p => p.id===id);
+    if(!plan) return;
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const hasLogged = (state.week.sessions||[]).some(s => s.status==='done' || s.status==='modified');
+    if(hasLogged && !confirm('Applying the '+plan.name+' plan replaces this week’s sessions, including ones you’ve logged. Continue?')) return;
+    if(plan.blank){
+      state.week.sessions = [];
+    } else {
+      state.week.sessions = plan.sessions.map((t, idx) => ({
+        id: 'tmp_plan_'+Date.now()+'_'+idx,
+        date: addDays(ws, t.day),
+        sport: t.sport||'', name: t.name, intensity: t.intensity||'',
+        plannedDuration: t.duration||null, rpe:null, duration:null, load:null,
+        status:'planned', isPB:false, workout:(t.workout||[]).map(x=>Object.assign({},x)),
+        _checked:[], note:'', noticed:'', blocker:''
+      }));
+    }
+    state.planName = plan.name;
+    closePlan();
+    renderWeek(); renderBlockBar();
+    showToast(plan.blank ? 'Cleared — build your week' : plan.name+' plan applied', 'success');
+  }
+  window.applyPlan = applyPlan;
+
+  // ============================================================
+  // LAB — "From my plan" quick-add palette
+  // ============================================================
+  function openLabTemplates(){
+    // Default the day to today if it's in the visible week, else the week's Monday.
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const today = isoToday();
+    labQuickDay = (today >= ws && today <= addDays(ws,6)) ? today : ws;
+    renderLabDayPicker();
+    renderLabTemplates();
+    document.getElementById('labtpl-backdrop').classList.add('open');
+    document.getElementById('labTemplateSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLabTemplates(){
+    document.getElementById('labtpl-backdrop').classList.remove('open');
+    document.getElementById('labTemplateSheet').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  window.openLabTemplates = openLabTemplates;
+  window.closeLabTemplates = closeLabTemplates;
+
+  function renderLabDayPicker(){
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const today = isoToday();
+    let html = '';
+    for(let i=0;i<7;i++){
+      const iso = addDays(ws, i);
+      html += '<button class="lab-day-chip'+(iso===labQuickDay?' sel':'')+'" onclick="selectLabDay(\''+iso+'\')">'+
+        '<span class="lab-day-chip-dow">'+dowShort(iso)+(iso===today?' · now':'')+'</span>'+
+        '<span class="lab-day-chip-num">'+dayNum(iso)+'</span></button>';
+    }
+    document.getElementById('labDayPicker').innerHTML = html;
+  }
+  function selectLabDay(iso){ labQuickDay = iso; renderLabDayPicker(); }
+  window.selectLabDay = selectLabDay;
+
+  function renderLabTemplates(){
+    document.getElementById('labTemplateList').innerHTML = LAB_TEMPLATES.map((t, i) =>
+      '<button class="lab-tpl" onclick="quickAddTemplate('+i+')">'+
+        '<span class="lab-tpl-dot '+esc(t.intensity)+'" aria-hidden="true"></span>'+
+        '<span class="lab-tpl-main">'+
+          '<span class="lab-tpl-name">'+esc(t.name)+'</span>'+
+          '<span class="lab-tpl-meta">'+esc(t.sport)+' · '+t.duration+' min · '+esc(t.intensity)+'</span>'+
+          '<span class="lab-tpl-target">'+esc(t.target)+'</span>'+
+        '</span>'+
+        '<i class="ti ti-plus lab-tpl-add" aria-hidden="true"></i>'+
+      '</button>').join('');
+  }
+
+  // Tap a template → drop a planned session on the chosen day, persist, and let
+  // him log it normally afterwards. Target string is pre-filled.
+  async function quickAddTemplate(i){
+    const t = LAB_TEMPLATES[i];
+    if(!t) return;
+    const dateIso = labQuickDay || isoToday();
+    const session = {
+      id: 'tmp_lab_'+Date.now(),
+      date: dateIso, sport: t.sport, name: t.name, intensity: t.intensity,
+      plannedDuration: t.duration, rpe:null, duration:null, load:null,
+      status:'planned', isPB:false, workout:[], _checked:[],
+      note:'', noticed:'', blocker:'', target: t.target, readiness:null
+    };
+    upsertLocalSession(session);
+    closeLabTemplates();
+    if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
+    showToast(t.name+' added · '+dowShort(dateIso)+' '+dayNum(dateIso), 'success');
+    try {
+      const res = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, session, { id: null }) });
+      if(!res.success) throw new Error(res.error || 'save failed');
+      if(res.id){ session.id = res.id; if(activeTab==='week') renderWeek(); }
+    } catch(e){
+      console.error('quickAddTemplate', e);
+      showToast('Added on your device but couldn’t reach the server — open it to retry.', 'error');
+    }
+  }
+  window.quickAddTemplate = quickAddTemplate;
+
+  // ============================================================
+  // YEAR / LOAD / PBS — placeholders (built in their own PRs)
+  // ============================================================
+  function placeholder(icon, title, text){
+    return '<div class="empty-state"><div class="empty-state-icon"><i class="ti '+icon+'" aria-hidden="true"></i></div>'+
+      '<h2 class="empty-state-title">'+title+'</h2><p class="empty-state-text">'+text+'</p></div>';
+  }
+  // ============================================================
+  // YEAR TAB
+  // ============================================================
+  const ACADEMIC_MONTHS = ['August','September','October','November','December','January','February','March','April','May','June','July'];
+  let blockCtx = null;       // { sportName, month, block }
+
+  function hasYear(){ return state.yearMap && state.yearMap.sports && state.yearMap.sports.length; }
+
+  function renderYear(){
+    const view = document.getElementById('view-year');
+    if(!hasYear()){ view.innerHTML = onboardHTML(); return; }
+    const curMonth = MONTHS[new Date().getMonth()];
+    let html = '<div class="year-head">'+
+      '<div class="year-legend">'+
+        legendItem('build','get fitter') + legendItem('maintain','') +
+        legendItem('peak','big event') + legendItem('recover','rest') +
+      '</div>'+
+      '<button class="year-head-btn" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Goal</button>'+
+    '</div>';
+    state.yearMap.sports.forEach((sport, si) => {
+      const ap = state.yearMap.aPriority;
+      const evt = (ap && ap.event && (!ap.sport || ap.sport===sport.name)) ? ap : null;
+      const nowPhase = currentSportPhase(sport, curMonth);
+      html += '<div class="year-sport">'+
+        '<div class="year-sport-head">'+
+          '<div class="year-sport-titles">'+
+            '<p class="overline">'+(sport.isPriority? 'Priority sport' : 'Sport')+'</p>'+
+            '<p class="year-sport-name">'+esc(sport.name)+
+              (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+'</p>'+
+          '</div>'+
+          (nowPhase? '<span class="year-now-chip ym-'+nowPhase+'"><span class="nc-emoji">'+PHASE_EMOJI[nowPhase]+'</span> Right now · '+PHASE_FRIENDLY[nowPhase]+'</span>' : '')+
+        '</div>'+
+        (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
+        renderMonths(sport, si, curMonth) +'</div>';
+    });
+    html += '<button class="year-head-btn" style="width:100%; justify-content:center; margin-top:4px;" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
+    view.innerHTML = html;
+  }
+
+  function legendItem(stt, meaning){
+    return '<span class="year-legend-item"><span class="legend-emoji">'+PHASE_EMOJI[stt]+'</span><strong>'+PHASE_FRIENDLY[stt]+'</strong>'+(meaning?' · '+meaning:'')+'</span>';
+  }
+
+  // The phase a sport is in this month — committed if set, otherwise the suggestion.
+  function currentSportPhase(sport, curMonth){
+    const committed = monthCommittedState(sport, curMonth);
+    if(committed) return committed;
+    const ap = state.yearMap.aPriority;
+    const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
+    return suggestState(curMonth, apIndex, busyMonthsSet()) || '';
+  }
+
+  function monthCommittedState(sport, month){
+    const ms = (sport.monthlyStates||[]).find(x => x.month===month);
+    return ms && ms.state ? ms.state : '';
+  }
+  function busyMonthsSet(){
+    const s = {};
+    (state.yearMap.otherCommitments||[]).forEach(c => { s[(c.month||c)] = true; });
+    return s;
+  }
+  // Map free text ("oct", "October") to a canonical full month name; '' if unknown.
+  function normalizeMonth(str){
+    const v = String(str||'').trim().toLowerCase();
+    if(!v) return '';
+    return MONTHS.find(m => m.toLowerCase().startsWith(v.slice(0,3))) || '';
+  }
+  function parseMonthList(str){
+    return String(str||'').split(',').map(normalizeMonth).filter(Boolean).map(m => ({ month: m }));
+  }
+  // Suggested state for an empty month, given the A-priority position.
+  function suggestState(month, apIndex, busy){
+    if(apIndex < 0) return '';
+    const delta = ACADEMIC_MONTHS.indexOf(month) - apIndex;
+    let s;
+    if(delta === 0) s = 'peak';                       // A-priority month
+    else if(delta === 1 || delta === 2) s = 'recover'; // 1–2 months after
+    else s = 'build';                                  // before, and well after (re-build)
+    if(s === 'build' && busy[month]) s = 'maintain';   // downgrade on busy months
+    return s;
+  }
+  function markersFor(sport, month){
+    const ap = state.yearMap.aPriority;
+    const isA = ap && ap.event && ap.month===month && (!ap.sport || ap.sport===sport.name);
+    const tw = (state.yearMap.testingWindows||[]).some(w => (w.month||w)===month);
+    const busy = (state.yearMap.otherCommitments||[]).some(c => (c.month||c)===month);
+    let m = '';
+    if(isA) m += '<span class="ym-marker a-priority" title="A-priority">★</span>';
+    if(tw) m += '<span class="ym-marker testing" title="Testing window">◆</span>';
+    if(busy) m += '<span class="ym-marker commitment" title="Busy — mocks/exams/travel">▲</span>';
+    return m;
+  }
+
+  // Render all 12 academic months as clean, colour-coded tiles (one per month).
+  function renderMonths(sport, si, curMonth){
+    const ap = state.yearMap.aPriority;
+    const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
+    const busy = busyMonthsSet();
+    let html = '<div class="year-months">';
+    ACADEMIC_MONTHS.forEach(month => {
+      const committed = monthCommittedState(sport, month);
+      if(committed) html += monthTile(sport, si, month, committed, false, curMonth);
+      else html += monthTile(sport, si, month, suggestState(month, apIndex, busy), true, curMonth);
+    });
+    return html + '</div>';
+  }
+
+  function monthTile(sport, si, month, stt, isSuggest, curMonth){
+    const isNow = month===curMonth;
+    const markers = markersFor(sport, month);
+    const mLabel = month.slice(0,3);
+    const cls = 'year-month ' + (stt ? 'ym-'+stt : 'ym-empty') + (isSuggest && stt ? ' ym-suggest' : '') + (isNow ? ' is-current' : '');
+    const onclick = (isSuggest && stt)
+      ? 'confirmSuggestion('+si+',\''+month+'\',\''+stt+'\')'
+      : 'openBlock('+si+',\''+month+'\')';
+    const title = month + (stt ? ' · '+PHASE_FRIENDLY[stt] + (isSuggest?' (suggested — tap to confirm)':'') : ' · tap to plan');
+    const inner = stt ? '<span class="ym-emoji">'+PHASE_EMOJI[stt]+'</span>' : '<span class="ym-plus">+</span>';
+    const editIcon = (isSuggest && stt)
+      ? '<span class="ym-suggest-edit" onclick="event.stopPropagation(); openBlock('+si+',\''+month+'\')" title="Edit details" aria-label="Edit"><i class="ti ti-pencil" aria-hidden="true"></i></span>'
+      : '';
+    return '<div class="'+cls+'" onclick="'+onclick+'" title="'+esc(title)+'">'+
+      editIcon +
+      (isNow ? '<span class="ym-now">Now</span>' : '') +
+      '<span class="ym-label">'+mLabel+'</span>'+
+      inner +
+      '<span class="ym-markers">'+markers+'</span></div>';
+  }
+
+  async function confirmSuggestion(si, month, stt){
+    const sport = state.yearMap.sports[si];
+    if(!sport || !stt) return;
+    const block = { month: month, state: stt, focus:'', loadTarget:null, note:'' };
+    applyBlockLocally(sport.name, block);
+    renderYear(); renderBlockBar();
+    try {
+      const res = await apiPost({ action:'saveBlock', email: currentUser.email, sport: sport.name, month: month, block: block });
+      if(!res.success) throw new Error(res.error || 'save failed');
+    } catch(e){ console.error('confirmSuggestion', e); showToast('Saved on your device but couldn’t reach the server.', 'error'); }
+  }
+  window.confirmSuggestion = confirmSuggestion;
+
+  // ----- Block detail sheet -----
+  function openBlockSheet(){ document.getElementById('block-backdrop').classList.add('open'); document.getElementById('blockSheet').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeBlock(){ document.getElementById('block-backdrop').classList.remove('open'); document.getElementById('blockSheet').classList.remove('open'); document.body.style.overflow=''; }
+  window.closeBlock = closeBlock;
+
+  function openBlock(sportIdx, month){
+    const sport = state.yearMap.sports[sportIdx];
+    if(!sport) return;
+    const existing = (sport.monthlyStates||[]).find(x => x.month===month) || { month:month, state:'', focus:'', loadTarget:'', note:'' };
+    blockCtx = { sportName: sport.name, month: month, block: existing };
+    // For an uncommitted month, pre-select the suggested state so editing a
+    // suggestion opens the sheet ready to confirm.
+    const ap = state.yearMap.aPriority;
+    const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
+    const preState = existing.state || suggestState(month, apIndex, busyMonthsSet());
+    document.getElementById('blockEyebrow').textContent = sport.name + ' · ' + month;
+    document.getElementById('blockTitle').innerHTML = preState ? '<em>'+(STATE_LABEL[preState])+'</em>.' : 'Plan this <em>block</em>.';
+    document.querySelectorAll('#statePicker .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===preState));
+    document.getElementById('blockFocus').value = existing.focus || '';
+    document.getElementById('blockLoad').value = existing.loadTarget || '';
+    document.getElementById('blockNote').value = existing.note || '';
+    openBlockSheet();
+  }
+  window.openBlock = openBlock;
+
+  function pickState(s){
+    document.querySelectorAll('#statePicker .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===s));
+    document.getElementById('blockTitle').innerHTML = '<em>'+(STATE_LABEL[s])+'</em>.';
+  }
+  window.pickState = pickState;
+
+  async function saveBlockSheet(){
+    if(!blockCtx) return;
+    const sel = document.querySelector('#statePicker .state-pill.sel');
+    const block = {
+      month: blockCtx.month,
+      state: sel ? sel.dataset.state : '',
+      focus: val('blockFocus').trim(),
+      loadTarget: numOrNull(val('blockLoad')),
+      note: val('blockNote')
+    };
+    const sportName = blockCtx.sportName;
+    // Optimistic: reflect the change and close immediately, then persist in the
+    // background. Apps Script can take a second or two; the athlete shouldn't wait.
+    applyBlockLocally(sportName, block);
+    closeBlock();
+    renderYear(); renderBlockBar();
+    showToast('Block saved', 'success');
+    try {
+      const res = await apiPost({ action:'saveBlock', email: currentUser.email, sport: sportName, month: block.month, block: block });
+      if(!res.success) throw new Error(res.error||'save failed');
+    } catch(e){
+      console.error('saveBlock', e);
+      showToast('Saved on your device but couldn’t reach the server — reopen to retry.', 'error');
+    }
+  }
+  window.saveBlockSheet = saveBlockSheet;
+
+  function applyBlockLocally(sportName, block){
+    const sport = state.yearMap.sports.find(s => s.name===sportName);
+    if(!sport) return;
+    if(!sport.monthlyStates) sport.monthlyStates = [];
+    const idx = sport.monthlyStates.findIndex(m => m.month===block.month);
+    if(idx>=0) sport.monthlyStates[idx] = block; else sport.monthlyStates.push(block);
+  }
+
+  function planThisWeek(){ closeBlock(); switchTab('week'); }
+  window.planThisWeek = planThisWeek;
+
+  async function addSport(){
+    const name = (prompt('Add a sport (e.g. Athletics, Football):')||'').trim();
+    if(!name) return;
+    if(state.yearMap.sports.some(s => s.name.toLowerCase()===name.toLowerCase())){ showToast('That sport is already on your year.', 'error'); return; }
+    state.yearMap.sports.push({ name:name, isPriority:false, monthlyStates:[] });
+    try {
+      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: serialiseYearMap() });
+      if(!res.success) throw new Error();
+      renderYear();
+    } catch(e){ console.error('addSport', e); showToast('Could not add sport — ' + (e.message||'try again'), 'error'); }
+  }
+  window.addSport = addSport;
+
+  function serialiseYearMap(){
+    const ym = state.yearMap;
+    return { year: ym.year||'2026–27', vision: ym.vision||'', aPriority: ym.aPriority||null,
+      sports: ym.sports||[], testingWindows: ym.testingWindows||[], otherCommitments: ym.otherCommitments||[] };
+  }
+
+  // ----- Onboarding (first-time) + goal editor -----
+  function onboardHTML(){
+    const sport = (athlete && athlete.Sport_1) || '';
+    return '<div class="empty-state onboard"><div class="empty-state-icon"><i class="ti ti-route" aria-hidden="true"></i></div>'+
+      '<h2 class="empty-state-title">Map your <em>year</em>.</h2>'+
+      '<p class="empty-state-text">Three quick things and you\'re set. You can change any of it later.</p>'+
+      '<div class="onboard-form">'+
+        onboardField('Your sport', '<input class="duration-input plan-field" id="obSport" value="'+esc(sport)+'" placeholder="e.g. Swimming">')+
+        onboardField('The one event your year points at', '<input class="duration-input plan-field" id="obEvent" placeholder="e.g. Regional Champs">'+
+          '<div class="plan-row" style="margin-top:8px;"><input type="date" class="duration-input plan-field" id="obDate"></div>')+
+        onboardField('This month, you\'re in…', stateMiniPicker('obState'))+
+      '</div>'+
+      '<button class="btn-primary" style="margin-top:8px;" onclick="submitOnboard()"><i class="ti ti-check" aria-hidden="true"></i> Set up my year</button>'+
+      '</div>';
+  }
+  function onboardField(label, inner){ return '<div class="onboard-field"><label>'+label+'</label>'+inner+'</div>'; }
+  function stateMiniPicker(id){
+    return '<div class="state-picker" id="'+id+'">'+
+      ['build','maintain','peak','recover','off'].map(s => '<button class="state-pill" data-state="'+s+'" onclick="miniPick(\''+id+'\',\''+s+'\')">'+STATE_LABEL[s]+'</button>').join('')+'</div>';
+  }
+  function miniPick(id, s){ document.querySelectorAll('#'+id+' .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===s)); }
+  window.miniPick = miniPick;
+
+  async function submitOnboard(){
+    const sport = val('obSport').trim();
+    if(!sport){ showToast('Add your sport first.', 'error'); return; }
+    const event = val('obEvent').trim();
+    const date = val('obDate');
+    const sel = document.querySelector('#obState .state-pill.sel');
+    const curMonth = MONTHS[new Date().getMonth()];
+    const apMonth = date ? MONTHS[parseISO(date).getMonth()] : '';
+    const yearMap = {
+      year: '2026–27', vision: '',
+      aPriority: event ? { sport: sport, event: event, date: date, month: apMonth } : null,
+      sports: [{ name: sport, isPriority: true, monthlyStates: sel ? [{ month: curMonth, state: sel.dataset.state, focus:'', loadTarget:null, note:'' }] : [] }],
+      testingWindows: [], otherCommitments: []
+    };
+    try {
+      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: yearMap });
+      if(!res.success) throw new Error(res.error||'save failed');
+      state.yearMap = yearMap;
+      renderNav();
+      switchTab('week');
+      showToast('Year set up — here\'s your week.', 'success');
+    } catch(e){ console.error('submitOnboard', e); showToast('Could not save — ' + (e.message||'try again'), 'error'); }
+  }
+  window.submitOnboard = submitOnboard;
+
+  function editYearGoal(){
+    const ym = state.yearMap;
+    const ap = ym.aPriority || {};
+    const tw = (ym.testingWindows||[]).map(w => w.month||w).join(', ');
+    const oc = (ym.otherCommitments||[]).map(w => w.month||w).join(', ');
+    const view = document.getElementById('view-year');
+    view.innerHTML = '<div class="empty-state onboard"><h2 class="empty-state-title">Your <em>goal</em>.</h2>'+
+      '<div class="onboard-form">'+
+        onboardField('Vision · optional', '<input class="duration-input plan-field" id="gVision" value="'+esc(ym.vision||'')+'" placeholder="e.g. Sub-58 100 free">')+
+        onboardField('A-priority event', '<input class="duration-input plan-field" id="gEvent" value="'+esc(ap.event||'')+'" placeholder="e.g. Regional Champs">'+
+          '<div class="plan-row" style="margin-top:8px;"><input type="date" class="duration-input plan-field" id="gDate" value="'+esc(ap.date||'')+'"></div>')+
+        onboardField('Testing months · comma-separated', '<input class="duration-input plan-field" id="gTesting" value="'+esc(tw)+'" placeholder="e.g. October, March">')+
+        onboardField('Busy months · mocks, exams, travel', '<input class="duration-input plan-field" id="gBusy" value="'+esc(oc)+'" placeholder="e.g. December, May">')+
+      '</div>'+
+      '<div style="display:flex; gap:10px; margin-top:8px;">'+
+        '<button class="year-head-btn" onclick="renderYear()">Cancel</button>'+
+        '<button class="btn-primary" onclick="saveYearGoal()"><i class="ti ti-check" aria-hidden="true"></i> Save goal</button>'+
+      '</div></div>';
+  }
+  window.editYearGoal = editYearGoal;
+
+  async function saveYearGoal(){
+    const ym = state.yearMap;
+    ym.vision = val('gVision').trim();
+    const event = val('gEvent').trim();
+    const date = val('gDate');
+    const apMonth = date ? MONTHS[parseISO(date).getMonth()] : '';
+    ym.aPriority = event ? { sport: (ym.sports[0]&&ym.sports[0].name)||'', event: event, date: date, month: apMonth } : null;
+    ym.testingWindows = parseMonthList(val('gTesting'));
+    ym.otherCommitments = parseMonthList(val('gBusy'));
+    try {
+      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: serialiseYearMap() });
+      if(!res.success) throw new Error();
+      renderYear(); renderBlockBar();
+      showToast('Goal saved', 'success');
+    } catch(e){ console.error('saveYearGoal', e); showToast('Could not save goal — ' + (e.message||'try again'), 'error'); }
+  }
+  window.saveYearGoal = saveYearGoal;
+
+  // ============================================================
+  // LOAD TAB — 44-week bars + ACWR overlay
+  // ============================================================
+  function seasonStartMonday(){
+    // First Monday on/after 1 Aug of the season's starting year
+    let startYear;
+    const yr = (state.yearMap && state.yearMap.year) || '';
+    const m = yr.match(/(\d{4})/);
+    if(m){ startYear = +m[1]; }
+    else { const now = new Date(); startYear = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear()-1; }
+    return fmtISO(mondayOf(new Date(startYear, 7, 1)));
+  }
+
+  function weekStateColour(weekStartIso){
+    if(!state.yearMap || !state.yearMap.sports) return null;
+    const month = MONTHS[parseISO(weekStartIso).getMonth()];
+    const sport = state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
+    if(!sport || !sport.monthlyStates) return null;
+    const ms = sport.monthlyStates.find(x=>x.month===month);
+    if(!ms || !ms.state) return null;
+    return { build:'var(--gold)', maintain:'var(--sage)', peak:'var(--burgundy)', recover:'var(--cream)', off:'var(--line)' }[ms.state] || null;
+  }
+
+  function renderLoad(){
+    const view = document.getElementById('view-load');
+    const sum = (state.load && state.load.summary) || { thisWeekLoad:0, acwr:null, weeksLogged:0 };
+    const acwr = sum.acwr;
+    const flag = acwr!=null && (acwr < 0.8 || acwr > 1.3);
+    // Plain-language read of the acute:chronic ratio (kept under the hood).
+    const word = acwr==null ? '—' : (acwr>1.3 ? 'High' : (acwr<0.8 ? 'Low' : 'Good'));
+    const wordSub = acwr==null ? 'log a few weeks' : (acwr>1.3 ? 'ramping up fast' : (acwr<0.8 ? 'easing off' : 'in a healthy range'));
+
+    let html =
+      '<div class="load-cards">'+
+        loadCard('Load this week', sum.thisWeekLoad||0, '', 'effort × minutes', false)+
+        loadCard('Doing too much?', word, '', wordSub, flag)+
+        loadCard('Weeks logged', sum.weeksLogged||0, '', 'this season', false)+
+      '</div>';
+    html += '<div class="section-head">'+
+        '<div><p class="overline">Across the season</p>'+
+        '<h2 class="section-heading">Training <em style="font-style:italic; color:var(--burgundy);">load</em> over time</h2></div>'+
+      '</div>';
+    html += '<div class="load-chart-wrap">'+
+      '<p class="load-chart-title">Bars = how much you trained each week · colour = your phase'+
+        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--gold);"></span>💪 Build</span>'+
+        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--sage);"></span>⚡ Keep sharp</span>'+
+        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--burgundy);"></span>🏆 Race ready</span>'+
+        '<span class="load-acwr-key"><i class="ti ti-wave-sine" aria-hidden="true"></i> Workload trend</span>'+
+      '</p>' + loadChartSVG() + '</div>';
+    view.innerHTML = html;
+  }
+
+  function loadCard(label, value, suffix, sub, flag){
+    return '<div class="load-card'+(flag?' flag':'')+'">'+
+      '<p class="load-card-label">'+label+'</p>'+
+      '<div><span class="load-card-value">'+esc(String(value))+suffix+'</span>'+
+      '<p class="load-card-sub">'+esc(sub)+'</p></div></div>';
+  }
+
+  function loadChartSVG(){
+    const WEEKS = 44, step = 18, padL = 8, padR = 8, padT = 10, padB = 22, h = 180;
+    const start = seasonStartMonday();
+    const series = (state.load && state.load.weeks) || [];
+    const loadByWeek = {}; const acwrByWeek = {};
+    series.forEach(w => { loadByWeek[w.weekStart] = w.load; if(w.acwr!=null) acwrByWeek[w.weekStart] = w.acwr; });
+    const weeks = [];
+    for(let i=0;i<WEEKS;i++){ const iso = addDays(start, i*7); weeks.push({ iso: iso, load: loadByWeek[iso]||0, acwr: acwrByWeek[iso] }); }
+    const maxLoad = Math.max(100, ...weeks.map(w=>w.load));
+    const width = padL + padR + WEEKS*step;
+    const barW = step - 6;
+    const chartH = h - padT - padB;
+    const yFor = v => padT + chartH * (1 - Math.min(v, maxLoad)/maxLoad);
+    const curMon = fmtISO(mondayOf(new Date()));
+
+    let bars = '', ticks = '', lastMonth = '';
+    weeks.forEach((w, i) => {
+      const x = padL + i*step;
+      const bh = w.load>0 ? Math.max(2, chartH*(w.load/maxLoad)) : 0;
+      const colour = weekStateColour(w.iso) || 'var(--line)';
+      const isCur = w.iso===curMon;
+      if(bh>0){
+        bars += '<rect class="load-bar" x="'+x+'" y="'+(padT+chartH-bh)+'" width="'+barW+'" height="'+bh+'" rx="2" fill="'+colour+'"'+
+          (isCur?' stroke="var(--ink)" stroke-width="1.5"':'')+' onclick="drillWeek(\''+w.iso+'\')"><title>'+fmtNice(w.iso)+' · '+w.load+'au</title></rect>';
+      } else {
+        bars += '<rect class="load-bar" x="'+x+'" y="'+(padT+chartH-3)+'" width="'+barW+'" height="3" rx="1.5" fill="var(--line-soft)" onclick="drillWeek(\''+w.iso+'\')"><title>'+fmtNice(w.iso)+' · no load</title></rect>';
+      }
+      const mon = monShort(w.iso);
+      if(mon!==lastMonth){ ticks += '<text x="'+x+'" y="'+(h-6)+'" font-family="Inter,sans-serif" font-size="9" fill="#7a6a60">'+mon+'</text>'; lastMonth = mon; }
+    });
+
+    // ACWR overlay: map [0,2] across chart height; reference line at 1.0
+    const acwrY = v => padT + chartH * (1 - Math.min(v,2)/2);
+    let line = '', refY = acwrY(1).toFixed(1);
+    const pts = weeks.map((w,i)=> w.acwr!=null ? (padL + i*step + barW/2)+','+acwrY(w.acwr).toFixed(1) : null).filter(Boolean);
+    let refLine = '<line x1="'+padL+'" y1="'+refY+'" x2="'+(width-padR)+'" y2="'+refY+'" stroke="var(--ink-mute)" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"></line>';
+    if(pts.length>1){ line = '<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--burgundy)" stroke-width="2" stroke-linejoin="round"></polyline>'; }
+    const dots = weeks.map((w,i)=> w.acwr!=null ? '<circle cx="'+(padL+i*step+barW/2)+'" cy="'+acwrY(w.acwr).toFixed(1)+'" r="2.5" fill="var(--burgundy)"></circle>' : '').join('');
+
+    const hasData = series.some(w=>w.load>0);
+    if(!hasData){
+      return '<div class="load-empty-note">No load logged yet. Log sessions in the Week tab and your weekly load builds here.</div>';
+    }
+    return '<svg width="'+width+'" height="'+h+'" viewBox="0 0 '+width+' '+h+'" style="display:block;">'+
+      refLine + bars + line + dots + ticks + '</svg>';
+  }
+
+  async function drillWeek(weekStartIso){
+    setLoading(true, 'Loading that week…');
+    try {
+      const wk = await apiGet({ action:'getWeek', email: currentUser.email, weekStart: weekStartIso });
+      state.week = wk.success ? { weekStart: wk.weekStart, sessions: wk.sessions||[] } : { weekStart: weekStartIso, sessions: [] };
+    } catch(e){ state.week = { weekStart: weekStartIso, sessions: [] }; }
+    setLoading(false);
+    switchTab('week');
+  }
+  window.drillWeek = drillWeek;
+
+  function goToThisWeek(){ drillWeek(fmtISO(mondayOf(new Date()))); }
+  window.goToThisWeek = goToThisWeek;
+  // ============================================================
+  // PBS TAB
+  // ============================================================
+  function renderPBs(){
+    const view = document.getElementById('view-pbs');
+    const pbs = state.pbs || [];
+    if(!pbs.length){
+      view.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-trophy" aria-hidden="true"></i></div>'+
+        '<h2 class="empty-state-title">No <em>bests</em> yet.</h2>'+
+        '<p class="empty-state-text">Log a session and mark it as a PB, or add one here. Every best you set shows up on this board.</p>'+
+        '<button class="btn-primary" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>';
+      return;
+    }
+    const groups = {};
+    pbs.forEach(p => { const k = p.sport || 'Other'; (groups[k] = groups[k] || []).push(p); });
+    let html = '<div class="pb-page-head">'+
+      '<div></div>'+
+      '<button class="year-head-btn" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>';
+    Object.keys(groups).sort().forEach(sport => {
+      html += '<div class="pb-group"><div class="pb-group-head">'+esc(sport)+'</div>';
+      groups[sport].forEach(p => { html += pbPageItem(p); });
+      html += '</div>';
+    });
+    view.innerHTML = html;
+  }
+
+  function pbPageItem(p){
+    const cur = parseFloat(p.value), prev = parseFloat(p.previousValue);
+    let trend = '';
+    if(!isNaN(cur) && !isNaN(prev) && cur !== prev){
+      const diff = +(cur - prev).toFixed(2);
+      const cls = diff > 0 ? 'up' : 'down';
+      trend = '<p class="pb-page-trend '+cls+'">'+(diff>0?'↑':'↓')+' '+Math.abs(diff)+(p.unit? ' '+esc(p.unit):'')+' · was '+esc(String(p.previousValue))+'</p>';
+    }
+    return '<div class="pb-page-item" onclick="editPB('+pbKey(p)+')">'+
+      '<div><p class="pb-page-name">'+esc(p.exercise)+'</p>'+
+        '<p class="pb-page-sub">'+(p.date? fmtNice(p.date):'')+(p.note? ' · '+esc(p.note):'')+'</p></div>'+
+      '<div class="pb-page-right"><p class="pb-page-value">'+esc(String(p.value))+(p.unit? ' <small>'+esc(p.unit)+'</small>':'')+'</p>'+trend+'</div></div>';
+  }
+  function pbKey(p){ return "'"+esc(p.sessionId||'')+"','"+esc(p.sport||'')+"','"+esc(p.exercise||'')+"'"; }
+
+  // ----- PB add / edit sheet -----
+  let pbCtx = null;
+  function openPBSheet(){ document.getElementById('pb-backdrop').classList.add('open'); document.getElementById('pbSheet').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closePB(){ document.getElementById('pb-backdrop').classList.remove('open'); document.getElementById('pbSheet').classList.remove('open'); document.body.style.overflow=''; }
+  window.closePB = closePB;
+
+  function openPBForm(prefill){
+    prefill = prefill || {};
+    pbCtx = { sessionId: prefill.sessionId || '' };
+    document.getElementById('pbSheetTitle').innerHTML = prefill.exercise ? esc(prefill.exercise) : 'New <em>PB</em>.';
+    document.getElementById('pbSport').value = prefill.sport || (athlete && athlete.Sport_1) || '';
+    document.getElementById('pbExercise').value = prefill.exercise || '';
+    document.getElementById('pbValue').value = prefill.value != null ? prefill.value : '';
+    document.getElementById('pbUnit').value = prefill.unit || '';
+    document.getElementById('pbDate').value = prefill.date || isoToday();
+    document.getElementById('pbNote').value = prefill.note || '';
+    openPBSheet();
+  }
+  function addPB(){ openPBForm({}); }
+  window.addPB = addPB;
+
+  function editPB(sessionId, sport, exercise){
+    const p = (state.pbs||[]).find(x => (sessionId && x.sessionId===sessionId) || (x.sport===sport && x.exercise===exercise));
+    if(!p){ addPB(); return; }
+    openPBForm(p);
+  }
+  window.editPB = editPB;
+
+  async function savePBSheet(){
+    const exercise = val('pbExercise').trim();
+    const value = val('pbValue').trim();
+    if(!exercise){ showToast('Name the exercise or event.', 'error'); return; }
+    if(value===''){ showToast('Add the result value.', 'error'); return; }
+    const pb = {
+      sport: val('pbSport').trim(),
+      exercise: exercise,
+      value: value,
+      unit: val('pbUnit').trim(),
+      date: val('pbDate') || isoToday(),
+      note: val('pbNote'),
+      sessionId: (pbCtx && pbCtx.sessionId) || ''
+    };
+    const btn = document.getElementById('pbSaveBtn'); btn.disabled=true; btn.textContent='Saving…';
+    try {
+      const res = await apiPost({ action:'savePB', email: currentUser.email, pb: pb });
+      if(!res.success) throw new Error(res.error||'save failed');
+      await refreshPBs();
+      closePB();
+      showToast('PB saved', 'success');
+    } catch(e){ console.error('savePB', e); showToast('Could not save PB — ' + (e.message||'try again'), 'error'); }
+    finally { btn.disabled=false; btn.textContent='Save PB'; }
+  }
+  window.savePBSheet = savePBSheet;
+
+  async function refreshPBs(){
+    try {
+      const res = await apiGet({ action:'getPBs', email: currentUser.email });
+      if(res.success) state.pbs = res.pbs || [];
+    } catch(e){ /* keep existing on failure */ }
+    if(activeTab==='pbs') renderPBs();
+    renderWeekPBs();
+  }
+
+  // ============================================================
+  // BOOK TAB — coach check-ins + month calendar (demo/visual only)
+  // ============================================================
+  const SLOT_TYPE = {
+    checkin:   { label:'Check-in',         cls:'type-checkin' },
+    technique: { label:'Technique Review', cls:'type-technique' },
+    testing:   { label:'Testing Day',      cls:'type-testing' },
+    group:     { label:'Group Session',    cls:'type-group' }
+  };
+  let calMonth = null;   // active calendar month index (0–11)
+
+  function renderBook(){
+    const view = document.getElementById('view-book');
+    const bk = state.booking;
+    if(!bk){
+      view.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-calendar-plus" aria-hidden="true"></i></div>'+
+        '<h2 class="empty-state-title">Booking is <em>coming soon</em>.</h2>'+
+        '<p class="empty-state-text">Soon you\'ll book check-ins, technique reviews and testing days with Mr Bain right here — and see them on your own calendar. Want a preview? Open this page with <strong>?demo=1</strong>.</p></div>';
+      return;
+    }
+    if(calMonth==null) calMonth = (bk.months && bk.months[0] != null) ? bk.months[0] : new Date().getMonth();
+    view.innerHTML =
+      '<div class="book-grid">'+
+        '<div class="book-card">'+
+          '<p class="overline">Coach check-ins</p>'+
+          '<h2 class="section-heading">Book a <em style="font-style:italic;color:var(--burgundy);">session</em></h2>'+
+          '<div id="slotList" style="margin-top:16px;">'+ (bk.slots||[]).map(slotCardHTML).join('') +'</div>'+
+          '<div class="booking-note">Slots open two weeks in advance.</div>'+
+        '</div>'+
+        '<div class="book-card">'+
+          '<div class="cal-head"><div><p class="overline">Your schedule</p>'+
+            '<h2 class="section-heading">'+esc(bk.calTitle || 'This term')+'</h2></div></div>'+
+          calTabsHTML(bk.months)+
+          '<div class="cal-grid" id="calGrid">'+calGridHTML(calMonth)+'</div>'+
+          calLegendHTML()+
+        '</div>'+
+      '</div>';
+  }
+
+  function slotCardHTML(s, i){
+    const t = SLOT_TYPE[s.type] || SLOT_TYPE.checkin;
+    const cls = 'slot-card ' + (s.status||'available');
+    let foot;
+    if(s.status==='booked') foot = '<span class="slot-status booked-label"><i class="ti ti-check" aria-hidden="true"></i> Booked</span>';
+    else if(s.status==='full') foot = '<span class="slot-status full-label">Full</span>';
+    else foot = '<button class="book-btn" onclick="event.stopPropagation(); bookSlot('+i+')">Book</button>';
+    return '<div class="'+cls+'"'+(s.status==='booked'?' onclick="cancelSlot('+i+')"':'')+'>'+
+      '<div class="slot-card-head">'+
+        '<span class="slot-card-title">'+esc(s.title)+'</span>'+
+        '<span class="slot-badge '+t.cls+'">'+t.label+'</span>'+
+      '</div>'+
+      '<div class="slot-card-foot">'+
+        '<span class="slot-card-time"><strong>'+esc(s.day)+'</strong> · '+esc(s.time)+(s.coach?' · '+esc(s.coach):'')+'</span>'+
+        foot+
+      '</div></div>';
+  }
+
+  function calTabsHTML(months){
+    if(!months || months.length<2) return '';
+    return '<div class="cal-tabs">'+months.map(m =>
+      '<button class="cal-tab'+(m===calMonth?' active':'')+'" onclick="pickCalMonth('+m+')">'+MONTHS[m]+'</button>').join('')+'</div>';
+  }
+  function pickCalMonth(m){ calMonth = m; document.getElementById('view-book') && renderBook(); }
+  window.pickCalMonth = pickCalMonth;
+
+  function calGridHTML(monthIdx){
+    const bk = state.booking;
+    const year = bk.calYear || new Date().getFullYear();
+    const first = new Date(year, monthIdx, 1);
+    const startDow = (first.getDay()+6)%7;   // Monday-first
+    const daysIn = new Date(year, monthIdx+1, 0).getDate();
+    const today = isoToday();
+    const evByDay = {};
+    (bk.events||[]).forEach(e => { if(parseISO(e.date).getMonth()===monthIdx){ (evByDay[dayNum(e.date)] = evByDay[dayNum(e.date)]||[]).push(e); } });
+    let html = ['Mo','Tu','We','Th','Fr','Sa','Su'].map(d=>'<div class="cal-dayhead">'+d+'</div>').join('');
+    for(let i=0;i<startDow;i++) html += '<div class="cal-day blank"></div>';
+    for(let d=1; d<=daysIn; d++){
+      const iso = fmtISO(new Date(year, monthIdx, d));
+      const evs = evByDay[d] || [];
+      const dots = evs.slice(0,3).map(e=>'<span class="cal-dot '+((SLOT_TYPE[e.type]||SLOT_TYPE.checkin).cls)+'"></span>').join('');
+      html += '<div class="cal-day'+(iso===today?' today':'')+'" title="'+(evs.map(e=>esc(e.name)).join(', '))+'">'+
+        '<span>'+d+'</span><span class="cal-dots">'+dots+'</span></div>';
+    }
+    return html;
+  }
+  function calLegendHTML(){
+    return '<div class="cal-legend">'+
+      '<span class="cal-legend-item"><span class="cal-legend-swatch" style="background:var(--burgundy);"></span>Check-in</span>'+
+      '<span class="cal-legend-item"><span class="cal-legend-swatch" style="background:var(--gold);"></span>Technique</span>'+
+      '<span class="cal-legend-item"><span class="cal-legend-swatch" style="background:var(--ink);"></span>Testing</span>'+
+      '<span class="cal-legend-item"><span class="cal-legend-swatch" style="background:var(--sage);"></span>Group</span>'+
+    '</div>';
+  }
+
+  function bookSlot(i){
+    const s = state.booking && state.booking.slots[i];
+    if(!s || s.status!=='available') return;
+    s.status = 'booked';
+    // reflect the booking on the calendar
+    if(s.eventDate){ (state.booking.events = state.booking.events||[]).push({ date:s.eventDate, type:s.type, name:s.title }); }
+    renderBook(); renderBlockBar();
+    showToast('Booked — '+s.title, 'success');
+  }
+  window.bookSlot = bookSlot;
+  function cancelSlot(i){
+    const s = state.booking && state.booking.slots[i];
+    if(!s || s.status!=='booked') return;
+    if(!confirm('Cancel this booking?')) return;
+    s.status = 'available';
+    if(s.eventDate && state.booking.events){ state.booking.events = state.booking.events.filter(e=>!(e.date===s.eventDate && e.name===s.title)); }
+    renderBook(); renderBlockBar();
+    showToast('Booking cancelled', 'success');
+  }
+  window.cancelSlot = cancelSlot;
+
+  // ============================================================
+  // BINDINGS + INIT
+  // ============================================================
+  document.querySelectorAll('.view-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.body.classList.toggle('show-week', btn.dataset.view==='week');
+    });
+  });
+
+  document.getElementById('rpe-row').addEventListener('click', e => {
+    const pip = e.target.closest('.rpe-pip');
+    if(!pip) return;
+    document.querySelectorAll('#rpe-row .rpe-pip').forEach(p => p.classList.remove('selected'));
+    pip.classList.add('selected');
+    updateLoad();
+  });
+  document.getElementById('duration-input').addEventListener('input', updateLoad);
+
+  // LAB: readiness pips — tap to select, tap again to clear (low friction)
+  document.getElementById('feel-row').addEventListener('click', e => {
+    const pip = e.target.closest('.feel-pip'); if(!pip) return;
+    const wasSel = pip.classList.contains('selected');
+    document.querySelectorAll('#feel-row .feel-pip').forEach(p => p.classList.remove('selected'));
+    if(!wasSel) pip.classList.add('selected');
+  });
+  document.getElementById('severity-row').addEventListener('click', e => {
+    const pip = e.target.closest('.severity-pip'); if(!pip) return;
+    const wasSel = pip.classList.contains('selected');
+    document.querySelectorAll('#severity-row .severity-pip').forEach(p => p.classList.remove('selected'));
+    if(!wasSel) pip.classList.add('selected');
+  });
+
+  window.addEventListener('load', () => {
+    const params = new URLSearchParams(location.search);
+    if(params.get('demo') === '1'){ startDemo(); return; }
+    if(checkExistingSession()) startPortal();
+  });
+</script>
+
+</body>
+</html>
