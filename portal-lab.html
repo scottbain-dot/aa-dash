@@ -2045,6 +2045,34 @@
   }
   .change-plan-btn:hover { background: var(--burgundy-dark); }
 
+  /* ============================
+     LAB — swipe-to-delete on session rows
+     ============================ */
+  .swipe-wrap { position: relative; overflow: hidden; border-radius: 10px; }
+  .swipe-wrap .plan-row {
+    position: relative; z-index: 1; background: var(--surface);
+    transition: transform 0.22s cubic-bezier(.2,.8,.2,1); will-change: transform; touch-action: pan-y;
+  }
+  .swipe-wrap.swiping .plan-row { transition: none; }
+  .swipe-wrap.open .plan-row { transform: translateX(-92px); }
+  .swipe-wrap .plan-row:hover { background: var(--surface); }   /* stay opaque while sliding */
+  .swipe-delete {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 92px; z-index: 0;
+    border: none; background: var(--burgundy); color: var(--cream);
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .swipe-delete .ti { font-size: 18px; }
+  .swipe-delete:active { background: var(--burgundy-dark); }
+  /* Only the genuinely-last row in the list drops its divider. */
+  .plan-list > .swipe-wrap:last-child .plan-row { border-bottom: none; }
+  .plan-list > .swipe-wrap .plan-row { border-radius: 0; }
+  /* Desktop hint: hovering a row shows the delete affordance is available */
+  @media (min-width: 820px) {
+    .swipe-wrap.open .plan-row { transform: translateX(-92px); }
+  }
+
   /* Plan library sheet */
   .plan-pick-note { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); margin: 0 0 16px; }
   .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -2308,6 +2336,7 @@
       sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
     if(action==='saveSession') return Promise.resolve({ success:true, id: 'demo_'+Date.now() });
+    if(action==='deleteSession') return Promise.resolve({ success:true, id: payload.id });
     return Promise.resolve({ success:true });
   }
 
@@ -2718,6 +2747,7 @@
       '</div>';
     renderWeekPBs();
     renderLoadStrip();
+    initSwipe();   // LAB: bind swipe-to-delete once (delegated on #weekGrid)
   }
 
   // One clean row per session (mockup-style: day · dot · name + detail).
@@ -2731,11 +2761,15 @@
     else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au';
     else meta = esc(s.sport)+' · '+(s.plannedDuration||0)+'min planned';
     const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
-    return '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
-      '<span class="plan-day">'+dayLabelHTML+'</span>'+
-      '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
-      '<div class="plan-info"><div class="plan-name">'+esc(s.name)+pb+'</div><div class="plan-detail">'+meta+'</div></div>'+
-      '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
+    // LAB: wrapped so a left-swipe reveals a Delete action (see swipe handlers).
+    return '<div class="swipe-wrap" data-id="'+esc(s.id)+'">'+
+      '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
+        '<span class="plan-day">'+dayLabelHTML+'</span>'+
+        '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+pb+'</div><div class="plan-detail">'+meta+'</div></div>'+
+        '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
+      '</div>'+
+      '<button class="swipe-delete" aria-label="Remove session" onclick="deleteSessionSwipe(event,\''+s.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i> Delete</button>'+
     '</div>';
   }
   function planRestRow(dayLabelHTML, iso, isToday, isPast){
@@ -3289,6 +3323,91 @@
     }
   }
   window.quickAddTemplate = quickAddTemplate;
+
+  // ============================================================
+  // LAB — swipe-to-delete (touch) + delete action
+  // ============================================================
+  let swipeState = null;
+  function initSwipe(){
+    const grid = document.getElementById('weekGrid');
+    if(!grid || grid._swipeBound) return;   // #weekGrid persists across renders
+    grid._swipeBound = true;
+    grid.addEventListener('touchstart', onSwipeStart, { passive:true });
+    grid.addEventListener('touchmove', onSwipeMove, { passive:false });
+    grid.addEventListener('touchend', onSwipeEnd);
+    grid.addEventListener('touchcancel', onSwipeEnd);
+    // Capture tap so a swiped/open row doesn't also open the session sheet.
+    grid.addEventListener('click', e => {
+      if(e.target.closest('.swipe-delete')) return;        // let the Delete tap through
+      const wrap = e.target.closest('.swipe-wrap');
+      if(!wrap) return;
+      if(wrap.classList.contains('open') || wrap.dataset.swiped==='1'){
+        e.stopPropagation(); e.preventDefault();
+        wrap.dataset.swiped = '';
+        wrap.classList.remove('open');                     // tap an open row to close it
+      }
+    }, true);
+  }
+  function closeAllSwipes(except){
+    document.querySelectorAll('#weekGrid .swipe-wrap.open').forEach(w => { if(w!==except) w.classList.remove('open'); });
+  }
+  function onSwipeStart(e){
+    if(e.touches.length !== 1) return;
+    const wrap = e.target.closest('.swipe-wrap');
+    closeAllSwipes(wrap);
+    if(!wrap) return;
+    const t = e.touches[0];
+    swipeState = { wrap, startX:t.clientX, startY:t.clientY, dx:0, decided:false,
+                   horizontal:false, openStart: wrap.classList.contains('open') };
+    wrap.classList.add('swiping');
+  }
+  function onSwipeMove(e){
+    if(!swipeState) return;
+    const t = e.touches[0];
+    const dx = t.clientX - swipeState.startX;
+    const dy = t.clientY - swipeState.startY;
+    if(!swipeState.decided){
+      if(Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      swipeState.horizontal = Math.abs(dx) > Math.abs(dy);
+      swipeState.decided = true;
+      if(!swipeState.horizontal){ swipeState.wrap.classList.remove('swiping'); swipeState = null; return; }
+    }
+    e.preventDefault();   // we own the horizontal gesture
+    const base = swipeState.openStart ? -92 : 0;
+    const tx = Math.max(-92, Math.min(0, base + dx));
+    swipeState.dx = tx;
+    const row = swipeState.wrap.querySelector('.plan-row');
+    if(row) row.style.transform = 'translateX('+tx+'px)';
+  }
+  function onSwipeEnd(){
+    if(!swipeState) return;
+    const wrap = swipeState.wrap;
+    wrap.classList.remove('swiping');
+    const row = wrap.querySelector('.plan-row');
+    if(row) row.style.transform = '';     // hand back to the CSS class
+    const open = swipeState.dx < -46;
+    wrap.classList.toggle('open', open);
+    wrap.dataset.swiped = Math.abs(swipeState.dx) > 6 ? '1' : '';
+    swipeState = null;
+  }
+
+  async function deleteSessionSwipe(ev, id){
+    if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+    const s = (state.week.sessions || []).find(x => x.id === id);
+    const nm = s ? s.name : 'this session';
+    // Optimistic: pull it from the week now; persist the delete in the background.
+    state.week.sessions = (state.week.sessions || []).filter(x => x.id !== id);
+    renderWeek(); renderBlockBar();
+    showToast('Removed “'+nm+'”', 'success');
+    try {
+      const res = await apiPost({ action:'deleteSession', email: currentUser.email, id: id });
+      if(!res.success) throw new Error(res.error || 'delete failed');
+    } catch(e){
+      console.error('deleteSession', e);
+      showToast('Removed here but couldn’t reach the server — it may reappear on reload.', 'error');
+    }
+  }
+  window.deleteSessionSwipe = deleteSessionSwipe;
 
   // ============================================================
   // YEAR / LOAD / PBS — placeholders (built in their own PRs)

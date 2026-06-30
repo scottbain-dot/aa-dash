@@ -400,6 +400,10 @@ function doPost(e) {
       var ssAp3 = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSaveSession(ssAp3, data.email, data.session));
     }
+    if (data.action === 'deleteSession') {
+      var ssAp3d = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleDeleteSession(ssAp3d, data.email, data.id));
+    }
     if (data.action === 'savePB') {
       var ssAp4 = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSavePB(ssAp4, data.email, data.pb));
@@ -2785,6 +2789,29 @@ function handleSaveSession(ss, email, session) {
     else sheet.appendRow(apBuildRow(sheet, fields));
     apCacheClear(athleteId);
     return { success: true, id: id, load: load === '' ? null : load };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// Delete a single session row by its Session_ID (scoped to the athlete).
+function handleDeleteSession(ss, email, id) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    if (!id) return { success: false, error: 'No session id' };
+    var sheet = apEnsureTrainingSessions(ss);
+    var rows = apReadObjects(sheet);
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Session_ID).trim() === String(id).trim() &&
+          String(rows[i].Athlete_ID).trim() === String(athleteId).trim()) {
+        sheet.deleteRow(rows[i].__row);
+        apCacheClear(athleteId);
+        return { success: true, id: id };
+      }
+    }
+    // Not found (e.g. a local-only session never persisted) — treat as success.
+    return { success: true, id: id, missing: true };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
