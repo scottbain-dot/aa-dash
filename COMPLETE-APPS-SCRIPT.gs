@@ -349,6 +349,11 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ===== AI QUICK-LOG PARSER (freeform text -> draft sessions; writes nothing) =====
+    if (data.action === 'parseSessions') {
+      return apJson(handleParseSessions(data.email, data.text, data.todayISO));
+    }
+
     // ===== SAVE NOMINATION =====
     if (data.action === 'saveNomination') {
       var nomResult = handleSaveNomination(data);
@@ -1943,6 +1948,103 @@ function handleGetHeroInsight(studentData) {
     sentence = sentence.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim();
 
     return { success: true, insight: sentence };
+
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ========================================
+// AI QUICK-LOG PARSER
+// Turns a coach's freeform text describing one or more past training sessions
+// into structured draft sessions for review. Writes to NO sheet — parse only.
+// Reuses the same ANTHROPIC_API_KEY script property as the dashboard insights.
+// Uses a fast, cheap model — this is structured extraction, not coaching.
+// ========================================
+function handleParseSessions(email, text, todayISO) {
+  try {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+    if (!apiKey) {
+      return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
+    }
+    if (!text || !String(text).trim()) {
+      return { success: false, error: 'No text to parse' };
+    }
+    var today = (todayISO && String(todayISO).trim())
+      ? String(todayISO).trim()
+      : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+
+    var systemPrompt = 'You extract structured training sessions from a coach\'s freeform notes.\n'
+      + 'You output ONLY a JSON array — no preamble, no explanation, no markdown code fences.\n\n'
+      + 'Each array element is exactly one training session, with exactly these fields:\n'
+      + '{\n'
+      + '  "date": "yyyy-mm-dd",\n'
+      + '  "sport": "Run" | "Bike" | "Strength" | "Power" | "Mobility" | "Test" | "Other",\n'
+      + '  "name": "short session name",\n'
+      + '  "duration": integer minutes or null,\n'
+      + '  "rpe": integer 1-10 or null,\n'
+      + '  "intensity": "easy" | "moderate" | "hard" | "",\n'
+      + '  "target": "any target/pace/HR/weights mentioned, else empty string",\n'
+      + '  "note": "how it felt or extra context, else empty string",\n'
+      + '  "readiness": { "feel": integer 1-5 or null, "niggle": { "area": "", "severity": integer 0-10 or null, "note": "" } } or null,\n'
+      + '  "confidence": "high" | "low"\n'
+      + '}\n\n'
+      + 'Rules:\n'
+      + '- Resolve relative dates ("yesterday", "today", "Mon", "Tuesday") against the given today\'s date. Always output an absolute ISO date (yyyy-mm-dd). Assume dates are in the recent past unless clearly stated otherwise.\n'
+      + '- duration is whole minutes (integer). rpe is an integer from 1 to 10.\n'
+      + '- NEVER guess rpe or duration. If a value is not clearly stated, return null for it and set "confidence" to "low".\n'
+      + '- Map the activity to the closest sport: Run, Bike, Strength, Power, Mobility, Test, or Other.\n'
+      + '- intensity: infer easy/moderate/hard only if obvious, otherwise use an empty string.\n'
+      + '- readiness: only include a niggle when an ache/injury/tightness is mentioned, otherwise set niggle to null. If nothing about how they felt or any niggle is mentioned, set readiness to null.\n'
+      + '- One array element per session. A single note may describe several sessions on different days.\n'
+      + '- If you cannot find any sessions, return an empty array [].';
+
+    var userMessage = 'Today\'s date is ' + today + '.\n\nTraining log:\n' + String(text);
+
+    var payload = {
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    };
+
+    var options = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    var response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', options);
+    var statusCode = response.getResponseCode();
+    if (statusCode !== 200) {
+      return { success: false, error: 'Anthropic API returned status ' + statusCode };
+    }
+
+    var responseBody = JSON.parse(response.getContentText());
+    var aiText = responseBody.content && responseBody.content[0] && responseBody.content[0].text;
+    if (!aiText) {
+      return { success: false, error: 'No text in API response' };
+    }
+
+    // Defensively strip markdown fences before parsing.
+    aiText = aiText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+
+    var sessions;
+    try {
+      sessions = JSON.parse(aiText);
+    } catch (parseErr) {
+      return { success: false, error: 'Could not read the parsed sessions. Please try again.' };
+    }
+    if (!Array.isArray(sessions)) {
+      return { success: false, error: 'The parser did not return a list of sessions.' };
+    }
+
+    return { success: true, sessions: sessions };
 
   } catch (error) {
     return { success: false, error: error.toString() };

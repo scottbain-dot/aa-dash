@@ -1282,6 +1282,85 @@
     font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
     cursor: pointer;
   }
+
+  /* ============================
+     LAB — AI Quick Log (paste → parse → review → save)
+     ============================ */
+  .quicklog-btn {
+    background: var(--ink); color: var(--cream); border: none; padding: 8px 14px; border-radius: 9px;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px; transition: filter 0.15s;
+  }
+  .quicklog-btn:hover { filter: brightness(1.15); }
+  .quicklog-btn .ti { color: var(--gold); }
+
+  .ql-help {
+    font-family: 'Fraunces', serif; font-style: italic; font-size: 13px;
+    color: var(--ink-mute); margin: 0 0 14px; line-height: 1.5;
+  }
+  .ql-error {
+    display: flex; align-items: flex-start; gap: 8px; margin-top: 14px;
+    background: rgba(135,75,70,0.08); color: var(--burgundy); border-radius: 12px;
+    padding: 11px 14px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; line-height: 1.4;
+  }
+  .ql-error .ti { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+  .ql-loading { text-align: center; padding: 44px 0; }
+  .ql-loading .spinner { margin: 0 auto 14px; }
+
+  /* Draft cards */
+  #qlogCards { display: flex; flex-direction: column; gap: 14px; }
+  .ql-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 14px 16px 16px; box-shadow: var(--shadow-card);
+    border-left: 4px solid var(--sage);
+  }
+  .ql-card.warn { border-left-color: var(--gold); }
+  .ql-card.flag { border-left-color: var(--burgundy); }
+  .ql-card.saving { opacity: 0.5; pointer-events: none; }
+  .ql-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .ql-name {
+    flex: 1; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px;
+    font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; background: var(--bg); color: var(--ink);
+  }
+  .ql-name:focus { outline: none; border-color: var(--burgundy); }
+  .ql-discard {
+    flex-shrink: 0; width: 38px; height: 38px; border-radius: 9px; border: 1px solid var(--line);
+    background: var(--cream); color: var(--ink-mute); cursor: pointer; font-size: 17px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .ql-discard:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .ql-flag-note {
+    display: none; align-items: center; gap: 6px; margin-bottom: 12px;
+    font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 600; line-height: 1.35;
+    border-radius: 8px; padding: 8px 10px;
+  }
+  .ql-card.warn .ql-flag-note { display: flex; background: rgba(212,175,55,0.14); color: var(--burgundy-dark); }
+  .ql-card.flag .ql-flag-note { display: flex; background: rgba(135,75,70,0.10); color: var(--burgundy); }
+  .ql-flag-note .ti { font-size: 15px; flex-shrink: 0; }
+  .ql-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ql-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .ql-field.full { grid-column: 1 / -1; }
+  .ql-field label {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-mute); font-weight: 700;
+  }
+  .ql-field input, .ql-field select, .ql-field textarea {
+    width: 100%; padding: 10px 11px; border: 1px solid var(--line); border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-size: 14px; background: var(--bg); color: var(--ink);
+  }
+  .ql-field textarea { font-family: 'Fraunces', serif; font-style: italic; min-height: 48px; resize: vertical; }
+  .ql-field select { -webkit-appearance: none; appearance: none; }
+  .ql-field input:focus, .ql-field select:focus, .ql-field textarea:focus { outline: none; border-color: var(--burgundy); }
+  .ql-field input.missing { border-color: var(--burgundy); background: rgba(135,75,70,0.05); }
+  .ql-readiness { margin-top: 12px; }
+  .ql-readiness summary {
+    cursor: pointer; font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-mute); font-weight: 700; padding: 4px 0; list-style: none;
+  }
+  .ql-readiness summary::-webkit-details-marker { display: none; }
+  .ql-readiness summary::before { content: '＋ '; color: var(--burgundy); }
+  .ql-readiness[open] summary::before { content: '－ '; }
+  .ql-readiness .ql-grid { margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -1732,6 +1811,46 @@
     <p class="readiness-sub-label">Add to</p>
     <div class="lab-day-picker" id="labDayPicker"></div>
     <div class="lab-tpl-list" id="labTemplateList"></div>
+  </div>
+</div>
+
+<!-- LAB: AI Quick Log — paste freeform text, parse into draft sessions, review, then save -->
+<div class="sheet-backdrop" id="qlog-backdrop" onclick="closeQuickLog()"></div>
+<div class="sheet" id="quickLogSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">Quick log</p>
+      <h2 class="sheet-title" id="qlogTitle">Paste your <em>sessions</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closeQuickLog()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+
+  <div class="sheet-body">
+    <!-- INPUT -->
+    <div id="qlogInput">
+      <p class="ql-help">Type or paste anything — one session or many. Claude turns it into draft cards you can check and edit. Nothing is saved until you confirm.</p>
+      <textarea class="note-input" id="qlogText" style="min-height:150px;"
+        placeholder="Tue: Z2 run 48min outdoor, felt 5, calf tight after 30min. Wed: Push A, 55min, RPE 7."></textarea>
+      <div class="ql-error" id="qlogError" style="display:none;"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="qlogErrorText"></span></div>
+    </div>
+
+    <!-- REVIEW -->
+    <div id="qlogReview" style="display:none;">
+      <p class="ql-help">Check each session — flagged cards need effort &amp; duration before they can be saved. Edit anything, then confirm.</p>
+      <div id="qlogCards"></div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="qlogLoading" class="ql-loading" style="display:none;">
+      <div class="spinner"></div>
+      <p class="app-loading-text" id="qlogLoadingText">Reading your sessions…</p>
+    </div>
+  </div>
+
+  <div class="sheet-save">
+    <button class="btn-secondary" id="qlogSecondaryBtn" onclick="qlogSecondary()">Cancel</button>
+    <button class="btn-primary" id="qlogPrimaryBtn" onclick="qlogPrimary()">Parse sessions</button>
   </div>
 </div>
 
@@ -2337,6 +2456,12 @@
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
     if(action==='saveSession') return Promise.resolve({ success:true, id: 'demo_'+Date.now() });
     if(action==='deleteSession') return Promise.resolve({ success:true, id: payload.id });
+    if(action==='parseSessions') return Promise.resolve({ success:true, sessions: [
+      { date: isoToday(), sport:'Run', name:'Z2 base (outdoor)', duration:48, rpe:5, intensity:'easy',
+        target:'Z2 · HR 130–141', note:'Felt good', readiness:{ feel:4, niggle:{ area:'left calf', severity:3, note:'tight after 30min' } }, confidence:'high' },
+      { date: addDays(isoToday(),-1), sport:'Strength', name:'Push A', duration:null, rpe:7, intensity:'moderate',
+        target:'', note:'', readiness:null, confidence:'low' }
+    ]});
     return Promise.resolve({ success:true });
   }
 
@@ -2739,6 +2864,7 @@
             (state.planName? '<p class="plan-label-line">Plan · <strong>'+esc(state.planName)+'</strong></p>' : '')+
           '</div>'+
           '<div class="plan-head-actions">'+
+            '<button class="quicklog-btn" onclick="openQuickLog()"><i class="ti ti-sparkles" aria-hidden="true"></i> Quick Log</button>'+
             '<button class="from-plan-btn" onclick="openLabTemplates()"><i class="ti ti-bolt" aria-hidden="true"></i> From my plan</button>'+
             '<button class="change-plan-btn" onclick="openPlanSheet()">Change plan</button>'+
           '</div>'+
@@ -3323,6 +3449,298 @@
     }
   }
   window.quickAddTemplate = quickAddTemplate;
+
+  // ============================================================
+  // LAB — AI Quick Log
+  // Paste freeform text → parse into draft sessions → review/edit → save.
+  // Nothing is written until the coach confirms. Backfill of past sessions;
+  // candidate low-friction logging feature for students.
+  // ============================================================
+  const QL_SPORTS = ['Run','Bike','Strength','Power','Mobility','Test','Other'];
+  let quickDrafts = [];        // parsed drafts currently under review
+  let qlogMode = 'input';      // 'input' | 'review'
+  let qlogBusy = false;
+
+  function openQuickLog(){
+    quickDrafts = [];
+    qlogBusy = false;
+    document.getElementById('qlogText').value = '';
+    hideQlogError();
+    setQlogMode('input');
+    document.getElementById('qlog-backdrop').classList.add('open');
+    document.getElementById('quickLogSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(()=>{ const t=document.getElementById('qlogText'); if(t) t.focus(); }, 250);
+  }
+  function closeQuickLog(){
+    if(qlogBusy) return;   // don't yank the sheet mid-save
+    document.getElementById('qlog-backdrop').classList.remove('open');
+    document.getElementById('quickLogSheet').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  window.openQuickLog = openQuickLog;
+  window.closeQuickLog = closeQuickLog;
+
+  function showQlogError(msg){
+    document.getElementById('qlogErrorText').textContent = msg;
+    document.getElementById('qlogError').style.display = 'flex';
+  }
+  function hideQlogError(){ document.getElementById('qlogError').style.display = 'none'; }
+
+  // Toggle input / review / loading views + the two footer buttons.
+  function setQlogMode(mode){
+    qlogMode = mode;
+    const loading = mode === 'loading';
+    document.getElementById('qlogInput').style.display   = mode === 'input'  ? '' : 'none';
+    document.getElementById('qlogReview').style.display  = mode === 'review' ? '' : 'none';
+    document.getElementById('qlogLoading').style.display = loading ? '' : 'none';
+    const primary = document.getElementById('qlogPrimaryBtn');
+    const secondary = document.getElementById('qlogSecondaryBtn');
+    const title = document.getElementById('qlogTitle');
+    if(mode === 'review'){
+      title.innerHTML = 'Review &amp; <em>save</em>.';
+      primary.textContent = 'Confirm & save all';
+      secondary.textContent = 'Back';
+    } else {
+      title.innerHTML = 'Paste your <em>sessions</em>.';
+      primary.textContent = 'Parse sessions';
+      secondary.textContent = 'Cancel';
+    }
+    primary.style.display = loading ? 'none' : '';
+    secondary.disabled = false;
+  }
+
+  function qlogPrimary(){ if(qlogMode === 'review') confirmSaveAll(); else submitQuickLog(); }
+  function qlogSecondary(){
+    if(qlogBusy) return;
+    if(qlogMode === 'review'){ setQlogMode('input'); }   // back to the pasted text (kept intact)
+    else closeQuickLog();
+  }
+  window.qlogPrimary = qlogPrimary;
+  window.qlogSecondary = qlogSecondary;
+
+  // Paste text → parse. On any failure, stay on input and keep the text.
+  async function submitQuickLog(){
+    const text = document.getElementById('qlogText').value.trim();
+    hideQlogError();
+    if(!text){ showQlogError('Paste or type at least one session first.'); return; }
+    document.getElementById('qlogLoadingText').textContent = 'Reading your sessions…';
+    setQlogMode('loading');
+    try {
+      const res = await apiPost({ action:'parseSessions', email: currentUser.email, text: text, todayISO: isoToday() });
+      if(!res.success) throw new Error(res.error || 'Couldn’t parse that text');
+      const sessions = Array.isArray(res.sessions) ? res.sessions : [];
+      if(!sessions.length){
+        setQlogMode('input');
+        showQlogError('Couldn’t find any sessions in that text. Try adding the day, duration and effort.');
+        return;
+      }
+      quickDrafts = sessions.map(normalizeDraft);
+      renderQuickDrafts();
+      setQlogMode('review');
+    } catch(e){
+      console.error('parseSessions', e);
+      setQlogMode('input');   // text is preserved in the textarea
+      showQlogError('Couldn’t reach the parser: ' + (e.message || 'try again') + '. Your text is safe.');
+    }
+  }
+  window.submitQuickLog = submitQuickLog;
+
+  // Coerce whatever the model returned into a safe, predictable shape.
+  function normalizeDraft(d){
+    d = d || {};
+    const rd = d.readiness || null;
+    let niggle = null;
+    if(rd && rd.niggle && (rd.niggle.area || rd.niggle.severity != null || rd.niggle.note)){
+      niggle = { area: rd.niggle.area || '', severity: (rd.niggle.severity==null?null:+rd.niggle.severity), note: rd.niggle.note || '' };
+    }
+    return {
+      date: d.date || isoToday(),
+      sport: d.sport || 'Other',
+      name: d.name || '',
+      duration: (d.duration==null||d.duration==='') ? null : parseInt(d.duration,10),
+      rpe: (d.rpe==null||d.rpe==='') ? null : parseInt(d.rpe,10),
+      intensity: (d.intensity==='easy'||d.intensity==='moderate'||d.intensity==='hard') ? d.intensity : '',
+      target: d.target || '',
+      note: d.note || '',
+      readiness: (rd && (rd.feel!=null || niggle)) ? { feel:(rd.feel==null?null:+rd.feel), niggle:niggle } : null,
+      confidence: d.confidence === 'low' ? 'low' : 'high',
+      _discarded: false
+    };
+  }
+
+  function sportOptions(sel){
+    const list = QL_SPORTS.slice();
+    if(sel && list.indexOf(sel) === -1) list.unshift(sel);
+    return list.map(s => '<option value="'+esc(s)+'"'+(s===sel?' selected':'')+'>'+esc(s)+'</option>').join('');
+  }
+  function intensityOptions(sel){
+    return ['','easy','moderate','hard'].map(v =>
+      '<option value="'+v+'"'+(v===sel?' selected':'')+'>'+(v?v.charAt(0).toUpperCase()+v.slice(1):'—')+'</option>').join('');
+  }
+
+  function renderQuickDrafts(){
+    const wrap = document.getElementById('qlogCards');
+    const active = quickDrafts.map((d,i)=>({d,i})).filter(x=>!x.d._discarded);
+    if(!active.length){
+      wrap.innerHTML = '<p class="ql-help" style="text-align:center;">All drafts discarded. Go back to edit your text, or close.</p>';
+      return;
+    }
+    wrap.innerHTML = active.map(({d,i}) => draftCard(d,i)).join('');
+    active.forEach(({i}) => qlogReval(i));
+  }
+
+  function draftCard(d, i){
+    const r = d.readiness || {};
+    const nig = (r && r.niggle) || {};
+    return '<div class="ql-card" id="qlcard-'+i+'">'+
+      '<div class="ql-card-head">'+
+        '<input class="ql-name" id="ql-name-'+i+'" value="'+esc(d.name)+'" placeholder="Session name">'+
+        '<button class="ql-discard" onclick="discardDraft('+i+')" aria-label="Discard session"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+      '</div>'+
+      '<div class="ql-flag-note" id="ql-flagnote-'+i+'"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="ql-flagtext-'+i+'"></span></div>'+
+      '<div class="ql-grid">'+
+        field('Date', '<input type="date" id="ql-date-'+i+'" value="'+esc(d.date)+'">')+
+        field('Sport', '<select id="ql-sport-'+i+'">'+sportOptions(d.sport)+'</select>')+
+        field('Duration · min', '<input type="text" inputmode="numeric" id="ql-dur-'+i+'" value="'+(d.duration==null?'':d.duration)+'" placeholder="—" oninput="qlogReval('+i+')">')+
+        field('Effort · RPE 1–10', '<input type="text" inputmode="numeric" id="ql-rpe-'+i+'" value="'+(d.rpe==null?'':d.rpe)+'" placeholder="—" oninput="qlogReval('+i+')">')+
+        field('Intensity', '<select id="ql-int-'+i+'">'+intensityOptions(d.intensity)+'</select>', true)+
+        field('Target', '<input type="text" id="ql-target-'+i+'" value="'+esc(d.target)+'" placeholder="Pace · HR · weights">', true)+
+        field('Note', '<textarea id="ql-note-'+i+'" placeholder="How did it feel?">'+esc(d.note)+'</textarea>', true)+
+      '</div>'+
+      '<details class="ql-readiness"'+(r.feel!=null||nig.area||nig.severity!=null?' open':'')+'>'+
+        '<summary>Readiness · optional</summary>'+
+        '<div class="ql-grid">'+
+          field('Feel · 1–5', '<input type="text" inputmode="numeric" id="ql-feel-'+i+'" value="'+(r.feel==null?'':r.feel)+'" placeholder="—">')+
+          field('Niggle area', '<input type="text" id="ql-narea-'+i+'" value="'+esc(nig.area||'')+'" placeholder="e.g. left calf">')+
+          field('Niggle severity · 0–10', '<input type="text" inputmode="numeric" id="ql-nsev-'+i+'" value="'+(nig.severity==null?'':nig.severity)+'" placeholder="—">')+
+          field('Niggle note', '<input type="text" id="ql-nnote-'+i+'" value="'+esc(nig.note||'')+'" placeholder="how it feels">')+
+        '</div>'+
+      '</details>'+
+    '</div>';
+  }
+  function field(label, control, full){
+    return '<div class="ql-field'+(full?' full':'')+'"><label>'+esc(label)+'</label>'+control+'</div>';
+  }
+
+  // Re-validate one card. Returns true when it's complete enough to save
+  // (valid rpe 1–10 and a positive duration). Also drives the flag styling.
+  function qlogReval(i){
+    const rpe = numOrNull(val('ql-rpe-'+i));
+    const dur = numOrNull(val('ql-dur-'+i));
+    const rpeOk = rpe != null && rpe >= 1 && rpe <= 10;
+    const durOk = dur != null && dur > 0;
+    const ok = rpeOk && durOk;
+    const card = document.getElementById('qlcard-'+i);
+    if(!card) return ok;
+    const lowConf = quickDrafts[i] && quickDrafts[i].confidence === 'low';
+    card.classList.toggle('flag', !ok);
+    card.classList.toggle('warn', ok && lowConf);
+    const rEl = document.getElementById('ql-rpe-'+i); if(rEl) rEl.classList.toggle('missing', !rpeOk);
+    const dEl = document.getElementById('ql-dur-'+i); if(dEl) dEl.classList.toggle('missing', !durOk);
+    const txt = document.getElementById('ql-flagtext-'+i);
+    if(txt){
+      if(!ok) txt.textContent = 'Add effort (1–10) and duration before saving.';
+      else if(lowConf) txt.textContent = 'Claude wasn’t sure on this one — double-check it.';
+      else txt.textContent = '';
+    }
+    return ok;
+  }
+  window.qlogReval = qlogReval;
+
+  function discardDraft(i){
+    if(quickDrafts[i]) quickDrafts[i]._discarded = true;
+    renderQuickDrafts();
+  }
+  window.discardDraft = discardDraft;
+
+  function collectDraftReadiness(i){
+    const feel = numOrNull(val('ql-feel-'+i));
+    const area = (val('ql-narea-'+i)||'').trim();
+    const sev = numOrNull(val('ql-nsev-'+i));
+    const nnote = (val('ql-nnote-'+i)||'').trim();
+    let niggle = null;
+    if(area || sev != null || nnote){ niggle = { area: area, severity: sev, note: nnote }; }
+    if(feel == null && !niggle) return null;
+    return { feel: feel, niggle: niggle };
+  }
+
+  // Build a session in the exact shape the existing saveSession path expects.
+  function buildDraftSession(i){
+    const rpe = numOrNull(val('ql-rpe-'+i));
+    const duration = numOrNull(val('ql-dur-'+i));
+    return {
+      id: 'tmp_ql_'+Date.now()+'_'+i,
+      date: val('ql-date-'+i) || isoToday(),
+      sport: val('ql-sport-'+i),
+      name: (val('ql-name-'+i)||'').trim(),
+      intensity: val('ql-int-'+i),
+      plannedDuration: null,
+      rpe: rpe,
+      duration: duration,
+      load: (rpe!=null && duration!=null) ? rpe*duration : null,   // server recomputes; local optimism
+      status: 'logged',
+      isPB: false,
+      workout: [], _checked: [],
+      note: val('ql-note-'+i), noticed: '', blocker: '',
+      target: (val('ql-target-'+i)||'').trim(),
+      readiness: collectDraftReadiness(i)
+    };
+  }
+
+  // Only place a saved session into the visible week if its date belongs there.
+  function maybeUpsertWeek(session){
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    if(session.date >= ws && session.date <= addDays(ws,6)) upsertLocalSession(session);
+  }
+
+  // Confirm: validate every active card, then save each via saveSession.
+  async function confirmSaveAll(){
+    if(qlogBusy) return;
+    const active = quickDrafts.map((d,i)=>i).filter(i => !quickDrafts[i]._discarded);
+    if(!active.length){ showToast('Nothing to save.', 'error'); return; }
+    let blocked = false;
+    active.forEach(i => { if(!qlogReval(i)) blocked = true; });
+    if(blocked){ showToast('Complete the flagged fields first.', 'error'); return; }
+
+    const jobs = active.map(i => ({ i: i, session: buildDraftSession(i) }));
+    for(const job of jobs){ const c = document.getElementById('qlcard-'+job.i); if(c) c.classList.add('saving'); }
+    qlogBusy = true;
+    document.getElementById('qlogPrimaryBtn').disabled = true;
+    document.getElementById('qlogSecondaryBtn').disabled = true;
+    document.getElementById('qlogLoadingText').textContent = 'Saving your sessions…';
+    setQlogMode('loading');
+
+    let saved = 0; const failed = [];
+    for(const job of jobs){
+      try {
+        const res = await apiPost({ action:'saveSession', email: currentUser.email,
+          session: Object.assign({}, job.session, { id: null }) });
+        if(!res.success) throw new Error(res.error || 'save failed');
+        job.session.id = res.id || job.session.id;
+        maybeUpsertWeek(job.session);
+        quickDrafts[job.i]._discarded = true;   // done → drop from review
+        saved++;
+      } catch(e){ console.error('quicklog save', e); failed.push(job.i); }
+    }
+
+    qlogBusy = false;
+    document.getElementById('qlogPrimaryBtn').disabled = false;
+    document.getElementById('qlogSecondaryBtn').disabled = false;
+
+    if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
+
+    if(failed.length){
+      quickDrafts.forEach((d,i)=>{ const c=document.getElementById('qlcard-'+i); if(c) c.classList.remove('saving'); });
+      renderQuickDrafts();
+      setQlogMode('review');
+      showToast('Saved '+saved+' · '+failed.length+' couldn’t be saved — try again.', 'error');
+      return;
+    }
+    closeQuickLog();
+    showToast('Logged '+saved+' session'+(saved===1?'':'s'), 'success');
+  }
+  window.confirmSaveAll = confirmSaveAll;
 
   // ============================================================
   // LAB — swipe-to-delete (touch) + delete action
