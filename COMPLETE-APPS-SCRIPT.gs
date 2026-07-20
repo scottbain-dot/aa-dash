@@ -2031,17 +2031,46 @@ function handleParseSessions(email, text, todayISO) {
       return { success: false, error: 'No text in API response' };
     }
 
-    // Defensively strip markdown fences before parsing.
-    aiText = aiText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    // Keep the untouched model text for debugging on failure.
+    var rawModelText = String(aiText);
 
-    var sessions;
-    try {
-      sessions = JSON.parse(aiText);
-    } catch (parseErr) {
-      return { success: false, error: 'Could not read the parsed sessions. Please try again.' };
+    // Robustly extract the JSON before parsing.
+    var extracted = rawModelText.trim();
+    // Strip a leading code fence of any label (```json, ```js, ``` ...) and a trailing fence.
+    extracted = extracted.replace(/^```[^\n`]*\r?\n?/, '').replace(/\r?\n?```\s*$/, '').trim();
+    // If it still doesn't start with a JSON array/object, slice out the JSON body,
+    // dropping any prose the model prepended/appended.
+    if (extracted.charAt(0) !== '[' && extracted.charAt(0) !== '{') {
+      var firstBracket = extracted.indexOf('[');
+      var lastBracket = extracted.lastIndexOf(']');
+      if (firstBracket !== -1 && lastBracket > firstBracket) {
+        extracted = extracted.slice(firstBracket, lastBracket + 1);
+      } else {
+        var firstBrace = extracted.indexOf('{');
+        var lastBrace = extracted.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+          extracted = extracted.slice(firstBrace, lastBrace + 1);
+        }
+      }
     }
-    if (!Array.isArray(sessions)) {
-      return { success: false, error: 'The parser did not return a list of sessions.' };
+
+    var parsed;
+    try {
+      parsed = JSON.parse(extracted);
+    } catch (parseErr) {
+      return { success: false, error: 'Parse failed', raw: rawModelText.slice(0, 1500) };
+    }
+
+    // Tolerate shape variation.
+    var sessions;
+    if (Array.isArray(parsed)) {
+      sessions = parsed;
+    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.sessions)) {
+      sessions = parsed.sessions;
+    } else if (parsed && typeof parsed === 'object') {
+      sessions = [parsed];
+    } else {
+      return { success: false, error: 'Parse failed', raw: rawModelText.slice(0, 1500) };
     }
 
     return { success: true, sessions: sessions };
