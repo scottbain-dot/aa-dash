@@ -1535,7 +1535,7 @@
         </select>
       </div>
       <div class="plan-row">
-        <input type="date" class="duration-input plan-field" id="planDate">
+        <input type="date" class="duration-input plan-field" id="planDate" onchange="applyDateAwareSheet()">
         <div class="duration-row" style="flex:1;">
           <input type="text" inputmode="numeric" class="duration-input plan-field" id="planDuration" placeholder="Planned min">
           <span class="duration-suffix">min</span>
@@ -1562,7 +1562,7 @@
       </button>
     </div>
 
-    <div class="sheet-section">
+    <div class="sheet-section" id="effortSection">
       <p class="sheet-section-label">
         Effort
         <i class="ti ti-info-circle info-i" title="1 = very easy, 5 = moderate, 10 = max effort"></i>
@@ -1586,7 +1586,7 @@
       </div>
     </div>
 
-    <div class="sheet-section">
+    <div class="sheet-section" id="durationSection">
       <p class="sheet-section-label">Actual duration</p>
       <div class="duration-row">
         <input type="text" class="duration-input" value="75" id="duration-input">
@@ -1594,7 +1594,7 @@
       </div>
     </div>
 
-    <div class="sheet-section">
+    <div class="sheet-section" id="loadSection">
       <p class="sheet-section-label">
         Load
         <i class="ti ti-info-circle info-i" title="Load = effort × duration. Used to track training stress over time."></i>
@@ -3193,7 +3193,26 @@
     }
     // LAB: readiness — collapsed by default
     fillReadiness(s.readiness);
+    // LAB: date-aware sheet — actuals for today/past, plan-only for future.
+    applyDateAwareSheet();
   }
+
+  // LAB: A session on TODAY or a PAST day can capture its actuals (RPE, actual
+  // duration, load, readiness) in the same step and save as logged. A FUTURE
+  // session is plan-only — those fields are hidden so it stays 'planned' with
+  // empty actuals. Re-runs when the date field changes inside the sheet.
+  function isFutureSheetDate(){
+    const d = (document.getElementById('planDate').value) || (editing && editing.date) || isoToday();
+    return d > isoToday();
+  }
+  function applyDateAwareSheet(){
+    const disp = isFutureSheetDate() ? 'none' : '';
+    ['effortSection','durationSection','loadSection','readinessSection'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.display = disp;
+    });
+  }
+  window.applyDateAwareSheet = applyDateAwareSheet;
 
   // LAB: readiness sheet helpers
   function fillReadiness(r){
@@ -3312,11 +3331,14 @@
     const sel = document.querySelector('#rpe-row .rpe-pip.selected');
     const rpe = sel ? parseInt(sel.dataset.val,10) : null;
     const duration = numOrNull(val('duration-input'));
-    const logged = rpe != null && duration != null;
+    const sessionDate = val('planDate') || editing.date;
+    // LAB: future sessions are plan-only; today/past can log actuals in this step.
+    const isFuture = sessionDate > isoToday();
+    const logged = !isFuture && rpe != null && duration != null;
     const isNew = !editing.id;
     const session = {
       id: editing.id || ('tmp_' + Date.now()),
-      date: val('planDate') || editing.date,
+      date: sessionDate,
       sport: val('planSport').trim(),
       name: name,
       intensity: val('planIntensity'),
@@ -3332,7 +3354,7 @@
       noticed: val('sheetNoticed'),
       blocker: val('sheetBlocker'),
       target: val('planTarget').trim(),
-      readiness: collectReadiness()
+      readiness: isFuture ? null : collectReadiness()
     };
     // Optimistic: update the week and close now; persist in the background.
     upsertLocalSession(session);
