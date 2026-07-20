@@ -2097,6 +2097,58 @@
   }
   .week-banner button:hover { border-color: var(--burgundy); }
 
+  /* Week tab: week navigation bar (prev / range / next + Today) */
+  .week-nav {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--cream); border: 1px solid var(--line); border-radius: 12px;
+    padding: 8px 10px; margin-bottom: 14px;
+  }
+  .week-nav-arrow {
+    flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--line); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--burgundy); font-size: 20px; transition: border-color 0.15s, background 0.15s;
+  }
+  .week-nav-arrow:hover { border-color: var(--burgundy); }
+  .week-nav-arrow:active { background: var(--cream); }
+  .week-nav-center {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center;
+  }
+  .week-nav-range {
+    font-family: 'Fraunces', serif; font-style: italic; font-size: 14px; color: var(--ink);
+    line-height: 1.2;
+  }
+  .week-nav-cur {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; font-weight: 700; color: var(--ink-mute);
+  }
+  .week-nav-today {
+    background: transparent; border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: var(--burgundy);
+    padding: 4px 12px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .week-nav-today:hover { border-color: var(--burgundy); }
+
+  /* Copy-last-week action (Week plan-card header + mobile) */
+  .copy-week-btn {
+    background: var(--surface); color: var(--burgundy); border: 1px solid var(--line); padding: 8px 14px; border-radius: 9px;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px; transition: border-color 0.15s, background 0.15s;
+  }
+  .copy-week-btn:hover { border-color: var(--burgundy); }
+  .copy-week-btn .ti { color: var(--burgundy); }
+
+  /* Read-only "Last week: …" reference on a carried-forward session */
+  .plan-lastweek-ref {
+    font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-mute);
+    margin-top: 3px; display: flex; align-items: center; gap: 5px; font-style: italic;
+  }
+  .plan-lastweek-ref .ti { font-size: 13px; color: var(--sage); font-style: normal; }
+  .today-big-lastweek-ref {
+    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute);
+    margin-top: 6px; font-style: italic;
+  }
+
   /* ============================
      TRAINING PLAN LIST (Week tab) — single clean card, one row per session
      ============================ */
@@ -2325,6 +2377,9 @@
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
   let workoutEditing = false;
+  // LAB: per-session "Last week: …" reference strings (Copy last week). Display-only,
+  // keyed by session id; never sent to the server, gone on reload.
+  let lastWeekRefs = {};
 
   // ============================================================
   // LAB — Scott's personal plan (hardcoded; stable data, lab file only)
@@ -2834,11 +2889,7 @@
     state.week.sessions.forEach(s => { (byDay[s.date] = byDay[s.date] || []).push(s); });
     const todays = byDay[today] || [];
 
-    const banner = document.getElementById('weekBanner');
-    if(ws !== curMon){
-      banner.innerHTML = '<div class="week-banner"><span>Week of '+fmtNice(ws)+' – '+fmtNice(addDays(ws,6))+'</span>'+
-        '<button onclick="goToThisWeek()">Back to this week</button></div>';
-    } else { banner.innerHTML = ''; }
+    renderWeekNav(ws, curMon);
 
     renderTodayHero(todays, today);
     renderMobileToday(todays, ws, today, byDay);
@@ -2866,6 +2917,7 @@
           '<div class="plan-head-actions">'+
             '<button class="quicklog-btn" onclick="openQuickLog()"><i class="ti ti-sparkles" aria-hidden="true"></i> Quick Log</button>'+
             '<button class="from-plan-btn" onclick="openLabTemplates()"><i class="ti ti-bolt" aria-hidden="true"></i> From my plan</button>'+
+            '<button class="copy-week-btn" onclick="copyLastWeek()"><i class="ti ti-copy" aria-hidden="true"></i> Copy last week</button>'+
             '<button class="change-plan-btn" onclick="openPlanSheet()">Change plan</button>'+
           '</div>'+
         '</div></div>'+
@@ -2887,12 +2939,15 @@
     else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au';
     else meta = esc(s.sport)+' · '+(s.plannedDuration||0)+'min planned';
     const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
+    // LAB: read-only "Last week: …" reference on a session carried forward via Copy last week.
+    const ref = lastWeekRefs[s.id];
+    const refLine = ref ? '<div class="plan-lastweek-ref"><i class="ti ti-history" aria-hidden="true"></i>'+esc(ref)+'</div>' : '';
     // LAB: wrapped so a left-swipe reveals a Delete action (see swipe handlers).
     return '<div class="swipe-wrap" data-id="'+esc(s.id)+'">'+
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
-        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+pb+'</div><div class="plan-detail">'+meta+'</div></div>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+pb+'</div><div class="plan-detail">'+meta+'</div>'+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
       '</div>'+
       '<button class="swipe-delete" aria-label="Remove session" onclick="deleteSessionSwipe(event,\''+s.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i> Delete</button>'+
@@ -2994,7 +3049,10 @@
   function renderMobileToday(todays, ws, today, byDay){
     // LAB: quick-add lives here too so the plan → log loop is one tap on a phone
     // (the Week-view plan card is hidden on mobile until you switch views).
-    let html = '<button class="from-plan-btn" style="width:100%; justify-content:center; padding:13px; margin-bottom:12px; border-radius:12px;" onclick="openLabTemplates()"><i class="ti ti-bolt" aria-hidden="true"></i> From my plan</button>';
+    let html = '<div style="display:flex; gap:8px; margin-bottom:12px;">'+
+      '<button class="from-plan-btn" style="flex:1; justify-content:center; padding:13px; border-radius:12px;" onclick="openLabTemplates()"><i class="ti ti-bolt" aria-hidden="true"></i> From my plan</button>'+
+      '<button class="copy-week-btn" style="flex:1; justify-content:center; padding:13px; border-radius:12px;" onclick="copyLastWeek()"><i class="ti ti-copy" aria-hidden="true"></i> Copy last week</button>'+
+    '</div>';
     if(todays.length){
       html += todays.map(s =>
         '<div class="today-big-session" onclick="openSession(\''+s.id+'\')">'+
@@ -3002,6 +3060,7 @@
           '<div class="today-big-session-meta"><span><strong>'+esc(s.sport)+'</strong></span><span>·</span>'+
             '<span>'+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+'</span>'+
             (s.isPB?'<span>·</span><span><i class="ti ti-flag" aria-hidden="true"></i> PB</span>':'')+'</div>'+
+          (lastWeekRefs[s.id]?'<div class="today-big-lastweek-ref">'+esc(lastWeekRefs[s.id])+'</div>':'')+
           '<div class="today-big-session-cta">'+
             '<button class="btn-primary" onclick="event.stopPropagation(); openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(s.status==='done'?'Edit log':'Log it')+'</button>'+
             '<button class="btn-secondary" onclick="event.stopPropagation(); openSession(\''+s.id+'\')">See workout</button>'+
@@ -4269,6 +4328,124 @@
 
   function goToThisWeek(){ drillWeek(fmtISO(mondayOf(new Date()))); }
   window.goToThisWeek = goToThisWeek;
+
+  // ============================================================
+  // LAB — Week navigation (prev / next / Today) + Copy last week
+  // ============================================================
+  // Nav bar above the week: step to past weeks (backfill) or future weeks (plan
+  // ahead). Re-uses the existing getWeek path via drillWeek. Today is shown only
+  // when the visible week isn't the current one.
+  function renderWeekNav(ws, curMon){
+    const banner = document.getElementById('weekBanner');
+    if(!banner) return;
+    const isCur = ws === curMon;
+    const range = 'Week of '+fmtNice(ws)+' – '+fmtNice(addDays(ws,6));
+    banner.innerHTML =
+      '<div class="week-nav">'+
+        '<button class="week-nav-arrow" aria-label="Previous week" onclick="stepWeek(-1)"><i class="ti ti-chevron-left" aria-hidden="true"></i></button>'+
+        '<div class="week-nav-center">'+
+          '<span class="week-nav-range">'+range+'</span>'+
+          (isCur
+            ? '<span class="week-nav-cur">This week</span>'
+            : '<button class="week-nav-today" onclick="goToThisWeek()"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Today</button>')+
+        '</div>'+
+        '<button class="week-nav-arrow" aria-label="Next week" onclick="stepWeek(1)"><i class="ti ti-chevron-right" aria-hidden="true"></i></button>'+
+      '</div>';
+  }
+
+  function stepWeek(dir){
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    drillWeek(addDays(ws, dir*7));
+  }
+  window.stepWeek = stepWeek;
+
+  // Whole days between two ISO dates (local midnight → local midnight).
+  function daysBetween(fromIso, toIso){
+    return Math.round((parseISO(toIso).getTime() - parseISO(fromIso).getTime()) / 86400000);
+  }
+
+  // Read-only reference from a previous-week session's ACTUALS: target, RPE, duration.
+  // Include whichever exist; omit blanks. Never saved, never pre-fills anything.
+  function lastWeekRefLine(prev){
+    const parts = [];
+    if(prev.target != null && String(prev.target).trim()) parts.push(String(prev.target).trim());
+    if(prev.rpe != null && prev.rpe !== '') parts.push('RPE '+prev.rpe);
+    if(prev.duration != null && prev.duration !== '') parts.push(prev.duration+' min');
+    return parts.length ? 'Last week: '+parts.join(' · ') : '';
+  }
+
+  // Copy the PREVIOUS week (ws − 7) into the visible week as fresh planned
+  // sessions. Carries plan intent only (sport/name/target/plannedDuration/
+  // intensity + same day-of-week); logged data starts empty and gets a new id.
+  // Each carried card shows last week's actuals as a read-only reference.
+  async function copyLastWeek(){
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const prevWs = addDays(ws, -7);
+    setLoading(true, 'Loading last week…');
+    let prev = [];
+    try {
+      const wk = await apiGet({ action:'getWeek', email: currentUser.email, weekStart: prevWs });
+      prev = (wk && wk.success) ? (wk.sessions || []) : [];
+    } catch(e){ prev = []; }
+    setLoading(false);
+
+    if(!prev.length){ showToast('Nothing to copy from last week', ''); return; }
+
+    // Warn (once) if any copied session lands on a day that already has sessions.
+    const busyDays = {};
+    (state.week.sessions || []).forEach(s => { busyDays[s.date] = true; });
+    const wouldDup = prev.some(p => {
+      const off = Math.max(0, Math.min(6, daysBetween(prevWs, p.date)));
+      return busyDays[addDays(ws, off)];
+    });
+    if(wouldDup && !confirm('Some of last week’s sessions land on days that already have sessions this week. Add them anyway?')) return;
+
+    // Build fresh planned copies; keep existing sessions (append, don't wipe).
+    const stamp = Date.now();
+    const copies = [];
+    prev.forEach((p, idx) => {
+      const off = Math.max(0, Math.min(6, daysBetween(prevWs, p.date)));
+      const tmpId = 'tmp_copy_'+stamp+'_'+idx;
+      const session = {
+        id: tmpId,
+        date: addDays(ws, off),
+        sport: p.sport || '',
+        name: p.name || '',
+        intensity: p.intensity || '',
+        plannedDuration: (p.plannedDuration != null ? p.plannedDuration : null),
+        rpe: null, duration: null, load: null,
+        status: 'planned', isPB: false,
+        workout: (p.workout || []).map(x => typeof x==='string' ? x : Object.assign({}, x)),
+        _checked: [], note: '', noticed: '', blocker: '',
+        target: p.target || '', readiness: null
+      };
+      const ref = lastWeekRefLine(p);
+      if(ref) lastWeekRefs[tmpId] = ref;
+      upsertLocalSession(session);
+      copies.push(session);
+    });
+
+    if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
+    showToast(copies.length+' session'+(copies.length===1?'':'s')+' copied from last week', 'success');
+
+    // Persist each as a new planned session; migrate the id (and its reference).
+    for(const session of copies){
+      try {
+        const res = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, session, { id: null }) });
+        if(!res.success) throw new Error(res.error || 'save failed');
+        if(res.id){
+          const oldId = session.id;
+          session.id = res.id;
+          if(lastWeekRefs[oldId]){ lastWeekRefs[res.id] = lastWeekRefs[oldId]; delete lastWeekRefs[oldId]; }
+        }
+      } catch(e){
+        console.error('copyLastWeek', e);
+        showToast('Copied on your device but couldn’t reach the server — open a session to retry.', 'error');
+      }
+    }
+    if(activeTab==='week') renderWeek();
+  }
+  window.copyLastWeek = copyLastWeek;
   // ============================================================
   // PBS TAB
   // ============================================================
