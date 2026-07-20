@@ -1758,10 +1758,9 @@
     </div>
     <div class="sheet-section">
       <p class="sheet-section-label">Result</p>
-      <div class="plan-row">
-        <input class="duration-input plan-field" id="pbValue" placeholder="Value — e.g. 124.8 or 85">
-        <input class="duration-input plan-field" id="pbUnit" placeholder="Unit — s, kg, m…">
-      </div>
+      <div class="pb-type-row" id="pbTypeRow"></div>
+      <div id="pbResultInputs"></div>
+      <p class="pb-result-hint" id="pbResultHint"></p>
     </div>
     <div class="sheet-section">
       <p class="sheet-section-label">Date</p>
@@ -2038,6 +2037,20 @@
   .pb-page-trend { font-family: 'Fraunces', serif; font-style: italic; font-size: 11px; color: var(--sage); margin-top: 1px; }
   .pb-page-trend.up { color: var(--sage); }
   .pb-page-trend.down { color: var(--burgundy); }
+
+  /* PB result: type picker + shaped input (mobile-first, large tap targets) */
+  .pb-type-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .pb-type-btn {
+    flex: 1 1 auto; min-width: 74px; min-height: 44px; padding: 10px 12px;
+    border: 1px solid var(--line); background: var(--bg); border-radius: 10px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-mute);
+    cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; white-space: nowrap;
+  }
+  .pb-type-btn.active { background: var(--burgundy); border-color: var(--burgundy); color: var(--cream); }
+  .pb-result-row { display: flex; gap: 8px; align-items: center; }
+  .pb-result-row .plan-field { flex: 1; margin-bottom: 0; }
+  .pb-result-row select.plan-field { flex: 0 0 104px; }
+  .pb-result-hint { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-mute); margin: 8px 0 0; font-style: italic; }
 
   /* ===== LOAD TAB ===== */
   .load-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
@@ -2547,7 +2560,7 @@
       if(!athlete){ setLoading(false); renderNoAthlete(); return; }
       state.yearMap = data.yearMap || null;
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
-      state.pbs = data.pbs || [];
+      state.pbs = pbNormalizeList(data.pbs || []);
       state.load = data.load || { weeks: [], summary: {} };
       applyLabYear();   // LAB: seed Scott's near-term phases (local, editable)
       renderNav();
@@ -2572,7 +2585,7 @@
     athlete = demo.athlete;
     state.yearMap = demo.yearMap;
     state.week = demo.week;
-    state.pbs = demo.pbs;
+    state.pbs = pbNormalizeList(demo.pbs);
     state.load = demo.load;
     state.booking = demo.booking;
     state.planName = 'Swimming Performance';
@@ -3100,19 +3113,100 @@
     if(!top.length){ el.innerHTML = '<p class="pb-item-sub" style="opacity:.75;">No PBs yet. Log a session and mark it as a PB.</p>'; return; }
     el.innerHTML = top.map(pbStripItem).join('');
   }
+  // ============================================================
+  // PB VALUE MODEL — type-aware result: canonical valueNum + display string.
+  // Old records (no valueNum) are backfilled from value/unit on load; a clearly
+  // broken row just renders plainly and can be re-saved via the fixed form.
+  // ============================================================
+  // Time <-> seconds. Accept "mm:ss", "h:mm:ss", or a bare number (seconds).
+  function pbParseTime(str){
+    const s = String(str==null?'':str).trim();
+    if(s==='') return null;
+    if(s.indexOf(':') < 0){ const n = Number(s); return isFinite(n) ? n : null; }
+    const parts = s.split(':').map(x => x.trim());
+    if(parts.length < 2 || parts.length > 3) return null;
+    for(let i=0;i<parts.length;i++){ if(parts[i]==='' || isNaN(Number(parts[i]))) return null; }
+    let sec;
+    if(parts.length===2) sec = Number(parts[0])*60 + Number(parts[1]);
+    else sec = Number(parts[0])*3600 + Number(parts[1])*60 + Number(parts[2]);
+    return isFinite(sec) ? sec : null;
+  }
+  function pbFmtTime(total){
+    if(total==null || !isFinite(total)) return '';
+    const sign = total < 0 ? '-' : ''; let t = Math.abs(total);
+    const h = Math.floor(t/3600); t -= h*3600;
+    const m = Math.floor(t/60); const s = t - m*60;
+    let si = Math.floor(s + 1e-9); let frac = s - si;
+    let sStr = String(si).padStart(2,'0');
+    if(frac > 1e-9){ const f = String(Math.round(frac*100)).replace(/0+$/,''); if(f) sStr += '.'+f; }
+    return h>0 ? (sign+h+':'+String(m).padStart(2,'0')+':'+sStr) : (sign+m+':'+sStr);
+  }
+  function pbInferType(p){
+    if(p && (p.valueType==='time'||p.valueType==='distance'||p.valueType==='weight'||p.valueType==='reps')) return p.valueType;
+    const u = String((p&&p.unit)||'').toLowerCase();
+    if(u==='time') return 'time';
+    if(u==='kg'||u==='lb'||u==='lbs') return 'weight';
+    if(u==='m'||u==='cm'||u==='km'||u==='mm') return 'distance';
+    if(u==='s'||u==='sec'||u==='secs'||u==='seconds') return 'time';
+    if(String((p&&p.value)||'').indexOf(':') >= 0) return 'time';
+    if(u==='') return 'reps';
+    return 'distance';
+  }
+  // Canonical numeric for a PB (from valueNum, else derived). NaN if unparseable.
+  function pbNum(p){
+    if(p && typeof p.valueNum==='number' && isFinite(p.valueNum)) return p.valueNum;
+    const type = pbInferType(p);
+    if(type==='time'){ const n = pbParseTime(p && p.value); return n==null ? NaN : n; }
+    const n = Number(String((p&&p.value)!=null?p.value:'').trim());
+    return isFinite(n) ? n : NaN;
+  }
+  function pbPrevNum(p){
+    const pv = p && p.previousValue;
+    if(pv==null || pv==='') return NaN;
+    const type = pbInferType(p);
+    if(type==='time'){ const n = pbParseTime(pv); return n==null ? NaN : n; }
+    const n = Number(String(pv).trim());
+    return isFinite(n) ? n : NaN;
+  }
+  // Lower-is-better: time metrics, plus sprint/agility-type entries. Exposed for reuse.
+  function pbLowerBetter(p){
+    if(pbInferType(p)==='time') return true;
+    const u = String((p&&p.unit)||'').toLowerCase();
+    if(u==='s'||u==='sec'||u==='secs'||u==='seconds') return true;
+    const ex = String((p&&p.exercise)||'').toLowerCase();
+    return /sprint|agility|dash|shuttle|40\s?m|5-?10-?5/.test(ex);
+  }
+  window.pbLowerBetter = pbLowerBetter;
+  // Ensure a loaded PB carries valueType + valueNum (backfill for old records).
+  function pbNormalize(p){
+    if(!p || typeof p !== 'object') return p;
+    const type = pbInferType(p);
+    const num = pbNum(p);
+    let unit = p.unit || '';
+    if(type==='time') unit = 'time';
+    return Object.assign({}, p, { valueType: type, valueNum: isFinite(num) ? num : null, unit: unit });
+  }
+  function pbNormalizeList(list){ return (list||[]).map(pbNormalize); }
+  // Unit label to show next to a value (nothing for time/reps).
+  function pbUnitLabel(p){ const t = pbInferType(p); return (t==='time' || t==='reps' || !p.unit) ? '' : p.unit; }
+  function pbTrimNum(n){ return String(+Number(n).toFixed(2)); }
+  // Trend string using canonical numbers + correct direction. '' when N/A.
   function pbTrend(p){
-    const cur = parseFloat(p.value), prev = parseFloat(p.previousValue);
-    if(isNaN(cur) || isNaN(prev)) return '';
-    const diff = +(cur - prev).toFixed(1);
-    if(diff===0) return '';
-    return (diff>0?'↑ ':'↓ ') + Math.abs(diff) + (p.unit?(' '+esc(p.unit)):'');
+    const cur = pbNum(p), prev = pbPrevNum(p);
+    if(isNaN(cur) || isNaN(prev) || cur===prev) return '';
+    const improved = pbLowerBetter(p) ? (cur < prev) : (cur > prev);
+    const type = pbInferType(p);
+    const mag = type==='time' ? (pbTrimNum(Math.abs(cur-prev))+'s')
+      : (pbTrimNum(Math.abs(cur-prev)) + (pbUnitLabel(p)?(' '+esc(pbUnitLabel(p))):''));
+    return (improved ? '↑ ' : '↓ ') + mag;
   }
   function pbStripItem(p){
     const trend = pbTrend(p);
+    const unit = pbUnitLabel(p);
     return '<div class="pb-item"><div>'+
         '<p class="pb-item-name">'+esc(p.exercise)+'</p>'+
         '<p class="pb-item-sub">'+esc(p.sport)+(p.date? ' · '+fmtNice(p.date):'')+'</p></div>'+
-      '<div><p class="pb-item-value">'+esc(String(p.value))+(p.unit?'<span style="font-size:11px;"> '+esc(p.unit)+'</span>':'')+'</p>'+
+      '<div><p class="pb-item-value">'+esc(String(p.value))+(unit?'<span style="font-size:11px;"> '+esc(unit)+'</span>':'')+'</p>'+
         (trend? '<p class="pb-item-value-sub">'+trend+'</p>':'')+'</div></div>';
   }
 
@@ -4495,17 +4589,20 @@
   }
 
   function pbPageItem(p){
-    const cur = parseFloat(p.value), prev = parseFloat(p.previousValue);
+    const cur = pbNum(p), prev = pbPrevNum(p);
     let trend = '';
     if(!isNaN(cur) && !isNaN(prev) && cur !== prev){
-      const diff = +(cur - prev).toFixed(2);
-      const cls = diff > 0 ? 'up' : 'down';
-      trend = '<p class="pb-page-trend '+cls+'">'+(diff>0?'↑':'↓')+' '+Math.abs(diff)+(p.unit? ' '+esc(p.unit):'')+' · was '+esc(String(p.previousValue))+'</p>';
+      const improved = pbLowerBetter(p) ? (cur < prev) : (cur > prev);
+      const type = pbInferType(p);
+      const mag = type==='time' ? (pbTrimNum(Math.abs(cur-prev))+'s')
+        : (pbTrimNum(Math.abs(cur-prev)) + (pbUnitLabel(p)?(' '+esc(pbUnitLabel(p))):''));
+      trend = '<p class="pb-page-trend '+(improved?'up':'down')+'">'+(improved?'↑':'↓')+' '+mag+' · was '+esc(String(p.previousValue))+'</p>';
     }
+    const unit = pbUnitLabel(p);
     return '<div class="pb-page-item" onclick="editPB('+pbKey(p)+')">'+
       '<div><p class="pb-page-name">'+esc(p.exercise)+'</p>'+
         '<p class="pb-page-sub">'+(p.date? fmtNice(p.date):'')+(p.note? ' · '+esc(p.note):'')+'</p></div>'+
-      '<div class="pb-page-right"><p class="pb-page-value">'+esc(String(p.value))+(p.unit? ' <small>'+esc(p.unit)+'</small>':'')+'</p>'+trend+'</div></div>';
+      '<div class="pb-page-right"><p class="pb-page-value">'+esc(String(p.value))+(unit? ' <small>'+esc(unit)+'</small>':'')+'</p>'+trend+'</div></div>';
   }
   function pbKey(p){ return "'"+esc(p.sessionId||'')+"','"+esc(p.sport||'')+"','"+esc(p.exercise||'')+"'"; }
 
@@ -4515,16 +4612,79 @@
   function closePB(){ document.getElementById('pb-backdrop').classList.remove('open'); document.getElementById('pbSheet').classList.remove('open'); document.body.style.overflow=''; }
   window.closePB = closePB;
 
+  // ----- Type-aware RESULT input -----
+  const PB_TYPES = [
+    { id:'time',     label:'Time',              units:['time'],        hint:'Enter as mm:ss or h:mm:ss — lower is better.' },
+    { id:'distance', label:'Distance / Height', units:['m','cm','km'], hint:'Number + unit — higher is better.' },
+    { id:'weight',   label:'Weight',            units:['kg'],          hint:'Kilograms — higher is better.' },
+    { id:'reps',     label:'Reps / Count',      units:[''],            hint:'Whole number — higher is better.' }
+  ];
+  let pbType = 'time';
+  let pbUnitValue = 'time';
+  let pbDraftValue = '';
+
+  function renderPBTypeRow(){
+    document.getElementById('pbTypeRow').innerHTML = PB_TYPES.map(t =>
+      '<button type="button" class="pb-type-btn'+(pbType===t.id?' active':'')+'" onclick="pickPBType(\''+t.id+'\')">'+esc(t.label)+'</button>'
+    ).join('');
+  }
+  function renderPBResultInputs(){
+    const wrap = document.getElementById('pbResultInputs');
+    const v = esc(pbDraftValue);
+    if(pbType==='time'){
+      wrap.innerHTML = '<input class="duration-input plan-field" id="pbValueInput" inputmode="numeric" placeholder="mm:ss  or  h:mm:ss" value="'+v+'">';
+    } else if(pbType==='distance'){
+      wrap.innerHTML = '<div class="pb-result-row">'+
+        '<input class="duration-input plan-field" id="pbValueInput" inputmode="decimal" placeholder="e.g. 5.42" value="'+v+'">'+
+        '<select class="duration-input plan-field" id="pbUnitSelect">'+
+          ['m','cm','km'].map(u => '<option value="'+u+'"'+(pbUnitValue===u?' selected':'')+'>'+u+'</option>').join('')+
+        '</select></div>';
+    } else if(pbType==='weight'){
+      wrap.innerHTML = '<div class="pb-result-row">'+
+        '<input class="duration-input plan-field" id="pbValueInput" inputmode="decimal" placeholder="e.g. 72.5" value="'+v+'">'+
+        '<span class="duration-suffix">kg</span></div>';
+    } else {
+      wrap.innerHTML = '<input class="duration-input plan-field" id="pbValueInput" inputmode="numeric" placeholder="e.g. 12" value="'+v+'">';
+    }
+    const hintEl = document.getElementById('pbResultHint');
+    const t = PB_TYPES.find(x => x.id===pbType);
+    if(hintEl) hintEl.textContent = t ? t.hint : '';
+    const inp = document.getElementById('pbValueInput');
+    if(inp) inp.addEventListener('input', () => { pbDraftValue = inp.value; });
+    const sel = document.getElementById('pbUnitSelect');
+    if(sel) sel.addEventListener('change', () => { pbUnitValue = sel.value; });
+  }
+  function pickPBType(id){
+    const inp = document.getElementById('pbValueInput'); if(inp) pbDraftValue = inp.value;
+    const t = PB_TYPES.find(x => x.id===id) || PB_TYPES[0];
+    pbType = t.id;
+    pbUnitValue = t.units[0];
+    renderPBTypeRow();
+    renderPBResultInputs();
+  }
+  window.pickPBType = pickPBType;
+
   function openPBForm(prefill){
     prefill = prefill || {};
     pbCtx = { sessionId: prefill.sessionId || '' };
     document.getElementById('pbSheetTitle').innerHTML = prefill.exercise ? esc(prefill.exercise) : 'New <em>PB</em>.';
     document.getElementById('pbSport').value = prefill.sport || (athlete && athlete.Sport_1) || '';
     document.getElementById('pbExercise').value = prefill.exercise || '';
-    document.getElementById('pbValue').value = prefill.value != null ? prefill.value : '';
-    document.getElementById('pbUnit').value = prefill.unit || '';
     document.getElementById('pbDate').value = prefill.date || isoToday();
     document.getElementById('pbNote').value = prefill.note || '';
+    // Derive the result type/unit/display value from the (possibly-old) record.
+    const hasVal = prefill.value != null && String(prefill.value) !== '';
+    pbType = hasVal ? pbInferType(prefill) : 'time';
+    const typeDef = PB_TYPES.find(x => x.id===pbType) || PB_TYPES[0];
+    if(pbType==='distance'){
+      const u = String(prefill.unit||'').toLowerCase();
+      pbUnitValue = (u==='m'||u==='cm'||u==='km') ? u : 'm';
+    } else {
+      pbUnitValue = typeDef.units[0];
+    }
+    pbDraftValue = hasVal ? String(prefill.value) : '';
+    renderPBTypeRow();
+    renderPBResultInputs();
     openPBSheet();
   }
   function addPB(){ openPBForm({}); }
@@ -4539,14 +4699,34 @@
 
   async function savePBSheet(){
     const exercise = val('pbExercise').trim();
-    const value = val('pbValue').trim();
     if(!exercise){ showToast('Name the exercise or event.', 'error'); return; }
-    if(value===''){ showToast('Add the result value.', 'error'); return; }
+    const inp = document.getElementById('pbValueInput');
+    const raw = inp ? inp.value.trim() : '';
+    if(raw===''){ showToast('Add the result value.', 'error'); return; }
+    const sel = document.getElementById('pbUnitSelect'); if(sel) pbUnitValue = sel.value;
+    // Build canonical numeric + display string per type.
+    let valueNum, valueStr, unit;
+    if(pbType==='time'){
+      const sec = pbParseTime(raw);
+      if(sec==null || !isFinite(sec)){ showToast('Enter time as mm:ss or h:mm:ss.', 'error'); return; }
+      valueNum = sec; valueStr = pbFmtTime(sec); unit = 'time';
+    } else if(pbType==='reps'){
+      const n = parseInt(raw, 10);
+      if(!isFinite(n)){ showToast('Enter a whole number.', 'error'); return; }
+      valueNum = n; valueStr = String(n); unit = '';
+    } else {
+      const n = Number(raw);
+      if(!isFinite(n)){ showToast('Enter a number.', 'error'); return; }
+      valueNum = n; valueStr = String(n);
+      unit = (pbType==='weight') ? 'kg' : (pbUnitValue || 'm');
+    }
     const pb = {
       sport: val('pbSport').trim(),
       exercise: exercise,
-      value: value,
-      unit: val('pbUnit').trim(),
+      value: valueStr,
+      valueNum: valueNum,
+      valueType: pbType,
+      unit: unit,
       date: val('pbDate') || isoToday(),
       note: val('pbNote'),
       sessionId: (pbCtx && pbCtx.sessionId) || ''
@@ -4566,7 +4746,7 @@
   async function refreshPBs(){
     try {
       const res = await apiGet({ action:'getPBs', email: currentUser.email });
-      if(res.success) state.pbs = res.pbs || [];
+      if(res.success) state.pbs = pbNormalizeList(res.pbs || []);
     } catch(e){ /* keep existing on failure */ }
     if(activeTab==='pbs') renderPBs();
     renderWeekPBs();
