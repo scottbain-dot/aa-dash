@@ -1128,16 +1128,6 @@
   }
   .demo-pill[hidden] { display: none; }
 
-  /* LAB build marker — reuses the demo-pill look but sits inline in the nav. */
-  .nav-lab-pill {
-    position: static;
-    bottom: auto; right: auto;
-    margin-left: 2px;
-    align-self: center;
-    box-shadow: none;
-    pointer-events: none;
-  }
-
   /* ============================
      LAB — read-only Target (shown at log time) + Readiness block
      ============================ */
@@ -1414,7 +1404,6 @@
     <div class="nav-top">
       <div class="nav-brand">
         <span class="nav-brand-mark">Athlete <em>Academy</em></span>
-        <span class="demo-pill nav-lab-pill">LAB</span>
       </div>
       <div class="nav-athlete">
         <div class="nav-athlete-avatar" id="navAvatar">··</div>
@@ -1831,7 +1820,7 @@
     <div id="qlogInput">
       <p class="ql-help">Type or paste anything — one session or many. Claude turns it into draft cards you can check and edit. Nothing is saved until you confirm.</p>
       <textarea class="note-input" id="qlogText" style="min-height:150px;"
-        placeholder="Tue: Z2 run 48min outdoor, felt 5, calf tight after 30min. Wed: Push A, 55min, RPE 7."></textarea>
+        placeholder="Tue: 5km easy run, 30min, felt good, RPE 5. Wed: strength session, 45min, RPE 7."></textarea>
       <div class="ql-error" id="qlogError" style="display:none;"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="qlogErrorText"></span></div>
     </div>
 
@@ -2367,7 +2356,7 @@
   const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const STATE_LABEL = { build:'Build', maintain:'Maintain', peak:'Peak', recover:'Recover', off:'Off' };
   // Kid-friendly labels + emoji for the Year tab (underlying state keys unchanged).
-  const PHASE_FRIENDLY = { build:'Build', maintain:'Keep sharp', peak:'Race ready', recover:'Recover', off:'Off' };
+  const PHASE_FRIENDLY = { build:'Build', maintain:'Maintain', peak:'Peak', recover:'Recover', off:'Off' };
   const PHASE_EMOJI = { build:'💪', maintain:'⚡', peak:'🏆', recover:'🌙', off:'⏸️' };
 
   let currentUser = null;
@@ -2382,59 +2371,22 @@
   let lastWeekRefs = {};
 
   // ============================================================
-  // LAB — Scott's personal plan (hardcoded; stable data, lab file only)
+  // QUICK-ADD PALETTE — generic, sport-neutral starter templates
   // ============================================================
-  // Quick-add palette: tap a template → pre-fills a planned session on the
-  // chosen day (sport, name, planned duration, intensity, default Target).
-  const LAB_TEMPLATES = [
-    { sport:'Run',      name:'Z2 base (outdoor)',            intensity:'easy',     duration:50, target:'Z2 · HR 130–141 · ~6:00–6:30/km · 6→8km ladder' },
-    { sport:'Run',      name:'Threshold – curve reps',       intensity:'hard',     duration:45, target:'15 km/h · HR 160–166 · 3-min walk recoveries' },
-    { sport:'Run',      name:'Threshold – outdoor intervals',intensity:'hard',     duration:45, target:'~4:20–4:40/km · 5×3–4 min' },
-    { sport:'Bike',     name:'Threshold – bike',             intensity:'hard',     duration:45, target:'4×5 min ~250W · 95rpm · HR 154–165' },
-    { sport:'Run',      name:'VO2 – curve SIT',              intensity:'hard',     duration:30, target:'4–5×30s @ 20–22 km/h' },
-    { sport:'Bike',     name:'VO2 – bike',                   intensity:'hard',     duration:35, target:'30/15s off MAP' },
-    { sport:'Strength', name:'Push A',                       intensity:'moderate', duration:50, target:'Hex squat · DB bench · BB push press · SL squat-to-bench · hip airplane' },
-    { sport:'Strength', name:'Pull B',                       intensity:'moderate', duration:50, target:'Hex deadlift · power clean · DB snatch · KB row · ecc hammer curls · slider reverse lunge' },
-    { sport:'Power',    name:'Power',                        intensity:'hard',     duration:40, target:'Sled push+pull · DB ¼-squat jumps · Wattbike 8s sprints' },
-    { sport:'Mobility', name:'Daily constant (~10 min)',     intensity:'easy',     duration:10, target:'Hip airplane · slider reverse lunge · bent-knee calf raises 4×12–15 · short-foot balance · pre-run soleus' },
-    { sport:'Test',     name:'Wattbike 5-min MAP',           intensity:'hard',     duration:15, target:'5-min max average power' }
-  ];
-
-  // Loose block plan applied to the Year tab on first load (month-grain).
-  // Finer intent (early Jul Maintain / late Jul Build / early Aug Maintain /
-  // mid-Aug Peak) is collapsed to one state per month: Build → Maintain → Peak.
-  const LAB_YEAR = [
-    { month:'June',   state:'build'    },
-    { month:'July',   state:'maintain' },
-    { month:'August', state:'peak'     }
+  // Tap a template → pre-fills a planned session on the chosen day
+  // (sport, name, planned duration, intensity, default Target). These are
+  // deliberately simple starting points any sport can use; students edit the
+  // details once the session is on their week.
+  const QUICK_TEMPLATES = [
+    { sport:'Run',      name:'Easy run',        intensity:'easy',     duration:40, target:'Steady, conversational pace' },
+    { sport:'Run',      name:'Interval run',    intensity:'hard',     duration:35, target:'Hard efforts with recovery jogs' },
+    { sport:'Bike',     name:'Bike session',    intensity:'moderate', duration:45, target:'Steady ride or intervals' },
+    { sport:'Strength', name:'Strength session',intensity:'moderate', duration:45, target:'Main lifts + accessories' },
+    { sport:'Mobility', name:'Mobility',        intensity:'easy',     duration:15, target:'Stretch, range of motion, control' },
+    { sport:'Rest',     name:'Rest / recovery', intensity:'easy',     duration:0,  target:'Recovery is training too' }
   ];
 
   let labQuickDay = null;    // ISO date selected in the quick-add palette
-
-  // Seed Scott's near-term phases locally on first load. Never overwrites a
-  // month he's already committed, and stays editable as normal (edits persist
-  // through the usual saveBlock flow).
-  function applyLabYear(){
-    if(!state.yearMap){
-      state.yearMap = {
-        year: '2025–26', vision: '',
-        aPriority: null,
-        sports: [{ name:(athlete && athlete.Sport_1) || 'Running', isPriority:true, monthlyStates:[] }],
-        testingWindows: [], otherCommitments: []
-      };
-    }
-    let sport = (state.yearMap.sports||[]).find(s=>s.isPriority) || (state.yearMap.sports||[])[0];
-    if(!sport){
-      sport = { name:(athlete && athlete.Sport_1) || 'Running', isPriority:true, monthlyStates:[] };
-      state.yearMap.sports = [sport];
-    }
-    if(!sport.monthlyStates) sport.monthlyStates = [];
-    LAB_YEAR.forEach(seed => {
-      const existing = sport.monthlyStates.find(m => m.month===seed.month);
-      if(existing){ if(!existing.state) existing.state = seed.state; }    // keep any committed state
-      else sport.monthlyStates.push({ month:seed.month, state:seed.state, focus:'', loadTarget:null, note:'' });
-    });
-  }
 
   // ============================================================
   // SMALL HELPERS
@@ -2512,9 +2464,9 @@
     if(action==='saveSession') return Promise.resolve({ success:true, id: 'demo_'+Date.now() });
     if(action==='deleteSession') return Promise.resolve({ success:true, id: payload.id });
     if(action==='parseSessions') return Promise.resolve({ success:true, sessions: [
-      { date: isoToday(), sport:'Run', name:'Z2 base (outdoor)', duration:48, rpe:5, intensity:'easy',
-        target:'Z2 · HR 130–141', note:'Felt good', readiness:{ feel:4, niggle:{ area:'left calf', severity:3, note:'tight after 30min' } }, confidence:'high' },
-      { date: addDays(isoToday(),-1), sport:'Strength', name:'Push A', duration:null, rpe:7, intensity:'moderate',
+      { date: isoToday(), sport:'Run', name:'Easy run', duration:30, rpe:5, intensity:'easy',
+        target:'Steady pace', note:'Felt good', readiness:{ feel:4, niggle:{ area:'left calf', severity:3, note:'tight after 20min' } }, confidence:'high' },
+      { date: addDays(isoToday(),-1), sport:'Strength', name:'Strength session', duration:null, rpe:7, intensity:'moderate',
         target:'', note:'', readiness:null, confidence:'low' }
     ]});
     return Promise.resolve({ success:true });
@@ -2549,8 +2501,9 @@
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
       state.pbs = data.pbs || [];
       state.load = data.load || { weeks: [], summary: {} };
-      applyLabYear();   // LAB: seed Scott's near-term phases (local, editable)
       renderNav();
+      // A brand-new account has no year map yet → land on the Year tab's
+      // "Map your year" onboarding; returning students start on their week.
       switchTab(hasYear() ? 'week' : 'year');
       setLoading(false);
     } catch(e){
@@ -3491,7 +3444,7 @@
   window.selectLabDay = selectLabDay;
 
   function renderLabTemplates(){
-    document.getElementById('labTemplateList').innerHTML = LAB_TEMPLATES.map((t, i) =>
+    document.getElementById('labTemplateList').innerHTML = QUICK_TEMPLATES.map((t, i) =>
       '<button class="lab-tpl" onclick="quickAddTemplate('+i+')">'+
         '<span class="lab-tpl-dot '+esc(t.intensity)+'" aria-hidden="true"></span>'+
         '<span class="lab-tpl-main">'+
@@ -3504,9 +3457,9 @@
   }
 
   // Tap a template → drop a planned session on the chosen day, persist, and let
-  // him log it normally afterwards. Target string is pre-filled.
+  // the student log it normally afterwards. Target string is pre-filled.
   async function quickAddTemplate(i){
-    const t = LAB_TEMPLATES[i];
+    const t = QUICK_TEMPLATES[i];
     if(!t) return;
     const dateIso = labQuickDay || isoToday();
     const session = {
@@ -4276,8 +4229,8 @@
     html += '<div class="load-chart-wrap">'+
       '<p class="load-chart-title">Bars = how much you trained each week · colour = your phase'+
         '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--gold);"></span>💪 Build</span>'+
-        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--sage);"></span>⚡ Keep sharp</span>'+
-        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--burgundy);"></span>🏆 Race ready</span>'+
+        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--sage);"></span>⚡ Maintain</span>'+
+        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--burgundy);"></span>🏆 Peak</span>'+
         '<span class="load-acwr-key"><i class="ti ti-wave-sine" aria-hidden="true"></i> Workload trend</span>'+
       '</p>' + loadChartSVG() + '</div>';
     view.innerHTML = html;
