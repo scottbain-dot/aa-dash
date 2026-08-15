@@ -1395,6 +1395,7 @@
     </div>
     <div class="tabs" id="tabs">
       <button class="tab active" data-tab="week" onclick="switchTab('week')">Week</button>
+      <button class="tab" data-tab="program" onclick="switchTab('program')">Program</button>
       <button class="tab" data-tab="year" onclick="switchTab('year')">Year</button>
       <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
       <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
@@ -1416,6 +1417,9 @@
   <!-- One consistent card stack: Today hero · This week · Load · This week's mix -->
   <div class="card-stack" id="weekStack"></div>
 </div><!-- /#view-week -->
+
+<!-- ===== PROGRAM TAB ===== -->
+<div class="tab-view" id="view-program"></div>
 
 <!-- ===== YEAR TAB ===== -->
 <div class="tab-view" id="view-year"></div>
@@ -2022,6 +2026,26 @@
   .myprog-item-sub { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); }
   .myprog-remove { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
   .myprog-remove:hover { border-color: var(--burgundy); color: var(--burgundy); }
+
+  /* ===== PROGRAM TAB — the home for building / switching the owned program ===== */
+  .prog-head { margin: 4px 2px 16px; }
+  .prog-title { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; color: var(--ink); margin: 0; line-height: 1.1; }
+  .prog-name { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; color: var(--burgundy); margin: 6px 0 0; }
+  .prog-sub { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-mute); margin: 5px 0 0; line-height: 1.5; }
+  .prog-actions-card { margin-bottom: 14px; }
+  .prog-auto { margin: -2px 0 4px; }
+  .prog-btn-row { display: flex; gap: 10px; margin-top: 14px; }
+  .prog-btn-row button { flex: 1; }
+  .prog-week-card .card-label { margin-bottom: 4px; }
+  .prog-week-list { margin-top: 2px; }
+  .prog-week-hint { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); line-height: 1.5; margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+  .prog-week-hint .ti { font-size: 13px; vertical-align: -1px; }
+  /* Program tab — empty state */
+  .prog-empty-card { text-align: center; padding: 30px 22px; }
+  .prog-empty-icon { width: 56px; height: 56px; border-radius: 16px; background: var(--cream); color: var(--burgundy); display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 14px; }
+  .prog-empty-lead { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; color: var(--ink); margin: 0 0 6px; }
+  .prog-empty-sub { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-mute); line-height: 1.55; margin: 0 auto 18px; max-width: 34ch; }
+  .prog-change-btn { display: inline-flex; align-items: center; gap: 8px; }
 
   /* ===== LOAD — plain-language verdict + "vs usual" bar ===== */
   /* Verdict headline sits with a small status pill (mock-style); colour lives on
@@ -2728,6 +2752,7 @@
       state.pbs = data.pbs || [];
       state.load = data.load || { weeks: [], summary: {} };
       renderNav();
+      await maybeAutoFillWeek();   // carry the owned program into an empty current week
       // A brand-new account has no year map yet → land on the Year tab's
       // "Map your year" onboarding; returning students start on their week.
       switchTab(hasYear() ? 'week' : 'year');
@@ -2918,6 +2943,7 @@
     document.getElementById('view-'+tab).classList.add('active');
     renderBlockBar();
     if(tab==='week') renderWeek();
+    else if(tab==='program') renderProgram();
     else if(tab==='year') renderYear();
     else if(tab==='load') renderLoad();
     else if(tab==='book') renderBook();
@@ -3753,7 +3779,7 @@
   ];
   // Expand a program into an owned weekly template (exercise slots → workout steps).
   function programToTemplate(p){
-    return { name: p.name, updated:'', sessions: (p.days||[]).map(d => ({
+    return { name: p.name, updated:'', autoRepeat: true, sessions: (p.days||[]).map(d => ({
       dow: d.dow, name: d.name, sport: d.sport || p.sessionSport || 'Strength',
       intensity: d.intensity||'', plannedDuration: d.duration||null, target:'',
       workout: (d.ex||[]).map(stepFromEx)
@@ -3806,6 +3832,7 @@
     state.week.sessions = fresh.slice();
     closePlan();
     renderWeek(); renderBlockBar();
+    if(activeTab==='program') renderProgram();
     showToast(plan.blank ? 'Program cleared — build your own week' : '“'+plan.name+'” is now your program', 'success');
 
     for(const s of oldReal){ try { await apiPost({ action:'deleteSession', email: currentUser.email, id: s.id }); } catch(e){ console.error('applyPlan del', e); } }
@@ -3874,7 +3901,7 @@
   function moreCopyWeek(){ closeMoreActions(); copyLastWeek(); }
   function moreSwitchProgram(){ closeMoreActions(); openPlanSheet(); }
   function moreFillWeek(){ closeMoreActions(); fillWeekFromTemplate(); }
-  function moreMyProgram(){ closeMoreActions(); openMyProgram(); }
+  function moreMyProgram(){ closeMoreActions(); switchTab('program'); }
   window.openMoreActions = openMoreActions;
   window.closeMoreActions = closeMoreActions;
   window.moreLogFromNotes = moreLogFromNotes;
@@ -3901,6 +3928,29 @@
   window.openMyProgram = openMyProgram;
   window.closeMyProgram = closeMyProgram;
 
+  // Shared Mon–Sun render of the owned template (used by the Program tab + the sheet).
+  function programDaysHTML(){
+    const sessions = templateSessions();
+    const indexed = sessions.map((t, i) => ({ t: t, i: i }));   // index → removal never depends on name strings
+    let html = '';
+    for(let d=0; d<7; d++){
+      const day = indexed.filter(o => o.t.dow===d);
+      html += '<div class="myprog-day">'+
+        '<div class="myprog-dow">'+DOW_FULL[d]+'</div>'+
+        (day.length
+          ? day.map(o => { const n = (o.t.workout||[]).length;
+              return '<div class="myprog-item">'+
+              '<span class="myprog-dot'+(o.t.intensity?' '+esc(o.t.intensity):'')+'" aria-hidden="true"></span>'+
+              '<span class="myprog-item-main"><span class="myprog-item-name">'+esc(o.t.name)+'</span>'+
+                '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+(n?' · '+n+' exercise'+(n===1?'':'s'):'')+'</span></span>'+
+              '<button class="myprog-remove" aria-label="Remove from program" onclick="removeFromProgramAt('+o.i+')"><i class="ti ti-x" aria-hidden="true"></i></button>'+
+            '</div>'; }).join('')
+          : '<div class="myprog-rest">Rest</div>')+
+      '</div>';
+    }
+    return html;
+  }
+
   function renderMyProgram(){
     const sessions = templateSessions();
     const fill = document.getElementById('myProgramFill');
@@ -3912,31 +3962,104 @@
         'Whatever you add here comes back every week — and you can change it any time.</div>';
       return;
     }
-    // Index into the flat template array so removal never depends on name strings.
-    const indexed = sessions.map((t, i) => ({ t: t, i: i }));
-    let html = '';
-    for(let d=0; d<7; d++){
-      const day = indexed.filter(o => o.t.dow===d);
-      html += '<div class="myprog-day">'+
-        '<div class="myprog-dow">'+DOW_FULL[d]+'</div>'+
-        (day.length
-          ? day.map(o => '<div class="myprog-item">'+
-              '<span class="myprog-dot'+(o.t.intensity?' '+esc(o.t.intensity):'')+'" aria-hidden="true"></span>'+
-              '<span class="myprog-item-main"><span class="myprog-item-name">'+esc(o.t.name)+'</span>'+
-                '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+(o.t.intensity?' · '+esc(o.t.intensity):'')+'</span></span>'+
-              '<button class="myprog-remove" aria-label="Remove from program" onclick="removeFromProgramAt('+o.i+')"><i class="ti ti-x" aria-hidden="true"></i></button>'+
-            '</div>').join('')
-          : '<div class="myprog-rest">Rest</div>')+
-      '</div>';
-    }
-    document.getElementById('myProgramBody').innerHTML = html;
+    document.getElementById('myProgramBody').innerHTML = programDaysHTML();
   }
+
+  // ---- Auto-repeat: does the owned program carry into empty weeks? (default on) ----
+  function autoRepeatOn(){
+    return !!(state.weeklyTemplate && state.weeklyTemplate.autoRepeat !== false && templateSessions().length);
+  }
+  // Fill the *visible* week from the template if it's completely empty. Silent,
+  // and never overwrites a week that already has any session. Returns true if it filled.
+  async function maybeAutoFillWeek(){
+    if(!autoRepeatOn()) return false;
+    if((state.week.sessions||[]).length) return false;
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const stamp = Date.now();
+    const created = templateSessions().map((t, idx) => ({
+      id:'tmp_auto_'+stamp+'_'+idx, date: addDays(ws, t.dow), sport: t.sport||'', name: t.name||'',
+      intensity: t.intensity||'', plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null),
+      rpe:null, duration:null, load:null, status:'planned', isPB:false,
+      workout: (t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
+      _checked:[], note:'', noticed:'', blocker:'', target: t.target||'', readiness:null }));
+    if(!created.length) return false;
+    state.week.sessions = created.slice();
+    for(const s of created){
+      try { const r = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, s, { id:null }) });
+        if(r.success && r.id){ s.id = r.id; } } catch(e){ /* local copy stands; syncs later */ }
+    }
+    return true;
+  }
+
+  // ============================================================
+  // PROGRAM TAB — the home for building / switching the owned program.
+  // ============================================================
+  function renderProgram(){
+    const el = document.getElementById('view-program');
+    if(!el) return;
+    const sessions = templateSessions();
+    const name = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
+    if(!sessions.length){
+      el.innerHTML =
+        '<div class="prog-head"><h2 class="prog-title">My Program</h2>'+
+          '<p class="prog-sub">Your training week — pick a starting program and it repeats automatically, or build your own.</p></div>'+
+        '<div class="card prog-empty-card">'+
+          '<div class="prog-empty-icon"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>'+
+          '<p class="prog-empty-lead">You don’t have a program yet.</p>'+
+          '<p class="prog-empty-sub">Start from a ready-made program, or build your own by planning a session and turning on “Repeat every week”.</p>'+
+          '<button class="btn-primary prog-change-btn" onclick="openPlanSheet()"><i class="ti ti-layout-grid-add" aria-hidden="true"></i> Choose a program</button>'+
+        '</div>';
+      return;
+    }
+    const auto = autoRepeatOn();
+    el.innerHTML =
+      '<div class="prog-head">'+
+        '<h2 class="prog-title">My Program</h2>'+
+        '<p class="prog-name">'+esc(name)+'</p>'+
+        '<p class="prog-sub">'+(auto ? 'This is your training week — it repeats automatically into every new week.' : 'This is your training week. Turn on auto-repeat to carry it into every week.')+'</p>'+
+      '</div>'+
+      '<div class="card prog-actions-card">'+
+        '<div class="pb-toggle prog-auto" onclick="toggleAutoRepeat()">'+
+          '<div class="pb-toggle-content">'+
+            '<div class="pb-toggle-icon" style="background:var(--sage); color:var(--cream);"><i class="ti ti-repeat" aria-hidden="true"></i></div>'+
+            '<div class="pb-toggle-text"><strong>Repeat automatically each week</strong>'+
+              '<small>Empty weeks fill from your program. Weeks you’ve already changed are never touched.</small></div>'+
+          '</div>'+
+          '<div class="toggle-switch'+(auto?' on':'')+'" id="autoRepeatToggle"></div>'+
+        '</div>'+
+        '<div class="prog-btn-row">'+
+          '<button class="btn-secondary" onclick="openPlanSheet()"><i class="ti ti-refresh" aria-hidden="true"></i> Change program</button>'+
+          '<button class="btn-primary" onclick="fillWeekFromTemplate()"><i class="ti ti-calendar-plus" aria-hidden="true"></i> Fill this week</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="card prog-week-card">'+
+        '<div class="card-label">Your week · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div>'+
+        '<div class="myprog-list prog-week-list">'+programDaysHTML()+'</div>'+
+        '<p class="prog-week-hint">Tap a day’s <i class="ti ti-x" aria-hidden="true"></i> to remove it. Open any session to swap exercises or turn “Repeat every week” on for a new one.</p>'+
+      '</div>';
+  }
+  window.renderProgram = renderProgram;
+
+  async function toggleAutoRepeat(){
+    if(!state.weeklyTemplate) return;
+    state.weeklyTemplate.autoRepeat = !autoRepeatOn();
+    renderProgram();
+    if(state.weeklyTemplate.autoRepeat){
+      const filled = await maybeAutoFillWeek();
+      if(filled){ if(activeTab==='week'){ renderWeek(); renderBlockBar(); } showToast('Auto-repeat on — this week filled from your program', 'success'); }
+      else showToast('Auto-repeat on — new empty weeks will fill from your program', 'success');
+    } else {
+      showToast('Auto-repeat off — weeks stay as you leave them', '');
+    }
+    persistTemplate();
+  }
+  window.toggleAutoRepeat = toggleAutoRepeat;
 
   async function removeFromProgramAt(i){
     const arr = (state.weeklyTemplate && state.weeklyTemplate.sessions) || [];
     if(i<0 || i>=arr.length) return;
     arr.splice(i, 1);
-    renderMyProgram();
+    if(activeTab==='program') renderProgram(); else renderMyProgram();
     if(activeTab==='week') renderWeek();
     showToast('Removed from your program', 'success');
     persistTemplate();
@@ -3951,7 +4074,7 @@
     if(!confirm('Clear your whole program? Your planned weeks stay — only the repeating template is emptied.')) return;
     state.weeklyTemplate = emptyTemplate();
     state.planName = '';
-    renderMyProgram();
+    if(activeTab==='program') renderProgram(); else renderMyProgram();
     if(activeTab==='week') renderWeek();
     showToast('Program cleared', 'success');
     persistTemplate();
@@ -4921,6 +5044,7 @@
       const wk = await apiGet({ action:'getWeek', email: currentUser.email, weekStart: weekStartIso });
       state.week = wk.success ? { weekStart: wk.weekStart, sessions: wk.sessions||[] } : { weekStart: weekStartIso, sessions: [] };
     } catch(e){ state.week = { weekStart: weekStartIso, sessions: [] }; }
+    await maybeAutoFillWeek();   // empty week carries the program forward
     setLoading(false);
     switchTab('week');
   }
@@ -4957,7 +5081,7 @@
 
   function stepWeek(dir){
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
-    drillWeek(addDays(ws, dir*7));
+    return drillWeek(addDays(ws, dir*7));
   }
   window.stepWeek = stepWeek;
 
