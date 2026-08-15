@@ -1833,6 +1833,25 @@
   .card-cta:hover { background: var(--burgundy-dark); }
   .card-cta-ghost { background: transparent; color: var(--burgundy); border: 1px solid var(--line); }
   .card-cta-ghost:hover { background: var(--cream); border-color: var(--burgundy); }
+  /* Gold primary — the Today hero's headline action (matches the approved mock) */
+  .card-cta-gold { background: var(--gold); color: var(--burgundy-dark); font-weight: 700; }
+  .card-cta-gold:hover { background: var(--gold); filter: brightness(0.96); }
+
+  /* Compact inline week nav (‹ 10–16 Aug ›), sits in the This week card header */
+  .week-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .week-nav-compact { display: flex; align-items: center; gap: 10px; }
+  .wn-btn {
+    width: 32px; height: 32px; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 9px; color: var(--burgundy); font-size: 16px; cursor: pointer; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wn-btn:hover { border-color: var(--burgundy); }
+  .wn-range { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 500; color: var(--ink); white-space: nowrap; }
+  .wn-today {
+    border: 1px solid var(--line); background: transparent; border-radius: 8px; color: var(--burgundy);
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 5px 10px; cursor: pointer; white-space: nowrap;
+  }
+  .wn-today:hover { border-color: var(--burgundy); }
 
   /* Slim, quiet context strip — replaces the heavy per-tab hero header */
   .context-strip {
@@ -1853,35 +1872,35 @@
     display: flex; align-items: center; gap: 10px; margin: 14px 0 0;
     font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); font-weight: 500;
   }
-  .week-progress-track { flex: 0 0 84px; height: 6px; background: var(--line-soft); border-radius: 999px; overflow: hidden; }
+  .week-progress-track { flex: 1; height: 7px; background: var(--line-soft); border-radius: 999px; overflow: hidden; }
   .week-progress-track > span { display: block; height: 100%; background: var(--sage); border-radius: 999px; transition: width 0.3s; }
   .week-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
   .week-actions > button { flex: 1 1 auto; justify-content: center; }
 
   /* ===== LOAD — plain-language verdict + "vs usual" bar ===== */
+  /* Verdict headline sits with a small status pill (mock-style); colour lives on
+     the pill + the vs-usual bar, not the headline text. */
+  .load-verdict-row { display: flex; align-items: baseline; gap: 9px; margin: 0 0 14px; flex-wrap: wrap; }
   .load-verdict {
-    font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; color: var(--ink);
-    margin: 0 0 12px; line-height: 1.15;
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--ink);
+    margin: 0; line-height: 1.1;
   }
-  .card-hero .load-verdict { font-size: 25px; }
-  .load-verdict.healthy { color: var(--sage); }
-  .load-verdict.ramp    { color: var(--amber); }
-  .load-verdict.building { color: var(--ink-mute); font-style: italic; }
-  .load-usual { margin: 0 0 12px; }
+  .card-hero .load-verdict { font-size: 26px; }
+  .load-verdict.building { color: var(--ink-mute); font-weight: 500; font-style: italic; }
+  .load-tag { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .load-tag.ok   { color: var(--sage);  background: #e9efe9; }
+  .load-tag.warn { color: var(--amber); background: #f7ecdd; }
+  .load-usual { position: relative; margin: 22px 0 12px; }
   .load-usual-track { position: relative; height: 14px; background: var(--line-soft); border-radius: 999px; }
   .load-usual-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--sage); min-width: 4px; }
   .load-usual-fill.ramp { background: var(--amber); }
-  .load-usual-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
-  .load-usual-marker::after {
-    content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
-    width: 8px; height: 8px; border-radius: 50%; background: var(--ink);
+  .load-usual-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--burgundy); }
+  .load-usual-tick-label {
+    position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+    color: var(--burgundy); white-space: nowrap;
   }
-  .load-usual-labels {
-    display: flex; justify-content: space-between; margin-top: 9px;
-    font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute);
-  }
-  .load-usual-labels .mark { color: var(--ink); font-weight: 600; }
-  .load-sentence { font-family: 'Fraunces', serif; font-style: italic; font-size: 14px; color: var(--ink-soft); margin: 0 0 8px; line-height: 1.45; }
+  .load-sentence { font-family: 'Fraunces', serif; font-style: italic; font-size: 14px; color: var(--ink-soft); margin: 0 0 8px; line-height: 1.5; }
   .load-detail { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); margin: 0; }
   .load-chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
   .load-chart-scroll::-webkit-scrollbar { height: 6px; }
@@ -2190,6 +2209,8 @@
   }
   .plan-date { font-family: 'Fraunces', serif; font-size: 15px; color: var(--ink); }
   .plan-row.is-today .plan-dow, .plan-row.is-today .plan-date { color: var(--burgundy); }
+  /* Today's row gets a soft tint band (approved mock) */
+  .plan-row.is-today, .swipe-wrap .plan-row.is-today { background: var(--cream); }
   .plan-today-tag { font-family: 'Fraunces', serif; font-style: italic; font-size: 9px; color: var(--burgundy); }
   .plan-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); justify-self: center; }
   /* Intensity = a single burgundy effort-ramp (light→dark), kept separate from the phase palette */
@@ -2755,12 +2776,12 @@
     if(activeTab!=='week' && activeTab!=='load'){ bar.innerHTML = ''; return; }
     const info = currentPhaseInfo();
     if(info){
+      // Quiet strip: state chip + focus only (matches the approved mock). The
+      // tab bar already handles navigation to Year.
       bar.innerHTML =
         '<div class="context-strip">'+
           '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+PHASE_FRIENDLY[info.phase]+'</span>'+
-          '<span class="context-strip-month">'+esc(info.month)+'</span>'+
-          (info.focus? '<span class="context-strip-focus">'+esc(info.focus)+'</span>' : '')+
-          '<button class="block-phase-link context-strip-link" onclick="switchTab(\'year\')">Your year →</button>'+
+          (info.focus? '<span class="context-strip-focus">'+esc(info.focus)+'</span>' : '<span class="context-strip-month">'+esc(info.month)+'</span>')+
         '</div>';
     } else {
       bar.innerHTML =
@@ -2814,13 +2835,13 @@
       const extra = todays.length>1 ? ' · +'+(todays.length-1)+' more today' : '';
       titleHTML = esc(s.name);
       subHTML = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+extra;
-      primary = '<button class="card-cta" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?'Edit today’s log':'Log today’s session')+'</button>';
+      primary = '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?'Edit today’s log':'Log today’s session')+'</button>';
     } else {
       titleHTML = 'A <em>rest</em> day.';
-      subHTML = 'Nothing planned — recovery is training too.';
+      subHTML = 'Nothing planned — recovery counts too.';
       primary = '';
     }
-    const addCls = todays.length ? 'card-cta card-cta-ghost' : 'card-cta';
+    const addCls = todays.length ? 'card-cta card-cta-ghost' : 'card-cta card-cta-gold';
     const addBtn = '<button class="'+addCls+'" onclick="newSession(\''+today+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add today’s session</button>';
     return '<div class="card card-hero">'+
       '<p class="card-hero-eyebrow">'+eyebrow+'</p>'+
@@ -2847,10 +2868,10 @@
       }
     }
     return '<div class="card">'+
-      '<p class="card-eyebrow">This week'+
-        (state.planName? '<span class="card-eyebrow-action" style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-mute);">Plan · <strong style="color:var(--burgundy);">'+esc(state.planName)+'</strong></span>' : '')+
-      '</p>'+
-      weekNavHTML(ws, curMon)+
+      '<div class="week-head">'+
+        '<p class="card-eyebrow" style="margin:0;">This week</p>'+
+        weekNavHTML(ws, curMon)+
+      '</div>'+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
       '<div class="week-actions">'+
         '<button class="quicklog-btn" onclick="openQuickLog()"><i class="ti ti-sparkles" aria-hidden="true"></i> Quick Log</button>'+
@@ -2866,9 +2887,7 @@
     const read = loadRead();
     const phase = (currentPhaseInfo()||{}).phase || '';
     return '<div class="card">'+
-      '<p class="card-eyebrow">Load'+
-        '<span class="card-eyebrow-action"><button class="block-phase-link" onclick="switchTab(\'load\')">Details →</button></span>'+
-      '</p>'+
+      '<p class="card-eyebrow">Load · this week</p>'+
       loadVerdictHTML(read, phase)+
     '</div>';
   }
@@ -4185,15 +4204,15 @@
 
     // Need ~3 logged weeks before an acute:chronic read means anything.
     if(weeksLogged < 3 || acwr == null){
-      return { enough:false, thisWeek, usual, weeksLogged, acwr:null, band:'building',
+      return { enough:false, thisWeek, usual, weeksLogged, acwr:null, band:'building', tone:'building',
                verdict:'Still building your baseline' };
     }
-    let verdict, band;
-    if(acwr < 0.8){ verdict = 'Easing off'; band = 'healthy'; }
-    else if(acwr <= 1.3){ verdict = 'Building steadily'; band = 'healthy'; }
-    else if(acwr <= 1.5){ verdict = 'Pushing up'; band = 'healthy'; }
-    else { verdict = 'Ramping fast — watch recovery'; band = 'ramp'; }
-    return { enough:true, thisWeek, usual, weeksLogged, acwr, verdict, band };
+    let verdict, band, tone;
+    if(acwr < 0.8){ verdict = 'Easing off'; band = 'healthy'; tone = 'easing'; }
+    else if(acwr <= 1.3){ verdict = 'Building steadily'; band = 'healthy'; tone = 'steady'; }
+    else if(acwr <= 1.5){ verdict = 'Pushing up'; band = 'healthy'; tone = 'push'; }
+    else { verdict = 'Ramping fast — watch recovery'; band = 'ramp'; tone = 'ramp'; }
+    return { enough:true, thisWeek, usual, weeksLogged, acwr, verdict, band, tone };
   }
 
   function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
@@ -4209,12 +4228,16 @@
     else if(thisWeek <= usual*0.65){ dir='below'; rel='well below your recent weeks'; }
     else if(thisWeek <= usual*0.9){ dir='below'; rel='a little below your recent weeks'; }
     else { dir='same'; rel='about the same as your recent weeks'; }
-    if(!phase) return cap(rel)+'.';
+    // A gentle, data-informed coaching tail keyed to the load tone / direction.
+    let tail = '';
+    if(read.tone==='ramp') tail = ' Watch your recovery this week.';
+    else if(dir==='above') tail = ' Keep an eye on how the hard days feel.';
+    if(!phase) return cap(rel)+'.'+tail;
     const label = PHASE_FRIENDLY[phase] || STATE_LABEL[phase] || '';
     // Affirm only when the direction fits the block's intent; else stay neutral.
     const fits = { build:['above','same'], peak:['above','same'], maintain:['same'], recover:['below'], off:['below','same'] };
     const ok = (fits[phase]||[]).indexOf(dir) >= 0;
-    return cap(rel) + ' — ' + (ok ? 'right for a '+label+' block.' : 'you\'re in a '+label+' block.');
+    return cap(rel) + ' — ' + (ok ? 'right for a '+label+' block.' : 'you\'re in a '+label+' block.') + tail;
   }
 
   // Shared load body: verdict headline + this-week-vs-usual bar + sentence + au
@@ -4229,16 +4252,18 @@
     const fillPct = Math.min(100, read.thisWeek/scaleMax*100);
     const markPct = Math.min(100, read.usual/scaleMax*100);
     const cls = read.band==='ramp' ? 'ramp' : 'healthy';
-    return '<p class="load-verdict '+cls+'">'+esc(read.verdict)+'</p>'+
+    const tag = read.tone==='ramp'   ? '<span class="load-tag warn">ease up</span>'
+              : read.tone==='easing' ? '<span class="load-tag ok">recovering</span>'
+              :                        '<span class="load-tag ok">on track</span>';
+    return '<div class="load-verdict-row"><span class="load-verdict '+cls+'">'+esc(read.verdict)+'</span>'+tag+'</div>'+
       '<div class="load-usual">'+
         '<div class="load-usual-track">'+
           '<div class="load-usual-fill '+cls+'" style="width:'+fillPct.toFixed(1)+'%"></div>'+
-          '<div class="load-usual-marker" style="left:'+markPct.toFixed(1)+'%" title="usual ~'+read.usual+' au"></div>'+
+          '<div class="load-usual-marker" style="left:'+markPct.toFixed(1)+'%" title="usual ~'+read.usual+' au"><span class="load-usual-tick-label">usual</span></div>'+
         '</div>'+
-        '<div class="load-usual-labels"><span>this week</span><span class="mark">usual ~'+read.usual+'</span></div>'+
       '</div>'+
       '<p class="load-sentence">'+esc(loadSentence(read, phase))+'</p>'+
-      '<p class="load-detail">'+read.thisWeek+' au · usual ~'+read.usual+' · '+read.weeksLogged+' weeks logged</p>';
+      '<p class="load-detail">'+read.thisWeek+' au · your usual is ~'+read.usual+'</p>';
   }
 
   function renderLoad(){
@@ -4332,19 +4357,23 @@
   // Nav bar above the week: step to past weeks (backfill) or future weeks (plan
   // ahead). Re-uses the existing getWeek path via drillWeek. Today is shown only
   // when the visible week isn't the current one.
-  // Week nav bar, returned as HTML so it can live inside the This Week card.
+  // Compact "10–16 Aug" range (same-month weeks collapse the second month).
+  function weekRangeShort(ws){
+    const endIso = addDays(ws,6);
+    if(parseISO(ws).getMonth()===parseISO(endIso).getMonth())
+      return dayNum(ws)+'–'+dayNum(endIso)+' '+monShort(ws);
+    return dayNum(ws)+' '+monShort(ws)+' – '+dayNum(endIso)+' '+monShort(endIso);
+  }
+
+  // Compact inline week nav (‹ range ›), lives in the This week card header.
+  // A quiet "Today" reset appears only when the visible week isn't the current one.
   function weekNavHTML(ws, curMon){
     const isCur = ws === curMon;
-    const range = 'Week of '+fmtNice(ws)+' – '+fmtNice(addDays(ws,6));
-    return '<div class="week-nav">'+
-        '<button class="week-nav-arrow" aria-label="Previous week" onclick="stepWeek(-1)"><i class="ti ti-chevron-left" aria-hidden="true"></i></button>'+
-        '<div class="week-nav-center">'+
-          '<span class="week-nav-range">'+range+'</span>'+
-          (isCur
-            ? '<span class="week-nav-cur">This week</span>'
-            : '<button class="week-nav-today" onclick="goToThisWeek()"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Today</button>')+
-        '</div>'+
-        '<button class="week-nav-arrow" aria-label="Next week" onclick="stepWeek(1)"><i class="ti ti-chevron-right" aria-hidden="true"></i></button>'+
+    return '<div class="week-nav-compact">'+
+        (isCur? '' : '<button class="wn-today" onclick="goToThisWeek()">Today</button>')+
+        '<button class="wn-btn" aria-label="Previous week" onclick="stepWeek(-1)">‹</button>'+
+        '<span class="wn-range">'+weekRangeShort(ws)+'</span>'+
+        '<button class="wn-btn" aria-label="Next week" onclick="stepWeek(1)">›</button>'+
       '</div>';
   }
 
