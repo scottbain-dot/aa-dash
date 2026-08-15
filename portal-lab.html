@@ -2492,6 +2492,13 @@
   .plan-pick-freq { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; color: var(--burgundy); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
   .plan-diff { height: 6px; background: var(--line-soft); border-radius: 999px; margin-top: 8px; overflow: hidden; }
   .plan-diff-fill { height: 100%; background: var(--gold); border-radius: 999px; }
+  /* Grouped picker (Foundation / Strength / Power / Your own) */
+  #planGrid.plan-grid { display: block; }
+  .plan-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .plan-group { grid-template-columns: 1fr; } }
+  .plan-group-label { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); margin: 20px 2px 10px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .plan-group-label:first-child { margin-top: 2px; }
+  .plan-group-goal { font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink-mute); }
 
   /* ============================
      WEEKLY LOAD STRIP (Week tab) — mockup-style intensity balance
@@ -3740,12 +3747,49 @@
     { id:'standChop',   name:'Standing Stability Chop',   region:'core',  pattern:'antirot',laterality:'uni', fvZone:'speedstrength', tier:3, equip:['cable'],        rx:'10 × 2', cue:'Stay square' },
     { id:'kneelChop',   name:'Kneeling Stability Chop',   region:'core',  pattern:'antirot',laterality:'bi',  fvZone:'strength',   tier:2, equip:['cable','band'],    rx:'8–10 × 2–4', cue:'On both knees' },
     { id:'lungeChop',   name:'Lunge Rotation Chop',       region:'core',  pattern:'rotation',laterality:'uni',fvZone:'strengthspeed', tier:3, equip:['cable'],        rx:'8–10 × 2–3', cue:'Rotate through the hips' },
-    { id:'woodchopper', name:'Woodchoppers',              region:'core',  pattern:'rotation',laterality:'bi', fvZone:'strength',   tier:2, equip:['cable','med ball'],rx:'10 × 1', cue:'Baseball / swimming-tennis style' }
+    { id:'woodchopper', name:'Woodchoppers',              region:'core',  pattern:'rotation',laterality:'bi', fvZone:'strength',   tier:2, equip:['cable','med ball'],rx:'10 × 1', cue:'Baseball / swimming-tennis style' },
+    // PLYOMETRICS · vertical (bilateral)
+    { id:'boxJump',     name:'Box Jump',                  region:'plyo',  pattern:'plyo-v',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['box'],        rx:'5 × 3 · reset each rep', cue:'Land soft and quiet, step down' },
+    { id:'tuckJump',    name:'Tuck Jump',                 region:'plyo',  pattern:'plyo-v',  laterality:'bi',  fvZone:'speed',      tier:3, equip:['bodyweight'],      rx:'5 × 3', cue:'Knees to chest, land quiet' },
+    { id:'cmjJump',     name:'Countermovement Jump',      region:'plyo',  pattern:'plyo-v',  laterality:'bi',  fvZone:'strengthspeed', tier:2, equip:['bodyweight'],   rx:'5 × 3', cue:'Dip and drive, reach tall' },
+    // PLYOMETRICS · low / landing (bilateral) — foundation jump & land
+    { id:'boxJumpLow',  name:'Low Box Jump & Land',       region:'plyo',  pattern:'plyo-low',laterality:'bi',  fvZone:'foundation', tier:1, equip:['box'],             rx:'6 × 2 · step down', cue:'Learn to land — soft knees' },
+    { id:'dropLanding', name:'Drop Landing',              region:'plyo',  pattern:'plyo-low',laterality:'bi',  fvZone:'foundation', tier:1, equip:['box'],             rx:'6 × 2', cue:'Stick the landing, hold 2 seconds' },
+    { id:'ankleHops',   name:'Ankle Hops',                region:'plyo',  pattern:'plyo-low',laterality:'bi',  fvZone:'foundation', tier:2, equip:['bodyweight'],      rx:'15–20 · continuous', cue:'Stiff ankles, off the floor fast' },
+    // PLYOMETRICS · horizontal (bilateral)
+    { id:'broadJump',   name:'Broad Jump',                region:'plyo',  pattern:'plyo-h',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['bodyweight'],   rx:'5 × 3', cue:'Jump for distance, stick the landing' },
+    { id:'tripleJump',  name:'Standing Triple Jump',      region:'plyo',  pattern:'plyo-h',  laterality:'bi',  fvZone:'speed',      tier:3, equip:['bodyweight'],      rx:'4 × 3', cue:'Three bounds, control the last landing' },
+    // PLYOMETRICS · lateral (single-side)
+    { id:'lateralBound',name:'Lateral Bound',             region:'plyo',  pattern:'plyo-lat',laterality:'uni', fvZone:'speedstrength', tier:3, equip:['bodyweight'],   rx:'5/side × 3', cue:'Push sideways, stick the landing' },
+    { id:'skaterHops',  name:'Skater Hops',               region:'plyo',  pattern:'plyo-lat',laterality:'uni', fvZone:'strengthspeed', tier:2, equip:['bodyweight'],   rx:'8/side', cue:'Side to side, soft knees' },
+    // MED-BALL THROWS · slam (bilateral)
+    { id:'medSlam',     name:'Med-Ball Slam',             region:'throw', pattern:'throw-slam',laterality:'bi',fvZone:'speedstrength', tier:2, equip:['med ball'],     rx:'8–10 · max effort', cue:'Slam it down as hard as you can' },
+    { id:'ohSlam',      name:'Overhead Slam',             region:'throw', pattern:'throw-slam',laterality:'bi',fvZone:'speed',      tier:3, equip:['med ball'],       rx:'8 × 2', cue:'Full overhead reach to the floor' },
+    // MED-BALL THROWS · overhead / back (bilateral)
+    { id:'medOhThrow',  name:'Overhead-Back Throw',       region:'throw', pattern:'throw-oh',laterality:'bi',  fvZone:'speed',      tier:3, equip:['med ball'],       rx:'6 × 3 · for distance', cue:'Throw up and back over your head' },
+    { id:'backThrow',   name:'Explosive Back Throw',      region:'throw', pattern:'throw-oh',laterality:'bi',  fvZone:'speed',      tier:3, equip:['med ball'],       rx:'6 × 3', cue:'Drive the hips and extend back' },
+    // MED-BALL THROWS · rotational (single-side)
+    { id:'rotThrow',    name:'Rotational Wall Throw',     region:'throw', pattern:'throw-rot',laterality:'uni',fvZone:'speed',      tier:3, equip:['med ball','wall'],rx:'8/side', cue:'Rotate through the hips into the wall' },
+    { id:'shotThrow',   name:'Shot-Put Throw',            region:'throw', pattern:'throw-rot',laterality:'uni',fvZone:'speed',      tier:3, equip:['med ball'],       rx:'6/side', cue:'Drive off the back leg, throw across' },
+    // SPEED · acceleration drills (bilateral)
+    { id:'wallDrill',   name:'Wall Drive Drill',          region:'speed', pattern:'accel',   laterality:'bi',  fvZone:'speed',      tier:2, equip:['wall'],           rx:'3 × 5/side', cue:'Punch the knee up, drive the foot down' },
+    { id:'aSkip',       name:'A-Skip',                    region:'speed', pattern:'accel',   laterality:'bi',  fvZone:'strengthspeed', tier:2, equip:['bodyweight'],   rx:'3 × 20m', cue:'Tall posture, rhythm' },
+    // SPEED · sprints (bilateral)
+    { id:'accelRun',    name:'Acceleration Sprints',      region:'speed', pattern:'sprint',  laterality:'bi',  fvZone:'speed',      tier:3, equip:['bodyweight'],      rx:'6 × 20m · full recovery', cue:'Stay low, drive out' },
+    { id:'flyingSprint',name:'Flying Sprints',            region:'speed', pattern:'sprint',  laterality:'bi',  fvZone:'speed',      tier:4, equip:['bodyweight'],      rx:'4 × 30m', cue:'Build to top speed, stay relaxed' },
+    // SPEED · agility / change of direction (bilateral)
+    { id:'shuttleRun',  name:'5-10-5 Shuttle',            region:'speed', pattern:'agility', laterality:'bi',  fvZone:'speed',      tier:3, equip:['cones'],          rx:'6 × 5-10-5 · full recovery', cue:'Low on the turns, plant hard' },
+    { id:'lateralShuffle',name:'Lateral Shuffle',         region:'speed', pattern:'agility', laterality:'bi',  fvZone:'strengthspeed', tier:2, equip:['cones'],        rx:'6 × 10m', cue:'Stay low, don’t cross the feet' },
+    // CONDITIONING / ESD · intervals (bilateral)
+    { id:'bikeIntervals',name:'Bike Intervals',           region:'cond',  pattern:'intervals',laterality:'bi', fvZone:'endurance', tier:2, equip:['bike'],           rx:'8 × 30s hard / 90s easy', cue:'Hard efforts, full breathing between' },
+    { id:'rowIntervals', name:'Row Intervals',            region:'cond',  pattern:'intervals',laterality:'bi', fvZone:'endurance', tier:2, equip:['rower'],          rx:'8 × 250m / 90s rest', cue:'Strong legs, steady breathing' },
+    { id:'tempoRun',    name:'Tempo Runs',                region:'cond',  pattern:'intervals',laterality:'bi', fvZone:'endurance', tier:2, equip:['track'],           rx:'6 × 200m @ tempo / walk back', cue:'Smooth and controlled, not a sprint' },
+    { id:'shuttleCond', name:'Shuttle Conditioning',      region:'cond',  pattern:'intervals',laterality:'bi', fvZone:'endurance', tier:3, equip:['cones'],           rx:'6 × 40m shuttles / 60s rest', cue:'Repeatable efforts — hold your pace' }
   ];
   const EX_BY_ID = {}; EXERCISE_LIBRARY.forEach(e => { EX_BY_ID[e.id] = e; });
   function exById(id){ return EX_BY_ID[id] || null; }
   const FV_ORDER = ['foundation','strength','strengthspeed','speedstrength','speed'];
-  const FV_LABEL = { foundation:'Foundation', strength:'Strength', strengthspeed:'Strength-Speed', speedstrength:'Speed-Strength', speed:'Speed' };
+  const FV_LABEL = { foundation:'Foundation', strength:'Strength', strengthspeed:'Strength-Speed', speedstrength:'Speed-Strength', speed:'Speed', endurance:'Conditioning' };
   // Strict match: same region + pattern + laterality. Ranked by nearness in the
   // force-velocity continuum, then by tier (easy→hard).
   function swapCandidates(id){
@@ -3763,20 +3807,59 @@
   function exMeta(e){ return (FV_LABEL[e.fvZone]||e.fvZone) + ' · ' + (e.equip||[]).join(', '); }
 
   // ============================================================
-  // PROGRAMS (starting points) — by goal × sport, NOT by grade. Each day is a
-  // set of exercise slots; picking a program sets it as My program + fills the
-  // week, and every lift stays swappable to a matched alternative.
-  // dow: 0 = Mon … 6 = Sun
+  // PROGRAMS (starting points) — by goal (phase) × sport, NOT by grade.
+  // Programs are COMPOSED: a phase skeleton (the day/slot shape) is resolved by a
+  // sport profile that fills the $tokens with sport-appropriate exercises. Every
+  // exercise stays swappable to a matched alternative. dow: 0 = Mon … 6 = Sun.
+  //   Tokens: $plyoLow $plyoMain $throw $accel $finisher $powerHinge $powerPush
+  //           $pull $carryThrow $core
   // ============================================================
-  const PROGRAMS = [
-    { id:'strength-general', name:'Strength · General', goal:'Get stronger across the big lifts', sport:'General', sessionSport:'Strength', freq:'4 days / week', diff:60, days:[
-      { dow:0, name:'Lower body — squat focus', intensity:'hard',     duration:55, ex:['backSquat','deadlift','splitSquat','hkChop'] },
+  const PHASE_META = {
+    foundation:{ title:'Foundation', goal:'Learn the movements and build a base', diff:35, freq:'3 days / week' },
+    strength:  { title:'Strength',   goal:'Get stronger across the big lifts',    diff:60, freq:'4 days / week' },
+    power:     { title:'Power',       goal:'Get explosive and fast',               diff:78, freq:'4 days / week' }
+  };
+  const PHASES = {
+    foundation:[
+      { dow:0, name:'Full body — patterns A', intensity:'moderate', duration:45, ex:['$plyoLow','gobletSquat','pushUp','$pull','$core'] },
+      { dow:2, name:'Full body — patterns B', intensity:'moderate', duration:45, ex:['$plyoLow','kbDeadlift','dbPress','ringRow','$core'] },
+      { dow:4, name:'Athletic basics',        intensity:'easy',     duration:40, ex:['$plyoLow','splitSquat','$carryThrow','$finisher'] }
+    ],
+    strength:[
+      { dow:0, name:'Lower body — squat focus', intensity:'hard',     duration:55, ex:['backSquat','deadlift','splitSquat','$core'] },
       { dow:1, name:'Upper body — push focus',  intensity:'hard',     duration:50, ex:['benchPress','barPress','ringRow','pullUp'] },
-      { dow:3, name:'Lower body — hinge focus', intensity:'moderate', duration:55, ex:['frontSquat','kbSwing','slRdl','nordic'] },
-      { dow:4, name:'Upper body — pull focus',  intensity:'moderate', duration:50, ex:['pullUp','saRow','pushPress','explPushUp'] }
-    ]},
-    { id:'custom', name:'Build your own', goal:'Start from an empty week and add your own', sport:'—', freq:'Flexible', diff:20, blank:true, days:[] }
-  ];
+      { dow:3, name:'Lower body — hinge focus', intensity:'moderate', duration:55, ex:['frontSquat','$powerHinge','slRdl','nordic'] },
+      { dow:4, name:'Upper body — pull focus',  intensity:'moderate', duration:50, ex:['pullUp','saRow','$powerPush','explPushUp'] }
+    ],
+    power:[
+      { dow:0, name:'Lower power',            intensity:'hard',     duration:55, ex:['$plyoMain','backSquat','$powerHinge','$core'] },
+      { dow:1, name:'Upper power',            intensity:'hard',     duration:50, ex:['$throw','$powerPush','pullUp','explPushUp'] },
+      { dow:3, name:'Speed & plyometrics',    intensity:'hard',     duration:45, ex:['$accel','$plyoMain','splitSquat','$finisher'] },
+      { dow:4, name:'Total-body power',       intensity:'moderate', duration:50, ex:['kbSwing','pushPress','saRow','$core'] }
+    ]
+  };
+  const SPORTS = {
+    general:    { label:'General',       sport:'Strength',   tokens:{ '$core':'hkChop',   '$pull':'seatedRow','$plyoLow':'boxJumpLow', '$carryThrow':'medSlam',  '$finisher':'bikeIntervals','$powerHinge':'kbSwing','$powerPush':'pushPress','$plyoMain':'boxJump',  '$throw':'medSlam',    '$accel':'wallDrill' } },
+    track:      { label:'Track / Sprint',sport:'Track',      tokens:{ '$core':'standChop','$pull':'saRow',    '$plyoLow':'ankleHops',  '$carryThrow':'broadJump','$finisher':'tempoRun',    '$powerHinge':'kbSwing','$powerPush':'pushPress','$plyoMain':'broadJump','$throw':'medOhThrow', '$accel':'accelRun' } },
+    rotational: { label:'Swim & Tennis', sport:'Rotational', tokens:{ '$core':'lungeChop','$pull':'barRow',   '$plyoLow':'boxJumpLow', '$carryThrow':'rotThrow', '$finisher':'rowIntervals', '$powerHinge':'kbSwing','$powerPush':'pushPress','$plyoMain':'boxJump',  '$throw':'rotThrow',   '$accel':'wallDrill' } },
+    team:       { label:'Team sport',    sport:'Team',       tokens:{ '$core':'kneelChop','$pull':'seatedRow','$plyoLow':'dropLanding', '$carryThrow':'medSlam',  '$finisher':'shuttleCond',  '$powerHinge':'kbSwing','$powerPush':'pushPress','$plyoMain':'boxJump',  '$throw':'medSlam',    '$accel':'shuttleRun' } }
+  };
+  const PHASE_KEYS = ['foundation','strength','power'];
+  const SPORT_KEYS = ['general','track','rotational','team'];
+  function resolveSlot(token, tokens){ return (token && token.charAt(0)==='$') ? (tokens[token]||token) : token; }
+  function buildProgram(phaseKey, sportKey){
+    const meta = PHASE_META[phaseKey], sp = SPORTS[sportKey];
+    return {
+      id: phaseKey+'-'+sportKey, phase: phaseKey, sportKey: sportKey,
+      name: meta.title+' · '+sp.label, goal: meta.goal, sport: sp.label,
+      sessionSport: sp.sport, freq: meta.freq, diff: meta.diff,
+      days: PHASES[phaseKey].map(d => ({ dow:d.dow, name:d.name, intensity:d.intensity, duration:d.duration,
+        ex: d.ex.map(t => resolveSlot(t, sp.tokens)) }))
+    };
+  }
+  const PROGRAMS = [];
+  PHASE_KEYS.forEach(pk => SPORT_KEYS.forEach(sk => PROGRAMS.push(buildProgram(pk, sk))));
+  PROGRAMS.push({ id:'custom', phase:'custom', name:'Build your own', goal:'Start from an empty week and add your own', sport:'—', freq:'Flexible', diff:20, blank:true, days:[] });
   // Expand a program into an owned weekly template (exercise slots → workout steps).
   function programToTemplate(p){
     return { name: p.name, updated:'', autoRepeat: true, sessions: (p.days||[]).map(d => ({
@@ -3793,14 +3876,29 @@
 
   function renderPlanGrid(){
     const grid = document.getElementById('planGrid');
-    grid.innerHTML = PROGRAMS.map(p =>
-      '<div class="plan-pick'+(state.planName===p.name?' active':'')+'" onclick="applyPlan(\''+p.id+'\')">'+
-        '<div class="plan-pick-name">'+esc(p.name)+'</div>'+
-        (p.sport && p.sport!=='—' ? '<div class="plan-pick-sport">'+esc(p.sport)+'</div>' : '')+
-        '<div class="plan-pick-goal">'+esc(p.goal)+'</div>'+
+    // Grouped under a phase header (which carries the goal), so each card just
+    // names the sport + a sport-specific blurb — no repeated phase/goal text.
+    const SPORT_BLURB = { general:'Balanced strength for any athlete', track:'Speed, acceleration & power', rotational:'Rotational power for swim & racket sports', team:'Power, agility & change of direction' };
+    const card = p => {
+      const title = p.blank ? p.name : (p.sport || p.name);
+      const sub = p.blank ? p.goal : (SPORT_BLURB[p.sportKey] || p.goal);
+      return '<div class="plan-pick'+(state.planName===p.name?' active':'')+'" onclick="applyPlan(\''+p.id+'\')">'+
+        '<div class="plan-pick-name">'+esc(title)+'</div>'+
+        '<div class="plan-pick-goal">'+esc(sub)+'</div>'+
         '<div class="plan-pick-freq">'+esc(p.freq)+'</div>'+
         '<div class="plan-diff"><div class="plan-diff-fill" style="width:'+(p.diff||25)+'%;"></div></div>'+
-      '</div>').join('');
+      '</div>';
+    };
+    let html = '';
+    PHASE_KEYS.forEach(pk => {
+      const group = PROGRAMS.filter(p => p.phase===pk);
+      if(!group.length) return;
+      html += '<div class="plan-group-label">'+esc(PHASE_META[pk].title)+' <span class="plan-group-goal">'+esc(PHASE_META[pk].goal)+'</span></div>'+
+              '<div class="plan-group">'+group.map(card).join('')+'</div>';
+    });
+    const own = PROGRAMS.filter(p => p.blank);
+    if(own.length) html += '<div class="plan-group-label">Your own</div><div class="plan-group">'+own.map(card).join('')+'</div>';
+    grid.innerHTML = html;
   }
 
   // Picking a starting program: (1) set it as the student's owned, repeating
