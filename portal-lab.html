@@ -1449,29 +1449,58 @@
   <div class="sheet-body">
 
     <button class="workout-edit-btn" id="planToggle" style="display:none; margin-bottom:18px;" onclick="showPlanHeader()">
-      <i class="ti ti-pencil" aria-hidden="true"></i> Edit name, sport &amp; date
+      <i class="ti ti-pencil" aria-hidden="true"></i> Edit plan details
     </button>
 
     <div class="sheet-section" id="planHeader">
-      <p class="sheet-section-label">Session details</p>
-      <input class="duration-input plan-field" id="planName" placeholder="Session name — e.g. Intervals 8×200">
-      <div class="plan-row">
-        <input class="duration-input plan-field" id="planSport" placeholder="Sport">
-        <select class="duration-input plan-field" id="planIntensity">
-          <option value="">Intensity…</option>
-          <option value="easy">Easy</option>
-          <option value="moderate">Moderate</option>
-          <option value="hard">Hard</option>
-        </select>
+      <p class="sheet-section-label">Plan this session</p>
+
+      <label class="field-label" for="planName">What is it?</label>
+      <input class="duration-input plan-field" id="planName" placeholder="e.g. Tuesday run, Leg day, Intervals 8×200">
+
+      <label class="field-label" for="planSport">Sport / type</label>
+      <input class="duration-input plan-field" id="planSport" list="sportOptions" autocomplete="off" placeholder="e.g. Running, Swimming, Strength">
+      <datalist id="sportOptions"></datalist>
+
+      <label class="field-label">How hard is it?</label>
+      <div class="intensity-pills" id="intensityPills">
+        <button type="button" class="int-pill" data-int="easy" onclick="pickIntensity('easy')">Easy</button>
+        <button type="button" class="int-pill" data-int="moderate" onclick="pickIntensity('moderate')">Moderate</button>
+        <button type="button" class="int-pill" data-int="hard" onclick="pickIntensity('hard')">Hard</button>
       </div>
-      <div class="plan-row">
-        <input type="date" class="duration-input plan-field" id="planDate" onchange="applyDateAwareSheet()">
-        <div class="duration-row" style="flex:1;">
-          <input type="text" inputmode="numeric" class="duration-input plan-field" id="planDuration" placeholder="Planned min">
-          <span class="duration-suffix">min</span>
+
+      <div class="plan-row" style="margin-top:12px;">
+        <div style="flex:1; min-width:0;">
+          <label class="field-label" for="planDate">Day</label>
+          <input type="date" class="duration-input plan-field" id="planDate" onchange="applyDateAwareSheet()">
+        </div>
+        <div style="flex:1; min-width:0;">
+          <label class="field-label" for="planDuration">How long?</label>
+          <div class="duration-row">
+            <input type="text" inputmode="numeric" class="duration-input plan-field" id="planDuration" placeholder="e.g. 45">
+            <span class="duration-suffix">min</span>
+          </div>
         </div>
       </div>
-      <input class="duration-input plan-field" id="planTarget" placeholder="Target · optional — e.g. HR 130–141 · ~6:00/km">
+
+      <label class="field-label" for="planTarget">Session goal · optional</label>
+      <input class="duration-input plan-field" id="planTarget" placeholder="e.g. 5km · hold 6:00/km · 3×8 at 40kg">
+    </div>
+
+    <!-- Build your program: mark this session to repeat every week -->
+    <div class="sheet-section" id="repeatSection">
+      <div class="pb-toggle" onclick="toggleRepeat()">
+        <div class="pb-toggle-content">
+          <div class="pb-toggle-icon" style="background:var(--sage); color:var(--cream);">
+            <i class="ti ti-repeat" aria-hidden="true"></i>
+          </div>
+          <div class="pb-toggle-text">
+            <strong>Repeat every week</strong>
+            <small>Adds it to your program so it comes back each week</small>
+          </div>
+        </div>
+        <div class="toggle-switch" id="repeatToggle"></div>
+      </div>
     </div>
 
     <!-- LAB: read-only target shown at log time (actual-vs-target) -->
@@ -1483,14 +1512,19 @@
       </div>
     </div>
 
-    <div class="sheet-section">
-      <p class="sheet-section-label">The workout</p>
+    <div class="sheet-section" id="workoutSection">
+      <p class="sheet-section-label">The workout · optional</p>
       <ul class="workout-list" id="sheetWorkout"></ul>
       <p class="workout-progress" id="workoutProgress"></p>
       <button class="workout-edit-btn" onclick="editWorkout()">
         <i class="ti ti-edit" aria-hidden="true"></i> Edit workout
       </button>
     </div>
+
+    <!-- Plan mode, today/past only: reveal the log fields to record it now -->
+    <button class="log-now-btn" id="logNowBtn" style="display:none;" onclick="revealLog()">
+      <i class="ti ti-checkbox" aria-hidden="true"></i> I already did this — log it now
+    </button>
 
     <div class="sheet-section" id="effortSection">
       <p class="sheet-section-label">
@@ -1535,7 +1569,7 @@
       </div>
     </div>
 
-    <div class="sheet-section">
+    <div class="sheet-section" id="pbSection">
       <p class="sheet-section-label">Mark as a PB?</p>
       <div class="pb-toggle" onclick="togglePB(this)">
         <div class="pb-toggle-content">
@@ -1551,12 +1585,12 @@
       </div>
     </div>
 
-    <div class="sheet-section">
+    <div class="sheet-section" id="noteSection">
       <p class="sheet-section-label">Note · optional</p>
       <textarea class="note-input" id="sheetNote" placeholder="How did it feel? What went well or not?"></textarea>
     </div>
 
-    <div class="sheet-section">
+    <div class="sheet-section" id="reflectionSection">
       <p class="sheet-section-label">Reflection · optional</p>
       <input class="duration-input plan-field" id="sheetNoticed" placeholder="What did you do well, or notice?">
       <input class="duration-input plan-field" id="sheetBlocker" placeholder="What got in the way?" style="margin-top:8px;">
@@ -1715,13 +1749,13 @@
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <div class="sheet-header-content">
-      <p class="sheet-eyebrow">Training plans</p>
-      <h2 class="sheet-title">Choose a <em>plan</em>.</h2>
+      <p class="sheet-eyebrow">Starting programs</p>
+      <h2 class="sheet-title">Choose a <em>program</em>.</h2>
     </div>
     <button class="sheet-close" onclick="closePlan()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
   <div class="sheet-body">
-    <p class="plan-pick-note">Pick a plan and it fills your week. You can tweak or log any session after.</p>
+    <p class="plan-pick-note">A starting point you make your own. It becomes your repeating week and fills this one — change any session, or turn sessions on and off, whenever you like.</p>
     <div class="plan-grid" id="planGrid"></div>
   </div>
 </div>
@@ -1757,6 +1791,27 @@
   </div>
   <div class="sheet-body">
     <div class="more-list" id="moreList"></div>
+  </div>
+</div>
+
+<!-- MY PROGRAM — the student's owned, repeating week -->
+<div class="sheet-backdrop" id="myprog-backdrop" onclick="closeMyProgram()"></div>
+<div class="sheet" id="myProgramSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">Your program</p>
+      <h2 class="sheet-title">My <em>week</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closeMyProgram()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <p class="ql-help">This is your repeating week — it stays yours and you can change it any time. Turn on “Repeat every week” on any session to add it here.</p>
+    <div id="myProgramBody"></div>
+  </div>
+  <div class="sheet-save">
+    <button class="btn-secondary" onclick="clearMyProgram()">Clear</button>
+    <button class="btn-primary" id="myProgramFill" onclick="myProgramFill()"><i class="ti ti-calendar-plus" aria-hidden="true"></i> Fill this week</button>
   </div>
 </div>
 
@@ -1892,6 +1947,14 @@
   .week-progress-track > span { display: block; height: 100%; background: var(--sage); border-radius: 999px; transition: width 0.3s; }
   .week-actions { display: flex; gap: 8px; margin-top: 14px; }
   .week-actions > button { justify-content: center; }
+  /* Empty-week prompt to pull in the repeating program */
+  .week-fill-prompt {
+    width: 100%; margin: 4px 0 6px; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid var(--sage); background: rgba(122,144,120,0.10); color: var(--sage);
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px; transition: filter 0.15s;
+  }
+  .week-fill-prompt:hover { filter: brightness(0.97); }
 
   /* "More" action sheet — one tappable row per power tool */
   .more-list { display: flex; flex-direction: column; gap: 8px; }
@@ -1910,6 +1973,24 @@
   .more-row-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
   .more-row-sub { font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; color: var(--ink-mute); line-height: 1.35; }
   .more-row-go { color: var(--ink-mute); font-size: 16px; flex-shrink: 0; }
+
+  /* My program sheet — one block per weekday */
+  .myprog-empty { font-family: 'Fraunces', serif; font-style: italic; font-size: 14px; color: var(--ink-mute); line-height: 1.55; background: var(--cream); border-radius: 14px; padding: 16px 18px; }
+  .myprog-empty strong { color: var(--ink); font-style: normal; }
+  .myprog-day { padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+  .myprog-day:last-child { border-bottom: none; }
+  .myprog-dow { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--ink-mute); margin-bottom: 6px; }
+  .myprog-rest { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
+  .myprog-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+  .myprog-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--line); flex-shrink: 0; }
+  .myprog-dot.easy { background: rgba(135,75,70,0.32); }
+  .myprog-dot.moderate { background: var(--burgundy-light); }
+  .myprog-dot.hard { background: var(--burgundy); }
+  .myprog-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .myprog-item-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .myprog-item-sub { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); }
+  .myprog-remove { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .myprog-remove:hover { border-color: var(--burgundy); color: var(--burgundy); }
 
   /* ===== LOAD — plain-language verdict + "vs usual" bar ===== */
   /* Verdict headline sits with a small status pill (mock-style); colour lives on
@@ -1950,6 +2031,34 @@
   .plan-row { display: flex; gap: 8px; }
   .plan-row .plan-field { flex: 1; }
   select.plan-field { -webkit-appearance: none; appearance: none; }
+
+  /* Field labels — every input in the plan header now says what it is */
+  .field-label {
+    display: block; font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 12px 0 6px;
+  }
+  .field-label:first-of-type { margin-top: 2px; }
+
+  /* Intensity as pills (clearer than a dropdown), coloured like the day dots */
+  .intensity-pills { display: flex; gap: 8px; }
+  .int-pill {
+    flex: 1; padding: 11px 8px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--bg); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px;
+    font-weight: 600; color: var(--ink-mute); transition: all 0.15s;
+  }
+  .int-pill:hover { border-color: var(--burgundy); }
+  .int-pill.sel[data-int="easy"]     { background: var(--sage);          color: var(--cream); border-color: var(--sage); }
+  .int-pill.sel[data-int="moderate"] { background: var(--gold);          color: var(--burgundy-dark); border-color: var(--gold); }
+  .int-pill.sel[data-int="hard"]     { background: var(--burgundy);      color: var(--cream); border-color: var(--burgundy); }
+
+  /* "Log it now" reveal — quiet, only shown for a plan on today/past */
+  .log-now-btn {
+    width: 100%; margin: 2px 0 18px; padding: 12px; border-radius: 10px;
+    border: 1px dashed var(--line); background: transparent; color: var(--burgundy);
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px; transition: border-color 0.15s;
+  }
+  .log-now-btn:hover { border-color: var(--burgundy); background: var(--cream); }
   .day-add {
     margin: 4px 16px 14px;
     background: transparent; color: var(--ink-mute);
@@ -2441,7 +2550,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, booking: null, planName: '' };
+  let state = { yearMap: null, weeklyTemplate: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, booking: null, planName: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -2543,6 +2652,8 @@
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
     if(action==='saveSession') return Promise.resolve({ success:true, id: 'demo_'+Date.now() });
     if(action==='deleteSession') return Promise.resolve({ success:true, id: payload.id });
+    if(action==='saveWeeklyTemplate') return Promise.resolve({ success:true });
+    if(action==='getWeeklyTemplate') return Promise.resolve({ success:true, weeklyTemplate: state.weeklyTemplate });
     if(action==='parseSessions') return Promise.resolve({ success:true, sessions: [
       { date: isoToday(), sport:'Run', name:'Easy run', duration:30, rpe:5, intensity:'easy',
         target:'Steady pace', note:'Felt good', readiness:{ feel:4, niggle:{ area:'left calf', severity:3, note:'tight after 20min' } }, confidence:'high' },
@@ -2578,6 +2689,10 @@
       athlete = data.athlete;
       if(!athlete){ setLoading(false); renderNoAthlete(); return; }
       state.yearMap = data.yearMap || null;
+      // Owned, repeating "My week" program. Server is source of truth once the
+      // Apps Script is redeployed; until then localStorage keeps it working.
+      state.weeklyTemplate = data.weeklyTemplate || loadTemplateLocal() || null;
+      state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
       state.pbs = data.pbs || [];
       state.load = data.load || { weeks: [], summary: {} };
@@ -2604,11 +2719,12 @@
     currentUser = { email: 'demo@athlete.academy', name: demo.athlete.Name, loginTime: Date.now() };
     athlete = demo.athlete;
     state.yearMap = demo.yearMap;
+    state.weeklyTemplate = demo.weeklyTemplate;
     state.week = demo.week;
     state.pbs = demo.pbs;
     state.load = demo.load;
     state.booking = demo.booking;
-    state.planName = 'Swimming Performance';
+    state.planName = (demo.weeklyTemplate && demo.weeklyTemplate.name) || 'Swimming Performance';
     document.body.classList.add('signed-in');
     document.getElementById('appError').classList.remove('active');
     setLoading(false);
@@ -2724,7 +2840,16 @@
       ]
     };
 
-    return { athlete, yearMap, week, pbs, load, booking };
+    // Owned repeating program (mirrors the demo week's shape) so My program +
+    // Fill this week show real data in ?demo=1.
+    const weeklyTemplate = { name: 'Swimming Performance', updated: '', sessions: [
+      { dow:0, name:'Aerobic swim — 3km', sport:'Swimming', intensity:'moderate', plannedDuration:60, target:'', workout:[{name:'Warm up',detail:'600m mixed'},{name:'Main set',detail:'10×200 @ pace'}] },
+      { dow:1, name:'Lower-body strength', sport:'Gym', intensity:'hard', plannedDuration:50, target:'', workout:[{name:'Back squat',detail:'4×5'}] },
+      { dow:2, name:'Sprint sets — 50s & 100s', sport:'Swimming', intensity:'hard', plannedDuration:75, target:'', workout:[] },
+      { dow:3, name:'Easy recovery swim', sport:'Swimming', intensity:'easy', plannedDuration:40, target:'', workout:[] },
+      { dow:5, name:'Long aerobic + technique', sport:'Swimming', intensity:'moderate', plannedDuration:90, target:'', workout:[] }
+    ]};
+    return { athlete, yearMap, weeklyTemplate, week, pbs, load, booking };
   }
 
   function renderNav(){
@@ -2904,11 +3029,18 @@
         rows += planRestRow(dayLabel, iso, isToday, iso<today);
       }
     }
+    // Empty week + a set-up program → offer a one-tap fill.
+    const emptyWeek = !(state.week.sessions||[]).length;
+    const tplN = templateSessions().length;
+    const fillPrompt = (emptyWeek && tplN)
+      ? '<button class="week-fill-prompt" onclick="fillWeekFromTemplate()"><i class="ti ti-calendar-plus" aria-hidden="true"></i> Fill this week from your program · '+tplN+' session'+(tplN===1?'':'s')+'</button>'
+      : '';
     return '<div class="card">'+
       '<div class="week-head">'+
         '<p class="card-eyebrow" style="margin:0;">This week</p>'+
         weekNavHTML(ws, curMon)+
       '</div>'+
+      fillPrompt+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
       '<div class="week-actions">'+
         '<button class="card-cta" style="flex:2;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
@@ -3100,13 +3232,18 @@
     document.getElementById('sheetTitle').innerHTML = esc(s.name || 'New session');
     document.getElementById('planName').value = s.name || '';
     document.getElementById('planSport').value = s.sport || '';
-    document.getElementById('planIntensity').value = s.intensity || '';
+    fillSportOptions();
+    pickIntensity(s.intensity || '');       // intensity is a pill picker now
     document.getElementById('planDate').value = s.date || isoToday();
     document.getElementById('planDuration').value = s.plannedDuration != null ? s.plannedDuration : '';
-    // Existing session → lead with logging; tuck the planning fields behind a toggle.
+    // New session → PLAN mode (short, no logging fields). Existing session →
+    // LOG mode: lead with logging, planning fields behind the toggle.
     const isNew = !s.id;
+    sheetMode = isNew ? 'plan' : 'log';
     document.getElementById('planHeader').style.display = isNew ? '' : 'none';
     document.getElementById('planToggle').style.display = isNew ? 'none' : 'flex';
+    // Repeat-weekly reflects whether this session is already on the program.
+    document.getElementById('repeatToggle').classList.toggle('on', sessionInTemplate(s));
     workoutEditing = false;
     if(!s._checked || s._checked.length !== (s.workout||[]).length){ s._checked = (s.workout||[]).map((_,i)=> (s._checked && s._checked[i]) || false); }
     renderWorkout(s.workout || []);
@@ -3133,26 +3270,64 @@
     }
     // LAB: readiness — collapsed by default
     fillReadiness(s.readiness);
-    // LAB: date-aware sheet — actuals for today/past, plan-only for future.
+    // Plan/log split + date-aware fields.
     applyDateAwareSheet();
+    updateSheetChrome();
   }
 
-  // LAB: A session on TODAY or a PAST day can capture its actuals (RPE, actual
-  // duration, load, readiness) in the same step and save as logged. A FUTURE
-  // session is plan-only — those fields are hidden so it stays 'planned' with
-  // empty actuals. Re-runs when the date field changes inside the sheet.
+  // Sport suggestions: the student's own sports first, then common options.
+  const COMMON_SPORTS = ['Running','Swimming','Cycling','Strength','Football','Basketball','Rowing','Tennis','Hockey','Athletics','Rugby','Netball','Mobility','Rest'];
+  function fillSportOptions(){
+    const seen = new Set(); const opts = [];
+    const add = v => { if(v && !seen.has(v.toLowerCase())){ seen.add(v.toLowerCase()); opts.push(v); } };
+    (state.yearMap && state.yearMap.sports || []).forEach(sp => add(sp.name));
+    if(athlete && athlete.Sport_1) add(athlete.Sport_1);
+    COMMON_SPORTS.forEach(add);
+    const dl = document.getElementById('sportOptions');
+    if(dl) dl.innerHTML = opts.map(v => '<option value="'+esc(v)+'"></option>').join('');
+  }
+
+  // Intensity pill picker (replaces the old dropdown).
+  function pickIntensity(v){
+    document.querySelectorAll('#intensityPills .int-pill').forEach(p => p.classList.toggle('sel', p.dataset.int===v));
+  }
+  window.pickIntensity = pickIntensity;
+  function selectedIntensity(){
+    const p = document.querySelector('#intensityPills .int-pill.sel');
+    return p ? p.dataset.int : '';
+  }
+  function toggleRepeat(){ document.getElementById('repeatToggle').classList.toggle('on'); }
+  window.toggleRepeat = toggleRepeat;
+
+  // LAB: A session on TODAY or a PAST day can capture its actuals. A FUTURE
+  // session, or a NEW session still being planned, hides the logging fields so
+  // the sheet stays short and clearly about building the week. "Log it now"
+  // flips a new today/past session into logging.
+  let sheetMode = 'log';         // 'plan' (building) | 'log' (recording actuals)
   function isFutureSheetDate(){
     const d = (document.getElementById('planDate').value) || (editing && editing.date) || isoToday();
     return d > isoToday();
   }
+  function revealLog(){ sheetMode = 'log'; applyDateAwareSheet(); updateSheetChrome(); }
+  window.revealLog = revealLog;
   function applyDateAwareSheet(){
-    const disp = isFutureSheetDate() ? 'none' : '';
-    ['effortSection','durationSection','loadSection','readinessSection'].forEach(id => {
+    const planning = (sheetMode === 'plan') || isFutureSheetDate();
+    const hide = planning ? 'none' : '';
+    ['effortSection','durationSection','loadSection','pbSection','noteSection','reflectionSection','readinessSection'].forEach(id => {
       const el = document.getElementById(id);
-      if(el) el.style.display = disp;
+      if(el) el.style.display = hide;
     });
+    // "Log it now" only makes sense for a plan on today or a past day.
+    const ln = document.getElementById('logNowBtn');
+    if(ln) ln.style.display = (sheetMode === 'plan' && !isFutureSheetDate()) ? '' : 'none';
   }
   window.applyDateAwareSheet = applyDateAwareSheet;
+
+  // Save button + workout label track whether we're planning or logging.
+  function updateSheetChrome(){
+    const btn = document.getElementById('sheetSaveBtn');
+    if(btn) btn.textContent = (sheetMode === 'plan') ? 'Add to my week' : 'Save session';
+  }
 
   // LAB: readiness sheet helpers
   function fillReadiness(r){
@@ -3281,7 +3456,7 @@
       date: sessionDate,
       sport: val('planSport').trim(),
       name: name,
-      intensity: val('planIntensity'),
+      intensity: selectedIntensity(),
       plannedDuration: numOrNull(val('planDuration')),
       rpe: logged ? rpe : null,
       duration: logged ? duration : null,
@@ -3296,11 +3471,18 @@
       target: val('planTarget').trim(),
       readiness: isFuture ? null : collectReadiness()
     };
+    // "Repeat every week" writes this session into the owned program.
+    const repeat = document.getElementById('repeatToggle').classList.contains('on');
+    let tplChanged = false;
+    if(repeat){ upsertTemplateSession(session); tplChanged = true; }
+    else if(sessionInTemplate(session)){ tplChanged = removeTemplateSession(dowOf(session.date), session.name); }
     // Optimistic: update the week and close now; persist in the background.
     upsertLocalSession(session);
     closeSheet();
     renderWeek(); renderBlockBar();
-    showToast(logged ? 'Session logged' : 'Session planned', 'success');
+    showToast(repeat ? (logged ? 'Logged · added to your program' : 'Planned · added to your program')
+                     : (logged ? 'Session logged' : 'Session planned'), 'success');
+    if(tplChanged) persistTemplate();
     try {
       const res = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, session, { id: isNew ? null : session.id }) });
       if(!res.success) throw new Error(res.error || 'save failed');
@@ -3320,8 +3502,88 @@
   }
 
   // ============================================================
-  // PLAN LIBRARY (Change Plan) — fills the week from a template.
-  // Visual/local for now; tweak or log any session after applying.
+  // MY PROGRAM — the student's owned, repeating weekly template.
+  // Shape: { name, updated, sessions:[{dow 0=Mon..6=Sun, name, sport,
+  // intensity, plannedDuration, target, workout}] }. Server-synced once the
+  // Apps Script is redeployed; localStorage keeps it working meanwhile.
+  // ============================================================
+  function tplKey(){ return 'aaPortalTemplate:' + ((currentUser && currentUser.email) || 'anon'); }
+  function loadTemplateLocal(){ try { return JSON.parse(localStorage.getItem(tplKey())); } catch(e){ return null; } }
+  function saveTemplateLocal(){ try { localStorage.setItem(tplKey(), JSON.stringify(state.weeklyTemplate || null)); } catch(e){} }
+  function emptyTemplate(){ return { name:'', updated:'', sessions:[] }; }
+  function templateSessions(){ return (state.weeklyTemplate && state.weeklyTemplate.sessions) || []; }
+  function dowOf(iso){ return (parseISO(iso).getDay()+6)%7; }   // 0=Mon .. 6=Sun
+  const DOW_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+  // Persist the template: localStorage immediately (source of truth pre-redeploy),
+  // server in the background (best-effort until the Apps Script action is live).
+  async function persistTemplate(){
+    if(state.weeklyTemplate) state.planName = state.weeklyTemplate.name || state.planName;
+    saveTemplateLocal();
+    try {
+      const r = await apiPost({ action:'saveWeeklyTemplate', email: currentUser.email, template: state.weeklyTemplate });
+      if(!r.success) throw new Error(r.error||'save failed');
+    } catch(e){ /* localStorage holds it; syncs on the next successful save */ }
+  }
+
+  // Add/update a session in the program on its day-of-week (keyed by dow+name).
+  function upsertTemplateSession(s){
+    if(!state.weeklyTemplate) state.weeklyTemplate = emptyTemplate();
+    if(!state.weeklyTemplate.sessions) state.weeklyTemplate.sessions = [];
+    const dow = dowOf(s.date);
+    const entry = { dow: dow, name: s.name, sport: s.sport||'', intensity: s.intensity||'',
+      plannedDuration: (s.plannedDuration!=null?s.plannedDuration:null), target: s.target||'',
+      workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)) };
+    const arr = state.weeklyTemplate.sessions;
+    const i = arr.findIndex(x => x.dow===dow && (x.name||'').toLowerCase()===(s.name||'').toLowerCase());
+    if(i>=0) arr[i] = entry; else arr.push(entry);
+  }
+  function removeTemplateSession(dow, name){
+    if(!state.weeklyTemplate || !state.weeklyTemplate.sessions) return false;
+    const before = state.weeklyTemplate.sessions.length;
+    state.weeklyTemplate.sessions = state.weeklyTemplate.sessions.filter(
+      x => !(x.dow===dow && (x.name||'').toLowerCase()===(name||'').toLowerCase()));
+    return state.weeklyTemplate.sessions.length !== before;
+  }
+  function sessionInTemplate(s){
+    const dow = dowOf(s.date);
+    return templateSessions().some(x => x.dow===dow && (x.name||'').toLowerCase()===(s.name||'').toLowerCase());
+  }
+
+  // Drop the program's sessions onto the visible week. Days that already have a
+  // session are left untouched — the student's week edits always win.
+  async function fillWeekFromTemplate(){
+    const sessions = templateSessions();
+    if(!sessions.length){ showToast('Your program is empty — mark a session “Repeat every week” to build it.', ''); return; }
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const busy = {}; (state.week.sessions||[]).forEach(s => { busy[s.date] = true; });
+    const stamp = Date.now();
+    const created = [];
+    sessions.forEach((t, idx) => {
+      const date = addDays(ws, t.dow);
+      if(busy[date]) return;
+      const session = { id:'tmp_tpl_'+stamp+'_'+idx, date: date, sport: t.sport||'', name: t.name||'',
+        intensity: t.intensity||'', plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null),
+        rpe:null, duration:null, load:null, status:'planned', isPB:false,
+        workout: (t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
+        _checked:[], note:'', noticed:'', blocker:'', target: t.target||'', readiness:null };
+      upsertLocalSession(session);
+      created.push(session);
+    });
+    if(!created.length){ showToast('This week already has sessions on your program days.', ''); return; }
+    if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
+    showToast(created.length+' session'+(created.length===1?'':'s')+' added from your program', 'success');
+    for(const s of created){
+      try { const r = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, s, { id:null }) });
+        if(r.success && r.id){ s.id = r.id; } } catch(e){ console.error('fillWeek', e); }
+    }
+    if(activeTab==='week') renderWeek();
+  }
+  window.fillWeekFromTemplate = fillWeekFromTemplate;
+
+  // ============================================================
+  // PLAN LIBRARY (starting programs) — one-tap starting points for the program.
+  // Picking one sets it as My program and fills the current week.
   // day: 0 = Mon … 6 = Sun
   // ============================================================
   const PLAN_LIBRARY = [
@@ -3368,28 +3630,43 @@
       '</div>').join('');
   }
 
-  function applyPlan(id){
+  // Picking a starting program: (1) set it as the student's owned, repeating
+  // program, and (2) fill THIS week from it — persisting both (delete replaced
+  // sessions, save the new ones) so it survives a reload.
+  async function applyPlan(id){
     const plan = PLAN_LIBRARY.find(p => p.id===id);
     if(!plan) return;
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
     const hasLogged = (state.week.sessions||[]).some(s => s.status==='done' || s.status==='modified');
-    if(hasLogged && !confirm('Applying the '+plan.name+' plan replaces this week’s sessions, including ones you’ve logged. Continue?')) return;
-    if(plan.blank){
-      state.week.sessions = [];
-    } else {
-      state.week.sessions = plan.sessions.map((t, idx) => ({
-        id: 'tmp_plan_'+Date.now()+'_'+idx,
-        date: addDays(ws, t.day),
-        sport: t.sport||'', name: t.name, intensity: t.intensity||'',
-        plannedDuration: t.duration||null, rpe:null, duration:null, load:null,
-        status:'planned', isPB:false, workout:(t.workout||[]).map(x=>Object.assign({},x)),
-        _checked:[], note:'', noticed:'', blocker:''
-      }));
-    }
+    if(hasLogged && !confirm('Switching to “'+plan.name+'” replaces this week’s sessions, including ones you’ve logged. Continue?')) return;
+
+    // 1) This program becomes the owned, repeating template.
+    state.weeklyTemplate = { name: plan.name, updated: '', sessions: (plan.sessions||[]).map(t => ({
+      dow: t.day, name: t.name, sport: t.sport||'', intensity: t.intensity||'',
+      plannedDuration: t.duration||null, target: '', workout: (t.workout||[]).map(x=>Object.assign({},x))
+    })) };
     state.planName = plan.name;
+    persistTemplate();
+
+    // 2) Replace the visible week, persisting the swap.
+    const oldReal = (state.week.sessions||[]).filter(s => s.id && !String(s.id).startsWith('tmp_'));
+    const stamp = Date.now();
+    const fresh = plan.blank ? [] : plan.sessions.map((t, idx) => ({
+      id: 'tmp_plan_'+stamp+'_'+idx,
+      date: addDays(ws, t.day),
+      sport: t.sport||'', name: t.name, intensity: t.intensity||'',
+      plannedDuration: t.duration||null, rpe:null, duration:null, load:null,
+      status:'planned', isPB:false, workout:(t.workout||[]).map(x=>Object.assign({},x)),
+      _checked:[], note:'', noticed:'', blocker:'', target:'', readiness:null
+    }));
+    state.week.sessions = fresh.slice();
     closePlan();
     renderWeek(); renderBlockBar();
-    showToast(plan.blank ? 'Cleared — build your week' : plan.name+' plan applied', 'success');
+    showToast(plan.blank ? 'Program cleared — build your own week' : '“'+plan.name+'” is now your program', 'success');
+
+    for(const s of oldReal){ try { await apiPost({ action:'deleteSession', email: currentUser.email, id: s.id }); } catch(e){ console.error('applyPlan del', e); } }
+    for(const s of fresh){ try { const r = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, s, { id:null }) }); if(r.success && r.id){ s.id = r.id; } } catch(e){ console.error('applyPlan save', e); } }
+    if(activeTab==='week') renderWeek();
   }
   window.applyPlan = applyPlan;
 
@@ -3426,12 +3703,18 @@
       '<i class="ti ti-chevron-right more-row-go" aria-hidden="true"></i></button>';
   }
   function openMoreActions(){
-    const prog = state.planName ? esc(state.planName) : 'none chosen yet';
-    document.getElementById('moreList').innerHTML =
+    const n = templateSessions().length;
+    const progName = (state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || '';
+    const progSub = n ? (n+' session'+(n===1?'':'s')+(progName?' · '+esc(progName):'')) : 'Not set up yet — build it as you plan';
+    let html = '';
+    if(n) html += moreRow('ti-calendar-plus', 'Fill this week from my program', 'Adds your program’s sessions to empty days', 'moreFillWeek');
+    html +=
+      moreRow('ti-list-check', 'My program', progSub, 'moreMyProgram')+
       moreRow('ti-sparkles', 'Log from notes', 'Paste what you did — we’ll turn it into sessions', 'moreLogFromNotes')+
-      moreRow('ti-bolt', 'Quick add', 'Drop in a session from a template', 'moreQuickAdd')+
+      moreRow('ti-bolt', 'Quick add', 'Drop in a one-off session from a template', 'moreQuickAdd')+
       moreRow('ti-copy', 'Copy last week', 'Repeat last week’s sessions on this week', 'moreCopyWeek')+
-      moreRow('ti-list-check', 'Switch program', 'Current · '+prog+' — replaces this week', 'moreSwitchProgram');
+      moreRow('ti-refresh', 'Switch program', 'Start from a ready-made program — replaces this week', 'moreSwitchProgram');
+    document.getElementById('moreList').innerHTML = html;
     document.getElementById('more-backdrop').classList.add('open');
     document.getElementById('moreSheet').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -3446,12 +3729,90 @@
   function moreQuickAdd(){ closeMoreActions(); openLabTemplates(); }
   function moreCopyWeek(){ closeMoreActions(); copyLastWeek(); }
   function moreSwitchProgram(){ closeMoreActions(); openPlanSheet(); }
+  function moreFillWeek(){ closeMoreActions(); fillWeekFromTemplate(); }
+  function moreMyProgram(){ closeMoreActions(); openMyProgram(); }
   window.openMoreActions = openMoreActions;
   window.closeMoreActions = closeMoreActions;
   window.moreLogFromNotes = moreLogFromNotes;
   window.moreQuickAdd = moreQuickAdd;
   window.moreCopyWeek = moreCopyWeek;
   window.moreSwitchProgram = moreSwitchProgram;
+  window.moreFillWeek = moreFillWeek;
+  window.moreMyProgram = moreMyProgram;
+
+  // ============================================================
+  // MY PROGRAM sheet — see/own/edit the repeating week (Mon→Sun).
+  // ============================================================
+  function openMyProgram(){
+    renderMyProgram();
+    document.getElementById('myprog-backdrop').classList.add('open');
+    document.getElementById('myProgramSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMyProgram(){
+    document.getElementById('myprog-backdrop').classList.remove('open');
+    document.getElementById('myProgramSheet').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  window.openMyProgram = openMyProgram;
+  window.closeMyProgram = closeMyProgram;
+
+  function renderMyProgram(){
+    const sessions = templateSessions();
+    const fill = document.getElementById('myProgramFill');
+    if(fill) fill.style.display = sessions.length ? '' : 'none';
+    if(!sessions.length){
+      document.getElementById('myProgramBody').innerHTML =
+        '<div class="myprog-empty">Your program is empty. Plan a session and turn on '+
+        '<strong>“Repeat every week”</strong>, or use <strong>Switch program</strong> to start from a ready-made one. '+
+        'Whatever you add here comes back every week — and you can change it any time.</div>';
+      return;
+    }
+    // Index into the flat template array so removal never depends on name strings.
+    const indexed = sessions.map((t, i) => ({ t: t, i: i }));
+    let html = '';
+    for(let d=0; d<7; d++){
+      const day = indexed.filter(o => o.t.dow===d);
+      html += '<div class="myprog-day">'+
+        '<div class="myprog-dow">'+DOW_FULL[d]+'</div>'+
+        (day.length
+          ? day.map(o => '<div class="myprog-item">'+
+              '<span class="myprog-dot'+(o.t.intensity?' '+esc(o.t.intensity):'')+'" aria-hidden="true"></span>'+
+              '<span class="myprog-item-main"><span class="myprog-item-name">'+esc(o.t.name)+'</span>'+
+                '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+(o.t.intensity?' · '+esc(o.t.intensity):'')+'</span></span>'+
+              '<button class="myprog-remove" aria-label="Remove from program" onclick="removeFromProgramAt('+o.i+')"><i class="ti ti-x" aria-hidden="true"></i></button>'+
+            '</div>').join('')
+          : '<div class="myprog-rest">Rest</div>')+
+      '</div>';
+    }
+    document.getElementById('myProgramBody').innerHTML = html;
+  }
+
+  async function removeFromProgramAt(i){
+    const arr = (state.weeklyTemplate && state.weeklyTemplate.sessions) || [];
+    if(i<0 || i>=arr.length) return;
+    arr.splice(i, 1);
+    renderMyProgram();
+    if(activeTab==='week') renderWeek();
+    showToast('Removed from your program', 'success');
+    persistTemplate();
+  }
+  window.removeFromProgramAt = removeFromProgramAt;
+
+  function myProgramFill(){ closeMyProgram(); fillWeekFromTemplate(); }
+  window.myProgramFill = myProgramFill;
+
+  async function clearMyProgram(){
+    if(!templateSessions().length) return;
+    if(!confirm('Clear your whole program? Your planned weeks stay — only the repeating template is emptied.')) return;
+    state.weeklyTemplate = emptyTemplate();
+    state.planName = '';
+    renderMyProgram();
+    if(activeTab==='week') renderWeek();
+    showToast('Program cleared', 'success');
+    persistTemplate();
+  }
+  window.clearMyProgram = clearMyProgram;
 
   function renderLabDayPicker(){
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));

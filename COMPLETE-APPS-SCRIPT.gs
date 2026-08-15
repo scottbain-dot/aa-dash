@@ -223,6 +223,9 @@ function doGet(e) {
     if (action === 'getYearMap') {
       return apJson(handleGetYearMap(ss, e.parameter.email));
     }
+    if (action === 'getWeeklyTemplate') {
+      return apJson(handleGetWeeklyTemplate(ss, e.parameter.email));
+    }
     if (action === 'getWeek') {
       return apJson(handleGetWeek(ss, e.parameter.email, e.parameter.weekStart));
     }
@@ -400,6 +403,10 @@ function doPost(e) {
     if (data.action === 'saveBlock') {
       var ssAp2 = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSaveBlock(ssAp2, data.email, data.sport, data.month, data.block));
+    }
+    if (data.action === 'saveWeeklyTemplate') {
+      var ssApT = SpreadsheetApp.getActiveSpreadsheet();
+      return apJson(handleSaveWeeklyTemplate(ssApT, data.email, data.template));
     }
     if (data.action === 'saveSession') {
       var ssAp3 = SpreadsheetApp.getActiveSpreadsheet();
@@ -2804,6 +2811,68 @@ function handleSaveYearMap(ss, email, yearMap) {
   }
 }
 
+// ----- Weekly_Templates (the student's owned, repeating "My week") -----
+function apEnsureWeeklyTemplates(ss) {
+  var sheet = ss.getSheetByName('Weekly_Templates');
+  if (!sheet) {
+    sheet = ss.insertSheet('Weekly_Templates');
+    sheet.getRange(1, 1, 1, 4).setValues([[
+      'Athlete_ID', 'Name', 'Sessions_JSON', 'Updated'
+    ]]);
+    sheet.getRange('1:1').setFontWeight('bold');
+  }
+  return sheet;
+}
+
+function apLoadWeeklyTemplate(ss, athleteId) {
+  var sheet = apEnsureWeeklyTemplates(ss);
+  var rows = apReadObjects(sheet);
+  for (var i = rows.length - 1; i >= 0; i--) {
+    if (String(rows[i].Athlete_ID).trim() === String(athleteId).trim()) {
+      return {
+        __row: rows[i].__row,
+        name: rows[i].Name || '',
+        sessions: apParse(rows[i].Sessions_JSON, []),
+        updated: rows[i].Updated || ''
+      };
+    }
+  }
+  return null;
+}
+
+function handleGetWeeklyTemplate(ss, email) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: true, weeklyTemplate: null };
+    var tpl = apLoadWeeklyTemplate(ss, athleteId);
+    if (tpl) delete tpl.__row;
+    return { success: true, weeklyTemplate: tpl };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleSaveWeeklyTemplate(ss, email, template) {
+  try {
+    var athleteId = lookupAthleteIdByEmail(ss, email);
+    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    template = template || {};
+    var sheet = apEnsureWeeklyTemplates(ss);
+    var existing = apLoadWeeklyTemplate(ss, athleteId);
+    var fields = {
+      'Athlete_ID': athleteId,
+      'Name': template.name || '',
+      'Sessions_JSON': JSON.stringify(template.sessions || []),
+      'Updated': new Date()
+    };
+    if (existing && existing.__row) apUpdateRow(sheet, existing.__row, fields);
+    else sheet.appendRow(apBuildRow(sheet, fields));
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
 // Patch one {sport, month} block inside the year map
 function handleSaveBlock(ss, email, sportName, month, block) {
   try {
@@ -3065,6 +3134,8 @@ function handleGetPortalBootstrap(ss, email) {
     var athleteId = athlete.Athlete_ID;
     var map = apLoadYearMap(ss, athleteId);
     if (map) delete map.__row;
+    var tpl = apLoadWeeklyTemplate(ss, athleteId);
+    if (tpl) delete tpl.__row;
     var week = handleGetWeek(ss, email, new Date());
     var load = apComputeLoad(ss, athleteId);
     var pbsRes = handleGetPBs(ss, email);
@@ -3072,6 +3143,7 @@ function handleGetPortalBootstrap(ss, email) {
       success: true,
       athlete: athlete,
       yearMap: map,
+      weeklyTemplate: tpl,
       week: { weekStart: week.weekStart, sessions: week.sessions || [] },
       pbs: pbsRes.pbs || [],
       load: { weeks: load.weeks, summary: load.summary },
