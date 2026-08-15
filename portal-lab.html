@@ -1815,6 +1815,23 @@
   </div>
 </div>
 
+<!-- SWAP — matched alternatives for one exercise slot (sits above the session sheet) -->
+<div class="sheet-backdrop sheet-top" id="swap-backdrop" onclick="closeSwap()"></div>
+<div class="sheet sheet-top" id="swapSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow" id="swapEyebrow">Swap</p>
+      <h2 class="sheet-title" id="swapTitle">Swap.</h2>
+    </div>
+    <button class="sheet-close" onclick="closeSwap()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <p class="ql-help">Same movement — pick whatever suits your gear and level. Only matched exercises are shown.</p>
+    <div class="more-list" id="swapList"></div>
+  </div>
+</div>
+
 <!-- LAB: AI Quick Log — paste freeform text, parse into draft sessions, review, then save -->
 <div class="sheet-backdrop" id="qlog-backdrop" onclick="closeQuickLog()"></div>
 <div class="sheet" id="quickLogSheet">
@@ -1973,6 +1990,20 @@
   .more-row-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
   .more-row-sub { font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; color: var(--ink-mute); line-height: 1.35; }
   .more-row-go { color: var(--ink-mute); font-size: 16px; flex-shrink: 0; }
+  .more-row.is-current { border-color: var(--sage); background: rgba(122,144,120,0.10); }
+  .swap-current-tag { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sage); background: #e9efe9; padding: 2px 7px; border-radius: 999px; margin-left: 6px; }
+  /* Swap sheet stacks above the open session sheet */
+  .sheet-backdrop.sheet-top { z-index: 110; }
+  .sheet.sheet-top { z-index: 120; }
+  /* Swap affordance on a workout step */
+  .workout-swap {
+    flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--burgundy); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; font-size: 15px; transition: all 0.15s; align-self: center;
+  }
+  .workout-swap:hover { border-color: var(--burgundy); background: var(--cream); }
+  /* Program picker: sport chip */
+  .plan-pick-sport { display: inline-block; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--burgundy); background: rgba(135,75,70,0.08); padding: 2px 8px; border-radius: 999px; margin-top: 6px; }
 
   /* My program sheet — one block per weekday */
   .myprog-empty { font-family: 'Fraunces', serif; font-style: italic; font-size: 14px; color: var(--ink-mute); line-height: 1.55; background: var(--cream); border-radius: 14px; padding: 16px 18px; }
@@ -3391,11 +3422,16 @@
     ul.innerHTML = steps.map((st,i) => {
       const name = typeof st==='string'? st : (st.name||'');
       const detail = typeof st==='string'? '' : (st.detail||'');
+      const exId = (st && typeof st==='object') ? st.exId : null;
       const isDone = !!checked[i]; if(isDone) done++;
+      // A slot with a known exercise can be swapped for a matched alternative.
+      const swap = (exId && swapCandidates(exId).length>1)
+        ? '<button class="workout-swap" title="Swap exercise" aria-label="Swap exercise" onclick="event.stopPropagation(); openSwap('+i+')"><i class="ti ti-arrows-left-right" aria-hidden="true"></i></button>'
+        : '';
       return '<li class="workout-step tickable'+(isDone?' done':'')+'" onclick="toggleStep('+i+')">'+
         '<span class="workout-check"><i class="ti ti-check" aria-hidden="true"></i></span>'+
         '<div class="workout-step-content"><p class="workout-step-name">'+esc(name)+'</p>'+
-        (detail? '<p class="workout-step-detail">'+esc(detail)+'</p>':'')+'</div></li>';
+        (detail? '<p class="workout-step-detail">'+esc(detail)+'</p>':'')+'</div>'+swap+'</li>';
     }).join('');
     if(prog){
       const all = steps.length;
@@ -3410,6 +3446,50 @@
     renderWorkout(editing.workout || []);
   }
   window.toggleStep = toggleStep;
+
+  // ----- Swap an exercise for a matched alternative (same region+pattern+laterality) -----
+  let swapIdx = null;
+  function openSwap(i){
+    const step = editing && editing.workout && editing.workout[i];
+    if(!step || !step.exId) return;
+    swapIdx = i;
+    renderSwap(step.exId);
+    document.getElementById('swap-backdrop').classList.add('open');
+    document.getElementById('swapSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSwap(){
+    document.getElementById('swap-backdrop').classList.remove('open');
+    document.getElementById('swapSheet').classList.remove('open');
+    document.body.style.overflow = editing ? 'hidden' : '';   // session sheet stays open underneath
+    swapIdx = null;
+  }
+  function renderSwap(exId){
+    const base = exById(exId);
+    const cands = swapCandidates(exId);
+    document.getElementById('swapEyebrow').textContent = base ? (base.region+' · '+base.pattern+' · '+(base.laterality==='uni'?'single-side':'both sides')) : 'Swap';
+    document.getElementById('swapTitle').innerHTML = 'Swap <em>'+esc(base? base.name : '')+'</em>.';
+    document.getElementById('swapList').innerHTML = cands.map(e =>
+      '<button class="more-row'+(e.id===exId?' is-current':'')+'" onclick="pickSwap(\''+e.id+'\')">'+
+        '<span class="more-row-icon"><i class="ti ti-barbell" aria-hidden="true"></i></span>'+
+        '<span class="more-row-main"><span class="more-row-name">'+esc(e.name)+(e.id===exId?' <span class="swap-current-tag">current</span>':'')+'</span>'+
+          '<span class="more-row-sub">'+esc(exMeta(e))+(e.cue? ' · '+esc(e.cue) : '')+'</span></span>'+
+        (e.id===exId ? '<i class="ti ti-check more-row-go" aria-hidden="true"></i>' : '<i class="ti ti-chevron-right more-row-go" aria-hidden="true"></i>')+
+      '</button>').join('');
+  }
+  function pickSwap(id){
+    const e = exById(id);
+    if(e && editing && editing.workout && swapIdx!=null){
+      const keepChecked = editing._checked ? editing._checked[swapIdx] : false;
+      editing.workout[swapIdx] = { name: e.name, detail: e.rx, exId: e.id };
+      renderWorkout(editing.workout);
+      if(editing._checked) editing._checked[swapIdx] = keepChecked;
+    }
+    closeSwap();
+  }
+  window.openSwap = openSwap;
+  window.closeSwap = closeSwap;
+  window.pickSwap = pickSwap;
 
   function editWorkout(){
     if(workoutEditing){
@@ -3582,37 +3662,103 @@
   window.fillWeekFromTemplate = fillWeekFromTemplate;
 
   // ============================================================
-  // PLAN LIBRARY (starting programs) — one-tap starting points for the program.
-  // Picking one sets it as My program and fills the current week.
-  // day: 0 = Mon … 6 = Sun
+  // EXERCISE LIBRARY — tagged by characteristics so the app can offer sensible,
+  // strictly-matched swaps. Built from the AA Master Catalogue (EXOS model).
+  // A swap is offered between exercises sharing region + pattern + laterality.
+  // fvZone: foundation < strength < strengthspeed < speedstrength < speed.
   // ============================================================
-  const PLAN_LIBRARY = [
-    { id:'general', name:'General Strength', goal:'All-round strength, three lifts a week', freq:'3× / week', diff:45, sessions:[
-      { day:0, name:'Upper Strength', sport:'Gym', intensity:'hard', duration:50, workout:[{name:'Back Squat',detail:'4×5'},{name:'DB Row',detail:'3×10'},{name:'DB Press',detail:'3×8'},{name:'Core',detail:'3 rounds'}] },
-      { day:2, name:'Conditioning', sport:'Gym', intensity:'moderate', duration:40, workout:[{name:'Intervals',detail:'6×400m'},{name:'Core circuit',detail:'3 rounds'}] },
-      { day:4, name:'Lower Strength', sport:'Gym', intensity:'hard', duration:50, workout:[{name:'Deadlift',detail:'4×5'},{name:'DB Lunge',detail:'3×10'},{name:'Mobility',detail:'10 min'}] }
-    ]},
-    { id:'swim', name:'Swimming Performance', goal:'Aerobic base plus sprint speed', freq:'5× / week', diff:75, sessions:[
-      { day:0, name:'Aerobic swim', sport:'Swimming', intensity:'moderate', duration:60, workout:[{name:'Warm up',detail:'600m'},{name:'Main set',detail:'10×200'},{name:'Cool down',detail:'400m'}] },
-      { day:1, name:'Sprint sets', sport:'Swimming', intensity:'hard', duration:60, workout:[{name:'Warm up',detail:'800m'},{name:'Sprints',detail:'8×50 max'},{name:'Race pace',detail:'6×100'}] },
-      { day:2, name:'Technique', sport:'Swimming', intensity:'easy', duration:45, workout:[{name:'Drills',detail:'1km'},{name:'Easy swim',detail:'1km'}] },
-      { day:4, name:'Threshold', sport:'Swimming', intensity:'hard', duration:60, workout:[{name:'Warm up',detail:'600m'},{name:'Threshold',detail:'5×300'},{name:'Cool down',detail:'400m'}] },
-      { day:5, name:'Long aerobic', sport:'Swimming', intensity:'moderate', duration:90, workout:[{name:'Steady swim',detail:'3km'}] }
-    ]},
-    { id:'run', name:'Running / Cross-Country', goal:'Endurance with tempo and intervals', freq:'4× / week', diff:60, sessions:[
-      { day:0, name:'Easy run', sport:'Running', intensity:'easy', duration:40, workout:[{name:'Easy run',detail:'40 min'}] },
-      { day:2, name:'Intervals', sport:'Running', intensity:'hard', duration:45, workout:[{name:'Warm up',detail:'10 min'},{name:'Intervals',detail:'6×800m'},{name:'Cool down',detail:'10 min'}] },
-      { day:4, name:'Tempo run', sport:'Running', intensity:'hard', duration:40, workout:[{name:'Warm up',detail:'10 min'},{name:'Tempo',detail:'20 min'},{name:'Cool down',detail:'10 min'}] },
-      { day:6, name:'Long run', sport:'Running', intensity:'moderate', duration:70, workout:[{name:'Long run',detail:'60–75 min easy'}] }
-    ]},
-    { id:'team', name:'Team Sport (in-season)', goal:'Power, agility and keeping sharp', freq:'4× / week', diff:65, sessions:[
-      { day:0, name:'Lower power', sport:'Gym', intensity:'hard', duration:50, workout:[{name:'Broad Jump',detail:'5×3'},{name:'Back Squat',detail:'4×5'}] },
-      { day:1, name:'Skills & games', sport:'Team', intensity:'moderate', duration:75, workout:[{name:'Skill drills',detail:'30 min'},{name:'Small games',detail:'30 min'}] },
-      { day:3, name:'Upper power + core', sport:'Gym', intensity:'moderate', duration:45, workout:[{name:'DB Press',detail:'4×6'},{name:'Pull-ups',detail:'4×6'},{name:'Core',detail:'3 rounds'}] },
-      { day:5, name:'Match', sport:'Team', intensity:'hard', duration:90, workout:[{name:'Match',detail:'Full game'}] }
-    ]},
-    { id:'custom', name:'Build your own', goal:'Start from a blank week and add your own sessions', freq:'Flexible', diff:25, blank:true, sessions:[] }
+  const EXERCISE_LIBRARY = [
+    // LOWER · squat (bilateral)
+    { id:'backSquat',   name:'Back Squat',                region:'lower', pattern:'squat',  laterality:'bi',  fvZone:'strength',   tier:3, equip:['barbell'],         rx:'4–8 × 3–4 · tempo 3-2-2', cue:'Record your weight' },
+    { id:'frontSquat',  name:'Front Squat',               region:'lower', pattern:'squat',  laterality:'bi',  fvZone:'strength',   tier:2, equip:['barbell'],         rx:'6–10 × 2–4 · tempo 3-2-1', cue:'Elbows high, tall chest' },
+    { id:'gobletSquat', name:'Goblet Squat',              region:'lower', pattern:'squat',  laterality:'bi',  fvZone:'foundation', tier:2, equip:['kettlebell'],      rx:'8–15 × 2–3 · tempo 3-2-1', cue:'Pick a weight so the last few reps are HARD' },
+    { id:'airSquat',    name:'Air Squat',                 region:'lower', pattern:'squat',  laterality:'bi',  fvZone:'foundation', tier:1, equip:['bodyweight'],      rx:'15 × 1 · tempo 3-2-2', cue:'Learn the squat' },
+    // LOWER · hinge (bilateral)
+    { id:'deadlift',    name:'Deadlift',                  region:'lower', pattern:'hinge',  laterality:'bi',  fvZone:'strength',   tier:3, equip:['barbell'],         rx:'4–8 · tempo 3-2-2', cue:'Choose your progression — light weight' },
+    { id:'hexDeadlift', name:'Hex-Bar Deadlift',          region:'lower', pattern:'hinge',  laterality:'bi',  fvZone:'strength',   tier:3, equip:['hex bar'],         rx:'6 × 2–4 · tempo 1-2-3', cue:'6 reps, so heavy with perfect technique' },
+    { id:'kbDeadlift',  name:'Kettlebell Deadlift',       region:'lower', pattern:'hinge',  laterality:'bi',  fvZone:'foundation', tier:1, equip:['kettlebell'],      rx:'15 × 1 · tempo 3-2-2', cue:'Hinge at the hip' },
+    { id:'hipThruster', name:'Hip Thruster',              region:'lower', pattern:'hinge',  laterality:'bi',  fvZone:'strength',   tier:3, equip:['barbell'],         rx:'8 × 4 · tempo 2-1-2', cue:'Squeeze the glutes at the top' },
+    { id:'kbSwing',     name:'Kettlebell Swing',          region:'lower', pattern:'hinge',  laterality:'bi',  fvZone:'strengthspeed', tier:3, equip:['kettlebell'],   rx:'6–15 · dynamic', cue:'Proper hip-hinge form — snap the hips' },
+    // LOWER · hinge (unilateral)
+    { id:'slRdl',       name:'Single-Leg RDL',            region:'lower', pattern:'hinge',  laterality:'uni', fvZone:'strength',   tier:3, equip:['kettlebell'],      rx:'6–10 × 2–4 · tempo 1-2-3', cue:'Opposite leg in front' },
+    // LOWER · split (unilateral)
+    { id:'splitSquat',  name:'Rear-Elevated Split Squat', region:'lower', pattern:'split',  laterality:'uni', fvZone:'strength',   tier:3, equip:['dumbbell'],        rx:'8/leg × 2–4 · tempo 3-2-2', cue:'Superset both legs' },
+    { id:'walkingLunge',name:'DB Walking Lunge',          region:'lower', pattern:'split',  laterality:'uni', fvZone:'strength',   tier:2, equip:['dumbbell'],        rx:'1 min AMRAP', cue:'As many good reps as you can' },
+    { id:'slBoxSquat',  name:'Single-Leg Box Squat',      region:'lower', pattern:'split',  laterality:'uni', fvZone:'foundation', tier:2, equip:['kettlebell','box'],rx:'6–8 × 2 · tempo 3-2-1', cue:'Opposite leg in front' },
+    // LOWER · hamstring accessory (knee-flexion) — kept distinct so it won't swap for a main hinge
+    { id:'nordic',      name:'Nordic Hamstring Curl',     region:'lower', pattern:'hamstring', laterality:'bi', fvZone:'strength', tier:3, equip:['partner'],         rx:'5–8 × 3–4 · tempo 3-2-2', cue:'Lower as slowly as you can (partner needed)' },
+    { id:'hamSlides',   name:'Hamstring Slides',          region:'lower', pattern:'hamstring', laterality:'bi', fvZone:'strength', tier:2, equip:['sliders'],         rx:'6–8 · tempo 2-1-1', cue:'Hips up throughout' },
+    // UPPER · horizontal push (bilateral)
+    { id:'benchPress',  name:'Bench Press',               region:'upper', pattern:'hpush',  laterality:'bi',  fvZone:'strength',   tier:3, equip:['barbell'],         rx:'6 · tempo 3-2-2', cue:'Control the bar to the chest' },
+    { id:'dbBench',     name:'DB Bench Press',            region:'upper', pattern:'hpush',  laterality:'bi',  fvZone:'strength',   tier:2, equip:['dumbbell'],        rx:'8–12 · tempo 3-2-2', cue:'Full range, steady tempo' },
+    { id:'pushUp',      name:'Push-Up',                   region:'upper', pattern:'hpush',  laterality:'bi',  fvZone:'foundation', tier:1, equip:['bodyweight'],      rx:'5–15 · tempo 3-2-2', cue:'Slow down, fast up' },
+    { id:'floorPress',  name:'DB Floor Press',            region:'upper', pattern:'hpush',  laterality:'bi',  fvZone:'strength',   tier:2, equip:['dumbbell'],        rx:'10 × 2 · tempo 1-2-3', cue:'No leaning' },
+    { id:'explPushUp',  name:'Explosive Push-Up',         region:'upper', pattern:'hpush',  laterality:'bi',  fvZone:'speed',      tier:2, equip:['bodyweight'],      rx:'4–8 × 2–3', cue:'Use a bench if needed' },
+    // UPPER · vertical push (bilateral)
+    { id:'barPress',    name:'Barbell Press',             region:'upper', pattern:'vpush',  laterality:'bi',  fvZone:'strength',   tier:2, equip:['barbell'],         rx:'6–10 × 2–4 · tempo 1-2-3', cue:'Strict — ribs down' },
+    { id:'dbPress',     name:'DB Shoulder Press',         region:'upper', pattern:'vpush',  laterality:'bi',  fvZone:'strength',   tier:2, equip:['dumbbell'],        rx:'8 × 4 · tempo 2-2-2', cue:'' },
+    { id:'pushPress',   name:'Push Press',                region:'upper', pattern:'vpush',  laterality:'bi',  fvZone:'speedstrength', tier:4, equip:['barbell'],      rx:'6 × 3 · tempo 1-0-1', cue:'Knee dip, then drive — faster and lighter' },
+    { id:'wallWalk',    name:'Wall Walk',                 region:'upper', pattern:'vpush',  laterality:'bi',  fvZone:'strength',   tier:2, equip:['bodyweight'],      rx:'4–8 · tempo 3-2-2', cue:'' },
+    // UPPER · horizontal pull (bilateral)
+    { id:'ringRow',     name:'Ring Row',                  region:'upper', pattern:'hpull',  laterality:'bi',  fvZone:'foundation', tier:1, equip:['rings'],           rx:'8–15 × 2–4 · tempo 2-2-2', cue:'Knees bent to make it easier' },
+    { id:'seatedRow',   name:'Seated Row',                region:'upper', pattern:'hpull',  laterality:'bi',  fvZone:'foundation', tier:1, equip:['machine'],         rx:'8–15 · tempo 2-2-2', cue:'' },
+    { id:'barRow',      name:'Bent-Over Bar Row',         region:'upper', pattern:'hpull',  laterality:'bi',  fvZone:'strength',   tier:3, equip:['barbell'],         rx:'8 × 4 · tempo 2-1-2', cue:'Flat back' },
+    // UPPER · horizontal pull (unilateral)
+    { id:'saRow',       name:'Single-Arm Row',            region:'upper', pattern:'hpull',  laterality:'uni', fvZone:'strength',   tier:2, equip:['kettlebell','dumbbell'], rx:'8–10 × 2–4 · tempo 2-1-2', cue:'No leaning' },
+    // UPPER · vertical pull (bilateral)
+    { id:'pullUp',      name:'Pull-Up',                   region:'upper', pattern:'vpull',  laterality:'bi',  fvZone:'strength',   tier:3, equip:['bar'],             rx:'5–10 × 2–4 · tempo 2-2-2', cue:'Can be assisted' },
+    { id:'assistPullUp',name:'Assisted Pull-Up',          region:'upper', pattern:'vpull',  laterality:'bi',  fvZone:'foundation', tier:2, equip:['bar','band'],      rx:'5–10 × 2–4', cue:'Use a band or a vest to hit 5 hard reps' },
+    { id:'latPulldown', name:'Lat Pull-Down',             region:'upper', pattern:'vpull',  laterality:'bi',  fvZone:'foundation', tier:2, equip:['cable'],           rx:'8–12 × 2–4', cue:'Drive the elbows down' },
+    // CORE · anti-rotation / rotation
+    { id:'hkChop',      name:'Half-Kneeling Chop',        region:'core',  pattern:'antirot',laterality:'uni', fvZone:'foundation', tier:1, equip:['cable','band'],    rx:'8–10 × 2–4 · tempo 1-2-3', cue:'Brace — resist the twist' },
+    { id:'standChop',   name:'Standing Stability Chop',   region:'core',  pattern:'antirot',laterality:'uni', fvZone:'speedstrength', tier:3, equip:['cable'],        rx:'10 × 2', cue:'Stay square' },
+    { id:'kneelChop',   name:'Kneeling Stability Chop',   region:'core',  pattern:'antirot',laterality:'bi',  fvZone:'strength',   tier:2, equip:['cable','band'],    rx:'8–10 × 2–4', cue:'On both knees' },
+    { id:'lungeChop',   name:'Lunge Rotation Chop',       region:'core',  pattern:'rotation',laterality:'uni',fvZone:'strengthspeed', tier:3, equip:['cable'],        rx:'8–10 × 2–3', cue:'Rotate through the hips' },
+    { id:'woodchopper', name:'Woodchoppers',              region:'core',  pattern:'rotation',laterality:'bi', fvZone:'strength',   tier:2, equip:['cable','med ball'],rx:'10 × 1', cue:'Baseball / swimming-tennis style' }
   ];
+  const EX_BY_ID = {}; EXERCISE_LIBRARY.forEach(e => { EX_BY_ID[e.id] = e; });
+  function exById(id){ return EX_BY_ID[id] || null; }
+  const FV_ORDER = ['foundation','strength','strengthspeed','speedstrength','speed'];
+  const FV_LABEL = { foundation:'Foundation', strength:'Strength', strengthspeed:'Strength-Speed', speedstrength:'Speed-Strength', speed:'Speed' };
+  // Strict match: same region + pattern + laterality. Ranked by nearness in the
+  // force-velocity continuum, then by tier (easy→hard).
+  function swapCandidates(id){
+    const b = exById(id); if(!b) return [];
+    const bz = FV_ORDER.indexOf(b.fvZone);
+    return EXERCISE_LIBRARY
+      .filter(e => e.region===b.region && e.pattern===b.pattern && e.laterality===b.laterality)
+      .sort((x,y) => {
+        if(x.id===b.id) return -1; if(y.id===b.id) return 1;
+        const d = Math.abs(FV_ORDER.indexOf(x.fvZone)-bz) - Math.abs(FV_ORDER.indexOf(y.fvZone)-bz);
+        return d || (x.tier - y.tier);
+      });
+  }
+  function stepFromEx(id){ const e = exById(id); return e ? { name:e.name, detail:e.rx, exId:e.id } : { name:id, detail:'' }; }
+  function exMeta(e){ return (FV_LABEL[e.fvZone]||e.fvZone) + ' · ' + (e.equip||[]).join(', '); }
+
+  // ============================================================
+  // PROGRAMS (starting points) — by goal × sport, NOT by grade. Each day is a
+  // set of exercise slots; picking a program sets it as My program + fills the
+  // week, and every lift stays swappable to a matched alternative.
+  // dow: 0 = Mon … 6 = Sun
+  // ============================================================
+  const PROGRAMS = [
+    { id:'strength-general', name:'Strength · General', goal:'Get stronger across the big lifts', sport:'General', sessionSport:'Strength', freq:'4 days / week', diff:60, days:[
+      { dow:0, name:'Lower body — squat focus', intensity:'hard',     duration:55, ex:['backSquat','deadlift','splitSquat','hkChop'] },
+      { dow:1, name:'Upper body — push focus',  intensity:'hard',     duration:50, ex:['benchPress','barPress','ringRow','pullUp'] },
+      { dow:3, name:'Lower body — hinge focus', intensity:'moderate', duration:55, ex:['frontSquat','kbSwing','slRdl','nordic'] },
+      { dow:4, name:'Upper body — pull focus',  intensity:'moderate', duration:50, ex:['pullUp','saRow','pushPress','explPushUp'] }
+    ]},
+    { id:'custom', name:'Build your own', goal:'Start from an empty week and add your own', sport:'—', freq:'Flexible', diff:20, blank:true, days:[] }
+  ];
+  // Expand a program into an owned weekly template (exercise slots → workout steps).
+  function programToTemplate(p){
+    return { name: p.name, updated:'', sessions: (p.days||[]).map(d => ({
+      dow: d.dow, name: d.name, sport: d.sport || p.sessionSport || 'Strength',
+      intensity: d.intensity||'', plannedDuration: d.duration||null, target:'',
+      workout: (d.ex||[]).map(stepFromEx)
+    })) };
+  }
 
   function openPlanSheet(){ renderPlanGrid(); document.getElementById('plan-backdrop').classList.add('open'); document.getElementById('planSheet').classList.add('open'); document.body.style.overflow='hidden'; }
   function closePlan(){ document.getElementById('plan-backdrop').classList.remove('open'); document.getElementById('planSheet').classList.remove('open'); document.body.style.overflow=''; }
@@ -3621,9 +3767,10 @@
 
   function renderPlanGrid(){
     const grid = document.getElementById('planGrid');
-    grid.innerHTML = PLAN_LIBRARY.map(p =>
+    grid.innerHTML = PROGRAMS.map(p =>
       '<div class="plan-pick'+(state.planName===p.name?' active':'')+'" onclick="applyPlan(\''+p.id+'\')">'+
         '<div class="plan-pick-name">'+esc(p.name)+'</div>'+
+        (p.sport && p.sport!=='—' ? '<div class="plan-pick-sport">'+esc(p.sport)+'</div>' : '')+
         '<div class="plan-pick-goal">'+esc(p.goal)+'</div>'+
         '<div class="plan-pick-freq">'+esc(p.freq)+'</div>'+
         '<div class="plan-diff"><div class="plan-diff-fill" style="width:'+(p.diff||25)+'%;"></div></div>'+
@@ -3634,30 +3781,27 @@
   // program, and (2) fill THIS week from it — persisting both (delete replaced
   // sessions, save the new ones) so it survives a reload.
   async function applyPlan(id){
-    const plan = PLAN_LIBRARY.find(p => p.id===id);
+    const plan = PROGRAMS.find(p => p.id===id);
     if(!plan) return;
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
     const hasLogged = (state.week.sessions||[]).some(s => s.status==='done' || s.status==='modified');
     if(hasLogged && !confirm('Switching to “'+plan.name+'” replaces this week’s sessions, including ones you’ve logged. Continue?')) return;
 
-    // 1) This program becomes the owned, repeating template.
-    state.weeklyTemplate = { name: plan.name, updated: '', sessions: (plan.sessions||[]).map(t => ({
-      dow: t.day, name: t.name, sport: t.sport||'', intensity: t.intensity||'',
-      plannedDuration: t.duration||null, target: '', workout: (t.workout||[]).map(x=>Object.assign({},x))
-    })) };
+    // 1) This program becomes the owned, repeating template (with swappable slots).
+    state.weeklyTemplate = programToTemplate(plan);
     state.planName = plan.name;
     persistTemplate();
 
-    // 2) Replace the visible week, persisting the swap.
+    // 2) Replace the visible week from the template, persisting the swap.
     const oldReal = (state.week.sessions||[]).filter(s => s.id && !String(s.id).startsWith('tmp_'));
     const stamp = Date.now();
-    const fresh = plan.blank ? [] : plan.sessions.map((t, idx) => ({
+    const fresh = (state.weeklyTemplate.sessions||[]).map((t, idx) => ({
       id: 'tmp_plan_'+stamp+'_'+idx,
-      date: addDays(ws, t.day),
+      date: addDays(ws, t.dow),
       sport: t.sport||'', name: t.name, intensity: t.intensity||'',
-      plannedDuration: t.duration||null, rpe:null, duration:null, load:null,
+      plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null), rpe:null, duration:null, load:null,
       status:'planned', isPB:false, workout:(t.workout||[]).map(x=>Object.assign({},x)),
-      _checked:[], note:'', noticed:'', blocker:'', target:'', readiness:null
+      _checked:[], note:'', noticed:'', blocker:'', target: t.target||'', readiness:null
     }));
     state.week.sessions = fresh.slice();
     closePlan();
