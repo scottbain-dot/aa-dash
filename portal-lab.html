@@ -1836,6 +1836,92 @@
   </div>
 </div>
 
+<!-- PROGRAM PREVIEW — browse a program's full week before committing to it -->
+<div class="sheet-backdrop" id="preview-backdrop" onclick="closePreview()"></div>
+<div class="sheet" id="previewSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow" id="previewEyebrow">Program</p>
+      <h2 class="sheet-title" id="previewTitle">Program.</h2>
+    </div>
+    <button class="sheet-close" onclick="closePreview()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body" id="previewBody"></div>
+  <div class="sheet-save">
+    <button class="btn-secondary" onclick="closePreview()">Back</button>
+    <button class="btn-primary" onclick="usePreviewedProgram()"><i class="ti ti-check" aria-hidden="true"></i> Use this program</button>
+  </div>
+</div>
+
+<!-- PROGRAM DAY EDITOR — the builder: edit one day of the owned program -->
+<div class="sheet-backdrop" id="pday-backdrop" onclick="closePday()"></div>
+<div class="sheet" id="pdaySheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow" id="pdayEyebrow">Edit day</p>
+      <h2 class="sheet-title" id="pdayTitle">Edit day.</h2>
+    </div>
+    <button class="sheet-close" onclick="closePday()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <div class="sheet-section">
+      <label class="field-label" for="pdayName">What is it?</label>
+      <input class="duration-input plan-field" id="pdayName" placeholder="e.g. Lower body — squat focus">
+
+      <label class="field-label">Which day?</label>
+      <div class="dow-pills" id="pdayDows"></div>
+
+      <label class="field-label" for="pdaySport">Sport / type</label>
+      <input class="duration-input plan-field" id="pdaySport" list="sportOptions" autocomplete="off" placeholder="e.g. Strength, Running">
+
+      <label class="field-label">How hard is it?</label>
+      <div class="intensity-pills" id="pdayInts">
+        <button type="button" class="int-pill" data-int="easy" onclick="pdayPickInt('easy')">Easy</button>
+        <button type="button" class="int-pill" data-int="moderate" onclick="pdayPickInt('moderate')">Moderate</button>
+        <button type="button" class="int-pill" data-int="hard" onclick="pdayPickInt('hard')">Hard</button>
+      </div>
+
+      <label class="field-label" for="pdayDuration" style="margin-top:12px;">How long?</label>
+      <div class="duration-row">
+        <input type="text" inputmode="numeric" class="duration-input plan-field" id="pdayDuration" placeholder="e.g. 50">
+        <span class="duration-suffix">min</span>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-label">Exercises</p>
+      <ul class="pday-ex-list" id="pdayWorkout"></ul>
+      <button class="pday-add-btn" onclick="openAddEx()"><i class="ti ti-plus" aria-hidden="true"></i> Add exercise</button>
+      <p class="pday-hint">Tap <i class="ti ti-arrows-left-right" aria-hidden="true"></i> to swap an exercise for a matched one.</p>
+    </div>
+
+    <button class="pday-delete" id="pdayDelete" onclick="deleteProgramDay()"><i class="ti ti-trash" aria-hidden="true"></i> Remove this day</button>
+  </div>
+  <div class="sheet-save">
+    <button class="btn-secondary" onclick="closePday()">Cancel</button>
+    <button class="btn-primary" onclick="saveProgramDay()"><i class="ti ti-check" aria-hidden="true"></i> Save to program</button>
+  </div>
+</div>
+
+<!-- ADD EXERCISE — browse the library and add to the day being built (above the day editor) -->
+<div class="sheet-backdrop sheet-top" id="addex-backdrop" onclick="closeAddEx()"></div>
+<div class="sheet sheet-top" id="addexSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">Add exercise</p>
+      <h2 class="sheet-title">Add an exercise.</h2>
+    </div>
+    <button class="sheet-close" onclick="closeAddEx()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <input class="duration-input plan-field" id="addexSearch" placeholder="Search — name, pattern or gear" oninput="renderAddEx(this.value)" style="margin-bottom:14px;">
+    <div class="more-list" id="addexList"></div>
+  </div>
+</div>
+
 <!-- LAB: AI Quick Log — paste freeform text, parse into draft sessions, review, then save -->
 <div class="sheet-backdrop" id="qlog-backdrop" onclick="closeQuickLog()"></div>
 <div class="sheet" id="quickLogSheet">
@@ -2046,6 +2132,52 @@
   .prog-empty-lead { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; color: var(--ink); margin: 0 0 6px; }
   .prog-empty-sub { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-mute); line-height: 1.55; margin: 0 auto 18px; max-width: 34ch; }
   .prog-change-btn { display: inline-flex; align-items: center; gap: 8px; }
+  .prog-name-row { display: flex; align-items: center; gap: 8px; }
+  .prog-rename { flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+  .prog-rename:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .prog-add-day { width: 100%; margin-top: 12px; padding: 12px; border: 1.5px dashed var(--line); border-radius: 12px; background: transparent; color: var(--burgundy); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.15s; }
+  .prog-add-day:hover { border-color: var(--burgundy); background: var(--cream); }
+  .myprog-item.clickable { cursor: pointer; border-radius: 10px; margin: 0 -8px; padding: 8px; transition: background 0.12s; }
+  .myprog-item.clickable:hover { background: var(--cream); }
+  .myprog-go { flex-shrink: 0; color: var(--ink-mute); font-size: 15px; }
+
+  /* ===== PROGRAM PREVIEW sheet ===== */
+  .preview-goal { font-family: 'Fraunces', serif; font-style: italic; font-size: 15px; color: var(--ink); margin: 0 0 12px; line-height: 1.5; }
+  .preview-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .preview-meta > span { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--burgundy); white-space: nowrap; }
+  .preview-day { padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+  .preview-day:last-child { border-bottom: none; }
+  .preview-day-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .preview-dow { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--ink-mute); }
+  .preview-day-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .preview-day-min { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); margin-left: auto; }
+  .preview-ex-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 5px; }
+  .preview-ex-list li { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink); display: flex; justify-content: space-between; gap: 12px; }
+  .preview-ex-rx { color: var(--ink-mute); font-size: 12px; white-space: nowrap; }
+
+  /* ===== PROGRAM DAY EDITOR (builder) ===== */
+  .dow-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+  .dow-pill { flex: 1; min-width: 38px; padding: 9px 0; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-mute); font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.12s; }
+  .dow-pill.on { border-color: var(--burgundy); background: var(--burgundy); color: var(--cream); }
+  .pday-ex-list { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 8px; }
+  .pday-ex { display: flex; align-items: center; gap: 10px; background: var(--cream); border-radius: 12px; padding: 12px 12px; }
+  .pday-ex-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .pday-ex-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .pday-ex-rx { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); }
+  .pday-ex-btn { flex-shrink: 0; width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--burgundy); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; transition: all 0.15s; }
+  .pday-ex-btn:hover { border-color: var(--burgundy); background: #fff; }
+  .pday-ex-btn.danger { color: var(--ink-mute); }
+  .pday-ex-btn.danger:hover { border-color: #c0392b; color: #c0392b; }
+  .pday-ex-empty { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); padding: 6px 2px; }
+  .pday-add-btn { width: 100%; padding: 12px; border: 1.5px dashed var(--line); border-radius: 12px; background: transparent; color: var(--burgundy); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.15s; }
+  .pday-add-btn:hover { border-color: var(--burgundy); background: var(--cream); }
+  .pday-hint { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); margin: 10px 2px 0; }
+  .pday-hint .ti { font-size: 13px; vertical-align: -1px; }
+  .pday-delete { width: 100%; margin-top: 8px; padding: 12px; border: none; border-radius: 12px; background: transparent; color: #c0392b; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; }
+  .pday-delete:hover { background: rgba(192,57,43,0.06); }
+  /* Add-exercise library groups */
+  .addex-group { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 16px 2px 8px; }
+  .addex-group:first-child { margin-top: 0; }
 
   /* ===== LOAD — plain-language verdict + "vs usual" bar ===== */
   /* Verdict headline sits with a small status pill (mock-style); colour lives on
@@ -3481,21 +3613,26 @@
   window.toggleStep = toggleStep;
 
   // ----- Swap an exercise for a matched alternative (same region+pattern+laterality) -----
-  let swapIdx = null;
-  function openSwap(i){
-    const step = editing && editing.workout && editing.workout[i];
+  // Generalised: works on ANY workout array (a week session, or a program day in
+  // the builder). swapArr/swapAfter say where to write and what to re-render.
+  let swapIdx = null, swapArr = null, swapAfter = null;
+  function openSwapOn(arr, i, after){
+    const step = arr && arr[i];
     if(!step || !step.exId) return;
-    swapIdx = i;
+    swapArr = arr; swapIdx = i; swapAfter = (typeof after === 'function') ? after : null;
     renderSwap(step.exId);
     document.getElementById('swap-backdrop').classList.add('open');
     document.getElementById('swapSheet').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
+  window.openSwapOn = openSwapOn;
+  function openSwap(i){ openSwapOn(editing && editing.workout, i, null); }   // week session
   function closeSwap(){
     document.getElementById('swap-backdrop').classList.remove('open');
     document.getElementById('swapSheet').classList.remove('open');
-    document.body.style.overflow = editing ? 'hidden' : '';   // session sheet stays open underneath
-    swapIdx = null;
+    // keep the page locked if a sheet is still open underneath (session or builder)
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+    swapIdx = null; swapArr = null; swapAfter = null;
   }
   function renderSwap(exId){
     const base = exById(exId);
@@ -3512,17 +3649,207 @@
   }
   function pickSwap(id){
     const e = exById(id);
-    if(e && editing && editing.workout && swapIdx!=null){
-      const keepChecked = editing._checked ? editing._checked[swapIdx] : false;
-      editing.workout[swapIdx] = { name: e.name, detail: e.rx, exId: e.id };
-      renderWorkout(editing.workout);
-      if(editing._checked) editing._checked[swapIdx] = keepChecked;
+    if(e && swapArr && swapIdx!=null){
+      if(editing && swapArr === editing.workout){
+        // week session — preserve the tick state across the swap
+        const keepChecked = editing._checked ? editing._checked[swapIdx] : false;
+        swapArr[swapIdx] = { name: e.name, detail: e.rx, exId: e.id };
+        renderWorkout(editing.workout);
+        if(editing._checked) editing._checked[swapIdx] = keepChecked;
+      } else {
+        swapArr[swapIdx] = { name: e.name, detail: e.rx, exId: e.id };
+        if(swapAfter) swapAfter();
+      }
     }
     closeSwap();
   }
   window.openSwap = openSwap;
   window.closeSwap = closeSwap;
   window.pickSwap = pickSwap;
+
+  // ============================================================
+  // PROGRAM PREVIEW — browse a program's full week before committing to it.
+  // ============================================================
+  let previewProgramId = null;
+  function openProgramPreview(id){
+    const p = PROGRAMS.find(x => x.id===id); if(!p) return;
+    previewProgramId = id;
+    document.getElementById('previewEyebrow').textContent = (p.sport && p.sport!=='—' ? p.sport+' · ' : '') + p.freq;
+    document.getElementById('previewTitle').textContent = p.name;
+    const body = document.getElementById('previewBody');
+    if(p.blank){
+      body.innerHTML = '<p class="preview-goal">'+esc(p.goal)+'</p><p class="ql-help">You’ll start from an empty week and add your own days and exercises.</p>';
+    } else {
+      body.innerHTML =
+        '<p class="preview-goal">'+esc(p.goal)+'</p>'+
+        '<div class="preview-meta"><span>'+esc(p.freq)+'</span><div class="plan-diff" style="flex:1;"><div class="plan-diff-fill" style="width:'+(p.diff||25)+'%;"></div></div></div>'+
+        (p.days||[]).map(d => {
+          const exs = (d.ex||[]).map(id => { const e = exById(id); return e ? '<li><span>'+esc(e.name)+'</span><span class="preview-ex-rx">'+esc(e.rx)+'</span></li>' : ''; }).join('');
+          return '<div class="preview-day"><div class="preview-day-head"><span class="preview-dow">'+DOW_FULL[d.dow]+'</span><span class="preview-day-name">'+esc(d.name)+'</span>'+(d.duration?'<span class="preview-day-min">'+d.duration+' min</span>':'')+'</div><ul class="preview-ex-list">'+exs+'</ul></div>';
+        }).join('');
+    }
+    document.getElementById('preview-backdrop').classList.add('open');
+    document.getElementById('previewSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePreview(){
+    document.getElementById('preview-backdrop').classList.remove('open');
+    document.getElementById('previewSheet').classList.remove('open');
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+  }
+  function usePreviewedProgram(){ const id = previewProgramId; closePreview(); if(id) applyPlan(id); }
+  window.openProgramPreview = openProgramPreview;
+  window.closePreview = closePreview;
+  window.usePreviewedProgram = usePreviewedProgram;
+
+  // ============================================================
+  // PROGRAM DAY EDITOR (the builder) — edit one day of the owned program.
+  // Works on a deep copy; commits to state.weeklyTemplate on save.
+  // ============================================================
+  const DOW_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let builderDay = null, builderIdx = null;
+  function openProgramDay(idx){
+    const arr = templateSessions();
+    if(idx>=0 && idx<arr.length){
+      builderIdx = idx;
+      builderDay = JSON.parse(JSON.stringify(arr[idx]));
+    } else {
+      builderIdx = -1;
+      const defSport = (arr[0] && arr[0].sport) || (state.weeklyTemplate && state.weeklyTemplate.sessions && state.weeklyTemplate.sessions[0] && state.weeklyTemplate.sessions[0].sport) || 'Strength';
+      builderDay = { dow:0, name:'', sport:defSport, intensity:'moderate', plannedDuration:45, target:'', workout:[] };
+    }
+    if(!builderDay.workout) builderDay.workout = [];
+    fillSportOptions();
+    document.getElementById('pdayDows').innerHTML = DOW_SHORT.map((d,i) =>
+      '<button type="button" class="dow-pill" data-dow="'+i+'" onclick="pdayPickDow('+i+')">'+d+'</button>').join('');
+    renderProgramDay();
+    document.getElementById('pday-backdrop').classList.add('open');
+    document.getElementById('pdaySheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function renderProgramDay(){
+    document.getElementById('pdayEyebrow').textContent = builderIdx>=0 ? 'Edit day' : 'New day';
+    document.getElementById('pdayTitle').textContent = builderDay.name || (builderIdx>=0 ? 'Edit day' : 'New day');
+    document.getElementById('pdayName').value = builderDay.name || '';
+    document.getElementById('pdaySport').value = builderDay.sport || '';
+    document.getElementById('pdayDuration').value = builderDay.plannedDuration != null ? builderDay.plannedDuration : '';
+    document.querySelectorAll('#pdayDows .dow-pill').forEach(b => b.classList.toggle('on', +b.dataset.dow === builderDay.dow));
+    document.querySelectorAll('#pdayInts .int-pill').forEach(b => b.classList.toggle('active', b.dataset.int === (builderDay.intensity||'')));
+    document.getElementById('pdayDelete').style.display = builderIdx>=0 ? '' : 'none';
+    renderBuilderWorkout();
+  }
+  function renderBuilderWorkout(){
+    const w = builderDay.workout || [];
+    const ul = document.getElementById('pdayWorkout');
+    ul.innerHTML = w.map((st,i) => {
+      const swap = (st.exId && swapCandidates(st.exId).length>1)
+        ? '<button class="pday-ex-btn" title="Swap" aria-label="Swap exercise" onclick="pdaySwapEx('+i+')"><i class="ti ti-arrows-left-right" aria-hidden="true"></i></button>' : '';
+      return '<li class="pday-ex"><div class="pday-ex-main"><span class="pday-ex-name">'+esc(st.name||'')+'</span>'+
+        (st.detail?'<span class="pday-ex-rx">'+esc(st.detail)+'</span>':'')+'</div>'+swap+
+        '<button class="pday-ex-btn danger" title="Remove" aria-label="Remove exercise" onclick="pdayRemoveEx('+i+')"><i class="ti ti-x" aria-hidden="true"></i></button></li>';
+    }).join('') || '<li class="pday-ex-empty">No exercises yet — add one below.</li>';
+  }
+  function pdayPickDow(d){ builderDay.dow = d; document.querySelectorAll('#pdayDows .dow-pill').forEach(b => b.classList.toggle('on', +b.dataset.dow === d)); }
+  function pdayPickInt(v){ builderDay.intensity = v; document.querySelectorAll('#pdayInts .int-pill').forEach(b => b.classList.toggle('active', b.dataset.int === v)); }
+  function pdaySwapEx(i){ openSwapOn(builderDay.workout, i, renderBuilderWorkout); }
+  function pdayRemoveEx(i){ builderDay.workout.splice(i,1); renderBuilderWorkout(); }
+  function closePday(){
+    document.getElementById('pday-backdrop').classList.remove('open');
+    document.getElementById('pdaySheet').classList.remove('open');
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+    builderDay = null; builderIdx = null;
+  }
+  async function saveProgramDay(){
+    const name = document.getElementById('pdayName').value.trim();
+    if(!name){ showToast('Give the day a name.', 'error'); return; }
+    builderDay.name = name;
+    builderDay.sport = document.getElementById('pdaySport').value.trim() || 'Strength';
+    builderDay.plannedDuration = numOrNull(document.getElementById('pdayDuration').value);
+    builderDay.target = builderDay.target || '';
+    if(!state.weeklyTemplate) state.weeklyTemplate = emptyTemplate();
+    if(!state.weeklyTemplate.sessions) state.weeklyTemplate.sessions = [];
+    if(builderIdx>=0) state.weeklyTemplate.sessions[builderIdx] = builderDay;
+    else state.weeklyTemplate.sessions.push(builderDay);
+    if(!state.planName){ state.planName = state.weeklyTemplate.name || 'My program'; state.weeklyTemplate.name = state.planName; }
+    closePday();
+    renderProgram();
+    if(activeTab==='week') renderWeek();
+    showToast('Saved to your program', 'success');
+    persistTemplate();
+  }
+  function deleteProgramDay(){
+    if(builderIdx<0) return;
+    if(!confirm('Remove this day from your program?')) return;
+    (state.weeklyTemplate.sessions||[]).splice(builderIdx, 1);
+    closePday();
+    renderProgram();
+    if(activeTab==='week') renderWeek();
+    showToast('Day removed', 'success');
+    persistTemplate();
+  }
+  window.openProgramDay = openProgramDay;
+  window.closePday = closePday;
+  window.pdayPickDow = pdayPickDow;
+  window.pdayPickInt = pdayPickInt;
+  window.pdaySwapEx = pdaySwapEx;
+  window.pdayRemoveEx = pdayRemoveEx;
+  window.saveProgramDay = saveProgramDay;
+  window.deleteProgramDay = deleteProgramDay;
+
+  // ----- Add exercise from the library into the day being built -----
+  const REGION_LABEL = { lower:'Lower body', upper:'Upper body', core:'Core', plyo:'Plyometrics', throw:'Med-ball throws', speed:'Speed & agility', cond:'Conditioning' };
+  const REGION_ORDER = ['lower','upper','core','plyo','throw','speed','cond'];
+  function openAddEx(){
+    document.getElementById('addexSearch').value = '';
+    renderAddEx('');
+    document.getElementById('addex-backdrop').classList.add('open');
+    document.getElementById('addexSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function renderAddEx(q){
+    q = (q||'').toLowerCase().trim();
+    const match = EXERCISE_LIBRARY.filter(e => !q ||
+      e.name.toLowerCase().includes(q) || e.pattern.includes(q) || e.region.includes(q) || (e.equip||[]).join(' ').toLowerCase().includes(q));
+    let html = '';
+    REGION_ORDER.forEach(r => {
+      const g = match.filter(e => e.region===r);
+      if(!g.length) return;
+      html += '<div class="addex-group">'+esc(REGION_LABEL[r]||r)+'</div>'+
+        g.map(e => '<button class="more-row" onclick="pickAddEx(\''+e.id+'\')">'+
+          '<span class="more-row-icon"><i class="ti ti-plus" aria-hidden="true"></i></span>'+
+          '<span class="more-row-main"><span class="more-row-name">'+esc(e.name)+'</span>'+
+            '<span class="more-row-sub">'+esc(exMeta(e))+(e.cue?' · '+esc(e.cue):'')+'</span></span>'+
+        '</button>').join('');
+    });
+    document.getElementById('addexList').innerHTML = html || '<p class="ql-help">No matches — try another word.</p>';
+  }
+  function pickAddEx(id){
+    const s = stepFromEx(id);
+    if(s && builderDay){ builderDay.workout.push(s); renderBuilderWorkout(); }
+    closeAddEx();
+  }
+  function closeAddEx(){
+    document.getElementById('addex-backdrop').classList.remove('open');
+    document.getElementById('addexSheet').classList.remove('open');
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+  }
+  window.openAddEx = openAddEx;
+  window.renderAddEx = renderAddEx;
+  window.pickAddEx = pickAddEx;
+  window.closeAddEx = closeAddEx;
+
+  function renameProgram(){
+    if(!state.weeklyTemplate) return;
+    const cur = state.weeklyTemplate.name || '';
+    const next = (window.prompt('Name your program', cur) || '').trim();
+    if(!next || next===cur) return;
+    state.weeklyTemplate.name = next;
+    state.planName = next;
+    renderProgram();
+    showToast('Program renamed', 'success');
+    persistTemplate();
+  }
+  window.renameProgram = renameProgram;
 
   function editWorkout(){
     if(workoutEditing){
@@ -3882,7 +4209,7 @@
     const card = p => {
       const title = p.blank ? p.name : (p.sport || p.name);
       const sub = p.blank ? p.goal : (SPORT_BLURB[p.sportKey] || p.goal);
-      return '<div class="plan-pick'+(state.planName===p.name?' active':'')+'" onclick="applyPlan(\''+p.id+'\')">'+
+      return '<div class="plan-pick'+(state.planName===p.name?' active':'')+'" onclick="openProgramPreview(\''+p.id+'\')">'+
         '<div class="plan-pick-name">'+esc(title)+'</div>'+
         '<div class="plan-pick-goal">'+esc(sub)+'</div>'+
         '<div class="plan-pick-freq">'+esc(p.freq)+'</div>'+
@@ -4037,11 +4364,12 @@
         '<div class="myprog-dow">'+DOW_FULL[d]+'</div>'+
         (day.length
           ? day.map(o => { const n = (o.t.workout||[]).length;
-              return '<div class="myprog-item">'+
+              return '<div class="myprog-item clickable" onclick="openProgramDay('+o.i+')">'+
               '<span class="myprog-dot'+(o.t.intensity?' '+esc(o.t.intensity):'')+'" aria-hidden="true"></span>'+
               '<span class="myprog-item-main"><span class="myprog-item-name">'+esc(o.t.name)+'</span>'+
                 '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+(n?' · '+n+' exercise'+(n===1?'':'s'):'')+'</span></span>'+
-              '<button class="myprog-remove" aria-label="Remove from program" onclick="removeFromProgramAt('+o.i+')"><i class="ti ti-x" aria-hidden="true"></i></button>'+
+              '<i class="ti ti-chevron-right myprog-go" aria-hidden="true"></i>'+
+              '<button class="myprog-remove" aria-label="Remove from program" onclick="event.stopPropagation(); removeFromProgramAt('+o.i+')"><i class="ti ti-x" aria-hidden="true"></i></button>'+
             '</div>'; }).join('')
           : '<div class="myprog-rest">Rest</div>')+
       '</div>';
@@ -4104,8 +4432,9 @@
         '<div class="card prog-empty-card">'+
           '<div class="prog-empty-icon"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>'+
           '<p class="prog-empty-lead">You don’t have a program yet.</p>'+
-          '<p class="prog-empty-sub">Start from a ready-made program, or build your own by planning a session and turning on “Repeat every week”.</p>'+
+          '<p class="prog-empty-sub">Start from a ready-made program, or build your own day by day.</p>'+
           '<button class="btn-primary prog-change-btn" onclick="openPlanSheet()"><i class="ti ti-layout-grid-add" aria-hidden="true"></i> Choose a program</button>'+
+          '<button class="prog-add-day" style="max-width:260px; margin:12px auto 0;" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Build your own — add a day</button>'+
         '</div>';
       return;
     }
@@ -4113,7 +4442,8 @@
     el.innerHTML =
       '<div class="prog-head">'+
         '<h2 class="prog-title">My Program</h2>'+
-        '<p class="prog-name">'+esc(name)+'</p>'+
+        '<div class="prog-name-row"><p class="prog-name">'+esc(name)+'</p>'+
+          '<button class="prog-rename" aria-label="Rename program" title="Rename" onclick="renameProgram()"><i class="ti ti-pencil" aria-hidden="true"></i></button></div>'+
         '<p class="prog-sub">'+(auto ? 'This is your training week — it repeats automatically into every new week.' : 'This is your training week. Turn on auto-repeat to carry it into every week.')+'</p>'+
       '</div>'+
       '<div class="card prog-actions-card">'+
@@ -4133,7 +4463,8 @@
       '<div class="card prog-week-card">'+
         '<div class="card-label">Your week · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div>'+
         '<div class="myprog-list prog-week-list">'+programDaysHTML()+'</div>'+
-        '<p class="prog-week-hint">Tap a day’s <i class="ti ti-x" aria-hidden="true"></i> to remove it. Open any session to swap exercises or turn “Repeat every week” on for a new one.</p>'+
+        '<button class="prog-add-day" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Add a day</button>'+
+        '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Tap <i class="ti ti-x" aria-hidden="true"></i> to remove a day.</p>'+
       '</div>';
   }
   window.renderProgram = renderProgram;
