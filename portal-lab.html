@@ -27,6 +27,8 @@
     --surface: #ffffff;
     --line: #e8d9cf;
     --line-soft: #f0e4dc;
+    --card-line: #efe4df;   /* shared card border — one frame across all tabs */
+    --amber: #f59e0b;       /* load warning accent (ramping fast) */
     --shadow-soft: 0 1px 3px rgba(26,20,17,0.04), 0 8px 24px rgba(26,20,17,0.04);
     /* Warmed editorial card shadow, toward the profile-mockup look */
     --shadow-card: 0 8px 28px rgba(135,75,70,0.06);
@@ -175,13 +177,12 @@
      BLOCK CONTEXT BAR
      ============================ */
   .block-bar {
-    padding: 24px 20px 22px;
     background: var(--bg);
-    border-bottom: 1px solid var(--line);
   }
   .block-bar-inner {
     max-width: 1280px;
     margin: 0 auto;
+    padding: 0 20px;
   }
   .block-eyebrow {
     font-family: 'Inter', sans-serif;
@@ -232,26 +233,8 @@
   }
 
   @media (min-width: 820px) {
-    .block-bar {
-      padding: 32px 32px 28px;
-    }
     .block-bar-inner {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 32px;
-    }
-    .block-bar-left {
-      flex: 1;
-    }
-    .block-title {
-      font-size: 42px;
-    }
-    .block-meta {
-      margin-top: 0;
-      padding-top: 0;
-      border-top: none;
-      flex-shrink: 0;
+      padding: 0 32px;
     }
   }
 
@@ -1430,50 +1413,8 @@
 
 <!-- ===== WEEK TAB ===== -->
 <div class="tab-view active" id="view-week">
-
-  <div id="weekBanner"></div>
-
-  <!-- MOBILE TOGGLE -->
-  <div class="view-toggle">
-    <button class="active" data-view="today">Today</button>
-    <button data-view="week">Week</button>
-  </div>
-
-  <div class="desktop-grid">
-
-    <div class="desktop-main">
-
-      <!-- TODAY HERO — always visible on desktop, mobile shows when Today selected -->
-      <div class="today-hero" id="today-hero"></div>
-
-      <!-- MOBILE TODAY VIEW (filled by JS) -->
-      <div class="mobile-only" id="mobile-today"></div>
-
-      <!-- WEEK VIEW (mobile: hidden by default; desktop: always visible) -->
-      <div id="week-view" class="mobile-week-hidden">
-        <div id="weekGrid"></div>
-      </div>
-
-      <!-- WEEKLY LOAD STRIP (intensity balance, mockup-style) -->
-      <div id="weekLoadStrip"></div>
-
-    </div>
-
-    <!-- DESKTOP SIDE: PB strip + week-note placeholder -->
-    <div class="desktop-side">
-      <div class="pb-strip">
-        <div class="pb-strip-header">
-          <div>
-            <p class="overline" style="color:rgba(250,243,237,0.5); margin-bottom:3px;">Personal bests</p>
-            <h3 class="pb-strip-title">Recent <em>PBs</em></h3>
-          </div>
-          <a href="#" class="pb-strip-link" onclick="switchTab('pbs'); return false;">See all →</a>
-        </div>
-        <div class="pb-list" id="weekPbList"></div>
-      </div>
-    </div>
-
-  </div>
+  <!-- One consistent card stack: Today hero · This week · Load · This week's mix -->
+  <div class="card-stack" id="weekStack"></div>
 </div><!-- /#view-week -->
 
 <!-- ===== YEAR TAB ===== -->
@@ -1844,16 +1785,112 @@
 </div>
 
 <style>
-  /* Mobile view toggle behaviour: when on mobile, hide week-view unless toggle says so */
-  @media (max-width: 819px) {
-    body.show-week #mobile-today { display: none; }
-    body.show-week #week-view { display: block; }
-    body:not(.show-week) #week-view { display: none; }
+  /* ============================================================
+     SHARED CARD SYSTEM — one pattern reused on all five tabs
+     ============================================================ */
+  .card-stack { display: flex; flex-direction: column; gap: 14px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--card-line);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: var(--shadow-card);
   }
-  @media (min-width: 820px) {
-    #week-view { display: block !important; }
-    #mobile-today { display: none; }
+  @media (max-width: 560px) { .card { padding: 18px 16px; } }
+  .card-eyebrow {
+    font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--burgundy); font-weight: 700;
+    margin: 0 0 12px; display: flex; align-items: center; gap: 8px;
   }
+  .card-eyebrow-action { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+  /* The single hero / priority card per tab — a touch stronger */
+  .card-hero { padding: 22px 22px 20px; }
+  .card-hero-eyebrow {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--burgundy); font-weight: 600; margin: 0 0 6px;
+  }
+  .card-hero-title {
+    font-family: 'Fraunces', serif; font-size: 26px; font-weight: 400; color: var(--ink);
+    margin: 0 0 4px; line-height: 1.12; letter-spacing: -0.01em;
+  }
+  .card-hero-title em { font-style: italic; color: var(--burgundy); }
+  .card-hero-sub {
+    font-family: 'Fraunces', serif; font-style: italic; font-size: 14px; color: var(--ink-mute);
+    margin: 0; line-height: 1.4;
+  }
+  .card-hero-sub strong { color: var(--ink); font-weight: 500; font-style: normal; }
+  .card-hero-sub .ti { color: var(--burgundy); font-style: normal; }
+  .card-empty-line { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); margin: 0; }
+
+  /* Shared card CTAs (hero primary + ghost) */
+  .card-cta {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 16px; border-radius: 12px; border: none; width: 100%;
+    background: var(--burgundy); color: var(--cream);
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .card-cta:hover { background: var(--burgundy-dark); }
+  .card-cta-ghost { background: transparent; color: var(--burgundy); border: 1px solid var(--line); }
+  .card-cta-ghost:hover { background: var(--cream); border-color: var(--burgundy); }
+
+  /* Slim, quiet context strip — replaces the heavy per-tab hero header */
+  .context-strip {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 11px 0; border-bottom: 1px solid var(--card-line);
+  }
+  .context-strip-month {
+    font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 600; color: var(--ink-mute);
+  }
+  .context-strip-focus { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); min-width: 0; }
+  .context-strip-link { margin-left: auto; }
+
+  /* ===== WEEK — Today hero card CTAs + progress ===== */
+  .week-today-cta { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .week-today-cta .card-cta { flex: 1 1 150px; }
+  .week-progress {
+    display: flex; align-items: center; gap: 10px; margin: 14px 0 0;
+    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); font-weight: 500;
+  }
+  .week-progress-track { flex: 0 0 84px; height: 6px; background: var(--line-soft); border-radius: 999px; overflow: hidden; }
+  .week-progress-track > span { display: block; height: 100%; background: var(--sage); border-radius: 999px; transition: width 0.3s; }
+  .week-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .week-actions > button { flex: 1 1 auto; justify-content: center; }
+
+  /* ===== LOAD — plain-language verdict + "vs usual" bar ===== */
+  .load-verdict {
+    font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; color: var(--ink);
+    margin: 0 0 12px; line-height: 1.15;
+  }
+  .card-hero .load-verdict { font-size: 25px; }
+  .load-verdict.healthy { color: var(--sage); }
+  .load-verdict.ramp    { color: var(--amber); }
+  .load-verdict.building { color: var(--ink-mute); font-style: italic; }
+  .load-usual { margin: 0 0 12px; }
+  .load-usual-track { position: relative; height: 14px; background: var(--line-soft); border-radius: 999px; }
+  .load-usual-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--sage); min-width: 4px; }
+  .load-usual-fill.ramp { background: var(--amber); }
+  .load-usual-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+  .load-usual-marker::after {
+    content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+    width: 8px; height: 8px; border-radius: 50%; background: var(--ink);
+  }
+  .load-usual-labels {
+    display: flex; justify-content: space-between; margin-top: 9px;
+    font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute);
+  }
+  .load-usual-labels .mark { color: var(--ink); font-weight: 600; }
+  .load-sentence { font-family: 'Fraunces', serif; font-style: italic; font-size: 14px; color: var(--ink-soft); margin: 0 0 8px; line-height: 1.45; }
+  .load-detail { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); margin: 0; }
+  .load-chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
+  .load-chart-scroll::-webkit-scrollbar { height: 6px; }
+  .load-chart-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+  /* ===== YEAR — testing/busy window lines ===== */
+  .year-window-line { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink); margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+  .year-window-line:last-child { margin-bottom: 0; }
+  .year-window-line .ym-marker { font-size: 13px; }
 
   /* Plan/edit header inputs in the session sheet */
   .plan-field { width: 100%; margin-bottom: 8px; }
@@ -1895,11 +1932,7 @@
   .year-legend-item strong { color: var(--ink); font-weight: 600; }
   .legend-emoji { font-size: 14px; line-height: 1; }
 
-  .year-sport {
-    background: var(--surface); border-radius: 22px;
-    padding: 20px 22px; margin-bottom: 16px;
-    box-shadow: var(--shadow-card);
-  }
+  /* .year-sport now sits inside the shared .card frame — layout only here */
   .year-sport-head {
     display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px;
   }
@@ -2003,15 +2036,7 @@
   .pb-page-head {
     display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px;
   }
-  .pb-group {
-    background: var(--surface); border-radius: 20px;
-    padding: 8px 20px; margin-bottom: 14px;
-    box-shadow: var(--shadow-card);
-  }
-  .pb-group-head {
-    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--ink-mute); font-weight: 700; padding: 14px 0 10px; border-bottom: 1px solid var(--line-soft);
-  }
+  /* .pb-group sits inside the shared .card frame — layout only here */
   .pb-page-item {
     display: flex; align-items: center; justify-content: space-between; gap: 14px;
     padding: 13px 0; border-bottom: 1px solid var(--line-soft); cursor: pointer;
@@ -2274,9 +2299,9 @@
   /* ============================
      BOOK TAB — coach check-ins + month calendar (mockup-style)
      ============================ */
-  .book-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .book-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
   @media (min-width: 920px) { .book-grid { grid-template-columns: 1.1fr 1fr; align-items: start; } }
-  .book-card { background: var(--surface); border-radius: 22px; box-shadow: var(--shadow-card); padding: 20px 22px; }
+  /* .book-card sits inside the shared .card frame — layout only */
 
   .slot-card {
     border-radius: 14px; background: var(--cream); padding: 14px 16px; margin-bottom: 10px;
@@ -2722,103 +2747,26 @@
     '</div>';
   }
 
+  // Slim, quiet context strip. Only Week and Load carry the training-state
+  // context; Year/Book/PBs lead with their own hero card, so the strip is empty
+  // (and collapses) there.
   function renderBlockBar(){
     const bar = document.getElementById('blockBar');
-    const weekLoad = state.week.sessions.reduce((a,s)=> a + (s.load||0), 0);
-    const done = state.week.sessions.filter(s=> s.status==='done' || s.status==='modified').length;
-    const total = state.week.sessions.length;
-
-    if(activeTab==='year'){
-      const ap = state.yearMap && state.yearMap.aPriority;
-      const vision = state.yearMap && state.yearMap.vision;
+    if(activeTab!=='week' && activeTab!=='load'){ bar.innerHTML = ''; return; }
+    const info = currentPhaseInfo();
+    if(info){
       bar.innerHTML =
-        '<div class="block-bar-left">'+
-          '<p class="block-eyebrow">Your year · '+esc((state.yearMap&&state.yearMap.year)||'2026–27')+'</p>'+
-          '<h1 class="block-title">'+(vision? esc(vision) : 'Map your <em>year</em>.')+'</h1>'+
-          '<p class="block-sub">'+(ap&&ap.event? 'A-priority · '+esc(ap.event)+(ap.date?' · '+fmtNice(ap.date):'') : 'Set the one event your year points at.')+'</p>'+
-        '</div>';
-      return;
-    }
-
-    if(activeTab==='load'){
-      const s = (state.load && state.load.summary) || {};
-      const acwr = s.acwr;
-      const info = currentPhaseInfo();
-      const tgt = info && info.loadTarget;
-      let sub;
-      if(tgt){
-        const phaseTxt = PHASE_EMOJI[info.phase]+' '+PHASE_FRIENDLY[info.phase];
-        sub = "You're in "+phaseTxt+" — aim for about "+tgt+" a week. You're at "+(s.thisWeekLoad||0)+".";
-      } else {
-        sub = acwr==null ? 'Log a few weeks and your training load builds here.'
-          : (acwr>1.3 ? 'Ramping up fast — watch the jump.' : (acwr<0.8 ? 'Easing off — your load is dropping.' : 'Your load is in a healthy range.'));
-      }
-      bar.innerHTML =
-        '<div class="block-bar-left">'+
-          (info ? phaseEyebrowRow() : '<p class="block-eyebrow">Training load</p>')+
-          '<h1 class="block-title">Your <em>load</em>.</h1>'+
-          '<p class="block-sub">'+esc(sub)+'</p>'+
-        '</div>'+
-        '<div class="block-meta">'+
-          '<div class="block-meta-item"><strong>'+(s.thisWeekLoad||0)+'</strong> load this week</div>'+
-          (tgt? '<div class="block-meta-item"><strong>'+esc(String(tgt))+'</strong> weekly target</div>' : '')+
-        '</div>';
-      return;
-    }
-
-    if(activeTab==='pbs'){
-      const n = (state.pbs||[]).length;
-      const latest = n ? state.pbs[0] : null;
-      bar.innerHTML =
-        '<div class="block-bar-left">'+
-          '<p class="block-eyebrow">Personal bests</p>'+
-          '<h1 class="block-title">Your <em>bests</em>.</h1>'+
-          '<p class="block-sub">'+(latest? 'Latest · '+esc(latest.exercise)+' '+esc(String(latest.value))+(latest.unit?esc(latest.unit):'')+(latest.date?' · '+fmtNice(latest.date):'') : 'Every best you set lands here.')+'</p>'+
-        '</div>'+
-        (n? '<div class="block-meta"><div class="block-meta-item"><strong>'+n+'</strong> '+(n===1?'best':'bests')+' logged</div></div>' : '');
-      return;
-    }
-
-    if(activeTab==='book'){
-      const bk = state.booking;
-      const open = bk ? (bk.slots||[]).filter(s=>s.status==='available').length : 0;
-      const booked = bk ? (bk.slots||[]).filter(s=>s.status==='booked').length : 0;
-      bar.innerHTML =
-        '<div class="block-bar-left">'+
-          '<p class="block-eyebrow">Coaching</p>'+
-          '<h1 class="block-title">Book a <em>session</em>.</h1>'+
-          '<p class="block-sub">'+(bk? 'Check-ins, technique reviews and testing — booked with Mr Bain.' : 'Coming soon — book coach time right here.')+'</p>'+
-        '</div>'+
-        (bk? '<div class="block-meta">'+
-          '<div class="block-meta-item"><strong>'+open+'</strong> slots open</div>'+
-          '<div class="block-meta-item"><strong>'+booked+'</strong> booked</div>'+
-        '</div>' : '');
-      return;
-    }
-
-    const blk = currentBlock();
-    if(blk){
-      bar.innerHTML =
-        '<div class="block-bar-left">'+
-          phaseEyebrowRow()+
-          '<h1 class="block-title">Your <em>week</em>.</h1>'+
-          '<p class="block-sub">'+esc(blk.focus || blk.note || 'Plan it, do it, log it.')+'</p>'+
-        '</div>'+
-        '<div class="block-meta">'+
-          '<div class="block-meta-item"><strong>'+done+' / '+total+'</strong> sessions done</div>'+
-          '<div class="block-meta-item"><strong>'+weekLoad+'</strong> load this week</div>'+
-          (blk.loadTarget? '<div class="block-meta-item"><strong>'+esc(String(blk.loadTarget))+'</strong> target</div>':'')+
+        '<div class="context-strip">'+
+          '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+PHASE_FRIENDLY[info.phase]+'</span>'+
+          '<span class="context-strip-month">'+esc(info.month)+'</span>'+
+          (info.focus? '<span class="context-strip-focus">'+esc(info.focus)+'</span>' : '')+
+          '<button class="block-phase-link context-strip-link" onclick="switchTab(\'year\')">Your year →</button>'+
         '</div>';
     } else {
       bar.innerHTML =
-        '<div class="block-bar-left">'+
-          '<p class="block-eyebrow">This week</p>'+
-          '<h1 class="block-title">Your <em>week</em>.</h1>'+
-          '<p class="block-sub">'+(total? 'Plan it, do it, log it.' : 'No plan yet — add a session below, or set your year.')+'</p>'+
-        '</div>'+
-        '<div class="block-meta">'+
-          '<div class="block-meta-item"><strong>'+done+' / '+total+'</strong> sessions done</div>'+
-          '<div class="block-meta-item"><strong>'+weekLoad+'</strong> load this week</div>'+
+        '<div class="context-strip">'+
+          '<span class="context-strip-month">'+(activeTab==='load'?'Training load':'This week')+'</span>'+
+          '<button class="block-phase-link context-strip-link" onclick="switchTab(\'year\')">Set your year →</button>'+
         '</div>';
     }
   }
@@ -2834,6 +2782,8 @@
   }
   function isLogged(s){ return s.status==='done' || s.status==='modified'; }
 
+  // The Week tab is one card stack, in the approved order:
+  //   (a) Today hero  (b) This week  (c) Load  (d) This week's mix
   function renderWeek(){
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
     const today = isoToday();
@@ -2842,11 +2792,47 @@
     state.week.sessions.forEach(s => { (byDay[s.date] = byDay[s.date] || []).push(s); });
     const todays = byDay[today] || [];
 
-    renderWeekNav(ws, curMon);
+    document.getElementById('weekStack').innerHTML =
+      weekTodayCard(todays, today) +
+      weekThisWeekCard(ws, curMon, byDay, today) +
+      weekLoadCard() +
+      weekMixCard();
 
-    renderTodayHero(todays, today);
-    renderMobileToday(todays, ws, today, byDay);
+    initSwipe();   // LAB: bind swipe-to-delete (delegated on #weekGrid)
+  }
 
+  // (a) TODAY hero — date, big session name, primary CTA, slim progress line (no load number).
+  function weekTodayCard(todays, today){
+    const eyebrow = dowShort(today)+' '+dayNum(today)+' '+monShort(today)+' · Today';
+    const done = state.week.sessions.filter(isLogged).length;
+    const total = state.week.sessions.length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const progress = total ? (done+' of '+total+' session'+(total===1?'':'s')+' this week') : 'No sessions planned this week yet';
+    let titleHTML, subHTML, primary;
+    if(todays.length){
+      const s = todays[0];
+      const extra = todays.length>1 ? ' · +'+(todays.length-1)+' more today' : '';
+      titleHTML = esc(s.name);
+      subHTML = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+extra;
+      primary = '<button class="card-cta" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?'Edit today’s log':'Log today’s session')+'</button>';
+    } else {
+      titleHTML = 'A <em>rest</em> day.';
+      subHTML = 'Nothing planned — recovery is training too.';
+      primary = '';
+    }
+    const addCls = todays.length ? 'card-cta card-cta-ghost' : 'card-cta';
+    const addBtn = '<button class="'+addCls+'" onclick="newSession(\''+today+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add today’s session</button>';
+    return '<div class="card card-hero">'+
+      '<p class="card-hero-eyebrow">'+eyebrow+'</p>'+
+      '<h2 class="card-hero-title">'+titleHTML+'</h2>'+
+      '<p class="card-hero-sub">'+subHTML+'</p>'+
+      '<div class="week-today-cta">'+primary+addBtn+'</div>'+
+      '<p class="week-progress"><span class="week-progress-track"><span style="width:'+pct+'%"></span></span>'+esc(progress)+'</p>'+
+    '</div>';
+  }
+
+  // (b) THIS WEEK — week nav + day list (status per day) + plan actions.
+  function weekThisWeekCard(ws, curMon, byDay, today){
     let rows = '';
     for(let i=0;i<7;i++){
       const iso = addDays(ws, i);
@@ -2860,25 +2846,31 @@
         rows += planRestRow(dayLabel, iso, isToday, iso<today);
       }
     }
-    document.getElementById('weekGrid').innerHTML =
-      '<div class="plan-card">'+
-        '<div class="plan-head"><div class="plan-head-row">'+
-          '<div><p class="overline">This week</p>'+
-            '<h2 class="section-heading">Training plan <span class="plan-week-range">Week of '+fmtNice(ws)+'</span></h2>'+
-            (state.planName? '<p class="plan-label-line">Plan · <strong>'+esc(state.planName)+'</strong></p>' : '')+
-          '</div>'+
-          '<div class="plan-head-actions">'+
-            '<button class="quicklog-btn" onclick="openQuickLog()"><i class="ti ti-sparkles" aria-hidden="true"></i> Quick Log</button>'+
-            '<button class="from-plan-btn" onclick="openLabTemplates()"><i class="ti ti-bolt" aria-hidden="true"></i> From my plan</button>'+
-            '<button class="copy-week-btn" onclick="copyLastWeek()"><i class="ti ti-copy" aria-hidden="true"></i> Copy last week</button>'+
-            '<button class="change-plan-btn" onclick="openPlanSheet()">Change plan</button>'+
-          '</div>'+
-        '</div></div>'+
-        '<div class="plan-list">'+rows+'</div>'+
-      '</div>';
-    renderWeekPBs();
-    renderLoadStrip();
-    initSwipe();   // LAB: bind swipe-to-delete once (delegated on #weekGrid)
+    return '<div class="card">'+
+      '<p class="card-eyebrow">This week'+
+        (state.planName? '<span class="card-eyebrow-action" style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-mute);">Plan · <strong style="color:var(--burgundy);">'+esc(state.planName)+'</strong></span>' : '')+
+      '</p>'+
+      weekNavHTML(ws, curMon)+
+      '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
+      '<div class="week-actions">'+
+        '<button class="quicklog-btn" onclick="openQuickLog()"><i class="ti ti-sparkles" aria-hidden="true"></i> Quick Log</button>'+
+        '<button class="from-plan-btn" onclick="openLabTemplates()"><i class="ti ti-bolt" aria-hidden="true"></i> From my plan</button>'+
+        '<button class="copy-week-btn" onclick="copyLastWeek()"><i class="ti ti-copy" aria-hidden="true"></i> Copy last week</button>'+
+        '<button class="change-plan-btn" onclick="openPlanSheet()">Change plan</button>'+
+      '</div>'+
+    '</div>';
+  }
+
+  // (c) LOAD — legible, plain-language read (shared builder, see loadVerdictHTML).
+  function weekLoadCard(){
+    const read = loadRead();
+    const phase = (currentPhaseInfo()||{}).phase || '';
+    return '<div class="card">'+
+      '<p class="card-eyebrow">Load'+
+        '<span class="card-eyebrow-action"><button class="block-phase-link" onclick="switchTab(\'load\')">Details →</button></span>'+
+      '</p>'+
+      loadVerdictHTML(read, phase)+
+    '</div>';
   }
 
   // One clean row per session (mockup-style: day · dot · name + detail).
@@ -2917,11 +2909,10 @@
   }
 
   // Weekly intensity balance — coloured squares + balance label + overload warning.
-  function renderLoadStrip(){
-    const el = document.getElementById('weekLoadStrip');
-    if(!el) return;
+  // (d) THIS WEEK'S MIX — intensity balance (same content), now returned as a card.
+  function weekMixCard(){
     const sessions = (state.week.sessions || []).filter(s => s.status !== 'missed');
-    if(!sessions.length){ el.innerHTML = ''; return; }
+    if(!sessions.length) return '';
     const ordered = sessions.slice().sort((a,b)=> (a.date<b.date?-1:a.date>b.date?1:0));
     const counts = { hard:0, moderate:0, easy:0 };
     let squares = '';
@@ -2939,9 +2930,8 @@
     else if(total && counts.easy === 0) balance = 'needs more recovery';
     else if(counts.hard >= 2 && counts.easy >= 1) balance = 'well balanced';
     else balance = 'steady';
-    el.className = 'load-strip-card';
-    el.innerHTML =
-      '<p class="overline">This week’s mix</p>'+
+    return '<div class="card">'+
+      '<p class="card-eyebrow">This week’s mix</p>'+
       '<div class="load-strip-squares">'+squares+'</div>'+
       '<p class="load-strip-label">'+counts.hard+' hard · '+counts.moderate+' moderate · '+counts.easy+' easy — '+balance+'</p>'+
       '<div class="load-strip-key">'+
@@ -2949,7 +2939,8 @@
         '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--burgundy-light);"></span>moderate</span>'+
         '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--burgundy);"></span>hard</span>'+
       '</div>'+
-      (maxRun >= 3 ? '<div class="load-strip-warning"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Three hard days in a row — build in some recovery.</div>' : '');
+      (maxRun >= 3 ? '<div class="load-strip-warning"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Three hard days in a row — build in some recovery.</div>' : '')+
+    '</div>';
   }
 
   function daySummary(ds){
@@ -2985,70 +2976,12 @@
       '<i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i></div>';
   }
 
-  function renderTodayHero(todays, today){
-    const eyebrow = dowShort(today)+' '+dayNum(today)+' '+monShort(today)+' · Today';
-    let title, sub;
-    if(!todays.length){ title = 'A <em>rest</em> day.'; sub = 'Nothing planned — recovery is training too.'; }
-    else if(todays.length===1){
-      const s = todays[0];
-      const word = s.intensity? (s.intensity==='moderate'?'moderate':s.intensity) : 'training';
-      title = 'A '+esc(word)+' <em>'+esc((s.sport||'session').toLowerCase())+'</em> day.';
-      sub = esc(s.name);
-    } else { title = todays.length+' sessions <em>today</em>.'; sub = 'Plan them, do them, log them.'; }
-    document.getElementById('today-hero').innerHTML =
-      '<p class="today-hero-eyebrow">'+eyebrow+'</p><h2 class="today-hero-title">'+title+'</h2><p class="today-hero-sub">'+sub+'</p>';
-  }
-
-  function renderMobileToday(todays, ws, today, byDay){
-    // LAB: quick-add lives here too so the plan → log loop is one tap on a phone
-    // (the Week-view plan card is hidden on mobile until you switch views).
-    let html = '<div style="display:flex; gap:8px; margin-bottom:12px;">'+
-      '<button class="from-plan-btn" style="flex:1; justify-content:center; padding:13px; border-radius:12px;" onclick="openLabTemplates()"><i class="ti ti-bolt" aria-hidden="true"></i> From my plan</button>'+
-      '<button class="copy-week-btn" style="flex:1; justify-content:center; padding:13px; border-radius:12px;" onclick="copyLastWeek()"><i class="ti ti-copy" aria-hidden="true"></i> Copy last week</button>'+
-    '</div>';
-    if(todays.length){
-      html += todays.map(s =>
-        '<div class="today-big-session" onclick="openSession(\''+s.id+'\')">'+
-          '<div class="today-big-session-row"><h3 class="today-big-session-name">'+esc(s.name)+'</h3>'+intensityBadge(s.intensity)+'</div>'+
-          '<div class="today-big-session-meta"><span><strong>'+esc(s.sport)+'</strong></span><span>·</span>'+
-            '<span>'+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+'</span>'+
-            (s.isPB?'<span>·</span><span><i class="ti ti-flag" aria-hidden="true"></i> PB</span>':'')+'</div>'+
-          (lastWeekRefs[s.id]?'<div class="today-big-lastweek-ref">'+esc(lastWeekRefs[s.id])+'</div>':'')+
-          '<div class="today-big-session-cta">'+
-            '<button class="btn-primary" onclick="event.stopPropagation(); openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(s.status==='done'?'Edit log':'Log it')+'</button>'+
-            '<button class="btn-secondary" onclick="event.stopPropagation(); openSession(\''+s.id+'\')">See workout</button>'+
-          '</div></div>').join('');
-    } else {
-      html += '<div class="today-big-session" style="border-left-color:var(--sage);">'+
-        '<div class="today-big-session-row"><h3 class="today-big-session-name">Rest day</h3></div>'+
-        '<div class="today-big-session-meta"><span>Nothing planned today.</span></div>'+
-        '<div class="today-big-session-cta"><button class="btn-secondary" onclick="newSession(\''+today+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add a session</button></div></div>';
-    }
-    html += '<div class="today-rest-summary"><strong>This week so far</strong>'+weekSoFar(ws, today, byDay)+'</div>';
-    document.getElementById('mobile-today').innerHTML = html;
-  }
-
-  function weekSoFar(ws, today, byDay){
-    const parts = [];
-    for(let i=0;i<7;i++){
-      const iso = addDays(ws, i);
-      if(iso===today){ parts.push('<span style="color:var(--burgundy);">'+dowShort(iso)+': today</span>'); continue; }
-      const ds = byDay[iso] || [];
-      let label = 'rest';
-      if(ds.length){
-        let mark = '';
-        if(ds.some(s=>s.status==='done')) mark = '✓ ';
-        else if(ds.some(s=>s.status==='modified')) mark = '⚑ ';
-        else if(ds.some(s=>s.status==='missed')) mark = '✗ ';
-        label = mark + ds.length + (ds.length>1?' sessions':' session');
-      }
-      parts.push(dowShort(iso)+' '+label);
-    }
-    return ' ' + parts.join(' · ');
-  }
-
+  // Recent-PBs list for the Week sidebar. The sidebar was folded into the single
+  // card stack, so this is a no-op when its target is absent — kept because
+  // refreshPBs() still calls it after a PB is saved.
   function renderWeekPBs(){
     const el = document.getElementById('weekPbList');
+    if(!el) return;
     const top = (state.pbs||[]).slice(0,3);
     if(!top.length){ el.innerHTML = '<p class="pb-item-sub" style="opacity:.75;">No PBs yet. Log a session and mark it as a PB.</p>'; return; }
     el.innerHTML = top.map(pbStripItem).join('');
@@ -3880,31 +3813,60 @@
     const view = document.getElementById('view-year');
     if(!hasYear()){ view.innerHTML = onboardHTML(); return; }
     const curMonth = MONTHS[new Date().getMonth()];
-    let html = '<div class="year-head">'+
-      '<div class="year-legend">'+
-        legendItem('build','get fitter') + legendItem('maintain','') +
-        legendItem('peak','big event') + legendItem('recover','rest') +
-      '</div>'+
-      '<button class="year-head-btn" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Goal</button>'+
+    const ym = state.yearMap;
+    const ap = ym.aPriority;
+    let html = '<div class="card-stack">';
+
+    // Hero — the athlete's headline goal (vision + A-priority event).
+    html += '<div class="card card-hero">'+
+      '<p class="card-hero-eyebrow">Your year · '+esc(ym.year||'2026–27')+'</p>'+
+      '<h2 class="card-hero-title">'+(ym.vision? esc(ym.vision) : 'Map your <em>year</em>.')+'</h2>'+
+      '<p class="card-hero-sub">'+(ap&&ap.event
+          ? '<i class="ti ti-flag-filled" aria-hidden="true"></i> A-priority · <strong>'+esc(ap.event)+'</strong>'+(ap.date?' · '+fmtNice(ap.date):'')
+          : 'Set the one event your year points at.')+'</p>'+
+      '<div class="week-today-cta"><button class="card-cta card-cta-ghost" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Edit goal</button></div>'+
     '</div>';
-    state.yearMap.sports.forEach((sport, si) => {
-      const ap = state.yearMap.aPriority;
+
+    // One card per sport — monthly states via the existing month tiles / statePicker.
+    ym.sports.forEach((sport, si) => {
       const evt = (ap && ap.event && (!ap.sport || ap.sport===sport.name)) ? ap : null;
       const nowPhase = currentSportPhase(sport, curMonth);
-      html += '<div class="year-sport">'+
-        '<div class="year-sport-head">'+
-          '<div class="year-sport-titles">'+
-            '<p class="overline">'+(sport.isPriority? 'Priority sport' : 'Sport')+'</p>'+
-            '<p class="year-sport-name">'+esc(sport.name)+
-              (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+'</p>'+
-          '</div>'+
-          (nowPhase? '<span class="year-now-chip ym-'+nowPhase+'"><span class="nc-emoji">'+PHASE_EMOJI[nowPhase]+'</span> Right now · '+PHASE_FRIENDLY[nowPhase]+'</span>' : '')+
-        '</div>'+
+      html += '<div class="card year-sport">'+
+        '<p class="card-eyebrow">'+(sport.isPriority? 'Priority sport' : 'Sport')+
+          (nowPhase? '<span class="card-eyebrow-action"><span class="year-now-chip ym-'+nowPhase+'"><span class="nc-emoji">'+PHASE_EMOJI[nowPhase]+'</span> Now · '+PHASE_FRIENDLY[nowPhase]+'</span></span>' : '')+
+        '</p>'+
+        '<div class="year-sport-head"><div class="year-sport-titles">'+
+          '<p class="year-sport-name">'+esc(sport.name)+
+            (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+'</p>'+
+        '</div></div>'+
         (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
-        renderMonths(sport, si, curMonth) +'</div>';
+        '<div class="year-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
+        renderMonths(sport, si, curMonth)+
+      '</div>';
     });
-    html += '<button class="year-head-btn" style="width:100%; justify-content:center; margin-top:4px;" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
+
+    // Add-a-sport — a ghost action, not its own card.
+    html += '<button class="card-cta card-cta-ghost" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
+
+    // Testing & busy months, surfaced from the year map.
+    html += yearTestingCard();
+
+    html += '</div>';
     view.innerHTML = html;
+  }
+
+  // Testing windows + busy months as a card, mirroring the ◆ / ▲ month markers.
+  function yearTestingCard(){
+    const ym = state.yearMap;
+    const tw = (ym.testingWindows||[]).map(w => w.month||w).filter(Boolean);
+    const oc = (ym.otherCommitments||[]).map(w => w.month||w).filter(Boolean);
+    let body = '';
+    if(tw.length) body += '<p class="year-window-line"><span class="ym-marker testing">◆</span> Testing · <strong>'+tw.map(esc).join(', ')+'</strong></p>';
+    if(oc.length) body += '<p class="year-window-line"><span class="ym-marker commitment">▲</span> Busy · <strong>'+oc.map(esc).join(', ')+'</strong></p>';
+    if(!body) body = '<p class="card-empty-line">No testing or busy months set yet. Add them in Edit goal.</p>';
+    return '<div class="card"><p class="card-eyebrow">Testing &amp; busy months'+
+      '<span class="card-eyebrow-action"><button class="block-phase-link" onclick="editYearGoal()">Edit →</button></span>'+
+    '</p>'+body+'</div>';
   }
 
   function legendItem(stt, meaning){
@@ -4207,40 +4169,100 @@
     return { build:'var(--gold)', maintain:'var(--sage)', peak:'var(--burgundy)', recover:'var(--cream)', off:'var(--line)' }[ms.state] || null;
   }
 
-  function renderLoad(){
-    const view = document.getElementById('view-load');
-    const sum = (state.load && state.load.summary) || { thisWeekLoad:0, acwr:null, weeksLogged:0 };
+  // ----- Legible, client-side load read (from acwr + weekly series only) -----
+  // No backend work: everything here is derived from state.load.summary.acwr and
+  // the state.load.weeks series the client already received.
+  function loadRead(){
+    const sum = (state.load && state.load.summary) || {};
+    const series = (state.load && state.load.weeks) || [];
+    const logged = series.filter(w => w && w.load > 0);
+    const thisWeek = sum.thisWeekLoad || 0;
+    // "usual" = mean of the last ~4 logged weeks (the athlete's recent normal).
+    const recent = logged.slice(-4);
+    const usual = recent.length ? Math.round(recent.reduce((a,w)=>a+w.load,0)/recent.length) : 0;
     const acwr = sum.acwr;
-    const flag = acwr!=null && (acwr < 0.8 || acwr > 1.3);
-    // Plain-language read of the acute:chronic ratio (kept under the hood).
-    const word = acwr==null ? '—' : (acwr>1.3 ? 'High' : (acwr<0.8 ? 'Low' : 'Good'));
-    const wordSub = acwr==null ? 'log a few weeks' : (acwr>1.3 ? 'ramping up fast' : (acwr<0.8 ? 'easing off' : 'in a healthy range'));
+    const weeksLogged = (sum.weeksLogged != null) ? sum.weeksLogged : logged.length;
 
-    let html =
-      '<div class="load-cards">'+
-        loadCard('Load this week', sum.thisWeekLoad||0, '', 'effort × minutes', false)+
-        loadCard('Doing too much?', word, '', wordSub, flag)+
-        loadCard('Weeks logged', sum.weeksLogged||0, '', 'this season', false)+
-      '</div>';
-    html += '<div class="section-head">'+
-        '<div><p class="overline">Across the season</p>'+
-        '<h2 class="section-heading">Training <em style="font-style:italic; color:var(--burgundy);">load</em> over time</h2></div>'+
-      '</div>';
-    html += '<div class="load-chart-wrap">'+
-      '<p class="load-chart-title">Bars = how much you trained each week · colour = your phase'+
-        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--gold);"></span>💪 Build</span>'+
-        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--sage);"></span>⚡ Maintain</span>'+
-        '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--burgundy);"></span>🏆 Peak</span>'+
-        '<span class="load-acwr-key"><i class="ti ti-wave-sine" aria-hidden="true"></i> Workload trend</span>'+
-      '</p>' + loadChartSVG() + '</div>';
-    view.innerHTML = html;
+    // Need ~3 logged weeks before an acute:chronic read means anything.
+    if(weeksLogged < 3 || acwr == null){
+      return { enough:false, thisWeek, usual, weeksLogged, acwr:null, band:'building',
+               verdict:'Still building your baseline' };
+    }
+    let verdict, band;
+    if(acwr < 0.8){ verdict = 'Easing off'; band = 'healthy'; }
+    else if(acwr <= 1.3){ verdict = 'Building steadily'; band = 'healthy'; }
+    else if(acwr <= 1.5){ verdict = 'Pushing up'; band = 'healthy'; }
+    else { verdict = 'Ramping fast — watch recovery'; band = 'ramp'; }
+    return { enough:true, thisWeek, usual, weeksLogged, acwr, verdict, band };
   }
 
-  function loadCard(label, value, suffix, sub, flag){
-    return '<div class="load-card'+(flag?' flag':'')+'">'+
-      '<p class="load-card-label">'+label+'</p>'+
-      '<div><span class="load-card-value">'+esc(String(value))+suffix+'</span>'+
-      '<p class="load-card-sub">'+esc(sub)+'</p></div></div>';
+  function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
+  // A short, state-aware sentence: how this week compares to usual, tied to the
+  // athlete's current training state (from the year map).
+  function loadSentence(read, phase){
+    const thisWeek = read.thisWeek, usual = read.usual;
+    let dir, rel;
+    if(!usual){ dir='same'; rel='about the same as your recent weeks'; }
+    else if(thisWeek >= usual*1.35){ dir='above'; rel='well above your recent weeks'; }
+    else if(thisWeek >= usual*1.1){ dir='above'; rel='a little above your recent weeks'; }
+    else if(thisWeek <= usual*0.65){ dir='below'; rel='well below your recent weeks'; }
+    else if(thisWeek <= usual*0.9){ dir='below'; rel='a little below your recent weeks'; }
+    else { dir='same'; rel='about the same as your recent weeks'; }
+    if(!phase) return cap(rel)+'.';
+    const label = PHASE_FRIENDLY[phase] || STATE_LABEL[phase] || '';
+    // Affirm only when the direction fits the block's intent; else stay neutral.
+    const fits = { build:['above','same'], peak:['above','same'], maintain:['same'], recover:['below'], off:['below','same'] };
+    const ok = (fits[phase]||[]).indexOf(dir) >= 0;
+    return cap(rel) + ' — ' + (ok ? 'right for a '+label+' block.' : 'you\'re in a '+label+' block.');
+  }
+
+  // Shared load body: verdict headline + this-week-vs-usual bar + sentence + au
+  // detail. Used by BOTH the Week Load card and the Load tab hero.
+  function loadVerdictHTML(read, phase){
+    if(!read.enough){
+      return '<p class="load-verdict building">'+esc(read.verdict)+'</p>'+
+        '<p class="load-sentence">Log about three weeks and your load read shows here.</p>'+
+        '<p class="load-detail">'+(read.thisWeek||0)+' au this week · '+read.weeksLogged+' week'+(read.weeksLogged===1?'':'s')+' logged</p>';
+    }
+    const scaleMax = Math.max(read.thisWeek, read.usual, 1) * 1.4;
+    const fillPct = Math.min(100, read.thisWeek/scaleMax*100);
+    const markPct = Math.min(100, read.usual/scaleMax*100);
+    const cls = read.band==='ramp' ? 'ramp' : 'healthy';
+    return '<p class="load-verdict '+cls+'">'+esc(read.verdict)+'</p>'+
+      '<div class="load-usual">'+
+        '<div class="load-usual-track">'+
+          '<div class="load-usual-fill '+cls+'" style="width:'+fillPct.toFixed(1)+'%"></div>'+
+          '<div class="load-usual-marker" style="left:'+markPct.toFixed(1)+'%" title="usual ~'+read.usual+' au"></div>'+
+        '</div>'+
+        '<div class="load-usual-labels"><span>this week</span><span class="mark">usual ~'+read.usual+'</span></div>'+
+      '</div>'+
+      '<p class="load-sentence">'+esc(loadSentence(read, phase))+'</p>'+
+      '<p class="load-detail">'+read.thisWeek+' au · usual ~'+read.usual+' · '+read.weeksLogged+' weeks logged</p>';
+  }
+
+  function renderLoad(){
+    const view = document.getElementById('view-load');
+    const read = loadRead();
+    const phase = (currentPhaseInfo()||{}).phase || '';
+    view.innerHTML =
+      '<div class="card-stack">'+
+        // Led by the same plain-language verdict as the Week Load card.
+        '<div class="card card-hero"><p class="card-hero-eyebrow">Training load</p>'+
+          loadVerdictHTML(read, phase)+
+        '</div>'+
+        // The fuller weekly chart, re-skinned into the card system.
+        '<div class="card">'+
+          '<p class="card-eyebrow">Across the season</p>'+
+          '<p class="load-chart-title">Bars = how much you trained each week · colour = your phase'+
+            '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--gold);"></span>💪 Build</span>'+
+            '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--sage);"></span>⚡ Maintain</span>'+
+            '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--burgundy);"></span>🏆 Peak</span>'+
+            '<span class="load-acwr-key"><i class="ti ti-wave-sine" aria-hidden="true"></i> Workload trend</span>'+
+          '</p>'+
+          '<div class="load-chart-scroll">'+loadChartSVG()+'</div>'+
+        '</div>'+
+      '</div>';
   }
 
   function loadChartSVG(){
@@ -4310,13 +4332,11 @@
   // Nav bar above the week: step to past weeks (backfill) or future weeks (plan
   // ahead). Re-uses the existing getWeek path via drillWeek. Today is shown only
   // when the visible week isn't the current one.
-  function renderWeekNav(ws, curMon){
-    const banner = document.getElementById('weekBanner');
-    if(!banner) return;
+  // Week nav bar, returned as HTML so it can live inside the This Week card.
+  function weekNavHTML(ws, curMon){
     const isCur = ws === curMon;
     const range = 'Week of '+fmtNice(ws)+' – '+fmtNice(addDays(ws,6));
-    banner.innerHTML =
-      '<div class="week-nav">'+
+    return '<div class="week-nav">'+
         '<button class="week-nav-arrow" aria-label="Previous week" onclick="stepWeek(-1)"><i class="ti ti-chevron-left" aria-hidden="true"></i></button>'+
         '<div class="week-nav-center">'+
           '<span class="week-nav-range">'+range+'</span>'+
@@ -4434,16 +4454,24 @@
         '<button class="btn-primary" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>';
       return;
     }
+    const latest = pbs[0];
     const groups = {};
     pbs.forEach(p => { const k = p.sport || 'Other'; (groups[k] = groups[k] || []).push(p); });
-    let html = '<div class="pb-page-head">'+
-      '<div></div>'+
-      '<button class="year-head-btn" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>';
+    let html = '<div class="card-stack">';
+    // Hero — headline + Add a PB.
+    html += '<div class="card card-hero">'+
+      '<p class="card-hero-eyebrow">Personal bests</p>'+
+      '<h2 class="card-hero-title">Your <em>bests</em>.</h2>'+
+      '<p class="card-hero-sub">'+(latest? 'Latest · <strong>'+esc(latest.exercise)+'</strong> '+esc(String(latest.value))+(latest.unit?' '+esc(latest.unit):'')+(latest.date?' · '+fmtNice(latest.date):'') : 'Every best you set lands here.')+'</p>'+
+      '<div class="week-today-cta"><button class="card-cta card-cta-ghost" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>'+
+    '</div>';
+    // One card per sport.
     Object.keys(groups).sort().forEach(sport => {
-      html += '<div class="pb-group"><div class="pb-group-head">'+esc(sport)+'</div>';
+      html += '<div class="card pb-group"><p class="card-eyebrow">'+esc(sport)+'</p>';
       groups[sport].forEach(p => { html += pbPageItem(p); });
       html += '</div>';
     });
+    html += '</div>';
     view.innerHTML = html;
   }
 
@@ -4548,15 +4576,15 @@
     if(calMonth==null) calMonth = (bk.months && bk.months[0] != null) ? bk.months[0] : new Date().getMonth();
     view.innerHTML =
       '<div class="book-grid">'+
-        '<div class="book-card">'+
-          '<p class="overline">Coach check-ins</p>'+
+        '<div class="card book-card">'+
+          '<p class="card-eyebrow">Coach check-ins</p>'+
           '<h2 class="section-heading">Book a <em style="font-style:italic;color:var(--burgundy);">session</em></h2>'+
           '<div id="slotList" style="margin-top:16px;">'+ (bk.slots||[]).map(slotCardHTML).join('') +'</div>'+
           '<div class="booking-note">Slots open two weeks in advance.</div>'+
         '</div>'+
-        '<div class="book-card">'+
-          '<div class="cal-head"><div><p class="overline">Your schedule</p>'+
-            '<h2 class="section-heading">'+esc(bk.calTitle || 'This term')+'</h2></div></div>'+
+        '<div class="card book-card">'+
+          '<p class="card-eyebrow">Your schedule</p>'+
+          '<div class="cal-head"><div><h2 class="section-heading">'+esc(bk.calTitle || 'This term')+'</h2></div></div>'+
           calTabsHTML(bk.months)+
           '<div class="cal-grid" id="calGrid">'+calGridHTML(calMonth)+'</div>'+
           calLegendHTML()+
@@ -4643,14 +4671,6 @@
   // ============================================================
   // BINDINGS + INIT
   // ============================================================
-  document.querySelectorAll('.view-toggle button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.body.classList.toggle('show-week', btn.dataset.view==='week');
-    });
-  });
-
   document.getElementById('rpe-row').addEventListener('click', e => {
     const pip = e.target.closest('.rpe-pip');
     if(!pip) return;
