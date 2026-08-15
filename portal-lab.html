@@ -1726,14 +1726,14 @@
   </div>
 </div>
 
-<!-- LAB: "From my plan" quick-add palette -->
+<!-- Quick-add palette (templates) -->
 <div class="sheet-backdrop" id="labtpl-backdrop" onclick="closeLabTemplates()"></div>
 <div class="sheet" id="labTemplateSheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <div class="sheet-header-content">
-      <p class="sheet-eyebrow">From my plan</p>
-      <h2 class="sheet-title">Quick-<em>add</em> a session.</h2>
+      <p class="sheet-eyebrow">Quick add</p>
+      <h2 class="sheet-title">Add from a <em>template</em>.</h2>
     </div>
     <button class="sheet-close" onclick="closeLabTemplates()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
@@ -1741,6 +1741,22 @@
     <p class="readiness-sub-label">Add to</p>
     <div class="lab-day-picker" id="labDayPicker"></div>
     <div class="lab-tpl-list" id="labTemplateList"></div>
+  </div>
+</div>
+
+<!-- "More" — the add/log power tools, grouped so they don't compete with the primary add -->
+<div class="sheet-backdrop" id="more-backdrop" onclick="closeMoreActions()"></div>
+<div class="sheet" id="moreSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">This week</p>
+      <h2 class="sheet-title">More ways to <em>build</em> your week.</h2>
+    </div>
+    <button class="sheet-close" onclick="closeMoreActions()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <div class="more-list" id="moreList"></div>
   </div>
 </div>
 
@@ -1874,8 +1890,26 @@
   }
   .week-progress-track { flex: 1; height: 7px; background: var(--line-soft); border-radius: 999px; overflow: hidden; }
   .week-progress-track > span { display: block; height: 100%; background: var(--sage); border-radius: 999px; transition: width 0.3s; }
-  .week-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  .week-actions > button { flex: 1 1 auto; justify-content: center; }
+  .week-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .week-actions > button { justify-content: center; }
+
+  /* "More" action sheet — one tappable row per power tool */
+  .more-list { display: flex; flex-direction: column; gap: 8px; }
+  .more-row {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
+    background: var(--cream); border: 1px solid transparent; border-radius: 14px; padding: 14px 16px;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .more-row:hover { box-shadow: 0 6px 18px rgba(135,75,70,0.10); border-color: var(--line); }
+  .more-row:active { transform: scale(0.99); }
+  .more-row-icon {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--surface); color: var(--burgundy);
+    display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+  }
+  .more-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .more-row-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .more-row-sub { font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; color: var(--ink-mute); line-height: 1.35; }
+  .more-row-go { color: var(--ink-mute); font-size: 16px; flex-shrink: 0; }
 
   /* ===== LOAD — plain-language verdict + "vs usual" bar ===== */
   /* Verdict headline sits with a small status pill (mock-style); colour lives on
@@ -2829,31 +2863,34 @@
     const total = state.week.sessions.length;
     const pct = total ? Math.round(done/total*100) : 0;
     const progress = total ? (done+' of '+total+' session'+(total===1?'':'s')+' this week') : 'No sessions planned this week yet';
-    let titleHTML, subHTML, primary;
+    // One adaptive action: log the session that's on today, or add one if the
+    // day is empty. (A second session on the same day is still reachable from
+    // the day list below — it isn't a co-equal button up here.)
+    let titleHTML, subHTML, cta;
     if(todays.length){
       const s = todays[0];
       const extra = todays.length>1 ? ' · +'+(todays.length-1)+' more today' : '';
       titleHTML = esc(s.name);
       subHTML = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+extra;
-      primary = '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?'Edit today’s log':'Log today’s session')+'</button>';
+      cta = '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?'Edit today’s log':'Log today’s session')+'</button>';
     } else {
       titleHTML = 'A <em>rest</em> day.';
       subHTML = 'Nothing planned — recovery counts too.';
-      primary = '';
+      cta = '<button class="card-cta card-cta-gold" onclick="newSession(\''+today+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add today’s session</button>';
     }
-    const addCls = todays.length ? 'card-cta card-cta-ghost' : 'card-cta card-cta-gold';
-    const addBtn = '<button class="'+addCls+'" onclick="newSession(\''+today+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add today’s session</button>';
     return '<div class="card card-hero">'+
       '<p class="card-hero-eyebrow">'+eyebrow+'</p>'+
       '<h2 class="card-hero-title">'+titleHTML+'</h2>'+
       '<p class="card-hero-sub">'+subHTML+'</p>'+
-      '<div class="week-today-cta">'+primary+addBtn+'</div>'+
+      '<div class="week-today-cta">'+cta+'</div>'+
       '<p class="week-progress"><span class="week-progress-track"><span style="width:'+pct+'%"></span></span>'+esc(progress)+'</p>'+
     '</div>';
   }
 
-  // (b) THIS WEEK — week nav + day list (status per day) + plan actions.
+  // (b) THIS WEEK — week nav + day list (status per day) + one clear add + More.
   function weekThisWeekCard(ws, curMon, byDay, today){
+    // Default an "Add session" to today when it's in view, else the week's Monday.
+    const addDay = (today >= ws && today <= addDays(ws,6)) ? today : ws;
     let rows = '';
     for(let i=0;i<7;i++){
       const iso = addDays(ws, i);
@@ -2874,10 +2911,8 @@
       '</div>'+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
       '<div class="week-actions">'+
-        '<button class="quicklog-btn" onclick="openQuickLog()"><i class="ti ti-sparkles" aria-hidden="true"></i> Quick Log</button>'+
-        '<button class="from-plan-btn" onclick="openLabTemplates()"><i class="ti ti-bolt" aria-hidden="true"></i> From my plan</button>'+
-        '<button class="copy-week-btn" onclick="copyLastWeek()"><i class="ti ti-copy" aria-hidden="true"></i> Copy last week</button>'+
-        '<button class="change-plan-btn" onclick="openPlanSheet()">Change plan</button>'+
+        '<button class="card-cta" style="flex:2;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
+        '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="openMoreActions()"><i class="ti ti-dots" aria-hidden="true"></i> More</button>'+
       '</div>'+
     '</div>';
   }
@@ -3379,6 +3414,44 @@
   }
   window.openLabTemplates = openLabTemplates;
   window.closeLabTemplates = closeLabTemplates;
+
+  // ============================================================
+  // "More" — groups the secondary add/log tools under one clear entry so they
+  // stop competing with the primary "Add session" / "Log today's session".
+  // ============================================================
+  function moreRow(icon, name, sub, fn){
+    return '<button class="more-row" onclick="'+fn+'()">'+
+      '<span class="more-row-icon"><i class="ti '+icon+'" aria-hidden="true"></i></span>'+
+      '<span class="more-row-main"><span class="more-row-name">'+name+'</span><span class="more-row-sub">'+sub+'</span></span>'+
+      '<i class="ti ti-chevron-right more-row-go" aria-hidden="true"></i></button>';
+  }
+  function openMoreActions(){
+    const prog = state.planName ? esc(state.planName) : 'none chosen yet';
+    document.getElementById('moreList').innerHTML =
+      moreRow('ti-sparkles', 'Log from notes', 'Paste what you did — we’ll turn it into sessions', 'moreLogFromNotes')+
+      moreRow('ti-bolt', 'Quick add', 'Drop in a session from a template', 'moreQuickAdd')+
+      moreRow('ti-copy', 'Copy last week', 'Repeat last week’s sessions on this week', 'moreCopyWeek')+
+      moreRow('ti-list-check', 'Switch program', 'Current · '+prog+' — replaces this week', 'moreSwitchProgram');
+    document.getElementById('more-backdrop').classList.add('open');
+    document.getElementById('moreSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMoreActions(){
+    document.getElementById('more-backdrop').classList.remove('open');
+    document.getElementById('moreSheet').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  // Each tool closes the More sheet, then opens its own flow.
+  function moreLogFromNotes(){ closeMoreActions(); openQuickLog(); }
+  function moreQuickAdd(){ closeMoreActions(); openLabTemplates(); }
+  function moreCopyWeek(){ closeMoreActions(); copyLastWeek(); }
+  function moreSwitchProgram(){ closeMoreActions(); openPlanSheet(); }
+  window.openMoreActions = openMoreActions;
+  window.closeMoreActions = closeMoreActions;
+  window.moreLogFromNotes = moreLogFromNotes;
+  window.moreQuickAdd = moreQuickAdd;
+  window.moreCopyWeek = moreCopyWeek;
+  window.moreSwitchProgram = moreSwitchProgram;
 
   function renderLabDayPicker(){
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
@@ -4598,8 +4671,8 @@
     const bk = state.booking;
     if(!bk){
       view.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-calendar-plus" aria-hidden="true"></i></div>'+
-        '<h2 class="empty-state-title">Booking is <em>coming soon</em>.</h2>'+
-        '<p class="empty-state-text">Soon you\'ll book check-ins, technique reviews and testing days with Mr Bain right here — and see them on your own calendar. Want a preview? Open this page with <strong>?demo=1</strong>.</p></div>';
+        '<h2 class="empty-state-title">Booking opens <em>later this term</em>.</h2>'+
+        '<p class="empty-state-text">Soon you\'ll book check-ins, technique reviews and testing days with your coach right here, and see them on your own calendar. Nothing to do yet — check back later this term.</p></div>';
       return;
     }
     if(calMonth==null) calMonth = (bk.months && bk.months[0] != null) ? bk.months[0] : new Date().getMonth();
