@@ -2132,6 +2132,17 @@
   .prog-empty-lead { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; color: var(--ink); margin: 0 0 6px; }
   .prog-empty-sub { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-mute); line-height: 1.55; margin: 0 auto 18px; max-width: 34ch; }
   .prog-change-btn { display: inline-flex; align-items: center; gap: 8px; }
+  /* Week ↔ Program cross-links */
+  .week-prov { width: 100%; display: flex; align-items: center; gap: 7px; background: var(--cream); border: 1px solid var(--line-soft); border-radius: 12px; padding: 10px 13px; margin: 12px 0 4px; font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute); cursor: pointer; text-align: left; transition: all 0.15s; }
+  .week-prov:hover { border-color: var(--burgundy); color: var(--ink); }
+  .week-prov strong { color: var(--burgundy); font-weight: 700; }
+  .week-prov .ti-chevron-right { margin-left: auto; font-size: 14px; }
+  .week-prov .ti-repeat, .week-prov .ti-clipboard-list { font-size: 14px; color: var(--burgundy); }
+  .prog-view-week { width: 100%; margin-top: 10px; background: transparent; border: none; color: var(--burgundy); font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 4px; }
+  .prog-view-week:hover { text-decoration: underline; }
+  .prog-week-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+  .prog-repeat-chip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--sage); background: #e9efe9; padding: 3px 8px; border-radius: 999px; }
+  .prog-repeat-chip .ti { font-size: 11px; }
   .prog-name-row { display: flex; align-items: center; gap: 8px; }
   .prog-rename { flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
   .prog-rename:hover { border-color: var(--burgundy); color: var(--burgundy); }
@@ -3231,11 +3242,16 @@
     const fillPrompt = (emptyWeek && tplN)
       ? '<button class="week-fill-prompt" onclick="fillWeekFromTemplate()"><i class="ti ti-calendar-plus" aria-hidden="true"></i> Fill this week from your program · '+tplN+' session'+(tplN===1?'':'s')+'</button>'
       : '';
+    const progName = (state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || '';
+    const prov = tplN
+      ? '<button class="week-prov" onclick="switchTab(\'program\')"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats from <strong>'+esc(progName||'my program')+'</strong> · Edit program <i class="ti ti-chevron-right" aria-hidden="true"></i></button>'
+      : '<button class="week-prov" onclick="switchTab(\'program\')"><i class="ti ti-clipboard-list" aria-hidden="true"></i> No program yet · Set one up <i class="ti ti-chevron-right" aria-hidden="true"></i></button>';
     return '<div class="card">'+
       '<div class="week-head">'+
         '<p class="card-eyebrow" style="margin:0;">This week</p>'+
         weekNavHTML(ws, curMon)+
       '</div>'+
+      prov+
       fillPrompt+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
       '<div class="week-actions">'+
@@ -4305,11 +4321,10 @@
     let html = '';
     if(n) html += moreRow('ti-calendar-plus', 'Fill this week from my program', 'Adds your program’s sessions to empty days', 'moreFillWeek');
     html +=
-      moreRow('ti-list-check', 'My program', progSub, 'moreMyProgram')+
+      moreRow('ti-list-check', 'My program', progSub + ' · build & switch', 'moreMyProgram')+
       moreRow('ti-sparkles', 'Log from notes', 'Paste what you did — we’ll turn it into sessions', 'moreLogFromNotes')+
       moreRow('ti-bolt', 'Quick add', 'Drop in a one-off session from a template', 'moreQuickAdd')+
-      moreRow('ti-copy', 'Copy last week', 'Repeat last week’s sessions on this week', 'moreCopyWeek')+
-      moreRow('ti-refresh', 'Switch program', 'Start from a ready-made program — replaces this week', 'moreSwitchProgram');
+      moreRow('ti-copy', 'Copy last week', 'Repeat last week’s sessions on this week', 'moreCopyWeek');
     document.getElementById('moreList').innerHTML = html;
     document.getElementById('more-backdrop').classList.add('open');
     document.getElementById('moreSheet').classList.add('open');
@@ -4459,9 +4474,11 @@
           '<button class="btn-secondary" onclick="openPlanSheet()"><i class="ti ti-refresh" aria-hidden="true"></i> Change program</button>'+
           '<button class="btn-primary" onclick="fillWeekFromTemplate()"><i class="ti ti-calendar-plus" aria-hidden="true"></i> Fill this week</button>'+
         '</div>'+
+        '<button class="prog-view-week" onclick="switchTab(\'week\')">See it on this week <i class="ti ti-chevron-right" aria-hidden="true"></i></button>'+
       '</div>'+
       '<div class="card prog-week-card">'+
-        '<div class="card-label">Your week · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div>'+
+        '<div class="prog-week-head"><div class="card-label" style="margin:0;">Your week · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div>'+
+          '<span class="prog-repeat-chip"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats weekly</span></div>'+
         '<div class="myprog-list prog-week-list">'+programDaysHTML()+'</div>'+
         '<button class="prog-add-day" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Add a day</button>'+
         '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Tap <i class="ti ti-x" aria-hidden="true"></i> to remove a day.</p>'+
