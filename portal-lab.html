@@ -2171,10 +2171,17 @@
   .dow-pill { flex: 1; min-width: 38px; padding: 9px 0; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-mute); font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.12s; }
   .dow-pill.on { border-color: var(--burgundy); background: var(--burgundy); color: var(--cream); }
   .pday-ex-list { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 8px; }
-  .pday-ex { display: flex; align-items: center; gap: 10px; background: var(--cream); border-radius: 12px; padding: 12px 12px; }
-  .pday-ex-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .pday-ex { display: flex; align-items: center; gap: 8px; background: var(--cream); border-radius: 12px; padding: 10px 10px; }
+  .pday-ex-move { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .pday-move-btn { width: 26px; height: 20px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0; transition: all 0.12s; }
+  .pday-move-btn:hover:not(:disabled) { border-color: var(--burgundy); color: var(--burgundy); }
+  .pday-move-btn:disabled { opacity: 0.3; cursor: default; }
+  .pday-ex-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
   .pday-ex-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
-  .pday-ex-rx { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); }
+  .pday-ex-rx-input { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); background: transparent; border: none; border-bottom: 1px dashed transparent; padding: 1px 0; width: 100%; transition: border-color 0.12s, color 0.12s; }
+  .pday-ex-rx-input::placeholder { color: var(--ink-mute); opacity: 0.55; }
+  .pday-ex-rx-input:hover { border-bottom-color: var(--line); }
+  .pday-ex-rx-input:focus { outline: none; color: var(--ink); border-bottom-color: var(--burgundy); }
   .pday-ex-btn { flex-shrink: 0; width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--burgundy); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; transition: all 0.15s; }
   .pday-ex-btn:hover { border-color: var(--burgundy); background: #fff; }
   .pday-ex-btn.danger { color: var(--ink-mute); }
@@ -3756,18 +3763,32 @@
   }
   function renderBuilderWorkout(){
     const w = builderDay.workout || [];
+    const last = w.length - 1;
     const ul = document.getElementById('pdayWorkout');
     ul.innerHTML = w.map((st,i) => {
+      const move = '<div class="pday-ex-move">'+
+        '<button class="pday-move-btn" title="Move up" aria-label="Move up"'+(i===0?' disabled':'')+' onclick="pdayMoveEx('+i+',-1)"><i class="ti ti-chevron-up" aria-hidden="true"></i></button>'+
+        '<button class="pday-move-btn" title="Move down" aria-label="Move down"'+(i===last?' disabled':'')+' onclick="pdayMoveEx('+i+',1)"><i class="ti ti-chevron-down" aria-hidden="true"></i></button>'+
+      '</div>';
       const swap = (st.exId && swapCandidates(st.exId).length>1)
         ? '<button class="pday-ex-btn" title="Swap" aria-label="Swap exercise" onclick="pdaySwapEx('+i+')"><i class="ti ti-arrows-left-right" aria-hidden="true"></i></button>' : '';
-      return '<li class="pday-ex"><div class="pday-ex-main"><span class="pday-ex-name">'+esc(st.name||'')+'</span>'+
-        (st.detail?'<span class="pday-ex-rx">'+esc(st.detail)+'</span>':'')+'</div>'+swap+
+      return '<li class="pday-ex">'+move+
+        '<div class="pday-ex-main"><span class="pday-ex-name">'+esc(st.name||'')+'</span>'+
+          '<input class="pday-ex-rx-input" value="'+esc(st.detail||'')+'" placeholder="reps · sets · tempo (e.g. 4×8 · tempo 3-1-1)" aria-label="Sets, reps and tempo" onchange="pdayEditRx('+i+', this.value)">'+
+        '</div>'+swap+
         '<button class="pday-ex-btn danger" title="Remove" aria-label="Remove exercise" onclick="pdayRemoveEx('+i+')"><i class="ti ti-x" aria-hidden="true"></i></button></li>';
     }).join('') || '<li class="pday-ex-empty">No exercises yet — add one below.</li>';
   }
   function pdayPickDow(d){ builderDay.dow = d; document.querySelectorAll('#pdayDows .dow-pill').forEach(b => b.classList.toggle('on', +b.dataset.dow === d)); }
   function pdayPickInt(v){ builderDay.intensity = v; document.querySelectorAll('#pdayInts .int-pill').forEach(b => b.classList.toggle('active', b.dataset.int === v)); }
   function pdaySwapEx(i){ openSwapOn(builderDay.workout, i, renderBuilderWorkout); }
+  function pdayEditRx(i, val){ if(builderDay.workout[i]) builderDay.workout[i].detail = (val||'').trim(); }
+  function pdayMoveEx(i, dir){
+    const w = builderDay.workout, j = i + dir;
+    if(j<0 || j>=w.length) return;
+    const t = w[i]; w[i] = w[j]; w[j] = t;
+    renderBuilderWorkout();
+  }
   function pdayRemoveEx(i){ builderDay.workout.splice(i,1); renderBuilderWorkout(); }
   function closePday(){
     document.getElementById('pday-backdrop').classList.remove('open');
@@ -3808,6 +3829,8 @@
   window.pdayPickDow = pdayPickDow;
   window.pdayPickInt = pdayPickInt;
   window.pdaySwapEx = pdaySwapEx;
+  window.pdayEditRx = pdayEditRx;
+  window.pdayMoveEx = pdayMoveEx;
   window.pdayRemoveEx = pdayRemoveEx;
   window.saveProgramDay = saveProgramDay;
   window.deleteProgramDay = deleteProgramDay;
