@@ -1376,6 +1376,21 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- FIRST-RUN WALKTHROUGH — guides writing a vision + periodising the year -->
+<div class="wt" id="walkthrough" hidden>
+  <div class="wt-card">
+    <button class="wt-skip" id="wtSkip" onclick="wtSkip()">Skip</button>
+    <div class="wt-stage" id="wtStage"></div>
+    <div class="wt-footer">
+      <div class="wt-dots" id="wtDots"></div>
+      <div class="wt-nav">
+        <button class="wt-back" id="wtBack" onclick="wtPrev()">Back</button>
+        <button class="wt-next" id="wtNext" onclick="wtNext()">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- DEMO "EXAMPLE" PILL (shown only in ?demo=1; easily removable) -->
 <div class="demo-pill" id="demoPill" hidden>Example</div>
 
@@ -2096,6 +2111,80 @@
   .ai-freetag { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--amber); background: rgba(245,158,11,0.12); padding: 2px 6px; border-radius: 999px; margin-left: 4px; }
   .ai-match-note { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute); background: var(--cream); border-radius: 12px; padding: 12px 14px; margin: 0 0 14px; line-height: 1.5; }
   .ai-match-note strong { color: var(--burgundy); }
+  /* ===== "Coming soon" teaser for gated tabs ===== */
+  .teaser { position: relative; min-height: 62vh; border-radius: 22px; overflow: hidden; }
+  .teaser-ghosts { position: absolute; inset: 0; padding: 16px; display: flex; flex-direction: column; gap: 14px; filter: blur(7px); opacity: 0.5; pointer-events: none; }
+  .tg-card { background: var(--surface); border-radius: 18px; box-shadow: var(--shadow-card); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .tg-bar { height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--cream), var(--line-soft)); }
+  .tg-bar.w40 { width: 40%; } .tg-bar.w50 { width: 50%; } .tg-bar.w60 { width: 60%; }
+  .tg-bar.w70 { width: 70%; } .tg-bar.w80 { width: 80%; } .tg-bar.w90 { width: 90%; }
+  .tg-row { display: flex; align-items: center; gap: 12px; }
+  .tg-dot { width: 24px; height: 24px; border-radius: 50%; background: var(--burgundy-light); flex-shrink: 0; }
+  .tg-chips { display: flex; gap: 8px; margin-top: 4px; }
+  .tg-chips span { width: 56px; height: 26px; border-radius: 8px; background: var(--gold-light); }
+  .teaser-veil { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px 26px;
+    background: radial-gradient(120% 90% at 50% 40%, rgba(254,248,246,0.72), rgba(254,248,246,0.94)); }
+  .teaser-badge { display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--burgundy); background: var(--gold-light); padding: 6px 14px; border-radius: 999px; margin-bottom: 18px; }
+  .teaser-icon { width: 66px; height: 66px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow-card); color: var(--burgundy); display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 16px; }
+  .teaser-title { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600; color: var(--ink); margin: 0 0 8px; }
+  .teaser-line { font-family: 'Inter', sans-serif; font-size: 14px; color: var(--ink-mute); line-height: 1.55; max-width: 32ch; margin: 0 0 22px; }
+  .teaser-back { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--burgundy); background: var(--surface); border: 1.5px solid var(--line); border-radius: 999px; padding: 10px 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+  .teaser-back:hover { border-color: var(--burgundy); }
+
+  /* ===== First-run WALKTHROUGH ===== */
+  .wt { position: fixed; inset: 0; z-index: 200; background: rgba(38,26,24,0.55); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; }
+  @media (min-width: 560px){ .wt { align-items: center; } }
+  .wt-card { position: relative; width: 100%; max-width: 480px; max-height: 94vh; background: var(--surface); border-radius: 26px 26px 0 0; display: flex; flex-direction: column; box-shadow: 0 -10px 40px rgba(0,0,0,0.25); overflow: hidden; }
+  @media (min-width: 560px){ .wt-card { border-radius: 26px; max-height: 88vh; } }
+  .wt-skip { position: absolute; top: 16px; right: 18px; z-index: 2; background: none; border: none; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-mute); cursor: pointer; }
+  .wt-skip:hover { color: var(--ink); }
+  .wt-stage { flex: 1; overflow-y: auto; padding: 40px 26px 12px; }
+  .wt-hero { width: 76px; height: 76px; border-radius: 22px; background: var(--burgundy); color: var(--cream); display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 4px 0 20px; }
+  .wt-eyebrow { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin: 0 0 8px; }
+  .wt-title { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600; color: var(--ink); line-height: 1.1; margin: 0 0 14px; }
+  .wt-title em { font-style: italic; color: var(--burgundy); }
+  .wt-body { font-family: 'Inter', sans-serif; font-size: 15px; color: var(--ink-mute); line-height: 1.6; margin: 0 0 18px; }
+  .wt-body strong { color: var(--ink); font-weight: 600; }
+  .wt-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+  .wt-chip { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--burgundy); background: var(--cream); border: 1px solid var(--line-soft); border-radius: 999px; padding: 6px 13px; }
+  .wt-example { background: var(--cream); border-left: 3px solid var(--gold); border-radius: 0 12px 12px 0; padding: 13px 16px; margin: 0 0 20px; }
+  .wt-example-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 4px; }
+  .wt-example-text { font-family: 'Fraunces', serif; font-style: italic; font-size: 16px; color: var(--ink); margin: 0; line-height: 1.4; }
+  .wt-field { margin: 0 0 16px; }
+  .wt-field label { display: block; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: var(--ink); margin: 0 0 7px; }
+  .wt-field textarea, .wt-field input { width: 100%; }
+  .wt-field textarea { min-height: 74px; }
+  /* mini colour-coded year strip */
+  .wt-year { display: flex; gap: 4px; margin: 4px 0 14px; }
+  .wt-year-cell { flex: 1; border-radius: 9px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .wtc-emoji { font-size: 14px; line-height: 1; }
+  .wtc-m { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; color: rgba(0,0,0,0.5); }
+  .wt-year-cell.ym-build    { background: var(--gold); }
+  .wt-year-cell.ym-maintain { background: var(--sage); }
+  .wt-year-cell.ym-peak     { background: var(--burgundy); }
+  .wt-year-cell.ym-peak .wtc-m, .wt-year-cell.ym-peak .wtc-emoji { color: var(--cream); }
+  .wt-year-cell.ym-recover  { background: var(--cream); border: 1px solid var(--line); }
+  .wt-year-cell.ym-off      { background: var(--ink); }
+  .wt-legend { display: flex; flex-direction: column; gap: 8px; margin: 0 0 8px; }
+  .wt-legend-item { display: flex; align-items: baseline; gap: 8px; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink); }
+  .wt-legend-item span.le-emoji { font-size: 15px; }
+  .wt-legend-item strong { color: var(--ink); }
+  .wt-legend-item em { font-style: normal; color: var(--ink-mute); }
+  .wt-note { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute); background: var(--cream); border-radius: 12px; padding: 12px 14px; line-height: 1.5; margin: 14px 0 0; }
+  .wt-summary { display: flex; flex-direction: column; gap: 12px; margin: 4px 0 8px; }
+  .wt-summary-row { display: flex; gap: 12px; align-items: flex-start; background: var(--cream); border-radius: 14px; padding: 14px 16px; }
+  .wt-summary-row i { color: var(--burgundy); font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .wt-summary-row .wsr-label { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-mute); }
+  .wt-summary-row .wsr-value { font-family: 'Fraunces', serif; font-size: 16px; color: var(--ink); line-height: 1.3; }
+  .wt-footer { flex-shrink: 0; padding: 14px 22px calc(18px + env(safe-area-inset-bottom,0px)); border-top: 1px solid var(--line-soft); display: flex; flex-direction: column; gap: 12px; background: var(--surface); }
+  .wt-dots { display: flex; justify-content: center; gap: 7px; }
+  .wt-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line); transition: all 0.2s; }
+  .wt-dot.on { background: var(--burgundy); width: 20px; border-radius: 4px; }
+  .wt-nav { display: flex; gap: 10px; }
+  .wt-back { flex: 1; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink-mute); background: transparent; border: 1.5px solid var(--line); border-radius: 12px; padding: 13px; cursor: pointer; }
+  .wt-back:hover { border-color: var(--ink-mute); }
+  .wt-next { flex: 2; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; color: var(--cream); background: var(--burgundy); border: none; border-radius: 12px; padding: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .wt-next:hover { background: var(--burgundy-dark); }
   .more-row {
     display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
     background: var(--cream); border: 1px solid transparent; border-radius: 14px; padding: 14px 16px;
@@ -2952,9 +3041,9 @@
       state.load = data.load || { weeks: [], summary: {} };
       renderNav();
       await maybeAutoFillWeek();   // carry the owned program into an empty current week
-      // A brand-new account has no year map yet → land on the Year tab's
-      // "Map your year" onboarding; returning students start on their week.
-      switchTab(hasYear() ? 'week' : 'year');
+      // Student launch: the Year is home. New students get the walkthrough.
+      switchTab(LAUNCH_MODE ? 'year' : (hasYear() ? 'week' : 'year'));
+      if(!hasYear()) openWalkthrough();
       setLoading(false);
     } catch(e){
       setLoading(false);
@@ -2985,7 +3074,7 @@
     setLoading(false);
     const pill = document.getElementById('demoPill'); if(pill) pill.hidden = false;
     renderNav();
-    switchTab('week');
+    switchTab(LAUNCH_MODE ? 'year' : 'week');
   }
 
   function buildDemoState(){
@@ -3135,12 +3224,19 @@
   // ============================================================
   // TABS + BLOCK BAR
   // ============================================================
+  // LAUNCH_MODE: student soft-launch. Only the Year is live; the rest are shown
+  // as blurred "coming soon" teasers. Flip to false to unlock the full app.
+  const LAUNCH_MODE = true;
+  const LIVE_TABS = { year:true };
+  function tabGated(tab){ return LAUNCH_MODE && !LIVE_TABS[tab]; }
+
   function switchTab(tab){
     activeTab = tab;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-'+tab).classList.add('active');
     renderBlockBar();
+    if(tabGated(tab)){ renderTeaser(tab); window.scrollTo(0,0); return; }
     if(tab==='week') renderWeek();
     else if(tab==='year') renderYear();
     else if(tab==='load') renderLoad();
@@ -3149,6 +3245,34 @@
     window.scrollTo(0,0);
   }
   window.switchTab = switchTab;
+
+  // A teaser for a not-yet-live tab: blurred ghost cards behind a crisp
+  // "coming soon" veil — students see something exciting but can't discern it.
+  const TEASER_COPY = {
+    week: { icon:'ti-barbell',   title:'Your training programs', line:'Build a full training week, swap exercises to match your gear, and let it repeat. Nearly ready.' },
+    load: { icon:'ti-activity',  title:'Training load',          line:'See how hard you’re training week to week — and whether it’s too much, too little, or just right.' },
+    book: { icon:'ti-calendar-event', title:'Book your sessions', line:'Reserve your spot in Athlete Academy sessions, straight from your phone.' },
+    pbs:  { icon:'ti-trophy',    title:'Personal bests',         line:'Track every PB and watch your numbers climb across the year.' }
+  };
+  function renderTeaser(tab){
+    const c = TEASER_COPY[tab] || { icon:'ti-lock', title:'Coming soon', line:'Something good is on the way.' };
+    const ghosts = '<div class="teaser-ghosts" aria-hidden="true">'+
+      '<div class="tg-card"><div class="tg-bar w60"></div><div class="tg-bar w90"></div><div class="tg-bar w40"></div></div>'+
+      '<div class="tg-card"><div class="tg-row"><span class="tg-dot"></span><div class="tg-bar w70"></div></div><div class="tg-row"><span class="tg-dot"></span><div class="tg-bar w50"></div></div><div class="tg-row"><span class="tg-dot"></span><div class="tg-bar w80"></div></div></div>'+
+      '<div class="tg-card"><div class="tg-bar w50"></div><div class="tg-chips"><span></span><span></span><span></span></div></div>'+
+    '</div>';
+    document.getElementById('view-'+tab).innerHTML =
+      '<div class="teaser">'+ghosts+
+        '<div class="teaser-veil">'+
+          '<div class="teaser-badge"><i class="ti ti-sparkles" aria-hidden="true"></i> Coming soon</div>'+
+          '<div class="teaser-icon"><i class="ti '+c.icon+'" aria-hidden="true"></i></div>'+
+          '<h3 class="teaser-title">'+esc(c.title)+'</h3>'+
+          '<p class="teaser-line">'+esc(c.line)+'</p>'+
+          '<button class="teaser-back" onclick="switchTab(\'year\')"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back to my year</button>'+
+        '</div>'+
+      '</div>';
+  }
+  window.renderTeaser = renderTeaser;
 
   function currentBlock(){
     if(!state.yearMap || !state.yearMap.sports || !state.yearMap.sports.length) return null;
@@ -4537,7 +4661,9 @@
   function moreFillWeek(){ closeMoreActions(); fillWeekFromTemplate(); }
   function moreMyProgram(){ closeMoreActions(); openMyProgram(); }
   function moreAddDay(){ closeMoreActions(); openProgramDay(-1); }
-  function moreAIBuild(){ closeMoreActions(); openAIBuild(); }
+  // Flip AI_LIVE to true once the parseProgram Apps Script web app is deployed.
+  const AI_LIVE = false;
+  function moreAIBuild(){ closeMoreActions(); if(!AI_LIVE){ showToast('Build with AI — coming soon ✨', ''); return; } openAIBuild(); }
   window.moreAIBuild = moreAIBuild;
   window.openMoreActions = openMoreActions;
   window.closeMoreActions = closeMoreActions;
@@ -5157,7 +5283,8 @@
       '<p class="card-hero-sub">'+(ap&&ap.event
           ? '<i class="ti ti-flag-filled" aria-hidden="true"></i> A-priority · <strong>'+esc(ap.event)+'</strong>'+(ap.date?' · '+fmtNice(ap.date):'')
           : 'Set the one event your year points at.')+'</p>'+
-      '<div class="week-today-cta"><button class="card-cta card-cta-ghost" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Edit goal</button></div>'+
+      '<div class="week-today-cta" style="display:flex; gap:10px;"><button class="card-cta card-cta-ghost" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Edit goal</button>'+
+        '<button class="card-cta card-cta-ghost" onclick="openWalkthrough()"><i class="ti ti-help-circle" aria-hidden="true"></i> How this works</button></div>'+
     '</div>';
 
     // One card per sport — monthly states via the existing month tiles / statePicker.
@@ -5397,7 +5524,8 @@
     const sport = (athlete && athlete.Sport_1) || '';
     return '<div class="empty-state onboard"><div class="empty-state-icon"><i class="ti ti-route" aria-hidden="true"></i></div>'+
       '<h2 class="empty-state-title">Map your <em>year</em>.</h2>'+
-      '<p class="empty-state-text">Three quick things and you\'re set. You can change any of it later.</p>'+
+      '<p class="empty-state-text">New here? Let us walk you through it — or fill in the quick version below.</p>'+
+      '<button class="btn-primary" style="margin:0 0 22px;" onclick="openWalkthrough()"><i class="ti ti-sparkles" aria-hidden="true"></i> Walk me through it</button>'+
       '<div class="onboard-form">'+
         onboardField('Your sport', '<input class="duration-input plan-field" id="obSport" value="'+esc(sport)+'" placeholder="e.g. Swimming">')+
         onboardField('The one event your year points at', '<input class="duration-input plan-field" id="obEvent" placeholder="e.g. Regional Champs">'+
@@ -5439,6 +5567,149 @@
     } catch(e){ console.error('submitOnboard', e); showToast('Could not save — ' + (e.message||'try again'), 'error'); }
   }
   window.submitOnboard = submitOnboard;
+
+  // ============================================================
+  // FIRST-RUN WALKTHROUGH — teaches the *why* + *how* of a vision, then how the
+  // year periodises (build → peak → recover), then sets up the year map.
+  // ============================================================
+  let wt = { i:0, sport:'', vision:'', event:'', date:'' };
+  const WT_STEPS = ['welcome','vision','event','periodise','finish'];
+  function openWalkthrough(){
+    wt = { i:0, sport:(athlete && athlete.Sport_1) || '', vision:'', event:'', date:'' };
+    document.getElementById('walkthrough').hidden = false;
+    document.body.style.overflow = 'hidden';
+    wtRender();
+  }
+  function closeWalkthrough(){
+    document.getElementById('walkthrough').hidden = true;
+    document.body.style.overflow = '';
+  }
+  window.openWalkthrough = openWalkthrough;
+
+  function wtCollect(){
+    const step = WT_STEPS[wt.i];
+    if(step==='vision'){ const v=document.getElementById('wtVision'); if(v) wt.vision = v.value.trim(); }
+    if(step==='event'){
+      const s=document.getElementById('wtSport'), e=document.getElementById('wtEvent'), d=document.getElementById('wtDate');
+      if(s) wt.sport = s.value.trim(); if(e) wt.event = e.value.trim(); if(d) wt.date = d.value;
+    }
+  }
+  function wtNext(){
+    wtCollect();
+    if(WT_STEPS[wt.i]==='event' && !wt.sport){ showToast('Add your sport to continue.', 'error'); return; }
+    if(wt.i >= WT_STEPS.length-1){ wtFinish(); return; }
+    wt.i++; wtRender();
+  }
+  function wtPrev(){ wtCollect(); if(wt.i>0){ wt.i--; wtRender(); } }
+  function wtSkip(){ closeWalkthrough(); if(!hasYear()) renderYear(); }
+  window.wtNext = wtNext; window.wtPrev = wtPrev; window.wtSkip = wtSkip;
+
+  // A colour-coded Aug→Jul strip, auto-periodised around the chosen event month
+  // (or a sensible example if no date yet).
+  function wtYearStripHTML(){
+    const apMonth = wt.date ? MONTHS[parseISO(wt.date).getMonth()] : '';
+    let apIndex = apMonth ? ACADEMIC_MONTHS.indexOf(apMonth) : 8;   // default example ≈ April
+    if(apIndex < 0) apIndex = 8;
+    const cells = ACADEMIC_MONTHS.map(m => {
+      const s = suggestState(m, apIndex, {}) || 'build';
+      return '<div class="wt-year-cell ym-'+s+'" title="'+m+' · '+PHASE_FRIENDLY[s]+'"><span class="wtc-emoji">'+PHASE_EMOJI[s]+'</span><span class="wtc-m">'+m.slice(0,1)+'</span></div>';
+    }).join('');
+    return '<div class="wt-year">'+cells+'</div>';
+  }
+
+  function wtStepHTML(){
+    switch(WT_STEPS[wt.i]){
+      case 'welcome':
+        return '<div class="wt-hero"><i class="ti ti-route" aria-hidden="true"></i></div>'+
+          '<p class="wt-eyebrow">Welcome</p>'+
+          '<h2 class="wt-title">Let’s map your <em>year</em>.</h2>'+
+          '<p class="wt-body">A great year starts with a plan. In four quick steps you’ll set your <strong>vision</strong>, choose your <strong>big event</strong>, and see how your training builds towards it. You can change anything later.</p>'+
+          '<div class="wt-chips"><span class="wt-chip">🎯 Your vision</span><span class="wt-chip">🏆 Your event</span><span class="wt-chip">📅 Your year</span></div>';
+      case 'vision':
+        return '<p class="wt-eyebrow">Step 1 · Your vision</p>'+
+          '<h2 class="wt-title">Start with a <em>vision</em>.</h2>'+
+          '<p class="wt-body">Your vision is the big thing you’re chasing this year. Writing it down makes it real — and gives every session a reason to show up.</p>'+
+          '<div class="wt-chips"><span class="wt-chip">✅ Specific</span><span class="wt-chip">🔥 Exciting</span><span class="wt-chip">💙 Yours</span></div>'+
+          '<div class="wt-example"><p class="wt-example-label">Example</p><p class="wt-example-text">“Make the final at Regionals — swim a sub-58 100 free.”</p></div>'+
+          '<div class="wt-field"><label for="wtVision">What are you chasing this year?</label>'+
+            '<textarea class="duration-input plan-field" id="wtVision" placeholder="Write your vision — one or two lines">'+esc(wt.vision)+'</textarea></div>';
+      case 'event':
+        return '<p class="wt-eyebrow">Step 2 · Your big event</p>'+
+          '<h2 class="wt-title">Point your year at <em>one event</em>.</h2>'+
+          '<p class="wt-body">Pick the one event that matters most — your whole year builds towards it. Coaches call this your <strong>A-priority</strong>.</p>'+
+          '<div class="wt-example"><p class="wt-example-label">Example</p><p class="wt-example-text">Regional Champs · 9 May</p></div>'+
+          '<div class="wt-field"><label for="wtSport">Your sport</label>'+
+            '<input class="duration-input plan-field" id="wtSport" value="'+esc(wt.sport)+'" placeholder="e.g. Swimming"></div>'+
+          '<div class="wt-field"><label for="wtEvent">Your big event</label>'+
+            '<input class="duration-input plan-field" id="wtEvent" value="'+esc(wt.event)+'" placeholder="e.g. Regional Champs"></div>'+
+          '<div class="wt-field"><label for="wtDate">When is it?</label>'+
+            '<input type="date" class="duration-input plan-field" id="wtDate" value="'+esc(wt.date)+'"></div>';
+      case 'periodise':
+        return '<p class="wt-eyebrow">Step 3 · How your year flows</p>'+
+          '<h2 class="wt-title">Build, peak, <em>recover</em>.</h2>'+
+          '<p class="wt-body">You can’t go hard all year. Smart athletes plan it: <strong>build</strong> fitness through the year, <strong>peak</strong> for the big event, then <strong>recover</strong> — and build again.</p>'+
+          wtYearStripHTML()+
+          '<div class="wt-legend">'+
+            '<span class="wt-legend-item"><span class="le-emoji">💪</span><strong>Build</strong> · <em>get fitter and stronger</em></span>'+
+            '<span class="wt-legend-item"><span class="le-emoji">🏆</span><strong>Peak</strong> · <em>sharp for your big event</em></span>'+
+            '<span class="wt-legend-item"><span class="le-emoji">🌙</span><strong>Recover</strong> · <em>rest and reset after</em></span>'+
+            '<span class="wt-legend-item"><span class="le-emoji">⚡</span><strong>Maintain</strong> · <em>hold steady when life is busy</em></span>'+
+          '</div>'+
+          '<p class="wt-note">We’ve suggested this for you from your event date — you’ll be able to fine-tune any month later.</p>';
+      case 'finish':
+      default:
+        const dateNice = wt.date ? fmtNice(wt.date) : '';
+        return '<div class="wt-hero" style="background:var(--gold); color:var(--burgundy-dark);"><i class="ti ti-confetti" aria-hidden="true"></i></div>'+
+          '<p class="wt-eyebrow">You’re ready</p>'+
+          '<h2 class="wt-title">Your year is <em>mapped</em>.</h2>'+
+          '<div class="wt-summary">'+
+            (wt.vision? '<div class="wt-summary-row"><i class="ti ti-target-arrow" aria-hidden="true"></i><div><div class="wsr-label">Vision</div><div class="wsr-value">'+esc(wt.vision)+'</div></div></div>':'')+
+            (wt.event? '<div class="wt-summary-row"><i class="ti ti-flag-filled" aria-hidden="true"></i><div><div class="wsr-label">Big event</div><div class="wsr-value">'+esc(wt.event)+(dateNice?' · '+esc(dateNice):'')+'</div></div></div>':'')+
+            '<div class="wt-summary-row"><i class="ti ti-calendar-star" aria-hidden="true"></i><div><div class="wsr-label">Your year</div><div class="wsr-value">Colour-coded and ready to fine-tune.</div></div></div>'+
+          '</div>'+
+          '<p class="wt-note">Tap below to open your year. You can edit your vision, event and any month whenever you like.</p>';
+    }
+  }
+  function wtRender(){
+    document.getElementById('wtStage').innerHTML = wtStepHTML();
+    document.getElementById('wtStage').scrollTop = 0;
+    document.getElementById('wtDots').innerHTML = WT_STEPS.map((_,i)=>'<span class="wt-dot'+(i===wt.i?' on':'')+'"></span>').join('');
+    document.getElementById('wtBack').style.visibility = wt.i===0 ? 'hidden' : 'visible';
+    const next = document.getElementById('wtNext');
+    const last = wt.i===WT_STEPS.length-1;
+    next.innerHTML = last ? '<i class="ti ti-check" aria-hidden="true"></i> Set up my year'
+                          : (wt.i===0 ? 'Let’s go <i class="ti ti-arrow-right" aria-hidden="true"></i>' : 'Next <i class="ti ti-arrow-right" aria-hidden="true"></i>');
+    document.getElementById('wtSkip').style.visibility = last ? 'hidden' : 'visible';
+  }
+  async function wtFinish(){
+    wtCollect();
+    const sport = wt.sport || (athlete && athlete.Sport_1) || 'My sport';
+    const curMonth = MONTHS[new Date().getMonth()];
+    const apMonth = wt.date ? MONTHS[parseISO(wt.date).getMonth()] : '';
+    const apIndex = apMonth ? ACADEMIC_MONTHS.indexOf(apMonth) : -1;
+    // Seed this month's state from the suggestion so the year isn't blank.
+    const seededState = suggestState(curMonth, apIndex, {}) || 'build';
+    const yearMap = {
+      year: '2026–27', vision: wt.vision || '',
+      aPriority: wt.event ? { sport: sport, event: wt.event, date: wt.date, month: apMonth } : null,
+      sports: [{ name: sport, isPriority: true, monthlyStates: [{ month: curMonth, state: seededState, focus:'', loadTarget:null, note:'' }] }],
+      testingWindows: [], otherCommitments: []
+    };
+    const nextBtn = document.getElementById('wtNext'); if(nextBtn) nextBtn.disabled = true;
+    try {
+      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: yearMap });
+      if(!res.success) throw new Error(res.error||'save failed');
+      state.yearMap = yearMap;
+      closeWalkthrough();
+      renderNav(); renderBlockBar();
+      switchTab('year');
+      showToast('Your year is mapped — welcome aboard! 🎉', 'success');
+    } catch(e){
+      if(nextBtn) nextBtn.disabled = false;
+      console.error('wtFinish', e);
+      showToast('Could not save — ' + (e.message||'try again'), 'error');
+    }
+  }
 
   function editYearGoal(){
     const ym = state.yearMap;
