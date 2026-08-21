@@ -217,23 +217,26 @@ function doGet(e) {
     }
 
     // ===== ATHLETE PORTAL (G10-12) ACTIONS =====
+    // getPortalBootstrap is the ONLY portal endpoint that takes an email — it is
+    // the login lookup that resolves the Athlete_ID. Every other portal data
+    // endpoint below is keyed by athleteId only (see IDENTITY RULE in CLAUDE.md).
     if (action === 'getPortalBootstrap') {
       return apJson(handleGetPortalBootstrap(ss, e.parameter.email));
     }
     if (action === 'getYearMap') {
-      return apJson(handleGetYearMap(ss, e.parameter.email));
+      return apJson(handleGetYearMap(ss, e.parameter.athleteId));
     }
     if (action === 'getWeeklyTemplate') {
-      return apJson(handleGetWeeklyTemplate(ss, e.parameter.email));
+      return apJson(handleGetWeeklyTemplate(ss, e.parameter.athleteId));
     }
     if (action === 'getWeek') {
-      return apJson(handleGetWeek(ss, e.parameter.email, e.parameter.weekStart));
+      return apJson(handleGetWeek(ss, e.parameter.athleteId, e.parameter.weekStart));
     }
     if (action === 'getYearLoad') {
-      return apJson(handleGetYearLoad(ss, e.parameter.email));
+      return apJson(handleGetYearLoad(ss, e.parameter.athleteId));
     }
     if (action === 'getPBs') {
-      return apJson(handleGetPBs(ss, e.parameter.email));
+      return apJson(handleGetPBs(ss, e.parameter.athleteId));
     }
 
     // ===== CLASH OF THE CODES ACTIONS =====
@@ -401,29 +404,30 @@ function doPost(e) {
     }
 
     // ===== ATHLETE PORTAL (G10-12) WRITES =====
+    // Portal data writes are keyed by athleteId only — never email (IDENTITY RULE).
     if (data.action === 'saveYearMap') {
       var ssAp = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSaveYearMap(ssAp, data.email, data.yearMap));
+      return apJson(handleSaveYearMap(ssAp, data.athleteId, data.yearMap));
     }
     if (data.action === 'saveBlock') {
       var ssAp2 = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSaveBlock(ssAp2, data.email, data.sport, data.month, data.block));
+      return apJson(handleSaveBlock(ssAp2, data.athleteId, data.sport, data.month, data.block));
     }
     if (data.action === 'saveWeeklyTemplate') {
       var ssApT = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSaveWeeklyTemplate(ssApT, data.email, data.template));
+      return apJson(handleSaveWeeklyTemplate(ssApT, data.athleteId, data.template));
     }
     if (data.action === 'saveSession') {
       var ssAp3 = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSaveSession(ssAp3, data.email, data.session));
+      return apJson(handleSaveSession(ssAp3, data.athleteId, data.session));
     }
     if (data.action === 'deleteSession') {
       var ssAp3d = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleDeleteSession(ssAp3d, data.email, data.id));
+      return apJson(handleDeleteSession(ssAp3d, data.athleteId, data.id));
     }
     if (data.action === 'savePB') {
       var ssAp4 = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSavePB(ssAp4, data.email, data.pb));
+      return apJson(handleSavePB(ssAp4, data.athleteId, data.pb));
     }
 
     // ===== CLASH OF THE CODES WRITES =====
@@ -2870,9 +2874,9 @@ function apLoadYearMap(ss, athleteId) {
   return null;
 }
 
-function handleGetYearMap(ss, email) {
+function handleGetYearMap(ss, athleteId) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
+    athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: true, yearMap: null };
     var cached = apCacheGet('ap_year_' + athleteId);
     if (cached) return { success: true, yearMap: cached };
@@ -2884,13 +2888,13 @@ function handleGetYearMap(ss, email) {
   }
 }
 
-function handleSaveYearMap(ss, email, yearMap) {
+function handleSaveYearMap(ss, athleteId, yearMap) {
   var lock = LockService.getScriptLock();
   try {
     // Serialise writes so a class saving at once can't collide on append/update.
     try { lock.waitLock(15000); } catch (lockErr) { return { success: false, error: 'Server busy — try again' }; }
-    var athleteId = lookupAthleteIdByEmail(ss, email);
-    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
     var sheet = apEnsureYearMaps(ss);
     var existing = apLoadYearMap(ss, athleteId);
     var fields = {
@@ -2943,9 +2947,9 @@ function apLoadWeeklyTemplate(ss, athleteId) {
   return null;
 }
 
-function handleGetWeeklyTemplate(ss, email) {
+function handleGetWeeklyTemplate(ss, athleteId) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
+    athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: true, weeklyTemplate: null };
     var tpl = apLoadWeeklyTemplate(ss, athleteId);
     if (tpl) delete tpl.__row;
@@ -2955,10 +2959,10 @@ function handleGetWeeklyTemplate(ss, email) {
   }
 }
 
-function handleSaveWeeklyTemplate(ss, email, template) {
+function handleSaveWeeklyTemplate(ss, athleteId, template) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
-    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
     template = template || {};
     var sheet = apEnsureWeeklyTemplates(ss);
     var existing = apLoadWeeklyTemplate(ss, athleteId);
@@ -2977,10 +2981,10 @@ function handleSaveWeeklyTemplate(ss, email, template) {
 }
 
 // Patch one {sport, month} block inside the year map
-function handleSaveBlock(ss, email, sportName, month, block) {
+function handleSaveBlock(ss, athleteId, sportName, month, block) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
-    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
     var map = apLoadYearMap(ss, athleteId) || {
       year: '', vision: '', aPriority: null, sports: [], testingWindows: [], otherCommitments: []
     };
@@ -3033,9 +3037,9 @@ function apSessionObj(r) {
   };
 }
 
-function handleGetWeek(ss, email, weekStart) {
+function handleGetWeek(ss, athleteId, weekStart) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
+    athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: true, sessions: [] };
     var ws = apWeekStart(weekStart || new Date());
     var sheet = apEnsureTrainingSessions(ss);
@@ -3053,10 +3057,10 @@ function handleGetWeek(ss, email, weekStart) {
   }
 }
 
-function handleSaveSession(ss, email, session) {
+function handleSaveSession(ss, athleteId, session) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
-    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
     var sheet = apEnsureTrainingSessions(ss);
     var id = session.id || Utilities.getUuid();
     var dateStr = apDateStr(session.date || new Date());
@@ -3098,10 +3102,10 @@ function handleSaveSession(ss, email, session) {
 }
 
 // Delete a single session row by its Session_ID (scoped to the athlete).
-function handleDeleteSession(ss, email, id) {
+function handleDeleteSession(ss, athleteId, id) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
-    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
     if (!id) return { success: false, error: 'No session id' };
     var sheet = apEnsureTrainingSessions(ss);
     var rows = apReadObjects(sheet);
@@ -3148,9 +3152,9 @@ function apComputeLoad(ss, athleteId) {
   return { weeks: series, summary: { thisWeekLoad: thisWeekLoad, acwr: latestAcwr, weeksLogged: weeksLogged } };
 }
 
-function handleGetYearLoad(ss, email) {
+function handleGetYearLoad(ss, athleteId) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
+    athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: true, weeks: [], summary: { thisWeekLoad: 0, acwr: null, weeksLogged: 0 } };
     var cached = apCacheGet('ap_load_' + athleteId);
     if (cached) return { success: true, weeks: cached.weeks, summary: cached.summary };
@@ -3176,9 +3180,9 @@ function apPBObj(r) {
   };
 }
 
-function handleGetPBs(ss, email) {
+function handleGetPBs(ss, athleteId) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
+    athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: true, pbs: [] };
     var sheet = apEnsurePBs(ss);
     var rows = apReadObjects(sheet);
@@ -3193,10 +3197,10 @@ function handleGetPBs(ss, email) {
   }
 }
 
-function handleSavePB(ss, email, pb) {
+function handleSavePB(ss, athleteId, pb) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
-    if (!athleteId) return { success: false, error: 'No athlete for ' + email };
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
     var sheet = apEnsurePBs(ss);
     var rows = apReadObjects(sheet);
     var prev = null, prevDate = '';
@@ -3239,9 +3243,9 @@ function handleGetPortalBootstrap(ss, email) {
     if (map) delete map.__row;
     var tpl = apLoadWeeklyTemplate(ss, athleteId);
     if (tpl) delete tpl.__row;
-    var week = handleGetWeek(ss, email, new Date());
+    var week = handleGetWeek(ss, athleteId, new Date());
     var load = apComputeLoad(ss, athleteId);
-    var pbsRes = handleGetPBs(ss, email);
+    var pbsRes = handleGetPBs(ss, athleteId);
     return {
       success: true,
       athlete: athlete,

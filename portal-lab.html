@@ -2909,7 +2909,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, booking: null, planName: '' };
+  let state = { yearMap: null, weeklyTemplate: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, booking: null, planName: '', athleteId: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -3028,6 +3028,17 @@
     if(DEMO_MODE) return demoApi(body);
     return apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body) });
   }
+
+  // ============================================================
+  // IDENTITY RULE (see CLAUDE.md): every portal data read/write is keyed by
+  // Athlete_ID — never email. Email is used exactly once, in the getPortalBootstrap
+  // login call, to resolve the Athlete_ID. All data calls MUST go through
+  // apiData()/apiDataGet(), which attach the athleteId. Never pass `email:` to a
+  // data endpoint. `node tools/check-identity.js` enforces this.
+  // ============================================================
+  function currentAthleteId(){ return (currentUser && currentUser.athleteId) || state.athleteId || ''; }
+  function apiData(payload){ return apiPost(Object.assign({ athleteId: currentAthleteId() }, payload)); }
+  function apiDataGet(params){ return apiGet(Object.assign({ athleteId: currentAthleteId() }, params)); }
   // Demo short-circuit: keep every interaction local, never touch the network.
   function demoApi(payload){
     const action = (payload && payload.action) || '';
@@ -3093,6 +3104,10 @@
       if(!data){ throw lastErr || new Error('load failed'); }
       athlete = data.athlete;
       if(!athlete){ setLoading(false); renderNoAthlete(); return; }
+      // Resolve the Athlete_ID once, here — every later call is keyed by it, not
+      // by email (IDENTITY RULE). Persist it so saves work even before a re-fetch.
+      state.athleteId = String((athlete && athlete.Athlete_ID) || '').trim();
+      if(currentUser){ currentUser.athleteId = state.athleteId; try { localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser)); } catch(e){} }
       // Server is source of truth; localStorage is the safety net if a save
       // didn't reach the server (so a student's year survives a refresh).
       state.yearMap = data.yearMap || loadYearLocal() || null;
@@ -3126,7 +3141,8 @@
   function startDemo(){
     DEMO_MODE = true;
     const demo = buildDemoState();
-    currentUser = { email: 'demo@athlete.academy', name: demo.athlete.Name, loginTime: Date.now() };
+    currentUser = { email: 'demo@athlete.academy', name: demo.athlete.Name, athleteId: 'demo', loginTime: Date.now() };
+    state.athleteId = 'demo';
     athlete = demo.athlete;
     state.yearMap = demo.yearMap;
     state.weeklyTemplate = demo.weeklyTemplate;
@@ -4210,7 +4226,7 @@
     if(text.length < 8){ showAIError('Add a bit more detail — day names and a few exercises.'); return; }
     setAIMode('loading'); aiBusy = true;
     try {
-      const res = await apiPost({ action:'parseProgram', email: currentUser.email, text: text });
+      const res = await apiData({ action:'parseProgram', text: text });
       if(!res.success || !res.program) throw new Error(res.error || 'Couldn’t read that text.');
       aiParsed = buildTemplateFromParsed(res.program);
       if(!aiParsed.sessions.length){
@@ -4321,7 +4337,7 @@
                      : (logged ? 'Session logged' : 'Session planned'), 'success');
     if(tplChanged) persistTemplate();
     try {
-      const res = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, session, { id: isNew ? null : session.id }) });
+      const res = await apiData({ action:'saveSession', session: Object.assign({}, session, { id: isNew ? null : session.id }) });
       if(!res.success) throw new Error(res.error || 'save failed');
       if(isNew && res.id){ session.id = res.id; renderWeek(); }
       if(session.isPB){ openPBForm({ sport: session.sport, exercise: session.name, date: session.date, sessionId: session.id }); }
@@ -4366,7 +4382,7 @@
     if(_yearSaving || !_yearDirty || !currentUser) return;
     _yearSaving = true; _yearDirty = false;
     try {
-      const r = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: serialiseYearMap() });
+      const r = await apiData({ action:'saveYearMap', yearMap: serialiseYearMap() });
       if(!r || !r.success) throw new Error(r && r.error || 'save failed');
     } catch(e){ _yearDirty = true; }   // keep dirty and retry
     finally {
@@ -4386,7 +4402,7 @@
     if(state.weeklyTemplate) state.planName = state.weeklyTemplate.name || state.planName;
     saveTemplateLocal();
     try {
-      const r = await apiPost({ action:'saveWeeklyTemplate', email: currentUser.email, template: state.weeklyTemplate });
+      const r = await apiData({ action:'saveWeeklyTemplate', template: state.weeklyTemplate });
       if(!r.success) throw new Error(r.error||'save failed');
     } catch(e){ /* localStorage holds it; syncs on the next successful save */ }
   }
@@ -4439,7 +4455,7 @@
     if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
     showToast(created.length+' session'+(created.length===1?'':'s')+' added from your program', 'success');
     for(const s of created){
-      try { const r = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, s, { id:null }) });
+      try { const r = await apiData({ action:'saveSession', session: Object.assign({}, s, { id:null }) });
         if(r.success && r.id){ s.id = r.id; } } catch(e){ console.error('fillWeek', e); }
     }
     if(activeTab==='week') renderWeek();
@@ -4685,8 +4701,8 @@
     refreshProgramSheet();
     showToast(plan.blank ? 'Program cleared — build your own week' : '“'+plan.name+'” is now your program', 'success');
 
-    for(const s of oldReal){ try { await apiPost({ action:'deleteSession', email: currentUser.email, id: s.id }); } catch(e){ console.error('applyPlan del', e); } }
-    for(const s of fresh){ try { const r = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, s, { id:null }) }); if(r.success && r.id){ s.id = r.id; } } catch(e){ console.error('applyPlan save', e); } }
+    for(const s of oldReal){ try { await apiData({ action:'deleteSession', id: s.id }); } catch(e){ console.error('applyPlan del', e); } }
+    for(const s of fresh){ try { const r = await apiData({ action:'saveSession', session: Object.assign({}, s, { id:null }) }); if(r.success && r.id){ s.id = r.id; } } catch(e){ console.error('applyPlan save', e); } }
     if(activeTab==='week') renderWeek();
   }
   window.applyPlan = applyPlan;
@@ -4868,7 +4884,7 @@
     if(!created.length) return false;
     state.week.sessions = created.slice();
     for(const s of created){
-      try { const r = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, s, { id:null }) });
+      try { const r = await apiData({ action:'saveSession', session: Object.assign({}, s, { id:null }) });
         if(r.success && r.id){ s.id = r.id; } } catch(e){ /* local copy stands; syncs later */ }
     }
     return true;
@@ -4961,7 +4977,7 @@
     if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
     showToast(t.name+' added · '+dowShort(dateIso)+' '+dayNum(dateIso), 'success');
     try {
-      const res = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, session, { id: null }) });
+      const res = await apiData({ action:'saveSession', session: Object.assign({}, session, { id: null }) });
       if(!res.success) throw new Error(res.error || 'save failed');
       if(res.id){ session.id = res.id; if(activeTab==='week') renderWeek(); }
     } catch(e){
@@ -5048,7 +5064,7 @@
     document.getElementById('qlogLoadingText').textContent = 'Reading your sessions…';
     setQlogMode('loading');
     try {
-      const res = await apiPost({ action:'parseSessions', email: currentUser.email, text: text, todayISO: isoToday() });
+      const res = await apiData({ action:'parseSessions', text: text, todayISO: isoToday() });
       if(!res.success) throw new Error(res.error || 'Couldn’t parse that text');
       const sessions = Array.isArray(res.sessions) ? res.sessions : [];
       if(!sessions.length){
@@ -5235,7 +5251,7 @@
     let saved = 0; const failed = [];
     for(const job of jobs){
       try {
-        const res = await apiPost({ action:'saveSession', email: currentUser.email,
+        const res = await apiData({ action:'saveSession',
           session: Object.assign({}, job.session, { id: null }) });
         if(!res.success) throw new Error(res.error || 'save failed');
         job.session.id = res.id || job.session.id;
@@ -5339,7 +5355,7 @@
     renderWeek(); renderBlockBar();
     showToast('Removed “'+nm+'”', 'success');
     try {
-      const res = await apiPost({ action:'deleteSession', email: currentUser.email, id: id });
+      const res = await apiData({ action:'deleteSession', id: id });
       if(!res.success) throw new Error(res.error || 'delete failed');
     } catch(e){
       console.error('deleteSession', e);
@@ -6054,7 +6070,7 @@
   async function drillWeek(weekStartIso){
     setLoading(true, 'Loading that week…');
     try {
-      const wk = await apiGet({ action:'getWeek', email: currentUser.email, weekStart: weekStartIso });
+      const wk = await apiDataGet({ action:'getWeek', weekStart: weekStartIso });
       state.week = wk.success ? { weekStart: wk.weekStart, sessions: wk.sessions||[] } : { weekStart: weekStartIso, sessions: [] };
     } catch(e){ state.week = { weekStart: weekStartIso, sessions: [] }; }
     await maybeAutoFillWeek();   // empty week carries the program forward
@@ -6123,7 +6139,7 @@
     setLoading(true, 'Loading last week…');
     let prev = [];
     try {
-      const wk = await apiGet({ action:'getWeek', email: currentUser.email, weekStart: prevWs });
+      const wk = await apiDataGet({ action:'getWeek', weekStart: prevWs });
       prev = (wk && wk.success) ? (wk.sessions || []) : [];
     } catch(e){ prev = []; }
     setLoading(false);
@@ -6170,7 +6186,7 @@
     // Persist each as a new planned session; migrate the id (and its reference).
     for(const session of copies){
       try {
-        const res = await apiPost({ action:'saveSession', email: currentUser.email, session: Object.assign({}, session, { id: null }) });
+        const res = await apiData({ action:'saveSession', session: Object.assign({}, session, { id: null }) });
         if(!res.success) throw new Error(res.error || 'save failed');
         if(res.id){
           const oldId = session.id;
@@ -6278,7 +6294,7 @@
     };
     const btn = document.getElementById('pbSaveBtn'); btn.disabled=true; btn.textContent='Saving…';
     try {
-      const res = await apiPost({ action:'savePB', email: currentUser.email, pb: pb });
+      const res = await apiData({ action:'savePB', pb: pb });
       if(!res.success) throw new Error(res.error||'save failed');
       await refreshPBs();
       closePB();
@@ -6290,7 +6306,7 @@
 
   async function refreshPBs(){
     try {
-      const res = await apiGet({ action:'getPBs', email: currentUser.email });
+      const res = await apiDataGet({ action:'getPBs' });
       if(res.success) state.pbs = res.pbs || [];
     } catch(e){ /* keep existing on failure */ }
     if(activeTab==='pbs') renderPBs();
