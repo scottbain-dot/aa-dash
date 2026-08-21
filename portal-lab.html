@@ -1394,8 +1394,7 @@
       </div>
     </div>
     <div class="tabs" id="tabs">
-      <button class="tab active" data-tab="week" onclick="switchTab('week')">Week</button>
-      <button class="tab" data-tab="program" onclick="switchTab('program')">Program</button>
+      <button class="tab active" data-tab="week" onclick="switchTab('week')">My Program</button>
       <button class="tab" data-tab="year" onclick="switchTab('year')">Year</button>
       <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
       <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
@@ -1417,9 +1416,6 @@
   <!-- One consistent card stack: Today hero · This week · Load · This week's mix -->
   <div class="card-stack" id="weekStack"></div>
 </div><!-- /#view-week -->
-
-<!-- ===== PROGRAM TAB ===== -->
-<div class="tab-view" id="view-program"></div>
 
 <!-- ===== YEAR TAB ===== -->
 <div class="tab-view" id="view-year"></div>
@@ -1788,8 +1784,8 @@
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <div class="sheet-header-content">
-      <p class="sheet-eyebrow">This week</p>
-      <h2 class="sheet-title">More ways to <em>build</em> your week.</h2>
+      <p class="sheet-eyebrow">My Program</p>
+      <h2 class="sheet-title"><em>Build</em> my program.</h2>
     </div>
     <button class="sheet-close" onclick="closeMoreActions()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
@@ -1805,12 +1801,11 @@
   <div class="sheet-header">
     <div class="sheet-header-content">
       <p class="sheet-eyebrow">Your program</p>
-      <h2 class="sheet-title">My <em>week</em>.</h2>
+      <h2 class="sheet-title">Edit my <em>program</em>.</h2>
     </div>
     <button class="sheet-close" onclick="closeMyProgram()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
   <div class="sheet-body">
-    <p class="ql-help">This is your repeating week — it stays yours and you can change it any time. Turn on “Repeat every week” on any session to add it here.</p>
     <div id="myProgramBody"></div>
   </div>
   <div class="sheet-save">
@@ -2065,6 +2060,7 @@
 
   /* "More" action sheet — one tappable row per power tool */
   .more-list { display: flex; flex-direction: column; gap: 8px; }
+  .more-divider { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 14px 2px 2px; }
   .more-row {
     display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
     background: var(--cream); border: 1px solid transparent; border-radius: 14px; padding: 14px 16px;
@@ -3100,7 +3096,6 @@
     document.getElementById('view-'+tab).classList.add('active');
     renderBlockBar();
     if(tab==='week') renderWeek();
-    else if(tab==='program') renderProgram();
     else if(tab==='year') renderYear();
     else if(tab==='load') renderLoad();
     else if(tab==='book') renderBook();
@@ -3251,8 +3246,8 @@
       : '';
     const progName = (state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || '';
     const prov = tplN
-      ? '<button class="week-prov" onclick="switchTab(\'program\')"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats from <strong>'+esc(progName||'my program')+'</strong> · Edit program <i class="ti ti-chevron-right" aria-hidden="true"></i></button>'
-      : '<button class="week-prov" onclick="switchTab(\'program\')"><i class="ti ti-clipboard-list" aria-hidden="true"></i> No program yet · Set one up <i class="ti ti-chevron-right" aria-hidden="true"></i></button>';
+      ? '<button class="week-prov" onclick="openMyProgram()"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats from <strong>'+esc(progName||'my program')+'</strong> · Edit program <i class="ti ti-chevron-right" aria-hidden="true"></i></button>'
+      : '<button class="week-prov" onclick="openMoreActions()"><i class="ti ti-clipboard-list" aria-hidden="true"></i> No program yet · Build one <i class="ti ti-chevron-right" aria-hidden="true"></i></button>';
     return '<div class="card">'+
       '<div class="week-head">'+
         '<p class="card-eyebrow" style="margin:0;">This week</p>'+
@@ -3262,8 +3257,8 @@
       fillPrompt+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
       '<div class="week-actions">'+
-        '<button class="card-cta" style="flex:2;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
-        '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="openMoreActions()"><i class="ti ti-dots" aria-hidden="true"></i> More</button>'+
+        '<button class="card-cta" style="flex:2;" onclick="openMoreActions()"><i class="ti ti-tools" aria-hidden="true"></i> Build my program</button>'+
+        '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
       '</div>'+
     '</div>';
   }
@@ -3809,7 +3804,7 @@
     else state.weeklyTemplate.sessions.push(builderDay);
     if(!state.planName){ state.planName = state.weeklyTemplate.name || 'My program'; state.weeklyTemplate.name = state.planName; }
     closePday();
-    renderProgram();
+    refreshProgramSheet();
     if(activeTab==='week') renderWeek();
     showToast('Saved to your program', 'success');
     persistTemplate();
@@ -3819,7 +3814,7 @@
     if(!confirm('Remove this day from your program?')) return;
     (state.weeklyTemplate.sessions||[]).splice(builderIdx, 1);
     closePday();
-    renderProgram();
+    refreshProgramSheet();
     if(activeTab==='week') renderWeek();
     showToast('Day removed', 'success');
     persistTemplate();
@@ -3884,7 +3879,7 @@
     if(!next || next===cur) return;
     state.weeklyTemplate.name = next;
     state.planName = next;
-    renderProgram();
+    refreshProgramSheet();
     showToast('Program renamed', 'success');
     persistTemplate();
   }
@@ -4296,7 +4291,7 @@
     state.week.sessions = fresh.slice();
     closePlan();
     renderWeek(); renderBlockBar();
-    if(activeTab==='program') renderProgram();
+    refreshProgramSheet();
     showToast(plan.blank ? 'Program cleared — build your own week' : '“'+plan.name+'” is now your program', 'success');
 
     for(const s of oldReal){ try { await apiPost({ action:'deleteSession', email: currentUser.email, id: s.id }); } catch(e){ console.error('applyPlan del', e); } }
@@ -4340,11 +4335,14 @@
   function openMoreActions(){
     const n = templateSessions().length;
     const progName = (state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || '';
-    const progSub = n ? (n+' session'+(n===1?'':'s')+(progName?' · '+esc(progName):'')) : 'Not set up yet — build it as you plan';
-    let html = '';
-    if(n) html += moreRow('ti-calendar-plus', 'Fill this week from my program', 'Adds your program’s sessions to empty days', 'moreFillWeek');
-    html +=
-      moreRow('ti-list-check', 'My program', progSub + ' · build & switch', 'moreMyProgram')+
+    const progSub = n ? (n+' session'+(n===1?'':'s')+(progName?' · '+esc(progName):'')) : 'Nothing yet — start one below';
+    // Build my program — the design actions on top, week utilities below.
+    let html =
+      moreRow('ti-refresh', 'Change program', 'Browse ready-made programs and preview before switching', 'moreSwitchProgram')+
+      (n ? moreRow('ti-list-check', 'Edit my program', progSub, 'moreMyProgram')
+         : moreRow('ti-plus', 'Build your own', 'Start from a blank week and add days', 'moreAddDay'))+
+      (n ? moreRow('ti-calendar-plus', 'Fill this week from my program', 'Adds your program’s sessions to empty days', 'moreFillWeek') : '')+
+      '<div class="more-divider">Log &amp; add to this week</div>'+
       moreRow('ti-sparkles', 'Log from notes', 'Paste what you did — we’ll turn it into sessions', 'moreLogFromNotes')+
       moreRow('ti-bolt', 'Quick add', 'Drop in a one-off session from a template', 'moreQuickAdd')+
       moreRow('ti-copy', 'Copy last week', 'Repeat last week’s sessions on this week', 'moreCopyWeek');
@@ -4364,7 +4362,8 @@
   function moreCopyWeek(){ closeMoreActions(); copyLastWeek(); }
   function moreSwitchProgram(){ closeMoreActions(); openPlanSheet(); }
   function moreFillWeek(){ closeMoreActions(); fillWeekFromTemplate(); }
-  function moreMyProgram(){ closeMoreActions(); switchTab('program'); }
+  function moreMyProgram(){ closeMoreActions(); openMyProgram(); }
+  function moreAddDay(){ closeMoreActions(); openProgramDay(-1); }
   window.openMoreActions = openMoreActions;
   window.closeMoreActions = closeMoreActions;
   window.moreLogFromNotes = moreLogFromNotes;
@@ -4373,6 +4372,7 @@
   window.moreSwitchProgram = moreSwitchProgram;
   window.moreFillWeek = moreFillWeek;
   window.moreMyProgram = moreMyProgram;
+  window.moreAddDay = moreAddDay;
 
   // ============================================================
   // MY PROGRAM sheet — see/own/edit the repeating week (Mon→Sun).
@@ -4417,17 +4417,40 @@
 
   function renderMyProgram(){
     const sessions = templateSessions();
+    const body = document.getElementById('myProgramBody');
     const fill = document.getElementById('myProgramFill');
+    const name = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
     if(fill) fill.style.display = sessions.length ? '' : 'none';
     if(!sessions.length){
-      document.getElementById('myProgramBody').innerHTML =
-        '<div class="myprog-empty">Your program is empty. Plan a session and turn on '+
-        '<strong>“Repeat every week”</strong>, or use <strong>Switch program</strong> to start from a ready-made one. '+
-        'Whatever you add here comes back every week — and you can change it any time.</div>';
+      body.innerHTML =
+        '<div class="prog-empty-card" style="box-shadow:none; background:transparent; padding:6px 0 0;">'+
+          '<div class="prog-empty-icon"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>'+
+          '<p class="prog-empty-lead">You don’t have a program yet.</p>'+
+          '<p class="prog-empty-sub">Start from a ready-made program, build your own day by day, or paste one in with AI.</p>'+
+          '<button class="btn-primary prog-change-btn" onclick="closeMyProgram(); openPlanSheet();"><i class="ti ti-layout-grid-add" aria-hidden="true"></i> Choose a program</button>'+
+          '<button class="prog-add-day" style="max-width:260px; margin:12px auto 0;" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Build your own — add a day</button>'+
+        '</div>';
       return;
     }
-    document.getElementById('myProgramBody').innerHTML = programDaysHTML();
+    const auto = autoRepeatOn();
+    body.innerHTML =
+      '<div class="prog-name-row" style="margin-bottom:14px;"><p class="prog-name">'+esc(name||'My program')+'</p>'+
+        '<button class="prog-rename" aria-label="Rename program" title="Rename" onclick="renameProgram()"><i class="ti ti-pencil" aria-hidden="true"></i></button></div>'+
+      '<div class="pb-toggle prog-auto" onclick="toggleAutoRepeat()">'+
+        '<div class="pb-toggle-content">'+
+          '<div class="pb-toggle-icon" style="background:var(--sage); color:var(--cream);"><i class="ti ti-repeat" aria-hidden="true"></i></div>'+
+          '<div class="pb-toggle-text"><strong>Repeat automatically each week</strong>'+
+            '<small>Empty weeks fill from your program. Weeks you’ve already changed are never touched.</small></div>'+
+        '</div>'+
+        '<div class="toggle-switch'+(auto?' on':'')+'" id="autoRepeatToggle"></div>'+
+      '</div>'+
+      '<div class="prog-week-head" style="margin-top:20px;"><div class="card-label" style="margin:0;">Your week · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div>'+
+        '<span class="prog-repeat-chip"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats weekly</span></div>'+
+      '<div class="myprog-list">'+programDaysHTML()+'</div>'+
+      '<button class="prog-add-day" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Add a day</button>'+
+      '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Tap <i class="ti ti-x" aria-hidden="true"></i> to remove a day.</p>';
   }
+  function refreshProgramSheet(){ if(document.getElementById('myProgramSheet').classList.contains('open')) renderMyProgram(); }
 
   // ---- Auto-repeat: does the owned program carry into empty weeks? (default on) ----
   function autoRepeatOn(){
@@ -4455,64 +4478,10 @@
     return true;
   }
 
-  // ============================================================
-  // PROGRAM TAB — the home for building / switching the owned program.
-  // ============================================================
-  function renderProgram(){
-    const el = document.getElementById('view-program');
-    if(!el) return;
-    const sessions = templateSessions();
-    const name = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
-    if(!sessions.length){
-      el.innerHTML =
-        '<div class="prog-head"><h2 class="prog-title">My Program</h2>'+
-          '<p class="prog-sub">Your training week — pick a starting program and it repeats automatically, or build your own.</p></div>'+
-        '<div class="card prog-empty-card">'+
-          '<div class="prog-empty-icon"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>'+
-          '<p class="prog-empty-lead">You don’t have a program yet.</p>'+
-          '<p class="prog-empty-sub">Start from a ready-made program, or build your own day by day.</p>'+
-          '<button class="btn-primary prog-change-btn" onclick="openPlanSheet()"><i class="ti ti-layout-grid-add" aria-hidden="true"></i> Choose a program</button>'+
-          '<button class="prog-add-day" style="max-width:260px; margin:12px auto 0;" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Build your own — add a day</button>'+
-        '</div>';
-      return;
-    }
-    const auto = autoRepeatOn();
-    el.innerHTML =
-      '<div class="prog-head">'+
-        '<h2 class="prog-title">My Program</h2>'+
-        '<div class="prog-name-row"><p class="prog-name">'+esc(name)+'</p>'+
-          '<button class="prog-rename" aria-label="Rename program" title="Rename" onclick="renameProgram()"><i class="ti ti-pencil" aria-hidden="true"></i></button></div>'+
-        '<p class="prog-sub">'+(auto ? 'This is your training week — it repeats automatically into every new week.' : 'This is your training week. Turn on auto-repeat to carry it into every week.')+'</p>'+
-      '</div>'+
-      '<div class="card prog-actions-card">'+
-        '<div class="pb-toggle prog-auto" onclick="toggleAutoRepeat()">'+
-          '<div class="pb-toggle-content">'+
-            '<div class="pb-toggle-icon" style="background:var(--sage); color:var(--cream);"><i class="ti ti-repeat" aria-hidden="true"></i></div>'+
-            '<div class="pb-toggle-text"><strong>Repeat automatically each week</strong>'+
-              '<small>Empty weeks fill from your program. Weeks you’ve already changed are never touched.</small></div>'+
-          '</div>'+
-          '<div class="toggle-switch'+(auto?' on':'')+'" id="autoRepeatToggle"></div>'+
-        '</div>'+
-        '<div class="prog-btn-row">'+
-          '<button class="btn-secondary" onclick="openPlanSheet()"><i class="ti ti-refresh" aria-hidden="true"></i> Change program</button>'+
-          '<button class="btn-primary" onclick="fillWeekFromTemplate()"><i class="ti ti-calendar-plus" aria-hidden="true"></i> Fill this week</button>'+
-        '</div>'+
-        '<button class="prog-view-week" onclick="switchTab(\'week\')">See it on this week <i class="ti ti-chevron-right" aria-hidden="true"></i></button>'+
-      '</div>'+
-      '<div class="card prog-week-card">'+
-        '<div class="prog-week-head"><div class="card-label" style="margin:0;">Your week · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div>'+
-          '<span class="prog-repeat-chip"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats weekly</span></div>'+
-        '<div class="myprog-list prog-week-list">'+programDaysHTML()+'</div>'+
-        '<button class="prog-add-day" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Add a day</button>'+
-        '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Tap <i class="ti ti-x" aria-hidden="true"></i> to remove a day.</p>'+
-      '</div>';
-  }
-  window.renderProgram = renderProgram;
-
   async function toggleAutoRepeat(){
     if(!state.weeklyTemplate) return;
     state.weeklyTemplate.autoRepeat = !autoRepeatOn();
-    renderProgram();
+    refreshProgramSheet();
     if(state.weeklyTemplate.autoRepeat){
       const filled = await maybeAutoFillWeek();
       if(filled){ if(activeTab==='week'){ renderWeek(); renderBlockBar(); } showToast('Auto-repeat on — this week filled from your program', 'success'); }
@@ -4528,7 +4497,7 @@
     const arr = (state.weeklyTemplate && state.weeklyTemplate.sessions) || [];
     if(i<0 || i>=arr.length) return;
     arr.splice(i, 1);
-    if(activeTab==='program') renderProgram(); else renderMyProgram();
+    refreshProgramSheet();
     if(activeTab==='week') renderWeek();
     showToast('Removed from your program', 'success');
     persistTemplate();
@@ -4543,7 +4512,7 @@
     if(!confirm('Clear your whole program? Your planned weeks stay — only the repeating template is emptied.')) return;
     state.weeklyTemplate = emptyTemplate();
     state.planName = '';
-    if(activeTab==='program') renderProgram(); else renderMyProgram();
+    refreshProgramSheet();
     if(activeTab==='week') renderWeek();
     showToast('Program cleared', 'success');
     persistTemplate();
