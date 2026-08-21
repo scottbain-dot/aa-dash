@@ -1,5 +1,22 @@
 # CLAUDE.md - Athlete Academy Project
 
+## 🔒 IDENTITY RULE (GDPR) — non-negotiable
+
+**All portal data reads/writes are keyed by `Athlete_ID`. Never by email.**
+
+Names/emails are personal data; keeping training data pseudonymous (ID-only) is how we protect student identity. Email is used in **exactly one place**: the `getPortalBootstrap` login call, which resolves the `Athlete_ID`. After that, the client holds the ID and every other call uses it.
+
+Concretely, in `portal-lab.html` (the live student portal):
+- Every data call goes through **`apiData()` / `apiDataGet()`**, which attach `athleteId`. Do **not** call `apiPost`/`apiGet` directly for data, and never pass `email:` to a data endpoint.
+- The only allowed `email:` in an API call is the `getPortalBootstrap` line.
+
+In `COMPLETE-APPS-SCRIPT.gs`:
+- The portal data handlers (`handleGetYearMap`, `handleSaveYearMap`, `handleSaveBlock`, `handleSaveSession`, `handleSavePB`, `handleGetWeek`, `handleGetPBs`, `handleSaveWeeklyTemplate`, `handleGetWeeklyTemplate`, `handleGetYearLoad`, `handleDeleteSession`) take **`athleteId`** and reject a blank one. Only `getPortalBootstrap` (and the legacy admin/other-portal handlers) may look up by email.
+
+**Enforcement:** run `node tools/check-identity.js` before committing any portal change — it fails the moment a data call reintroduces email. This rule existed to stop a recurring regression where changes quietly reverted to email lookups and broke things; the guard makes the ID path the only path.
+
+---
+
 ## Project Owner
 
 **Scott Bain (Lad)** - PE Teacher at Frankfurt International School (FIS), Germany
