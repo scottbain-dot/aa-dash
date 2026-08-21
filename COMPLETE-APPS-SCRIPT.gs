@@ -4703,3 +4703,82 @@ function handleGetClashConfig() {
     return { success: false, error: error.toString() };
   }
 }
+
+// ============================================================
+// ROSTER ADMIN — run these from the Athletes spreadsheet itself.
+// Adds an "Athlete Academy" menu (appears after you reload the sheet):
+//   • Assign missing athlete IDs — gives every athlete with an email a unique,
+//     stable Athlete_ID. REQUIRED: without an Athlete_ID a student's data can't
+//     save. Idempotent — only fills blanks, never changes existing IDs. So you
+//     can paste a whole class (leaving Athlete_ID blank) and click once.
+//   • Check roster for problems — flags missing emails, non-@fis.edu emails,
+//     duplicates and any athletes still without an ID.
+// ============================================================
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Athlete Academy')
+    .addItem('Assign missing athlete IDs', 'assignAthleteIds')
+    .addItem('Check roster for problems', 'checkRoster')
+    .addToUi();
+}
+
+function assignAthleteIds() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Athletes');
+  var ui = SpreadsheetApp.getUi();
+  if (!sh) { ui.alert('No "Athletes" sheet found.'); return; }
+  var data = sh.getDataRange().getValues();
+  var H = data[0];
+  var idc = H.indexOf('Athlete_ID'), ec = H.indexOf('Email');
+  if (idc < 0 || ec < 0) { ui.alert('The Athletes sheet needs an "Athlete_ID" and an "Email" column.'); return; }
+  // Athlete_ID is a plain number. Continue from the highest number already used
+  // so re-runs keep numbering upward and never reuse an ID.
+  var seen = {}, max = 0;
+  for (var i = 1; i < data.length; i++) {
+    var cur = String(data[i][idc] || '').trim();
+    if (cur) { seen[cur] = true; var n = parseInt(cur, 10); if (!isNaN(n)) max = Math.max(max, n); }
+  }
+  var assigned = 0;
+  for (var i = 1; i < data.length; i++) {
+    var email = String(data[i][ec] || '').trim();
+    if (!email) continue;                               // skip fully blank rows
+    if (String(data[i][idc] || '').trim()) continue;    // already has an ID — leave it
+    var id;
+    do { max++; id = max; } while (seen[String(id)]);
+    seen[String(id)] = true;
+    sh.getRange(i + 1, idc + 1).setValue(id);           // writes a plain number
+    assigned++;
+  }
+  ui.alert(assigned
+    ? ('Done — assigned ' + assigned + ' new athlete ID' + (assigned === 1 ? '' : 's') + '.\n\nEvery athlete with an email now has a unique ID and can save their data.')
+    : 'All athletes already have IDs — nothing to assign.');
+}
+
+function checkRoster() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Athletes');
+  var ui = SpreadsheetApp.getUi();
+  if (!sh) { ui.alert('No "Athletes" sheet found.'); return; }
+  var data = sh.getDataRange().getValues();
+  var H = data[0];
+  var idc = H.indexOf('Athlete_ID'), ec = H.indexOf('Email'), nc = H.indexOf('Name');
+  var noEmail = [], badEmail = [], noId = [], dupEmail = [], emails = {};
+  for (var i = 1; i < data.length; i++) {
+    var name = nc >= 0 ? String(data[i][nc] || '').trim() : '';
+    var email = String(data[i][ec] || '').trim();
+    var id = String(data[i][idc] || '').trim();
+    var label = 'Row ' + (i + 1) + (name ? ' (' + name + ')' : '');
+    if (!name && !email) continue;                      // blank spacer row
+    if (!email) { noEmail.push(label); continue; }
+    if (!/^[^@\s]+@fis\.edu$/i.test(email)) badEmail.push(label + ' → ' + email);
+    var key = email.toLowerCase();
+    if (emails[key]) dupEmail.push(email); else emails[key] = true;
+    if (!id) noId.push(label);
+  }
+  var msg = [];
+  msg.push(noId.length ? ('⚠️ ' + noId.length + ' athlete(s) have NO Athlete_ID — run "Assign missing athlete IDs".') : '✅ Every athlete has an Athlete_ID.');
+  msg.push(noEmail.length ? ('⚠️ ' + noEmail.length + ' row(s) have a name but no email:\n   ' + noEmail.slice(0, 12).join('\n   ')) : '✅ Every athlete has an email.');
+  msg.push(badEmail.length ? ('⚠️ ' + badEmail.length + ' email(s) are not @fis.edu:\n   ' + badEmail.slice(0, 12).join('\n   ')) : '✅ All emails are @fis.edu.');
+  msg.push(dupEmail.length ? ('⚠️ Duplicate email(s): ' + dupEmail.slice(0, 12).join(', ')) : '✅ No duplicate emails.');
+  ui.alert('Roster check', msg.join('\n\n'), ui.ButtonSet.OK);
+}
