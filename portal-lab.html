@@ -1917,6 +1917,35 @@
   </div>
 </div>
 
+<!-- BUILD WITH AI — paste a plan / current program, parse into a program, review, apply -->
+<div class="sheet-backdrop" id="aibuild-backdrop" onclick="closeAIBuild()"></div>
+<div class="sheet" id="aiBuildSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">My Program</p>
+      <h2 class="sheet-title" id="aiTitle">Build with <em>AI</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closeAIBuild()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <div id="aiInput">
+      <p class="ql-help">Paste a program, a coach’s plan, or just describe your week — we’ll turn it into your program. You can tweak everything afterwards.</p>
+      <textarea class="note-input" id="aiText" style="min-height:190px;" placeholder="e.g.&#10;Mon — Lower: back squat 5x5, deadlift 3x5, walking lunge 3x10&#10;Wed — Upper: bench 5x5, pull-ups 4x8, shoulder press 3x8&#10;Fri — Conditioning: KB swings 5x15, row 8x250m&#10;&#10;…or paste your current program here."></textarea>
+      <div class="qlog-error" id="aiError" style="display:none;"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="aiErrorText"></span></div>
+    </div>
+    <div id="aiLoading" style="display:none; text-align:center; padding:40px 0;">
+      <div class="ai-spinner" aria-hidden="true"></div>
+      <p class="ql-help" id="aiLoadingText" style="margin-top:14px;">Reading your program…</p>
+    </div>
+    <div id="aiReview" style="display:none;"><div id="aiReviewBody"></div></div>
+  </div>
+  <div class="sheet-save">
+    <button class="btn-secondary" id="aiSecondaryBtn" onclick="aiSecondary()">Cancel</button>
+    <button class="btn-primary" id="aiPrimaryBtn" onclick="aiPrimary()"><i class="ti ti-sparkles" aria-hidden="true"></i> Build my program</button>
+  </div>
+</div>
+
 <!-- LAB: AI Quick Log — paste freeform text, parse into draft sessions, review, then save -->
 <div class="sheet-backdrop" id="qlog-backdrop" onclick="closeQuickLog()"></div>
 <div class="sheet" id="quickLogSheet">
@@ -2061,6 +2090,12 @@
   /* "More" action sheet — one tappable row per power tool */
   .more-list { display: flex; flex-direction: column; gap: 8px; }
   .more-divider { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 14px 2px 2px; }
+  /* Build with AI */
+  .ai-spinner { width: 34px; height: 34px; margin: 0 auto; border: 3px solid var(--line); border-top-color: var(--burgundy); border-radius: 50%; animation: ai-spin 0.8s linear infinite; }
+  @keyframes ai-spin { to { transform: rotate(360deg); } }
+  .ai-freetag { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--amber); background: rgba(245,158,11,0.12); padding: 2px 6px; border-radius: 999px; margin-left: 4px; }
+  .ai-match-note { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute); background: var(--cream); border-radius: 12px; padding: 12px 14px; margin: 0 0 14px; line-height: 1.5; }
+  .ai-match-note strong { color: var(--burgundy); }
   .more-row {
     display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
     background: var(--cream); border: 1px solid transparent; border-radius: 14px; padding: 14px 16px;
@@ -2862,6 +2897,17 @@
     if(action==='deleteSession') return Promise.resolve({ success:true, id: payload.id });
     if(action==='saveWeeklyTemplate') return Promise.resolve({ success:true });
     if(action==='getWeeklyTemplate') return Promise.resolve({ success:true, weeklyTemplate: state.weeklyTemplate });
+    if(action==='parseProgram') return Promise.resolve({ success:true, program: {
+      name: 'My Program (from notes)',
+      days: [
+        { dow:0, name:'Lower body', sport:'Strength', intensity:'hard', duration:55, exercises:[
+          { name:'Back Squat', detail:'5×5' }, { name:'Deadlift', detail:'3×5' }, { name:'Walking Lunge', detail:'3×10' } ] },
+        { dow:2, name:'Upper body', sport:'Strength', intensity:'hard', duration:50, exercises:[
+          { name:'Bench Press', detail:'5×5' }, { name:'Pull-Up', detail:'4×8' }, { name:'Barbell Press', detail:'3×8' } ] },
+        { dow:4, name:'Conditioning', sport:'Strength', intensity:'moderate', duration:40, exercises:[
+          { name:'Kettlebell Swing', detail:'5×15' }, { name:'Row Intervals', detail:'8×250m' }, { name:'Farmer Carry', detail:'4×40m' } ] }
+      ]
+    }});
     if(action==='parseSessions') return Promise.resolve({ success:true, sessions: [
       { date: isoToday(), sport:'Run', name:'Easy run', duration:30, rpe:5, intensity:'easy',
         target:'Steady pace', note:'Felt good', readiness:{ feel:4, niggle:{ area:'left calf', severity:3, note:'tight after 20min' } }, confidence:'high' },
@@ -3885,6 +3931,132 @@
   }
   window.renameProgram = renameProgram;
 
+  // ============================================================
+  // BUILD WITH AI — paste text / a current program → parse → match to the
+  // library → review → apply as My Program. Matched exercises stay swappable.
+  // ============================================================
+  let aiMode = 'input', aiBusy = false, aiParsed = null;
+  function openAIBuild(){
+    aiParsed = null; aiBusy = false;
+    document.getElementById('aiText').value = '';
+    hideAIError();
+    setAIMode('input');
+    document.getElementById('aibuild-backdrop').classList.add('open');
+    document.getElementById('aiBuildSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(()=>{ const t=document.getElementById('aiText'); if(t) t.focus(); }, 250);
+  }
+  function closeAIBuild(){
+    if(aiBusy) return;
+    document.getElementById('aibuild-backdrop').classList.remove('open');
+    document.getElementById('aiBuildSheet').classList.remove('open');
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+  }
+  function showAIError(msg){ document.getElementById('aiErrorText').textContent = msg; document.getElementById('aiError').style.display = 'flex'; }
+  function hideAIError(){ document.getElementById('aiError').style.display = 'none'; }
+  function setAIMode(mode){
+    aiMode = mode;
+    document.getElementById('aiInput').style.display   = mode==='input'   ? '' : 'none';
+    document.getElementById('aiLoading').style.display = mode==='loading' ? '' : 'none';
+    document.getElementById('aiReview').style.display  = mode==='review'  ? '' : 'none';
+    const primary = document.getElementById('aiPrimaryBtn'), secondary = document.getElementById('aiSecondaryBtn');
+    const title = document.getElementById('aiTitle');
+    if(mode==='review'){
+      title.innerHTML = 'Review &amp; <em>use</em>.';
+      primary.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> Use this program';
+      secondary.textContent = 'Back';
+    } else {
+      title.innerHTML = 'Build with <em>AI</em>.';
+      primary.innerHTML = '<i class="ti ti-sparkles" aria-hidden="true"></i> Build my program';
+      secondary.textContent = 'Cancel';
+    }
+    primary.style.display = mode==='loading' ? 'none' : '';
+  }
+  function aiPrimary(){ if(aiMode==='review') applyAIProgram(); else submitAIBuild(); }
+  function aiSecondary(){ if(aiBusy) return; if(aiMode==='review') setAIMode('input'); else closeAIBuild(); }
+  window.openAIBuild = openAIBuild;
+  window.closeAIBuild = closeAIBuild;
+  window.aiPrimary = aiPrimary;
+  window.aiSecondary = aiSecondary;
+
+  // Fuzzy-match a free-text exercise name to a library exercise (so it stays swappable).
+  function matchExercise(name){
+    if(!name) return null;
+    const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+    const q = norm(name); if(!q) return null;
+    let exact = null, best = null;
+    for(const e of EXERCISE_LIBRARY){
+      const en = norm(e.name);
+      if(en===q) return e.id;
+      if(en.includes(q) || q.includes(en)){
+        const d = Math.abs(en.length - q.length);
+        if(!best || d < best.d) best = { id:e.id, d:d };
+      }
+    }
+    return best ? best.id : null;
+  }
+  function normIntensity(v){ v = String(v||'').toLowerCase(); return (v==='easy'||v==='moderate'||v==='hard') ? v : ''; }
+  function clampDow(d){ d = parseInt(d,10); return (isNaN(d) || d<0 || d>6) ? 0 : d; }
+  // Turn a parsed {name, days:[...]} into an owned template, matching exercises to the library.
+  function buildTemplateFromParsed(program){
+    const sessions = (program.days||[]).map(d => ({
+      dow: clampDow(d.dow), name: (d.name||'Session').slice(0,80), sport: (d.sport||'Strength').slice(0,40),
+      intensity: normIntensity(d.intensity), plannedDuration: numOrNull(d.duration), target: '',
+      workout: (d.exercises||[]).map(ex => {
+        const nm = ex && (ex.name || ex.exercise || '');
+        const detail = ex && (ex.detail || ex.rx || ex.prescription || '');
+        const id = matchExercise(nm);
+        return id ? { name: exById(id).name, detail: (detail || exById(id).rx), exId: id }
+                  : { name: String(nm||'Exercise').slice(0,60), detail: String(detail||'').slice(0,60) };
+      })
+    })).filter(s => s.name && s.workout.length);
+    return { name: (program.name || 'My program').slice(0,60), autoRepeat: true, sessions: sessions };
+  }
+  async function submitAIBuild(){
+    const text = document.getElementById('aiText').value.trim();
+    hideAIError();
+    if(!text){ showAIError('Paste or describe your program first.'); return; }
+    if(text.length < 8){ showAIError('Add a bit more detail — day names and a few exercises.'); return; }
+    setAIMode('loading'); aiBusy = true;
+    try {
+      const res = await apiPost({ action:'parseProgram', email: currentUser.email, text: text });
+      if(!res.success || !res.program) throw new Error(res.error || 'Couldn’t read that text.');
+      aiParsed = buildTemplateFromParsed(res.program);
+      if(!aiParsed.sessions.length){
+        setAIMode('input'); showAIError('Couldn’t find any training days. Try adding day names and exercises.'); aiBusy = false; return;
+      }
+      renderAIReview();
+      setAIMode('review');
+    } catch(e){
+      setAIMode('input'); showAIError(e.message || 'Something went wrong — try again.');
+    }
+    aiBusy = false;
+  }
+  function renderAIReview(){
+    const t = aiParsed; let matched = 0, total = 0;
+    const days = t.sessions.map(s => {
+      const exs = (s.workout||[]).map(w => {
+        total++; const m = !!w.exId; if(m) matched++;
+        return '<li><span>'+esc(w.name)+(m?'':' <span class="ai-freetag">custom</span>')+'</span><span class="preview-ex-rx">'+esc(w.detail||'')+'</span></li>';
+      }).join('');
+      return '<div class="preview-day"><div class="preview-day-head"><span class="preview-dow">'+DOW_FULL[s.dow]+'</span><span class="preview-day-name">'+esc(s.name)+'</span>'+(s.plannedDuration?'<span class="preview-day-min">'+s.plannedDuration+' min</span>':'')+'</div><ul class="preview-ex-list">'+exs+'</ul></div>';
+    }).join('');
+    document.getElementById('aiReviewBody').innerHTML =
+      '<div class="ai-match-note"><strong>'+t.name+'</strong> · '+t.sessions.length+' day'+(t.sessions.length===1?'':'s')+' · '+matched+'/'+total+' exercises matched to the library (matched ones are swappable; “custom” ones you can swap later by editing the day). Tweak anything after.</div>'+days;
+  }
+  async function applyAIProgram(){
+    if(!aiParsed) return;
+    state.weeklyTemplate = aiParsed;
+    state.planName = aiParsed.name;
+    const days = aiParsed.sessions.length;
+    closeAIBuild();
+    await persistTemplate();
+    renderWeek(); renderBlockBar();
+    await fillWeekFromTemplate();
+    showToast('Program built — '+days+' day'+(days===1?'':'s')+' in My Program', 'success');
+  }
+  window.applyAIProgram = applyAIProgram;
+
   function editWorkout(){
     if(workoutEditing){
       // commit
@@ -4338,6 +4510,7 @@
     const progSub = n ? (n+' session'+(n===1?'':'s')+(progName?' · '+esc(progName):'')) : 'Nothing yet — start one below';
     // Build my program — the design actions on top, week utilities below.
     let html =
+      moreRow('ti-sparkles', 'Build with AI', 'Paste a plan or your current program — we’ll build it', 'moreAIBuild')+
       moreRow('ti-refresh', 'Change program', 'Browse ready-made programs and preview before switching', 'moreSwitchProgram')+
       (n ? moreRow('ti-list-check', 'Edit my program', progSub, 'moreMyProgram')
          : moreRow('ti-plus', 'Build your own', 'Start from a blank week and add days', 'moreAddDay'))+
@@ -4364,6 +4537,8 @@
   function moreFillWeek(){ closeMoreActions(); fillWeekFromTemplate(); }
   function moreMyProgram(){ closeMoreActions(); openMyProgram(); }
   function moreAddDay(){ closeMoreActions(); openProgramDay(-1); }
+  function moreAIBuild(){ closeMoreActions(); openAIBuild(); }
+  window.moreAIBuild = moreAIBuild;
   window.openMoreActions = openMoreActions;
   window.closeMoreActions = closeMoreActions;
   window.moreLogFromNotes = moreLogFromNotes;
