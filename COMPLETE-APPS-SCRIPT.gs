@@ -357,6 +357,11 @@ function doPost(e) {
       return apJson(handleParseSessions(data.email, data.text, data.todayISO));
     }
 
+    // ===== AI PROGRAM BUILDER (freeform text / pasted program -> weekly program; writes nothing) =====
+    if (data.action === 'parseProgram') {
+      return apJson(handleParseProgram(data.email, data.text));
+    }
+
     // ===== SAVE NOMINATION =====
     if (data.action === 'saveNomination') {
       var nomResult = handleSaveNomination(data);
@@ -2081,6 +2086,99 @@ function handleParseSessions(email, text, todayISO) {
     }
 
     return { success: true, sessions: sessions };
+
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ========================================
+// AI PROGRAM BUILDER
+// Turns a student's freeform text — a pasted program, a coach's plan, or a
+// description of their week — into a structured WEEKLY PROGRAM (a repeating
+// template) for review. Writes to NO sheet — parse only.
+// Reuses the same ANTHROPIC_API_KEY script property. Fast, cheap model.
+// ========================================
+function handleParseProgram(email, text) {
+  try {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+    if (!apiKey) {
+      return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
+    }
+    if (!text || !String(text).trim()) {
+      return { success: false, error: 'No text to parse' };
+    }
+
+    var systemPrompt = 'You convert a student athlete\'s freeform text (a pasted program, a coach\'s plan, or a description of their training week) into a structured WEEKLY training program.\n'
+      + 'You output ONLY a JSON object — no preamble, no explanation, no markdown code fences.\n\n'
+      + 'The object has exactly these fields:\n'
+      + '{\n'
+      + '  "name": "a short program name (infer one if none given, e.g. \\"Strength Block\\")",\n'
+      + '  "days": [\n'
+      + '    {\n'
+      + '      "dow": integer 0-6 where 0=Monday .. 6=Sunday,\n'
+      + '      "name": "short day name, e.g. \\"Lower body\\" or \\"Upper — push\\"",\n'
+      + '      "sport": "Strength" | "Power" | "Run" | "Swim" | "Conditioning" | "Mobility" | "Other",\n'
+      + '      "intensity": "easy" | "moderate" | "hard" | "",\n'
+      + '      "duration": integer minutes or null,\n'
+      + '      "exercises": [ { "name": "exercise name", "detail": "sets/reps/tempo/load as written, else empty string" } ]\n'
+      + '    }\n'
+      + '  ]\n'
+      + '}\n\n'
+      + 'Rules:\n'
+      + '- One array element per training day. Use dow to place it on a weekday; if days are only labelled generically (Day 1, Day 2, A/B), spread them Mon/Wed/Fri style starting at dow 0.\n'
+      + '- Use standard, canonical exercise names (e.g. "Back Squat", "Deadlift", "Bench Press", "Pull-Up", "Kettlebell Swing", "Box Jump", "Med-Ball Slam", "Row Intervals") so they map cleanly — but keep the student\'s exercise if it has no standard name.\n'
+      + '- "detail" is the prescription exactly as written (e.g. "5x5", "3x8 @ 40kg", "8x250m"). If none is given, use an empty string. Do NOT invent loads or reps.\n'
+      + '- duration is whole minutes (integer) or null if not stated. intensity only if obvious, else empty string.\n'
+      + '- Ignore warm-ups/cool-downs unless they are the only content; focus on the main work.\n'
+      + '- If you cannot find any training days, return {"name":"","days":[]}.';
+
+    var userMessage = 'Turn this into a weekly program:\n\n' + String(text);
+
+    var payload = {
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    };
+
+    var options = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    var response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', options);
+    if (response.getResponseCode() !== 200) {
+      return { success: false, error: 'Anthropic API returned status ' + response.getResponseCode() };
+    }
+
+    var responseBody = JSON.parse(response.getContentText());
+    var aiText = responseBody.content && responseBody.content[0] && responseBody.content[0].text;
+    if (!aiText) {
+      return { success: false, error: 'No text in API response' };
+    }
+
+    // Extract JSON object, tolerating code fences / prose around it.
+    var extracted = String(aiText).trim().replace(/^```[^\n`]*\r?\n?/, '').replace(/\r?\n?```\s*$/, '').trim();
+    if (extracted.charAt(0) !== '{') {
+      var fb = extracted.indexOf('{'), lb = extracted.lastIndexOf('}');
+      if (fb !== -1 && lb > fb) extracted = extracted.slice(fb, lb + 1);
+    }
+
+    var program;
+    try {
+      program = JSON.parse(extracted);
+    } catch (parseErr) {
+      return { success: false, error: 'Parse failed', raw: String(aiText).slice(0, 1500) };
+    }
+    if (!program || typeof program !== 'object' || !Array.isArray(program.days)) {
+      return { success: false, error: 'Parse failed', raw: String(aiText).slice(0, 1500) };
+    }
+
+    return { success: true, program: program };
 
   } catch (error) {
     return { success: false, error: error.toString() };
