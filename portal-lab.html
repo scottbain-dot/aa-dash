@@ -1342,6 +1342,11 @@
 <div class="welcome" id="welcome">
   <p class="welcome-mark">Athlete <em>Academy</em></p>
   <p class="welcome-sub">Your year, your weeks, your bests. Sign in to plan and log your training.</p>
+  <div class="embedded-warn" id="embeddedWarn" style="display:none;">
+    <i class="ti ti-browser-plus" aria-hidden="true"></i>
+    <div><strong>Open this in Safari or Chrome to sign in.</strong>
+    Tap the <b>•••</b> (or share) button and choose <b>Open in browser</b> — Google sign-in won’t work inside an app’s built-in browser.</div>
+  </div>
   <div class="welcome-signin">
     <div id="g_id_onload"
          data-client_id="701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com"
@@ -2105,6 +2110,11 @@
   /* "More" action sheet — one tappable row per power tool */
   .more-list { display: flex; flex-direction: column; gap: 8px; }
   .more-divider { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 14px 2px 2px; }
+  /* Embedded-browser sign-in warning (on the welcome screen) */
+  .embedded-warn { display: flex; gap: 10px; align-items: flex-start; text-align: left; max-width: 340px; margin: 0 auto 20px; padding: 14px 16px; border-radius: 14px; background: rgba(212,175,55,0.14); border: 1px solid var(--gold); font-family: 'Inter', sans-serif; font-size: 13px; line-height: 1.5; color: var(--cream); }
+  .embedded-warn i { font-size: 20px; color: var(--gold); flex-shrink: 0; margin-top: 1px; }
+  .embedded-warn strong { display: block; margin-bottom: 3px; color: #fff; }
+  .embedded-warn b { color: var(--gold-light); }
   /* Build with AI */
   .ai-spinner { width: 34px; height: 34px; margin: 0 auto; border: 3px solid var(--line); border-top-color: var(--burgundy); border-radius: 50%; animation: ai-spin 0.8s linear infinite; }
   @keyframes ai-spin { to { transform: rotate(360deg); } }
@@ -2945,15 +2955,40 @@
   // ============================================================
   // AUTH
   // ============================================================
+  // JWT payloads are base64URL (not standard base64) and UTF-8 (names at FIS have
+  // umlauts/accents) — a plain atob() can throw or mangle them. Decode safely.
+  function b64urlDecode(seg){
+    let s = String(seg||'').replace(/-/g,'+').replace(/_/g,'/');
+    while(s.length % 4) s += '=';
+    const bin = atob(s);
+    try {
+      return decodeURIComponent(bin.split('').map(c => '%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    } catch(e){ return bin; }   // fall back to raw if it isn't valid UTF-8
+  }
   function handleCredentialResponse(resp){
     try {
-      const payload = JSON.parse(atob(resp.credential.split('.')[1]));
+      const payload = JSON.parse(b64urlDecode(resp.credential.split('.')[1]));
       currentUser = { email: payload.email, name: payload.name, picture: payload.picture, loginTime: Date.now() };
       localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
       startPortal();
     } catch(e){ showToast('Sign-in failed. Try again.', 'error'); }
   }
   window.handleCredentialResponse = handleCredentialResponse;
+
+  // Google blocks OAuth inside embedded/in-app browsers (Canvas, Teams, Gmail,
+  // WhatsApp…). Detect that so we can tell students to open in Safari/Chrome.
+  function isEmbeddedBrowser(){
+    const ua = navigator.userAgent || '';
+    if(/FBAN|FBAV|Instagram|Line\/|WhatsApp|Snapchat|Twitter|MicroMessenger|; wv\)|WebView/i.test(ua)) return true;
+    // iOS in-app webviews report the OS but not "Safari"; real iOS browsers include "Safari" or "CriOS".
+    if(/iPhone|iPad|iPod/.test(ua) && !/Safari|CriOS|FxiOS|EdgiOS/i.test(ua)) return true;
+    return false;
+  }
+  function maybeWarnEmbedded(){
+    if(!isEmbeddedBrowser()) return;
+    const el = document.getElementById('embeddedWarn');
+    if(el) el.style.display = '';
+  }
 
   function checkExistingSession(){
     try {
@@ -3044,14 +3079,27 @@
     document.getElementById('appError').classList.remove('active');
     setLoading(true, 'Loading your training…');
     try {
-      const data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
-      if(!data.success) throw new Error(data.error || 'load failed');
+      // Auto-retry with backoff — a whole class hitting the Apps Script at once
+      // (cold start / concurrency) can be transiently slow; don't fail on the first try.
+      let data = null, lastErr = null;
+      for(let attempt = 0; attempt < 3; attempt++){
+        try {
+          data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
+          if(data && data.success) break;
+          lastErr = new Error(data && data.error || 'load failed'); data = null;
+        } catch(err){ lastErr = err; data = null; }
+        if(attempt < 2){ setLoading(true, 'Reconnecting…'); await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); }
+      }
+      if(!data){ throw lastErr || new Error('load failed'); }
       athlete = data.athlete;
       if(!athlete){ setLoading(false); renderNoAthlete(); return; }
       // Server is source of truth; localStorage is the safety net if a save
       // didn't reach the server (so a student's year survives a refresh).
       state.yearMap = data.yearMap || loadYearLocal() || null;
       if(state.yearMap) saveYearLocal();
+      // Heal the sheet: if the server had no year but the device does (a save
+      // that never landed), push it back up so the sheet becomes complete.
+      if(!data.yearMap && state.yearMap) markYearDirty();
       state.weeklyTemplate = data.weeklyTemplate || loadTemplateLocal() || null;
       state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
@@ -3235,8 +3283,9 @@
     document.getElementById('view-week').innerHTML =
       '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-user-question"></i></div>'+
       '<h2 class="empty-state-title">No <em>athlete record</em> found.</h2>'+
-      '<p class="empty-state-text">Signed in as '+esc(currentUser.email)+'. Ask Mr Bain to add you to the Academy, then sign in again.</p>'+
-      '<button class="btn-primary" onclick="logout()">Sign out</button></div>';
+      '<p class="empty-state-text">You’re signed in as <strong>'+esc(currentUser.email)+'</strong>. '+
+        'Make sure you used your <strong>school (@fis.edu) account</strong> — if you did, ask Mr Bain to add you to the Academy, then sign in again.</p>'+
+      '<button class="btn-primary" onclick="logout()">Sign out &amp; try another account</button></div>';
   }
 
   // ============================================================
@@ -4303,6 +4352,29 @@
   function yearKey(){ return 'aaPortalYear:' + ((currentUser && currentUser.email) || 'anon'); }
   function loadYearLocal(){ try { return JSON.parse(localStorage.getItem(yearKey())); } catch(e){ return null; } }
   function saveYearLocal(){ try { localStorage.setItem(yearKey(), JSON.stringify(state.yearMap || null)); } catch(e){} }
+  // Coalesced year-map save: ALWAYS sends the full current map, so rapid edits
+  // (e.g. tapping several months) can't race and lose updates. Saves to the
+  // device immediately, then syncs to the sheet — trailing-edge with retry, so a
+  // slow/failed Apps Script call never loses data or blocks the UI.
+  let _yearSaving = false, _yearDirty = false;
+  function markYearDirty(){
+    saveYearLocal();
+    if(DEMO_MODE || !currentUser) return;
+    _yearDirty = true; flushYearSave();
+  }
+  async function flushYearSave(){
+    if(_yearSaving || !_yearDirty || !currentUser) return;
+    _yearSaving = true; _yearDirty = false;
+    try {
+      const r = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: serialiseYearMap() });
+      if(!r || !r.success) throw new Error(r && r.error || 'save failed');
+    } catch(e){ _yearDirty = true; }   // keep dirty and retry
+    finally {
+      _yearSaving = false;
+      if(_yearDirty) setTimeout(flushYearSave, 2500);
+    }
+  }
+  window.flushYearSave = flushYearSave;
   function emptyTemplate(){ return { name:'', updated:'', sessions:[] }; }
   function templateSessions(){ return (state.weeklyTemplate && state.weeklyTemplate.sessions) || []; }
   function dowOf(iso){ return (parseISO(iso).getDay()+6)%7; }   // 0=Mon .. 6=Sun
@@ -5501,10 +5573,7 @@
     const block = { month: month, state: stt, focus:'', loadTarget:null, note:'' };
     applyBlockLocally(sport.name, block);
     renderYear(); renderBlockBar();
-    try {
-      const res = await apiPost({ action:'saveBlock', email: currentUser.email, sport: sport.name, month: month, block: block });
-      if(!res.success) throw new Error(res.error || 'save failed');
-    } catch(e){ console.error('confirmSuggestion', e); showToast('Saved on your device but couldn’t reach the server.', 'error'); }
+    markYearDirty();   // saves the full map (device now, sheet in the background)
   }
   window.confirmSuggestion = confirmSuggestion;
 
@@ -5556,13 +5625,7 @@
     closeBlock();
     renderYear(); renderBlockBar();
     showToast('Block saved', 'success');
-    try {
-      const res = await apiPost({ action:'saveBlock', email: currentUser.email, sport: sportName, month: block.month, block: block });
-      if(!res.success) throw new Error(res.error||'save failed');
-    } catch(e){
-      console.error('saveBlock', e);
-      showToast('Saved on your device but couldn’t reach the server — reopen to retry.', 'error');
-    }
+    markYearDirty();   // full-map save (device now, sheet in the background, with retry)
   }
   window.saveBlockSheet = saveBlockSheet;
 
@@ -5583,12 +5646,8 @@
     if(!name) return;
     if(state.yearMap.sports.some(s => s.name.toLowerCase()===name.toLowerCase())){ showToast('That sport is already on your year.', 'error'); return; }
     state.yearMap.sports.push({ name:name, isPriority:false, monthlyStates:[] });
-    saveYearLocal();
-    try {
-      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: serialiseYearMap() });
-      if(!res.success) throw new Error();
-      renderYear();
-    } catch(e){ console.error('addSport', e); showToast('Could not add sport — ' + (e.message||'try again'), 'error'); }
+    markYearDirty();
+    renderYear();
   }
   window.addSport = addSport;
 
@@ -5636,15 +5695,11 @@
       sports: [{ name: sport, isPriority: true, monthlyStates: sel ? [{ month: curMonth, state: sel.dataset.state, focus:'', loadTarget:null, note:'' }] : [] }],
       testingWindows: [], otherCommitments: []
     };
-    try {
-      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: yearMap });
-      if(!res.success) throw new Error(res.error||'save failed');
-      state.yearMap = yearMap;
-      saveYearLocal();
-      renderNav();
-      switchTab('week');
-      showToast('Year set up — here\'s your week.', 'success');
-    } catch(e){ console.error('submitOnboard', e); showToast('Could not save — ' + (e.message||'try again'), 'error'); }
+    state.yearMap = yearMap;
+    markYearDirty();
+    renderNav();
+    switchTab('year');
+    showToast('Year set up!', 'success');
   }
   window.submitOnboard = submitOnboard;
 
@@ -5777,21 +5832,15 @@
       sports: [{ name: sport, isPriority: true, monthlyStates: [{ month: curMonth, state: seededState, focus:'', loadTarget:null, note:'' }] }],
       testingWindows: [], otherCommitments: []
     };
-    const nextBtn = document.getElementById('wtNext'); if(nextBtn) nextBtn.disabled = true;
-    try {
-      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: yearMap });
-      if(!res.success) throw new Error(res.error||'save failed');
-      state.yearMap = yearMap;
-      saveYearLocal();
-      closeWalkthrough();
-      renderNav(); renderBlockBar();
-      switchTab('year');
-      showToast('Your year is mapped — welcome aboard! 🎉', 'success');
-    } catch(e){
-      if(nextBtn) nextBtn.disabled = false;
-      console.error('wtFinish', e);
-      showToast('Could not save — ' + (e.message||'try again'), 'error');
-    }
+    // Optimistic + resilient: save on the device and open the year immediately;
+    // the sheet syncs in the background (with retry), so a slow server never
+    // blocks the student or throws a scary error.
+    state.yearMap = yearMap;
+    markYearDirty();
+    closeWalkthrough();
+    renderNav(); renderBlockBar();
+    switchTab('year');
+    showToast('Your year is mapped — welcome aboard! 🎉', 'success');
   }
 
   function editYearGoal(){
@@ -5824,13 +5873,9 @@
     ym.aPriority = event ? { sport: (ym.sports[0]&&ym.sports[0].name)||'', event: event, date: date, month: apMonth } : null;
     ym.testingWindows = parseMonthList(val('gTesting'));
     ym.otherCommitments = parseMonthList(val('gBusy'));
-    saveYearLocal();
-    try {
-      const res = await apiPost({ action:'saveYearMap', email: currentUser.email, yearMap: serialiseYearMap() });
-      if(!res.success) throw new Error();
-      renderYear(); renderBlockBar();
-      showToast('Goal saved', 'success');
-    } catch(e){ console.error('saveYearGoal', e); showToast('Could not save goal — ' + (e.message||'try again'), 'error'); }
+    markYearDirty();
+    renderYear(); renderBlockBar();
+    showToast('Goal saved', 'success');
   }
   window.saveYearGoal = saveYearGoal;
 
@@ -6397,6 +6442,7 @@
     const params = new URLSearchParams(location.search);
     if(params.get('demo') === '1'){ startDemo(); return; }
     if(checkExistingSession()) startPortal();
+    else maybeWarnEmbedded();   // on the sign-in screen, warn in-app browsers
   });
 </script>
 

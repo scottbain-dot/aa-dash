@@ -2885,7 +2885,10 @@ function handleGetYearMap(ss, email) {
 }
 
 function handleSaveYearMap(ss, email, yearMap) {
+  var lock = LockService.getScriptLock();
   try {
+    // Serialise writes so a class saving at once can't collide on append/update.
+    try { lock.waitLock(15000); } catch (lockErr) { return { success: false, error: 'Server busy — try again' }; }
     var athleteId = lookupAthleteIdByEmail(ss, email);
     if (!athleteId) return { success: false, error: 'No athlete for ' + email };
     var sheet = apEnsureYearMaps(ss);
@@ -2906,6 +2909,8 @@ function handleSaveYearMap(ss, email, yearMap) {
     return { success: true };
   } catch (error) {
     return { success: false, error: error.toString() };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
   }
 }
 
