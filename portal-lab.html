@@ -2131,6 +2131,23 @@
   .teaser-back { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--burgundy); background: var(--surface); border: 1.5px solid var(--line); border-radius: 999px; padding: 10px 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
   .teaser-back:hover { border-color: var(--burgundy); }
 
+  /* ===== Season key dates ===== */
+  .kd-intro { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute); line-height: 1.55; margin: 0 0 14px; }
+  .kd-intro strong { color: var(--ink); font-weight: 600; }
+  .kd-list { display: flex; flex-direction: column; }
+  .kd-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line-soft); }
+  .kd-row:last-child { border-bottom: none; }
+  .kd-emoji { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+  .kd-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .kd-label { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .kd-cue { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-mute); }
+  .kd-date { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--burgundy); white-space: nowrap; flex-shrink: 0; }
+  .kd-row.kd-isst { background: rgba(212,175,55,0.10); border-radius: 12px; padding: 11px 12px; margin: 3px 0; border-bottom: none; }
+  .kd-row.kd-isst .kd-label { color: var(--burgundy); }
+  .kd-row.kd-isst + .kd-row { border-top: 1px solid var(--line-soft); }
+  .kd-past { opacity: 0.42; }
+  .kd-soon-tag { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--green-dark); background: rgba(34,197,94,0.14); padding: 2px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; }
+
   /* ===== First-run WALKTHROUGH ===== */
   .wt { position: fixed; inset: 0; z-index: 200; background: rgba(38,26,24,0.55); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; }
   @media (min-width: 560px){ .wt { align-items: center; } }
@@ -5266,6 +5283,57 @@
   const ACADEMIC_MONTHS = ['August','September','October','November','December','January','February','March','April','May','June','July'];
   let blockCtx = null;       // { sportName, month, block }
 
+  // ============================================================
+  // SCHOOL KEY DATES (FIS Upper School calendar 2026–27) — surfaced so athletes
+  // can plan effort around them. ISST = the big competition weeks (sharpen up);
+  // exams = ease off / don't over-reach; breaks = recover. Update each year.
+  // ============================================================
+  const SCHOOL_EVENTS = [
+    { label:'First day of school',   type:'term',  start:'2026-08-20', end:'2026-08-21' },
+    { label:'Fall Break',            type:'break', start:'2026-10-03', end:'2026-10-11' },
+    { label:'ISST Tournament',       type:'isst',  start:'2026-11-12', end:'2026-11-14', note:'Fall ISST' },
+    { label:'Fall MAP Testing',      type:'exam',  start:'2026-11-17', end:'2026-11-24' },
+    { label:'Winter Break',          type:'break', start:'2026-12-19', end:'2027-01-10' },
+    { label:'Mock Exams',            type:'exam',  start:'2027-01-12', end:'2027-01-22' },
+    { label:'Ski Break',             type:'break', start:'2027-02-13', end:'2027-02-21' },
+    { label:'ISST Tournament',       type:'isst',  start:'2027-03-11', end:'2027-03-13', note:'Spring ISST' },
+    { label:'Spring Break',          type:'break', start:'2027-03-20', end:'2027-04-04' },
+    { label:'IB Exams · Grade 12',   type:'exam',  start:'2027-04-26', end:'2027-05-19' },
+    { label:'Spring MAP Testing',    type:'exam',  start:'2027-05-11', end:'2027-05-18' },
+    { label:'ISST Tournament',       type:'isst',  start:'2027-05-27', end:'2027-05-29', note:'Summer ISST' },
+    { label:'Last day of school',    type:'term',  start:'2027-06-25', end:'2027-06-25' }
+  ];
+  const EVENT_META = {
+    isst:  { emoji:'🏆', cue:'Big competition — sharpen up and arrive fresh' },
+    exam:  { emoji:'📚', cue:'School load high — hold steady, don’t over-reach' },
+    break: { emoji:'🌴', cue:'A natural chance to recover' },
+    term:  { emoji:'🎒', cue:'' }
+  };
+  // "12–14 Nov" or "19 Dec – 10 Jan" (drops the second month when the same).
+  function eventRange(ev){
+    const a = parseISO(ev.start), b = parseISO(ev.end);
+    if(ev.start===ev.end) return dayNum(ev.start)+' '+monShort(ev.start);
+    if(a.getMonth()===b.getMonth()) return dayNum(ev.start)+'–'+dayNum(ev.end)+' '+monShort(ev.end);
+    return dayNum(ev.start)+' '+monShort(ev.start)+' – '+dayNum(ev.end)+' '+monShort(ev.end);
+  }
+  function seasonKeyDatesCard(){
+    const todayIso = isoToday();
+    const rows = SCHOOL_EVENTS.map(ev => {
+      const m = EVENT_META[ev.type] || EVENT_META.term;
+      const past = ev.end < todayIso;
+      const soon = !past && ev.start <= addDays(todayIso, 28);   // within ~4 weeks
+      return '<div class="kd-row'+(ev.type==='isst'?' kd-isst':'')+(past?' kd-past':'')+(soon?' kd-soon':'')+'">'+
+        '<span class="kd-emoji">'+m.emoji+'</span>'+
+        '<span class="kd-main"><span class="kd-label">'+esc(ev.label)+(soon?' <span class="kd-soon-tag">soon</span>':'')+'</span>'+
+          (m.cue?'<span class="kd-cue">'+esc(m.cue)+'</span>':'')+'</span>'+
+        '<span class="kd-date">'+esc(eventRange(ev))+'</span>'+
+      '</div>';
+    }).join('');
+    return '<div class="card"><p class="card-eyebrow">Season key dates · 2026–27</p>'+
+      '<p class="kd-intro">Plan your effort around these. <strong>🏆 ISST</strong> weeks are when you want to be sharp; <strong>📚 exams</strong> are when to hold steady; <strong>🌴 breaks</strong> are a chance to recover.</p>'+
+      '<div class="kd-list">'+rows+'</div></div>';
+  }
+
   function hasYear(){ return state.yearMap && state.yearMap.sports && state.yearMap.sports.length; }
 
   function renderYear(){
@@ -5286,6 +5354,9 @@
       '<div class="week-today-cta" style="display:flex; gap:10px;"><button class="card-cta card-cta-ghost" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Edit goal</button>'+
         '<button class="card-cta card-cta-ghost" onclick="openWalkthrough()"><i class="ti ti-help-circle" aria-hidden="true"></i> How this works</button></div>'+
     '</div>';
+
+    // Season key dates — awareness of ISST weeks, exams and breaks.
+    html += seasonKeyDatesCard();
 
     // One card per sport — monthly states via the existing month tiles / statePicker.
     ym.sports.forEach((sport, si) => {
@@ -5646,16 +5717,18 @@
             '<input type="date" class="duration-input plan-field" id="wtDate" value="'+esc(wt.date)+'"></div>';
       case 'periodise':
         return '<p class="wt-eyebrow">Step 3 · How your year flows</p>'+
-          '<h2 class="wt-title">Build, peak, <em>recover</em>.</h2>'+
-          '<p class="wt-body">You can’t go hard all year. Smart athletes plan it: <strong>build</strong> fitness through the year, <strong>peak</strong> for the big event, then <strong>recover</strong> — and build again.</p>'+
+          '<h2 class="wt-title">Know when to <em>push</em>.</h2>'+
+          '<p class="wt-body">The point of your year isn’t to go flat-out all the time — it’s to know <strong>when to push a little harder, when to hold steady, and when to back off and recover</strong>. Go hard forever and you break down; plan it and you get better.</p>'+
           wtYearStripHTML()+
           '<div class="wt-legend">'+
-            '<span class="wt-legend-item"><span class="le-emoji">💪</span><strong>Build</strong> · <em>get fitter and stronger</em></span>'+
-            '<span class="wt-legend-item"><span class="le-emoji">🏆</span><strong>Peak</strong> · <em>sharp for your big event</em></span>'+
-            '<span class="wt-legend-item"><span class="le-emoji">🌙</span><strong>Recover</strong> · <em>rest and reset after</em></span>'+
-            '<span class="wt-legend-item"><span class="le-emoji">⚡</span><strong>Maintain</strong> · <em>hold steady when life is busy</em></span>'+
+            '<span class="wt-legend-item"><span class="le-emoji">💪</span><strong>Build</strong> · <em>push a bit harder — get fitter and stronger. This is most of your year.</em></span>'+
+            '<span class="wt-legend-item"><span class="le-emoji">⚡</span><strong>Maintain</strong> · <em>hold your level. Don’t over-reach when school or games are busy.</em></span>'+
+            '<span class="wt-legend-item"><span class="le-emoji">🏆</span><strong>Peak</strong> · <em>the clever one — see below.</em></span>'+
+            '<span class="wt-legend-item"><span class="le-emoji">🌙</span><strong>Recover</strong> · <em>ease right off and let your body absorb the work.</em></span>'+
           '</div>'+
-          '<p class="wt-note">We’ve suggested this for you from your event date — you’ll be able to fine-tune any month later.</p>';
+          '<div class="wt-example" style="border-left-color:var(--burgundy);"><p class="wt-example-label">🏆 What “Peak” really means</p>'+
+            '<p class="wt-example-text" style="font-style:normal; font-size:14px; font-family:\'Inter\',sans-serif; color:var(--ink-mute); line-height:1.55;">It’s not “train the hardest.” In the week or two before a big event you actually train <strong>a little less</strong> — so you turn up <strong>fresh and sharp</strong> instead of tired. Peaking means arriving rested, ready to perform.</p></div>'+
+          '<p class="wt-note">We’ve coloured your year from your event date — you can fine-tune any month, or any week, later.</p>';
       case 'finish':
       default:
         const dateNice = wt.date ? fmtNice(wt.date) : '';
