@@ -4710,137 +4710,166 @@ function handleGetClashConfig() {
 
 // ============================================================
 // ROSTER ADMIN — run these from the Athletes spreadsheet itself.
+// ONE roster: every student (Grade 9 and Grade 10–12) lives on the "Athletes"
+// tab. The Grade column is the single source of truth for which portal a
+// student belongs to — Grade 9 → the separate Grade 9 platform, Grade 10–12 →
+// this planning portal. Grade 9 rows carry a Name + Grade (+ Class = AA(7)/
+// AA(8)) but NO email — they stay anonymous for GDPR and are keyed only by
+// their Athlete_ID.
+//
 // Adds an "Athlete Academy" menu (appears after you reload the sheet):
-//   • Assign missing athlete IDs — gives every student a unique, stable numeric
-//     Athlete_ID. REQUIRED: without an Athlete_ID a student's data can't save.
-//     Covers BOTH groups in one click:
-//       – Grade 10–12 on the "Athletes" tab (keyed by email).
-//       – Grade 9 on a separate class tab whose headers are AA(7) / AA(8):
-//         names only, no emails (kept anonymous for GDPR). An "ID" column is
-//         added to the left of each class list and filled with numbers that
-//         continue the SAME sequence as the Athletes tab, so no two students —
-//         across any grade or tab — ever share an ID.
-//     Idempotent — only fills blanks, never changes existing IDs. Paste a whole
-//     class (leaving IDs blank) and click once.
-//   • Check roster for problems — flags missing emails, non-@fis.edu emails,
-//     duplicates and any Grade 10–12 athletes still without an ID.
+//   • Import Grade 9 into Athletes tab — copies the names from the AA(7)/AA(8)
+//     class tab into the Athletes tab (Grade = 9, Class = section), then hands
+//     each new student an Athlete_ID. Idempotent — re-running never duplicates a
+//     student. After this you can delete the old AA(7)/AA(8) tab.
+//   • Assign missing athlete IDs — gives every student on the Athletes tab a
+//     unique, stable numeric Athlete_ID (whether or not they have an email).
+//     REQUIRED: without an Athlete_ID a student's data can't save. Idempotent —
+//     only fills blanks, never changes existing IDs. Paste a whole class
+//     (leaving Athlete_ID blank) and click once.
+//   • Check roster for problems — flags Grade 10–12 rows missing an email
+//     (they need one to log in — Grade 9 don't), non-@fis.edu emails,
+//     duplicates and any student still without an ID.
 // ============================================================
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Athlete Academy')
+    .addItem('Import Grade 9 into Athletes tab', 'importGrade9ToAthletes')
     .addItem('Assign missing athlete IDs', 'assignAthleteIds')
     .addItem('Check roster for problems', 'checkRoster')
     .addToUi();
 }
 
-function assignAthleteIds() {
+// Copy the Grade 9 class lists (AA(7)/AA(8) tab) into the Athletes tab as proper
+// rows — Grade = 9, Class = the section — then assign IDs. Idempotent.
+function importGrade9ToAthletes() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var ui = SpreadsheetApp.getUi();
   var sh = ss.getSheetByName('Athletes');
   if (!sh) { ui.alert('No "Athletes" sheet found.'); return; }
-  var data = sh.getDataRange().getValues();
-  var H = data[0];
-  var idc = H.indexOf('Athlete_ID'), ec = H.indexOf('Email');
-  if (idc < 0 || ec < 0) { ui.alert('The Athletes sheet needs an "Athlete_ID" and an "Email" column.'); return; }
 
-  // ONE global numbering sequence across the whole school. Athlete_ID is a plain
-  // number; continue from the highest already used anywhere so re-runs keep
-  // numbering upward and never reuse an ID.
-  var seen = {}, max = 0;
-  function note(v) { var s = String(v || '').trim(); if (!s) return; seen[s] = true; var n = parseInt(s, 10); if (!isNaN(n)) max = Math.max(max, n); }
-  function nextId() { var id; do { max++; id = max; } while (seen[String(id)]); seen[String(id)] = true; return id; }
+  var g9 = readGrade9Classes_(ss);
+  if (!g9.length) { ui.alert('No Grade 9 class tab found — looked for a tab whose headers are AA(7) / AA(8).'); return; }
 
-  // Grade 9 lives on a separate class tab (AA(7)/AA(8)); find it and make sure
-  // each class list has an "ID" column to its left. Do this first so the pre-scan
-  // below sees any IDs it already holds.
-  var g9 = findGrade9Sheets_(ss);
-
-  // Pre-scan every ID already in use (Grade 10–12 + Grade 9) before assigning.
-  for (var i = 1; i < data.length; i++) note(data[i][idc]);
-  g9.forEach(function (info) { info.classCols.forEach(function (cc) { for (var r = info.firstDataRow; r < info.values.length; r++) note(info.values[r][cc.idCol]); }); });
-
-  // --- Grade 10–12 (Athletes tab, one row per athlete, keyed by email) ---
-  var assigned = 0;
-  for (var i = 1; i < data.length; i++) {
-    var email = String(data[i][ec] || '').trim();
-    if (!email) continue;                               // skip fully blank rows
-    if (String(data[i][idc] || '').trim()) continue;    // already has an ID — leave it
-    sh.getRange(i + 1, idc + 1).setValue(nextId());     // writes a plain number
-    assigned++;
+  // The Athletes tab needs Name + Grade; add a "Class" column (for the section)
+  // if it isn't already there.
+  var H = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  var nameIdx = H.indexOf('Name'), gradeIdx = H.indexOf('Grade');
+  if (nameIdx < 0 || gradeIdx < 0) { ui.alert('The Athletes sheet needs "Name" and "Grade" columns.'); return; }
+  var classIdx = H.indexOf('Class');
+  if (classIdx < 0) {
+    classIdx = H.length;
+    sh.getRange(1, classIdx + 1).setValue('Class');
+    H.push('Class');
   }
 
-  // --- Grade 9 (separate class tab, names only, no emails) ---
-  var g9assigned = 0;
-  g9.forEach(function (info) {
-    info.classCols.forEach(function (cc) {
-      for (var r = info.firstDataRow; r < info.values.length; r++) {
-        var name = String(info.values[r][cc.nameCol] || '').trim();
-        if (!name) continue;                            // no student on this row
-        if (String(info.values[r][cc.idCol] || '').trim()) continue; // already has an ID
-        info.sheet.getRange(r + 1, cc.idCol + 1).setValue(nextId());
-        g9assigned++;
-      }
-    });
+  // Remember who's already on the Athletes tab (Name + Class) so a re-run never
+  // adds a student twice.
+  var existing = {};
+  var data = sh.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    var nm = String(data[i][nameIdx] || '').trim().toLowerCase();
+    if (!nm) continue;
+    var cl = classIdx < data[i].length ? String(data[i][classIdx] || '').trim().toLowerCase() : '';
+    existing[nm + '|' + cl] = true;
+  }
+
+  var added = 0;
+  g9.forEach(function (e) {
+    var key = e.name.toLowerCase() + '|' + e.cls.toLowerCase();
+    if (existing[key]) return;
+    existing[key] = true;
+    var row = [];
+    for (var c = 0; c < H.length; c++) row.push('');
+    row[nameIdx] = e.name;
+    row[gradeIdx] = 9;
+    row[classIdx] = e.cls;
+    sh.appendRow(row);
+    added++;
   });
 
-  var parts = [];
-  parts.push(assigned
-    ? ('Grade 10–12: assigned ' + assigned + ' new ID' + (assigned === 1 ? '' : 's') + '.')
-    : 'Grade 10–12: everyone with an email already had an ID.');
-  if (g9.length) {
-    parts.push(g9assigned
-      ? ('Grade 9: assigned ' + g9assigned + ' new ID' + (g9assigned === 1 ? '' : 's') + '.')
-      : 'Grade 9: everyone already had an ID.');
-  }
-  parts.push('\nEvery student now has a unique Athlete_ID and can save their data.');
-  ui.alert('Assign athlete IDs', parts.join('\n'), ui.ButtonSet.OK);
+  var assigned = assignAthleteIdsCore_(ss);
+
+  ui.alert('Import Grade 9',
+    (added
+      ? ('Added ' + added + ' Grade 9 student' + (added === 1 ? '' : 's') + ' to the Athletes tab (Grade = 9, Class = section).')
+      : 'No new Grade 9 students to add — they were all already on the Athletes tab.') +
+    '\n\n' +
+    (assigned
+      ? ('Assigned ' + assigned + ' new Athlete_ID' + (assigned === 1 ? '' : 's') + '.')
+      : 'Everyone already had an Athlete_ID.') +
+    '\n\nEveryone now lives on the Athletes tab — you can delete the old AA(7)/AA(8) tab.',
+    ui.ButtonSet.OK);
 }
 
-// Locate Grade 9 class tab(s): any sheet (other than Athletes) whose header row
-// holds AA(n) labels (e.g. "AA(7)", "AA(8)"). For each such class-name column,
-// ensure there is an "ID" column immediately to its LEFT (inserting one if
-// missing — idempotent, so re-runs never add a second). Returns, per sheet:
-//   { sheet, values (re-read after any insert), firstDataRow,
-//     classCols: [{ nameCol, idCol }] }
-function findGrade9Sheets_(ss) {
+// Read every Grade 9 class list from the AA(7)/AA(8) tab. Read-only.
+// Returns [{ name, cls }] — e.g. { name: 'B, Aiden', cls: 'AA(7)' }.
+function readGrade9Classes_(ss) {
   var out = [];
   ss.getSheets().forEach(function (sheet) {
     if (sheet.getName() === 'Athletes') return;
     var values = sheet.getDataRange().getValues();
     if (!values.length) return;
-
-    // Find the header row that carries AA(n) labels (search the first few rows).
-    var hr = -1, nameCols = [];
+    // Find the header row carrying AA(n) labels (search the first few rows).
+    var hr = -1, cols = [];
     for (var r = 0; r < Math.min(values.length, 6); r++) {
-      var cols = [];
+      var found = [];
       for (var c = 0; c < values[r].length; c++) {
-        if (/^AA\(\d+\)$/.test(String(values[r][c] || '').trim())) cols.push(c);
+        var label = String(values[r][c] || '').trim();
+        if (/^AA\(\d+\)$/.test(label)) found.push({ col: c, cls: label });
       }
-      if (cols.length) { hr = r; nameCols = cols; break; }
+      if (found.length) { hr = r; cols = found; break; }
     }
     if (hr < 0) return;
-
-    // Insert a left-hand "ID" column for any class column that lacks one.
-    // Insert right-to-left so not-yet-processed indices stay valid.
-    var needInsert = [];
-    nameCols.forEach(function (c) {
-      var leftHeader = c > 0 ? String(values[hr][c - 1] || '').trim().toLowerCase() : '';
-      if (leftHeader !== 'id') needInsert.push(c);
+    cols.forEach(function (cc) {
+      for (var r = hr + 1; r < values.length; r++) {
+        var name = String(values[r][cc.col] || '').trim();
+        if (name) out.push({ name: name, cls: cc.cls });
+      }
     });
-    needInsert.sort(function (a, b) { return b - a; }).forEach(function (c) {
-      sheet.insertColumnBefore(c + 1);                  // 1-based; new column lands at index c
-      sheet.getRange(hr + 1, c + 1).setValue('ID');
-    });
-    if (needInsert.length) values = sheet.getDataRange().getValues();
-
-    // Recompute class columns + their (left) ID columns after any inserts.
-    var classCols = [];
-    for (var c = 0; c < values[hr].length; c++) {
-      if (/^AA\(\d+\)$/.test(String(values[hr][c] || '').trim())) classCols.push({ nameCol: c, idCol: c - 1 });
-    }
-    out.push({ sheet: sheet, values: values, firstDataRow: hr + 1, classCols: classCols });
   });
   return out;
+}
+
+function assignAthleteIds() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+  if (!ss.getSheetByName('Athletes')) { ui.alert('No "Athletes" sheet found.'); return; }
+  var assigned = assignAthleteIdsCore_(ss);
+  ui.alert('Assign athlete IDs',
+    (assigned
+      ? ('Assigned ' + assigned + ' new Athlete_ID' + (assigned === 1 ? '' : 's') + '.\n\nEvery student now has a unique ID and can save their data.')
+      : 'All students already have IDs — nothing to assign.'),
+    ui.ButtonSet.OK);
+}
+
+// Give every Athletes-tab row that has a Name or Email — but no Athlete_ID — a
+// unique number, continuing from the highest already used. Grade 9 rows have no
+// email, so we key off Name too (email alone is not required). Returns the count.
+function assignAthleteIdsCore_(ss) {
+  var sh = ss.getSheetByName('Athletes');
+  if (!sh) return 0;
+  var data = sh.getDataRange().getValues();
+  var H = data[0];
+  var idc = H.indexOf('Athlete_ID'), ec = H.indexOf('Email'), nc = H.indexOf('Name');
+  if (idc < 0) return 0;
+  var seen = {}, max = 0;
+  for (var i = 1; i < data.length; i++) {
+    var cur = String(data[i][idc] || '').trim();
+    if (cur) { seen[cur] = true; var n = parseInt(cur, 10); if (!isNaN(n)) max = Math.max(max, n); }
+  }
+  var assigned = 0;
+  for (var i = 1; i < data.length; i++) {
+    var name = nc >= 0 ? String(data[i][nc] || '').trim() : '';
+    var email = ec >= 0 ? String(data[i][ec] || '').trim() : '';
+    if (!name && !email) continue;                      // blank spacer row
+    if (String(data[i][idc] || '').trim()) continue;    // already has an ID
+    var id; do { max++; id = max; } while (seen[String(id)]);
+    seen[String(id)] = true;
+    sh.getRange(i + 1, idc + 1).setValue(id);            // writes a plain number
+    assigned++;
+  }
+  return assigned;
 }
 
 function checkRoster() {
@@ -4850,23 +4879,25 @@ function checkRoster() {
   if (!sh) { ui.alert('No "Athletes" sheet found.'); return; }
   var data = sh.getDataRange().getValues();
   var H = data[0];
-  var idc = H.indexOf('Athlete_ID'), ec = H.indexOf('Email'), nc = H.indexOf('Name');
+  var idc = H.indexOf('Athlete_ID'), ec = H.indexOf('Email'), nc = H.indexOf('Name'), gc = H.indexOf('Grade');
   var noEmail = [], badEmail = [], noId = [], dupEmail = [], emails = {};
   for (var i = 1; i < data.length; i++) {
     var name = nc >= 0 ? String(data[i][nc] || '').trim() : '';
-    var email = String(data[i][ec] || '').trim();
+    var email = ec >= 0 ? String(data[i][ec] || '').trim() : '';
     var id = String(data[i][idc] || '').trim();
-    var label = 'Row ' + (i + 1) + (name ? ' (' + name + ')' : '');
+    var grade = gc >= 0 ? String(data[i][gc] || '').trim() : '';
     if (!name && !email) continue;                      // blank spacer row
-    if (!email) { noEmail.push(label); continue; }
+    var label = 'Row ' + (i + 1) + (name ? ' (' + name + ')' : '');
+    if (!id) noId.push(label);                          // everyone needs an ID
+    var isG9 = (grade === '9');
+    if (!email) { if (!isG9) noEmail.push(label); continue; }  // G10–12 need an email to log in; G9 don't
     if (!/^[^@\s]+@fis\.edu$/i.test(email)) badEmail.push(label + ' → ' + email);
     var key = email.toLowerCase();
     if (emails[key]) dupEmail.push(email); else emails[key] = true;
-    if (!id) noId.push(label);
   }
   var msg = [];
-  msg.push(noId.length ? ('⚠️ ' + noId.length + ' athlete(s) have NO Athlete_ID — run "Assign missing athlete IDs".') : '✅ Every athlete has an Athlete_ID.');
-  msg.push(noEmail.length ? ('⚠️ ' + noEmail.length + ' row(s) have a name but no email:\n   ' + noEmail.slice(0, 12).join('\n   ')) : '✅ Every athlete has an email.');
+  msg.push(noId.length ? ('⚠️ ' + noId.length + ' student(s) have NO Athlete_ID — run "Assign missing athlete IDs".') : '✅ Every student has an Athlete_ID.');
+  msg.push(noEmail.length ? ('⚠️ ' + noEmail.length + ' Grade 10–12 row(s) have a name but no email (needed to log in):\n   ' + noEmail.slice(0, 12).join('\n   ')) : '✅ Every Grade 10–12 athlete has an email.');
   msg.push(badEmail.length ? ('⚠️ ' + badEmail.length + ' email(s) are not @fis.edu:\n   ' + badEmail.slice(0, 12).join('\n   ')) : '✅ All emails are @fis.edu.');
   msg.push(dupEmail.length ? ('⚠️ Duplicate email(s): ' + dupEmail.slice(0, 12).join(', ')) : '✅ No duplicate emails.');
   ui.alert('Roster check', msg.join('\n\n'), ui.ButtonSet.OK);
