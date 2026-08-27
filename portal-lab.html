@@ -4623,13 +4623,13 @@
     state.planName = state.weeklyTemplate.name;
     await persistTemplate();
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    // Keep anything already logged, drop the old planned sessions, and lay the FULL
+    // program onto the week — including on days that have a logged session, so the
+    // whole program is represented (a day can hold the log + its program session).
     const logged = (state.week.sessions||[]).filter(s => isLogged(s));
     const planned = (state.week.sessions||[]).filter(s => !isLogged(s) && s.id && !String(s.id).startsWith('tmp_'));
-    const loggedDow = {}; logged.forEach(s => { loggedDow[dowOf(s.date)] = true; });
     const stamp = Date.now();
-    const fresh = (state.weeklyTemplate.sessions||[])
-      .filter(t2 => !loggedDow[t2.dow])
-      .map((t2, i) => buildWeekSession(t2, ws, stamp, i));
+    const fresh = (state.weeklyTemplate.sessions||[]).map((t2, i) => buildWeekSession(t2, ws, stamp, i));
     state.week.sessions = logged.concat(fresh);
     renderWeek(); renderBlockBar(); refreshProgramSheet();
     showToast('“'+state.weeklyTemplate.name+'” is now your program', 'success');
