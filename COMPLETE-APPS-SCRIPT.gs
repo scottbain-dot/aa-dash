@@ -2904,7 +2904,7 @@ function apEnsureTrainingSessions(ss) {
   // Ensure the optional LAB columns exist on the live sheet. Appends by NAME,
   // so an existing sheet (which may not be a fresh 16-column one) is upgraded
   // in place without disturbing existing columns or data.
-  apEnsureColumns(sheet, ['Target', 'Readiness_JSON']);
+  apEnsureColumns(sheet, ['Target', 'Readiness_JSON', 'Type', 'Result']);
   return sheet;
 }
 
@@ -3131,6 +3131,8 @@ function apSessionObj(r) {
     workout: apParse(r.Planned_JSON, []),
     note: r.Note || '',
     target: r.Target || '',
+    type: r.Type || 'training',
+    result: r.Result || '',
     readiness: apParse(r.Readiness_JSON, null)
   };
 }
@@ -3182,6 +3184,8 @@ function handleSaveSession(ss, athleteId, session) {
       'Planned_JSON': JSON.stringify(session.workout || []),
       'Note': session.note || '',
       'Target': session.target || '',
+      'Type': session.type || 'training',
+      'Result': session.result || '',
       'Readiness_JSON': session.readiness ? JSON.stringify(session.readiness) : '',
       'Updated': new Date()
     };
