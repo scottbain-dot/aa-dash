@@ -2230,16 +2230,19 @@ function handleGenerateProgram(spec) {
       + '- Scale to experience. New = simple patterns, moderate volume. Some = standard. Experienced = more load/complexity.\n'
       + '- Use CANONICAL exercise names so they map cleanly, drawing from: Back Squat, Front Squat, Goblet Squat, Deadlift, Romanian Deadlift, Hip Thrust, Split Squat, Walking Lunge, Bench Press, Overhead Press, Push-Up, Dumbbell Press, Pull-Up, Chin-Up, Barbell Row, Dumbbell Row, Kettlebell Swing, Box Jump, Broad Jump, Med-Ball Slam, Med-Ball Throw, Sprint, Acceleration Run, Tempo Run, Interval Run, Row Intervals, Bike Intervals, Nordic Curl, Plank, Pallof Press, Farmer Carry, Hanging Leg Raise.\n'
       + '- Give simple, realistic set/rep detail for the goal and age (Strength ~4x5, Power ~4x3, Foundation ~3x10-12, Endurance = intervals/time). Do not prescribe 1-rep maxes.\n'
+      + '- If the athlete has written a description of what they want, treat it as the MOST important input — honour their focus, injuries and constraints even if a structured field seems to say otherwise.\n'
       + '- Return ONLY the JSON object.';
 
-    var userMessage = 'Design a weekly program for:\n'
+    var desc = spec.notes ? String(spec.notes).slice(0, 600).trim() : '';
+    var userMessage = '';
+    if (desc) userMessage += 'What the athlete wants, in their own words (this is the most important input):\n"' + desc + '"\n\n';
+    userMessage += 'Preferences (secondary hints — the description above wins if they conflict):\n'
       + '- Goal: ' + (spec.goal || 'general fitness') + '\n'
       + '- Experience: ' + (spec.experience || 'some') + '\n'
       + '- Days per week: ' + (spec.days || 3) + '\n'
       + '- Session length: ' + (spec.minutes || 45) + ' minutes\n'
       + '- Equipment: ' + (spec.equipment || 'full gym') + '\n'
-      + '- Sport: ' + (spec.sport || 'general athletic') + '\n'
-      + (spec.notes ? '- Also consider: ' + String(spec.notes).slice(0, 400) + '\n' : '');
+      + '- Sport: ' + (spec.sport || 'general athletic') + '\n';
 
     var payload = {
       model: 'claude-haiku-4-5-20251001',

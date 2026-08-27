@@ -2031,7 +2031,10 @@
   </div>
   <div class="sheet-body">
     <div id="aiInput">
-      <p class="ql-help">Tap your choices and we’ll build a program around them. You can tweak everything after.</p>
+      <p class="ql-help">Tell us what you want <strong>in your own words</strong> — the more you say, the better the program. The quick choices below help too, but this is where you really shape it.</p>
+      <label class="ai-guide-label" for="aiNotes" style="display:block;">In your own words · what are you after?</label>
+      <textarea class="note-input ai-notes-primary" id="aiNotes" style="min-height:120px;" placeholder="e.g. I play rugby and want to get more explosive for next season. My left knee gets sore so nothing too heavy on squats. I can train 3 days a week, about 45 min, and I’d like a real core focus."></textarea>
+      <div class="more-divider" style="margin-top:20px;">Quick choices · optional</div>
       <div class="ai-guide-group">
         <p class="ai-guide-label">Your goal</p>
         <div class="ai-chips" data-k="goal">
@@ -2040,6 +2043,7 @@
           <button type="button" class="ai-chip" data-val="Endurance" onclick="aiPick(this)">🏃 Endurance</button>
           <button type="button" class="ai-chip" data-val="Foundation / base" onclick="aiPick(this)">🧱 Foundation</button>
           <button type="button" class="ai-chip" data-val="Speed" onclick="aiPick(this)">🚀 Speed</button>
+          <button type="button" class="ai-chip" data-val="Other" onclick="aiPick(this)">✨ Other</button>
         </div>
       </div>
       <div class="ai-guide-group">
@@ -2069,18 +2073,23 @@
       </div>
       <div class="ai-guide-group">
         <p class="ai-guide-label">Equipment</p>
-        <div class="ai-chips" data-k="equipment">
+        <div class="ai-chips" data-k="equipment" data-multi="1">
           <button type="button" class="ai-chip" data-val="full gym" onclick="aiPick(this)">Full gym</button>
-          <button type="button" class="ai-chip" data-val="dumbbells / kettlebells" onclick="aiPick(this)">Dumbbells / KB</button>
-          <button type="button" class="ai-chip" data-val="bodyweight / bands" onclick="aiPick(this)">Bodyweight / bands</button>
+          <button type="button" class="ai-chip" data-val="barbell" onclick="aiPick(this)">Barbell</button>
+          <button type="button" class="ai-chip" data-val="dumbbells" onclick="aiPick(this)">Dumbbells</button>
+          <button type="button" class="ai-chip" data-val="kettlebells" onclick="aiPick(this)">Kettlebells</button>
+          <button type="button" class="ai-chip" data-val="resistance bands" onclick="aiPick(this)">Bands</button>
+          <button type="button" class="ai-chip" data-val="bodyweight only" onclick="aiPick(this)">Bodyweight</button>
+          <button type="button" class="ai-chip" data-val="machines" onclick="aiPick(this)">Machines</button>
+          <button type="button" class="ai-chip" data-val="bike / rower" onclick="aiPick(this)">Bike / rower</button>
+          <button type="button" class="ai-chip" data-val="track / outdoor space" onclick="aiPick(this)">Track / outdoor</button>
         </div>
+        <p class="ai-guide-hint">Tick everything you can get to.</p>
       </div>
       <div class="ai-guide-group">
         <p class="ai-guide-label">Sport · optional</p>
         <input class="duration-input plan-field" id="aiSport" list="sportOptions" autocomplete="off" placeholder="e.g. Rugby, Swimming">
       </div>
-      <label class="ai-guide-label" for="aiNotes" style="display:block;">Anything else? · optional</label>
-      <textarea class="note-input" id="aiNotes" style="min-height:66px;" placeholder="e.g. sore left knee, no gym at weekends, want more core"></textarea>
       <details class="ai-paste">
         <summary>Or paste an existing plan instead</summary>
         <textarea class="note-input" id="aiText" style="min-height:150px; margin-top:10px;" placeholder="Mon — Lower: back squat 5x5, deadlift 3x5&#10;Wed — Upper: bench 5x5, pull-ups 4x8&#10;Fri — Conditioning: KB swings 5x15, row 8x250m"></textarea>
@@ -2663,6 +2672,9 @@
   .ai-chip { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink-soft);
     background: var(--surface); border: 1.5px solid var(--line); border-radius: 9999px; padding: 8px 14px; cursor: pointer; }
   .ai-chip.sel { background: var(--burgundy); color: var(--cream); border-color: var(--burgundy); }
+  .ai-notes-primary { border: 1.5px solid var(--burgundy-light); background: var(--surface); font-size: 15px; }
+  .ai-notes-primary:focus { border-color: var(--burgundy); outline: none; }
+  .ai-guide-hint { font-size: 12px; color: var(--ink-mute); margin: 6px 2px 0; }
   .ai-paste { margin-top: 14px; }
   .ai-paste > summary { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-mute); cursor: pointer; list-style: none; }
   .ai-paste > summary::-webkit-details-marker { display: none; }
@@ -4424,17 +4436,20 @@
   // Single-select chip within its group.
   function aiPick(el){
     const group = el.closest('.ai-chips'); if(!group) return;
-    group.querySelectorAll('.ai-chip').forEach(c => c.classList.toggle('sel', c===el));
+    if(group.dataset.multi){ el.classList.toggle('sel'); }               // equipment = pick many
+    else group.querySelectorAll('.ai-chip').forEach(c => c.classList.toggle('sel', c===el));
   }
   window.aiPick = aiPick;
   function collectAISpec(){
     const get = k => { const s = document.querySelector('#aiInput .ai-chips[data-k="'+k+'"] .ai-chip.sel'); return s ? s.dataset.val : ''; };
+    const getMulti = k => [...document.querySelectorAll('#aiInput .ai-chips[data-k="'+k+'"] .ai-chip.sel')].map(c => c.dataset.val);
+    const equip = getMulti('equipment');
     return {
       goal: get('goal'),
       experience: get('experience') || 'some experience',
       days: parseInt(get('days') || '3', 10),
       minutes: parseInt(get('minutes') || '45', 10),
-      equipment: get('equipment') || 'full gym',
+      equipment: equip.length ? equip.join(', ') : 'full gym',
       sport: (val('aiSport') || '').trim(),
       notes: (val('aiNotes') || '').trim()
     };
@@ -4519,8 +4534,10 @@
     hideAIError();
     const paste = (document.getElementById('aiText').value || '').trim();
     const spec = collectAISpec();
-    const useSpec = !!spec.goal;
-    if(!useSpec && !paste){ showAIError('Pick a goal — or paste a plan below.'); return; }
+    const hasNotes = spec.notes.length >= 8;
+    const useSpec = !!(spec.goal || hasNotes);   // a description alone is enough — it's the strongest input
+    if(!useSpec && !paste){ showAIError('Tell us what you want — describe it up top, or tap a goal.'); return; }
+    if(spec.goal === 'Other' && !hasNotes){ showAIError('You picked “Other” — say what you’re after in the box up top.'); return; }
     if(!useSpec && paste.length < 8){ showAIError('Add a bit more detail — day names and a few exercises.'); return; }
     if(aiGenLeftToday() <= 0){ showAIError('You’ve built a lot today — tweak what you have, or try again tomorrow.'); return; }
     setAIMode('loading'); aiBusy = true;
