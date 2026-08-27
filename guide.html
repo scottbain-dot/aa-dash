@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Athlete Academy Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  /* ===== Tokens — FIS Warriors identity (burgundy + gold), warm paper ground ===== */
+  :root{
+    --paper:#fef8f6; --card:#ffffff; --sunk:#f6ede9;
+    --ink:#241a18; --ink-soft:#5c4b46; --ink-mute:#8a746d;
+    --line:#ecddd7; --line-soft:#f3e7e2;
+    --burgundy:#874b46; --burgundy-dark:#6a3a36; --burgundy-light:#a06b66;
+    --gold:#d4af37; --gold-soft:#f5e6b3;
+    --easy:#4a9d5b; --moderate:#e0a52e; --hard:#c0433b;
+    --st-build:#2b2521; --st-maintain:#8c857e; --st-peak:#874b46; --st-recover:#ffffff;
+    --shadow:0 1px 2px rgba(58,32,28,.05), 0 8px 24px rgba(58,32,28,.06);
+    --radius:18px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#1b100e; --card:#241715; --sunk:#2c1c19;
+      --ink:#f3e7e3; --ink-soft:#d8c3bc; --ink-mute:#a98d85;
+      --line:#3a2723; --line-soft:#32211e;
+      --burgundy:#c98a83; --burgundy-dark:#e4b3ac; --burgundy-light:#b1746d;
+      --gold:#e6c65b; --gold-soft:#4a3a17;
+      --st-build:#e7ddd6; --st-maintain:#9a938c; --st-peak:#c98a83; --st-recover:#f3e7e3;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#1b100e; --card:#241715; --sunk:#2c1c19;
+    --ink:#f3e7e3; --ink-soft:#d8c3bc; --ink-mute:#a98d85;
+    --line:#3a2723; --line-soft:#32211e;
+    --burgundy:#c98a83; --burgundy-dark:#e4b3ac; --burgundy-light:#b1746d;
+    --gold:#e6c65b; --gold-soft:#4a3a17;
+    --st-build:#e7ddd6; --st-maintain:#9a938c; --st-peak:#c98a83; --st-recover:#f3e7e3;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:760px; margin:0 auto; padding:0 20px; }
+  section{ scroll-margin-top:76px; }
+
+  /* ===== Header / hero ===== */
+  .top{
+    position:sticky; top:0; z-index:20; background:color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line-soft);
+  }
+  .top-inner{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 20px; max-width:760px; margin:0 auto; }
+  .brand{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:19px; letter-spacing:.02em; color:var(--ink); }
+  .brand em{ color:var(--gold); font-style:normal; }
+  .theme-btn{
+    border:1px solid var(--line); background:var(--card); color:var(--ink-soft); cursor:pointer;
+    border-radius:999px; width:34px; height:34px; font-size:15px; line-height:1; display:grid; place-items:center;
+  }
+  .theme-btn:hover{ border-color:var(--burgundy); color:var(--burgundy); }
+
+  .hero{ padding:54px 0 30px; }
+  .hero-kicker{
+    font-family:'Inter',sans-serif; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--burgundy); margin:0 0 14px;
+  }
+  .hero h1{
+    font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:clamp(40px,9vw,68px); line-height:.98;
+    letter-spacing:-.01em; margin:0 0 16px; text-wrap:balance;
+  }
+  .hero h1 em{ color:var(--burgundy); font-style:normal; }
+  .hero-lede{ font-size:18px; color:var(--ink-soft); margin:0; max-width:56ch; }
+  .hero-idea{
+    margin:26px 0 0; padding:16px 18px; border-left:3px solid var(--gold); background:var(--sunk);
+    border-radius:0 12px 12px 0; font-size:15px; color:var(--ink-soft);
+  }
+  .hero-idea strong{ color:var(--ink); }
+
+  /* ===== Jump nav ===== */
+  .jump{ margin:30px 0 8px; display:flex; flex-wrap:wrap; gap:8px; }
+  .jump a{
+    text-decoration:none; font-size:13px; font-weight:600; color:var(--ink-soft);
+    border:1px solid var(--line); background:var(--card); border-radius:999px; padding:7px 13px;
+    display:inline-flex; align-items:center; gap:7px; transition:.14s;
+  }
+  .jump a:hover{ border-color:var(--burgundy); color:var(--burgundy); }
+  .jump a b{ font-family:'Inter'; font-variant-numeric:tabular-nums; color:var(--burgundy); font-weight:700; }
+
+  /* ===== Steps ===== */
+  .step{ padding:36px 0; border-top:1px solid var(--line-soft); }
+  .step:first-of-type{ border-top:none; }
+  .step-head{ display:flex; align-items:baseline; gap:14px; margin-bottom:6px; }
+  .step-num{
+    flex:none; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px;
+    font-variant-numeric:tabular-nums; color:var(--card); background:var(--burgundy);
+    width:30px; height:30px; border-radius:9px; display:grid; place-items:center; transform:translateY(4px);
+  }
+  .step-titles{ min-width:0; }
+  .step h2{
+    font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:clamp(27px,5.5vw,36px); line-height:1.02;
+    letter-spacing:-.005em; margin:0; text-wrap:balance;
+  }
+  .step-sub{ font-size:12px; font-weight:700; letter-spacing:.11em; text-transform:uppercase; color:var(--burgundy); margin:2px 0 0; }
+  .step-body{ margin-top:14px; }
+  .step-body > p{ margin:0 0 12px; color:var(--ink-soft); }
+  .step-body strong{ color:var(--ink); }
+
+  ol.dos, ul.dos{ margin:8px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px; }
+  ol.dos li, ul.dos li{ position:relative; padding-left:34px; font-size:15px; color:var(--ink-soft); }
+  ol.dos{ counter-reset:d; }
+  ol.dos li::before{
+    counter-increment:d; content:counter(d); position:absolute; left:0; top:1px; width:23px; height:23px; border-radius:7px;
+    background:var(--sunk); color:var(--burgundy); font-size:12px; font-weight:700; display:grid; place-items:center;
+    font-variant-numeric:tabular-nums;
+  }
+  ul.dos li::before{
+    content:""; position:absolute; left:7px; top:9px; width:8px; height:8px; border-radius:50%; background:var(--gold);
+  }
+
+  .tip{
+    margin-top:16px; display:flex; gap:11px; align-items:flex-start; padding:13px 15px; border-radius:12px;
+    background:var(--sunk); border:1px solid var(--line); font-size:14px; color:var(--ink-soft);
+  }
+  .tip .t-ic{ flex:none; font-size:16px; line-height:1.3; }
+  .tip strong{ color:var(--ink); }
+
+  /* ===== Mock UI (recreates the real app so students recognise it) ===== */
+  .mock{
+    margin-top:18px; background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .mock-cap{ font-size:12px; color:var(--ink-mute); text-align:center; margin:9px 0 0; font-style:italic; }
+  .m-pad{ padding:16px; }
+  .m-eyebrow{ font-size:11px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--burgundy); margin:0 0 8px; }
+
+  /* Today hero mock */
+  .m-hero{ background:linear-gradient(155deg, #fff, var(--sunk)); }
+  :root:not([data-theme="light"]) .m-hero{ background:linear-gradient(155deg, var(--card), var(--sunk)); }
+  .m-hero-eyebrow{ font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--burgundy); margin:0 0 6px; }
+  .m-hero-title{ font-family:'Barlow Condensed'; font-weight:700; font-size:27px; line-height:1; margin:0 0 4px; }
+  .m-hero-sub{ font-size:13px; color:var(--ink-mute); margin:0 0 14px; }
+  .m-cta{
+    display:inline-flex; align-items:center; gap:8px; background:var(--gold); color:#5a3a1c; font-weight:700;
+    border-radius:12px; padding:12px 18px; font-size:14px; width:100%; justify-content:center; border:none;
+  }
+  .m-prog{ display:flex; align-items:center; gap:10px; margin-top:13px; font-size:12px; color:var(--ink-mute); }
+  .m-prog .bar{ flex:1; height:7px; background:var(--line); border-radius:999px; overflow:hidden; }
+  .m-prog .bar i{ display:block; height:100%; width:40%; background:var(--easy); border-radius:999px; }
+
+  /* day rows */
+  .m-day{ display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--line-soft); }
+  .m-day:first-child{ border-top:none; }
+  .m-when{ width:46px; flex:none; line-height:1.1; }
+  .m-when .d{ font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--burgundy); }
+  .m-when .n{ font-size:14px; font-weight:600; }
+  .m-dot{ width:12px; height:12px; border-radius:50%; flex:none; }
+  .dot-easy{ background:var(--easy);} .dot-mod{ background:var(--moderate);} .dot-hard{ background:var(--hard);} .dot-empty{ background:transparent; border:2px dashed var(--line); }
+  .m-main{ flex:1; min-width:0; }
+  .m-name{ font-size:14px; font-weight:600; }
+  .m-meta{ font-size:12px; color:var(--ink-mute); }
+  .muted-name{ color:var(--ink-mute); font-style:italic; }
+
+  /* pills / chips / badges */
+  .pill-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .pill{ border:1px solid var(--line); border-radius:9px; padding:9px 14px; font-size:13px; font-weight:600; color:var(--ink-soft); background:var(--card); }
+  .pill.sel-train{ background:var(--st-build); color:var(--paper); border-color:var(--st-build); }
+  .pill.sel-prac{ background:var(--burgundy); color:#fff; border-color:var(--burgundy); }
+  .pill.sel-game{ background:var(--gold); color:#5a3a1c; border-color:var(--gold); }
+  .pill.i-easy{ background:var(--easy); color:#fff; border-color:var(--easy);} .pill.i-mod{ background:var(--moderate); color:#fff; border-color:var(--moderate);} .pill.i-hard{ background:var(--hard); color:#fff; border-color:var(--hard);}
+
+  .tag{ display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:2px 7px; border-radius:6px; margin-left:6px; vertical-align:middle; }
+  .tag-prac{ background:rgba(135,75,70,.14); color:var(--burgundy); }
+  .tag-game{ background:var(--gold); color:#5a3a1c; }
+
+  .nextgame{ display:flex; align-items:center; gap:10px; border:1px solid var(--gold); background:rgba(212,175,55,.12); border-radius:12px; padding:11px 13px; }
+  .nextgame .ng-txt{ line-height:1.25; } .nextgame .ng-txt b{ font-size:13.5px; } .nextgame .ng-txt span{ display:block; font-size:12px; color:var(--ink-mute); }
+  .pregame{ display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-size:11px; font-weight:600; color:var(--burgundy-dark); background:rgba(212,175,55,.18); border-radius:7px; padding:2px 9px; }
+
+  .m-chips{ display:flex; flex-wrap:wrap; gap:7px; }
+  .chip{ border:1px solid var(--line); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:600; color:var(--ink-soft); background:var(--card); }
+  .chip.on{ background:var(--burgundy); color:#fff; border-color:var(--burgundy); }
+  .chip-lbl{ font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-mute); margin:14px 0 6px; }
+  .chip-lbl:first-child{ margin-top:0; }
+
+  .rpe{ display:flex; gap:5px; } .rpe i{ flex:1; text-align:center; border:1px solid var(--line); border-radius:7px; padding:7px 0; font-size:12px; font-weight:600; color:var(--ink-mute); font-style:normal; }
+  .rpe i.on{ background:var(--burgundy); color:#fff; border-color:var(--burgundy); }
+  .load-line{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding:10px 13px; background:var(--sunk); border-radius:10px; font-size:13px; }
+  .load-line b{ font-family:'Barlow Condensed'; font-size:19px; color:var(--burgundy); }
+
+  /* year states */
+  .yr-legend{ display:flex; flex-wrap:wrap; gap:9px 16px; margin-top:4px; }
+  .yr-legend span{ display:inline-flex; align-items:center; gap:7px; font-size:13px; color:var(--ink-soft); }
+  .sw{ width:15px; height:15px; border-radius:5px; flex:none; border:1px solid var(--line); }
+  .sw-build{ background:var(--st-build);} .sw-maintain{ background:var(--st-maintain);} .sw-peak{ background:var(--st-peak);} .sw-recover{ background:var(--st-recover);}
+  .yr-months{ display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-top:14px; }
+  .yr-m{ text-align:center; border-radius:9px; padding:9px 2px; font-size:11px; font-weight:700; border:1px solid var(--line); }
+  .ym-build{ background:var(--st-build); color:var(--paper);} .ym-maintain{ background:var(--st-maintain); color:#fff;} .ym-peak{ background:var(--st-peak); color:#fff;} .ym-recover{ background:var(--st-recover); color:var(--ink); }
+  .ym-split{ background:linear-gradient(105deg, var(--st-build) 0 50%, var(--st-peak) 50% 100%); color:#fff; }
+
+  /* coming soon */
+  .soon-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
+  @media (max-width:520px){ .soon-grid{ grid-template-columns:1fr; } }
+  .soon{ background:var(--card); border:1px dashed var(--line); border-radius:14px; padding:16px; }
+  .soon h3{ font-family:'Barlow Condensed'; font-weight:700; font-size:19px; margin:0 0 4px; }
+  .soon p{ margin:0; font-size:13px; color:var(--ink-mute); }
+  .soon-flag{ display:inline-block; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--gold-dark, #9a7d1f); background:var(--gold-soft); border-radius:999px; padding:3px 9px; margin-bottom:9px; }
+  :root:not([data-theme="light"]) .soon-flag{ color:var(--gold); }
+
+  footer{ border-top:1px solid var(--line-soft); margin-top:20px; padding:30px 0 60px; color:var(--ink-mute); font-size:13px; }
+  footer strong{ color:var(--ink-soft); }
+  a.link{ color:var(--burgundy); font-weight:600; }
+
+  :focus-visible{ outline:2px solid var(--burgundy); outline-offset:2px; border-radius:4px; }
+  @media (prefers-reduced-motion:no-preference){ .jump a, .theme-btn{ transition:.14s; } }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-inner">
+    <span class="brand">Athlete <em>Academy</em></span>
+    <button class="theme-btn" id="themeBtn" aria-label="Switch light / dark">◐</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="hero-kicker">Player guide · Iteration 1</p>
+    <h1>Your training,<br><em>your</em> plan.</h1>
+    <p class="hero-lede">A quick walkthrough of everything the portal does right now — how to set up your year, build a program, add your games, and log your training. Short steps, real screens.</p>
+    <p class="hero-idea"><strong>The whole idea:</strong> you decide where your year is going, the portal helps you build a weekly plan to get there, and it works around your team practices and games. You stay in control — it never forces anything on you.</p>
+  </header>
+
+  <nav class="jump" aria-label="Jump to a section">
+    <a href="#signin"><b>1</b> Sign in</a>
+    <a href="#year"><b>2</b> Map your year</a>
+    <a href="#program"><b>3</b> My Program</a>
+    <a href="#build"><b>4</b> Build a program</a>
+    <a href="#types"><b>5</b> Training, practice or game</a>
+    <a href="#games"><b>6</b> Add your games</a>
+    <a href="#repeat"><b>7</b> Make it repeat</a>
+    <a href="#log"><b>8</b> Log a session</a>
+    <a href="#soon"><b>9</b> Coming soon</a>
+  </nav>
+
+  <!-- 1 -->
+  <section class="step" id="signin">
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <div class="step-titles"><p class="step-sub">Getting in</p><h2>Sign in with your school account</h2></div>
+    </div>
+    <div class="step-body">
+      <p>Open the portal link and sign in with your <strong>@fis.edu Google account</strong> — the same one you use for school. That's the only time it asks who you are; everything after that just works.</p>
+      <ul class="dos">
+        <li>Tap <strong>Sign in with Google</strong> and pick your school account.</li>
+        <li>If a page says it can't sign you in, you've probably opened it <strong>inside another app</strong> (Canvas, Gmail, Teams). Tap the <strong>⋯</strong> menu and choose <strong>Open in browser</strong> (Safari or Chrome).</li>
+      </ul>
+      <div class="tip"><span class="t-ic">🔒</span><span><strong>Your privacy:</strong> once you're in, your training is stored by an ID number, not your name or email. That's on purpose — it keeps your data private.</span></div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="step" id="year">
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <div class="step-titles"><p class="step-sub">The Year tab</p><h2>Map your year first</h2></div>
+    </div>
+    <div class="step-body">
+      <p>Your year is the big picture. For each sport, you colour in every month with what you're trying to do then. New students start here and get a short walkthrough.</p>
+      <div class="yr-legend">
+        <span><i class="sw sw-build"></i> <strong>Build</strong> — get fitter / stronger</span>
+        <span><i class="sw sw-maintain"></i> <strong>Maintain</strong> — hold your level when it's busy</span>
+        <span><i class="sw sw-peak"></i> <strong>Peak</strong> — be at your best for a big event</span>
+        <span><i class="sw sw-recover"></i> <strong>Recover</strong> — rest and reset</span>
+      </div>
+      <div class="mock">
+        <div class="m-pad">
+          <p class="m-eyebrow">Swimming · your year</p>
+          <div class="yr-months">
+            <div class="yr-m ym-build">Aug</div>
+            <div class="yr-m ym-build">Sep</div>
+            <div class="yr-m ym-maintain">Oct</div>
+            <div class="yr-m ym-split">Nov</div>
+            <div class="yr-m ym-peak">Dec</div>
+            <div class="yr-m ym-recover">Jan</div>
+          </div>
+        </div>
+      </div>
+      <p class="mock-cap">Tap any month to change it. A month with two halves (build early, peak later) can be split down the middle.</p>
+      <ul class="dos" style="margin-top:16px;">
+        <li>Set your <strong>big event</strong> — the one thing your year points at.</li>
+        <li>Not sure how to plan it? Tap <strong>“How to plan my year”</strong> any time — it explains the states and you can re-open it whenever.</li>
+        <li>Your <strong>Season key dates</strong> (breaks, exams, ISST) sit at the bottom so you can plan your effort around them.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="step" id="program">
+    <div class="step-head">
+      <span class="step-num">3</span>
+      <div class="step-titles"><p class="step-sub">Your home base</p><h2>Meet My Program</h2></div>
+    </div>
+    <div class="step-body">
+      <p>This is where you live day to day. It opens on <strong>today's session</strong>, then shows your whole week, your training load, and how hard your week is balanced.</p>
+      <div class="mock m-hero">
+        <div class="m-pad">
+          <p class="m-hero-eyebrow">Thu 27 Aug · Today</p>
+          <p class="m-hero-title">Easy recovery swim</p>
+          <p class="m-hero-sub">Swimming · 40 min planned</p>
+          <button class="m-cta">✓ Log today's session</button>
+          <div class="m-prog"><span class="bar"><i></i></span> 2 of 5 sessions this week</div>
+        </div>
+      </div>
+      <ul class="dos" style="margin-top:16px;">
+        <li><strong>Today</strong> — one tap to log or add today's session.</li>
+        <li><strong>This week</strong> — every day, with arrows to look ahead or back.</li>
+        <li><strong>Load</strong> — plain-language read on whether you're doing too much, too little, or about right.</li>
+        <li><strong>This week's mix</strong> — how many easy / moderate / hard days you've got.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="step" id="build">
+    <div class="step-head">
+      <span class="step-num">4</span>
+      <div class="step-titles"><p class="step-sub">Build my program</p><h2>Three ways to build it</h2></div>
+    </div>
+    <div class="step-body">
+      <p>Tap <strong>Build my program</strong> at the top of My Program. You've got three routes:</p>
+      <div class="mock">
+        <div class="m-pad">
+          <p class="m-eyebrow">Build with AI · your choices</p>
+          <p class="chip-lbl">Your goal</p>
+          <div class="m-chips"><span class="chip on">💪 Strength</span><span class="chip">⚡ Power</span><span class="chip">🏃 Endurance</span><span class="chip">✨ Other</span></div>
+          <p class="chip-lbl">Days per week</p>
+          <div class="m-chips"><span class="chip">2</span><span class="chip on">3</span><span class="chip">4</span><span class="chip">5</span></div>
+          <p class="chip-lbl">Game day</p>
+          <div class="m-chips"><span class="chip">Fri</span><span class="chip on">Sat</span><span class="chip">Sun</span></div>
+        </div>
+      </div>
+      <ol class="dos" style="margin-top:16px;">
+        <li><strong>Build with AI</strong> — answer a few quick taps (goal, days, time, equipment, team days), then it writes you a program you can review and tweak.</li>
+        <li><strong>Add sessions yourself</strong> — build your week by hand, one session at a time.</li>
+        <li><strong>Ready-made programs</strong> — pick-and-go plans by goal and sport. <em>Coming soon.</em></li>
+      </ol>
+      <div class="tip"><span class="t-ic">✍️</span><span><strong>The text box is the most powerful part.</strong> The chips are quick hints — but the “anything else” box is where you say what you really want in your own words: “I play rugby and want to get more explosive, my left knee gets sore so nothing too heavy on squats.” It listens to that first.</span></div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="step" id="types">
+    <div class="step-head">
+      <span class="step-num">5</span>
+      <div class="step-titles"><p class="step-sub">Session type</p><h2>Training, practice or game?</h2></div>
+    </div>
+    <div class="step-body">
+      <p>Every session is one of three types. Pick it at the top of the session screen — the screen changes to suit it.</p>
+      <div class="mock"><div class="m-pad">
+        <p class="m-eyebrow">Type</p>
+        <div class="pill-row"><span class="pill sel-train">Training</span><span class="pill">Team practice</span><span class="pill">Game</span></div>
+      </div></div>
+      <ul class="dos" style="margin-top:16px;">
+        <li><strong>Training</strong> — your own workout, with an exercise list you can swap and tick off.</li>
+        <li><strong>Team practice</strong> — no exercise list; just log the time and how hard it was.</li>
+        <li><strong>Game</strong> — a match or meet. Add the <strong>result</strong> if you want, and it never repeats weekly (it's a one-off).</li>
+      </ul>
+      <p style="margin-top:14px;">Practices and games still count toward your training load, so your week stays honest. You'll spot them by their tag:</p>
+      <div class="mock"><div class="m-pad">
+        <div class="m-day"><span class="m-when"><span class="d">Tue</span><span class="n">25</span></span><span class="m-dot dot-mod"></span><div class="m-main"><div class="m-name">Squad session <span class="tag tag-prac">👥 Practice</span></div><div class="m-meta">Swimming · 60 min</div></div></div>
+        <div class="m-day"><span class="m-when"><span class="d">Sat</span><span class="n">29</span></span><span class="m-dot dot-hard"></span><div class="m-main"><div class="m-name">vs Riverside <span class="tag tag-game">🏆 Game</span></div><div class="m-meta">Swimming Gala · Won 3–1</div></div></div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="step" id="games">
+    <div class="step-head">
+      <span class="step-num">6</span>
+      <div class="step-titles"><p class="step-sub">Your fixtures</p><h2>Add your games</h2></div>
+    </div>
+    <div class="step-body">
+      <p>Put your matches in and the portal plans your training around them. Add one from <strong>This week</strong> or from <strong>“My games”</strong> on the Year tab.</p>
+      <div class="mock"><div class="m-pad">
+        <div class="nextgame"><span style="font-size:18px;">🏆</span><span class="ng-txt"><b>Next game · vs Riverside (Home)</b><span>Sat 29 Aug · in 2 days · Swimming Gala</span></span></div>
+        <div class="m-day" style="margin-top:6px;"><span class="m-when"><span class="d">Fri</span><span class="n">28</span></span><span class="m-dot dot-empty"></span><div class="m-main"><div class="m-name muted-name">Rest day</div><span class="pregame">⚠️ Day before vs Riverside — keep it easy</span></div></div>
+      </div></div>
+      <ul class="dos" style="margin-top:16px;">
+        <li><strong>Next game</strong> shows on This Week with a countdown, and tapping it jumps to that week.</li>
+        <li><strong>My games</strong> (Year tab) lists your whole season — upcoming fixtures and recent results.</li>
+        <li>The portal <strong>nudges you to go easy the day before a game</strong> so you turn up fresh. It's a nudge, not a rule — you're still in charge.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="step" id="repeat">
+    <div class="step-head">
+      <span class="step-num">7</span>
+      <div class="step-titles"><p class="step-sub">Your repeating week</p><h2>Make it repeat</h2></div>
+    </div>
+    <div class="step-body">
+      <p>Your <strong>program</strong> is your repeating week. Mark a session <strong>“Part of my program”</strong> and it comes back automatically in future weeks.</p>
+      <ul class="dos">
+        <li><strong>Auto-repeat</strong> fills your empty future weeks from your program, so you're never staring at a blank week.</li>
+        <li>On a week that's only half full, <strong>“Fill this week from your program”</strong> tops up the missing days.</li>
+        <li>Change a repeating session (swap an exercise, change the plan) and it asks: <strong>“Update my program too, or just this week?”</strong> — you choose.</li>
+      </ul>
+      <div class="tip"><span class="t-ic">💡</span><span>Just logging your weights or reps <strong>never</strong> changes your program — that's your record of what you did, not the plan. Only changes to the plan itself ask.</span></div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="step" id="log">
+    <div class="step-head">
+      <span class="step-num">8</span>
+      <div class="step-titles"><p class="step-sub">After you train</p><h2>Log a session</h2></div>
+    </div>
+    <div class="step-body">
+      <p>Open the session, say how hard it was and how long it took. That's it — the portal works out your <strong>load</strong> from those two numbers.</p>
+      <div class="mock"><div class="m-pad">
+        <p class="m-eyebrow">Effort · 1 easy → 10 max</p>
+        <div class="rpe"><i>4</i><i>5</i><i>6</i><i>7</i><i class="on">8</i><i>9</i><i>10</i></div>
+        <div class="load-line"><span>Load this session</span><b>640 au</b></div>
+      </div></div>
+      <ul class="dos" style="margin-top:16px;">
+        <li><strong>Effort + time</strong> → your load. Log honestly and the Load read stays useful.</li>
+        <li><strong>Readiness</strong> — a quick how-do-you-feel, and a spot to flag a niggle. Optional.</li>
+        <li><strong>New best?</strong> Flag it as a <strong>PB</strong>. For a game, jot the <strong>result</strong>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="step" id="soon">
+    <div class="step-head">
+      <span class="step-num">9</span>
+      <div class="step-titles"><p class="step-sub">On the way</p><h2>Coming soon</h2></div>
+    </div>
+    <div class="step-body">
+      <p>Two more pieces are on the way — you'll see them appear as we build:</p>
+      <div class="soon-grid">
+        <div class="soon"><span class="soon-flag">Coming soon</span><h3>Exercise library</h3><p>A proper library of every movement, with demo videos, so you always know how to do it right.</p></div>
+        <div class="soon"><span class="soon-flag">Coming soon</span><h3>Training Age</h3><p>Your overall development score across strength, speed, mindset and more — tracked over time.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>This is iteration 1.</strong> The portal is growing — this guide grows with it. If something doesn't work the way it should, tell Mr Bain and it gets fixed.</p>
+    <p style="margin-top:10px;">Athlete Academy · Frankfurt International School</p>
+  </footer>
+
+</div>
+
+<script>
+  // Theme toggle — light ⇄ dark, remembered per device (best-effort).
+  (function(){
+    var root = document.documentElement, btn = document.getElementById('themeBtn');
+    try { var saved = localStorage.getItem('aaGuideTheme'); if(saved) root.setAttribute('data-theme', saved); } catch(e){}
+    btn.addEventListener('click', function(){
+      var now = root.getAttribute('data-theme');
+      var isDark = now ? now==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      var next = isDark ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('aaGuideTheme', next); } catch(e){}
+    });
+  })();
+</script>
+</body>
+</html>
