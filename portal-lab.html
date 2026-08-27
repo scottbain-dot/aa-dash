@@ -33,6 +33,12 @@
     /* Warmed editorial card shadow, toward the profile-mockup look */
     --shadow-card: 0 8px 28px rgba(135,75,70,0.06);
     --shadow-lift: 0 4px 12px rgba(26,20,17,0.06), 0 24px 48px rgba(26,20,17,0.08);
+    /* Year periodisation states — Black / Grey / Maroon / White palette. */
+    --st-build:    #2b2521;   --st-build-ink:    #f7f1ec;   /* Build → black */
+    --st-maintain: #8c857e;   --st-maintain-ink: #ffffff;   /* Maintain → grey */
+    --st-peak:     #874b46;   --st-peak-ink:     #faf3ed;   /* Peak → maroon */
+    --st-recover:  #ffffff;   --st-recover-ink:  #2b2521;   /* Recover → white */
+    --st-off:      #e9e3dd;   --st-off-ink:      #8a7d73;   /* Off → light grey */
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -158,11 +164,11 @@
     padding: 4px 11px; border-radius: 9999px; white-space: nowrap;
   }
   .block-phase-chip > span { font-size: 12px; line-height: 1; }
-  .block-phase-chip.ym-build    { background: var(--gold);     color: var(--burgundy-dark); }
-  .block-phase-chip.ym-maintain { background: var(--sage);     color: var(--cream); }
-  .block-phase-chip.ym-peak     { background: var(--burgundy); color: var(--cream); }
-  .block-phase-chip.ym-recover  { background: var(--cream);    color: var(--ink); border: 1px solid var(--line); }
-  .block-phase-chip.ym-off      { background: var(--ink);      color: var(--cream); }
+  .block-phase-chip.ym-build    { background: var(--st-build);    color: var(--st-build-ink); }
+  .block-phase-chip.ym-maintain { background: var(--st-maintain); color: var(--st-maintain-ink); }
+  .block-phase-chip.ym-peak     { background: var(--st-peak);     color: var(--st-peak-ink); }
+  .block-phase-chip.ym-recover  { background: var(--st-recover);  color: var(--st-recover-ink); border: 1px solid var(--line); }
+  .block-phase-chip.ym-off      { background: var(--st-off);      color: var(--st-off-ink); }
   .block-phase-month {
     font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.1em;
     text-transform: uppercase; font-weight: 600; color: var(--ink-mute);
@@ -1396,6 +1402,32 @@
   </div>
 </div>
 
+<!-- YEAR HELP — read-only "how to plan my year" (re-openable from the Year tab) -->
+<div class="wt" id="yearHelp" hidden>
+  <div class="wt-card">
+    <button class="wt-skip" onclick="closeYearHelp()">Close</button>
+    <div class="wt-stage">
+      <p class="wt-eyebrow">How to plan my year</p>
+      <h2 class="wt-title">Your year, <em>mapped</em>.</h2>
+      <p class="wt-body">When you set your <strong>big event</strong>, the portal automatically colours your months around it — so you don’t have to work it out yourself:</p>
+      <div class="wt-legend">
+        <span class="wt-legend-item"><span class="le-emoji">💪</span><strong>Build</strong> · <em>most of your year — push a bit harder and get fitter, stronger, faster.</em></span>
+        <span class="wt-legend-item"><span class="le-emoji">⚡</span><strong>Maintain</strong> · <em>hold your level when school or games are busy — don’t over-reach.</em></span>
+        <span class="wt-legend-item"><span class="le-emoji">🏆</span><strong>Peak</strong> · <em>the week or two before your event — train a little less so you arrive fresh and sharp.</em></span>
+        <span class="wt-legend-item"><span class="le-emoji">🌙</span><strong>Recover</strong> · <em>just after a big event — ease right off and let your body absorb the work.</em></span>
+      </div>
+      <div class="wt-example"><p class="wt-example-label">It’s a starting point — not locked</p>
+        <p class="wt-example-text" style="font-style:normal; font-size:14px; font-family:'Inter',sans-serif; color:var(--ink-mute); line-height:1.55;">Tap <strong>any month</strong> to change it. If a month has two phases — say build early, then recover after a competition — you can <strong>split it in half</strong> and give each half its own colour. Your plan is yours; change it whenever your season or goals change.</p></div>
+      <p class="wt-note">Want to change your big event or vision? Use <strong>Edit goal</strong> on the Year tab.</p>
+    </div>
+    <div class="wt-footer">
+      <div class="wt-nav" style="width:100%;">
+        <button class="wt-next" style="width:100%;" onclick="closeYearHelp()"><i class="ti ti-check" aria-hidden="true"></i> Got it</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- DEMO "EXAMPLE" PILL (shown only in ?demo=1; easily removable) -->
 <div class="demo-pill" id="demoPill" hidden>Example</div>
 
@@ -1682,13 +1714,27 @@
 
   <div class="sheet-body">
     <div class="sheet-section">
-      <p class="sheet-section-label">Training state</p>
+      <p class="sheet-section-label" id="stateLabel">Training state</p>
       <div class="state-picker" id="statePicker">
         <button class="state-pill" data-state="build" onclick="pickState('build')">Build</button>
         <button class="state-pill" data-state="maintain" onclick="pickState('maintain')">Maintain</button>
         <button class="state-pill" data-state="peak" onclick="pickState('peak')">Peak</button>
         <button class="state-pill" data-state="recover" onclick="pickState('recover')">Recover</button>
         <button class="state-pill" data-state="off" onclick="pickState('off')">Off</button>
+      </div>
+      <div class="split-row" onclick="toggleSplit()">
+        <div class="split-row-text"><strong>Split this month</strong><small>Give the first &amp; second half different phases</small></div>
+        <div class="toggle-switch" id="splitToggle"></div>
+      </div>
+      <div id="splitSecond" style="display:none;">
+        <p class="sheet-section-label">Second half</p>
+        <div class="state-picker" id="statePicker2">
+          <button class="state-pill" data-state="build" onclick="pickState2('build')">Build</button>
+          <button class="state-pill" data-state="maintain" onclick="pickState2('maintain')">Maintain</button>
+          <button class="state-pill" data-state="peak" onclick="pickState2('peak')">Peak</button>
+          <button class="state-pill" data-state="recover" onclick="pickState2('recover')">Recover</button>
+          <button class="state-pill" data-state="off" onclick="pickState2('off')">Off</button>
+        </div>
       </div>
     </div>
 
@@ -2189,12 +2235,14 @@
   .wt-year-cell { flex: 1; border-radius: 9px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .wtc-emoji { font-size: 14px; line-height: 1; }
   .wtc-m { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; color: rgba(0,0,0,0.5); }
-  .wt-year-cell.ym-build    { background: var(--gold); }
-  .wt-year-cell.ym-maintain { background: var(--sage); }
-  .wt-year-cell.ym-peak     { background: var(--burgundy); }
+  .wt-year-cell.ym-build    { background: var(--st-build); }
+  .wt-year-cell.ym-maintain { background: var(--st-maintain); }
+  .wt-year-cell.ym-peak     { background: var(--st-peak); }
+  .wt-year-cell.ym-build .wtc-m, .wt-year-cell.ym-build .wtc-emoji,
+  .wt-year-cell.ym-maintain .wtc-m, .wt-year-cell.ym-maintain .wtc-emoji,
   .wt-year-cell.ym-peak .wtc-m, .wt-year-cell.ym-peak .wtc-emoji { color: var(--cream); }
-  .wt-year-cell.ym-recover  { background: var(--cream); border: 1px solid var(--line); }
-  .wt-year-cell.ym-off      { background: var(--ink); }
+  .wt-year-cell.ym-recover  { background: var(--st-recover); border: 1px solid var(--line); }
+  .wt-year-cell.ym-off      { background: var(--st-off); }
   .wt-legend { display: flex; flex-direction: column; gap: 8px; margin: 0 0 8px; }
   .wt-legend-item { display: flex; align-items: baseline; gap: 8px; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink); }
   .wt-legend-item span.le-emoji { font-size: 15px; }
@@ -2464,11 +2512,11 @@
     padding: 6px 12px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
   }
   .year-now-chip .nc-emoji { font-size: 13px; }
-  .year-now-chip.ym-build    { background: var(--gold);     color: var(--burgundy-dark); }
-  .year-now-chip.ym-maintain { background: var(--sage);     color: var(--cream); }
-  .year-now-chip.ym-peak     { background: var(--burgundy); color: var(--cream); }
-  .year-now-chip.ym-recover  { background: var(--cream);    color: var(--ink); border: 1px solid var(--line); }
-  .year-now-chip.ym-off      { background: var(--ink);      color: var(--cream); }
+  .year-now-chip.ym-build    { background: var(--st-build);    color: var(--st-build-ink); }
+  .year-now-chip.ym-maintain { background: var(--st-maintain); color: var(--st-maintain-ink); }
+  .year-now-chip.ym-peak     { background: var(--st-peak);     color: var(--st-peak-ink); }
+  .year-now-chip.ym-recover  { background: var(--st-recover);  color: var(--st-recover-ink); border: 1px solid var(--line); }
+  .year-now-chip.ym-off      { background: var(--st-off);      color: var(--st-off-ink); }
   .year-sport-goal {
     font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute);
     margin: 0 0 14px; display: flex; align-items: center; gap: 6px;
@@ -2494,13 +2542,21 @@
   }
   .ym-emoji { font-size: 19px; line-height: 1; }
   .ym-plus { font-family: 'Fraunces', serif; font-size: 18px; color: var(--ink-mute); line-height: 1; }
-  /* whole-tile phase colours */
-  .ym-build    { background: var(--gold); }     .ym-build .ym-label    { color: var(--burgundy-dark); }
-  .ym-maintain { background: var(--sage); }     .ym-maintain .ym-label { color: var(--cream); }
-  .ym-peak     { background: var(--burgundy); } .ym-peak .ym-label     { color: var(--cream); }
-  .ym-recover  { background: var(--cream); border: 1px solid var(--line); }
-  .ym-off      { background: repeating-linear-gradient(45deg, var(--cream), var(--cream) 5px, var(--line-soft) 5px, var(--line-soft) 6px); }
-  .ym-empty    { background: var(--cream); border: 1px dashed var(--line); }
+  /* whole-tile phase colours — Black / Grey / Maroon / White */
+  .ym-build    { background: var(--st-build); }    .ym-build .ym-label    { color: var(--st-build-ink); }
+  .ym-maintain { background: var(--st-maintain); } .ym-maintain .ym-label { color: var(--st-maintain-ink); }
+  .ym-peak     { background: var(--st-peak); }     .ym-peak .ym-label     { color: var(--st-peak-ink); }
+  .ym-recover  { background: var(--st-recover); border: 1px solid var(--line); } .ym-recover .ym-label { color: var(--st-recover-ink); }
+  .ym-off      { background: var(--st-off); } .ym-off .ym-label { color: var(--st-off-ink); }
+  .ym-empty    { background: var(--surface); border: 1px dashed var(--line); }
+  /* split month — first half | second half, label sits in a legible chip */
+  .ym-split .ym-label { color: #fff; background: rgba(0,0,0,0.42); padding: 0 5px; border-radius: 6px; }
+  .ym-emoji.ym-emoji-2 { font-size: 12px; letter-spacing: 1px; }
+  /* Split-this-month toggle inside the block sheet */
+  .split-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+  .split-row-text strong { display: block; font-size: 14px; color: var(--ink); }
+  .split-row-text small { display: block; color: var(--ink-mute); font-size: 12px; margin-top: 2px; }
+  #splitSecond { margin-top: 14px; }
   .year-month.ym-suggest { opacity: 0.5; }
   .year-month.is-current { box-shadow: 0 0 0 2px var(--burgundy); }
   .ym-now {
@@ -5428,13 +5484,12 @@
       const soon = !past && ev.start <= addDays(todayIso, 28);   // within ~4 weeks
       return '<div class="kd-row'+(ev.type==='isst'?' kd-isst':'')+(past?' kd-past':'')+(soon?' kd-soon':'')+'">'+
         '<span class="kd-emoji">'+m.emoji+'</span>'+
-        '<span class="kd-main"><span class="kd-label">'+esc(ev.label)+(soon?' <span class="kd-soon-tag">soon</span>':'')+'</span>'+
-          (m.cue?'<span class="kd-cue">'+esc(m.cue)+'</span>':'')+'</span>'+
+        '<span class="kd-main"><span class="kd-label">'+esc(ev.label)+(soon?' <span class="kd-soon-tag">soon</span>':'')+'</span></span>'+
         '<span class="kd-date">'+esc(eventRange(ev))+'</span>'+
       '</div>';
     }).join('');
     return '<div class="card"><p class="card-eyebrow">Season key dates · 2026–27</p>'+
-      '<p class="kd-intro">Plan your effort around these. <strong>🏆 ISST</strong> weeks are when you want to be sharp; <strong>📚 exams</strong> are when to hold steady; <strong>🌴 breaks</strong> are a chance to recover.</p>'+
+      '<p class="kd-intro">The big dates across your year — plan your own effort around them.</p>'+
       '<div class="kd-list">'+rows+'</div></div>';
   }
 
@@ -5456,11 +5511,8 @@
           ? '<i class="ti ti-flag-filled" aria-hidden="true"></i> A-priority · <strong>'+esc(ap.event)+'</strong>'+(ap.date?' · '+fmtNice(ap.date):'')
           : 'Set the one event your year points at.')+'</p>'+
       '<div class="week-today-cta" style="display:flex; gap:10px;"><button class="card-cta card-cta-ghost" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Edit goal</button>'+
-        '<button class="card-cta card-cta-ghost" onclick="openWalkthrough()"><i class="ti ti-help-circle" aria-hidden="true"></i> How this works</button></div>'+
+        '<button class="card-cta card-cta-ghost" onclick="openYearHelp()"><i class="ti ti-help-circle" aria-hidden="true"></i> How to plan my year</button></div>'+
     '</div>';
-
-    // Season key dates — awareness of ISST weeks, exams and breaks.
-    html += seasonKeyDatesCard();
 
     // One card per sport — monthly states via the existing month tiles / statePicker.
     ym.sports.forEach((sport, si) => {
@@ -5486,6 +5538,9 @@
     // Testing & busy months, surfaced from the year map.
     html += yearTestingCard();
 
+    // Season key dates — at the bottom: the big dates, no prescriptive advice.
+    html += seasonKeyDatesCard();
+
     html += '</div>';
     view.innerHTML = html;
   }
@@ -5510,8 +5565,11 @@
 
   // The phase a sport is in this month — committed if set, otherwise the suggestion.
   function currentSportPhase(sport, curMonth){
-    const committed = monthCommittedState(sport, curMonth);
-    if(committed) return committed;
+    const ms = (sport.monthlyStates||[]).find(x => x.month===curMonth);
+    if(ms && ms.state){
+      // If this month is split, the second half kicks in from the 16th.
+      return (ms.state2 && new Date().getDate() >= 16) ? ms.state2 : ms.state;
+    }
     const ap = state.yearMap.aPriority;
     const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
     return suggestState(curMonth, apIndex, busyMonthsSet()) || '';
@@ -5576,16 +5634,22 @@
     const isNow = month===curMonth;
     const markers = markersFor(sport, month);
     const mLabel = month.slice(0,3);
-    const cls = 'year-month ' + (stt ? 'ym-'+stt : 'ym-empty') + (isSuggest && stt ? ' ym-suggest' : '') + (isNow ? ' is-current' : '');
+    // A committed month can be split into first half (stt) + second half (stt2).
+    const ms = (sport.monthlyStates||[]).find(x => x.month===month);
+    const stt2 = (!isSuggest && ms && ms.state2 && ms.state2!==stt) ? ms.state2 : '';
+    const cls = 'year-month ' + (stt ? 'ym-'+stt : 'ym-empty') + (stt2 ? ' ym-split' : '') + (isSuggest && stt ? ' ym-suggest' : '') + (isNow ? ' is-current' : '');
+    const styleAttr = stt2 ? ' style="background:linear-gradient(90deg, var(--st-'+stt+') 0 50%, var(--st-'+stt2+') 50% 100%);"' : '';
     const onclick = (isSuggest && stt)
       ? 'confirmSuggestion('+si+',\''+month+'\',\''+stt+'\')'
       : 'openBlock('+si+',\''+month+'\')';
-    const title = month + (stt ? ' · '+PHASE_FRIENDLY[stt] + (isSuggest?' (suggested — tap to confirm)':'') : ' · tap to plan');
-    const inner = stt ? '<span class="ym-emoji">'+PHASE_EMOJI[stt]+'</span>' : '<span class="ym-plus">+</span>';
+    const title = month + (stt ? ' · '+PHASE_FRIENDLY[stt] + (stt2?' → '+PHASE_FRIENDLY[stt2]:'') + (isSuggest?' (suggested — tap to confirm)':'') : ' · tap to plan');
+    const inner = stt
+      ? (stt2 ? '<span class="ym-emoji ym-emoji-2">'+PHASE_EMOJI[stt]+PHASE_EMOJI[stt2]+'</span>' : '<span class="ym-emoji">'+PHASE_EMOJI[stt]+'</span>')
+      : '<span class="ym-plus">+</span>';
     const editIcon = (isSuggest && stt)
       ? '<span class="ym-suggest-edit" onclick="event.stopPropagation(); openBlock('+si+',\''+month+'\')" title="Edit details" aria-label="Edit"><i class="ti ti-pencil" aria-hidden="true"></i></span>'
       : '';
-    return '<div class="'+cls+'" onclick="'+onclick+'" title="'+esc(title)+'">'+
+    return '<div class="'+cls+'"'+styleAttr+' onclick="'+onclick+'" title="'+esc(title)+'">'+
       editIcon +
       (isNow ? '<span class="ym-now">Now</span>' : '') +
       '<span class="ym-label">'+mLabel+'</span>'+
@@ -5621,6 +5685,12 @@
     document.getElementById('blockEyebrow').textContent = sport.name + ' · ' + month;
     document.getElementById('blockTitle').innerHTML = preState ? '<em>'+(STATE_LABEL[preState])+'</em>.' : 'Plan this <em>block</em>.';
     document.querySelectorAll('#statePicker .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===preState));
+    // Split-month state: second half, if this block has one.
+    const isSplit = !!(existing.state2);
+    document.getElementById('splitToggle').classList.toggle('on', isSplit);
+    document.getElementById('splitSecond').style.display = isSplit ? '' : 'none';
+    document.getElementById('stateLabel').textContent = isSplit ? 'First half' : 'Training state';
+    document.querySelectorAll('#statePicker2 .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===(existing.state2||'')));
     document.getElementById('blockFocus').value = existing.focus || '';
     document.getElementById('blockLoad').value = existing.loadTarget || '';
     document.getElementById('blockNote').value = existing.note || '';
@@ -5633,13 +5703,30 @@
     document.getElementById('blockTitle').innerHTML = '<em>'+(STATE_LABEL[s])+'</em>.';
   }
   window.pickState = pickState;
+  function pickState2(s){
+    document.querySelectorAll('#statePicker2 .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===s));
+  }
+  window.pickState2 = pickState2;
+  // Toggle "split this month": show/hide the second-half picker + relabel the first.
+  function toggleSplit(){
+    const tog = document.getElementById('splitToggle');
+    const on = !tog.classList.contains('on');
+    tog.classList.toggle('on', on);
+    document.getElementById('splitSecond').style.display = on ? '' : 'none';
+    document.getElementById('stateLabel').textContent = on ? 'First half' : 'Training state';
+    if(on && !document.querySelector('#statePicker2 .state-pill.sel')) pickState2('recover');
+  }
+  window.toggleSplit = toggleSplit;
 
   async function saveBlockSheet(){
     if(!blockCtx) return;
     const sel = document.querySelector('#statePicker .state-pill.sel');
+    const splitOn = document.getElementById('splitToggle').classList.contains('on');
+    const sel2 = document.querySelector('#statePicker2 .state-pill.sel');
     const block = {
       month: blockCtx.month,
       state: sel ? sel.dataset.state : '',
+      state2: (splitOn && sel2) ? sel2.dataset.state : '',
       focus: val('blockFocus').trim(),
       loadTarget: numOrNull(val('blockLoad')),
       note: val('blockNote')
@@ -5746,6 +5833,13 @@
     document.body.style.overflow = '';
   }
   window.openWalkthrough = openWalkthrough;
+
+  // Read-only "how to plan my year" — re-openable help. Does NOT re-run setup
+  // (so it can never overwrite an existing year the way the walkthrough could).
+  function openYearHelp(){ document.getElementById('yearHelp').hidden = false; document.body.style.overflow = 'hidden'; }
+  function closeYearHelp(){ document.getElementById('yearHelp').hidden = true; document.body.style.overflow = ''; }
+  window.openYearHelp = openYearHelp;
+  window.closeYearHelp = closeYearHelp;
 
   function wtCollect(){
     const step = WT_STEPS[wt.i];
