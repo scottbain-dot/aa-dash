@@ -29,7 +29,7 @@ if (fs.existsSync('portal-lab.html')) {
 // ---- Server: COMPLETE-APPS-SCRIPT.gs ----
 if (fs.existsSync('COMPLETE-APPS-SCRIPT.gs')) {
   const gs = fs.readFileSync('COMPLETE-APPS-SCRIPT.gs', 'utf8');
-  const portalHandlers = ['handleGetYearMap','handleGetWeeklyTemplate','handleGetWeek','handleGetYearLoad',
+  const portalHandlers = ['handleGetYearMap','handleGetWeeklyTemplate','handleGetWeek','handleGetGames','handleGetYearLoad',
     'handleGetPBs','handleSaveYearMap','handleSaveBlock','handleSaveWeeklyTemplate','handleSaveSession',
     'handleDeleteSession','handleSavePB'];
   // Dispatch must not pass email to these handlers

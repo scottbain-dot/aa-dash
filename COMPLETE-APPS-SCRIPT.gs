@@ -232,6 +232,9 @@ function doGet(e) {
     if (action === 'getWeek') {
       return apJson(handleGetWeek(ss, e.parameter.athleteId, e.parameter.weekStart));
     }
+    if (action === 'getGames') {
+      return apJson(handleGetGames(ss, e.parameter.athleteId));
+    }
     if (action === 'getYearLoad') {
       return apJson(handleGetYearLoad(ss, e.parameter.athleteId));
     }
@@ -3152,6 +3155,35 @@ function handleGetWeek(ss, athleteId, weekStart) {
       }
     }
     return { success: true, weekStart: ws, sessions: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// All of an athlete's game-type sessions across the whole season (every week),
+// so the portal can show a season fixtures list and plan training around games.
+function handleGetGames(ss, athleteId) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: true, games: [] };
+    var sheet = apEnsureTrainingSessions(ss);
+    var rows = apReadObjects(sheet);
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Athlete_ID).trim() !== athleteId) continue;
+      if (String(rows[i].Type || '').trim() !== 'game') continue;
+      out.push({
+        id: rows[i].Session_ID,
+        date: apDateStr(rows[i].Date),
+        name: rows[i].Name || 'Game',
+        sport: rows[i].Sport || '',
+        result: rows[i].Result || '',
+        rpe: rows[i].RPE === '' ? null : Number(rows[i].RPE),
+        duration: rows[i].Duration === '' ? null : Number(rows[i].Duration)
+      });
+    }
+    out.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    return { success: true, games: out };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
