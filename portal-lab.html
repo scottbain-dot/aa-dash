@@ -98,6 +98,32 @@
     color: var(--gold);
     font-style: italic;
   }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .nav-guide {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cream);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(250,243,237,0.28);
+    background: rgba(250,243,237,0.06);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .nav-guide:hover { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.12); }
+  .nav-guide i { font-size: 15px; }
+  /* On very small phones, keep the "Guide" label (clarity) but drop the athlete
+     detail line so the row never overflows. */
+  @media (max-width: 480px){ .nav-right { gap: 9px; } .nav-guide { padding: 6px 11px; } }
   .nav-athlete {
     font-family: 'Inter', sans-serif;
     font-size: 12px;
@@ -1476,9 +1502,14 @@
       <div class="nav-brand">
         <span class="nav-brand-mark">Athlete <em>Academy</em></span>
       </div>
-      <div class="nav-athlete">
-        <div class="nav-athlete-avatar" id="navAvatar">··</div>
-        <span id="navAthlete"><strong>—</strong></span>
+      <div class="nav-right">
+        <a class="nav-guide" href="guide.html" target="_blank" rel="noopener" title="How to use the portal">
+          <i class="ti ti-book" aria-hidden="true"></i><span>Guide</span>
+        </a>
+        <div class="nav-athlete">
+          <div class="nav-athlete-avatar" id="navAvatar">··</div>
+          <span id="navAthlete"><strong>—</strong></span>
+        </div>
       </div>
     </div>
     <div class="tabs" id="tabs">
