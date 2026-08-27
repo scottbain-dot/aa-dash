@@ -2389,9 +2389,9 @@
   .myprog-rest { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
   .myprog-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
   .myprog-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--line); flex-shrink: 0; }
-  .myprog-dot.easy { background: rgba(135,75,70,0.32); }
-  .myprog-dot.moderate { background: var(--burgundy-light); }
-  .myprog-dot.hard { background: var(--burgundy); }
+  .myprog-dot.easy { background: var(--int-easy); }
+  .myprog-dot.moderate { background: var(--int-moderate); }
+  .myprog-dot.hard { background: var(--int-hard); }
   .myprog-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
   .myprog-item-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
   .myprog-item-sub { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); }
@@ -2894,7 +2894,7 @@
   /* Intensity = a single burgundy effort-ramp (light→dark), kept separate from the phase palette */
   .plan-dot.easy { background: var(--int-easy); }
   .plan-dot.moderate { background: var(--int-moderate); }
-  .plan-dot.hard { background: var(--burgundy); }
+  .plan-dot.hard { background: var(--int-hard); }
   .plan-dot.is-empty { background: transparent; border: 1.5px dashed var(--line); width: 11px; height: 11px; }
   .plan-row.is-done .plan-dot { box-shadow: 0 0 0 3px rgba(122,144,120,0.22); }
   .plan-info { min-width: 0; }
