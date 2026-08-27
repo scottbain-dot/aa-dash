@@ -39,6 +39,8 @@
     --st-peak:     #874b46;   --st-peak-ink:     #faf3ed;   /* Peak → maroon */
     --st-recover:  #ffffff;   --st-recover-ink:  #2b2521;   /* Recover → white */
     --st-off:      #e9e3dd;   --st-off-ink:      #8a7d73;   /* Off → light grey */
+    /* Session intensity — traffic light (easy / moderate / hard) */
+    --int-easy: #4a9d5b;   --int-moderate: #e0a52e;   --int-hard: #c0433b;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -1998,6 +2000,24 @@
   </div>
 </div>
 
+<!-- EXERCISE LIBRARY — browse/search the whole exercise bank (read-only reference) -->
+<div class="sheet-backdrop" id="lib-backdrop" onclick="closeLibrary()"></div>
+<div class="sheet" id="libSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">Exercise library</p>
+      <h2 class="sheet-title">The <em>exercise bank</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closeLibrary()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <p class="ql-help">Every exercise you can use — with a cue for each. To add one to your week, open a day and tap “Add exercise.”</p>
+    <input class="duration-input plan-field" id="libSearch" placeholder="Search — name, pattern or gear" oninput="renderLibrary(this.value)" style="margin:6px 0 14px;">
+    <div class="more-list" id="libList"></div>
+  </div>
+</div>
+
 <!-- BUILD WITH AI — paste a plan / current program, parse into a program, review, apply -->
 <div class="sheet-backdrop" id="aibuild-backdrop" onclick="closeAIBuild()"></div>
 <div class="sheet" id="aiBuildSheet">
@@ -2519,9 +2539,9 @@
     font-weight: 600; color: var(--ink-mute); transition: all 0.15s;
   }
   .int-pill:hover { border-color: var(--burgundy); }
-  .int-pill.sel[data-int="easy"]     { background: var(--sage);          color: var(--cream); border-color: var(--sage); }
-  .int-pill.sel[data-int="moderate"] { background: var(--gold);          color: var(--burgundy-dark); border-color: var(--gold); }
-  .int-pill.sel[data-int="hard"]     { background: var(--burgundy);      color: var(--cream); border-color: var(--burgundy); }
+  .int-pill.sel[data-int="easy"]     { background: var(--int-easy);     color: #fff; border-color: var(--int-easy); }
+  .int-pill.sel[data-int="moderate"] { background: var(--int-moderate); color: #fff; border-color: var(--int-moderate); }
+  .int-pill.sel[data-int="hard"]     { background: var(--int-hard);     color: #fff; border-color: var(--int-hard); }
 
   /* "Log it now" reveal — quiet, only shown for a plan on today/past */
   .log-now-btn {
@@ -2648,6 +2668,13 @@
   .ai-paste > summary::-webkit-details-marker { display: none; }
   .ai-paste > summary::before { content: '＋ '; }
   .ai-paste[open] > summary::before { content: '－ '; }
+  /* Exercise library (read-only browse) rows + specialist-lift caution */
+  .lib-row { padding: 12px 4px; border-bottom: 1px solid var(--line-soft); }
+  .lib-row-name { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink); }
+  .lib-row-meta { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute); margin-top: 2px; }
+  .lib-row-cue { font-family: 'Fraunces', serif; font-style: italic; font-size: 13.5px; color: var(--ink-soft); margin-top: 4px; }
+  .ex-caution { color: var(--int-hard); font-size: 12.5px; font-weight: 600; margin-top: 4px; }
+  .ex-caution-tag { display: inline-block; font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 700; color: #fff; background: var(--int-hard); border-radius: 6px; padding: 1px 6px; vertical-align: middle; }
   /* Apply-choice modal notes + "save this week as my program" button */
   .apply-choice-note { font-size: 12.5px; color: var(--ink-mute); line-height: 1.45; margin: 8px 2px 0; }
   .week-saveprog { width: 100%; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -2865,8 +2892,8 @@
   .plan-today-tag { font-family: 'Fraunces', serif; font-style: italic; font-size: 9px; color: var(--burgundy); }
   .plan-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); justify-self: center; }
   /* Intensity = a single burgundy effort-ramp (light→dark), kept separate from the phase palette */
-  .plan-dot.easy { background: rgba(135,75,70,0.32); }
-  .plan-dot.moderate { background: var(--burgundy-light); }
+  .plan-dot.easy { background: var(--int-easy); }
+  .plan-dot.moderate { background: var(--int-moderate); }
   .plan-dot.hard { background: var(--burgundy); }
   .plan-dot.is-empty { background: transparent; border: 1.5px dashed var(--line); width: 11px; height: 11px; }
   .plan-row.is-done .plan-dot { box-shadow: 0 0 0 3px rgba(122,144,120,0.22); }
@@ -2962,9 +2989,9 @@
   }
   .load-strip-squares { display: flex; gap: 6px; margin: 12px 0 10px; flex-wrap: wrap; }
   .load-strip-square { width: 30px; height: 30px; border-radius: 8px; background: var(--line-soft); }
-  .load-strip-square.easy { background: rgba(135,75,70,0.32); }
-  .load-strip-square.moderate { background: var(--burgundy-light); }
-  .load-strip-square.hard { background: var(--burgundy); }
+  .load-strip-square.easy { background: var(--int-easy); }
+  .load-strip-square.moderate { background: var(--int-moderate); }
+  .load-strip-square.hard { background: var(--int-hard); }
   .load-strip-key { display: flex; gap: 14px; margin-top: 10px; }
   .load-strip-key-item { display: inline-flex; align-items: center; gap: 5px; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); }
   .load-strip-key-sq { width: 11px; height: 11px; border-radius: 3px; }
@@ -3774,9 +3801,9 @@
       '<div class="load-strip-squares">'+squares+'</div>'+
       '<p class="load-strip-label">'+counts.hard+' hard · '+counts.moderate+' moderate · '+counts.easy+' easy — '+balance+'</p>'+
       '<div class="load-strip-key">'+
-        '<span class="load-strip-key-item"><span class="load-strip-key-sq easy" style="background:rgba(135,75,70,0.32);"></span>easy</span>'+
-        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--burgundy-light);"></span>moderate</span>'+
-        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--burgundy);"></span>hard</span>'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq easy" style="background:var(--int-easy);"></span>easy</span>'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--int-moderate);"></span>moderate</span>'+
+        '<span class="load-strip-key-item"><span class="load-strip-key-sq" style="background:var(--int-hard);"></span>hard</span>'+
       '</div>'+
       (maxRun >= 3 ? '<div class="load-strip-warning"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Three hard days in a row — build in some recovery.</div>' : '')+
     '</div>';
@@ -4289,8 +4316,8 @@
       html += '<div class="addex-group">'+esc(REGION_LABEL[r]||r)+'</div>'+
         g.map(e => '<button class="more-row" onclick="pickAddEx(\''+e.id+'\')">'+
           '<span class="more-row-icon"><i class="ti ti-plus" aria-hidden="true"></i></span>'+
-          '<span class="more-row-main"><span class="more-row-name">'+esc(e.name)+'</span>'+
-            '<span class="more-row-sub">'+esc(exMeta(e))+(e.cue?' · '+esc(e.cue):'')+'</span></span>'+
+          '<span class="more-row-main"><span class="more-row-name">'+esc(e.name)+(e.caution?' <span class="ex-caution-tag">⚠ specialist</span>':'')+'</span>'+
+            '<span class="more-row-sub">'+esc(exMeta(e))+(e.cue?' · '+esc(e.cue):'')+(e.caution?' · <span class="ex-caution">'+esc(e.caution)+'</span>':'')+'</span></span>'+
         '</button>').join('');
     });
     document.getElementById('addexList').innerHTML = html || '<p class="ql-help">No matches — try another word.</p>';
@@ -4305,6 +4332,41 @@
     document.getElementById('addexSheet').classList.remove('open');
     document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
   }
+
+  // Standalone, read-only browse of the whole exercise bank (reached from the hub).
+  function openLibrary(){
+    document.getElementById('libSearch').value = '';
+    renderLibrary('');
+    document.getElementById('lib-backdrop').classList.add('open');
+    document.getElementById('libSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLibrary(){
+    document.getElementById('lib-backdrop').classList.remove('open');
+    document.getElementById('libSheet').classList.remove('open');
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+  }
+  window.openLibrary = openLibrary; window.closeLibrary = closeLibrary;
+  function renderLibrary(q){
+    q = (q||'').toLowerCase().trim();
+    const match = EXERCISE_LIBRARY.filter(e => !q ||
+      e.name.toLowerCase().includes(q) || e.pattern.includes(q) || e.region.includes(q) ||
+      (e.equip||[]).join(' ').toLowerCase().includes(q) || (e.component||'').toLowerCase().includes(q));
+    let html = '';
+    REGION_ORDER.forEach(r => {
+      const g = match.filter(e => e.region===r);
+      if(!g.length) return;
+      html += '<div class="addex-group">'+esc(REGION_LABEL[r]||r)+' · '+g.length+'</div>'+
+        g.map(e => '<div class="lib-row">'+
+          '<div class="lib-row-name">'+esc(e.name)+(e.caution?' <span class="ex-caution-tag">⚠ specialist</span>':'')+'</div>'+
+          '<div class="lib-row-meta">'+esc(exMeta(e))+(e.rx?' · '+esc(e.rx):'')+'</div>'+
+          (e.cue?'<div class="lib-row-cue">“'+esc(e.cue)+'”</div>':'')+
+          (e.caution?'<div class="ex-caution">'+esc(e.caution)+'</div>':'')+
+        '</div>').join('');
+    });
+    document.getElementById('libList').innerHTML = html || '<p class="ql-help">No matches — try another word.</p>';
+  }
+  window.renderLibrary = renderLibrary;
   window.openAddEx = openAddEx;
   window.renderAddEx = renderAddEx;
   window.pickAddEx = pickAddEx;
@@ -4882,9 +4944,9 @@
     { id:'slHamCurl',   name:'Single-Leg Hamstring Curl', region:'lower', pattern:'hamstring',laterality:'uni', fvZone:'speedstrength', tier:3, equip:['bodyweight'],     rx:'8 × 4 · explosive', cue:'Explosive — curl to jump', component:'Strength & Power' },
     { id:'buPress',     name:'Bottoms-Up Press (KB)',     region:'upper', pattern:'vpush',    laterality:'uni', fvZone:'strength',      tier:2, equip:['kettlebell'],     rx:'8 × 2–4 · tempo 1-2-3', cue:'Go light — focus on stability', component:'Strength & Power' },
     { id:'saLatPull',   name:'Single-Arm Lat Pull-Down',  region:'upper', pattern:'vpull',    laterality:'uni', fvZone:'strength',      tier:3, equip:['cable'],          rx:'5–8 × 2–3 · tempo 1-2-3', cue:'One arm at a time', component:'Strength & Power' },
-    { id:'hangClean',   name:'Hang Clean',                region:'full',  pattern:'olympic',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['barbell'],        rx:'4–8 × 2–4 · empty / ≤30kg bar', cue:'Movement practice — add weight only once checked', component:'Strength & Power' },
-    { id:'squatClean',  name:'Full Squat Clean',          region:'full',  pattern:'olympic',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['barbell'],        rx:'4 × 3 · ≤30kg', cue:'Movement practice', component:'Strength & Power' },
-    { id:'muscleSnatch',name:'Muscle Snatch (RDL + Jump)',region:'full',  pattern:'olympic',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['barbell'],        rx:'4 × 3 · ≤30kg', cue:'Movement practice — RDL to jump', component:'Strength & Power' }
+    { id:'hangClean',   name:'Hang Clean',                region:'full',  pattern:'olympic',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['barbell'],        rx:'4–8 × 2–4 · empty / ≤30kg bar', cue:'Movement practice — light bar only', caution:'Specialist lift — get coached before you load it', component:'Strength & Power' },
+    { id:'squatClean',  name:'Full Squat Clean',          region:'full',  pattern:'olympic',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['barbell'],        rx:'4 × 3 · ≤30kg', cue:'Movement practice', caution:'Specialist lift — get coached before you load it', component:'Strength & Power' },
+    { id:'muscleSnatch',name:'Muscle Snatch (RDL + Jump)',region:'full',  pattern:'olympic',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['barbell'],        rx:'4 × 3 · ≤30kg', cue:'Movement practice — RDL to jump', caution:'Specialist lift — get coached before you load it', component:'Strength & Power' }
   ];
   const EX_BY_ID = {}; EXERCISE_LIBRARY.forEach(e => { EX_BY_ID[e.id] = e; });
   function exById(id){ return EX_BY_ID[id] || null; }
@@ -5064,6 +5126,7 @@
       (n ? moreRow('ti-list-check', 'Edit my program', progSub, 'moreMyProgram')
          : moreRow('ti-plus', 'Build your own', 'Start from a blank week and add days', 'moreAddDay'))+
       (n ? moreRow('ti-calendar-plus', 'Fill this week from my program', 'Adds your program’s sessions to empty days', 'moreFillWeek') : '')+
+      moreRow('ti-books', 'Exercise library', 'Browse every exercise, with a cue for each', 'moreLibrary')+
       '<div class="more-divider">Add to this week</div>'+
       moreRow('ti-bolt', 'Quick add', 'Drop in a one-off session from a template', 'moreQuickAdd')+
       moreRow('ti-copy', 'Copy last week', 'Repeat last week’s sessions on this week', 'moreCopyWeek')+
@@ -5091,6 +5154,8 @@
   function moreAddDay(){ closeMoreActions(); openProgramDay(-1); }
   function moreSaveWeek(){ closeMoreActions(); saveWeekAsProgram(); }
   window.moreSaveWeek = moreSaveWeek;
+  function moreLibrary(){ closeMoreActions(); openLibrary(); }
+  window.moreLibrary = moreLibrary;
   // AI is live (guided builder + log-from-notes). Requires ANTHROPIC_API_KEY set in
   // Apps Script Script Properties and the latest COMPLETE-APPS-SCRIPT.gs deployed.
   const AI_LIVE = true;
