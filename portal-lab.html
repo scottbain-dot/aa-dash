@@ -2160,6 +2160,9 @@
 
   /* ===== First-run WALKTHROUGH ===== */
   .wt { position: fixed; inset: 0; z-index: 200; background: rgba(38,26,24,0.55); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; }
+  /* `.wt` sets display:flex, which overrides the browser's default [hidden]{display:none};
+     without this rule the overlay can't be hidden and closeWalkthrough() leaves it stuck on screen. */
+  .wt[hidden] { display: none; }
   @media (min-width: 560px){ .wt { align-items: center; } }
   .wt-card { position: relative; width: 100%; max-width: 480px; max-height: 94vh; background: var(--surface); border-radius: 26px 26px 0 0; display: flex; flex-direction: column; box-shadow: 0 -10px 40px rgba(0,0,0,0.25); overflow: hidden; }
   @media (min-width: 560px){ .wt-card { border-radius: 26px; max-height: 88vh; } }
