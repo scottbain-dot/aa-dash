@@ -1540,7 +1540,7 @@
         <button type="button" class="int-pill" data-int="hard" onclick="pickIntensity('hard')">Hard</button>
       </div>
 
-      <div class="plan-row" style="margin-top:12px;">
+      <div class="form-row" style="margin-top:12px;">
         <div style="flex:1; min-width:0;">
           <label class="field-label" for="planDate">Day</label>
           <input type="date" class="duration-input plan-field" id="planDate" onchange="applyDateAwareSheet()">
@@ -1801,7 +1801,7 @@
     </div>
     <div class="sheet-section">
       <p class="sheet-section-label">Result</p>
-      <div class="plan-row">
+      <div class="form-row">
         <input class="duration-input plan-field" id="pbValue" placeholder="Value — e.g. 124.8 or 85">
         <input class="duration-input plan-field" id="pbUnit" placeholder="Unit — s, kg, m…">
       </div>
@@ -2496,8 +2496,10 @@
 
   /* Plan/edit header inputs in the session sheet */
   .plan-field { width: 100%; margin-bottom: 8px; }
-  .plan-row { display: flex; gap: 8px; }
-  .plan-row .plan-field { flex: 1; }
+  /* Two-up form rows inside sheets (Day + How long, Value + Unit, a date field).
+     Its own class so the week day-row `.plan-row` grid can't crush these inputs. */
+  .form-row { display: flex; gap: 12px; }
+  .form-row > * { flex: 1; min-width: 0; }
   select.plan-field { -webkit-appearance: none; appearance: none; }
 
   /* Field labels — every input in the plan header now says what it is */
@@ -3681,10 +3683,6 @@
     const prov = tplN
       ? '<button class="week-prov" onclick="openMyProgram()"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats from <strong>'+esc(progName||'my program')+'</strong> · Edit program <i class="ti ti-chevron-right" aria-hidden="true"></i></button>'
       : '<button class="week-prov" onclick="openMoreActions()"><i class="ti ti-clipboard-list" aria-hidden="true"></i> No program yet · Build one <i class="ti ti-chevron-right" aria-hidden="true"></i></button>';
-    // The simple "commit" action: turn this week into the repeating program.
-    const saveWeekBtn = (!emptyWeek)
-      ? '<button class="week-saveprog" onclick="saveWeekAsProgram()"><i class="ti ti-bookmark" aria-hidden="true"></i> Save this week as my program</button>'
-      : '';
     return '<div class="card">'+
       '<div class="week-head">'+
         '<p class="card-eyebrow" style="margin:0;">This week</p>'+
@@ -3693,7 +3691,6 @@
       prov+
       fillPrompt+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
-      saveWeekBtn+
       '<div class="week-actions">'+
         '<button class="card-cta" style="flex:2;" onclick="openMoreActions()"><i class="ti ti-tools" aria-hidden="true"></i> Build my program</button>'+
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
@@ -6022,7 +6019,7 @@
       '<div class="onboard-form">'+
         onboardField('Your sport', '<input class="duration-input plan-field" id="obSport" value="'+esc(sport)+'" placeholder="e.g. Swimming">')+
         onboardField('The one event your year points at', '<input class="duration-input plan-field" id="obEvent" placeholder="e.g. Regional Champs">'+
-          '<div class="plan-row" style="margin-top:8px;"><input type="date" class="duration-input plan-field" id="obDate"></div>')+
+          '<div class="form-row" style="margin-top:8px;"><input type="date" class="duration-input plan-field" id="obDate"></div>')+
         onboardField('This month, you\'re in…', stateMiniPicker('obState'))+
       '</div>'+
       '<button class="btn-primary" style="margin-top:8px;" onclick="submitOnboard()"><i class="ti ti-check" aria-hidden="true"></i> Set up my year</button>'+
@@ -6215,7 +6212,7 @@
       '<div class="onboard-form">'+
         onboardField('Vision · optional', '<input class="duration-input plan-field" id="gVision" value="'+esc(ym.vision||'')+'" placeholder="e.g. Sub-58 100 free">')+
         onboardField('A-priority event', '<input class="duration-input plan-field" id="gEvent" value="'+esc(ap.event||'')+'" placeholder="e.g. Regional Champs">'+
-          '<div class="plan-row" style="margin-top:8px;"><input type="date" class="duration-input plan-field" id="gDate" value="'+esc(ap.date||'')+'"></div>')+
+          '<div class="form-row" style="margin-top:8px;"><input type="date" class="duration-input plan-field" id="gDate" value="'+esc(ap.date||'')+'"></div>')+
         onboardField('Testing months · comma-separated', '<input class="duration-input plan-field" id="gTesting" value="'+esc(tw)+'" placeholder="e.g. October, March">')+
         onboardField('Busy months · mocks, exams, travel', '<input class="duration-input plan-field" id="gBusy" value="'+esc(oc)+'" placeholder="e.g. December, May">')+
       '</div>'+
