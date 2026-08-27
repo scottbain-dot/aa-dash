@@ -365,6 +365,11 @@ function doPost(e) {
       return apJson(handleParseProgram(data.email, data.text));
     }
 
+    // ===== AI PROGRAM GENERATOR (structured choices -> weekly program; writes nothing) =====
+    if (data.action === 'generateProgram') {
+      return apJson(handleGenerateProgram(data.spec));
+    }
+
     // ===== SAVE NOMINATION =====
     if (data.action === 'saveNomination') {
       var nomResult = handleSaveNomination(data);
@@ -2184,6 +2189,96 @@ function handleParseProgram(email, text) {
 
     return { success: true, program: program };
 
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// Generate a weekly program from a student's structured choices (goal, experience,
+// days/week, session length, equipment, sport, optional notes). Writes nothing —
+// returns the same {name, days:[...]} shape the client already matches + applies.
+function handleGenerateProgram(spec) {
+  try {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+    if (!apiKey) {
+      return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
+    }
+    spec = spec || {};
+
+    var systemPrompt = 'You are a strength & conditioning coach for school athletes (ages 14-18). '
+      + 'You design one safe, sensible WEEKLY training program from the athlete\'s choices.\n'
+      + 'Output ONLY a JSON object — no preamble, no explanation, no markdown code fences.\n\n'
+      + 'The object has exactly these fields:\n'
+      + '{\n'
+      + '  "name": "a short program name, e.g. \\"4-Day Strength\\"",\n'
+      + '  "days": [\n'
+      + '    {\n'
+      + '      "dow": integer 0-6 where 0=Monday .. 6=Sunday,\n'
+      + '      "name": "short day name, e.g. \\"Lower body\\" or \\"Upper — push\\"",\n'
+      + '      "sport": "Strength" | "Power" | "Run" | "Swim" | "Conditioning" | "Mobility" | "Other",\n'
+      + '      "intensity": "easy" | "moderate" | "hard",\n'
+      + '      "duration": integer minutes,\n'
+      + '      "exercises": [ { "name": "canonical exercise name", "detail": "sets x reps, e.g. 3x8" } ]\n'
+      + '    }\n'
+      + '  ]\n'
+      + '}\n\n'
+      + 'Rules:\n'
+      + '- The NUMBER of training days must equal the athlete\'s days/week. Spread them sensibly across the week (e.g. Mon/Wed/Fri for 3, Mon/Tue/Thu/Fri for 4).\n'
+      + '- Fit each session into the chosen minutes: ~3-4 exercises for 30 min, ~4-5 for 45 min, ~5-6 for 60 min. Always at least 3 per session.\n'
+      + '- Match the goal. Strength = big compound lifts, lower reps. Power = jumps/throws/explosive + some strength. Endurance = runs/intervals/tempo + core. Foundation = basic movement patterns, mostly bodyweight, higher reps. Speed = sprints/accelerations + power.\n'
+      + '- Respect equipment. "Bodyweight / bands" = NO barbell or heavy dumbbell lifts (use push-ups, split squats, nordics, jumps, sprints, bands). "Dumbbells / kettlebells" = dumbbell/KB variants, no barbell. "Full gym" = anything.\n'
+      + '- Scale to experience. New = simple patterns, moderate volume. Some = standard. Experienced = more load/complexity.\n'
+      + '- Use CANONICAL exercise names so they map cleanly, drawing from: Back Squat, Front Squat, Goblet Squat, Deadlift, Romanian Deadlift, Hip Thrust, Split Squat, Walking Lunge, Bench Press, Overhead Press, Push-Up, Dumbbell Press, Pull-Up, Chin-Up, Barbell Row, Dumbbell Row, Kettlebell Swing, Box Jump, Broad Jump, Med-Ball Slam, Med-Ball Throw, Sprint, Acceleration Run, Tempo Run, Interval Run, Row Intervals, Bike Intervals, Nordic Curl, Plank, Pallof Press, Farmer Carry, Hanging Leg Raise.\n'
+      + '- Give simple, realistic set/rep detail for the goal and age (Strength ~4x5, Power ~4x3, Foundation ~3x10-12, Endurance = intervals/time). Do not prescribe 1-rep maxes.\n'
+      + '- Return ONLY the JSON object.';
+
+    var userMessage = 'Design a weekly program for:\n'
+      + '- Goal: ' + (spec.goal || 'general fitness') + '\n'
+      + '- Experience: ' + (spec.experience || 'some') + '\n'
+      + '- Days per week: ' + (spec.days || 3) + '\n'
+      + '- Session length: ' + (spec.minutes || 45) + ' minutes\n'
+      + '- Equipment: ' + (spec.equipment || 'full gym') + '\n'
+      + '- Sport: ' + (spec.sport || 'general athletic') + '\n'
+      + (spec.notes ? '- Also consider: ' + String(spec.notes).slice(0, 400) + '\n' : '');
+
+    var payload = {
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    };
+    var options = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    var response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', options);
+    if (response.getResponseCode() !== 200) {
+      return { success: false, error: 'Anthropic API returned status ' + response.getResponseCode() };
+    }
+    var responseBody = JSON.parse(response.getContentText());
+    var aiText = responseBody.content && responseBody.content[0] && responseBody.content[0].text;
+    if (!aiText) {
+      return { success: false, error: 'No text in API response' };
+    }
+    var extracted = String(aiText).trim().replace(/^```[^\n`]*\r?\n?/, '').replace(/\r?\n?```\s*$/, '').trim();
+    if (extracted.charAt(0) !== '{') {
+      var fb = extracted.indexOf('{'), lb = extracted.lastIndexOf('}');
+      if (fb !== -1 && lb > fb) extracted = extracted.slice(fb, lb + 1);
+    }
+    var program;
+    try {
+      program = JSON.parse(extracted);
+    } catch (parseErr) {
+      return { success: false, error: 'Parse failed', raw: String(aiText).slice(0, 1500) };
+    }
+    if (!program || typeof program !== 'object' || !Array.isArray(program.days)) {
+      return { success: false, error: 'Parse failed', raw: String(aiText).slice(0, 1500) };
+    }
+    return { success: true, program: program };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
