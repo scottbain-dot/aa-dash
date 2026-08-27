@@ -1449,6 +1449,21 @@
   </div>
 </div>
 
+<!-- "Update your program too?" — asked when a student edits a session that repeats -->
+<div class="wt" id="programEditChoice" hidden>
+  <div class="wt-card">
+    <div class="wt-stage">
+      <p class="wt-eyebrow">This session repeats</p>
+      <h2 class="wt-title" style="margin-bottom:4px;">You changed <em id="programEditName">this session</em></h2>
+      <p class="wt-body" style="margin-top:0;">It's part of your program. Do you want this change every week, or just this once?</p>
+      <button class="btn-primary" style="width:100%;" onclick="confirmProgramEdit()"><i class="ti ti-repeat" aria-hidden="true"></i> Update my program</button>
+      <p class="apply-choice-note">Every future week gets this version. Weeks you've already planned don't change.</p>
+      <button class="btn-secondary" style="width:100%; margin-top:16px;" onclick="dismissProgramEdit()"><i class="ti ti-calendar" aria-hidden="true"></i> Just this week</button>
+      <p class="apply-choice-note">Keeps the change on this week only. Your program stays as it was.</p>
+    </div>
+  </div>
+</div>
+
 <!-- DEMO "EXAMPLE" PILL (shown only in ?demo=1; easily removable) -->
 <div class="demo-pill" id="demoPill" hidden>Example</div>
 
@@ -1530,7 +1545,14 @@
     <div class="sheet-section" id="planHeader">
       <p class="sheet-section-label">Plan this session</p>
 
-      <label class="field-label" for="planName">What is it?</label>
+      <label class="field-label">Type</label>
+      <div class="intensity-pills" id="typePills">
+        <button type="button" class="int-pill type-pill" data-type="training" onclick="pickType('training')">Training</button>
+        <button type="button" class="int-pill type-pill" data-type="practice" onclick="pickType('practice')">Team practice</button>
+        <button type="button" class="int-pill type-pill" data-type="game" onclick="pickType('game')">Game</button>
+      </div>
+
+      <label class="field-label" for="planName" style="margin-top:14px;">What is it?</label>
       <input class="duration-input plan-field" id="planName" placeholder="e.g. Tuesday run, Leg day, Intervals 8×200">
 
       <label class="field-label" for="planSport">Sport / type</label>
@@ -1560,6 +1582,11 @@
 
       <label class="field-label" for="planTarget">Session goal · optional</label>
       <input class="duration-input plan-field" id="planTarget" placeholder="e.g. 5km · hold 6:00/km · 3×8 at 40kg">
+
+      <div id="resultSection" style="display:none;">
+        <label class="field-label" for="planResult" style="margin-top:14px;">Result · optional</label>
+        <input class="duration-input plan-field" id="planResult" placeholder="e.g. Won 3–1 · scored 2 · lost in a tiebreak">
+      </div>
     </div>
 
     <!-- Build your program: mark this session to repeat every week -->
@@ -2552,6 +2579,21 @@
   .int-pill.sel[data-int="moderate"] { background: var(--int-moderate); color: #fff; border-color: var(--int-moderate); }
   .int-pill.sel[data-int="hard"]     { background: var(--int-hard);     color: #fff; border-color: var(--int-hard); }
 
+  /* Session type pills — Training / Practice / Game. Brand tones: ink, burgundy, gold. */
+  .type-pill.sel[data-type="training"] { background: var(--ink);      color: #fff; border-color: var(--ink); }
+  .type-pill.sel[data-type="practice"] { background: var(--burgundy); color: #fff; border-color: var(--burgundy); }
+  .type-pill.sel[data-type="game"]     { background: var(--gold);     color: var(--burgundy-dark); border-color: var(--gold); }
+
+  /* Small type badge shown beside a session name in the week/program lists */
+  .type-tag {
+    display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .04em; padding: 1px 6px; border-radius: 6px;
+    margin-left: 6px; vertical-align: middle;
+  }
+  .type-tag i { font-size: 11px; }
+  .type-tag.type-practice { background: rgba(135,75,70,.13); color: var(--burgundy); }
+  .type-tag.type-game     { background: var(--gold); color: var(--burgundy-dark); }
+
   /* "Log it now" reveal — quiet, only shown for a plan on today/past */
   .log-now-btn {
     width: 100%; margin: 2px 0 18px; padding: 12px; border-radius: 10px;
@@ -3108,6 +3150,7 @@
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
+  let _sheetOpenSig = null;  // plan signature captured when the sheet opened (change detection)
   let workoutEditing = false;
   // LAB: per-session "Last week: …" reference strings (Copy last week). Display-only,
   // keyed by session id; never sent to the server, gone on reload.
@@ -3682,9 +3725,10 @@
     if(todays.length){
       const s = todays[0];
       const extra = todays.length>1 ? ' · +'+(todays.length-1)+' more today' : '';
-      titleHTML = esc(s.name);
+      titleHTML = esc(s.name)+typeTag(s);
+      const noun = s.type==='game' ? 'game' : (s.type==='practice' ? 'practice' : 'session');
       subHTML = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+extra;
-      cta = '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?'Edit today’s log':'Log today’s session')+'</button>';
+      cta = '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?('Edit today’s '+noun):('Log today’s '+noun))+'</button>';
     } else {
       titleHTML = 'A <em>rest</em> day.';
       subHTML = 'Nothing planned — recovery counts too.';
@@ -3750,16 +3794,25 @@
     '</div>';
   }
 
+  // Small badge marking a practice or a game (training is the unmarked default).
+  function typeTag(s){
+    const t = s.type || 'training';
+    if(t==='game')     return ' <span class="type-tag type-game"><i class="ti ti-trophy" aria-hidden="true"></i> Game</span>';
+    if(t==='practice') return ' <span class="type-tag type-practice"><i class="ti ti-users" aria-hidden="true"></i> Practice</span>';
+    return '';
+  }
+
   // One clean row per session (mockup-style: day · dot · name + detail).
   function planRow(s, dayLabelHTML, iso, isToday){
     let statusCls = '';
     if(s.status==='done' || s.status==='modified') statusCls = ' is-done';
     else if(s.status==='missed') statusCls = ' is-missed';
     const dotCls = s.intensity ? ' '+s.intensity : '';
+    const resultBit = (s.type==='game' && s.result) ? ' · '+esc(s.result) : '';
     let meta;
     if(s.status==='missed') meta = 'Missed' + (s.note? ' · '+esc(s.note) : '');
-    else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au';
-    else meta = esc(s.sport)+' · '+(s.plannedDuration||0)+'min planned';
+    else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au'+resultBit;
+    else meta = esc(s.sport)+' · '+(s.plannedDuration||0)+'min planned'+resultBit;
     const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
     // LAB: read-only "Last week: …" reference on a session carried forward via Copy last week.
     const ref = lastWeekRefs[s.id];
@@ -3769,7 +3822,7 @@
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
-        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+pb+'</div><div class="plan-detail">'+meta+'</div>'+refLine+'</div>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+typeTag(s)+pb+'</div><div class="plan-detail">'+meta+'</div>'+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
       '</div>'+
       '<button class="swipe-delete" aria-label="Remove session" onclick="deleteSessionSwipe(event,\''+s.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i> Delete</button>'+
@@ -3847,7 +3900,7 @@
     return '<div class="'+cls+'" onclick="openSession(\''+s.id+'\')">'+
       '<span class="session-dot'+dotCls+'" aria-hidden="true"></span>'+
       '<div class="session-row-content">'+
-        '<p class="session-name">'+esc(s.name)+pb+'</p>'+
+        '<p class="session-name">'+esc(s.name)+typeTag(s)+pb+'</p>'+
         '<p class="session-meta">'+meta+'</p>'+
       '</div>'+
       '<i class="ti ti-chevron-right session-action-hint" aria-hidden="true"></i></div>';
@@ -3925,6 +3978,8 @@
     document.getElementById('planSport').value = s.sport || '';
     fillSportOptions();
     pickIntensity(s.intensity || '');       // intensity is a pill picker now
+    pickType(s.type || 'training');          // Training / Practice / Game (also sets section visibility)
+    document.getElementById('planResult').value = s.result || '';
     document.getElementById('planDate').value = s.date || isoToday();
     document.getElementById('planDuration').value = s.plannedDuration != null ? s.plannedDuration : '';
     // New session → PLAN mode (short, no logging fields). Existing session →
@@ -3937,6 +3992,10 @@
     document.getElementById('planToggle').style.display = 'none';
     // Repeat-weekly reflects whether this session is already on the program.
     document.getElementById('repeatToggle').classList.toggle('on', sessionInTemplate(s));
+    // Snapshot the plan as it opens — so on save we can tell whether the student
+    // actually changed a repeating part of it (vs just logged actuals). Workout
+    // edits mutate `editing` in place, so we must capture this now, not at save.
+    _sheetOpenSig = structuralSig(s);
     workoutEditing = false;
     if(!s._checked || s._checked.length !== (s.workout||[]).length){ s._checked = (s.workout||[]).map((_,i)=> (s._checked && s._checked[i]) || false); }
     renderWorkout(s.workout || []);
@@ -3988,6 +4047,28 @@
   }
   function toggleRepeat(){ document.getElementById('repeatToggle').classList.toggle('on'); }
   window.toggleRepeat = toggleRepeat;
+
+  // Session type: Training (default) / Team practice / Game. Practices and games
+  // aren't a list of exercises — they just capture time + effort — so choosing one
+  // hides the workout builder. Games add a Result field and don't repeat weekly.
+  function pickType(v){
+    document.querySelectorAll('#typePills .type-pill').forEach(p => p.classList.toggle('sel', p.dataset.type===v));
+    applyTypeUI(v);
+  }
+  window.pickType = pickType;
+  function selectedType(){
+    const p = document.querySelector('#typePills .type-pill.sel');
+    return p ? p.dataset.type : 'training';
+  }
+  function applyTypeUI(type){
+    const isTraining = (type === 'training');
+    const ws = document.getElementById('workoutSection'); if(ws) ws.style.display = isTraining ? '' : 'none';
+    const rs = document.getElementById('resultSection');  if(rs) rs.style.display = (type === 'game') ? '' : 'none';
+    // A game is a one-off fixture, not a repeating weekly slot.
+    const rep = document.getElementById('repeatSection');
+    if(type === 'game'){ if(rep) rep.style.display = 'none'; const t=document.getElementById('repeatToggle'); if(t) t.classList.remove('on'); }
+    else if(rep){ rep.style.display = ''; }
+  }
 
   // LAB: A session on TODAY or a PAST day can capture its actuals. A FUTURE
   // session, or a NEW session still being planned, hides the logging fields so
@@ -4590,7 +4671,7 @@
   function weekHasSessions(){ return (state.week.sessions||[]).length > 0; }
   function hasProgram(){ return templateSessions().length > 0; }
   function buildWeekSession(t, ws, stamp, idx){
-    return { id:'tmp_ap_'+stamp+'_'+idx, date: addDays(ws, t.dow),
+    return { id:'tmp_ap_'+stamp+'_'+idx, date: addDays(ws, t.dow), type: t.type||'training', result:'',
       sport: t.sport||'', name: t.name||'Session', intensity: t.intensity||'',
       plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null), rpe:null, duration:null, load:null,
       status:'planned', isPB:false, workout:(t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
@@ -4720,9 +4801,12 @@
     const isFuture = sessionDate > isoToday();
     const logged = !isFuture && rpe != null && duration != null;
     const isNew = !editing.id;
+    const sType = selectedType();
     const session = {
       id: editing.id || ('tmp_' + Date.now()),
       date: sessionDate,
+      type: sType,
+      result: (sType === 'game') ? val('planResult').trim() : '',
       sport: val('planSport').trim(),
       name: name,
       intensity: selectedIntensity(),
@@ -4740,18 +4824,32 @@
       target: val('planTarget').trim(),
       readiness: isFuture ? null : collectReadiness()
     };
-    // "Repeat every week" writes this session into the owned program.
+    // "Part of my program" governs the repeating template. Three cases:
+    //  • toggle OFF, was in program → remove it from the program.
+    //  • toggle ON, not yet in program → add it straight in.
+    //  • toggle ON, already in program → only the PLAN can differ (exercises,
+    //    target, duration, intensity). If it does, we ASK before changing the
+    //    program — logged weights/reps are actuals and never touch the plan.
     const repeat = document.getElementById('repeatToggle').classList.contains('on');
-    let tplChanged = false;
-    if(repeat){ upsertTemplateSession(session); tplChanged = true; }
-    else if(sessionInTemplate(session)){ tplChanged = removeTemplateSession(dowOf(session.date), session.name); }
+    const wasInProgram = sessionInTemplate(session);
+    let tplChanged = false, askProgram = false, programMsg = '';
+    if(!repeat){
+      if(wasInProgram){ tplChanged = removeTemplateSession(dowOf(session.date), session.name); programMsg = ' · removed from your program'; }
+    } else if(!wasInProgram){
+      upsertTemplateSession(session); tplChanged = true; programMsg = ' · added to your program';
+    } else {
+      // Already in the program AND still marked repeat. Ask only if the student
+      // actually changed a repeating part of the plan during THIS edit — logging
+      // weights/reps/RPE leaves the signature untouched, so it never nags.
+      if(structuralSig(session) !== _sheetOpenSig){ _pendingProgramEdit = session; askProgram = true; }
+    }
     // Optimistic: update the week and close now; persist in the background.
     upsertLocalSession(session);
     closeSheet();
     renderWeek(); renderBlockBar();
-    showToast(repeat ? (logged ? 'Logged · added to your program' : 'Planned · added to your program')
-                     : (logged ? 'Session logged' : 'Session planned'), 'success');
+    showToast((logged ? 'Session logged' : 'Session planned') + programMsg, 'success');
     if(tplChanged) persistTemplate();
+    if(askProgram) openProgramEditChoice(session.name);
     try {
       const res = await apiData({ action:'saveSession', session: Object.assign({}, session, { id: isNew ? null : session.id }) });
       if(!res.success) throw new Error(res.error || 'save failed');
@@ -4828,7 +4926,7 @@
     if(!state.weeklyTemplate) state.weeklyTemplate = emptyTemplate();
     if(!state.weeklyTemplate.sessions) state.weeklyTemplate.sessions = [];
     const dow = dowOf(s.date);
-    const entry = { dow: dow, name: s.name, sport: s.sport||'', intensity: s.intensity||'',
+    const entry = { dow: dow, name: s.name, type: s.type||'training', sport: s.sport||'', intensity: s.intensity||'',
       plannedDuration: (s.plannedDuration!=null?s.plannedDuration:null), target: s.target||'',
       workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)) };
     const arr = state.weeklyTemplate.sessions;
@@ -4846,6 +4944,39 @@
     const dow = dowOf(s.date);
     return templateSessions().some(x => x.dow===dow && (x.name||'').toLowerCase()===(s.name||'').toLowerCase());
   }
+  // Signature of the *plan* only — the parts that repeat. Deliberately excludes
+  // logged actuals (rpe/duration/load/weights), so logging never looks like a
+  // program change. Works on both a week session and a template entry (same fields).
+  function structuralSig(o){
+    return JSON.stringify({
+      type: o.type||'training',
+      sport: o.sport||'', name: o.name||'', intensity: o.intensity||'',
+      plannedDuration: (o.plannedDuration!=null ? o.plannedDuration : null),
+      target: o.target||'',
+      workout: (o.workout||[]).map(x => typeof x==='string' ? x : ((x && (x.id||x.name))||''))
+    });
+  }
+  // "Update your program too?" — asked when a repeating session's plan is edited.
+  let _pendingProgramEdit = null;
+  function openProgramEditChoice(name){
+    document.getElementById('programEditName').textContent = name || 'this session';
+    document.getElementById('programEditChoice').hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  function closeProgramEditChoice(){
+    document.getElementById('programEditChoice').hidden = true;
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+  }
+  function confirmProgramEdit(){
+    if(_pendingProgramEdit){ upsertTemplateSession(_pendingProgramEdit); persistTemplate(); refreshProgramSheet(); showToast('Program updated — this repeats every week', 'success'); }
+    _pendingProgramEdit = null; closeProgramEditChoice();
+  }
+  function dismissProgramEdit(){
+    _pendingProgramEdit = null; closeProgramEditChoice();
+    showToast('Kept on this week only — your program is unchanged', '');
+  }
+  window.confirmProgramEdit = confirmProgramEdit;
+  window.dismissProgramEdit = dismissProgramEdit;
 
   // Drop the program's sessions onto the visible week. Days that already have a
   // session are left untouched — the student's week edits always win.
@@ -4859,7 +4990,7 @@
     sessions.forEach((t, idx) => {
       const date = addDays(ws, t.dow);
       if(busy[date]) return;
-      const session = { id:'tmp_tpl_'+stamp+'_'+idx, date: date, sport: t.sport||'', name: t.name||'',
+      const session = { id:'tmp_tpl_'+stamp+'_'+idx, date: date, type: t.type||'training', result:'', sport: t.sport||'', name: t.name||'',
         intensity: t.intensity||'', plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null),
         rpe:null, duration:null, load:null, status:'planned', isPB:false,
         workout: (t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
@@ -5313,8 +5444,8 @@
           ? day.map(o => { const n = (o.t.workout||[]).length;
               return '<div class="myprog-item clickable" onclick="openProgramDay('+o.i+')">'+
               '<span class="myprog-dot'+(o.t.intensity?' '+esc(o.t.intensity):'')+'" aria-hidden="true"></span>'+
-              '<span class="myprog-item-main"><span class="myprog-item-name">'+esc(o.t.name)+'</span>'+
-                '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+(n?' · '+n+' exercise'+(n===1?'':'s'):'')+'</span></span>'+
+              '<span class="myprog-item-main"><span class="myprog-item-name">'+esc(o.t.name)+typeTag(o.t)+'</span>'+
+                '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+((o.t.type==='training'||!o.t.type)&&n?' · '+n+' exercise'+(n===1?'':'s'):'')+'</span></span>'+
               '<i class="ti ti-chevron-right myprog-go" aria-hidden="true"></i>'+
               '<button class="myprog-remove" aria-label="Remove from program" onclick="event.stopPropagation(); removeFromProgramAt('+o.i+')"><i class="ti ti-x" aria-hidden="true"></i></button>'+
             '</div>'; }).join('')
@@ -5365,21 +5496,33 @@
   function autoRepeatOn(){
     return !!(state.weeklyTemplate && state.weeklyTemplate.autoRepeat !== false && templateSessions().length);
   }
-  // Fill the *visible* week from the template if it's completely empty. Silent,
-  // and never overwrites a week that already has any session. Returns true if it filled.
+  // Weeks we've already auto-filled once, remembered per device. This lets a
+  // student delete a program day from a future week and have it *stay* gone —
+  // auto-repeat tops a week up a single time, then leaves the student in control.
+  function autoFillKey(){ return 'aaPortalAutoFilled:' + ((currentUser && currentUser.email) || 'anon'); }
+  function autoFilledWeeks(){ try { return JSON.parse(localStorage.getItem(autoFillKey())) || {}; } catch(e){ return {}; } }
+  function weekWasAutoFilled(ws){ return !!autoFilledWeeks()[ws]; }
+  function markWeekAutoFilled(ws){ try { const m = autoFilledWeeks(); m[ws] = 1; localStorage.setItem(autoFillKey(), JSON.stringify(m)); } catch(e){} }
+  // Silently carry the owned program into the visible week. Fills only the program
+  // days that are still empty — a student's own sessions and edits always win — and
+  // fills any given week just once. Never backfills a week that has already started,
+  // so browsing back through history stays clean. Returns true if it added anything.
   async function maybeAutoFillWeek(){
     if(!autoRepeatOn()) return false;
-    if((state.week.sessions||[]).length) return false;
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    if(ws < fmtISO(mondayOf(new Date()))) return false;   // don't backfill past weeks
+    if(weekWasAutoFilled(ws)) return false;               // only top a week up once
+    const busy = {}; (state.week.sessions||[]).forEach(s => { busy[s.date] = true; });
     const stamp = Date.now();
-    const created = templateSessions().map((t, idx) => ({
-      id:'tmp_auto_'+stamp+'_'+idx, date: addDays(ws, t.dow), sport: t.sport||'', name: t.name||'',
-      intensity: t.intensity||'', plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null),
-      rpe:null, duration:null, load:null, status:'planned', isPB:false,
-      workout: (t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
-      _checked:[], note:'', noticed:'', blocker:'', target: t.target||'', readiness:null }));
+    const created = [];
+    templateSessions().forEach((t, idx) => {
+      const date = addDays(ws, t.dow);
+      if(busy[date]) return;                              // day already has a session — leave it
+      created.push(buildWeekSession(t, ws, stamp, idx));
+    });
+    markWeekAutoFilled(ws);
     if(!created.length) return false;
-    state.week.sessions = created.slice();
+    state.week.sessions = (state.week.sessions||[]).concat(created);
     for(const s of created){
       try { const r = await apiData({ action:'saveSession', session: Object.assign({}, s, { id:null }) });
         if(r.success && r.id){ s.id = r.id; } } catch(e){ /* local copy stands; syncs later */ }
@@ -5392,6 +5535,9 @@
     state.weeklyTemplate.autoRepeat = !autoRepeatOn();
     refreshProgramSheet();
     if(state.weeklyTemplate.autoRepeat){
+      // An explicit toggle is a clear intent — let it top up the visible week
+      // even if auto-fill had already run there once.
+      try { const m = autoFilledWeeks(); delete m[state.week.weekStart || fmtISO(mondayOf(new Date()))]; localStorage.setItem(autoFillKey(), JSON.stringify(m)); } catch(e){}
       const filled = await maybeAutoFillWeek();
       if(filled){ if(activeTab==='week'){ renderWeek(); renderBlockBar(); } showToast('Auto-repeat on — this week filled from your program', 'success'); }
       else showToast('Auto-repeat on — new empty weeks will fill from your program', 'success');
