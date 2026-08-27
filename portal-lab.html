@@ -1470,6 +1470,7 @@
       <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
       <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
       <button class="tab" data-tab="pbs" onclick="switchTab('pbs')">PBs</button>
+      <button class="tab" data-tab="age" onclick="switchTab('age')">Training Age</button>
     </div>
   </div>
 </div>
@@ -1499,6 +1500,7 @@
 
 <!-- ===== PBS TAB ===== -->
 <div class="tab-view" id="view-pbs"></div>
+<div class="tab-view" id="view-age"></div>
 
 </div><!-- /.content -->
 </div><!-- /#portal -->
@@ -3287,8 +3289,9 @@
       state.load = data.load || { weeks: [], summary: {} };
       renderNav();
       await maybeAutoFillWeek();   // carry the owned program into an empty current week
-      // Student launch: the Year is home. New students get the walkthrough.
-      switchTab(LAUNCH_MODE ? 'year' : (hasYear() ? 'week' : 'year'));
+      // Home is My Program (the day-to-day tab). New students (no year yet) land on
+      // Year and get the walkthrough to set their vision first.
+      switchTab(hasYear() ? 'week' : 'year');
       if(!hasYear()) openWalkthrough();
       setLoading(false);
     } catch(e){
@@ -3321,7 +3324,7 @@
     setLoading(false);
     const pill = document.getElementById('demoPill'); if(pill) pill.hidden = false;
     renderNav();
-    switchTab(LAUNCH_MODE ? 'year' : 'week');
+    switchTab('week');
   }
 
   function buildDemoState(){
@@ -3502,7 +3505,8 @@
     week: { icon:'ti-barbell',   title:'Your training programs', line:'Build a full training week, swap exercises to match your gear, and let it repeat. Nearly ready.' },
     load: { icon:'ti-activity',  title:'Training load',          line:'See how hard you’re training week to week — and whether it’s too much, too little, or just right.' },
     book: { icon:'ti-calendar-event', title:'Book your sessions', line:'Reserve your spot in Athlete Academy sessions, straight from your phone.' },
-    pbs:  { icon:'ti-trophy',    title:'Personal bests',         line:'Track every PB and watch your numbers climb across the year.' }
+    pbs:  { icon:'ti-trophy',    title:'Personal bests',         line:'Track every PB and watch your numbers climb across the year.' },
+    age:  { icon:'ti-radar',     title:'My Training Age',        line:'Your athletic development across psychology, physiology and skills — one score that grows as you do. Coming soon.' }
   };
   function renderTeaser(tab){
     const c = TEASER_COPY[tab] || { icon:'ti-lock', title:'Coming soon', line:'Something good is on the way.' };
