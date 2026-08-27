@@ -2234,6 +2234,7 @@ function handleGenerateProgram(spec) {
       + '- Use CANONICAL exercise names so they map cleanly, drawing from: Back Squat, Front Squat, Goblet Squat, Deadlift, Romanian Deadlift, Hip Thrust, Split Squat, Walking Lunge, Bench Press, Overhead Press, Push-Up, Dumbbell Press, Pull-Up, Chin-Up, Barbell Row, Dumbbell Row, Kettlebell Swing, Box Jump, Broad Jump, Med-Ball Slam, Med-Ball Throw, Sprint, Acceleration Run, Tempo Run, Interval Run, Row Intervals, Bike Intervals, Nordic Curl, Plank, Pallof Press, Farmer Carry, Hanging Leg Raise.\n'
       + '- Give simple, realistic set/rep detail for the goal and age (Strength ~4x5, Power ~4x3, Foundation ~3x10-12, Endurance = intervals/time). Do not prescribe 1-rep maxes.\n'
       + '- If the athlete has written a description of what they want, treat it as the MOST important input — honour their focus, injuries and constraints even if a structured field seems to say otherwise.\n'
+      + '- Team commitments: dow uses 0=Mon,1=Tue,2=Wed,3=Thu,4=Fri,5=Sat,6=Sun. NEVER put a training day on the game day. Prefer NOT to add training on team-practice days (those are already covered) unless days/week can\'t otherwise be met. Keep the day BEFORE the game easy — never a hard session the day before a game. The game itself is that week\'s key hard effort, so don\'t also schedule a second hard day right next to it.\n'
       + '- Return ONLY the JSON object.';
 
     var desc = spec.notes ? String(spec.notes).slice(0, 600).trim() : '';
@@ -2246,6 +2247,12 @@ function handleGenerateProgram(spec) {
       + '- Session length: ' + (spec.minutes || 45) + ' minutes\n'
       + '- Equipment: ' + (spec.equipment || 'full gym') + '\n'
       + '- Sport: ' + (spec.sport || 'general athletic') + '\n';
+    if (spec.practiceDays && spec.practiceDays.length) {
+      userMessage += '- Already trains with the team on: ' + spec.practiceDays.join(', ') + ' (avoid adding training on these days)\n';
+    }
+    if (spec.gameDay) {
+      userMessage += '- Game day: ' + spec.gameDay + ' (NO training this day; keep the day before easy; the game is this week\'s key hard effort)\n';
+    }
 
     var payload = {
       model: 'claude-haiku-4-5-20251001',

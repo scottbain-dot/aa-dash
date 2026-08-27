@@ -1565,6 +1565,7 @@
         <button type="button" class="int-pill" data-int="moderate" onclick="pickIntensity('moderate')">Moderate</button>
         <button type="button" class="int-pill" data-int="hard" onclick="pickIntensity('hard')">Hard</button>
       </div>
+      <p class="pregame-hint" id="preGameHint" style="display:none;"><i class="ti ti-alert-triangle" aria-hidden="true"></i> <span id="preGameHintText"></span></p>
 
       <div class="form-row" style="margin-top:12px;">
         <div style="flex:1; min-width:0;">
@@ -2099,6 +2100,32 @@
         </div>
       </div>
       <div class="ai-guide-group">
+        <p class="ai-guide-label">Team practice days · optional</p>
+        <div class="ai-chips" data-k="practiceDays" data-multi="1">
+          <button type="button" class="ai-chip" data-val="Mon" onclick="aiPick(this)">Mon</button>
+          <button type="button" class="ai-chip" data-val="Tue" onclick="aiPick(this)">Tue</button>
+          <button type="button" class="ai-chip" data-val="Wed" onclick="aiPick(this)">Wed</button>
+          <button type="button" class="ai-chip" data-val="Thu" onclick="aiPick(this)">Thu</button>
+          <button type="button" class="ai-chip" data-val="Fri" onclick="aiPick(this)">Fri</button>
+          <button type="button" class="ai-chip" data-val="Sat" onclick="aiPick(this)">Sat</button>
+          <button type="button" class="ai-chip" data-val="Sun" onclick="aiPick(this)">Sun</button>
+        </div>
+        <p class="ai-guide-hint">Days you already train with your team — I'll plan around them.</p>
+      </div>
+      <div class="ai-guide-group">
+        <p class="ai-guide-label">Game day · optional</p>
+        <div class="ai-chips" data-k="gameDay">
+          <button type="button" class="ai-chip" data-val="Mon" onclick="aiPick(this)">Mon</button>
+          <button type="button" class="ai-chip" data-val="Tue" onclick="aiPick(this)">Tue</button>
+          <button type="button" class="ai-chip" data-val="Wed" onclick="aiPick(this)">Wed</button>
+          <button type="button" class="ai-chip" data-val="Thu" onclick="aiPick(this)">Thu</button>
+          <button type="button" class="ai-chip" data-val="Fri" onclick="aiPick(this)">Fri</button>
+          <button type="button" class="ai-chip" data-val="Sat" onclick="aiPick(this)">Sat</button>
+          <button type="button" class="ai-chip" data-val="Sun" onclick="aiPick(this)">Sun</button>
+        </div>
+        <p class="ai-guide-hint">I'll keep the day before easy and won't stack a hard session on game day.</p>
+      </div>
+      <div class="ai-guide-group">
         <p class="ai-guide-label">Equipment</p>
         <div class="ai-chips" data-k="equipment" data-multi="1">
           <button type="button" class="ai-chip" data-val="full gym" onclick="aiPick(this)">Full gym</button>
@@ -2621,6 +2648,23 @@
   .type-tag i { font-size: 11px; }
   .type-tag.type-practice { background: rgba(135,75,70,.13); color: var(--burgundy); }
   .type-tag.type-game     { background: var(--gold); color: var(--burgundy-dark); }
+
+  /* Day-before-a-game nudge in the week list */
+  .pregame-chip {
+    display: inline-flex; align-items: center; gap: 4px; margin-top: 4px;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+    color: var(--burgundy-dark); background: rgba(212,175,55,.16);
+    border-radius: 7px; padding: 2px 8px;
+  }
+  .pregame-chip i { font-size: 12px; }
+
+  /* Day-before-a-game caution inside the session sheet */
+  .pregame-hint {
+    display: flex; align-items: flex-start; gap: 7px; margin: 10px 0 0; padding: 10px 12px;
+    border-radius: 10px; background: rgba(212,175,55,.16); border: 1px solid var(--gold);
+    font-family: 'Inter', sans-serif; font-size: 12.5px; line-height: 1.45; color: var(--burgundy-dark);
+  }
+  .pregame-hint i { margin-top: 1px; flex-shrink: 0; }
 
   /* "Log it now" reveal — quiet, only shown for a plan on today/past */
   .log-now-btn {
@@ -3852,6 +3896,15 @@
     '</div>';
   }
 
+  // "Day before a game" hint — nudges an easy day so the student arrives fresh.
+  // Forward-looking only (no retrospective noise on past days).
+  function preGameChip(iso){
+    if(iso < isoToday()) return '';
+    const g = gameNextDay(iso);
+    if(!g) return '';
+    return '<span class="pregame-chip"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Day before '+esc(g.name)+' — keep it easy</span>';
+  }
+
   // Small badge marking a practice or a game (training is the unmarked default).
   function typeTag(s){
     const t = s.type || 'training';
@@ -3880,7 +3933,7 @@
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
-        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+typeTag(s)+pb+'</div><div class="plan-detail">'+meta+'</div>'+refLine+'</div>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+typeTag(s)+pb+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
       '</div>'+
       '<button class="swipe-delete" aria-label="Remove session" onclick="deleteSessionSwipe(event,\''+s.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i> Delete</button>'+
@@ -3891,7 +3944,7 @@
       '<span class="plan-day">'+dayLabelHTML+'</span>'+
       '<span class="plan-dot is-empty" aria-hidden="true"></span>'+
       '<div class="plan-info"><div class="plan-name muted">'+(isPast?'Nothing logged':'Rest day')+'</div>'+
-        '<div class="plan-detail">'+(isPast?'No session this day':'Nothing planned — tap to add')+'</div></div>'+
+        '<div class="plan-detail">'+(isPast?'No session this day':'Nothing planned — tap to add')+'</div>'+preGameChip(iso)+'</div>'+
       '<button class="plan-add" title="Add a session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
     '</div>';
   }
@@ -4097,8 +4150,26 @@
   // Intensity pill picker (replaces the old dropdown).
   function pickIntensity(v){
     document.querySelectorAll('#intensityPills .int-pill').forEach(p => p.classList.toggle('sel', p.dataset.int===v));
+    updatePreGameHint();
   }
   window.pickIntensity = pickIntensity;
+
+  // Warn softly when a HARD session is planned the day before a game — the point
+  // is to arrive fresh. A nudge, never a block; the student stays in control.
+  function updatePreGameHint(){
+    const el = document.getElementById('preGameHint'); if(!el) return;
+    const date = (document.getElementById('planDate') && document.getElementById('planDate').value) || (editing && editing.date) || '';
+    const g = date ? gameNextDay(date) : null;
+    const hard = selectedIntensity() === 'hard';
+    const isGame = selectedType() === 'game';
+    if(g && hard && !isGame){
+      document.getElementById('preGameHintText').textContent = 'This is the day before '+g.name+'. A hard session here can leave you flat — consider keeping it easy so you arrive fresh.';
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+  window.updatePreGameHint = updatePreGameHint;
   function selectedIntensity(){
     const p = document.querySelector('#intensityPills .int-pill.sel');
     return p ? p.dataset.int : '';
@@ -4126,6 +4197,7 @@
     const rep = document.getElementById('repeatSection');
     if(type === 'game'){ if(rep) rep.style.display = 'none'; const t=document.getElementById('repeatToggle'); if(t) t.classList.remove('on'); }
     else if(rep){ rep.style.display = ''; }
+    updatePreGameHint();
   }
 
   // LAB: A session on TODAY or a PAST day can capture its actuals. A FUTURE
@@ -4149,6 +4221,7 @@
     // "Log it now" only makes sense for a plan on today or a past day.
     const ln = document.getElementById('logNowBtn');
     if(ln) ln.style.display = (sheetMode === 'plan' && !isFutureSheetDate()) ? '' : 'none';
+    updatePreGameHint();
   }
   window.applyDateAwareSheet = applyDateAwareSheet;
 
@@ -4565,6 +4638,13 @@
     const sp = (state.yearMap && state.yearMap.sports && state.yearMap.sports[0] && state.yearMap.sports[0].name)
             || (window.athlete && (athlete['Sport 1'] || athlete.Sport_1)) || '';
     const sportEl = document.getElementById('aiSport'); if(sportEl && sp) sportEl.value = sp;
+    // Prefill game day from the next fixture, so the plan already knows about it.
+    const ng = upcomingGames()[0];
+    if(ng){
+      const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][parseISO(ng.date).getDay()];
+      const chip = document.querySelector('#aiInput .ai-chips[data-k="gameDay"] .ai-chip[data-val="'+dow+'"]');
+      if(chip) chip.classList.add('sel');
+    }
     fillSportOptions();
     hideAIError();
     setAIMode('input');
@@ -4590,6 +4670,8 @@
       minutes: parseInt(get('minutes') || '45', 10),
       equipment: equip.length ? equip.join(', ') : 'full gym',
       sport: (val('aiSport') || '').trim(),
+      practiceDays: getMulti('practiceDays'),   // ['Tue','Thu'] — plan training around these
+      gameDay: get('gameDay'),                  // 'Sat' — keep the day before easy
       notes: (val('aiNotes') || '').trim()
     };
   }
@@ -4986,6 +5068,18 @@
     if(activeTab==='year') renderYear();
     if(activeTab==='week') renderWeek();
   }
+  // A quick date→game lookup, merging the season fixtures list with any game
+  // sessions actually sitting in the loaded week (covers a just-added game).
+  function gameDateMap(){
+    const m = {};
+    (state.games || []).forEach(g => { if(g && g.date) m[g.date] = g; });
+    (state.week.sessions || []).forEach(s => { if(s.type==='game' && !m[s.date]) m[s.date] = { date:s.date, name:s.name, sport:s.sport||'' }; });
+    return m;
+  }
+  function gameOnDate(iso){ return gameDateMap()[iso] || null; }
+  // The game for which `iso` is the day before (used to nudge an easy day before a match).
+  function gameNextDay(iso){ return gameOnDate(addDays(iso, 1)); }
+
   // Games still ahead of today (today included), soonest first.
   function upcomingGames(){
     const t = isoToday();
