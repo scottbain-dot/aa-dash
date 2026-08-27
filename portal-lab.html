@@ -1428,6 +1428,25 @@
   </div>
 </div>
 
+<!-- APPLY CHOICE — make a built program your repeating program, or just add to this week -->
+<div class="wt" id="applyChoice" hidden>
+  <div class="wt-card">
+    <div class="wt-stage">
+      <p class="wt-eyebrow">Your program is ready</p>
+      <h2 class="wt-title" style="margin-bottom:4px;"><em id="applyChoiceName">Your program</em></h2>
+      <p class="wt-body" id="applyChoiceSub" style="margin-top:0;">4 sessions a week</p>
+      <p class="wt-body">How do you want to use it?</p>
+      <button class="btn-primary" style="width:100%;" onclick="commitProgram()"><i class="ti ti-star" aria-hidden="true"></i> Make this my program</button>
+      <p class="apply-choice-note">Becomes your repeating week and lays onto this week. Anything you’ve already logged stays.</p>
+      <button class="btn-secondary" style="width:100%; margin-top:16px;" onclick="addBuiltToWeek()"><i class="ti ti-calendar-plus" aria-hidden="true"></i> Just add to this week</button>
+      <p class="apply-choice-note">Drops these sessions into this week only, on top of what’s already there. Your program doesn’t change.</p>
+    </div>
+    <div class="wt-footer">
+      <div class="wt-nav" style="width:100%;"><button class="wt-back" style="width:100%;" onclick="closeApplyChoice()">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
 <!-- DEMO "EXAMPLE" PILL (shown only in ?demo=1; easily removable) -->
 <div class="demo-pill" id="demoPill" hidden>Example</div>
 
@@ -1547,8 +1566,8 @@
             <i class="ti ti-repeat" aria-hidden="true"></i>
           </div>
           <div class="pb-toggle-text">
-            <strong>Repeat every week</strong>
-            <small>Adds it to your program so it comes back each week</small>
+            <strong>Part of my program</strong>
+            <small>Makes it part of your repeating week — comes back automatically</small>
           </div>
         </div>
         <div class="toggle-switch" id="repeatToggle"></div>
@@ -2625,6 +2644,12 @@
   .ai-paste > summary::-webkit-details-marker { display: none; }
   .ai-paste > summary::before { content: '＋ '; }
   .ai-paste[open] > summary::before { content: '－ '; }
+  /* Apply-choice modal notes + "save this week as my program" button */
+  .apply-choice-note { font-size: 12.5px; color: var(--ink-mute); line-height: 1.45; margin: 8px 2px 0; }
+  .week-saveprog { width: 100%; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--bg-warm); color: var(--burgundy-dark); border: 1px solid var(--line); border-radius: 12px;
+    padding: 11px 14px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .week-saveprog:hover { background: var(--line-soft); }
   .year-month.ym-suggest { opacity: 0.5; }
   .year-month.is-current { box-shadow: 0 0 0 2px var(--burgundy); }
   .ym-now {
@@ -3656,6 +3681,10 @@
     const prov = tplN
       ? '<button class="week-prov" onclick="openMyProgram()"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats from <strong>'+esc(progName||'my program')+'</strong> · Edit program <i class="ti ti-chevron-right" aria-hidden="true"></i></button>'
       : '<button class="week-prov" onclick="openMoreActions()"><i class="ti ti-clipboard-list" aria-hidden="true"></i> No program yet · Build one <i class="ti ti-chevron-right" aria-hidden="true"></i></button>';
+    // The simple "commit" action: turn this week into the repeating program.
+    const saveWeekBtn = (!emptyWeek)
+      ? '<button class="week-saveprog" onclick="saveWeekAsProgram()"><i class="ti ti-bookmark" aria-hidden="true"></i> Save this week as my program</button>'
+      : '';
     return '<div class="card">'+
       '<div class="week-head">'+
         '<p class="card-eyebrow" style="margin:0;">This week</p>'+
@@ -3664,6 +3693,7 @@
       prov+
       fillPrompt+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
+      saveWeekBtn+
       '<div class="week-actions">'+
         '<button class="card-cta" style="flex:2;" onclick="openMoreActions()"><i class="ti ti-tools" aria-hidden="true"></i> Build my program</button>'+
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
@@ -4450,16 +4480,109 @@
   }
   async function applyAIProgram(){
     if(!aiParsed) return;
-    state.weeklyTemplate = aiParsed;
-    state.planName = aiParsed.name;
-    const days = aiParsed.sessions.length;
+    const t = aiParsed;
     closeAIBuild();
-    await persistTemplate();
-    renderWeek(); renderBlockBar();
-    await fillWeekFromTemplate();
-    showToast('Program built — '+days+' day'+(days===1?'':'s')+' in My Program', 'success');
+    applyBuiltProgram(t);
   }
   window.applyAIProgram = applyAIProgram;
+
+  // ============================================================
+  // APPLYING A BUILT PROGRAM — the student chooses: make it their repeating
+  // program, or just add it to this week (in addition to what's already there).
+  // ============================================================
+  let _pendingApply = null;
+  function weekHasSessions(){ return (state.week.sessions||[]).length > 0; }
+  function hasProgram(){ return templateSessions().length > 0; }
+  function buildWeekSession(t, ws, stamp, idx){
+    return { id:'tmp_ap_'+stamp+'_'+idx, date: addDays(ws, t.dow),
+      sport: t.sport||'', name: t.name||'Session', intensity: t.intensity||'',
+      plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null), rpe:null, duration:null, load:null,
+      status:'planned', isPB:false, workout:(t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
+      _checked:[], note:'', noticed:'', blocker:'', target: t.target||'', readiness:null };
+  }
+  // Entry point. A clean slate (no week sessions AND no program) just becomes the
+  // program — no need to ask. Otherwise the student picks.
+  function applyBuiltProgram(template){
+    _pendingApply = { template: { name: template.name || 'My program', autoRepeat: true, sessions: template.sessions || [] } };
+    if(!(_pendingApply.template.sessions || []).length){ showToast('That program is empty.', ''); return; }
+    if(!weekHasSessions() && !hasProgram()){ commitProgram(); return; }
+    openApplyChoice(_pendingApply.template);
+  }
+  function openApplyChoice(t){
+    const days = (t.sessions||[]).length;
+    document.getElementById('applyChoiceName').textContent = t.name || 'Your program';
+    document.getElementById('applyChoiceSub').textContent = days+' session'+(days===1?'':'s')+' a week';
+    document.getElementById('applyChoice').hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  function closeApplyChoice(){ document.getElementById('applyChoice').hidden = true; document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : ''; }
+  window.closeApplyChoice = closeApplyChoice;
+
+  // "Make this my program" — becomes the repeating program and lays onto this week,
+  // replacing planned sessions but keeping anything already logged.
+  async function commitProgram(){
+    const t = _pendingApply && _pendingApply.template; if(!t) return;
+    closeApplyChoice();
+    state.weeklyTemplate = { name: t.name || 'My program', autoRepeat: true, sessions: t.sessions || [] };
+    state.planName = state.weeklyTemplate.name;
+    await persistTemplate();
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const logged = (state.week.sessions||[]).filter(s => isLogged(s));
+    const planned = (state.week.sessions||[]).filter(s => !isLogged(s) && s.id && !String(s.id).startsWith('tmp_'));
+    const loggedDow = {}; logged.forEach(s => { loggedDow[dowOf(s.date)] = true; });
+    const stamp = Date.now();
+    const fresh = (state.weeklyTemplate.sessions||[])
+      .filter(t2 => !loggedDow[t2.dow])
+      .map((t2, i) => buildWeekSession(t2, ws, stamp, i));
+    state.week.sessions = logged.concat(fresh);
+    renderWeek(); renderBlockBar(); refreshProgramSheet();
+    showToast('“'+state.weeklyTemplate.name+'” is now your program', 'success');
+    for(const s of planned){ try { await apiData({ action:'deleteSession', id: s.id }); } catch(e){ console.error('commit del', e); } }
+    for(const s of fresh){ try { const r = await apiData({ action:'saveSession', session: Object.assign({}, s, { id:null }) }); if(r.success && r.id) s.id = r.id; } catch(e){ console.error('commit save', e); } }
+    if(activeTab==='week') renderWeek();
+  }
+  window.commitProgram = commitProgram;
+
+  // "Just add to this week" — add the sessions IN ADDITION (even on busy days),
+  // this week only; the repeating program is left unchanged.
+  async function addBuiltToWeek(){
+    const t = _pendingApply && _pendingApply.template; if(!t) return;
+    closeApplyChoice();
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const stamp = Date.now();
+    const created = (t.sessions||[]).map((t2, i) => buildWeekSession(t2, ws, stamp, i));
+    created.forEach(upsertLocalSession);
+    renderWeek(); renderBlockBar();
+    showToast(created.length+' session'+(created.length===1?'':'s')+' added to this week', 'success');
+    for(const s of created){ try { const r = await apiData({ action:'saveSession', session: Object.assign({}, s, { id:null }) }); if(r.success && r.id) s.id = r.id; } catch(e){ console.error('addWeek', e); } }
+    if(activeTab==='week') renderWeek();
+  }
+  window.addBuiltToWeek = addBuiltToWeek;
+
+  // A. Save the CURRENT week as the repeating program — the simple "commit" path.
+  function templateFromWeek(){
+    const out = [];
+    (state.week.sessions||[]).slice()
+      .sort((a,b) => (dowOf(a.date)-dowOf(b.date)))
+      .forEach(s => out.push({
+        dow: dowOf(s.date), name: s.name || 'Session', sport: s.sport || '', intensity: s.intensity || '',
+        plannedDuration: (s.plannedDuration!=null ? s.plannedDuration : (s.duration!=null ? s.duration : null)),
+        target: s.target || '', workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x))
+      }));
+    return out;
+  }
+  async function saveWeekAsProgram(){
+    const sessions = templateFromWeek();
+    if(!sessions.length){ showToast('Add some sessions to this week first.', ''); return; }
+    if(hasProgram() && !confirm('Save this week as your program? This replaces your current repeating program.')) return;
+    const name = (state.weeklyTemplate && state.weeklyTemplate.name) || 'My program';
+    state.weeklyTemplate = { name: name, autoRepeat: true, sessions: sessions };
+    state.planName = name;
+    await persistTemplate();
+    renderWeek(); renderBlockBar(); refreshProgramSheet();
+    showToast('Saved — this week is now your program', 'success');
+  }
+  window.saveWeekAsProgram = saveWeekAsProgram;
 
   function editWorkout(){
     if(workoutEditing){
@@ -4876,35 +4999,9 @@
   async function applyPlan(id){
     const plan = PROGRAMS.find(p => p.id===id);
     if(!plan) return;
-    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
-    const hasLogged = (state.week.sessions||[]).some(s => s.status==='done' || s.status==='modified');
-    if(hasLogged && !confirm('Switching to “'+plan.name+'” replaces this week’s sessions, including ones you’ve logged. Continue?')) return;
-
-    // 1) This program becomes the owned, repeating template (with swappable slots).
-    state.weeklyTemplate = programToTemplate(plan);
-    state.planName = plan.name;
-    persistTemplate();
-
-    // 2) Replace the visible week from the template, persisting the swap.
-    const oldReal = (state.week.sessions||[]).filter(s => s.id && !String(s.id).startsWith('tmp_'));
-    const stamp = Date.now();
-    const fresh = (state.weeklyTemplate.sessions||[]).map((t, idx) => ({
-      id: 'tmp_plan_'+stamp+'_'+idx,
-      date: addDays(ws, t.dow),
-      sport: t.sport||'', name: t.name, intensity: t.intensity||'',
-      plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null), rpe:null, duration:null, load:null,
-      status:'planned', isPB:false, workout:(t.workout||[]).map(x=>Object.assign({},x)),
-      _checked:[], note:'', noticed:'', blocker:'', target: t.target||'', readiness:null
-    }));
-    state.week.sessions = fresh.slice();
     closePlan();
-    renderWeek(); renderBlockBar();
-    refreshProgramSheet();
-    showToast(plan.blank ? 'Program cleared — build your own week' : '“'+plan.name+'” is now your program', 'success');
-
-    for(const s of oldReal){ try { await apiData({ action:'deleteSession', id: s.id }); } catch(e){ console.error('applyPlan del', e); } }
-    for(const s of fresh){ try { const r = await apiData({ action:'saveSession', session: Object.assign({}, s, { id:null }) }); if(r.success && r.id){ s.id = r.id; } } catch(e){ console.error('applyPlan save', e); } }
-    if(activeTab==='week') renderWeek();
+    // Routes through the same "make my program / just add to this week" choice.
+    applyBuiltProgram(programToTemplate(plan));
   }
   window.applyPlan = applyPlan;
 
@@ -4948,8 +5045,10 @@
     // AI tools live at the top when switched on (AI_LIVE), otherwise under "coming soon".
     const aiRow = moreRow('ti-sparkles', 'Build with AI', 'Answer a few questions — we’ll build your program', 'moreAIBuild');
     const notesRow = moreRow('ti-notes', 'Log from notes', 'Paste what you did — we’ll turn it into sessions', 'moreLogFromNotes');
+    const weekN = (state.week.sessions||[]).length;
     let html =
       (AI_LIVE ? aiRow : '')+
+      (weekN ? moreRow('ti-bookmark', 'Save this week as my program', 'Make this week your repeating program', 'moreSaveWeek') : '')+
       (n ? moreRow('ti-list-check', 'Edit my program', progSub, 'moreMyProgram')
          : moreRow('ti-plus', 'Build your own', 'Start from a blank week and add days', 'moreAddDay'))+
       (n ? moreRow('ti-calendar-plus', 'Fill this week from my program', 'Adds your program’s sessions to empty days', 'moreFillWeek') : '')+
@@ -4978,6 +5077,8 @@
   function moreFillWeek(){ closeMoreActions(); fillWeekFromTemplate(); }
   function moreMyProgram(){ closeMoreActions(); openMyProgram(); }
   function moreAddDay(){ closeMoreActions(); openProgramDay(-1); }
+  function moreSaveWeek(){ closeMoreActions(); saveWeekAsProgram(); }
+  window.moreSaveWeek = moreSaveWeek;
   // AI is live (guided builder + log-from-notes). Requires ANTHROPIC_API_KEY set in
   // Apps Script Script Properties and the latest COMPLETE-APPS-SCRIPT.gs deployed.
   const AI_LIVE = true;
@@ -5058,7 +5159,7 @@
       '<div class="pb-toggle prog-auto" onclick="toggleAutoRepeat()">'+
         '<div class="pb-toggle-content">'+
           '<div class="pb-toggle-icon" style="background:var(--sage); color:var(--cream);"><i class="ti ti-repeat" aria-hidden="true"></i></div>'+
-          '<div class="pb-toggle-text"><strong>Repeat automatically each week</strong>'+
+          '<div class="pb-toggle-text"><strong>Repeat my program each week</strong>'+
             '<small>Empty weeks fill from your program. Weeks you’ve already changed are never touched.</small></div>'+
         '</div>'+
         '<div class="toggle-switch'+(auto?' on':'')+'" id="autoRepeatToggle"></div>'+
