@@ -1769,13 +1769,13 @@
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <div class="sheet-header-content">
-      <p class="sheet-eyebrow">Starting programs</p>
-      <h2 class="sheet-title">Choose a <em>program</em>.</h2>
+      <p class="sheet-eyebrow"><i class="ti ti-sparkles" aria-hidden="true"></i> Coming soon</p>
+      <h2 class="sheet-title">Ready-made <em>programs</em>.</h2>
     </div>
     <button class="sheet-close" onclick="closePlan()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
   <div class="sheet-body">
-    <p class="plan-pick-note">A starting point you make your own. It becomes your repeating week and fills this one — change any session, or turn sessions on and off, whenever you like.</p>
+    <p class="plan-pick-note">Soon you’ll pick a ready-made program built around what you choose below — then make it your own. It’s not switched on yet, but here’s what’s coming. In the meantime you can <strong>build your own</strong> from scratch.</p>
     <div class="plan-grid" id="planGrid"></div>
   </div>
 </div>
@@ -3313,7 +3313,9 @@
   // LAUNCH_MODE: student soft-launch. Only the Year is live; the rest are shown
   // as blurred "coming soon" teasers. Flip to false to unlock the full app.
   const LAUNCH_MODE = true;
-  const LIVE_TABS = { year:true };
+  // My Program (week) is now live so students can build their own program.
+  // Load/Book/PBs stay teased until they're ready.
+  const LIVE_TABS = { year:true, week:true };
   function tabGated(tab){ return LAUNCH_MODE && !LIVE_TABS[tab]; }
 
   function switchTab(tab){
@@ -4645,32 +4647,36 @@
   window.openPlanSheet = openPlanSheet;
   window.closePlan = closePlan;
 
+  // Ready-made programs aren't finalised yet, so this sheet PREVIEWS the choices
+  // that will build one (goal / sport / season / time) as tappable-but-not-yet-live
+  // chips, and offers the working "build your own" path underneath.
   function renderPlanGrid(){
     const grid = document.getElementById('planGrid');
-    // Grouped under a phase header (which carries the goal), so each card just
-    // names the sport + a sport-specific blurb — no repeated phase/goal text.
-    const SPORT_BLURB = { general:'Balanced strength for any athlete', track:'Speed, acceleration & power', rotational:'Rotational power for swim & racket sports', team:'Power, agility & change of direction' };
-    const card = p => {
-      const title = p.blank ? p.name : (p.sport || p.name);
-      const sub = p.blank ? p.goal : (SPORT_BLURB[p.sportKey] || p.goal);
-      return '<div class="plan-pick'+(state.planName===p.name?' active':'')+'" onclick="openProgramPreview(\''+p.id+'\')">'+
-        '<div class="plan-pick-name">'+esc(title)+'</div>'+
-        '<div class="plan-pick-goal">'+esc(sub)+'</div>'+
-        '<div class="plan-pick-freq">'+esc(p.freq)+'</div>'+
-        '<div class="plan-diff"><div class="plan-diff-fill" style="width:'+(p.diff||25)+'%;"></div></div>'+
+    // Prefer the student's real sports; fall back to a generic set.
+    let sports = [];
+    try { sports = ((state.yearMap && state.yearMap.sports) || []).map(s => s && s.name).filter(Boolean); } catch(e){}
+    if(!sports.length){
+      const a = window.athlete || {};
+      sports = [a['Sport 1'], a.Sport_1, a['Sport 2'], a.Sport_2, a['Sport 3'], a.Sport_3].filter(Boolean);
+    }
+    if(!sports.length) sports = ['Your sport'];
+    sports = sports.filter((v,i,arr) => arr.indexOf(v)===i);   // de-dupe
+    const chip = t => '<span class="wt-chip" style="cursor:pointer;" onclick="programChoicesToast()">'+esc(t)+'</span>';
+    const group = (label, items) => '<div class="plan-group-label">'+esc(label)+'</div>'+
+      '<div class="wt-chips" style="margin-bottom:16px;">'+items.map(chip).join('')+'</div>';
+    grid.innerHTML =
+      group('🎯 Your goal', ['💪 Strength', '⚡ Power & plyometrics', '🏃 Endurance', '🧱 Foundation / base', '🚀 Speed'])+
+      group('🏅 Your sport', sports)+
+      group('📆 Season', ['In-season — stay sharp', 'Out-of-season — build'])+
+      group('📅 Days per week', ['3 days', '4 days', '5 days'])+
+      group('⏱️ Session length', ['30 min', '45 min', '60 min'])+
+      '<div style="margin-top:8px;">'+
+        '<button class="btn-primary" style="width:100%;" onclick="closePlan(); openProgramDay(-1);"><i class="ti ti-plus" aria-hidden="true"></i> Build your own — add a day</button>'+
+        '<p class="plan-pick-note" style="margin-top:12px;">Pick-a-program from these choices is coming soon. For now, build your own week — add days, choose sessions, swap any exercise. It’s fully yours and saves automatically.</p>'+
       '</div>';
-    };
-    let html = '';
-    PHASE_KEYS.forEach(pk => {
-      const group = PROGRAMS.filter(p => p.phase===pk);
-      if(!group.length) return;
-      html += '<div class="plan-group-label">'+esc(PHASE_META[pk].title)+' <span class="plan-group-goal">'+esc(PHASE_META[pk].goal)+'</span></div>'+
-              '<div class="plan-group">'+group.map(card).join('')+'</div>';
-    });
-    const own = PROGRAMS.filter(p => p.blank);
-    if(own.length) html += '<div class="plan-group-label">Your own</div><div class="plan-group">'+own.map(card).join('')+'</div>';
-    grid.innerHTML = html;
   }
+  function programChoicesToast(){ showToast('Ready-made programs — coming soon ✨ Build your own for now', ''); }
+  window.programChoicesToast = programChoicesToast;
 
   // Picking a starting program: (1) set it as the student's owned, repeating
   // program, and (2) fill THIS week from it — persisting both (delete replaced
@@ -4746,17 +4752,18 @@
     const n = templateSessions().length;
     const progName = (state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || '';
     const progSub = n ? (n+' session'+(n===1?'':'s')+(progName?' · '+esc(progName):'')) : 'Nothing yet — start one below';
-    // Build my program — the design actions on top, week utilities below.
+    // Build my program — working tools first, "coming soon" previews grouped last.
     let html =
-      moreRow('ti-sparkles', 'Build with AI', 'Paste a plan or your current program — we’ll build it', 'moreAIBuild')+
-      moreRow('ti-refresh', 'Change program', 'Browse ready-made programs and preview before switching', 'moreSwitchProgram')+
       (n ? moreRow('ti-list-check', 'Edit my program', progSub, 'moreMyProgram')
          : moreRow('ti-plus', 'Build your own', 'Start from a blank week and add days', 'moreAddDay'))+
       (n ? moreRow('ti-calendar-plus', 'Fill this week from my program', 'Adds your program’s sessions to empty days', 'moreFillWeek') : '')+
-      '<div class="more-divider">Log &amp; add to this week</div>'+
-      moreRow('ti-sparkles', 'Log from notes', 'Paste what you did — we’ll turn it into sessions', 'moreLogFromNotes')+
+      '<div class="more-divider">Add to this week</div>'+
       moreRow('ti-bolt', 'Quick add', 'Drop in a one-off session from a template', 'moreQuickAdd')+
-      moreRow('ti-copy', 'Copy last week', 'Repeat last week’s sessions on this week', 'moreCopyWeek');
+      moreRow('ti-copy', 'Copy last week', 'Repeat last week’s sessions on this week', 'moreCopyWeek')+
+      '<div class="more-divider">Coming soon</div>'+
+      moreRow('ti-layout-grid-add', 'Ready-made programs', 'Preview the choices — goal, sport &amp; season', 'moreSwitchProgram')+
+      moreRow('ti-sparkles', 'Build with AI', 'Paste a plan or your current program — we’ll build it', 'moreAIBuild')+
+      moreRow('ti-notes', 'Log from notes', 'Paste what you did — we’ll turn it into sessions', 'moreLogFromNotes');
     document.getElementById('moreList').innerHTML = html;
     document.getElementById('more-backdrop').classList.add('open');
     document.getElementById('moreSheet').classList.add('open');
@@ -4768,7 +4775,7 @@
     document.body.style.overflow = '';
   }
   // Each tool closes the More sheet, then opens its own flow.
-  function moreLogFromNotes(){ closeMoreActions(); openQuickLog(); }
+  function moreLogFromNotes(){ closeMoreActions(); if(!AI_LIVE){ showToast('Log from notes — coming soon ✨', ''); return; } openQuickLog(); }
   function moreQuickAdd(){ closeMoreActions(); openLabTemplates(); }
   function moreCopyWeek(){ closeMoreActions(); copyLastWeek(); }
   function moreSwitchProgram(){ closeMoreActions(); openPlanSheet(); }
@@ -4841,9 +4848,9 @@
         '<div class="prog-empty-card" style="box-shadow:none; background:transparent; padding:6px 0 0;">'+
           '<div class="prog-empty-icon"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>'+
           '<p class="prog-empty-lead">You don’t have a program yet.</p>'+
-          '<p class="prog-empty-sub">Start from a ready-made program, build your own day by day, or paste one in with AI.</p>'+
-          '<button class="btn-primary prog-change-btn" onclick="closeMyProgram(); openPlanSheet();"><i class="ti ti-layout-grid-add" aria-hidden="true"></i> Choose a program</button>'+
-          '<button class="prog-add-day" style="max-width:260px; margin:12px auto 0;" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Build your own — add a day</button>'+
+          '<p class="prog-empty-sub">Build your own week day by day — add sessions, choose the focus, swap any exercise. It’s yours and saves automatically.</p>'+
+          '<button class="btn-primary prog-change-btn" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Build your own — add a day</button>'+
+          '<button class="prog-add-day" style="max-width:280px; margin:12px auto 0;" onclick="closeMyProgram(); openPlanSheet();"><i class="ti ti-layout-grid-add" aria-hidden="true"></i> See ready-made programs (coming soon)</button>'+
         '</div>';
       return;
     }
