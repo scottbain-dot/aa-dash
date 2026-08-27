@@ -4269,8 +4269,8 @@
   window.deleteProgramDay = deleteProgramDay;
 
   // ----- Add exercise from the library into the day being built -----
-  const REGION_LABEL = { lower:'Lower body', upper:'Upper body', core:'Core', plyo:'Plyometrics', throw:'Med-ball throws', speed:'Speed & agility', cond:'Conditioning' };
-  const REGION_ORDER = ['lower','upper','core','plyo','throw','speed','cond'];
+  const REGION_LABEL = { lower:'Lower body', upper:'Upper body', full:'Olympic & total-body', core:'Core', plyo:'Plyometrics', throw:'Med-ball throws', speed:'Speed & agility', cond:'Conditioning' };
+  const REGION_ORDER = ['lower','upper','full','core','plyo','throw','speed','cond'];
   function openAddEx(){
     document.getElementById('addexSearch').value = '';
     renderAddEx('');
@@ -4873,7 +4873,18 @@
     { id:'bikeIntervals',name:'Bike Intervals',           region:'cond',  pattern:'intervals',laterality:'bi', fvZone:'endurance', tier:2, equip:['bike'],           rx:'8 × 30s hard / 90s easy', cue:'Hard efforts, full breathing between' },
     { id:'rowIntervals', name:'Row Intervals',            region:'cond',  pattern:'intervals',laterality:'bi', fvZone:'endurance', tier:2, equip:['rower'],          rx:'8 × 250m / 90s rest', cue:'Strong legs, steady breathing' },
     { id:'tempoRun',    name:'Tempo Runs',                region:'cond',  pattern:'intervals',laterality:'bi', fvZone:'endurance', tier:2, equip:['track'],           rx:'6 × 200m @ tempo / walk back', cue:'Smooth and controlled, not a sprint' },
-    { id:'shuttleCond', name:'Shuttle Conditioning',      region:'cond',  pattern:'intervals',laterality:'bi', fvZone:'endurance', tier:3, equip:['cones'],           rx:'6 × 40m shuttles / 60s rest', cue:'Repeatable efforts — hold your pace' }
+    { id:'shuttleCond', name:'Shuttle Conditioning',      region:'cond',  pattern:'intervals',laterality:'bi', fvZone:'endurance', tier:3, equip:['cones'],           rx:'6 × 40m shuttles / 60s rest', cue:'Repeatable efforts — hold your pace' },
+    // ===== From the AA Master Catalogue (EXOS) · Strength & Power =====
+    { id:'slTrxSquat',  name:'Single-Leg TRX Box Squat',  region:'lower', pattern:'split',    laterality:'uni', fvZone:'strength',      tier:3, equip:['trx','box'],      rx:'6–8/leg × 3 · tempo 3-2-1', cue:'Opposite leg in front. Rings work if no TRX.', component:'Strength & Power' },
+    { id:'kbJumpSquat', name:'Kettlebell Jump Squat',     region:'lower', pattern:'squat',    laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['kettlebell'],     rx:'8 · dynamic (jump)', cue:'Squat — then jump!', component:'Strength & Power' },
+    { id:'slDeadlift',  name:'Single-Leg Deadlift (KB)',  region:'lower', pattern:'hinge',    laterality:'uni', fvZone:'foundation',    tier:2, equip:['kettlebell'],     rx:'5–6/leg', cue:'Get creative for weight', component:'Strength & Power' },
+    { id:'dropDeadlift',name:'Bar Drop Deadlift',         region:'lower', pattern:'hinge',    laterality:'bi',  fvZone:'strength',      tier:3, equip:['barbell'],        rx:'8 × 4 · tempo 2-1-2', cue:'Drop the bar — no eccentric', component:'Strength & Power' },
+    { id:'slHamCurl',   name:'Single-Leg Hamstring Curl', region:'lower', pattern:'hamstring',laterality:'uni', fvZone:'speedstrength', tier:3, equip:['bodyweight'],     rx:'8 × 4 · explosive', cue:'Explosive — curl to jump', component:'Strength & Power' },
+    { id:'buPress',     name:'Bottoms-Up Press (KB)',     region:'upper', pattern:'vpush',    laterality:'uni', fvZone:'strength',      tier:2, equip:['kettlebell'],     rx:'8 × 2–4 · tempo 1-2-3', cue:'Go light — focus on stability', component:'Strength & Power' },
+    { id:'saLatPull',   name:'Single-Arm Lat Pull-Down',  region:'upper', pattern:'vpull',    laterality:'uni', fvZone:'strength',      tier:3, equip:['cable'],          rx:'5–8 × 2–3 · tempo 1-2-3', cue:'One arm at a time', component:'Strength & Power' },
+    { id:'hangClean',   name:'Hang Clean',                region:'full',  pattern:'olympic',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['barbell'],        rx:'4–8 × 2–4 · empty / ≤30kg bar', cue:'Movement practice — add weight only once checked', component:'Strength & Power' },
+    { id:'squatClean',  name:'Full Squat Clean',          region:'full',  pattern:'olympic',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['barbell'],        rx:'4 × 3 · ≤30kg', cue:'Movement practice', component:'Strength & Power' },
+    { id:'muscleSnatch',name:'Muscle Snatch (RDL + Jump)',region:'full',  pattern:'olympic',  laterality:'bi',  fvZone:'speedstrength', tier:3, equip:['barbell'],        rx:'4 × 3 · ≤30kg', cue:'Movement practice — RDL to jump', component:'Strength & Power' }
   ];
   const EX_BY_ID = {}; EXERCISE_LIBRARY.forEach(e => { EX_BY_ID[e.id] = e; });
   function exById(id){ return EX_BY_ID[id] || null; }
