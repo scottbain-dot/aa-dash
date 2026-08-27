@@ -1449,6 +1449,21 @@
   </div>
 </div>
 
+<!-- "Update your program too?" — asked when a student edits a session that repeats -->
+<div class="wt" id="programEditChoice" hidden>
+  <div class="wt-card">
+    <div class="wt-stage">
+      <p class="wt-eyebrow">This session repeats</p>
+      <h2 class="wt-title" style="margin-bottom:4px;">You changed <em id="programEditName">this session</em></h2>
+      <p class="wt-body" style="margin-top:0;">It's part of your program. Do you want this change every week, or just this once?</p>
+      <button class="btn-primary" style="width:100%;" onclick="confirmProgramEdit()"><i class="ti ti-repeat" aria-hidden="true"></i> Update my program</button>
+      <p class="apply-choice-note">Every future week gets this version. Weeks you've already planned don't change.</p>
+      <button class="btn-secondary" style="width:100%; margin-top:16px;" onclick="dismissProgramEdit()"><i class="ti ti-calendar" aria-hidden="true"></i> Just this week</button>
+      <p class="apply-choice-note">Keeps the change on this week only. Your program stays as it was.</p>
+    </div>
+  </div>
+</div>
+
 <!-- DEMO "EXAMPLE" PILL (shown only in ?demo=1; easily removable) -->
 <div class="demo-pill" id="demoPill" hidden>Example</div>
 
@@ -3108,6 +3123,7 @@
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
+  let _sheetOpenSig = null;  // plan signature captured when the sheet opened (change detection)
   let workoutEditing = false;
   // LAB: per-session "Last week: …" reference strings (Copy last week). Display-only,
   // keyed by session id; never sent to the server, gone on reload.
@@ -3937,6 +3953,10 @@
     document.getElementById('planToggle').style.display = 'none';
     // Repeat-weekly reflects whether this session is already on the program.
     document.getElementById('repeatToggle').classList.toggle('on', sessionInTemplate(s));
+    // Snapshot the plan as it opens — so on save we can tell whether the student
+    // actually changed a repeating part of it (vs just logged actuals). Workout
+    // edits mutate `editing` in place, so we must capture this now, not at save.
+    _sheetOpenSig = structuralSig(s);
     workoutEditing = false;
     if(!s._checked || s._checked.length !== (s.workout||[]).length){ s._checked = (s.workout||[]).map((_,i)=> (s._checked && s._checked[i]) || false); }
     renderWorkout(s.workout || []);
@@ -4740,18 +4760,32 @@
       target: val('planTarget').trim(),
       readiness: isFuture ? null : collectReadiness()
     };
-    // "Repeat every week" writes this session into the owned program.
+    // "Part of my program" governs the repeating template. Three cases:
+    //  • toggle OFF, was in program → remove it from the program.
+    //  • toggle ON, not yet in program → add it straight in.
+    //  • toggle ON, already in program → only the PLAN can differ (exercises,
+    //    target, duration, intensity). If it does, we ASK before changing the
+    //    program — logged weights/reps are actuals and never touch the plan.
     const repeat = document.getElementById('repeatToggle').classList.contains('on');
-    let tplChanged = false;
-    if(repeat){ upsertTemplateSession(session); tplChanged = true; }
-    else if(sessionInTemplate(session)){ tplChanged = removeTemplateSession(dowOf(session.date), session.name); }
+    const wasInProgram = sessionInTemplate(session);
+    let tplChanged = false, askProgram = false, programMsg = '';
+    if(!repeat){
+      if(wasInProgram){ tplChanged = removeTemplateSession(dowOf(session.date), session.name); programMsg = ' · removed from your program'; }
+    } else if(!wasInProgram){
+      upsertTemplateSession(session); tplChanged = true; programMsg = ' · added to your program';
+    } else {
+      // Already in the program AND still marked repeat. Ask only if the student
+      // actually changed a repeating part of the plan during THIS edit — logging
+      // weights/reps/RPE leaves the signature untouched, so it never nags.
+      if(structuralSig(session) !== _sheetOpenSig){ _pendingProgramEdit = session; askProgram = true; }
+    }
     // Optimistic: update the week and close now; persist in the background.
     upsertLocalSession(session);
     closeSheet();
     renderWeek(); renderBlockBar();
-    showToast(repeat ? (logged ? 'Logged · added to your program' : 'Planned · added to your program')
-                     : (logged ? 'Session logged' : 'Session planned'), 'success');
+    showToast((logged ? 'Session logged' : 'Session planned') + programMsg, 'success');
     if(tplChanged) persistTemplate();
+    if(askProgram) openProgramEditChoice(session.name);
     try {
       const res = await apiData({ action:'saveSession', session: Object.assign({}, session, { id: isNew ? null : session.id }) });
       if(!res.success) throw new Error(res.error || 'save failed');
@@ -4846,6 +4880,38 @@
     const dow = dowOf(s.date);
     return templateSessions().some(x => x.dow===dow && (x.name||'').toLowerCase()===(s.name||'').toLowerCase());
   }
+  // Signature of the *plan* only — the parts that repeat. Deliberately excludes
+  // logged actuals (rpe/duration/load/weights), so logging never looks like a
+  // program change. Works on both a week session and a template entry (same fields).
+  function structuralSig(o){
+    return JSON.stringify({
+      sport: o.sport||'', name: o.name||'', intensity: o.intensity||'',
+      plannedDuration: (o.plannedDuration!=null ? o.plannedDuration : null),
+      target: o.target||'',
+      workout: (o.workout||[]).map(x => typeof x==='string' ? x : ((x && (x.id||x.name))||''))
+    });
+  }
+  // "Update your program too?" — asked when a repeating session's plan is edited.
+  let _pendingProgramEdit = null;
+  function openProgramEditChoice(name){
+    document.getElementById('programEditName').textContent = name || 'this session';
+    document.getElementById('programEditChoice').hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  function closeProgramEditChoice(){
+    document.getElementById('programEditChoice').hidden = true;
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+  }
+  function confirmProgramEdit(){
+    if(_pendingProgramEdit){ upsertTemplateSession(_pendingProgramEdit); persistTemplate(); refreshProgramSheet(); showToast('Program updated — this repeats every week', 'success'); }
+    _pendingProgramEdit = null; closeProgramEditChoice();
+  }
+  function dismissProgramEdit(){
+    _pendingProgramEdit = null; closeProgramEditChoice();
+    showToast('Kept on this week only — your program is unchanged', '');
+  }
+  window.confirmProgramEdit = confirmProgramEdit;
+  window.dismissProgramEdit = dismissProgramEdit;
 
   // Drop the program's sessions onto the visible week. Days that already have a
   // session are left untouched — the student's week edits always win.
@@ -5365,21 +5431,33 @@
   function autoRepeatOn(){
     return !!(state.weeklyTemplate && state.weeklyTemplate.autoRepeat !== false && templateSessions().length);
   }
-  // Fill the *visible* week from the template if it's completely empty. Silent,
-  // and never overwrites a week that already has any session. Returns true if it filled.
+  // Weeks we've already auto-filled once, remembered per device. This lets a
+  // student delete a program day from a future week and have it *stay* gone —
+  // auto-repeat tops a week up a single time, then leaves the student in control.
+  function autoFillKey(){ return 'aaPortalAutoFilled:' + ((currentUser && currentUser.email) || 'anon'); }
+  function autoFilledWeeks(){ try { return JSON.parse(localStorage.getItem(autoFillKey())) || {}; } catch(e){ return {}; } }
+  function weekWasAutoFilled(ws){ return !!autoFilledWeeks()[ws]; }
+  function markWeekAutoFilled(ws){ try { const m = autoFilledWeeks(); m[ws] = 1; localStorage.setItem(autoFillKey(), JSON.stringify(m)); } catch(e){} }
+  // Silently carry the owned program into the visible week. Fills only the program
+  // days that are still empty — a student's own sessions and edits always win — and
+  // fills any given week just once. Never backfills a week that has already started,
+  // so browsing back through history stays clean. Returns true if it added anything.
   async function maybeAutoFillWeek(){
     if(!autoRepeatOn()) return false;
-    if((state.week.sessions||[]).length) return false;
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    if(ws < fmtISO(mondayOf(new Date()))) return false;   // don't backfill past weeks
+    if(weekWasAutoFilled(ws)) return false;               // only top a week up once
+    const busy = {}; (state.week.sessions||[]).forEach(s => { busy[s.date] = true; });
     const stamp = Date.now();
-    const created = templateSessions().map((t, idx) => ({
-      id:'tmp_auto_'+stamp+'_'+idx, date: addDays(ws, t.dow), sport: t.sport||'', name: t.name||'',
-      intensity: t.intensity||'', plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null),
-      rpe:null, duration:null, load:null, status:'planned', isPB:false,
-      workout: (t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
-      _checked:[], note:'', noticed:'', blocker:'', target: t.target||'', readiness:null }));
+    const created = [];
+    templateSessions().forEach((t, idx) => {
+      const date = addDays(ws, t.dow);
+      if(busy[date]) return;                              // day already has a session — leave it
+      created.push(buildWeekSession(t, ws, stamp, idx));
+    });
+    markWeekAutoFilled(ws);
     if(!created.length) return false;
-    state.week.sessions = created.slice();
+    state.week.sessions = (state.week.sessions||[]).concat(created);
     for(const s of created){
       try { const r = await apiData({ action:'saveSession', session: Object.assign({}, s, { id:null }) });
         if(r.success && r.id){ s.id = r.id; } } catch(e){ /* local copy stands; syncs later */ }
@@ -5392,6 +5470,9 @@
     state.weeklyTemplate.autoRepeat = !autoRepeatOn();
     refreshProgramSheet();
     if(state.weeklyTemplate.autoRepeat){
+      // An explicit toggle is a clear intent — let it top up the visible week
+      // even if auto-fill had already run there once.
+      try { const m = autoFilledWeeks(); delete m[state.week.weekStart || fmtISO(mondayOf(new Date()))]; localStorage.setItem(autoFillKey(), JSON.stringify(m)); } catch(e){}
       const filled = await maybeAutoFillWeek();
       if(filled){ if(activeTab==='week'){ renderWeek(); renderBlockBar(); } showToast('Auto-repeat on — this week filled from your program', 'success'); }
       else showToast('Auto-repeat on — new empty weeks will fill from your program', 'success');
