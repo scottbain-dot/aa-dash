@@ -2012,7 +2012,7 @@
     <button class="sheet-close" onclick="closeLibrary()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
   <div class="sheet-body">
-    <p class="ql-help">Every exercise you can use — with a cue for each. To add one to your week, open a day and tap “Add exercise.”</p>
+    <p class="ql-help" id="libHelp">Every exercise you can use — with a cue for each. To add one to your week, open a day and tap “Add exercise.”</p>
     <input class="duration-input plan-field" id="libSearch" placeholder="Search — name, pattern or gear" oninput="renderLibrary(this.value)" style="margin:6px 0 14px;">
     <div class="more-list" id="libList"></div>
   </div>
@@ -3723,7 +3723,6 @@
       fillPrompt+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
       '<div class="week-actions">'+
-        '<button class="card-cta" style="flex:2;" onclick="openMoreActions()"><i class="ti ti-tools" aria-hidden="true"></i> Build my program</button>'+
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
       '</div>'+
     '</div>';
@@ -4334,9 +4333,26 @@
   }
 
   // Standalone, read-only browse of the whole exercise bank (reached from the hub).
+  // The browsable library is a rough list for now (rep ranges, no demos). Keep it
+  // gated until it's a proper resource with video for each movement. The underlying
+  // EXERCISE_LIBRARY still powers building + swapping — this only gates the browse.
+  const LIBRARY_LIVE = false;
+  const LIB_SOON_HTML =
+    '<div class="teaser-veil" style="position:static; padding:24px 6px;">'+
+      '<div class="teaser-badge"><i class="ti ti-sparkles" aria-hidden="true"></i> Coming soon</div>'+
+      '<div class="teaser-icon"><i class="ti ti-barbell" aria-hidden="true"></i></div>'+
+      '<h3 class="teaser-title">A proper exercise library.</h3>'+
+      '<p class="teaser-line">We’re building a real resource — a clear demo and <strong>video for every movement</strong>, plus guidance that fits your level. For now, you can still add and swap exercises inside any day of your program.</p>'+
+    '</div>';
   function openLibrary(){
-    document.getElementById('libSearch').value = '';
-    renderLibrary('');
+    if(!LIBRARY_LIVE){
+      const s = document.getElementById('libSearch'); if(s) s.style.display = 'none';
+      const h = document.getElementById('libHelp'); if(h) h.style.display = 'none';
+      document.getElementById('libList').innerHTML = LIB_SOON_HTML;
+    } else {
+      document.getElementById('libSearch').value = '';
+      renderLibrary('');
+    }
     document.getElementById('lib-backdrop').classList.add('open');
     document.getElementById('libSheet').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -5205,7 +5221,7 @@
       (n ? moreRow('ti-list-check', 'Edit my program', progSub, 'moreMyProgram')
          : moreRow('ti-plus', 'Build your own', 'Start from a blank week and add days', 'moreAddDay'))+
       (n ? moreRow('ti-calendar-plus', 'Fill this week from my program', 'Adds your program’s sessions to empty days', 'moreFillWeek') : '')+
-      moreRow('ti-books', 'Exercise library', 'Browse every exercise, with a cue for each', 'moreLibrary')+
+      moreRow('ti-books', 'Exercise library', 'Coming soon — demos &amp; video for every move', 'moreLibrary')+
       '<div class="more-divider">Add to this week</div>'+
       moreRow('ti-bolt', 'Quick add', 'Drop in a one-off session from a template', 'moreQuickAdd')+
       moreRow('ti-copy', 'Copy last week', 'Repeat last week’s sessions on this week', 'moreCopyWeek')+
