@@ -2267,6 +2267,18 @@
   .week-progress-track > span { display: block; height: 100%; background: var(--sage); border-radius: 999px; transition: width 0.3s; }
   .week-actions { display: flex; gap: 8px; margin-top: 14px; }
   .week-actions > button { justify-content: center; }
+  /* Next-game strip — soonest upcoming fixture, always visible on This Week */
+  .week-nextgame {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    margin: 10px 0 2px; padding: 10px 12px; border-radius: 12px; cursor: pointer;
+    border: 1px solid var(--gold); background: linear-gradient(0deg, rgba(212,175,55,.10), rgba(212,175,55,.10));
+    font-family: 'Inter', sans-serif; color: var(--ink); transition: background 0.12s;
+  }
+  .week-nextgame:hover { background: rgba(212,175,55,.18); }
+  .week-nextgame > .ti-trophy { color: var(--burgundy-dark); font-size: 18px; flex-shrink: 0; }
+  .week-nextgame-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .week-nextgame-txt strong { font-size: 13.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .week-nextgame-txt small { font-size: 12px; color: var(--ink-mute); }
   /* Empty-week prompt to pull in the repeating program */
   .week-fill-prompt {
     width: 100%; margin: 4px 0 6px; padding: 12px 14px; border-radius: 12px;
@@ -2326,6 +2338,22 @@
   .kd-row.kd-isst + .kd-row { border-top: 1px solid var(--line-soft); }
   .kd-past { opacity: 0.42; }
   .kd-soon-tag { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--green-dark); background: rgba(34,197,94,0.14); padding: 2px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; }
+
+  /* Season fixtures list (My games) */
+  .fx-list { display: flex; flex-direction: column; }
+  .fx-list-past { opacity: 0.6; }
+  .fx-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
+  .fx-row:last-child { border-bottom: none; }
+  .fx-row:hover { background: var(--cream); border-radius: 10px; margin: 0 -8px; padding: 10px 8px; }
+  .fx-when { flex-shrink: 0; width: 58px; display: flex; flex-direction: column; line-height: 1.15; }
+  .fx-dow { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--burgundy); }
+  .fx-day { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink); }
+  .fx-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .fx-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fx-result { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; color: var(--burgundy-dark); background: var(--gold); border-radius: 6px; padding: 1px 6px; margin-left: 6px; }
+  .fx-sub { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); }
+  .fx-go { flex-shrink: 0; color: var(--ink-mute); font-size: 15px; }
+  .fx-past-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); margin: 14px 0 4px; }
 
   /* ===== First-run WALKTHROUGH ===== */
   .wt { position: fixed; inset: 0; z-index: 200; background: rgba(38,26,24,0.55); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; }
@@ -3146,7 +3174,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, booking: null, planName: '', athleteId: '' };
+  let state = { yearMap: null, weeklyTemplate: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, games: [], booking: null, planName: '', athleteId: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -3283,6 +3311,7 @@
     if(action==='getWeek') return Promise.resolve({ success:true, weekStart: payload.weekStart,
       sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
+    if(action==='getGames') return Promise.resolve({ success:true, games: (state.games||[]) });
     if(action==='saveSession') return Promise.resolve({ success:true, id: 'demo_'+Date.now() });
     if(action==='deleteSession') return Promise.resolve({ success:true, id: payload.id });
     if(action==='saveWeeklyTemplate') return Promise.resolve({ success:true });
@@ -3376,6 +3405,7 @@
       switchTab(hasYear() ? 'week' : 'year');
       if(!hasYear()) openWalkthrough();
       setLoading(false);
+      loadGames();   // fire-and-forget: fill the season fixtures list once we're painted
     } catch(e){
       setLoading(false);
       document.getElementById('appError').classList.add('active');
@@ -3399,6 +3429,7 @@
     state.week = demo.week;
     state.pbs = demo.pbs;
     state.load = demo.load;
+    state.games = demo.games || [];
     state.booking = demo.booking;
     state.planName = (demo.weeklyTemplate && demo.weeklyTemplate.name) || 'Swimming Performance';
     document.body.classList.add('signed-in');
@@ -3525,7 +3556,14 @@
       { dow:3, name:'Easy recovery swim', sport:'Swimming', intensity:'easy', plannedDuration:40, target:'', workout:[] },
       { dow:5, name:'Long aerobic + technique', sport:'Swimming', intensity:'moderate', plannedDuration:90, target:'', workout:[] }
     ]};
-    return { athlete, yearMap, weeklyTemplate, week, pbs, load, booking };
+    // A few fixtures across the season for ?demo=1 (one recent, two upcoming).
+    const gSat = nextSaturday(isoToday());
+    const games = [
+      { id:'demo_g0', date: addDays(isoToday(), -6), name:'City Sprint Cup', sport:'Swimming', result:'2nd · 26.1s PB', rpe:9, duration:90 },
+      { id:'demo_g1', date: gSat,               name:'vs Riverside (Home)', sport:'Swimming Gala', result:'', rpe:null, duration:null },
+      { id:'demo_g2', date: addDays(gSat, 14),  name:'Regional Meet',       sport:'Swimming',      result:'', rpe:null, duration:null }
+    ];
+    return { athlete, yearMap, weeklyTemplate, week, pbs, load, booking, games };
   }
 
   function renderNav(){
@@ -3776,12 +3814,32 @@
         weekNavHTML(ws, curMon)+
       '</div>'+
       prov+
+      nextGameStrip(ws)+
       fillPrompt+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
       '<div class="week-actions">'+
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
+        '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add game</button>'+
       '</div>'+
     '</div>';
+  }
+
+  // A quiet "next game" line on This Week — the soonest upcoming fixture, with a
+  // countdown, so a match on the horizon is always visible. Tapping opens its week.
+  function nextGameStrip(ws){
+    const up = upcomingGames();
+    if(!up.length) return '';
+    const g = up[0];
+    const days = daysBetween(isoToday(), g.date);
+    const when = days<=0 ? 'today' : days===1 ? 'tomorrow' : ('in '+days+' days');
+    const inThisWeek = g.date >= ws && g.date <= addDays(ws,6);
+    const action = inThisWeek ? '' : ' onclick="drillWeek(\''+fmtISO(mondayOf(parseISO(g.date)))+'\')"';
+    return '<button class="week-nextgame"'+action+'>'+
+      '<i class="ti ti-trophy" aria-hidden="true"></i>'+
+      '<span class="week-nextgame-txt"><strong>Next game · '+esc(g.name)+'</strong>'+
+        '<small>'+dowShort(g.date)+' '+dayNum(g.date)+' '+monShort(g.date)+' · '+when+(g.sport?' · '+esc(g.sport):'')+'</small></span>'+
+      (inThisWeek ? '' : '<i class="ti ti-chevron-right" aria-hidden="true"></i>')+
+    '</button>';
   }
 
   // (c) LOAD — legible, plain-language read (shared builder, see loadVerdictHTML).
@@ -4844,7 +4902,10 @@
       if(structuralSig(session) !== _sheetOpenSig){ _pendingProgramEdit = session; askProgram = true; }
     }
     // Optimistic: update the week and close now; persist in the background.
+    const prevId = session.id;
     upsertLocalSession(session);
+    // Keep the season fixtures mirror in step with this edit.
+    if(session.type === 'game') upsertGameLocal(session); else removeGameLocal(prevId);
     closeSheet();
     renderWeek(); renderBlockBar();
     showToast((logged ? 'Session logged' : 'Session planned') + programMsg, 'success');
@@ -4853,7 +4914,7 @@
     try {
       const res = await apiData({ action:'saveSession', session: Object.assign({}, session, { id: isNew ? null : session.id }) });
       if(!res.success) throw new Error(res.error || 'save failed');
-      if(isNew && res.id){ session.id = res.id; renderWeek(); }
+      if(isNew && res.id){ session.id = res.id; renderWeek(); if(session.type === 'game'){ removeGameLocal(prevId); upsertGameLocal(session); } }
       if(session.isPB){ openPBForm({ sport: session.sport, exercise: session.name, date: session.date, sessionId: session.id }); }
     } catch(e){
       console.error('saveSession', e);
@@ -4882,6 +4943,68 @@
   function yearKey(){ return 'aaPortalYear:' + ((currentUser && currentUser.email) || 'anon'); }
   function loadYearLocal(){ try { return JSON.parse(localStorage.getItem(yearKey())); } catch(e){ return null; } }
   function saveYearLocal(){ try { localStorage.setItem(yearKey(), JSON.stringify(state.yearMap || null)); } catch(e){} }
+
+  // ---- Games / fixtures ----------------------------------------------------
+  // A game is a game-type session (persisted in Training_Sessions), but it also
+  // needs to be visible across the whole season — not just the week it lands in —
+  // so the student (and, in Stage 3, the planner) can arrange training around it.
+  // We keep a per-device mirror of known games for an instant, offline-safe list,
+  // and reconcile it with the server (getGames) whenever that call succeeds.
+  function gamesKey(){ return 'aaPortalGames:' + ((currentUser && currentUser.email) || 'anon'); }
+  function loadGamesLocal(){ try { return JSON.parse(localStorage.getItem(gamesKey())) || []; } catch(e){ return []; } }
+  function saveGamesLocal(list){ try { localStorage.setItem(gamesKey(), JSON.stringify(list || [])); } catch(e){} }
+  function gameRec(s){ return { id:s.id, date:s.date, name:s.name||'Game', sport:s.sport||'', result:s.result||'', rpe:(s.rpe!=null?s.rpe:null), duration:(s.duration!=null?s.duration:null) }; }
+  // Merge by id (server wins on conflict), keep game rows only, sort by date.
+  function mergeGames(a, b){
+    const by = {};
+    (b||[]).forEach(g => { if(g && g.id) by[g.id] = g; });
+    (a||[]).forEach(g => { if(g && g.id) by[g.id] = g; });   // a (server) overrides b (local)
+    return Object.keys(by).map(k => by[k]).sort((x,y)=> (x.date<y.date?-1:x.date>y.date?1:0));
+  }
+  function upsertGameLocal(s){
+    const list = loadGamesLocal().filter(g => g.id !== s.id);
+    list.push(gameRec(s));
+    saveGamesLocal(list);
+    state.games = mergeGames(state.games || [], list);
+  }
+  function removeGameLocal(id){
+    const list = loadGamesLocal().filter(g => g.id !== id);
+    saveGamesLocal(list);
+    state.games = (state.games || []).filter(g => g.id !== id);
+  }
+  // Best-effort server reconcile: pull all game sessions, merge with the local
+  // mirror, refresh anything on screen that shows fixtures. Never blocks the UI.
+  async function loadGames(){
+    state.games = mergeGames(state.games || [], loadGamesLocal());
+    try {
+      const r = await apiDataGet({ action:'getGames' });
+      if(r && r.success && Array.isArray(r.games)){
+        state.games = mergeGames(r.games, loadGamesLocal());
+        saveGamesLocal(state.games);   // let the server heal the device mirror
+      }
+    } catch(e){ /* offline / action not deployed yet — local mirror stands */ }
+    if(activeTab==='year') renderYear();
+    if(activeTab==='week') renderWeek();
+  }
+  // Games still ahead of today (today included), soonest first.
+  function upcomingGames(){
+    const t = isoToday();
+    return (state.games || []).filter(g => g && g.date >= t).sort((x,y)=> (x.date<y.date?-1:x.date>y.date?1:0));
+  }
+  // The next Saturday on/after a date — a sensible default fixture day.
+  function nextSaturday(fromIso){
+    let d = parseISO(fromIso || isoToday());
+    const add = (6 - d.getDay() + 7) % 7;        // 6 = Saturday (JS getDay: 0=Sun)
+    d.setDate(d.getDate() + (add===0 ? 7 : add)); // always a *future* Saturday
+    return fmtISO(d);
+  }
+  // Open the session sheet ready to add a game (type preset, sensible date).
+  function addGame(dateIso){
+    newSession(dateIso || nextSaturday(isoToday()));
+    pickType('game');
+    const el = document.getElementById('planName'); if(el){ el.placeholder = 'e.g. vs Riverside (Home)'; }
+  }
+  window.addGame = addGame;
   // Coalesced year-map save: ALWAYS sends the full current map, so rapid edits
   // (e.g. tapping several months) can't race and lose updates. Saves to the
   // device immediately, then syncs to the sheet — trailing-edge with retry, so a
@@ -5995,6 +6118,7 @@
     const nm = s ? s.name : 'this session';
     // Optimistic: pull it from the week now; persist the delete in the background.
     state.week.sessions = (state.week.sessions || []).filter(x => x.id !== id);
+    removeGameLocal(id);   // keep the fixtures mirror in step if it was a game
     renderWeek(); renderBlockBar();
     showToast('Removed “'+nm+'”', 'success');
     try {
@@ -6053,6 +6177,36 @@
     if(a.getMonth()===b.getMonth()) return dayNum(ev.start)+'–'+dayNum(ev.end)+' '+monShort(ev.end);
     return dayNum(ev.start)+' '+monShort(ev.start)+' – '+dayNum(ev.end)+' '+monShort(ev.end);
   }
+  // My games — the student's own fixtures across the whole season. Upcoming games
+  // first (with a countdown), then recent past ones. Tapping opens that week.
+  function seasonFixturesCard(){
+    const games = (state.games || []).slice().sort((a,b)=> (a.date<b.date?-1:a.date>b.date?1:0));
+    const t = isoToday();
+    const up = games.filter(g => g.date >= t);
+    const past = games.filter(g => g.date < t).reverse().slice(0, 5);   // last few
+    const rowsHTML = list => list.map(g => {
+      const days = daysBetween(t, g.date);
+      const when = g.date<t ? '' : (days<=0?'today':days===1?'tomorrow':('in '+days+'d'));
+      const wkMon = fmtISO(mondayOf(parseISO(g.date)));
+      const res = g.result ? '<span class="fx-result">'+esc(g.result)+'</span>' : '';
+      return '<div class="fx-row" onclick="drillWeek(\''+wkMon+'\')">'+
+        '<span class="fx-when"><span class="fx-dow">'+dowShort(g.date)+'</span><span class="fx-day">'+dayNum(g.date)+' '+monShort(g.date)+'</span></span>'+
+        '<span class="fx-main"><span class="fx-name">'+esc(g.name)+res+'</span>'+
+          '<span class="fx-sub">'+(g.sport?esc(g.sport):'Game')+(when?' · '+when:'')+'</span></span>'+
+        '<i class="ti ti-chevron-right fx-go" aria-hidden="true"></i>'+
+      '</div>';
+    }).join('');
+    let body = '';
+    if(up.length) body += '<div class="fx-list">'+rowsHTML(up)+'</div>';
+    else body += '<p class="card-empty-line">No games coming up. Add your fixtures so your training can work around them.</p>';
+    if(past.length) body += '<p class="fx-past-label">Recent</p><div class="fx-list fx-list-past">'+rowsHTML(past)+'</div>';
+    return '<div class="card"><p class="card-eyebrow">My games</p>'+
+      '<p class="kd-intro">Your fixtures across the season — the days your training points at.</p>'+
+      body+
+      '<button class="card-cta card-cta-ghost" style="width:100%; margin-top:12px;" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a game</button>'+
+    '</div>';
+  }
+
   function seasonKeyDatesCard(){
     const todayIso = isoToday();
     const rows = SCHOOL_EVENTS.map(ev => {
@@ -6114,6 +6268,9 @@
 
     // Testing & busy months, surfaced from the year map.
     html += yearTestingCard();
+
+    // My games — the student's own fixtures across the season.
+    html += seasonFixturesCard();
 
     // Season key dates — at the bottom: the big dates, no prescriptive advice.
     html += seasonKeyDatesCard();
