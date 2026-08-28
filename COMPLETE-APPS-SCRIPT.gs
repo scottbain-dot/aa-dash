@@ -5070,7 +5070,11 @@ function flattenEmailChips() {
   var ec = headers.indexOf('Email');
   if (ec < 0) { ui.alert('No "Email" column found.'); return; }
 
-  var a1 = sh.getRange(2, ec + 1, lastRow - 1, 1).getA1Notation();   // e.g. E2:E71
+  var emailRange = sh.getRange(2, ec + 1, lastRow - 1, 1);
+  // The Email column may carry a "People chip" column type (a data-validation rule)
+  // that rejects plain text. Clear it so the plain-text emails below are accepted.
+  emailRange.clearDataValidations();
+  var a1 = emailRange.getA1Notation();   // e.g. E2:E71
   var resp = Sheets.Spreadsheets.get(ss.getId(), {
     ranges: ['Athletes!' + a1],
     fields: 'sheets(data(rowData(values(chipRuns(chip(personProperties(email))),formattedValue))))'
@@ -5093,10 +5097,10 @@ function flattenEmailChips() {
       out.push([cell.formattedValue != null ? cell.formattedValue : '']);   // keep plain text as-is
     }
   }
-  sh.getRange(2, ec + 1, out.length, 1).setValues(out);
+  emailRange.setValues(out);
 
-  var msg = 'Found ' + chips + ' people-chip cell(s); wrote ' + fixed + ' real email(s) as plain text.';
+  var msg = 'Cleared the people-chip column type and wrote ' + fixed + ' real email(s) as plain text (from ' + chips + ' chip cell(s)).';
   if (chipNoEmail.length) msg += '\n\n⚠️ ' + chipNoEmail.length + ' chip(s) had no readable email (fix by hand): ' + chipNoEmail.slice(0, 12).join(', ');
-  msg += '\n\nNow run "Check roster for problems" to confirm.';
+  msg += '\n\nIf any cell still shows an "invalid" flag, select the Email column and Data ▸ Data validation ▸ Remove rule, then re-run. Now run "Check roster for problems" to confirm.';
   ui.alert('Email chips flattened', msg, ui.ButtonSet.OK);
 }
