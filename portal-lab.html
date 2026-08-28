@@ -1490,6 +1490,50 @@
   </div>
 </div>
 
+<!-- WORKOUT MODE — full-screen "do the workout" view -->
+<div class="wkt" id="workoutMode">
+  <div class="wkt-head">
+    <div class="wkt-head-top">
+      <div style="min-width:0;">
+        <p class="wkt-eyebrow" id="wktEyebrow">Workout</p>
+        <h2 class="wkt-title" id="wktTitle">Session</h2>
+      </div>
+      <button class="wkt-close" onclick="closeWorkout()" aria-label="Close workout"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="wkt-progress">
+      <span class="wkt-progress-track"><span id="wktBar" style="width:0%"></span></span>
+      <span class="wkt-progress-label" id="wktProgressLabel">0 / 0</span>
+    </div>
+  </div>
+  <div class="wkt-list" id="wktList"></div>
+  <div class="wkt-foot">
+    <div class="wkt-rest" id="wktRestBar">
+      <span class="wkt-rest-label">Rest</span>
+      <button class="wkt-rest-chip" onclick="wktRest(60)">60s</button>
+      <button class="wkt-rest-chip" onclick="wktRest(90)">90s</button>
+      <button class="wkt-rest-chip" onclick="wktRest(120)">2 min</button>
+    </div>
+    <button class="wkt-finish" onclick="wktFinishOpen()"><i class="ti ti-flag-checkered" aria-hidden="true"></i> Finish workout</button>
+  </div>
+  <!-- Finish: log effort + time -->
+  <div class="wkt-finish-panel" id="wktFinishPanel">
+    <div class="wkt-finish-card">
+      <h3>Nice work.</h3>
+      <p class="sub">Log how it went and it's saved to your week.</p>
+      <p class="wkt-rest-label" style="color:var(--ink-mute); letter-spacing:0.06em;">How hard was it? · 1 easy → 10 max</p>
+      <div class="wkt-rpe" id="wktRpe"></div>
+      <div class="wkt-scale"><span>easy</span><span>moderate</span><span>max</span></div>
+      <label class="field-label" for="wktDuration">How long? (minutes)</label>
+      <div class="duration-row">
+        <input type="text" inputmode="numeric" class="duration-input" id="wktDuration" placeholder="e.g. 45">
+        <span class="duration-suffix">min</span>
+      </div>
+      <button class="wkt-finish" style="margin-top:18px;" onclick="wktSaveFinish()"><i class="ti ti-check" aria-hidden="true"></i> Save workout</button>
+      <button class="wkt-cancel-ex" style="width:100%; margin-top:10px; padding:11px; border-radius:11px; background:transparent; border:1px solid var(--line); color:var(--ink-mute); font-weight:600; cursor:pointer;" onclick="wktFinishClose()">Back to exercises</button>
+    </div>
+  </div>
+</div>
+
 <!-- DEMO "EXAMPLE" PILL (shown only in ?demo=1; easily removable) -->
 <div class="demo-pill" id="demoPill" hidden>Example</div>
 
@@ -1648,6 +1692,7 @@
 
     <div class="sheet-section" id="workoutSection">
       <p class="sheet-section-label">The workout · optional</p>
+      <button class="card-cta card-cta-gold" id="sheetStartWorkout" style="width:100%; display:none; margin-bottom:14px;" onclick="startWorkoutFromSheet()"><i class="ti ti-barbell" aria-hidden="true"></i> Start workout</button>
       <ul class="workout-list" id="sheetWorkout"></ul>
       <p class="workout-progress" id="workoutProgress"></p>
       <button class="workout-edit-btn" onclick="editWorkout()">
@@ -3230,6 +3275,85 @@
   .cal-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
   .cal-legend-item { display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); font-weight: 500; }
   .cal-legend-swatch { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ===================== WORKOUT MODE ===================== */
+  .wkt { position: fixed; inset: 0; z-index: 300; background: var(--ink); color: var(--cream);
+    display: none; flex-direction: column; }
+  .wkt.open { display: flex; }
+  .wkt-head { flex: none; padding: 16px 18px 12px; border-bottom: 1px solid rgba(250,243,237,0.12); }
+  .wkt-head-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .wkt-close { width: 34px; height: 34px; border-radius: 999px; border: 1px solid rgba(250,243,237,0.24);
+    background: transparent; color: var(--cream); cursor: pointer; font-size: 16px; display: grid; place-items: center; }
+  .wkt-close:hover { border-color: var(--gold); color: var(--gold); }
+  .wkt-eyebrow { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--gold); margin: 0 0 2px; }
+  .wkt-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1; margin: 0; }
+  .wkt-progress { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .wkt-progress-track { flex: 1; height: 8px; border-radius: 999px; background: rgba(250,243,237,0.16); overflow: hidden; }
+  .wkt-progress-track > span { display: block; height: 100%; background: var(--gold); border-radius: 999px; transition: width 0.3s; }
+  .wkt-progress-label { font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(250,243,237,0.75); white-space: nowrap; }
+  .wkt-list { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
+  .wkt-card { background: rgba(250,243,237,0.06); border: 1px solid rgba(250,243,237,0.12); border-radius: 16px;
+    padding: 14px; display: flex; gap: 13px; align-items: flex-start; transition: opacity 0.2s, background 0.2s; }
+  .wkt-card.done { opacity: 0.62; background: rgba(74,157,91,0.14); border-color: rgba(74,157,91,0.4); }
+  .wkt-check { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(250,243,237,0.4);
+    background: transparent; color: transparent; cursor: pointer; display: grid; place-items: center; font-size: 20px; transition: all 0.15s; }
+  .wkt-card.done .wkt-check { background: var(--green); border-color: var(--green); color: #fff; }
+  .wkt-check:hover { border-color: var(--gold); }
+  .wkt-main { flex: 1; min-width: 0; }
+  .wkt-ex-name { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700; color: var(--cream); margin: 0 0 2px; }
+  .wkt-card.done .wkt-ex-name { text-decoration: line-through; text-decoration-color: rgba(250,243,237,0.4); }
+  .wkt-ex-rx { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--gold); margin: 0 0 4px; }
+  .wkt-ex-cue { font-family: 'Inter', sans-serif; font-size: 13px; line-height: 1.4; color: rgba(250,243,237,0.72); margin: 0; }
+  .wkt-ex-caution { display: inline-flex; align-items: center; gap: 5px; margin-top: 7px; font-size: 11px; font-weight: 600;
+    color: #ffd9a0; background: rgba(224,165,46,0.16); border-radius: 7px; padding: 3px 9px; }
+  .wkt-ex-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .wkt-ex-btn { display: inline-flex; align-items: center; gap: 5px; font-family: 'Inter', sans-serif; font-size: 12px;
+    font-weight: 600; color: var(--cream); background: rgba(250,243,237,0.08); border: 1px solid rgba(250,243,237,0.18);
+    border-radius: 8px; padding: 6px 11px; cursor: pointer; }
+  .wkt-ex-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .wkt-ex-editor { margin-top: 11px; padding-top: 11px; border-top: 1px solid rgba(250,243,237,0.12); }
+  .wkt-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .wkt-field label { display: block; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: rgba(250,243,237,0.6); margin-bottom: 3px; }
+  .wkt-field input { width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.25); border: 1px solid rgba(250,243,237,0.2);
+    border-radius: 9px; padding: 9px 10px; color: var(--cream); font-family: 'Inter', sans-serif; font-size: 14px; }
+  .wkt-field input:focus { outline: none; border-color: var(--gold); }
+  .wkt-editor-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .wkt-editor-actions button { flex: 1; border-radius: 9px; padding: 9px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid transparent; }
+  .wkt-save-ex { background: var(--gold); color: var(--burgundy-dark); }
+  .wkt-cancel-ex { background: transparent; color: rgba(250,243,237,0.7); border-color: rgba(250,243,237,0.24); }
+  /* Footer: rest timer + finish */
+  .wkt-foot { flex: none; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(250,243,237,0.12);
+    background: rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 10px; }
+  .wkt-rest { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .wkt-rest-label { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(250,243,237,0.55); }
+  .wkt-rest-chip { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--cream);
+    background: rgba(250,243,237,0.08); border: 1px solid rgba(250,243,237,0.18); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  .wkt-rest-chip:hover { border-color: var(--gold); }
+  .wkt-rest-live { display: flex; align-items: center; gap: 10px; background: rgba(212,175,55,0.14); border: 1px solid var(--gold);
+    border-radius: 12px; padding: 8px 12px; }
+  .wkt-rest-count { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; color: var(--gold); font-variant-numeric: tabular-nums; min-width: 62px; }
+  .wkt-rest-live button { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--cream);
+    background: rgba(250,243,237,0.1); border: 1px solid rgba(250,243,237,0.2); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+  .wkt-finish { width: 100%; border: none; border-radius: 13px; padding: 15px; font-family: 'Inter', sans-serif;
+    font-size: 15px; font-weight: 700; background: var(--gold); color: var(--burgundy-dark); cursor: pointer; }
+  .wkt-finish:hover { filter: brightness(0.96); }
+  /* Finish panel (RPE + duration) */
+  .wkt-finish-panel { position: absolute; inset: 0; z-index: 2; background: rgba(20,13,11,0.72); backdrop-filter: blur(3px);
+    display: none; align-items: flex-end; justify-content: center; }
+  .wkt-finish-panel.open { display: flex; }
+  @media (min-width: 560px){ .wkt-finish-panel { align-items: center; } }
+  .wkt-finish-card { width: 100%; max-width: 460px; background: var(--surface); color: var(--ink); border-radius: 22px 22px 0 0;
+    padding: 22px 20px calc(22px + env(safe-area-inset-bottom)); }
+  @media (min-width: 560px){ .wkt-finish-card { border-radius: 22px; } }
+  .wkt-finish-card h3 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; margin: 0 0 3px; }
+  .wkt-finish-card .sub { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-mute); margin: 0 0 16px; }
+  .wkt-rpe { display: flex; gap: 5px; margin: 6px 0 4px; }
+  .wkt-rpe i { flex: 1; text-align: center; border: 1px solid var(--line); border-radius: 8px; padding: 9px 0; font-style: normal;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-mute); cursor: pointer; }
+  .wkt-rpe i.sel { background: var(--burgundy); color: #fff; border-color: var(--burgundy); }
+  .wkt-scale { display: flex; justify-content: space-between; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute); margin-bottom: 14px; }
 </style>
 
 <script>
@@ -3841,7 +3965,14 @@
       titleHTML = esc(s.name)+typeTag(s);
       const noun = s.type==='game' ? 'game' : (s.type==='practice' ? 'practice' : 'session');
       subHTML = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+extra;
-      cta = '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?('Edit today’s '+noun):('Log today’s '+noun))+'</button>';
+      const hasWorkout = (s.type==='training' || !s.type) && (s.workout||[]).length;
+      if(hasWorkout){
+        // A real workout today → lead with Start workout; keep a quiet "just log it".
+        cta = '<button class="card-cta card-cta-gold" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> Start workout</button>'+
+              '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?'Edit log':'Just log it')+'</button>';
+      } else {
+        cta = '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?('Edit today’s '+noun):('Log today’s '+noun))+'</button>';
+      }
     } else {
       titleHTML = 'A <em>rest</em> day.';
       subHTML = 'Nothing planned — recovery counts too.';
@@ -4141,6 +4272,9 @@
     workoutEditing = false;
     if(!s._checked || s._checked.length !== (s.workout||[]).length){ s._checked = (s.workout||[]).map((_,i)=> (s._checked && s._checked[i]) || false); }
     renderWorkout(s.workout || []);
+    // "Start workout" — only for a saved training session that actually has exercises.
+    const startBtn = document.getElementById('sheetStartWorkout');
+    if(startBtn) startBtn.style.display = (s.id && (s.type==='training'||!s.type) && (s.workout||[]).length) ? '' : 'none';
     // RPE
     document.querySelectorAll('#rpe-row .rpe-pip').forEach(p => p.classList.toggle('selected', s.rpe!=null && +p.dataset.val===+s.rpe));
     // duration (actual)
@@ -5201,7 +5335,9 @@
       sport: o.sport||'', name: o.name||'', intensity: o.intensity||'',
       plannedDuration: (o.plannedDuration!=null ? o.plannedDuration : null),
       target: o.target||'',
-      workout: (o.workout||[]).map(x => typeof x==='string' ? x : ((x && (x.id||x.name))||''))
+      // Include each exercise's target (detail) so changing reps/sets/weight in
+      // workout mode counts as a plan change and can be pushed to the program.
+      workout: (o.workout||[]).map(x => typeof x==='string' ? x : (((x && (x.exId||x.id||x.name))||'')+'§'+((x && x.detail)||'')))
     });
   }
   // "Update your program too?" — asked when a repeating session's plan is edited.
@@ -5225,6 +5361,207 @@
   }
   window.confirmProgramEdit = confirmProgramEdit;
   window.dismissProgramEdit = dismissProgramEdit;
+
+  // ============================================================
+  // WORKOUT MODE — full-screen "do the session" view. Big cards, check off, a
+  // per-exercise weight/reps editor, a rest timer, then finish → log RPE + time.
+  // Progress is mirrored to localStorage so a locked screen never loses it.
+  // ============================================================
+  let wktSession = null, _wktOpenSig = '', wktEditing = -1, wktRpeVal = null;
+  let wktRestInterval = null, wktRestLeft = 0;
+
+  function wktKey(id){ return 'aaWorkout:' + ((currentUser && currentUser.email) || 'anon') + ':' + id; }
+  function saveWktProgress(){ try { if(wktSession) localStorage.setItem(wktKey(wktSession.id), JSON.stringify({ checked: wktSession._checked, sx: (wktSession.workout||[]).map(w => w.sx||null) })); } catch(e){} }
+  function loadWktProgress(id){ try { return JSON.parse(localStorage.getItem(wktKey(id))); } catch(e){ return null; } }
+  function clearWktProgress(id){ try { localStorage.removeItem(wktKey(id)); } catch(e){} }
+
+  // Structured sets/reps/weight/time → a readable target string ("4×5 · 40kg").
+  function wktCompose(sx){
+    if(!sx) return '';
+    const s=String(sx.sets||'').trim(), r=String(sx.reps||'').trim(), w=String(sx.weight||'').trim(), t=String(sx.time||'').trim();
+    const p=[];
+    if(s && r) p.push(s+'×'+r); else if(r) p.push(r+' reps'); else if(s) p.push(s+' sets');
+    if(t) p.push(t); if(w) p.push(w);
+    return p.join(' · ');
+  }
+  // Best-effort parse of an existing target string back into fields, to prefill.
+  function wktParse(detail){
+    const d=String(detail||''); const sx={sets:'',reps:'',weight:'',time:''};
+    const m=d.match(/(\d+)\s*[×xX]\s*(\d+)/); if(m){ sx.sets=m[1]; sx.reps=m[2]; }
+    const w=d.match(/(\d+(?:\.\d+)?\s*(?:kg|lb|lbs|%))/i); if(w) sx.weight=w[1].replace(/\s+/g,'');
+    const t=d.match(/(\d+\s*(?:s|sec|secs|min|mins)\b)/i); if(t) sx.time=t[1].replace(/\s+/g,'');
+    return sx;
+  }
+
+  function startWorkout(id){
+    const s = (state.week.sessions||[]).find(x => x.id===id);
+    if(!s){ return; }
+    wktSession = s;
+    wktSession.workout = (wktSession.workout||[]).map(w => typeof w==='string' ? { name:w, detail:'', exId:null } : Object.assign({}, w));
+    if(!wktSession._checked || wktSession._checked.length !== wktSession.workout.length)
+      wktSession._checked = wktSession.workout.map((_,i) => (wktSession._checked && wktSession._checked[i]) || false);
+    const prog = loadWktProgress(id);
+    if(prog){
+      if(Array.isArray(prog.checked)) wktSession._checked = wktSession.workout.map((_,i) => !!prog.checked[i]);
+      if(Array.isArray(prog.sx)) wktSession.workout.forEach((w,i) => { if(prog.sx[i]){ w.sx = prog.sx[i]; const d=wktCompose(w.sx); if(d) w.detail=d; } });
+    }
+    wktEditing = -1;
+    _wktOpenSig = structuralSig(wktSession);
+    document.getElementById('wktEyebrow').textContent = wktSession.sport || 'Workout';
+    document.getElementById('wktTitle').textContent = wktSession.name || 'Session';
+    wktRestStop();
+    renderWorkoutMode();
+    document.getElementById('workoutMode').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  window.startWorkout = startWorkout;
+  function startWorkoutFromSheet(){ if(editing && editing.id){ closeSheet(); startWorkout(editing.id); } }
+  window.startWorkoutFromSheet = startWorkoutFromSheet;
+
+  function closeWorkout(){
+    wktRestStop();
+    document.getElementById('wktFinishPanel').classList.remove('open');
+    document.getElementById('workoutMode').classList.remove('open');
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+    if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
+  }
+  window.closeWorkout = closeWorkout;
+
+  function renderWorkoutMode(){
+    const list = document.getElementById('wktList');
+    const w = wktSession.workout || [];
+    list.innerHTML = w.length
+      ? w.map((it,i) => wktCardHTML(it,i)).join('')
+      : '<p style="color:rgba(250,243,237,0.7); font-family:Inter,sans-serif; text-align:center; padding:34px 12px; line-height:1.5;">No exercises in this session yet. Add some in the plan, then start again.</p>';
+    wktUpdateProgress();
+  }
+  function wktUpdateProgress(){
+    const w = wktSession.workout || [];
+    const done = (wktSession._checked||[]).filter(Boolean).length;
+    const pct = w.length ? Math.round(done/w.length*100) : 0;
+    document.getElementById('wktBar').style.width = pct+'%';
+    document.getElementById('wktProgressLabel').textContent = done+' / '+w.length + ((w.length && done===w.length) ? ' · done' : '');
+  }
+  function wktField(label,id,val,ph){ return '<div class="wkt-field"><label for="'+id+'">'+label+'</label><input id="'+id+'" value="'+esc(val||'')+'" placeholder="'+(ph||'')+'" autocomplete="off"></div>'; }
+  function wktCardHTML(it, i){
+    const done = !!((wktSession._checked||[])[i]);
+    const lib = it.exId ? exById(it.exId) : null;
+    const rx = it.detail || (lib && lib.rx) || '';
+    const cue = (lib && lib.cue) || it.cue || '';
+    const caution = lib && lib.caution;
+    const editing = (wktEditing === i);
+    let editor = '';
+    if(editing){
+      const sx = it.sx || wktParse(it.detail);
+      editor = '<div class="wkt-ex-editor"><div class="wkt-fields">'+
+        wktField('Sets','wktf_sets_'+i, sx.sets, '')+
+        wktField('Reps','wktf_reps_'+i, sx.reps, '')+
+        wktField('Weight','wktf_weight_'+i, sx.weight, 'e.g. 40kg')+
+        wktField('Time','wktf_time_'+i, sx.time, 'e.g. 30s')+
+      '</div><div class="wkt-editor-actions">'+
+        '<button class="wkt-cancel-ex" onclick="wktCancelEdit()">Cancel</button>'+
+        '<button class="wkt-save-ex" onclick="wktSaveEx('+i+')">Save</button>'+
+      '</div></div>';
+    }
+    return '<div class="wkt-card'+(done?' done':'')+'">'+
+      '<button class="wkt-check" onclick="wktToggle('+i+')" aria-label="Mark done"><i class="ti ti-check" aria-hidden="true"></i></button>'+
+      '<div class="wkt-main">'+
+        '<p class="wkt-ex-name">'+esc(it.name||'Exercise')+'</p>'+
+        (rx? '<p class="wkt-ex-rx">'+esc(rx)+'</p>':'')+
+        (cue? '<p class="wkt-ex-cue">'+esc(cue)+'</p>':'')+
+        (caution? '<span class="wkt-ex-caution"><i class="ti ti-alert-triangle" aria-hidden="true"></i> '+esc(caution)+'</span>':'')+
+        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' weight / reps</button></div>')+
+        editor+
+      '</div>'+
+    '</div>';
+  }
+  function wktToggle(i){
+    if(!wktSession._checked) wktSession._checked = [];
+    const now = !wktSession._checked[i];
+    wktSession._checked[i] = now;
+    saveWktProgress();
+    if(now) wktRest(90);   // auto-rest after finishing a set (fun + useful)
+    renderWorkoutMode();
+  }
+  function wktEdit(i){ wktEditing = i; renderWorkoutMode(); }
+  function wktCancelEdit(){ wktEditing = -1; renderWorkoutMode(); }
+  function wktSaveEx(i){
+    const g = id => { const e=document.getElementById(id); return e ? e.value.trim() : ''; };
+    const sx = { sets:g('wktf_sets_'+i), reps:g('wktf_reps_'+i), weight:g('wktf_weight_'+i), time:g('wktf_time_'+i) };
+    const it = wktSession.workout[i];
+    it.sx = sx; const d = wktCompose(sx); if(d) it.detail = d;
+    wktEditing = -1; saveWktProgress(); renderWorkoutMode();
+  }
+  window.wktToggle = wktToggle; window.wktEdit = wktEdit; window.wktCancelEdit = wktCancelEdit; window.wktSaveEx = wktSaveEx;
+
+  // ---- Rest timer ----
+  function wktFmt(s){ const m=Math.floor(s/60), ss=s%60; return m+':'+String(ss).padStart(2,'0'); }
+  function wktRenderRest(){
+    const bar = document.getElementById('wktRestBar'); if(!bar) return;
+    if(wktRestInterval && wktRestLeft>0){
+      bar.innerHTML = '<div class="wkt-rest-live"><span class="wkt-rest-count">'+wktFmt(wktRestLeft)+'</span>'+
+        '<button onclick="wktRestAdd(15)">+15s</button><button onclick="wktRestStop()">Skip</button></div>';
+    } else {
+      bar.innerHTML = '<span class="wkt-rest-label">Rest</span>'+
+        '<button class="wkt-rest-chip" onclick="wktRest(60)">60s</button>'+
+        '<button class="wkt-rest-chip" onclick="wktRest(90)">90s</button>'+
+        '<button class="wkt-rest-chip" onclick="wktRest(120)">2 min</button>';
+    }
+  }
+  function wktRest(sec){
+    wktRestLeft = sec;
+    if(wktRestInterval) clearInterval(wktRestInterval);
+    wktRestInterval = setInterval(() => {
+      wktRestLeft--;
+      if(wktRestLeft<=0){ clearInterval(wktRestInterval); wktRestInterval=null; wktRestLeft=0; try { navigator.vibrate && navigator.vibrate(250); } catch(e){} }
+      wktRenderRest();
+    }, 1000);
+    wktRenderRest();
+  }
+  function wktRestStop(){ if(wktRestInterval){ clearInterval(wktRestInterval); wktRestInterval=null; } wktRestLeft=0; wktRenderRest(); }
+  function wktRestAdd(s){ if(!wktRestInterval){ wktRest(s); return; } wktRestLeft += s; wktRenderRest(); }
+  window.wktRest = wktRest; window.wktRestStop = wktRestStop; window.wktRestAdd = wktRestAdd;
+
+  // ---- Finish → log ----
+  function wktFinishOpen(){
+    let pips = '';
+    for(let v=1; v<=10; v++) pips += '<i data-v="'+v+'" onclick="wktPickRpe('+v+')">'+v+'</i>';
+    document.getElementById('wktRpe').innerHTML = pips;
+    wktRpeVal = (wktSession.rpe!=null) ? wktSession.rpe : null;
+    wktMarkRpe();
+    document.getElementById('wktDuration').value = (wktSession.duration!=null ? wktSession.duration : (wktSession.plannedDuration!=null ? wktSession.plannedDuration : ''));
+    document.getElementById('wktFinishPanel').classList.add('open');
+  }
+  function wktFinishClose(){ document.getElementById('wktFinishPanel').classList.remove('open'); }
+  function wktPickRpe(v){ wktRpeVal = v; wktMarkRpe(); }
+  function wktMarkRpe(){ document.querySelectorAll('#wktRpe i').forEach(el => el.classList.toggle('sel', +el.dataset.v === wktRpeVal)); }
+  window.wktFinishOpen = wktFinishOpen; window.wktFinishClose = wktFinishClose; window.wktPickRpe = wktPickRpe;
+
+  async function wktSaveFinish(){
+    if(!wktSession) return;
+    const rpe = wktRpeVal;
+    const duration = numOrNull(document.getElementById('wktDuration').value);
+    const logged = rpe!=null && duration!=null;
+    if(logged){ wktSession.rpe = rpe; wktSession.duration = duration; wktSession.load = rpe*duration; wktSession.status = 'done'; }
+    const changed = structuralSig(wktSession) !== _wktOpenSig;   // did any target change?
+    const inProgram = sessionInTemplate(wktSession);
+    const isNew = !wktSession.id || String(wktSession.id).startsWith('tmp_');
+    upsertLocalSession(wktSession);
+    clearWktProgress(wktSession.id);
+    wktRestStop();
+    document.getElementById('wktFinishPanel').classList.remove('open');
+    document.getElementById('workoutMode').classList.remove('open');
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+    if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
+    showToast(logged ? 'Workout logged 💪' : 'Workout saved', 'success');
+    try {
+      const res = await apiData({ action:'saveSession', session: Object.assign({}, wktSession, { id: isNew ? null : wktSession.id }) });
+      if(res.success && res.id && isNew){ wktSession.id = res.id; if(activeTab==='week') renderWeek(); }
+    } catch(e){ showToast('Saved on your device. It’ll sync when you’re back online.', ''); }
+    // A repeating session whose targets changed: offer to update the program.
+    if(inProgram && changed){ _pendingProgramEdit = wktSession; openProgramEditChoice(wktSession.name); }
+  }
+  window.wktSaveFinish = wktSaveFinish;
 
   // Drop the program's sessions onto the visible week. Days that already have a
   // session are left untouched — the student's week edits always win.
