@@ -521,7 +521,7 @@ function lookupAthleteIdByEmail(ss, email) {
   if (emailCol === -1 || idCol === -1) return null;
 
   for (var i = 1; i < data.length; i++) {
-    if (data[i][emailCol] && data[i][emailCol].toString().toLowerCase() === email.toLowerCase()) {
+    if (data[i][emailCol] && data[i][emailCol].toString().trim().toLowerCase() === String(email).trim().toLowerCase()) {
       return data[i][idCol];
     }
   }
@@ -2871,7 +2871,7 @@ function apGetAthlete(ss, email) {
   var emailCol = headers.indexOf('Email');
   if (emailCol === -1) return null;
   for (var i = 1; i < data.length; i++) {
-    if (data[i][emailCol] && String(data[i][emailCol]).toLowerCase() === String(email).toLowerCase()) {
+    if (data[i][emailCol] && String(data[i][emailCol]).trim().toLowerCase() === String(email).trim().toLowerCase()) {
       var obj = {};
       for (var c = 0; c < headers.length; c++) obj[headers[c]] = data[i][c];
       return obj;
