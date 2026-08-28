@@ -4877,6 +4877,7 @@ function onOpen() {
     .createMenu('Athlete Academy')
     .addItem('Import Grade 9 into Athletes tab', 'importGrade9ToAthletes')
     .addItem('Assign missing athlete IDs', 'assignAthleteIds')
+    .addItem('Fix email chips → plain text', 'flattenEmailChips')
     .addItem('Check roster for problems', 'checkRoster')
     .addToUi();
 }
@@ -5042,4 +5043,60 @@ function checkRoster() {
   msg.push(badEmail.length ? ('⚠️ ' + badEmail.length + ' email(s) are not @fis.edu:\n   ' + badEmail.slice(0, 12).join('\n   ')) : '✅ All emails are @fis.edu.');
   msg.push(dupEmail.length ? ('⚠️ Duplicate email(s): ' + dupEmail.slice(0, 12).join(', ')) : '✅ No duplicate emails.');
   ui.alert('Roster check', msg.join('\n\n'), ui.ButtonSet.OK);
+}
+
+// One-off repair: some Email cells are Google "people chips", so Apps Script (and
+// therefore sign-in) reads the person's DISPLAY NAME instead of their address.
+// This pulls the real email out of each chip and writes it back as plain text,
+// which never re-triggers a chip. Plain-text cells are left untouched.
+//
+// REQUIRES the advanced Google Sheets service. Turn it on once:
+//   Extensions ▸ Apps Script ▸ Services (the + by "Services") ▸ Google Sheets API ▸ Add.
+// Then run this from the Athlete Academy menu.
+function flattenEmailChips() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+  var sh = ss.getSheetByName('Athletes');
+  if (!sh) { ui.alert('No "Athletes" sheet found.'); return; }
+  if (typeof Sheets === 'undefined') {
+    ui.alert('Turn on the Sheets API first',
+      'In the Apps Script editor: click the + next to "Services", add "Google Sheets API", then run this again.',
+      ui.ButtonSet.OK);
+    return;
+  }
+  var lastRow = sh.getLastRow(), lastCol = sh.getLastColumn();
+  if (lastRow < 2) { ui.alert('No data rows.'); return; }
+  var headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  var ec = headers.indexOf('Email');
+  if (ec < 0) { ui.alert('No "Email" column found.'); return; }
+
+  var a1 = sh.getRange(2, ec + 1, lastRow - 1, 1).getA1Notation();   // e.g. E2:E71
+  var resp = Sheets.Spreadsheets.get(ss.getId(), {
+    ranges: ['Athletes!' + a1],
+    fields: 'sheets(data(rowData(values(chipRuns(chip(personProperties(email))),formattedValue))))'
+  });
+  var rows = ((((resp.sheets || [])[0] || {}).data || [])[0] || {}).rowData || [];
+
+  var out = [], chips = 0, fixed = 0, chipNoEmail = [];
+  for (var i = 0; i < lastRow - 1; i++) {
+    var cell = (((rows[i] || {}).values || [])[0]) || {};
+    var runs = cell.chipRuns || [];
+    var email = '';
+    for (var r = 0; r < runs.length; r++) {
+      var pp = runs[r].chip && runs[r].chip.personProperties;
+      if (pp && pp.email) { email = String(pp.email).trim(); break; }
+    }
+    if (runs.length) chips++;
+    if (email) { out.push([email]); fixed++; }
+    else {
+      if (runs.length) chipNoEmail.push('Row ' + (i + 2));   // a chip we couldn't read
+      out.push([cell.formattedValue != null ? cell.formattedValue : '']);   // keep plain text as-is
+    }
+  }
+  sh.getRange(2, ec + 1, out.length, 1).setValues(out);
+
+  var msg = 'Found ' + chips + ' people-chip cell(s); wrote ' + fixed + ' real email(s) as plain text.';
+  if (chipNoEmail.length) msg += '\n\n⚠️ ' + chipNoEmail.length + ' chip(s) had no readable email (fix by hand): ' + chipNoEmail.slice(0, 12).join(', ');
+  msg += '\n\nNow run "Check roster for problems" to confirm.';
+  ui.alert('Email chips flattened', msg, ui.ButtonSet.OK);
 }
