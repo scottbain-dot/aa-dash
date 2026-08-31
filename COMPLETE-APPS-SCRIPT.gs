@@ -5016,11 +5016,24 @@ function apTimeStr(v) {
   return String(v);
 }
 
+// Booking stays locked until BOOKING_LIVE is 'true' in Script Properties. While
+// locked, only athlete IDs listed in BOOKING_TESTERS (comma-separated) may book —
+// so the coach can test end-to-end before students can touch it.
+function apBookingLiveFor(athleteId) {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    if (String(props.getProperty('BOOKING_LIVE') || '').toLowerCase() === 'true') return true;
+    var testers = String(props.getProperty('BOOKING_TESTERS') || '').split(',').map(function (s) { return s.trim(); }).filter(String);
+    return testers.indexOf(String(athleteId).trim()) >= 0;
+  } catch (e) { return false; }
+}
+
 function handleBookCheckIn(ss, athleteId, checkInId) {
   try {
     athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: false, error: 'athleteId is required' };
     if (!checkInId) return { success: false, error: 'checkInId is required' };
+    if (!apBookingLiveFor(athleteId)) return { success: false, error: 'Booking isn’t open yet — it’s still being set up.' };
     var checkins = apReadObjects(apEnsureCheckIns(ss));
     var ci = null;
     for (var i = 0; i < checkins.length; i++) { if (String(checkins[i].CheckIn_ID).trim() === String(checkInId).trim()) { ci = checkins[i]; break; } }
@@ -5068,6 +5081,7 @@ function handleCancelBooking(ss, athleteId, bookingId) {
   try {
     athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: false, error: 'athleteId is required' };
+    if (!apBookingLiveFor(athleteId)) return { success: false, error: 'Booking isn’t open yet.' };
     var sheet = apEnsureBookings(ss);
     var rows = apReadObjects(sheet);
     for (var i = 0; i < rows.length; i++) {

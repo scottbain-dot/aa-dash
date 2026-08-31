@@ -3617,7 +3617,7 @@
       if(!hasYear()) openWalkthrough();
       setLoading(false);
       loadGames();   // fire-and-forget: fill the season fixtures list once we're painted
-      loadBooking(); // fire-and-forget: pull bookable check-ins
+      if(bookingUnlocked()) loadBooking(); // testers only — booking is still gated
     } catch(e){
       setLoading(false);
       document.getElementById('appError').classList.add('active');
@@ -3807,8 +3807,22 @@
   const LAUNCH_MODE = true;
   // My Program (week) is now live so students can build their own program.
   // Load/Book/PBs stay teased until they're ready.
-  const LIVE_TABS = { year:true, week:true, book:true };
-  function tabGated(tab){ return LAUNCH_MODE && !LIVE_TABS[tab]; }
+  const LIVE_TABS = { year:true, week:true };
+  // Booking is still in testing — students see the "coming soon" teaser. It's
+  // unlocked only for the demo, a ?book=1 override, and named testers. This just
+  // reveals the UI; the SERVER enforces the real lock (BOOKING_LIVE / tester
+  // athlete IDs), so a student adding ?book=1 still can't actually book.
+  const BOOKING_TESTERS = ['scott_bain@fis.edu'];
+  function bookingUnlocked(){
+    if(typeof DEMO_MODE !== 'undefined' && DEMO_MODE) return true;
+    try { if(/[?&]book=1(&|$)/.test(location.search)) return true; } catch(e){}
+    const email = ((currentUser && currentUser.email) || '').toLowerCase();
+    return BOOKING_TESTERS.indexOf(email) >= 0;
+  }
+  function tabGated(tab){
+    if(tab==='book' && bookingUnlocked()) return false;   // testers see the live tab
+    return LAUNCH_MODE && !LIVE_TABS[tab];
+  }
 
   function switchTab(tab){
     activeTab = tab;
