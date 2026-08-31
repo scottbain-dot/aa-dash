@@ -235,6 +235,9 @@ function doGet(e) {
     if (action === 'getGames') {
       return apJson(handleGetGames(ss, e.parameter.athleteId));
     }
+    if (action === 'getBookingData') {
+      return apJson(handleGetBookingData(ss, e.parameter.athleteId));
+    }
     if (action === 'getYearLoad') {
       return apJson(handleGetYearLoad(ss, e.parameter.athleteId));
     }
@@ -432,6 +435,12 @@ function doPost(e) {
     if (data.action === 'deleteSession') {
       var ssAp3d = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleDeleteSession(ssAp3d, data.athleteId, data.id));
+    }
+    if (data.action === 'bookCheckIn') {
+      return apJson(handleBookCheckIn(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.checkInId));
+    }
+    if (data.action === 'cancelBooking') {
+      return apJson(handleCancelBooking(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.bookingId));
     }
     if (data.action === 'savePB') {
       var ssAp4 = SpreadsheetApp.getActiveSpreadsheet();
@@ -4872,6 +4881,211 @@ function handleGetClashConfig() {
 //     (they need one to log in — Grade 9 don't), non-@fis.edu emails,
 //     duplicates and any student still without an ID.
 // ============================================================
+// ============================================================
+// BOOKING — coach check-ins (letter-day anchored; group + 1:1).
+// A booking creates an event on CHECKIN_CALENDAR_ID (Script Property; falls back
+// to the script owner's default calendar) with the student as a GUEST, so it
+// lands on the coach's AND the student's calendar. The coach is emailed on every
+// book/cancel. Identity: the client sends athleteId only; the email needed for
+// the invite is resolved server-side from the Athletes sheet (IDENTITY RULE).
+// ============================================================
+
+// Whole-year A–H letter days, seeded from the US Organizational Documents.
+// Weekends/trips/holidays simply aren't listed — that's how A/E-day anchoring
+// self-corrects around the exceptions (read the letter, don't count every 8).
+var AP_LETTER_DAYS = '2026-08-24:A,2026-08-25:B,2026-08-26:C,2026-08-27:D,2026-08-28:E,2026-08-31:F,2026-09-01:G,2026-09-02:H,2026-09-03:A,2026-09-04:B,2026-09-07:C,2026-09-08:D,2026-09-09:E,2026-09-10:F,2026-09-11:G,2026-09-14:H,2026-09-15:A,2026-09-16:B,2026-09-17:C,2026-09-18:D,2026-09-21:E,2026-09-22:F,2026-09-23:G,2026-09-24:H,2026-09-25:A,2026-09-28:B,2026-09-29:C,2026-09-30:D,2026-10-01:E,2026-10-02:F,2026-10-12:G,2026-10-13:H,2026-10-14:A,2026-10-15:B,2026-10-16:C,2026-10-19:D,2026-10-20:E,2026-10-21:F,2026-10-22:G,2026-10-23:H,2026-10-26:A,2026-10-27:B,2026-10-28:C,2026-10-29:D,2026-10-30:E,2026-11-02:F,2026-11-03:G,2026-11-04:H,2026-11-05:A,2026-11-06:B,2026-11-09:C,2026-11-10:D,2026-11-11:E,2026-11-12:F,2026-11-13:G,2026-11-16:H,2026-11-17:A,2026-11-18:B,2026-11-19:C,2026-11-23:D,2026-11-24:E,2026-11-25:F,2026-11-30:G,2026-12-01:H,2026-12-02:A,2026-12-03:B,2026-12-04:C,2026-12-07:D,2026-12-08:E,2026-12-09:F,2026-12-10:G,2026-12-11:H,2026-12-14:A,2026-12-15:B,2026-12-16:C,2026-12-17:D,2026-12-18:E,2027-01-11:F,2027-01-12:G,2027-01-13:H,2027-01-14:A,2027-01-15:B,2027-01-18:C,2027-01-19:D,2027-01-20:E,2027-01-21:F,2027-01-25:G,2027-01-26:H,2027-01-27:A,2027-01-28:B,2027-01-29:C,2027-02-01:D,2027-02-02:E,2027-02-03:F,2027-02-04:G,2027-02-05:H,2027-02-08:A,2027-02-09:B,2027-02-10:C,2027-02-11:D,2027-02-12:E,2027-02-22:F,2027-02-23:G,2027-02-24:H,2027-02-25:A,2027-02-26:B,2027-03-01:C,2027-03-02:D,2027-03-03:E,2027-03-04:F,2027-03-05:G,2027-03-08:H,2027-03-09:A,2027-03-10:B,2027-03-11:C,2027-03-12:D,2027-03-15:E,2027-03-16:F,2027-03-17:G,2027-03-18:H,2027-03-19:A,2027-04-05:B,2027-04-06:C,2027-04-07:D,2027-04-08:E,2027-04-09:F,2027-04-12:G,2027-04-13:H,2027-04-14:A,2027-04-15:B,2027-04-16:C,2027-04-19:D,2027-04-20:E,2027-04-21:F,2027-04-22:G,2027-04-23:H,2027-04-26:A,2027-04-27:B,2027-04-28:C,2027-04-29:D,2027-04-30:E,2027-05-03:F,2027-05-04:G,2027-05-05:H,2027-05-10:A,2027-05-11:B,2027-05-12:C,2027-05-13:D,2027-05-14:E,2027-05-18:F,2027-05-19:G,2027-05-20:H,2027-05-21:A,2027-05-24:B,2027-05-25:C,2027-05-26:D,2027-05-31:E,2027-06-01:F,2027-06-02:G,2027-06-03:H,2027-06-04:A,2027-06-07:B,2027-06-08:C,2027-06-09:D,2027-06-10:E,2027-06-11:F,2027-06-14:G,2027-06-15:H,2027-06-16:A,2027-06-17:B,2027-06-18:C,2027-06-21:D,2027-06-22:E,2027-06-23:F,2027-06-24:G,2027-06-25:H';
+function apLetterMap() {
+  if (!apLetterMap._m) {
+    var m = {};
+    AP_LETTER_DAYS.split(',').forEach(function (p) { var i = p.indexOf(':'); if (i > 0) m[p.slice(0, i)] = p.slice(i + 1); });
+    apLetterMap._m = m;
+  }
+  return apLetterMap._m;
+}
+function apLetterForDate(iso) { return apLetterMap()[iso] || ''; }
+function apParseDateTime(iso, hhmm) {
+  var d = String(iso).split('-'), t = String(hhmm || '00:00').split(':');
+  return new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2]), Number(t[0]) || 0, Number(t[1]) || 0, 0);
+}
+
+function apGetAthleteById(ss, athleteId) {
+  var sheet = ss.getSheetByName('Athletes'); if (!sheet) return null;
+  var data = sheet.getDataRange().getValues(); var H = data[0];
+  var idc = H.indexOf('Athlete_ID'); if (idc < 0) return null;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idc]).trim() === String(athleteId).trim()) {
+      var o = {}; for (var c = 0; c < H.length; c++) o[H[c]] = data[i][c]; return o;
+    }
+  }
+  return null;
+}
+function apAthleteName(athlete, fallback) {
+  if (!athlete) return fallback;
+  var n = athlete.Name || ((athlete.First_Name || '') + ' ' + (athlete.Last_Name || '')).trim();
+  return n || fallback;
+}
+
+// The check-in config sheet — one row per bookable occurrence.
+function apEnsureCheckIns(ss) {
+  var sheet = ss.getSheetByName('Check_Ins');
+  if (!sheet) {
+    sheet = ss.insertSheet('Check_Ins');
+    sheet.getRange(1, 1, 1, 10).setValues([[
+      'CheckIn_ID', 'Seq', 'Title', 'Date', 'Start', 'End', 'Format', 'Capacity', 'Status', 'Notes'
+    ]]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    apSeedCheckInOne(sheet);
+  }
+  return sheet;
+}
+// Check-in 1 — six group onboarding sessions across the first two weeks (Sep 2026).
+function apSeedCheckInOne(sheet) {
+  var rows = [
+    ['ci1_tue1', 1, 'Check-in 1 · Onboarding', '2026-09-08', '15:30', '16:30', 'group', 10, 'open', 'After school'],
+    ['ci1_wed1', 1, 'Check-in 1 · Onboarding', '2026-09-09', '11:40', '12:30', 'group', 10, 'open', 'E-day lunch'],
+    ['ci1_thu1', 1, 'Check-in 1 · Onboarding', '2026-09-10', '07:15', '08:15', 'group', 10, 'open', 'Before school'],
+    ['ci1_tue2', 1, 'Check-in 1 · Onboarding', '2026-09-15', '15:30', '16:30', 'group', 10, 'open', 'After school'],
+    ['ci1_wed2', 1, 'Check-in 1 · Onboarding', '2026-09-16', '11:40', '12:30', 'group', 10, 'open', 'B-day lunch'],
+    ['ci1_thu2', 1, 'Check-in 1 · Onboarding', '2026-09-17', '07:15', '08:15', 'group', 10, 'open', 'Before school']
+  ];
+  sheet.getRange(2, 1, rows.length, 10).setValues(rows);
+}
+function apEnsureBookings(ss) {
+  var sheet = ss.getSheetByName('Bookings');
+  if (!sheet) {
+    sheet = ss.insertSheet('Bookings');
+    sheet.getRange(1, 1, 1, 9).setValues([[
+      'Booking_ID', 'CheckIn_ID', 'Athlete_ID', 'Athlete_Email', 'Status', 'Calendar_Event_ID', 'Created', 'Updated', 'Slot'
+    ]]);
+    sheet.getRange('1:1').setFontWeight('bold');
+  }
+  return sheet;
+}
+function apCheckinCalendar() {
+  var id = '';
+  try { id = PropertiesService.getScriptProperties().getProperty('CHECKIN_CALENDAR_ID') || ''; } catch (e) {}
+  if (id) { var c = CalendarApp.getCalendarById(id); if (c) return c; }
+  return CalendarApp.getDefaultCalendar();
+}
+function apCoachEmail() {
+  try { var e = PropertiesService.getScriptProperties().getProperty('COACH_EMAIL'); if (e) return e; } catch (e) {}
+  try { return Session.getEffectiveUser().getEmail(); } catch (e2) { return ''; }
+}
+
+// Read the bookable check-ins + this athlete's own bookings + live capacity.
+function handleGetBookingData(ss, athleteId) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    var checkins = apReadObjects(apEnsureCheckIns(ss));
+    var bookings = apReadObjects(apEnsureBookings(ss));
+    var countBy = {}, mineByCi = {};
+    for (var b = 0; b < bookings.length; b++) {
+      if (String(bookings[b].Status) !== 'booked') continue;
+      var cid = String(bookings[b].CheckIn_ID).trim();
+      countBy[cid] = (countBy[cid] || 0) + 1;
+      if (athleteId && String(bookings[b].Athlete_ID).trim() === athleteId) mineByCi[cid] = bookings[b].Booking_ID;
+    }
+    var slots = [];
+    for (var i = 0; i < checkins.length; i++) {
+      var c = checkins[i];
+      if (String(c.Status || 'open') !== 'open') continue;
+      var id = String(c.CheckIn_ID).trim();
+      var cap = Number(c.Capacity) || 0;
+      var booked = countBy[id] || 0;
+      var myB = mineByCi[id] || '';
+      var dateStr = apDateStr(c.Date);
+      slots.push({
+        id: id, seq: c.Seq, title: c.Title, date: dateStr,
+        start: apTimeStr(c.Start), end: apTimeStr(c.End),
+        format: c.Format || 'group', capacity: cap, booked: booked,
+        note: c.Notes || '', letter: apLetterForDate(dateStr),
+        myBookingId: myB,
+        status: myB ? 'booked' : (cap && booked >= cap ? 'full' : 'available')
+      });
+    }
+    slots.sort(function (a, b2) { var ka = a.date + a.start, kb = b2.date + b2.start; return ka < kb ? -1 : ka > kb ? 1 : 0; });
+    return { success: true, slots: slots };
+  } catch (error) { return { success: false, error: error.toString() }; }
+}
+// Times may come back from the sheet as a Date (auto-parsed) — normalise to HH:MM.
+function apTimeStr(v) {
+  if (v == null || v === '') return '';
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    return ('0' + v.getHours()).slice(-2) + ':' + ('0' + v.getMinutes()).slice(-2);
+  }
+  return String(v);
+}
+
+function handleBookCheckIn(ss, athleteId, checkInId) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
+    if (!checkInId) return { success: false, error: 'checkInId is required' };
+    var checkins = apReadObjects(apEnsureCheckIns(ss));
+    var ci = null;
+    for (var i = 0; i < checkins.length; i++) { if (String(checkins[i].CheckIn_ID).trim() === String(checkInId).trim()) { ci = checkins[i]; break; } }
+    if (!ci) return { success: false, error: 'Check-in not found' };
+    if (String(ci.Status || 'open') !== 'open') return { success: false, error: 'That check-in is closed.' };
+    var bookingsSheet = apEnsureBookings(ss);
+    var bookings = apReadObjects(bookingsSheet);
+    var existing = null, count = 0;
+    for (var b = 0; b < bookings.length; b++) {
+      if (String(bookings[b].Status) !== 'booked') continue;
+      if (String(bookings[b].CheckIn_ID).trim() !== String(checkInId).trim()) continue;
+      count++;
+      if (String(bookings[b].Athlete_ID).trim() === athleteId) existing = bookings[b];
+    }
+    if (existing) return { success: true, already: true, bookingId: existing.Booking_ID };
+    var cap = Number(ci.Capacity) || 0;
+    if (cap && count >= cap) return { success: false, error: 'That session is full.' };
+    var athlete = apGetAthleteById(ss, athleteId);
+    var email = athlete ? String(athlete.Email || '').trim() : '';
+    var name = apAthleteName(athlete, athleteId);
+    var dateStr = apDateStr(ci.Date);
+    var eventId = '';
+    try {
+      var cal = apCheckinCalendar();
+      var start = apParseDateTime(dateStr, apTimeStr(ci.Start));
+      var end = apParseDateTime(dateStr, apTimeStr(ci.End));
+      var opts = { description: 'Athlete Academy check-in.' + (ci.Notes ? ' (' + ci.Notes + ')' : ''), sendInvites: true };
+      if (email) opts.guests = email;
+      var ev = cal.createEvent(String(ci.Title) + (name ? ' — ' + name : ''), start, end, opts);
+      eventId = ev.getId();
+    } catch (e) { eventId = ''; }   // calendar not configured/authorised yet — the booking still records
+    var id = 'bk_' + Utilities.getUuid().slice(0, 8);
+    var now = new Date();
+    bookingsSheet.appendRow([id, checkInId, athleteId, email, 'booked', eventId, now, now, '']);
+    try {
+      var coach = apCoachEmail();
+      if (coach) MailApp.sendEmail(coach, 'New check-in booking: ' + name,
+        name + ' booked ' + ci.Title + '\n' + dateStr + ' ' + apTimeStr(ci.Start) + '–' + apTimeStr(ci.End) + (ci.Notes ? ' (' + ci.Notes + ')' : '') + '\n\nNow ' + (count + 1) + '/' + cap + ' booked.');
+    } catch (e) {}
+    return { success: true, bookingId: id, eventCreated: !!eventId };
+  } catch (error) { return { success: false, error: error.toString() }; }
+}
+
+function handleCancelBooking(ss, athleteId, bookingId) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
+    var sheet = apEnsureBookings(ss);
+    var rows = apReadObjects(sheet);
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Booking_ID).trim() === String(bookingId).trim() && String(rows[i].Athlete_ID).trim() === athleteId) {
+        try { if (rows[i].Calendar_Event_ID) { var ev = apCheckinCalendar().getEventById(rows[i].Calendar_Event_ID); if (ev) ev.deleteEvent(); } } catch (e) {}
+        apUpdateRow(sheet, rows[i].__row, { 'Status': 'cancelled', 'Updated': new Date() });
+        try {
+          var coach = apCoachEmail();
+          var name = apAthleteName(apGetAthleteById(ss, athleteId), athleteId);
+          if (coach) MailApp.sendEmail(coach, 'Check-in cancelled: ' + name, name + ' cancelled a check-in booking (' + rows[i].CheckIn_ID + ').');
+        } catch (e2) {}
+        return { success: true, id: bookingId };
+      }
+    }
+    return { success: true, id: bookingId, missing: true };
+  } catch (error) { return { success: false, error: error.toString() }; }
+}
+
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Athlete Academy')
