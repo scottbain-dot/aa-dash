@@ -3812,7 +3812,7 @@
   // unlocked only for the demo, a ?book=1 override, and named testers. This just
   // reveals the UI; the SERVER enforces the real lock (BOOKING_LIVE / tester
   // athlete IDs), so a student adding ?book=1 still can't actually book.
-  const BOOKING_TESTERS = ['scott_bain@fis.edu'];
+  const BOOKING_TESTERS = ['scott_bain@fis.edu', 'scottybain@gmail.com'];
   function bookingUnlocked(){
     if(typeof DEMO_MODE !== 'undefined' && DEMO_MODE) return true;
     try { if(/[?&]book=1(&|$)/.test(location.search)) return true; } catch(e){}
