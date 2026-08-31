@@ -3245,6 +3245,15 @@
     margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line);
     font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; color: var(--ink-mute); text-align: center;
   }
+  /* Phase-1 check-in booking extras */
+  .book-checkin-caption { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-mute); margin: 2px 0 0; }
+  .slot-when { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--gold-dark, #9a7d1f); flex-shrink: 0; }
+  .slot-spots-row { margin-top: 8px; }
+  .slot-spots { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); }
+  .slot-booked-note { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line);
+    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--burgundy); }
+  .slot-booked-note strong { font-weight: 700; }
 
   .cal-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   .cal-tabs { display: flex; gap: 4px; background: var(--cream); padding: 4px; border-radius: 11px; margin-bottom: 14px; }
@@ -3511,6 +3520,9 @@
       sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
     if(action==='getGames') return Promise.resolve({ success:true, games: (state.games||[]) });
+    if(action==='getBookingData') return Promise.resolve({ success:true, slots: (state.booking && state.booking.slots) || [] });
+    if(action==='bookCheckIn') return Promise.resolve({ success:true, bookingId:'demo_bk_'+Date.now(), eventCreated:false });
+    if(action==='cancelBooking') return Promise.resolve({ success:true, id: payload.bookingId });
     if(action==='saveSession') return Promise.resolve({ success:true, id: 'demo_'+Date.now() });
     if(action==='deleteSession') return Promise.resolve({ success:true, id: payload.id });
     if(action==='saveWeeklyTemplate') return Promise.resolve({ success:true });
@@ -3605,6 +3617,7 @@
       if(!hasYear()) openWalkthrough();
       setLoading(false);
       loadGames();   // fire-and-forget: fill the season fixtures list once we're painted
+      loadBooking(); // fire-and-forget: pull bookable check-ins
     } catch(e){
       setLoading(false);
       document.getElementById('appError').classList.add('active');
@@ -3728,22 +3741,17 @@
 
     // Coach check-ins + a personal calendar (demo/visual only).
     const booking = {
-      calTitle: 'June & July 2026',
+      calTitle: 'September 2026',
       calYear: 2026,
-      months: [5, 6],
+      months: [8],
+      title: 'Check-in 1 · Onboarding',
       slots: [
-        { title:'Check-in with Mr Bain',       type:'checkin',   day:'Wed 3 Jun',  time:'15:30–16:00', coach:'Mr Bain', status:'available', eventDate:'2026-06-03' },
-        { title:'Freestyle technique review',   type:'technique', day:'Fri 5 Jun',  time:'16:00–16:30', coach:'Mr Bain', status:'available', eventDate:'2026-06-05' },
-        { title:'Cooper retest',                type:'testing',   day:'Tue 9 Jun',  time:'14:00–15:00', coach:null,      status:'available', eventDate:'2026-06-09' },
-        { title:'Mobility assessment',          type:'testing',   day:'Thu 11 Jun', time:'14:00–14:45', coach:null,      status:'booked',    eventDate:'2026-06-11' },
-        { title:'Group conditioning',           type:'group',     day:'Sat 13 Jun', time:'09:00–10:00', coach:null,      status:'full',      eventDate:'2026-06-13' }
+        { id:'d1', title:'Check-in 1 · Onboarding', date:'2026-09-08', start:'15:30', end:'16:30', note:'After school',  format:'group', capacity:10, booked:3,  letter:'D', myBookingId:'',    status:'available' },
+        { id:'d2', title:'Check-in 1 · Onboarding', date:'2026-09-09', start:'11:40', end:'12:30', note:'E-day lunch',   format:'group', capacity:10, booked:10, letter:'E', myBookingId:'',    status:'full' },
+        { id:'d3', title:'Check-in 1 · Onboarding', date:'2026-09-10', start:'07:15', end:'08:15', note:'Before school', format:'group', capacity:10, booked:2,  letter:'F', myBookingId:'dbk', status:'booked' },
+        { id:'d4', title:'Check-in 1 · Onboarding', date:'2026-09-15', start:'15:30', end:'16:30', note:'After school',  format:'group', capacity:10, booked:1,  letter:'A', myBookingId:'',    status:'available' }
       ],
-      events: [
-        { date:'2026-06-11', type:'testing',   name:'Mobility assessment' },
-        { date:'2026-06-19', type:'checkin',   name:'Check-in with Mr Bain' },
-        { date:'2026-06-25', type:'group',     name:'Group conditioning' },
-        { date:'2026-07-02', type:'technique', name:'Stroke review' }
-      ]
+      events: [ { date:'2026-09-10', type:'checkin', name:'Check-in 1' } ]
     };
 
     // Owned repeating program (mirrors the demo week's shape) so My program +
@@ -3799,7 +3807,7 @@
   const LAUNCH_MODE = true;
   // My Program (week) is now live so students can build their own program.
   // Load/Book/PBs stay teased until they're ready.
-  const LIVE_TABS = { year:true, week:true };
+  const LIVE_TABS = { year:true, week:true, book:true };
   function tabGated(tab){ return LAUNCH_MODE && !LIVE_TABS[tab]; }
 
   function switchTab(tab){
@@ -3812,7 +3820,7 @@
     if(tab==='week') renderWeek();
     else if(tab==='year') renderYear();
     else if(tab==='load') renderLoad();
-    else if(tab==='book') renderBook();
+    else if(tab==='book'){ renderBook(); loadBooking(); }
     else if(tab==='pbs') renderPBs();
     window.scrollTo(0,0);
   }
@@ -7639,8 +7647,9 @@
         '<div class="card book-card">'+
           '<p class="card-eyebrow">Coach check-ins</p>'+
           '<h2 class="section-heading">Book a <em style="font-style:italic;color:var(--burgundy);">session</em></h2>'+
-          '<div id="slotList" style="margin-top:16px;">'+ (bk.slots||[]).map(slotCardHTML).join('') +'</div>'+
-          '<div class="booking-note">Slots open two weeks in advance.</div>'+
+          (bk.title ? '<p class="book-checkin-caption">'+esc(bk.title)+' · pick one time that suits you</p>' : '')+
+          '<div id="slotList" style="margin-top:14px;">'+ (bk.slots||[]).map(slotCardHTML).join('') +'</div>'+
+          '<div class="booking-note">New check-in dates open about two weeks ahead.</div>'+
         '</div>'+
         '<div class="card book-card">'+
           '<p class="card-eyebrow">Your schedule</p>'+
@@ -7653,21 +7662,28 @@
   }
 
   function slotCardHTML(s, i){
-    const t = SLOT_TYPE[s.type] || SLOT_TYPE.checkin;
     const cls = 'slot-card ' + (s.status||'available');
+    const dayLabel = dowShort(s.date)+' · '+dayNum(s.date)+' '+monShort(s.date);
+    const spots = (s.capacity ? Math.max(0, s.capacity - (s.booked||0)) : null);
+    const when = s.note ? '<span class="slot-when">'+esc(String(s.note).toUpperCase())+'</span>' : '';
     let foot;
     if(s.status==='booked') foot = '<span class="slot-status booked-label"><i class="ti ti-check" aria-hidden="true"></i> Booked</span>';
     else if(s.status==='full') foot = '<span class="slot-status full-label">Full</span>';
     else foot = '<button class="book-btn" onclick="event.stopPropagation(); bookSlot('+i+')">Book</button>';
+    const spotsLine = (s.status==='available' && spots!=null)
+      ? '<span class="slot-spots">'+spots+' of '+s.capacity+' spots left</span>' : '';
     return '<div class="'+cls+'"'+(s.status==='booked'?' onclick="cancelSlot('+i+')"':'')+'>'+
       '<div class="slot-card-head">'+
-        '<span class="slot-card-title">'+esc(s.title)+'</span>'+
-        '<span class="slot-badge '+t.cls+'">'+t.label+'</span>'+
+        '<span class="slot-card-title">'+esc(dayLabel)+'</span>'+ when +
       '</div>'+
       '<div class="slot-card-foot">'+
-        '<span class="slot-card-time"><strong>'+esc(s.day)+'</strong> · '+esc(s.time)+(s.coach?' · '+esc(s.coach):'')+'</span>'+
+        '<span class="slot-card-time"><strong>'+esc(s.start)+'–'+esc(s.end)+'</strong>'+(s.letter?' · '+esc(s.letter)+'-day':'')+'</span>'+
         foot+
-      '</div></div>';
+      '</div>'+
+      (s.status==='booked'
+        ? '<div class="slot-booked-note"><i class="ti ti-check" aria-hidden="true"></i> <strong>Booked</strong> · with Mr Bain · tap to cancel</div>'
+        : (spotsLine ? '<div class="slot-spots-row">'+spotsLine+'</div>' : ''))+
+    '</div>';
   }
 
   function calTabsHTML(months){
@@ -7707,24 +7723,50 @@
     '</div>';
   }
 
-  function bookSlot(i){
+  // Best-effort: pull the live check-in slots + this student's bookings and render.
+  async function loadBooking(){
+    try {
+      const r = await apiDataGet({ action:'getBookingData' });
+      if(r && r.success && Array.isArray(r.slots)){
+        const slots = r.slots;
+        const months = [...new Set(slots.map(s => parseISO(s.date).getMonth()))];
+        const year = slots.length ? parseISO(slots[0].date).getFullYear() : new Date().getFullYear();
+        const events = slots.filter(s => s.status==='booked').map(s => ({ date:s.date, type:'checkin', name:s.title }));
+        const calTitle = (months.length ? months.map(m => MONTHS[m]).join(' & ') + ' ' + year : 'This term');
+        state.booking = { slots, months, calYear:year, calTitle,
+          title:(slots[0] && slots[0].title) || '', events };
+      }
+    } catch(e){ /* leave whatever we have */ }
+    if(activeTab==='book') renderBook();
+  }
+
+  async function bookSlot(i){
     const s = state.booking && state.booking.slots[i];
     if(!s || s.status!=='available') return;
-    s.status = 'booked';
-    // reflect the booking on the calendar
-    if(s.eventDate){ (state.booking.events = state.booking.events||[]).push({ date:s.eventDate, type:s.type, name:s.title }); }
-    renderBook(); renderBlockBar();
-    showToast('Booked — '+s.title, 'success');
+    s.status = 'booked'; s.booked = (s.booked||0)+1;   // optimistic
+    renderBook();
+    try {
+      const r = await apiData({ action:'bookCheckIn', checkInId: s.id });
+      if(!r || !r.success){ s.status='available'; s.booked=Math.max(0,(s.booked||1)-1); renderBook(); showToast((r&&r.error)||'Couldn’t book that slot.', 'error'); return; }
+      s.myBookingId = r.bookingId;
+      showToast('Booked · '+dowShort(s.date)+' '+dayNum(s.date)+' '+monShort(s.date)+'. Check your calendar.', 'success');
+      loadBooking();   // refresh live capacity
+    } catch(e){ s.status='available'; s.booked=Math.max(0,(s.booked||1)-1); renderBook(); showToast('Couldn’t reach the server. Try again.', 'error'); }
   }
   window.bookSlot = bookSlot;
-  function cancelSlot(i){
+
+  async function cancelSlot(i){
     const s = state.booking && state.booking.slots[i];
     if(!s || s.status!=='booked') return;
-    if(!confirm('Cancel this booking?')) return;
-    s.status = 'available';
-    if(s.eventDate && state.booking.events){ state.booking.events = state.booking.events.filter(e=>!(e.date===s.eventDate && e.name===s.title)); }
-    renderBook(); renderBlockBar();
-    showToast('Booking cancelled', 'success');
+    if(!confirm('Cancel this booking? It’ll be removed from your calendar too.')) return;
+    const bid = s.myBookingId;
+    s.status = 'available'; s.myBookingId=''; s.booked=Math.max(0,(s.booked||1)-1);
+    renderBook();
+    try {
+      const r = await apiData({ action:'cancelBooking', bookingId: bid });
+      showToast((r && r.success) ? 'Booking cancelled.' : 'Cancelled here — refresh to confirm.', (r && r.success) ? 'success' : '');
+      loadBooking();
+    } catch(e){ showToast('Couldn’t reach the server. Try again.', 'error'); }
   }
   window.cancelSlot = cancelSlot;
 
