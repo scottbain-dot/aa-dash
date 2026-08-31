@@ -5016,16 +5016,26 @@ function apTimeStr(v) {
   return String(v);
 }
 
-// Booking stays locked until BOOKING_LIVE is 'true' in Script Properties. While
-// locked, only athlete IDs listed in BOOKING_TESTERS (comma-separated) may book —
-// so the coach can test end-to-end before students can touch it.
-function apBookingLiveFor(athleteId) {
+// Built-in testers — no Script Properties needed (mobile-friendly). Anyone signed
+// in as one of these emails can book while booking is otherwise locked. Edit this
+// list in code to add/remove testers.
+var AP_BOOKING_TESTER_EMAILS = ['scott_bain@fis.edu', 'scottybain@gmail.com'];
+// Booking stays locked for everyone else until BOOKING_LIVE is 'true' (Script
+// Property, set at launch from a computer). BOOKING_TESTERS (comma-separated
+// athlete IDs) is an optional extra allowlist.
+function apBookingLiveFor(ss, athleteId) {
   try {
     var props = PropertiesService.getScriptProperties();
     if (String(props.getProperty('BOOKING_LIVE') || '').toLowerCase() === 'true') return true;
     var testers = String(props.getProperty('BOOKING_TESTERS') || '').split(',').map(function (s) { return s.trim(); }).filter(String);
-    return testers.indexOf(String(athleteId).trim()) >= 0;
-  } catch (e) { return false; }
+    if (testers.indexOf(String(athleteId).trim()) >= 0) return true;
+  } catch (e) {}
+  // Built-in tester emails (resolved server-side from the athlete row).
+  try {
+    var athlete = apGetAthleteById(ss, athleteId);
+    var email = athlete ? String(athlete.Email || '').trim().toLowerCase() : '';
+    return !!email && AP_BOOKING_TESTER_EMAILS.indexOf(email) >= 0;
+  } catch (e2) { return false; }
 }
 
 function handleBookCheckIn(ss, athleteId, checkInId) {
@@ -5033,7 +5043,7 @@ function handleBookCheckIn(ss, athleteId, checkInId) {
     athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: false, error: 'athleteId is required' };
     if (!checkInId) return { success: false, error: 'checkInId is required' };
-    if (!apBookingLiveFor(athleteId)) return { success: false, error: 'Booking isn’t open yet — it’s still being set up.' };
+    if (!apBookingLiveFor(ss, athleteId)) return { success: false, error: 'Booking isn’t open yet — it’s still being set up.' };
     var checkins = apReadObjects(apEnsureCheckIns(ss));
     var ci = null;
     for (var i = 0; i < checkins.length; i++) { if (String(checkins[i].CheckIn_ID).trim() === String(checkInId).trim()) { ci = checkins[i]; break; } }
@@ -5081,7 +5091,7 @@ function handleCancelBooking(ss, athleteId, bookingId) {
   try {
     athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: false, error: 'athleteId is required' };
-    if (!apBookingLiveFor(athleteId)) return { success: false, error: 'Booking isn’t open yet.' };
+    if (!apBookingLiveFor(ss, athleteId)) return { success: false, error: 'Booking isn’t open yet.' };
     var sheet = apEnsureBookings(ss);
     var rows = apReadObjects(sheet);
     for (var i = 0; i < rows.length; i++) {
