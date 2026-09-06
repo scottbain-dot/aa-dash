@@ -5110,6 +5110,22 @@ function handleCancelBooking(ss, athleteId, bookingId) {
   } catch (error) { return { success: false, error: error.toString() }; }
 }
 
+// Run this ONCE from the editor (or the Athlete Academy menu) after adding the
+// booking code. It touches Calendar + Gmail, which forces Google's permission
+// screen to appear so the web app can create events and email the coach. It also
+// prints which calendar bookings will land on — a handy sanity check.
+function authorizeBooking() {
+  var cal = apCheckinCalendar();
+  var calName = cal ? cal.getName() : '(none found)';
+  var quota = MailApp.getRemainingDailyQuota();
+  var msg = 'Booking is authorised.\n\nEvents will go on calendar: ' + calName +
+    '\nEmails left today: ' + quota +
+    '\nCoach notifications to: ' + apCoachEmail();
+  Logger.log(msg);
+  try { SpreadsheetApp.getUi().alert('Booking setup', msg, SpreadsheetApp.getUi().ButtonSet.OK); } catch (e) {}
+  return msg;
+}
+
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Athlete Academy')
@@ -5117,6 +5133,7 @@ function onOpen() {
     .addItem('Assign missing athlete IDs', 'assignAthleteIds')
     .addItem('Fix email chips → plain text', 'flattenEmailChips')
     .addItem('Check roster for problems', 'checkRoster')
+    .addItem('Set up / authorize booking', 'authorizeBooking')
     .addToUi();
 }
 
