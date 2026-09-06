@@ -4961,10 +4961,15 @@ function apEnsureBookings(ss) {
   }
   return sheet;
 }
+// The dedicated "Athlete Academy — Check-ins" calendar. A CHECKIN_CALENDAR_ID
+// Script Property overrides this; otherwise we use this built-in default, then
+// fall back to the owner's default calendar if it can't be reached.
+var AP_CHECKIN_CALENDAR_ID = 'c_d789628445533bab643cb8c7a6cd1aaad3ef1d41e81506f63dae45147bd6731b@group.calendar.google.com';
 function apCheckinCalendar() {
   var id = '';
   try { id = PropertiesService.getScriptProperties().getProperty('CHECKIN_CALENDAR_ID') || ''; } catch (e) {}
-  if (id) { var c = CalendarApp.getCalendarById(id); if (c) return c; }
+  if (!id) id = AP_CHECKIN_CALENDAR_ID;
+  if (id) { try { var c = CalendarApp.getCalendarById(id); if (c) return c; } catch (e2) {} }
   return CalendarApp.getDefaultCalendar();
 }
 function apCoachEmail() {
