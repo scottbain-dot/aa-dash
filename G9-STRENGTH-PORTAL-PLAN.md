@@ -18,7 +18,7 @@ The current portal is a "teacher unlocks, student executes" machine. The G10–1
 
 | Stage | What they're doing | What the portal is | How it opens |
 |---|---|---|---|
-| **1 · Intro to Training** | Learning how a session works, how the gym works, and practising the six foundation movements at bodyweight, every lesson | A lesson companion: a three-part session (Prep, Move, Finish), the movement passport, the concept checklist | Everyone starts here |
+| **1 · Intro to Training** | Learning how a session works, how the gym works, and the six foundation movements at bodyweight, introduced one at a time and then cycled | Two things: a **Board** you project in the gym (today's session, no login), and a **classroom portal** used every 3–4 gym sessions (passport, pattern videos and criteria, self-check, reflection). No laptops in the gym | Everyone starts here |
 | **2 · Foundations** | Running the Foundation program (full body A, full body B, athletic basics), levelling up patterns, loaded work pattern by pattern | A workout portal: the full six-part EXOS session map, this week's sessions, Workout Mode, swaps, film and test flows | Teacher marks the unit complete, for the class or per student. Stamps do not gate it |
 | **3 · My Program** | Building and running their own repeating week, in the same shape as the academy | A program builder: phase × goal builder, weekly template, PBs | Teacher opens it per student from admin ("Ready to build"). The portal shows a readiness signal to help the call |
 
@@ -30,26 +30,23 @@ The current portal is a "teacher unlocks, student executes" machine. The G10–1
 
 ## 3. The Intro to Training unit (Stage 1)
 
-**Same shape every lesson: Prep → Move → Finish.** Prep merges pillar prep and movement prep as "warm up". Move is all six patterns at bodyweight, every lesson (Foundation A and B alternate the emphasis, but every pattern gets practised). Finish is a short finisher and cool down. The full six-part EXOS map waits for Foundations, so the session shape gets richer as they progress.
+**Same shape every gym session: Prep → Move → Finish.** Prep merges pillar prep and movement prep as "warm up". Move is the patterns introduced so far, at bodyweight. Finish is a short cool down. Jump-and-land work sits inside Prep and a finisher inside Finish from Block 2, without naming them. The full six-part EXOS map waits for Foundations.
 
-**Stamps land whenever they land.** Each lesson the student ticks the patterns they practised, so the passport shows "Squat · 5 practices". You stamp level 1 for any student, any pattern, any lesson, from the roster view on your phone. Some students have six stamps by lesson 4, some by the end, some carry one or two into Foundations.
+**Patterns come in one per gym session, then cycle.** Once a pattern is introduced it is practised in every session after. By the end of Block 2 all six are cycling in a Foundation A / B rhythm.
 
-**Lessons are a concept sequence, not a stamp schedule.** Each lesson adds one idea. However many lessons it takes.
+**No laptops in the gym.** You project the Board. Students use the portal in a classroom session after every three or four gym sessions, to consolidate. That is where the ideas (criteria, reading a prescription, RPE) are taught and self-checked, then applied in the next gym block.
 
-| Concept | In the gym | In the portal | Checklist tick |
-|---|---|---|---|
-| The gym and the shape | Tour, safety, etiquette, re-racking. Prep → Move → Finish walked through once | Sign in. See today's three parts. Tick the patterns practised | Gym rules |
-| How do you know it's good? | The six criteria per pattern, partner checks | Criteria on every pattern tile. Practice counts start | Partner-checked a movement |
-| Tempo and control | 3-2-1 tempo, pause at the bottom, control down | Tempo shown on the Move block | Held a tempo |
-| Jump and land | Drop landing, low box jump and land, in Prep | Prep grows a jump-and-land step | Landed quietly |
-| Reading a prescription and first load | Sets × reps, choosing a weight, "last few reps hard". Goblet squat and KB deadlift for stamped patterns | Log a weight for the first time. "Last time" starts working | Logged a weight |
-| Effort and RPE | The honesty rule, what a 7 feels like | RPE prompt at the end of the session | Rated a session |
-| Finishing properly | Finisher, cool down, foam roll, sleep and fuel (Fuel Lab link) | Finish block gets its steps | Finished a session properly |
-| Run it yourself | Full session with no teacher cues. You observe | Everything they need is on screen | Ran a session alone → unit complete |
+**Stamps land whenever they land.** You stamp level 1 for any student, any pattern, any session, from admin on your phone. Some students have six stamps by the end of Block 2, some carry one or two into Foundations.
 
-Med ball, energy systems and regeneration as *named* components are not in the intro. They arrive with the full map in Foundations. Which of jump-and-land, med ball and the finisher belong in the intro at all is an open call (§9).
+| Block | Gym sessions (Board) | Classroom session (portal) |
+|---|---|---|
+| **1 · The shape, lower body** | 1: gym rules, Prep → Move → Finish walked through, **Squat**. 2: + **Hinge**. 3: + **Lunge** | **A:** sign in, meet the passport and what a stamp means, watch the three pattern videos, self-check against the criteria, tick "gym rules" and "partner-checked a movement". Reflection: which pattern feels least controlled? |
+| **2 · Upper body, all six cycling** | 4: + **Push**. 5: + **Pull**. 6: + **Press**. Jump-and-land enters Prep, a short finisher enters Finish. Tempo and control as the cue of the block | **B:** reading a prescription (sets × reps, tempo, "last few reps hard"), choosing a weight, what RPE 7 feels like. Self-check all six. Ticks: "held a tempo", "can read a prescription". Reflection: which patterns are you ready to be stamped on? |
+| **3 · Loading and running it** | 7: first load on stamped patterns (goblet squat, KB deadlift). 8: effort and RPE in practice. 9: run the session yourself, you observe | **C:** log the last gym session in Workout Mode (first log). Rate it. Preview Foundations: the six-part map and "this week". Ticks: "logged a session", "rated a session". Unit complete |
 
-**Level 1 sign-off is in class, by you, from admin on your phone.** Canvas video stays for level 2 upwards. Six videos per beginner for bodyweight movements is too much friction.
+Three blocks is the default. Add a gym session to any block if a class needs it; the classroom session stays at the end of the block.
+
+**Level 1 sign-off is in class, by you, from admin on your phone.** Canvas video stays for level 2 upwards.
 
 ---
 
@@ -57,12 +54,18 @@ Med ball, energy systems and regeneration as *named* components are not in the i
 
 Three home screens, one per stage. Same header, same passport, more ownership each time.
 
-**Stage 1 home**
-- "Intro to Training · Wed 16 Sep"
-- Today's session in three parts: Prep, Move, Finish. Move lists all six patterns with a tick for "practised today"
-- The passport: six tiles showing practices so far, and a stamp once you sign it off
-- The concept checklist, ticked as each idea is covered
-- One button: "Start today's session"
+**The Board (gym, projected, no login)**
+- Pick the session ("Block 2 · Gym 5") from a list
+- Three columns in big type: Prep, Move, Finish
+- Move lists today's patterns with one or two cues each and the bodyweight exercise name
+- Optional running clock
+
+**Stage 1 home (classroom)**
+- "Intro to Training · Classroom B · after gym sessions 4–6"
+- The passport: six tiles, stamped or "practising since 12 Sep"
+- Learn: the six patterns, each with its video and six criteria, and a self-check ("I can do this with…")
+- Ideas covered: the concept checklist, ticked as each is taught
+- Reflection prompt for this classroom session, saved
 
 **Stage 2 home**
 - "Foundations"
@@ -121,7 +124,7 @@ Exercise names, videos, criteria and load tiers live in the HTML of two differen
 G9 sessions land in `Training_Sessions` (Sport = `Strength`, Type = `training`, steps in `Planned_JSON` with `exId`, sets, reps, weight). Two readers move with it: the dashboard strength progression card (`index.html`) and admin's session counts. `Workout_Logs` then retires.
 
 ### Stage state
-Two columns appended to `Strength` by name (the existing `updateStudent` can do this): `Stage` (blank = intro, `foundations`, `program`, set by the teacher) and `Unit_JSON` (concept-checklist ticks with dates). Practice counts per pattern come from the logged sessions, not a new store. Level 1 stamps are simply `{P}_Tech = 1`.
+Two columns appended to `Strength` by name (the existing `updateStudent` can do this): `Stage` (blank = intro, `foundations`, `program`, set by the teacher) and `Unit_JSON` (concept ticks, self-checks and reflections with dates). Level 1 stamps are simply `{P}_Tech = 1`. Board sessions are content, not data: they live in the shared content file.
 
 ---
 
@@ -153,7 +156,7 @@ These numbers go in the shared content file, once. Fill them in the table in §6
 
 ## 7. Admin changes
 
-- **Class stamp view** (phone-first): roster × six patterns, each cell showing practices so far, tap to stamp level 1, tap again to undo. Used in any lesson. Uses `updateStudent`
+- **Class stamp view** (phone-first): roster × six patterns, tap to stamp level 1, tap again to undo. Used in any gym session. Uses `updateStudent`
 - **Concept checklist** per student, next to the stamps
 - **Unit complete** for the whole class in one tap, or per student (sets `Stage`)
 - **"Ready to build"** toggle per student (sets `Stage = program`)
@@ -164,16 +167,17 @@ These numbers go in the shared content file, once. Fill them in the table in §6
 
 ## 8. Build order (PR-sized)
 
-Today is 6 Sept 2026 and the unit is about to start, so Stage 1 ships first and small.
+Today is 6 Sept 2026 and the unit is about to start. Block 1 needs only the Board and the stamp view, so those ship first.
 
-1. **Content file** — extract patterns, levels, videos, criteria and the tier table (L2 and L3 anchors, L4 blank) into `strength-content.js`. Wire `index.html` and `admin.html` to it. No behaviour change
-2. **Portal shell + Stage 1** — new `strength-portal.html`: ID-only auth via bootstrap, the three-part session, passport with practice ticks, concept checklist. Ship before lesson 1
-3. **Admin class stamp view** — needed from lesson 2 onwards
-4. **Workout Mode + logging** — port Workout Mode, log to `Training_Sessions`. Needed by the "reading a prescription" lesson
-5. **Stage 2** — Foundation templates, level-gated swaps, film and test flows, "last time" from `Training_Sessions`
-6. **Move the readers** — dashboard strength card and admin counts onto `Training_Sessions`; retire `Workout_Logs`
-7. **Stage 3** — builder and My Program ported from `portal-lab`, level-gated; "Ready to build" in admin
-8. **Polish** — plain-language pass, empty states, a G9 section in `guide.html`
+1. **Content file** — extract patterns, levels, videos, criteria, the tier table (L2 and L3 anchors, L4 blank) and the Board sessions into `strength-content.js`. Wire `index.html` and `admin.html` to it. No behaviour change
+2. **Board** — `strength-portal.html?board`: session picker, Prep / Move / Finish in big type, clock. No login. Ship before gym session 1
+3. **Admin class stamp view** — needed from gym session 1
+4. **Classroom portal (Stage 1)** — ID-only auth via bootstrap, passport, pattern library with self-check, concept checklist, reflection. Ship before Classroom A
+5. **Workout Mode + logging** — port Workout Mode, log to `Training_Sessions`. Needed by Classroom C
+6. **Stage 2** — the six-part map, Foundation templates, level-gated swaps, film and test flows, "last time" from the log
+7. **Move the readers** — dashboard strength card and admin counts onto `Training_Sessions`; retire `Workout_Logs`
+8. **Stage 3** — builder and My Program ported from `portal-lab`, level-gated; "Ready to build" in admin
+9. **Polish** — plain-language pass, empty states, a G9 section in `guide.html`
 
 ---
 
@@ -182,8 +186,9 @@ Today is 6 Sept 2026 and the unit is about to start, so Stage 1 ships first and 
 - L4 tier numbers and the Pull unit (§6)
 - Is a shared `strength-content.js` acceptable, or must each file stay fully self-contained?
 - The readiness signal the portal shows before "Ready to build" (draft: level 2 in four patterns and ten logged sessions)
-- Which of jump-and-land, med ball and a finisher belong in the intro, or whether the intro stays at Prep, Move, Finish with the six patterns only
-- Whether practice ticks are the student's own (tap in the portal) or only count when a session is logged
+- Gym sessions per block (three is the default) and whether every block ends in a classroom session
+- What goes on the Board beyond the session: a clock, a criteria slide per pattern, a rest timer
+- Whether classroom reflections are private to the student or visible to you in admin
 
 ---
 
