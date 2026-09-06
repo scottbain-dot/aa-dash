@@ -3631,10 +3631,14 @@
       state.load = data.load || { weeks: [], summary: {} };
       renderNav();
       await maybeAutoFillWeek();   // carry the owned program into an empty current week
-      // Home is My Program (the day-to-day tab). New students (no year yet) land on
-      // Year and get the walkthrough to set their vision first.
-      switchTab(hasYear() ? 'week' : 'year');
-      if(!hasYear()) openWalkthrough();
+      // A refresh resumes the tab you were on (sessionStorage). A fresh open
+      // lands on My Program (the day-to-day tab); new students (no year yet)
+      // land on Year and get the walkthrough to set their vision first.
+      var savedTab = null;
+      try { savedTab = sessionStorage.getItem('aa_tab'); } catch(e){}
+      var resume = savedTab && ['week','year','load','book','pbs'].indexOf(savedTab) >= 0;
+      switchTab(resume ? savedTab : (hasYear() ? 'week' : 'year'));
+      if(!hasYear() && !resume) openWalkthrough();
       setLoading(false);
       loadGames();   // fire-and-forget: fill the season fixtures list once we're painted
       if(bookingUnlocked()) loadBooking(); // testers only — booking is still gated
@@ -3846,6 +3850,10 @@
 
   function switchTab(tab){
     activeTab = tab;
+    // Remember the tab for this browser session so a refresh resumes here.
+    // (sessionStorage survives a reload but not a fresh open — a new open lands
+    // on My Program by design.)
+    try { sessionStorage.setItem('aa_tab', tab); } catch(e){}
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-'+tab).classList.add('active');
