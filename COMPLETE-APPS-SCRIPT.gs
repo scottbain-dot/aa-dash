@@ -5255,6 +5255,52 @@ function syncCheckinCancellations() {
   return msg;
 }
 
+// Teacher cancel from the sheet — the reliable way to cancel a student without
+// hunting for the event in a calendar UI. Lists active bookings, you pick one,
+// and the script deletes its calendar event (it owns it), frees the slot, and
+// emails the student. No Calendar API needed.
+function coachCancelBooking() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+  var sheet = apEnsureBookings(ss);
+  var rows = apReadObjects(sheet);
+  var checkins = apReadObjects(apEnsureCheckIns(ss));
+  var ciById = {};
+  for (var c = 0; c < checkins.length; c++) ciById[String(checkins[c].CheckIn_ID).trim()] = checkins[c];
+  var booked = [];
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Status) !== 'booked') continue;
+    var ci = ciById[String(rows[i].CheckIn_ID).trim()] || {};
+    var nm = apAthleteName(apGetAthleteById(ss, rows[i].Athlete_ID), rows[i].Athlete_ID);
+    booked.push({ row: rows[i], ci: ci, label: nm + ' — ' + (ci.Title || '?') + ' · ' + apDateStr(ci.Date) + ' ' + apTimeStr(ci.Start) });
+  }
+  if (!booked.length) { ui.alert('Cancel a booking', 'There are no active bookings.', ui.ButtonSet.OK); return; }
+  var list = booked.map(function (b, idx) { return (idx + 1) + '. ' + b.label; }).join('\n');
+  var resp = ui.prompt('Cancel a booking', 'Type the number of the booking to cancel:\n\n' + list, ui.ButtonSet.OK_CANCEL);
+  if (resp.getSelectedButton() !== ui.Button.OK) return;
+  var n = parseInt(resp.getResponseText(), 10);
+  if (!(n >= 1 && n <= booked.length)) { ui.alert('Cancel a booking', 'That was not a valid number — nothing cancelled.', ui.ButtonSet.OK); return; }
+  var pick = booked[n - 1];
+  var evNote = '';
+  try {
+    var evId = String(pick.row.Calendar_Event_ID || '').trim();
+    if (evId) {
+      var ev = apCheckinCalendar().getEventById(evId);
+      if (ev) { ev.deleteEvent(); evNote = ' Calendar event deleted.'; }
+      else { evNote = ' (calendar event was already gone).'; }
+    } else { evNote = ' (no calendar event was recorded).'; }
+  } catch (e) { evNote = ' (could not delete the calendar event: ' + e + ')'; }
+  apUpdateRow(sheet, pick.row.__row, { 'Status': 'cancelled', 'Updated': new Date() });
+  try {
+    var athlete = apGetAthleteById(ss, pick.row.Athlete_ID);
+    var semail = athlete ? String(athlete.Email || '').trim() : '';
+    var nm2 = apAthleteName(athlete, pick.row.Athlete_ID);
+    if (semail) MailApp.sendEmail(semail, 'Your Athlete Academy check-in was cancelled',
+      'Hi ' + nm2 + ',\n\nMr Bain has cancelled your check-in (' + (pick.ci.Title || '') + ' on ' + apDateStr(pick.ci.Date) + '). Please book a new time in the Athlete Academy portal.\n');
+  } catch (e2) {}
+  ui.alert('Cancel a booking', 'Cancelled: ' + pick.label + '.' + evNote + '\n\nThe slot is now free in the portal.', ui.ButtonSet.OK);
+}
+
 // Diagnostic: for every booked slot, log what the calendar reports — the stored
 // event id, what getEventById returns, and the raw REST view (status of each
 // matching instance). Run from the editor (or the menu), then read the
@@ -5339,6 +5385,7 @@ function onOpen() {
     .addItem('Check roster for problems', 'checkRoster')
     .addItem('Set up / authorize booking', 'authorizeBooking')
     .addItem('Set up booking sync (auto, run once)', 'setupBookingSync')
+    .addItem('Cancel a check-in booking', 'coachCancelBooking')
     .addItem('Sync check-in cancellations now', 'syncCheckinCancellations')
     .addItem('Debug booking sync (log)', 'debugBookingSync')
     .addItem('Reset check-in slots (fix times)', 'resetCheckIns')
