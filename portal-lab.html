@@ -3252,8 +3252,28 @@
   .slot-spots-row { margin-top: 8px; }
   .slot-spots { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); }
   .slot-booked-note { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line);
-    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--burgundy); }
+    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--burgundy); line-height: 1.5; }
   .slot-booked-note strong { font-weight: 700; }
+  .slot-card.locked { opacity: 0.72; }
+  .slot-status.locked-label { color: var(--ink-mute); }
+  .slot-locked-note { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line);
+    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); line-height: 1.5; }
+  /* "About this check-in" intro */
+  .book-about { background: var(--cream); border-radius: 14px; padding: 14px 16px; margin: 12px 0 4px; }
+  .book-about-title { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--burgundy); margin: 0 0 6px; }
+  .book-about-body { font-family: 'Inter', sans-serif; font-size: 13.5px; line-height: 1.55; color: var(--ink-soft, #5c4b46); margin: 0 0 10px; }
+  .book-about-body strong { color: var(--ink); }
+  .book-about-facts { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+  .book-about-facts li { display: flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-mute); }
+  .book-about-facts i { color: var(--burgundy); font-size: 15px; flex-shrink: 0; }
+  /* Message Mr Bain */
+  .book-msg-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 14px;
+    padding: 12px; border-radius: 11px; border: 1px solid var(--burgundy); background: transparent; color: var(--burgundy);
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .book-msg-btn:hover { background: var(--burgundy); color: var(--cream); }
+  /* Booked day ringed on the schedule calendar */
+  .cal-day-booked { box-shadow: inset 0 0 0 2px var(--burgundy); background: rgba(135,75,70,0.06); font-weight: 700; }
 
   .cal-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   .cal-tabs { display: flex; gap: 4px; background: var(--cream); padding: 4px; border-radius: 11px; margin-bottom: 14px; }
@@ -3746,10 +3766,10 @@
       months: [8],
       title: 'Check-in 1 · Onboarding',
       slots: [
-        { id:'d1', title:'Check-in 1 · Onboarding', date:'2026-09-08', start:'15:30', end:'16:30', note:'After school',  format:'group', capacity:10, booked:3,  letter:'D', myBookingId:'',    status:'available' },
-        { id:'d2', title:'Check-in 1 · Onboarding', date:'2026-09-09', start:'11:40', end:'12:30', note:'E-day lunch',   format:'group', capacity:10, booked:10, letter:'E', myBookingId:'',    status:'full' },
-        { id:'d3', title:'Check-in 1 · Onboarding', date:'2026-09-10', start:'07:15', end:'08:15', note:'Before school', format:'group', capacity:10, booked:2,  letter:'F', myBookingId:'dbk', status:'booked' },
-        { id:'d4', title:'Check-in 1 · Onboarding', date:'2026-09-15', start:'15:30', end:'16:30', note:'After school',  format:'group', capacity:10, booked:1,  letter:'A', myBookingId:'',    status:'available' }
+        { id:'d1', title:'Check-in 1 · Onboarding', date:'2026-09-08', start:'15:30', end:'16:30', note:'After school',  format:'group', capacity:10, booked:3,  letter:'D', location:'PE Office', myBookingId:'',    lockedDate:'2026-09-10', status:'locked' },
+        { id:'d2', title:'Check-in 1 · Onboarding', date:'2026-09-09', start:'11:40', end:'12:30', note:'E-day lunch',   format:'group', capacity:10, booked:10, letter:'E', location:'PE Office', myBookingId:'',    lockedDate:'2026-09-10', status:'locked' },
+        { id:'d3', title:'Check-in 1 · Onboarding', date:'2026-09-10', start:'07:15', end:'08:15', note:'Before school', format:'group', capacity:10, booked:2,  letter:'F', location:'PE Office', myBookingId:'dbk', lockedDate:'', status:'booked' },
+        { id:'d4', title:'Check-in 1 · Onboarding', date:'2026-09-15', start:'15:30', end:'16:30', note:'After school',  format:'group', capacity:10, booked:1,  letter:'A', location:'PE Office', myBookingId:'',    lockedDate:'2026-09-10', status:'locked' }
       ],
       events: [ { date:'2026-09-10', type:'checkin', name:'Check-in 1' } ]
     };
@@ -7661,8 +7681,9 @@
         '<div class="card book-card">'+
           '<p class="card-eyebrow">Coach check-ins</p>'+
           '<h2 class="section-heading">Book a <em style="font-style:italic;color:var(--burgundy);">session</em></h2>'+
-          (bk.title ? '<p class="book-checkin-caption">'+esc(bk.title)+' · pick one time that suits you</p>' : '')+
+          bookAboutHTML(bk)+
           '<div id="slotList" style="margin-top:14px;">'+ (bk.slots||[]).map(slotCardHTML).join('') +'</div>'+
+          '<button class="book-msg-btn" onclick="messageCoach()"><i class="ti ti-message-circle" aria-hidden="true"></i> Message Mr Bain</button>'+
           '<div class="booking-note">New check-in dates open about two weeks ahead.</div>'+
         '</div>'+
         '<div class="card book-card">'+
@@ -7675,6 +7696,29 @@
       '</div>';
   }
 
+  // The "what is this check-in" intro shown above the slots.
+  function bookAboutHTML(bk){
+    const first = (bk.slots && bk.slots[0]) || {};
+    const loc = first.location || 'PE Office';
+    return '<div class="book-about">'+
+      '<p class="book-about-title">'+esc(bk.title || 'Your next check-in')+'</p>'+
+      '<p class="book-about-body">Your first check-in with Mr Bain. I’ll show you how the portal works, how to build your program, and how the year plan fits together. <strong>Pick one time</strong> that suits you — that’s all you need to do.</p>'+
+      '<ul class="book-about-facts">'+
+        '<li><i class="ti ti-clock" aria-hidden="true"></i> About 20–30 minutes</li>'+
+        '<li><i class="ti ti-users" aria-hidden="true"></i> Small group — bring your questions</li>'+
+        '<li><i class="ti ti-map-pin" aria-hidden="true"></i> Meet in the '+esc(loc)+'</li>'+
+        '<li><i class="ti ti-calendar-check" aria-hidden="true"></i> Added to your Google Calendar automatically</li>'+
+      '</ul>'+
+    '</div>';
+  }
+  // Open Google Chat to message the coach. (A direct DM deep-link needs a
+  // per-person id; this lands in Chat where Mr Bain is one search away.)
+  function messageCoach(){
+    const url = 'https://chat.google.com/';
+    try { window.open(url, '_blank', 'noopener'); } catch(e){ location.href = url; }
+  }
+  window.messageCoach = messageCoach;
+
   function slotCardHTML(s, i){
     const cls = 'slot-card ' + (s.status||'available');
     const dayLabel = dowShort(s.date)+' · '+dayNum(s.date)+' '+monShort(s.date);
@@ -7683,9 +7727,16 @@
     let foot;
     if(s.status==='booked') foot = '<span class="slot-status booked-label"><i class="ti ti-check" aria-hidden="true"></i> Booked</span>';
     else if(s.status==='full') foot = '<span class="slot-status full-label">Full</span>';
+    else if(s.status==='locked') foot = '<span class="slot-status locked-label">Unavailable</span>';
     else foot = '<button class="book-btn" onclick="event.stopPropagation(); bookSlot('+i+')">Book</button>';
-    const spotsLine = (s.status==='available' && spots!=null)
-      ? '<span class="slot-spots">'+spots+' of '+s.capacity+' spots left</span>' : '';
+    let sub = '';
+    if(s.status==='booked'){
+      sub = '<div class="slot-booked-note"><i class="ti ti-check" aria-hidden="true"></i> <strong>Booked</strong> · Mr Bain · '+esc(s.location||'PE Office')+'. It’s on your Google Calendar — accept the email invite. Tap to cancel.</div>';
+    } else if(s.status==='locked' && s.lockedDate){
+      sub = '<div class="slot-locked-note">You’re booked for this check-in on <strong>'+esc(dowShort(s.lockedDate)+' '+dayNum(s.lockedDate)+' '+monShort(s.lockedDate))+'</strong>. Cancel that to switch time.</div>';
+    } else if(s.status==='available' && spots!=null){
+      sub = '<div class="slot-spots-row"><span class="slot-spots">'+spots+' of '+s.capacity+' spots left</span></div>';
+    }
     return '<div class="'+cls+'"'+(s.status==='booked'?' onclick="cancelSlot('+i+')"':'')+'>'+
       '<div class="slot-card-head">'+
         '<span class="slot-card-title">'+esc(dayLabel)+'</span>'+ when +
@@ -7694,9 +7745,7 @@
         '<span class="slot-card-time"><strong>'+esc(s.start)+'–'+esc(s.end)+'</strong>'+(s.letter?' · '+esc(s.letter)+'-day':'')+'</span>'+
         foot+
       '</div>'+
-      (s.status==='booked'
-        ? '<div class="slot-booked-note"><i class="ti ti-check" aria-hidden="true"></i> <strong>Booked</strong> · with Mr Bain · tap to cancel</div>'
-        : (spotsLine ? '<div class="slot-spots-row">'+spotsLine+'</div>' : ''))+
+      sub+
     '</div>';
   }
 
@@ -7722,9 +7771,10 @@
     for(let d=1; d<=daysIn; d++){
       const iso = fmtISO(new Date(year, monthIdx, d));
       const evs = evByDay[d] || [];
-      const dots = evs.slice(0,3).map(e=>'<span class="cal-dot '+((SLOT_TYPE[e.type]||SLOT_TYPE.checkin).cls)+'"></span>').join('');
-      html += '<div class="cal-day'+(iso===today?' today':'')+'" title="'+(evs.map(e=>esc(e.name)).join(', '))+'">'+
-        '<span>'+d+'</span><span class="cal-dots">'+dots+'</span></div>';
+      // A booked check-in rings the whole day (clearer than a dot).
+      const booked = evs.length>0;
+      html += '<div class="cal-day'+(iso===today?' today':'')+(booked?' cal-day-booked':'')+'" title="'+(evs.map(e=>esc(e.name)).join(', '))+'">'+
+        '<span>'+d+'</span></div>';
     }
     return html;
   }

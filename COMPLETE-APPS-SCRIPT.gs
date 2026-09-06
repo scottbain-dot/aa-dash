@@ -4906,6 +4906,8 @@ function apLetterForDate(iso) { return apLetterMap()[iso] || ''; }
 // School timezone — check-in times are Frankfurt wall-clock. Everything is
 // anchored here so it never depends on the script's or sheet's timezone.
 var AP_TZ = 'Europe/Berlin';
+// Where check-ins happen (for now — shown in the portal and on the calendar event).
+var AP_CHECKIN_LOCATION = 'PE Office';
 function apParseDateTime(iso, hhmm) {
   return Utilities.parseDate(String(iso) + ' ' + String(hhmm || '00:00'), AP_TZ, 'yyyy-MM-dd HH:mm');
 }
@@ -4998,13 +5000,19 @@ function handleGetBookingData(ss, athleteId) {
   try {
     athleteId = String(athleteId || '').trim();
     var checkins = apReadObjects(apEnsureCheckIns(ss));
+    var byId = {};
+    for (var k = 0; k < checkins.length; k++) byId[String(checkins[k].CheckIn_ID).trim()] = checkins[k];
     var bookings = apReadObjects(apEnsureBookings(ss));
-    var countBy = {}, mineByCi = {};
+    var countBy = {}, mineByCi = {}, mineBySeq = {};
     for (var b = 0; b < bookings.length; b++) {
       if (String(bookings[b].Status) !== 'booked') continue;
       var cid = String(bookings[b].CheckIn_ID).trim();
       countBy[cid] = (countBy[cid] || 0) + 1;
-      if (athleteId && String(bookings[b].Athlete_ID).trim() === athleteId) mineByCi[cid] = bookings[b].Booking_ID;
+      if (athleteId && String(bookings[b].Athlete_ID).trim() === athleteId) {
+        mineByCi[cid] = bookings[b].Booking_ID;
+        var sr = byId[cid];
+        if (sr) mineBySeq[String(sr.Seq)] = apDateStr(sr.Date);   // one booking per check-in (Seq)
+      }
     }
     var slots = [];
     for (var i = 0; i < checkins.length; i++) {
@@ -5015,13 +5023,14 @@ function handleGetBookingData(ss, athleteId) {
       var booked = countBy[id] || 0;
       var myB = mineByCi[id] || '';
       var dateStr = apDateStr(c.Date);
+      var lockedDate = (!myB && mineBySeq[String(c.Seq)]) ? mineBySeq[String(c.Seq)] : '';
       slots.push({
         id: id, seq: c.Seq, title: c.Title, date: dateStr,
         start: apTimeStr(c.Start), end: apTimeStr(c.End),
         format: c.Format || 'group', capacity: cap, booked: booked,
-        note: c.Notes || '', letter: apLetterForDate(dateStr),
-        myBookingId: myB,
-        status: myB ? 'booked' : (cap && booked >= cap ? 'full' : 'available')
+        note: c.Notes || '', letter: apLetterForDate(dateStr), location: AP_CHECKIN_LOCATION,
+        myBookingId: myB, lockedDate: lockedDate,
+        status: myB ? 'booked' : (lockedDate ? 'locked' : (cap && booked >= cap ? 'full' : 'available'))
       });
     }
     slots.sort(function (a, b2) { var ka = a.date + a.start, kb = b2.date + b2.start; return ka < kb ? -1 : ka > kb ? 1 : 0; });
@@ -5081,6 +5090,18 @@ function handleBookCheckIn(ss, athleteId, checkInId) {
       if (String(bookings[b].Athlete_ID).trim() === athleteId) existing = bookings[b];
     }
     if (existing) return { success: true, already: true, bookingId: existing.Booking_ID };
+    // One booking per check-in (Seq): block a second time-slot of the same check-in.
+    var seq = String(ci.Seq);
+    for (var s2 = 0; s2 < bookings.length; s2++) {
+      if (String(bookings[s2].Status) !== 'booked') continue;
+      if (String(bookings[s2].Athlete_ID).trim() !== athleteId) continue;
+      var otherCid = String(bookings[s2].CheckIn_ID).trim();
+      var other = null;
+      for (var z = 0; z < checkins.length; z++) { if (String(checkins[z].CheckIn_ID).trim() === otherCid) { other = checkins[z]; break; } }
+      if (other && String(other.Seq) === seq) {
+        return { success: false, error: 'You’re already booked for this check-in on ' + apDateStr(other.Date) + '. Cancel that first to change your time.' };
+      }
+    }
     var cap = Number(ci.Capacity) || 0;
     if (cap && count >= cap) return { success: false, error: 'That session is full.' };
     var athlete = apGetAthleteById(ss, athleteId);
@@ -5092,7 +5113,11 @@ function handleBookCheckIn(ss, athleteId, checkInId) {
       var cal = apCheckinCalendar();
       var start = apParseDateTime(dateStr, apTimeStr(ci.Start));
       var end = apParseDateTime(dateStr, apTimeStr(ci.End));
-      var opts = { description: 'Athlete Academy check-in.' + (ci.Notes ? ' (' + ci.Notes + ')' : ''), sendInvites: true };
+      var opts = {
+        description: 'Athlete Academy check-in with Mr Bain.' + (ci.Notes ? ' (' + ci.Notes + ')' : '') + '\n\nMeet in the ' + AP_CHECKIN_LOCATION + '.',
+        location: AP_CHECKIN_LOCATION,
+        sendInvites: true
+      };
       if (email) opts.guests = email;
       var ev = cal.createEvent(String(ci.Title) + (name ? ' — ' + name : ''), start, end, opts);
       eventId = ev.getId();
