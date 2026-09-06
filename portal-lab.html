@@ -3283,6 +3283,12 @@
     font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-mute); cursor: pointer; transition: all 0.15s;
   }
   .cal-tab.active { background: var(--surface); color: var(--burgundy); box-shadow: 0 1px 3px rgba(26,20,17,0.08); }
+  .book-switch { display: flex; gap: 4px; background: var(--cream); padding: 4px; border-radius: 12px; margin-bottom: 14px; }
+  .book-switch-btn {
+    flex: 1; border: none; background: transparent; padding: 11px 12px; border-radius: 9px;
+    font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 700; color: var(--ink-mute); cursor: pointer; transition: all 0.15s;
+  }
+  .book-switch-btn.active { background: var(--burgundy); color: #fff; box-shadow: 0 1px 3px rgba(26,20,17,0.12); }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
   .cal-dayhead {
     font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
@@ -7677,6 +7683,7 @@
     group:     { label:'Group Session',    cls:'type-group' }
   };
   let calMonth = null;   // active calendar month index (0–11)
+  let bookActiveKey = null;   // active check-in group key (switch at the top of Book)
 
   function renderBook(){
     const view = document.getElementById('view-book');
@@ -7696,19 +7703,23 @@
     });
     const keys = Object.keys(groups).sort((a,b) =>
       (Number(groups[a].seq||0) - Number(groups[b].seq||0)) || (a<b?-1:a>b?1:0));
-    const cards = keys.map(k => {
-      const g = groups[k];
-      return '<div class="card book-card">'+
+    if(keys.indexOf(bookActiveKey) < 0) bookActiveKey = keys[0];
+    const shortName = g => (String(g.title||'').split('·')[0].trim()) || ('Check-in '+(g.seq||''));
+    // A switch at the top when there's more than one check-in.
+    const sw = keys.length > 1 ? '<div class="book-switch" role="tablist">'+ keys.map(k =>
+      '<button class="book-switch-btn'+(k===bookActiveKey?' active':'')+'" onclick="pickCheckin(\''+k+'\')">'+esc(shortName(groups[k]))+'</button>'
+    ).join('') + '</div>' : '';
+    const g = groups[bookActiveKey];
+    const card = g ? '<div class="card book-card">'+
         '<p class="card-eyebrow">Coach check-ins</p>'+
         '<h2 class="section-heading">'+esc(g.title || 'Book a session')+'</h2>'+
         bookAboutHTML(g)+
         '<div class="slotList" style="margin-top:14px;">'+ g.items.map(it => slotCardHTML(it.s, it.i)).join('') +'</div>'+
-      '</div>';
-    }).join('');
+      '</div>' : '';
     view.innerHTML =
       '<div class="book-grid">'+
         '<div class="book-col">'+
-          cards+
+          sw + card+
           '<button class="book-msg-btn" onclick="messageCoach()"><i class="ti ti-message-circle" aria-hidden="true"></i> Message Mr Bain</button>'+
           '<div class="booking-note">New check-in dates open about two weeks ahead.</div>'+
         '</div>'+
@@ -7796,6 +7807,8 @@
   }
   function pickCalMonth(m){ calMonth = m; document.getElementById('view-book') && renderBook(); }
   window.pickCalMonth = pickCalMonth;
+  function pickCheckin(k){ bookActiveKey = k; document.getElementById('view-book') && renderBook(); window.scrollTo(0,0); }
+  window.pickCheckin = pickCheckin;
 
   function calGridHTML(monthIdx){
     const bk = state.booking;
