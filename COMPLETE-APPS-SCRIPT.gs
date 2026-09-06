@@ -5620,6 +5620,106 @@ function authorizeBooking() {
   return msg;
 }
 
+// ── Check-in attendance register + report ─────────────────────────────────
+// Grade number from "Grade"/"Year_Group" values like 11, "11", "G11", "Grade 11".
+function apGradeNum_(v) {
+  var s = String(v == null ? '' : v).toUpperCase().replace(/GRADE|YEAR|GROUP|^G/g, ' ');
+  var m = s.match(/\d+/);
+  return m ? Number(m[0]) : null;
+}
+function apEnsureCheckinRegister(ss) {
+  var sheet = ss.getSheetByName('CheckIn_Register');
+  if (!sheet) {
+    sheet = ss.insertSheet('CheckIn_Register');
+    sheet.getRange(1, 1, 1, 8).setValues([['Seq', 'Check-in', 'Date', 'Time', 'Name', 'Email', 'Booking_ID', 'Attendance']]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+// Build the attendance register from current bookings. Preserves any attendance
+// already marked (matched by Booking_ID), so it's safe to re-run after new
+// bookings or cancellations. Cancelled bookings drop off.
+function buildCheckinRegister() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; }
+  var reg = apEnsureCheckinRegister(ss);
+  var prev = {};
+  apReadObjects(reg).forEach(function (r) { if (r.Booking_ID) prev[String(r.Booking_ID).trim()] = r.Attendance || ''; });
+  var checkins = apReadObjects(apEnsureCheckIns(ss));
+  var ciById = {}; checkins.forEach(function (c) { ciById[String(c.CheckIn_ID).trim()] = c; });
+  var rows = [];
+  apReadObjects(apEnsureBookings(ss)).forEach(function (b) {
+    if (String(b.Status) !== 'booked') return;
+    var ci = ciById[String(b.CheckIn_ID).trim()]; if (!ci) return;
+    var nm = apAthleteName(apGetAthleteById(ss, b.Athlete_ID), b.Athlete_ID);
+    rows.push([ci.Seq, ci.Title, apDateStr(ci.Date), apTimeStr(ci.Start), nm, b.Athlete_Email || '', b.Booking_ID, prev[String(b.Booking_ID).trim()] || '']);
+  });
+  rows.sort(function (a, c) { var ka = a[2] + a[3] + a[0], kb = c[2] + c[3] + c[0]; return ka < kb ? -1 : ka > kb ? 1 : 0; });
+  var last = reg.getLastRow(); if (last > 1) reg.getRange(2, 1, last - 1, 8).clearContent();
+  if (rows.length) {
+    reg.getRange(2, 3, rows.length, 2).setNumberFormat('@');   // Date/Time as text
+    reg.getRange(2, 1, rows.length, 8).setValues(rows);
+    var rule = SpreadsheetApp.newDataValidation().requireValueInList(['Attended', 'No-show'], true).setAllowInvalid(true).build();
+    reg.getRange(2, 8, rows.length, 1).setDataValidation(rule);
+  }
+  if (ui) ui.alert('Check-in register', 'Built the register with ' + rows.length + ' booking(s) on the "CheckIn_Register" tab.\n\nMark each one Attended or No-show in the Attendance column, then run "Check-in report".', ui.ButtonSet.OK);
+}
+// Summarise attendance per check-in: seen, no-show, unmarked-past, still-to-come,
+// and Grade 10-12 athletes who never booked. Writes a "CheckIn_Report" tab.
+function checkinReport() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; }
+  var att = {};
+  apReadObjects(apEnsureCheckinRegister(ss)).forEach(function (r) { if (r.Booking_ID) att[String(r.Booking_ID).trim()] = String(r.Attendance || '').trim(); });
+  var checkins = apReadObjects(apEnsureCheckIns(ss));
+  var ciById = {}, seqTitle = {};
+  checkins.forEach(function (c) { ciById[String(c.CheckIn_ID).trim()] = c; seqTitle[String(c.Seq)] = String(c.Title); });
+  var now = new Date();
+  var bySeq = {};
+  apReadObjects(apEnsureBookings(ss)).forEach(function (b) {
+    if (String(b.Status) !== 'booked') return;
+    var ci = ciById[String(b.CheckIn_ID).trim()]; if (!ci) return;
+    var seq = String(ci.Seq);
+    var g = bySeq[seq] = bySeq[seq] || { ids: {}, attended: [], noshow: [], toCome: [], unmarked: [] };
+    g.ids[String(b.Athlete_ID).trim()] = true;
+    var nm = apAthleteName(apGetAthleteById(ss, b.Athlete_ID), b.Athlete_ID);
+    var a = att[String(b.Booking_ID).trim()] || '';
+    var start = null; try { start = apParseDateTime(apDateStr(ci.Date), apTimeStr(ci.Start)); } catch (e) {}
+    if (a === 'Attended') g.attended.push(nm);
+    else if (a === 'No-show') g.noshow.push(nm);
+    else if (start && start > now) g.toCome.push(nm + ' (' + apDateStr(ci.Date) + ')');
+    else g.unmarked.push(nm + ' (' + apDateStr(ci.Date) + ')');
+  });
+  // Roster: Grades 10-12 only.
+  var roster = [];
+  var ath = ss.getSheetByName('Athletes');
+  if (ath) {
+    apReadObjects(ath).forEach(function (r) {
+      var gr = apGradeNum_(r.Grade); if (gr == null) gr = apGradeNum_(r.Year_Group);
+      if (gr === 10 || gr === 11 || gr === 12) roster.push({ id: String(r.Athlete_ID).trim(), name: apAthleteName(r, r.Athlete_ID) });
+    });
+  }
+  var rep = ss.getSheetByName('CheckIn_Report'); if (rep) rep.clear(); else rep = ss.insertSheet('CheckIn_Report');
+  var out = [], summary = [];
+  Object.keys(bySeq).sort().forEach(function (seq) {
+    var g = bySeq[seq], title = seqTitle[seq] || ('Check-in ' + seq);
+    var notBooked = roster.filter(function (p) { return !g.ids[p.id]; }).map(function (p) { return p.name; });
+    out.push([title, '']);
+    out.push(['  Attended (' + g.attended.length + ')', g.attended.join(', ')]);
+    out.push(['  No-show (' + g.noshow.length + ')', g.noshow.join(', ')]);
+    out.push(['  Unmarked, past (' + g.unmarked.length + ')', g.unmarked.join(', ')]);
+    out.push(['  Still to come (' + g.toCome.length + ')', g.toCome.join(', ')]);
+    out.push(['  Not booked, G10-12 (' + notBooked.length + ')', notBooked.join(', ')]);
+    out.push(['', '']);
+    summary.push(title + ': ' + g.attended.length + ' seen · ' + g.noshow.length + ' no-show · ' + g.unmarked.length + ' unmarked · ' + g.toCome.length + ' to come · ' + notBooked.length + ' not booked');
+  });
+  if (!out.length) out.push(['No bookings yet.', '']);
+  rep.getRange(1, 1, out.length, 2).setValues(out);
+  rep.setColumnWidth(1, 230); rep.setColumnWidth(2, 620);
+  if (ui) ui.alert('Check-in report', (summary.length ? summary.join('\n') : 'No bookings yet.') + '\n\nFull breakdown is on the "CheckIn_Report" tab.', ui.ButtonSet.OK);
+}
+
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Athlete Academy')
@@ -5630,6 +5730,8 @@ function onOpen() {
     .addItem('Set up / authorize booking', 'authorizeBooking')
     .addItem('Set up booking sync (auto, run once)', 'setupBookingSync')
     .addItem('Cancel a check-in booking', 'coachCancelBooking')
+    .addItem('Build check-in register', 'buildCheckinRegister')
+    .addItem('Check-in report (seen / no-show / not booked)', 'checkinReport')
     .addItem('Add Check-in 2 slots (1:1)', 'seedCheckInTwo')
     .addItem('Reserve my check-in times (calendar holds)', 'reserveCheckinTimes')
     .addItem('Sync check-in cancellations now', 'syncCheckinCancellations')
