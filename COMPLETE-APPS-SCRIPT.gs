@@ -4971,6 +4971,53 @@ function resetCheckIns() {
   apSeedCheckInOne(sheet);
   try { ui.alert('Check-in slots reset', 'Times re-seeded as text (Europe/Berlin). Reload the portal to see the corrected times.', ui.ButtonSet.OK); } catch (e) {}
 }
+
+// Minute helpers for slicing a time window into 15-minute slots.
+function apHmToMin_(hm) { var p = String(hm).split(':'); return (Number(p[0]) || 0) * 60 + (Number(p[1]) || 0); }
+function apMinToHm_(m) { var h = Math.floor(m / 60), mm = m % 60; return (h < 10 ? '0' : '') + h + ':' + (mm < 10 ? '0' : '') + mm; }
+
+// Check-in 2 — 15-minute one-to-one slots (Seq 2). Each window is sliced into
+// 15-min, capacity-1 slots. Appended after the existing rows.
+function apSeedCheckInTwo(sheet) {
+  var windows = [
+    { date: '2026-09-21', start: '11:40', end: '12:30', note: 'E-day lunch' },
+    { date: '2026-09-22', start: '15:30', end: '17:00', note: 'After school' },
+    { date: '2026-09-24', start: '07:15', end: '08:15', note: 'Before school' },
+    { date: '2026-09-25', start: '11:40', end: '12:30', note: 'A-day lunch' },
+    { date: '2026-09-28', start: '11:40', end: '12:30', note: 'B-day lunch' },
+    { date: '2026-09-29', start: '15:30', end: '17:00', note: 'After school' },
+    { date: '2026-10-01', start: '07:15', end: '08:15', note: 'Before school' }
+  ];
+  var rows = [];
+  windows.forEach(function (w) {
+    var t = apHmToMin_(w.start), endMin = apHmToMin_(w.end);
+    while (t + 15 <= endMin) {
+      var s = apMinToHm_(t), e = apMinToHm_(t + 15);
+      var id = 'ci2_' + w.date.replace(/-/g, '').slice(4) + '_' + s.replace(':', '');
+      rows.push([id, 2, 'Check-in 2 · Your program', w.date, s, e, 'individual', 1, 'open', w.note]);
+      t += 15;
+    }
+  });
+  if (!rows.length) return 0;
+  var startRow = sheet.getLastRow() + 1;
+  sheet.getRange(startRow, 4, rows.length, 3).setNumberFormat('@');   // Date/Start/End as text
+  sheet.getRange(startRow, 1, rows.length, 10).setValues(rows);
+  return rows.length;
+}
+
+// Menu: add the Check-in 2 one-to-one slots. Idempotent — refuses if Seq 2 rows
+// already exist (delete them first to re-seed).
+function seedCheckInTwo() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; }
+  var sheet = apEnsureCheckIns(ss);
+  var rows = apReadObjects(sheet);
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Seq) === '2') { if (ui) ui.alert('Check-in 2', 'Check-in 2 slots already exist. Delete those rows first if you want to re-seed.', ui.ButtonSet.OK); return; }
+  }
+  var n = apSeedCheckInTwo(sheet);
+  if (ui) ui.alert('Check-in 2', 'Added ' + n + ' one-to-one slots (15 min). Now run "Reserve my check-in times" to put the holds on your calendar.', ui.ButtonSet.OK);
+}
 function apEnsureBookings(ss) {
   var sheet = ss.getSheetByName('Bookings');
   if (!sheet) {
@@ -5583,6 +5630,7 @@ function onOpen() {
     .addItem('Set up / authorize booking', 'authorizeBooking')
     .addItem('Set up booking sync (auto, run once)', 'setupBookingSync')
     .addItem('Cancel a check-in booking', 'coachCancelBooking')
+    .addItem('Add Check-in 2 slots (1:1)', 'seedCheckInTwo')
     .addItem('Reserve my check-in times (calendar holds)', 'reserveCheckinTimes')
     .addItem('Sync check-in cancellations now', 'syncCheckinCancellations')
     .addItem('Debug booking sync (log)', 'debugBookingSync')
