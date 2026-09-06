@@ -7671,8 +7671,8 @@
     const bk = state.booking;
     if(!bk){
       view.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-calendar-plus" aria-hidden="true"></i></div>'+
-        '<h2 class="empty-state-title">Booking opens <em>later this term</em>.</h2>'+
-        '<p class="empty-state-text">Soon you\'ll book check-ins, technique reviews and testing days with your coach right here, and see them on your own calendar. Nothing to do yet — check back later this term.</p></div>';
+        '<h2 class="empty-state-title">Loading your <em>check-ins</em>…</h2>'+
+        '<p class="empty-state-text">One moment while we fetch your booking times.</p></div>';
       return;
     }
     if(calMonth==null) calMonth = (bk.months && bk.months[0] != null) ? bk.months[0] : new Date().getMonth();
