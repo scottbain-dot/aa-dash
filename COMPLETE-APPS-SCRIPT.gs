@@ -5249,6 +5249,43 @@ function syncCheckinCancellations() {
   return msg;
 }
 
+// Diagnostic: for every booked slot, log what the calendar reports — the stored
+// event id, what getEventById returns, and the raw REST view (status of each
+// matching instance). Run from the editor (or the menu), then read the
+// Execution log. Tells us exactly why a cancel is or isn't detected.
+function debugBookingSync() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var calId = apCheckinCalendarId();
+  Logger.log('Calendar id: ' + calId);
+  var rows = apReadObjects(apEnsureBookings(ss));
+  var any = false;
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Status) !== 'booked') continue;
+    any = true;
+    var evId = String(rows[i].Calendar_Event_ID || '').trim();
+    Logger.log('— Booking ' + rows[i].Booking_ID + ' | athlete ' + rows[i].Athlete_ID + ' | eventId: ' + evId);
+    if (!evId) { Logger.log('   (no event id stored — nothing to verify)'); continue; }
+    try {
+      var ev = apCheckinCalendar().getEventById(evId);
+      Logger.log('   getEventById: ' + (ev === null ? 'null' : ('object, title="' + ev.getTitle() + '"')));
+    } catch (e) { Logger.log('   getEventById threw: ' + e); }
+    var url = 'https://www.googleapis.com/calendar/v3/calendars/' +
+      encodeURIComponent(calId) + '/events?showDeleted=true&maxResults=25&iCalUID=' + encodeURIComponent(evId);
+    try {
+      var resp = UrlFetchApp.fetch(url, { method: 'get', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
+      Logger.log('   REST code: ' + resp.getResponseCode());
+      var body = JSON.parse(resp.getContentText());
+      if (body && body.error) Logger.log('   REST error: ' + JSON.stringify(body.error));
+      var items = (body && body.items) || [];
+      Logger.log('   REST items: ' + items.length);
+      for (var k = 0; k < items.length; k++) Logger.log('     item status=' + items[k].status + ' id=' + items[k].id);
+    } catch (e2) { Logger.log('   REST threw: ' + e2); }
+    Logger.log('   → apEventIsGone_ = ' + apEventIsGone_(calId, evId));
+  }
+  if (!any) Logger.log('No booked rows found.');
+  try { SpreadsheetApp.getUi().alert('Debug booking sync', 'Done — open Extensions ▸ Apps Script ▸ Executions (or View ▸ Logs) to read the log.', SpreadsheetApp.getUi().ButtonSet.OK); } catch (e3) {}
+}
+
 // Run ONCE (Athlete Academy menu) to install the background sweep so
 // calendar-side cancels flow back to the portal automatically. Idempotent —
 // won't double-install.
@@ -5291,6 +5328,7 @@ function onOpen() {
     .addItem('Set up / authorize booking', 'authorizeBooking')
     .addItem('Set up booking sync (auto, run once)', 'setupBookingSync')
     .addItem('Sync check-in cancellations now', 'syncCheckinCancellations')
+    .addItem('Debug booking sync (log)', 'debugBookingSync')
     .addItem('Reset check-in slots (fix times)', 'resetCheckIns')
     .addToUi();
 }
