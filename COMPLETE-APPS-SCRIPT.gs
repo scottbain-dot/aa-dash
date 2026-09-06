@@ -4990,6 +4990,12 @@ function apCheckinCalendar() {
   if (id) { try { var c = CalendarApp.getCalendarById(id); if (c) return c; } catch (e2) {} }
   return CalendarApp.getDefaultCalendar();
 }
+// Just the calendar id string (used by the REST reconcile below).
+function apCheckinCalendarId() {
+  var id = '';
+  try { id = PropertiesService.getScriptProperties().getProperty('CHECKIN_CALENDAR_ID') || ''; } catch (e) {}
+  return id || AP_CHECKIN_CALENDAR_ID || 'primary';
+}
 function apCoachEmail() {
   try { var e = PropertiesService.getScriptProperties().getProperty('COACH_EMAIL'); if (e) return e; } catch (e) {}
   try { return Session.getEffectiveUser().getEmail(); } catch (e2) { return ''; }
@@ -5171,26 +5177,55 @@ function handleCancelBooking(ss, athleteId, bookingId) {
 //   onlyAthleteId — if set, only that athlete's booked rows are checked (cheap;
 //   used on portal open so a student's own view is always correct without
 //   waiting for the background sweep).
+//
+// Is this booking's calendar event gone? We query the Calendar REST API by
+// iCalUID with showDeleted=true (using scopes the script already holds — no
+// advanced service to enable). This is deliberate: CalendarApp.getEventById()
+// returns a ghost object for events cancelled from a synced client (e.g. Apple
+// Calendar) instead of null, so it misses those. The REST view reports the real
+// status. Returns true ONLY on a definitive "deleted/cancelled" answer; any
+// error or ambiguous response returns false so a booking is never cancelled by
+// mistake.
+function apEventIsGone_(calId, iCalUid) {
+  var uid = String(iCalUid || '').trim();
+  if (!uid || !calId) return false;
+  var url = 'https://www.googleapis.com/calendar/v3/calendars/' +
+    encodeURIComponent(calId) + '/events?showDeleted=true&maxResults=25&iCalUID=' +
+    encodeURIComponent(uid);
+  var resp;
+  try {
+    resp = UrlFetchApp.fetch(url, {
+      method: 'get',
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      muteHttpExceptions: true
+    });
+  } catch (e) { return false; }            // network error — never cancel on error
+  if (resp.getResponseCode() !== 200) return false;   // auth/other — leave as-is
+  var body;
+  try { body = JSON.parse(resp.getContentText()); } catch (e2) { return false; }
+  var items = (body && body.items) || [];
+  if (!items.length) return true;          // no such event on this calendar → gone
+  for (var i = 0; i < items.length; i++) { // any live instance → still booked
+    if (items[i].status !== 'cancelled') return false;
+  }
+  return true;                             // every matching instance is cancelled
+}
 function apReconcileBookings(ss, onlyAthleteId) {
   var out = { checked: 0, cancelled: 0 };
   try {
     onlyAthleteId = String(onlyAthleteId || '').trim();
     var sheet = apEnsureBookings(ss);
     var rows = apReadObjects(sheet);
-    var cal = null;
-    try { cal = apCheckinCalendar(); } catch (e) { return out; }
-    if (!cal) return out;
+    var calId = apCheckinCalendarId();
+    if (!calId) return out;
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       if (String(r.Status) !== 'booked') continue;
       if (onlyAthleteId && String(r.Athlete_ID).trim() !== onlyAthleteId) continue;
       var evId = String(r.Calendar_Event_ID || '').trim();
       if (!evId) continue;                 // no event to verify — leave as-is
-      var gone = false;
-      try { gone = (cal.getEventById(evId) === null); }
-      catch (e2) { continue; }             // transient/auth error — never cancel on error
       out.checked++;
-      if (gone) {
+      if (apEventIsGone_(calId, evId)) {
         apUpdateRow(sheet, r.__row, { 'Status': 'cancelled', 'Updated': new Date() });
         out.cancelled++;
         try {
