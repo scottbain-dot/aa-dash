@@ -5370,17 +5370,16 @@ function checkCalendarApi() {
 // Run ONCE (Athlete Academy menu) to install the background sweep so
 // calendar-side cancels flow back to the portal automatically. Idempotent —
 // won't double-install.
+var AP_SYNC_MINUTES = 5;   // backstop sweep cadence (the portal also syncs on open)
 function setupBookingSync() {
   var ui; try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; }
+  // Remove any existing sweep trigger so re-running updates the cadence.
   var existing = ScriptApp.getProjectTriggers();
   for (var i = 0; i < existing.length; i++) {
-    if (existing[i].getHandlerFunction() === 'syncCheckinCancellations') {
-      if (ui) ui.alert('Booking sync', 'Already set up — it runs every 10 minutes.', ui.ButtonSet.OK);
-      return;
-    }
+    if (existing[i].getHandlerFunction() === 'syncCheckinCancellations') ScriptApp.deleteTrigger(existing[i]);
   }
-  ScriptApp.newTrigger('syncCheckinCancellations').timeBased().everyMinutes(10).create();
-  if (ui) ui.alert('Booking sync', 'Done. Calendar cancellations now sync to the portal every 10 minutes.', ui.ButtonSet.OK);
+  ScriptApp.newTrigger('syncCheckinCancellations').timeBased().everyMinutes(AP_SYNC_MINUTES).create();
+  if (ui) ui.alert('Booking sync', 'Done. Calendar cancellations now sweep to the portal every ' + AP_SYNC_MINUTES + ' minutes (and instantly when a student opens the portal, once the web app is redeployed).', ui.ButtonSet.OK);
 }
 
 // Run this ONCE from the editor (or the Athlete Academy menu) after adding the
