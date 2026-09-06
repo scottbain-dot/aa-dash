@@ -4999,6 +4999,10 @@ function apCoachEmail() {
 function handleGetBookingData(ss, athleteId) {
   try {
     athleteId = String(athleteId || '').trim();
+    // Sync this student's own bookings against the calendar first, so a coach's
+    // calendar-side cancel shows up immediately in their view (the background
+    // sweep keeps everyone else's capacity counts fresh).
+    if (athleteId) apReconcileBookings(ss, athleteId);
     var checkins = apReadObjects(apEnsureCheckIns(ss));
     var byId = {};
     for (var k = 0; k < checkins.length; k++) byId[String(checkins[k].CheckIn_ID).trim()] = checkins[k];
@@ -5114,7 +5118,7 @@ function handleBookCheckIn(ss, athleteId, checkInId) {
       var start = apParseDateTime(dateStr, apTimeStr(ci.Start));
       var end = apParseDateTime(dateStr, apTimeStr(ci.End));
       var opts = {
-        description: 'Athlete Academy check-in with Mr Bain.' + (ci.Notes ? ' (' + ci.Notes + ')' : '') + '\n\nMeet in the ' + AP_CHECKIN_LOCATION + '.',
+        description: 'Athlete Academy check-in with Mr Bain.' + (ci.Notes ? ' (' + ci.Notes + ')' : '') + '\n\nMeet in the ' + AP_CHECKIN_LOCATION + '.\n\nTo change or cancel, use the Athlete Academy portal. Removing this event from your own calendar does NOT cancel your booking.',
         location: AP_CHECKIN_LOCATION,
         sendInvites: true
       };
@@ -5157,6 +5161,75 @@ function handleCancelBooking(ss, athleteId, bookingId) {
   } catch (error) { return { success: false, error: error.toString() }; }
 }
 
+// ── Calendar → sheet sync ────────────────────────────────────────────────
+// The Bookings sheet is the source of truth; the calendar event is a side
+// effect. This reconciles the OTHER direction: if a booked event has been
+// deleted from the check-ins calendar (e.g. the coach cancelled a student
+// straight from Google Calendar), mark that booking cancelled here so the slot
+// frees up and the portal stops showing it. Google already emails the guest a
+// cancellation when the event is deleted, so the student is notified too.
+//   onlyAthleteId — if set, only that athlete's booked rows are checked (cheap;
+//   used on portal open so a student's own view is always correct without
+//   waiting for the background sweep).
+function apReconcileBookings(ss, onlyAthleteId) {
+  var out = { checked: 0, cancelled: 0 };
+  try {
+    onlyAthleteId = String(onlyAthleteId || '').trim();
+    var sheet = apEnsureBookings(ss);
+    var rows = apReadObjects(sheet);
+    var cal = null;
+    try { cal = apCheckinCalendar(); } catch (e) { return out; }
+    if (!cal) return out;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (String(r.Status) !== 'booked') continue;
+      if (onlyAthleteId && String(r.Athlete_ID).trim() !== onlyAthleteId) continue;
+      var evId = String(r.Calendar_Event_ID || '').trim();
+      if (!evId) continue;                 // no event to verify — leave as-is
+      var gone = false;
+      try { gone = (cal.getEventById(evId) === null); }
+      catch (e2) { continue; }             // transient/auth error — never cancel on error
+      out.checked++;
+      if (gone) {
+        apUpdateRow(sheet, r.__row, { 'Status': 'cancelled', 'Updated': new Date() });
+        out.cancelled++;
+        try {
+          var coach = apCoachEmail();
+          var nm = apAthleteName(apGetAthleteById(ss, r.Athlete_ID), r.Athlete_ID);
+          if (coach) MailApp.sendEmail(coach, 'Check-in slot freed (calendar cancel): ' + nm,
+            nm + '’s booking was cancelled from the calendar, so the slot has been freed in the portal.');
+        } catch (e3) {}
+      }
+    }
+  } catch (error) {}
+  return out;
+}
+
+// Menu / trigger entry point: full sweep across every booking.
+function syncCheckinCancellations() {
+  var res = apReconcileBookings(SpreadsheetApp.getActiveSpreadsheet(), '');
+  var msg = 'Checked ' + res.checked + ' booked slot(s). Freed ' + res.cancelled + ' that were cancelled on the calendar.';
+  Logger.log(msg);
+  try { SpreadsheetApp.getUi().alert('Sync check-in cancellations', msg, SpreadsheetApp.getUi().ButtonSet.OK); } catch (e) {}
+  return msg;
+}
+
+// Run ONCE (Athlete Academy menu) to install the background sweep so
+// calendar-side cancels flow back to the portal automatically. Idempotent —
+// won't double-install.
+function setupBookingSync() {
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; }
+  var existing = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < existing.length; i++) {
+    if (existing[i].getHandlerFunction() === 'syncCheckinCancellations') {
+      if (ui) ui.alert('Booking sync', 'Already set up — it runs every 10 minutes.', ui.ButtonSet.OK);
+      return;
+    }
+  }
+  ScriptApp.newTrigger('syncCheckinCancellations').timeBased().everyMinutes(10).create();
+  if (ui) ui.alert('Booking sync', 'Done. Calendar cancellations now sync to the portal every 10 minutes.', ui.ButtonSet.OK);
+}
+
 // Run this ONCE from the editor (or the Athlete Academy menu) after adding the
 // booking code. It touches Calendar + Gmail, which forces Google's permission
 // screen to appear so the web app can create events and email the coach. It also
@@ -5181,6 +5254,8 @@ function onOpen() {
     .addItem('Fix email chips → plain text', 'flattenEmailChips')
     .addItem('Check roster for problems', 'checkRoster')
     .addItem('Set up / authorize booking', 'authorizeBooking')
+    .addItem('Set up booking sync (auto, run once)', 'setupBookingSync')
+    .addItem('Sync check-in cancellations now', 'syncCheckinCancellations')
     .addItem('Reset check-in slots (fix times)', 'resetCheckIns')
     .addToUi();
 }

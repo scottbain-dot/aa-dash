@@ -7731,7 +7731,7 @@
     else foot = '<button class="book-btn" onclick="event.stopPropagation(); bookSlot('+i+')">Book</button>';
     let sub = '';
     if(s.status==='booked'){
-      sub = '<div class="slot-booked-note"><i class="ti ti-check" aria-hidden="true"></i> <strong>Booked</strong> · Mr Bain · '+esc(s.location||'PE Office')+'. It’s on your Google Calendar — accept the email invite. Tap to cancel.</div>';
+      sub = '<div class="slot-booked-note"><i class="ti ti-check" aria-hidden="true"></i> <strong>Booked</strong> · Mr Bain · '+esc(s.location||'PE Office')+'. It’s on your Google Calendar — accept the email invite. <strong>Tap here to cancel</strong> — removing it from your own calendar won’t cancel it.</div>';
     } else if(s.status==='locked' && s.lockedDate){
       sub = '<div class="slot-locked-note">You’re booked for this check-in on <strong>'+esc(dowShort(s.lockedDate)+' '+dayNum(s.lockedDate)+' '+monShort(s.lockedDate))+'</strong>. Cancel that to switch time.</div>';
     } else if(s.status==='available' && spots!=null){
