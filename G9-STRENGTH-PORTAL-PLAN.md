@@ -18,7 +18,7 @@ The current portal is a "teacher unlocks, student executes" machine. The G10–1
 
 | Stage | What they're doing | What the portal is | How it opens |
 |---|---|---|---|
-| **1 · Intro to Training** | Learning how a session works, how the gym works, and the six foundation movements at bodyweight, introduced two per session as a contrast (push vs pull, single vs double leg, horizontal vs vertical) and then cycled | Two things: a **Board** you project in the gym (today's session, no login), and a **classroom portal** used every 3–4 gym sessions (passport, pattern videos and criteria, self-check, reflection). No laptops in the gym | Everyone starts here |
+| **1 · Intro to Training** | Learning how a session works, how the gym works, and the six foundation movements at bodyweight, in alternating **Push** and **Pull** sessions, two patterns introduced per session, then cycled | Two things: a **Board** you project in the gym (today's session, no login), and a **classroom portal** used every 3–4 gym sessions (passport, pattern videos and criteria, self-check, reflection). No laptops in the gym | Everyone starts here |
 | **2 · Foundations** | Running the Foundation program (full body A, full body B, athletic basics), levelling up patterns, loaded work pattern by pattern | A workout portal: the full six-part EXOS session map, this week's sessions, Workout Mode, swaps, film and test flows | Teacher marks the unit complete, for the class or per student. Stamps do not gate it |
 | **3 · My Program** | Building and running their own repeating week, in the same shape as the academy | A program builder: phase × goal builder, weekly template, PBs | Teacher opens it per student from admin ("Ready to build"). The portal shows a readiness signal to help the call |
 
@@ -30,9 +30,11 @@ The current portal is a "teacher unlocks, student executes" machine. The G10–1
 
 ## 3. The Intro to Training unit (Stage 1)
 
-**Same shape every gym session: Prep → Move → Finish.** Prep merges pillar prep and movement prep as "warm up". Move is the patterns introduced so far, at bodyweight. Finish is a short cool down. Jump-and-land work sits inside Prep and a finisher inside Finish from Block 2, without naming them. The full six-part EXOS map waits for Foundations.
+**Sessions alternate Push and Pull, and every session has the same four blocks:** Warm up (game, World's Greatest Stretch, a plyo, prehab), Primary lifts (one lower, one upper), Accessory (two or three), Extras. This is the shape of last year's session sheets, and it maps onto EXOS: Warm up is pillar and movement prep plus plyos, Primary and Accessory are strength and power, Extras is energy systems and regeneration. The Board can reveal those names under each block when you want to teach the structure; they stay hidden in the intro.
 
-**Patterns come in two per gym session, as a contrast.** Each pair is taught around a movement idea: knees vs hips, push vs pull, single leg vs double leg, horizontal vs vertical, upper vs lower. All six are in by the end of Block 1 and practised in every session after. Block 2 keeps cycling all six but changes the lens each session, so the same movements get looked at through a new contrast.
+**The slot stays, the content progresses. That is the teaching.** In the intro sessions the Primary block reads "Hinge · technique practice and film"; by Block 3 the same slot reads "Kettlebell or hex-bar deadlift · 3 × 8 · 8/10". Students see the same session shape every time and watch what fills it change.
+
+**Patterns come in two per session.** Pull session: Hinge + Pull. Push session: Squat + Push. Then Press and Lunge join the Push sessions (Press as a primary, Lunge as accessory), and the Pull sessions add posterior chain and core accessories. Each session carries one idea in the header: hips back then pull; knees and push; horizontal vs vertical; single leg vs double leg.
 
 **No laptops in the gym.** You project the Board. Students use the portal in a classroom session after every three or four gym sessions, to consolidate. That is where the ideas (criteria, reading a prescription, RPE) are taught and self-checked, then applied in the next gym block.
 
@@ -40,9 +42,9 @@ The current portal is a "teacher unlocks, student executes" machine. The G10–1
 
 | Block | Gym sessions (Board) | Classroom session (portal) |
 |---|---|---|
-| **1 · The shape and the six patterns** | 1: gym rules, Prep → Move → Finish walked through, **Squat + Hinge** (lower body: knees vs hips). 2: + **Push + Pull** (upper body, horizontal: push vs pull). 3: + **Lunge + Press** (single leg vs double, vertical vs horizontal) | **A:** sign in, meet the passport and what a stamp means, watch the six pattern videos, self-check against the criteria, tick "gym rules" and "partner-checked a movement". Reflection: which pattern feels least controlled? |
-| **2 · All six, through a new lens each session** | 4: upper vs lower. 5: horizontal vs vertical. 6: single leg vs double leg. All six every session in a Foundation A / B rhythm. Jump-and-land enters Prep, a short finisher enters Finish, unnamed. Tempo and control as the cue of the block | **B:** reading a prescription (sets × reps, tempo, "last few reps hard"), choosing a weight, what RPE 7 feels like. Self-check all six. Ticks: "held a tempo", "can read a prescription". Reflection: which patterns are you ready to be stamped on? |
-| **3 · Loading and running it** | 7: first load on stamped patterns (goblet squat, KB deadlift). 8: effort and RPE in practice. 9: run the session yourself, you observe | **C:** log the last gym session in Workout Mode (first log). Rate it. Preview Foundations: the six-part map and "this week". Ticks: "logged a session", "rated a session". Unit complete |
+| **1 · The shape and the six patterns** | 1 **Pull:** gym rules, the four blocks walked through, **Hinge + Pull** as technique practice and film. 2 **Push:** **Squat + Push** the same way. 3 **Pull:** hinge and pull again with a little load in Accessory. 4 **Push:** **Press** joins as a primary, **Lunge** as accessory | **A:** sign in, meet the passport and what a stamp means, watch the six pattern videos, self-check against the criteria, tick "gym rules" and "partner-checked a movement". Reflection: which pattern feels least controlled? |
+| **2 · All six, a new idea each session** | Push and Pull alternate. Ideas in the header: horizontal vs vertical, single leg vs double leg, upper vs lower. Hops replace jumps in the warm up, prehab appears (shoulder taps, groin). Tempo and control as the cue of the block | **B:** reading a prescription (sets × reps, tempo, "last few reps hard"), choosing a weight, what RPE 7 feels like. Self-check all six. Ticks: "held a tempo", "can read a prescription". Reflection: which patterns are you ready to be stamped on? |
+| **3 · Loading and running it** | Push and Pull alternate. Primary lifts become "goblet squat or bar back squat · 3 × 8 · 8/10", with the heavier option only for stamped patterns. Effort and RPE in practice. Last session: run it yourself, you observe | **C:** log the last gym session in Workout Mode (first log). Rate it. Preview Foundations: the six-part map and "this week". Ticks: "logged a session", "rated a session". Unit complete |
 
 Three blocks is the default. Add a gym session to any block if a class needs it; the classroom session stays at the end of the block.
 
@@ -54,11 +56,13 @@ Three blocks is the default. Add a gym session to any block if a class needs it;
 
 Three home screens, one per stage. Same header, same passport, more ownership each time.
 
-**The Board (gym, projected, no login)**
-- Pick the session ("Block 1 · Gym 2") from a list
-- Three columns in big type: Prep, Move, Finish
-- Move lists today's patterns with one or two cues each and the bodyweight exercise name, plus the contrast being taught ("push vs pull")
-- Optional running clock
+**The Board (gym, projected, no login)** — working prototype with your four sessions: https://claude.ai/code/artifact/6a7eb5b1-518f-491b-9fb1-2fb760da7129
+- Pick the session from a list (or arrow keys)
+- Four lanes in big type: Warm up, Primary lifts, Accessory, Extras. Columns: exercise, sets × reps, note. New patterns tagged. "Technique practice and film" rows in gold
+- Today's idea in the header ("hips back, then pull")
+- Tap any exercise to teach it: full-screen card with the prescription, the cue, the six criteria for its pattern and where it sits on the level ladder
+- "Structure names" toggle reveals the EXOS names under each lane when you want to teach the shape
+- Clock on space bar
 
 **Stage 1 home (classroom)**
 - "Intro to Training · Classroom B · after gym sessions 4–6"
@@ -186,7 +190,7 @@ Today is 6 Sept 2026 and the unit is about to start. Block 1 needs only the Boar
 - L4 tier numbers and the Pull unit (§6)
 - Is a shared `strength-content.js` acceptable, or must each file stay fully self-contained?
 - The readiness signal the portal shows before "Ready to build" (draft: level 2 in four patterns and ten logged sessions)
-- The exact pairings and the order of lenses in Block 2 (draft above; the Board just reads whatever the content file says)
+- The exact session sequence (the Board reads whatever the content file says, so it is data, not code)
 - Gym sessions per block (three is the default) and whether every block ends in a classroom session
 - What goes on the Board beyond the session: a clock, a criteria slide per pattern, a rest timer
 - Whether classroom reflections are private to the student or visible to you in admin
