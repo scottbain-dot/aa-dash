@@ -5344,6 +5344,29 @@ function debugBookingSync() {
   return out;
 }
 
+// One-click check that the Calendar API is enabled for this script's project —
+// needs no booking. Hits the check-ins calendar once and reports the HTTP code.
+function checkCalendarApi() {
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e0) { ui = null; }
+  var calId = apCheckinCalendarId();
+  var url = 'https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(calId) + '/events?maxResults=1';
+  var msg;
+  try {
+    var resp = UrlFetchApp.fetch(url, { method: 'get', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
+    var code = resp.getResponseCode();
+    if (code === 200) {
+      msg = 'Calendar API is ON (HTTP 200).\n\nCalendar cancels will now sync to the portal.';
+    } else {
+      var detail = '';
+      try { detail = JSON.parse(resp.getContentText()).error.message; } catch (e1) { detail = String(resp.getContentText()).slice(0, 400); }
+      msg = 'Calendar API returned HTTP ' + code + ' — not usable yet.\n\n' + detail;
+    }
+  } catch (e2) { msg = 'Request failed: ' + e2; }
+  Logger.log(msg);
+  if (ui) ui.alert('Check Calendar API', msg, ui.ButtonSet.OK);
+  return msg;
+}
+
 // Run ONCE (Athlete Academy menu) to install the background sweep so
 // calendar-side cancels flow back to the portal automatically. Idempotent —
 // won't double-install.
@@ -5388,6 +5411,7 @@ function onOpen() {
     .addItem('Cancel a check-in booking', 'coachCancelBooking')
     .addItem('Sync check-in cancellations now', 'syncCheckinCancellations')
     .addItem('Debug booking sync (log)', 'debugBookingSync')
+    .addItem('Check Calendar API', 'checkCalendarApi')
     .addItem('Reset check-in slots (fix times)', 'resetCheckIns')
     .addToUi();
 }
