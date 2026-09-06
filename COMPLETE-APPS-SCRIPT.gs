@@ -5256,34 +5256,40 @@ function syncCheckinCancellations() {
 function debugBookingSync() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var calId = apCheckinCalendarId();
-  Logger.log('Calendar id: ' + calId);
+  var L = [];
+  var log = function (s) { L.push(s); Logger.log(s); };
+  log('Calendar: ' + calId);
   var rows = apReadObjects(apEnsureBookings(ss));
   var any = false;
   for (var i = 0; i < rows.length; i++) {
     if (String(rows[i].Status) !== 'booked') continue;
     any = true;
     var evId = String(rows[i].Calendar_Event_ID || '').trim();
-    Logger.log('— Booking ' + rows[i].Booking_ID + ' | athlete ' + rows[i].Athlete_ID + ' | eventId: ' + evId);
-    if (!evId) { Logger.log('   (no event id stored — nothing to verify)'); continue; }
+    log('');
+    log('Booking ' + rows[i].Booking_ID + ' (athlete ' + rows[i].Athlete_ID + ')');
+    log('  eventId: ' + (evId || '(none stored)'));
+    if (!evId) continue;
     try {
       var ev = apCheckinCalendar().getEventById(evId);
-      Logger.log('   getEventById: ' + (ev === null ? 'null' : ('object, title="' + ev.getTitle() + '"')));
-    } catch (e) { Logger.log('   getEventById threw: ' + e); }
+      log('  getEventById: ' + (ev === null ? 'null' : 'ghost object ("' + ev.getTitle() + '")'));
+    } catch (e) { log('  getEventById threw: ' + e); }
     var url = 'https://www.googleapis.com/calendar/v3/calendars/' +
       encodeURIComponent(calId) + '/events?showDeleted=true&maxResults=25&iCalUID=' + encodeURIComponent(evId);
     try {
       var resp = UrlFetchApp.fetch(url, { method: 'get', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
-      Logger.log('   REST code: ' + resp.getResponseCode());
+      log('  REST code: ' + resp.getResponseCode());
       var body = JSON.parse(resp.getContentText());
-      if (body && body.error) Logger.log('   REST error: ' + JSON.stringify(body.error));
+      if (body && body.error) log('  REST error: ' + JSON.stringify(body.error));
       var items = (body && body.items) || [];
-      Logger.log('   REST items: ' + items.length);
-      for (var k = 0; k < items.length; k++) Logger.log('     item status=' + items[k].status + ' id=' + items[k].id);
-    } catch (e2) { Logger.log('   REST threw: ' + e2); }
-    Logger.log('   → apEventIsGone_ = ' + apEventIsGone_(calId, evId));
+      log('  REST items: ' + items.length);
+      for (var k = 0; k < items.length; k++) log('    item status=' + items[k].status);
+    } catch (e2) { log('  REST threw: ' + e2); }
+    log('  => apEventIsGone_ = ' + apEventIsGone_(calId, evId));
   }
-  if (!any) Logger.log('No booked rows found.');
-  try { SpreadsheetApp.getUi().alert('Debug booking sync', 'Done — open Extensions ▸ Apps Script ▸ Executions (or View ▸ Logs) to read the log.', SpreadsheetApp.getUi().ButtonSet.OK); } catch (e3) {}
+  if (!any) log('No booked rows found.');
+  var out = L.join('\n');
+  try { SpreadsheetApp.getUi().alert('Debug booking sync', out, SpreadsheetApp.getUi().ButtonSet.OK); } catch (e3) {}
+  return out;
 }
 
 // Run ONCE (Athlete Academy menu) to install the background sweep so
