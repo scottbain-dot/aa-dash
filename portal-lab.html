@@ -3208,6 +3208,7 @@
      BOOK TAB — coach check-ins + month calendar (mockup-style)
      ============================ */
   .book-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .book-col { display: flex; flex-direction: column; gap: 14px; }
   @media (min-width: 920px) { .book-grid { grid-template-columns: 1.1fr 1fr; align-items: start; } }
   /* .book-card sits inside the shared .card frame — layout only */
 
@@ -3767,13 +3768,16 @@
     const booking = {
       calTitle: 'September 2026',
       calYear: 2026,
-      months: [8],
+      months: [8,9],
       title: 'Check-in 1 · Onboarding',
       slots: [
-        { id:'d1', title:'Check-in 1 · Onboarding', date:'2026-09-08', start:'15:30', end:'16:30', note:'After school',  format:'group', capacity:10, booked:3,  letter:'D', location:'PE Office', myBookingId:'',    lockedDate:'2026-09-10', status:'locked' },
-        { id:'d2', title:'Check-in 1 · Onboarding', date:'2026-09-09', start:'11:40', end:'12:30', note:'E-day lunch',   format:'group', capacity:10, booked:10, letter:'E', location:'PE Office', myBookingId:'',    lockedDate:'2026-09-10', status:'locked' },
-        { id:'d3', title:'Check-in 1 · Onboarding', date:'2026-09-10', start:'07:15', end:'08:15', note:'Before school', format:'group', capacity:10, booked:2,  letter:'F', location:'PE Office', myBookingId:'dbk', lockedDate:'', status:'booked' },
-        { id:'d4', title:'Check-in 1 · Onboarding', date:'2026-09-15', start:'15:30', end:'16:30', note:'After school',  format:'group', capacity:10, booked:1,  letter:'A', location:'PE Office', myBookingId:'',    lockedDate:'2026-09-10', status:'locked' }
+        { id:'d1', seq:1, title:'Check-in 1 · Onboarding', date:'2026-09-08', start:'15:30', end:'16:30', note:'After school',  format:'group', capacity:10, booked:3,  letter:'D', location:'PE Office', myBookingId:'',    lockedDate:'2026-09-10', status:'locked' },
+        { id:'d2', seq:1, title:'Check-in 1 · Onboarding', date:'2026-09-09', start:'11:40', end:'12:30', note:'E-day lunch',   format:'group', capacity:10, booked:10, letter:'E', location:'PE Office', myBookingId:'',    lockedDate:'2026-09-10', status:'locked' },
+        { id:'d3', seq:1, title:'Check-in 1 · Onboarding', date:'2026-09-10', start:'07:15', end:'08:15', note:'Before school', format:'group', capacity:10, booked:2,  letter:'F', location:'PE Office', myBookingId:'dbk', lockedDate:'', status:'booked' },
+        { id:'d4', seq:1, title:'Check-in 1 · Onboarding', date:'2026-09-15', start:'15:30', end:'16:30', note:'After school',  format:'group', capacity:10, booked:1,  letter:'A', location:'PE Office', myBookingId:'',    lockedDate:'2026-09-10', status:'locked' },
+        { id:'e1', seq:2, title:'Check-in 2 · Your program', date:'2026-09-21', start:'11:40', end:'11:55', note:'E-day lunch',   format:'individual', capacity:1, booked:0, letter:'E', location:'PE Office', myBookingId:'', lockedDate:'', status:'available' },
+        { id:'e2', seq:2, title:'Check-in 2 · Your program', date:'2026-09-22', start:'15:30', end:'15:45', note:'After school',  format:'individual', capacity:1, booked:1, letter:'F', location:'PE Office', myBookingId:'', lockedDate:'', status:'full' },
+        { id:'e3', seq:2, title:'Check-in 2 · Your program', date:'2026-10-01', start:'07:15', end:'07:30', note:'Before school', format:'individual', capacity:1, booked:0, letter:'E', location:'PE Office', myBookingId:'', lockedDate:'', status:'available' }
       ],
       events: [ { date:'2026-09-10', type:'checkin', name:'Check-in 1' } ]
     };
@@ -7684,13 +7688,27 @@
       return;
     }
     if(calMonth==null) calMonth = (bk.months && bk.months[0] != null) ? bk.months[0] : new Date().getMonth();
+    // Group slots by check-in (Seq), keeping each slot's flat index for book/cancel.
+    const groups = {};
+    (bk.slots||[]).forEach((s,i) => {
+      const k = String(s.seq || s.title || '1');
+      (groups[k] = groups[k] || { seq:s.seq, title:s.title, format:s.format, items:[] }).items.push({s,i});
+    });
+    const keys = Object.keys(groups).sort((a,b) =>
+      (Number(groups[a].seq||0) - Number(groups[b].seq||0)) || (a<b?-1:a>b?1:0));
+    const cards = keys.map(k => {
+      const g = groups[k];
+      return '<div class="card book-card">'+
+        '<p class="card-eyebrow">Coach check-ins</p>'+
+        '<h2 class="section-heading">'+esc(g.title || 'Book a session')+'</h2>'+
+        bookAboutHTML(g)+
+        '<div class="slotList" style="margin-top:14px;">'+ g.items.map(it => slotCardHTML(it.s, it.i)).join('') +'</div>'+
+      '</div>';
+    }).join('');
     view.innerHTML =
       '<div class="book-grid">'+
-        '<div class="card book-card">'+
-          '<p class="card-eyebrow">Coach check-ins</p>'+
-          '<h2 class="section-heading">Book a <em style="font-style:italic;color:var(--burgundy);">session</em></h2>'+
-          bookAboutHTML(bk)+
-          '<div id="slotList" style="margin-top:14px;">'+ (bk.slots||[]).map(slotCardHTML).join('') +'</div>'+
+        '<div class="book-col">'+
+          cards+
           '<button class="book-msg-btn" onclick="messageCoach()"><i class="ti ti-message-circle" aria-hidden="true"></i> Message Mr Bain</button>'+
           '<div class="booking-note">New check-in dates open about two weeks ahead.</div>'+
         '</div>'+
@@ -7703,17 +7721,31 @@
         '</div>'+
       '</div>';
   }
+  // Per-check-in framing shown above each group's slots.
+  function checkinMeta(seq){
+    if(String(seq)==='2') return {
+      blurb: 'A quick one to one with Mr Bain, just you. We’ll look at your personal program: what you need, and how to move forward with your plans and goals.',
+      duration: 'About 15 minutes',
+      who: 'Just you, one to one with Mr Bain'
+    };
+    return {
+      blurb: 'Your first check-in with Mr Bain. I’ll show you how the portal works, how to build your program, and how the year plan fits together. <strong>Pick one time</strong> that suits you.',
+      duration: 'About 20 to 30 minutes',
+      who: 'Small group. Bring your questions'
+    };
+  }
 
-  // The "what is this check-in" intro shown above the slots.
-  function bookAboutHTML(bk){
-    const first = (bk.slots && bk.slots[0]) || {};
+  // The "what is this check-in" intro shown above each check-in's slots.
+  function bookAboutHTML(g){
+    const first = (g.items && g.items[0] && g.items[0].s) || {};
     const loc = first.location || 'PE Office';
+    const meta = checkinMeta(g.seq);
     return '<div class="book-about">'+
-      '<p class="book-about-title">'+esc(bk.title || 'Your next check-in')+'</p>'+
-      '<p class="book-about-body">Your first check-in with Mr Bain. I’ll show you how the portal works, how to build your program, and how the year plan fits together. <strong>Pick one time</strong> that suits you — that’s all you need to do.</p>'+
+      '<p class="book-about-title">'+esc(g.title || 'Your next check-in')+'</p>'+
+      '<p class="book-about-body">'+meta.blurb+'</p>'+
       '<ul class="book-about-facts">'+
-        '<li><i class="ti ti-clock" aria-hidden="true"></i> About 20–30 minutes</li>'+
-        '<li><i class="ti ti-users" aria-hidden="true"></i> Small group — bring your questions</li>'+
+        '<li><i class="ti ti-clock" aria-hidden="true"></i> '+meta.duration+'</li>'+
+        '<li><i class="ti ti-users" aria-hidden="true"></i> '+meta.who+'</li>'+
         '<li><i class="ti ti-map-pin" aria-hidden="true"></i> Meet in the '+esc(loc)+'</li>'+
         '<li><i class="ti ti-calendar-check" aria-hidden="true"></i> Added to your Google Calendar automatically</li>'+
       '</ul>'+
