@@ -5244,7 +5244,17 @@ function apCancelBookingRow_(ss, bookingsSheet, row, checkinsSheet, ci, notifySt
   }
 }
 
+// Serialize booking mutations so simultaneous group bookings can't create
+// duplicate calendar events, overbook a slot, or mis-count. Everything is read
+// inside the lock, so each booking sees the previous one's committed Event_ID.
+function apBookingLock_(waitMs) {
+  try { var l = LockService.getScriptLock(); if (l.tryLock(waitMs || 15000)) return l; } catch (e) {}
+  return null;
+}
+
 function handleBookCheckIn(ss, athleteId, checkInId) {
+  var lock = apBookingLock_(15000);
+  if (!lock) return { success: false, error: 'The booking system is busy for a second. Please try again.' };
   try {
     athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: false, error: 'athleteId is required' };
@@ -5304,6 +5314,7 @@ function handleBookCheckIn(ss, athleteId, checkInId) {
     } catch (e) {}
     return { success: true, bookingId: id, eventCreated: !!eventId };
   } catch (error) { return { success: false, error: error.toString() }; }
+  finally { try { SpreadsheetApp.flush(); } catch (e) {} lock.releaseLock(); }
 }
 
 // Look up a slot object (with __row) by CheckIn_ID.
@@ -5313,6 +5324,7 @@ function apFindCheckIn_(checkins, checkInId) {
 }
 
 function handleCancelBooking(ss, athleteId, bookingId) {
+  var lock = apBookingLock_(15000);
   try {
     athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: false, error: 'athleteId is required' };
@@ -5336,6 +5348,7 @@ function handleCancelBooking(ss, athleteId, bookingId) {
     }
     return { success: true, id: bookingId, missing: true };
   } catch (error) { return { success: false, error: error.toString() }; }
+  finally { if (lock) { try { SpreadsheetApp.flush(); } catch (e) {} lock.releaseLock(); } }
 }
 
 // ── Calendar → sheet sync ────────────────────────────────────────────────
@@ -5653,7 +5666,7 @@ function buildCheckinRegister() {
     if (String(b.Status) !== 'booked') return;
     var ci = ciById[String(b.CheckIn_ID).trim()]; if (!ci) return;
     var nm = apAthleteName(apGetAthleteById(ss, b.Athlete_ID), b.Athlete_ID);
-    rows.push([ci.Seq, ci.Title, apDateStr(ci.Date), apTimeStr(ci.Start), nm, b.Athlete_Email || '', b.Booking_ID, prev[String(b.Booking_ID).trim()] || '']);
+    rows.push([ci.Seq, ci.Title, apDateStr(ci.Date), apTimeStr(ci.Start), nm, b.Athlete_Email || '', b.Booking_ID, prev[String(b.Booking_ID).trim()] || 'Attended']);
   });
   rows.sort(function (a, c) { var ka = a[2] + a[3] + a[0], kb = c[2] + c[3] + c[0]; return ka < kb ? -1 : ka > kb ? 1 : 0; });
   var last = reg.getLastRow(); if (last > 1) reg.getRange(2, 1, last - 1, 8).clearContent();
@@ -5663,7 +5676,7 @@ function buildCheckinRegister() {
     var rule = SpreadsheetApp.newDataValidation().requireValueInList(['Attended', 'No-show'], true).setAllowInvalid(true).build();
     reg.getRange(2, 8, rows.length, 1).setDataValidation(rule);
   }
-  if (ui) ui.alert('Check-in register', 'Built the register with ' + rows.length + ' booking(s) on the "CheckIn_Register" tab.\n\nMark each one Attended or No-show in the Attendance column, then run "Check-in report".', ui.ButtonSet.OK);
+  if (ui) ui.alert('Check-in register', 'Built the register with ' + rows.length + ' booking(s) on the "CheckIn_Register" tab.\n\nEveryone defaults to Attended — just change the ones who didn’t show to No-show, then run "Check-in report".', ui.ButtonSet.OK);
 }
 // Summarise attendance per check-in: seen, no-show, unmarked-past, still-to-come,
 // and Grade 10-12 athletes who never booked. Writes a "CheckIn_Report" tab.
@@ -5686,9 +5699,9 @@ function checkinReport() {
     var nm = apAthleteName(apGetAthleteById(ss, b.Athlete_ID), b.Athlete_ID);
     var a = att[String(b.Booking_ID).trim()] || '';
     var start = null; try { start = apParseDateTime(apDateStr(ci.Date), apTimeStr(ci.Start)); } catch (e) {}
-    if (a === 'Attended') g.attended.push(nm);
+    if (start && start > now) g.toCome.push(nm + ' (' + apDateStr(ci.Date) + ')');   // future: not happened yet, even though it defaults to Attended
     else if (a === 'No-show') g.noshow.push(nm);
-    else if (start && start > now) g.toCome.push(nm + ' (' + apDateStr(ci.Date) + ')');
+    else if (a === 'Attended') g.attended.push(nm);
     else g.unmarked.push(nm + ' (' + apDateStr(ci.Date) + ')');
   });
   // Roster: Grades 10-12 only.
