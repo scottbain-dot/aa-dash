@@ -4903,9 +4903,11 @@ function apLetterMap() {
   return apLetterMap._m;
 }
 function apLetterForDate(iso) { return apLetterMap()[iso] || ''; }
+// School timezone — check-in times are Frankfurt wall-clock. Everything is
+// anchored here so it never depends on the script's or sheet's timezone.
+var AP_TZ = 'Europe/Berlin';
 function apParseDateTime(iso, hhmm) {
-  var d = String(iso).split('-'), t = String(hhmm || '00:00').split(':');
-  return new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2]), Number(t[0]) || 0, Number(t[1]) || 0, 0);
+  return Utilities.parseDate(String(iso) + ' ' + String(hhmm || '00:00'), AP_TZ, 'yyyy-MM-dd HH:mm');
 }
 
 function apGetAthleteById(ss, athleteId) {
@@ -4948,7 +4950,21 @@ function apSeedCheckInOne(sheet) {
     ['ci1_wed2', 1, 'Check-in 1 · Onboarding', '2026-09-16', '11:40', '12:30', 'group', 10, 'open', 'B-day lunch'],
     ['ci1_thu2', 1, 'Check-in 1 · Onboarding', '2026-09-17', '07:15', '08:15', 'group', 10, 'open', 'Before school']
   ];
+  // Force Date/Start/End to PLAIN TEXT so Sheets doesn't store them as timezone-
+  // sensitive date/time values (that's what shifted the displayed times).
+  sheet.getRange(2, 4, rows.length, 3).setNumberFormat('@');
   sheet.getRange(2, 1, rows.length, 10).setValues(rows);
+}
+// Repair an existing Check_Ins tab: clear and re-seed with text times. Safe to
+// re-run — it uses the same CheckIn_IDs, so existing bookings still line up.
+function resetCheckIns() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+  var sheet = ss.getSheetByName('Check_Ins') || apEnsureCheckIns(ss);
+  var last = sheet.getLastRow();
+  if (last > 1) sheet.getRange(2, 1, last - 1, sheet.getLastColumn()).clearContent();
+  apSeedCheckInOne(sheet);
+  try { ui.alert('Check-in slots reset', 'Times re-seeded as text (Europe/Berlin). Reload the portal to see the corrected times.', ui.ButtonSet.OK); } catch (e) {}
 }
 function apEnsureBookings(ss) {
   var sheet = ss.getSheetByName('Bookings');
@@ -5012,13 +5028,14 @@ function handleGetBookingData(ss, athleteId) {
     return { success: true, slots: slots };
   } catch (error) { return { success: false, error: error.toString() }; }
 }
-// Times may come back from the sheet as a Date (auto-parsed) — normalise to HH:MM.
+// Times are stored as text now; older rows may still be a Date value, which we
+// format in the school timezone (never getHours(), which uses the script's tz).
 function apTimeStr(v) {
   if (v == null || v === '') return '';
   if (Object.prototype.toString.call(v) === '[object Date]') {
-    return ('0' + v.getHours()).slice(-2) + ':' + ('0' + v.getMinutes()).slice(-2);
+    return Utilities.formatDate(v, AP_TZ, 'HH:mm');
   }
-  return String(v);
+  return String(v).trim();
 }
 
 // Built-in testers — no Script Properties needed (mobile-friendly). Anyone signed
@@ -5139,6 +5156,7 @@ function onOpen() {
     .addItem('Fix email chips → plain text', 'flattenEmailChips')
     .addItem('Check roster for problems', 'checkRoster')
     .addItem('Set up / authorize booking', 'authorizeBooking')
+    .addItem('Reset check-in slots (fix times)', 'resetCheckIns')
     .addToUi();
 }
 
