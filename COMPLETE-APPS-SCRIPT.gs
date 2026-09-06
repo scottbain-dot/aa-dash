@@ -5189,26 +5189,32 @@ function handleCancelBooking(ss, athleteId, bookingId) {
 function apEventIsGone_(calId, iCalUid) {
   var uid = String(iCalUid || '').trim();
   if (!uid || !calId) return false;
+  // Primary: Calendar REST view — reports the real 'cancelled' status, so it
+  // catches events cancelled from a synced client (Apple Calendar, phone, etc.).
+  // Needs the Calendar API enabled for the script's Cloud project.
   var url = 'https://www.googleapis.com/calendar/v3/calendars/' +
     encodeURIComponent(calId) + '/events?showDeleted=true&maxResults=25&iCalUID=' +
     encodeURIComponent(uid);
-  var resp;
   try {
-    resp = UrlFetchApp.fetch(url, {
+    var resp = UrlFetchApp.fetch(url, {
       method: 'get',
       headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
       muteHttpExceptions: true
     });
-  } catch (e) { return false; }            // network error — never cancel on error
-  if (resp.getResponseCode() !== 200) return false;   // auth/other — leave as-is
-  var body;
-  try { body = JSON.parse(resp.getContentText()); } catch (e2) { return false; }
-  var items = (body && body.items) || [];
-  if (!items.length) return true;          // no such event on this calendar → gone
-  for (var i = 0; i < items.length; i++) { // any live instance → still booked
-    if (items[i].status !== 'cancelled') return false;
-  }
-  return true;                             // every matching instance is cancelled
+    if (resp.getResponseCode() === 200) {
+      var body = JSON.parse(resp.getContentText());
+      var items = (body && body.items) || [];
+      if (!items.length) return true;                       // not found → gone
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].status !== 'cancelled') return false;  // a live instance → still booked
+      }
+      return true;                                          // all cancelled → gone
+    }
+  } catch (e) {}
+  // Fallback (REST unavailable — e.g. Calendar API not enabled): a hard delete
+  // of the master event makes getEventById return null. Won't catch a
+  // synced-client cancel, but is safe and better than doing nothing.
+  try { return apCheckinCalendar().getEventById(uid) === null; } catch (e2) { return false; }
 }
 function apReconcileBookings(ss, onlyAthleteId) {
   var out = { checked: 0, cancelled: 0 };
