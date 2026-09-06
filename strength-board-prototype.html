@@ -158,12 +158,12 @@ const FILM = 'Technique · watch side on';
 
 const UNIT = [
  { block:1, title:'Learn the shape', sessions:[
-  { n:1, type:'Pull', day:'Gym 1', idea:'<b>Hips back, then pull.</b> Hinge and pull are the two ways the back of the body works. Today is about the shape of a session and the shape of these two movements.',
+  { n:1, type:'Pull', day:'Gym 1',
     prep:[ ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','5 each side','Slow, reach tall on the twist'], ['Crawl','Inchworm','5','Walk the hands out, hold, walk back'] ],
     sub1:'Learn', learn:[ ['Hinge',1,'Bodyweight hinge',FILM,'Push the <b>hips back</b> first, hands slide down the thighs. Flat back the whole way.',true], ['Pull',2,'Horizontal bar pull',FILM,'Bar at hip height. <b>Squeeze the shoulder blades</b> at the top, chest up, no shrug.',true] ],
     sub2:'Practise', work:[ ['Lower','Bodyweight hinge','2 × 10','Slow. Feel the hamstrings load'], ['Upper','Horizontal bar pull','2 × 8','Straight body, feet closer if it is too hard'], ['Trunk','Glute bridge','2 × 10','Squeeze at the top for two seconds'] ],
     finish:[ ['Cool down','Walk it out, then hamstring stretch','3 min','Breathe slowly through the nose'], ['Check-out','Which felt harder, hinge or pull?','1 min','Tell a partner why'] ] },
-  { n:2, type:'Push', day:'Gym 2', idea:'<b>Knees, then push.</b> Squat and push-up are the two ways the front of the body works. Same session shape as last time, different movements.',
+  { n:2, type:'Push', day:'Gym 2',
     prep:[ ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','5 each side',''], ['Crawl','Bear crawl','20 m out and back','Knees an inch off the floor, hips low'] ],
     sub1:'Learn', learn:[ ['Squat',1,'Bodyweight squat',FILM,'<b>Feet flat</b>, knees over the toes, hips below the knee. Two seconds down.',true], ['Push',1,'Floor push-up',FILM,'Elbows at <b>45 degrees</b>. Body in one line from head to heel. Hands on a box if needed.',true] ],
     sub2:'Practise', work:[ ['Lower','Bodyweight squat','2 × 10','Pause for one second at the bottom'], ['Upper','Push-up, floor or box','2 × 8','Choose the height where you can do eight clean'], ['Trunk','Dead bug','2 × 8 each side','Lower back stays pressed into the floor'] ],
@@ -253,7 +253,7 @@ function render(){
   renderTimeline();
   document.body.classList.toggle('exos-on', exos); $('exosTog').classList.toggle('on', exos); $('exosTog').setAttribute('aria-pressed', String(exos));
   const title = s.type==='Classroom' ? `Classroom ${s.n}` : `Session ${s.n} <span class="type">${s.type}</span>`;
-  const head = `<div class="head"><div><div class="kicker">Block ${s.block} · ${s.blockTitle}</div><h1>${title}</h1></div><div class="idea">${s.idea}</div><div class="clk" id="clk2">00:00</div></div>`;
+  const head = `<div class="head"><div><div class="kicker">Block ${s.block} · ${s.blockTitle}</div><h1>${title}</h1></div><div class="idea">${s.idea || ''}</div><div class="clk" id="clk2">00:00</div></div>`;
   if(s.type==='Classroom'){
     $('stage').innerHTML = head + `<div class="cls">${
       box('', 'What we do', '45 min', 'Portal, on laptops', `<ol>${s.cls.do.map(d=>`<li><span>${d[0]}<em>${d[1]}</em></span></li>`).join('')}</ol>`)}${
