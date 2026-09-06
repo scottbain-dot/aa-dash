@@ -3839,9 +3839,9 @@
   // LAUNCH_MODE: student soft-launch. Only the Year is live; the rest are shown
   // as blurred "coming soon" teasers. Flip to false to unlock the full app.
   const LAUNCH_MODE = true;
-  // My Program (week) is now live so students can build their own program.
-  // Load/Book/PBs stay teased until they're ready.
-  const LIVE_TABS = { year:true, week:true };
+  // My Program (week) is live so students can build their own program, and Book
+  // (check-ins) is now live too. Load/PBs stay teased until they're ready.
+  const LIVE_TABS = { year:true, week:true, book:true };
   // Booking is still in testing — students see the "coming soon" teaser. It's
   // unlocked only for the demo, a ?book=1 override, and named testers. This just
   // reveals the UI; the SERVER enforces the real lock (BOOKING_LIVE / tester

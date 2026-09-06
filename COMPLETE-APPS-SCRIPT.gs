@@ -5111,10 +5111,14 @@ function apTimeStr(v) {
 // in as one of these emails can book while booking is otherwise locked. Edit this
 // list in code to add/remove testers.
 var AP_BOOKING_TESTER_EMAILS = ['scott_bain@fis.edu', 'scottybain@gmail.com'];
-// Booking stays locked for everyone else until BOOKING_LIVE is 'true' (Script
-// Property, set at launch from a computer). BOOKING_TESTERS (comma-separated
+// LAUNCH SWITCH: true = booking is open to every signed-in student. Set to false
+// to close it again (only testers / BOOKING_LIVE property can book then).
+var AP_BOOKING_LIVE = true;
+// Booking stays locked for everyone else until AP_BOOKING_LIVE is true (or the
+// BOOKING_LIVE Script Property is 'true'). BOOKING_TESTERS (comma-separated
 // athlete IDs) is an optional extra allowlist.
 function apBookingLiveFor(ss, athleteId) {
+  if (AP_BOOKING_LIVE) return true;
   try {
     var props = PropertiesService.getScriptProperties();
     if (String(props.getProperty('BOOKING_LIVE') || '').toLowerCase() === 'true') return true;
