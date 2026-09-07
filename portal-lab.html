@@ -3076,7 +3076,7 @@
   }
   .plan-list { margin-top: 12px; }
   .plan-row {
-    display: grid; grid-template-columns: 46px 14px 1fr 30px; align-items: center; gap: 14px;
+    display: grid; grid-template-columns: 46px 14px 1fr 30px 22px; align-items: center; gap: 14px;
     padding: 14px 8px; border-bottom: 1px solid var(--line-soft); cursor: pointer;
     border-radius: 10px; transition: background 0.15s;
   }
@@ -3115,9 +3115,19 @@
   .plan-row:hover .plan-add { opacity: 0.55; }
   .plan-add:hover { background: var(--surface); color: var(--burgundy); opacity: 1; }
   .plan-rest .plan-add { opacity: 0.4; }
+  /* Drag-to-move day: grip handle + ghost + drop target */
+  .plan-grip { display: flex; align-items: center; justify-content: center; color: var(--ink-mute); cursor: grab; touch-action: none; opacity: 0; transition: opacity 0.15s; font-size: 16px; }
+  .plan-row:hover .plan-grip { opacity: 0.55; }
+  .plan-grip:active { cursor: grabbing; }
+  @media (max-width: 560px) { .plan-grip { opacity: 0.5; } }
+  .drag-ghost { position: fixed; z-index: 1200; pointer-events: none; opacity: 0.96; background: var(--surface); box-shadow: 0 14px 34px rgba(0,0,0,0.22); border-radius: 12px; padding: 14px 8px; }
+  .swipe-wrap.dragging .plan-row { opacity: 0.3; }
+  .drop-target { outline: 2px dashed var(--burgundy); outline-offset: -2px; border-radius: 12px; background: var(--cream); }
+  .week-saveorder { width: 100%; margin-top: 10px; background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 10px; padding: 9px; font: 600 13px 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
+  .week-saveorder:hover { border-color: var(--burgundy); color: var(--burgundy); }
   @media (max-width: 560px) {
     .plan-card { padding: 18px 18px; }
-    .plan-row { padding: 13px 4px; gap: 10px; grid-template-columns: 42px 12px 1fr 28px; }
+    .plan-row { padding: 13px 4px; gap: 10px; grid-template-columns: 42px 12px 1fr 28px 20px; }
     .plan-add { opacity: 0.45; }
   }
   /* Plan-card header row + Change-plan button + plan label */
@@ -3992,6 +4002,7 @@
       weekMixCard();
 
     initSwipe();   // LAB: bind swipe-to-delete (delegated on #weekGrid)
+    initWeekDrag();   // grip-drag a session onto another day
   }
 
   // Prominent "Build my program" entry — top of My Program, opens the build hub
@@ -4083,6 +4094,7 @@
       nextGameStrip(ws)+
       fillPrompt+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
+      ((state.week.sessions||[]).length ? '<button class="week-saveorder" onclick="saveWeekAsProgram()"><i class="ti ti-device-floppy" aria-hidden="true"></i> Save this order to my program</button>' : '')+
       '<div class="week-actions">'+
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add game</button>'+
@@ -4151,18 +4163,19 @@
     const ref = lastWeekRefs[s.id];
     const refLine = ref ? '<div class="plan-lastweek-ref"><i class="ti ti-history" aria-hidden="true"></i>'+esc(ref)+'</div>' : '';
     // LAB: wrapped so a left-swipe reveals a Delete action (see swipe handlers).
-    return '<div class="swipe-wrap" data-id="'+esc(s.id)+'">'+
+    return '<div class="swipe-wrap" data-id="'+esc(s.id)+'" data-day="'+esc(iso)+'">'+
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
         '<div class="plan-info"><div class="plan-name">'+esc(s.name)+typeTag(s)+pb+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
+        '<span class="plan-grip" aria-label="Drag to move to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
       '</div>'+
       '<button class="swipe-delete" aria-label="Remove session" onclick="deleteSessionSwipe(event,\''+s.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i> Delete</button>'+
     '</div>';
   }
   function planRestRow(dayLabelHTML, iso, isToday, isPast){
-    return '<div class="plan-row plan-rest'+(isToday?' is-today':'')+'" onclick="newSession(\''+iso+'\')">'+
+    return '<div class="plan-row plan-rest'+(isToday?' is-today':'')+'" data-day="'+esc(iso)+'" onclick="newSession(\''+iso+'\')">'+
       '<span class="plan-day">'+dayLabelHTML+'</span>'+
       '<span class="plan-dot is-empty" aria-hidden="true"></span>'+
       '<div class="plan-info"><div class="plan-name muted">'+(isPast?'Nothing logged':'Rest day')+'</div>'+
@@ -5125,6 +5138,67 @@
     showToast('Saved — this week is now your program', 'success');
   }
   window.saveWeekAsProgram = saveWeekAsProgram;
+
+  // Move a session to a new day: re-render, persist the session (real ids only),
+  // and nudge to save the order to the program.
+  function moveSessionToDay(s){
+    renderWeek();
+    if(s.id && !String(s.id).startsWith('tmp_')){
+      try { apiData({ action:'saveSession', session: Object.assign({}, s, { id: s.id }) }).catch(function(){}); } catch(e){}
+    }
+    showToast('Moved to '+dowShort(s.date)+' '+dayNum(s.date)+'. Save the order to your program to keep it.', 'success');
+  }
+  // Grip-drag a session row onto another day (touch + mouse). Bound each render;
+  // #weekGrid is rebuilt so the listeners live on the fresh element.
+  function initWeekDrag(){
+    const grid = document.getElementById('weekGrid');
+    if(!grid || grid._dragBound) return;
+    grid._dragBound = true;
+    let drag = null;
+    grid.addEventListener('pointerdown', function(e){
+      const grip = e.target.closest('.plan-grip');
+      if(!grip) return;
+      const wrap = grip.closest('.swipe-wrap');
+      const row = wrap && wrap.querySelector('.plan-row');
+      if(!wrap || !row) return;
+      e.preventDefault();
+      const rect = row.getBoundingClientRect();
+      const ghost = row.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.style.width = rect.width+'px'; ghost.style.left = rect.left+'px'; ghost.style.top = rect.top+'px';
+      document.body.appendChild(ghost);
+      wrap.classList.add('dragging');
+      drag = { id: wrap.getAttribute('data-id'), from: wrap.getAttribute('data-day'), ghost: ghost, offY: e.clientY-rect.top, target: null, targetEl: null };
+      try { grid.setPointerCapture(e.pointerId); } catch(_){}
+    });
+    grid.addEventListener('pointermove', function(e){
+      if(!drag) return;
+      e.preventDefault();
+      drag.ghost.style.top = (e.clientY - drag.offY)+'px';
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const t = el && el.closest('[data-day]');
+      if(t !== drag.targetEl){
+        grid.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
+        drag.targetEl = t || null;
+        drag.target = t ? t.getAttribute('data-day') : null;
+        if(t && drag.target !== drag.from) t.classList.add('drop-target');
+      }
+    });
+    function endDrag(){
+      if(!drag) return;
+      const id = drag.id, target = drag.target, from = drag.from;
+      if(drag.ghost) drag.ghost.remove();
+      grid.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
+      const w = grid.querySelector('.swipe-wrap.dragging'); if(w) w.classList.remove('dragging');
+      drag = null;
+      if(target && target !== from){
+        const s = (state.week.sessions||[]).find(function(x){ return x.id===id; });
+        if(s){ s.date = target; moveSessionToDay(s); }
+      }
+    }
+    grid.addEventListener('pointerup', endDrag);
+    grid.addEventListener('pointercancel', endDrag);
+  }
 
   function editWorkout(){
     if(workoutEditing){
