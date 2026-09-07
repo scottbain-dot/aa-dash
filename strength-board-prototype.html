@@ -31,6 +31,10 @@
   .s small{display:block;font-weight:500;color:var(--mute);font-size:10px;margin-top:3px;letter-spacing:.06em;text-transform:uppercase}
   .s.pull{border-bottom:3px solid var(--ink)} .s.push{border-bottom:3px solid var(--accent)}
   .s.cls{border-style:dashed;color:var(--mute)}
+  .s.rules{border-bottom:3px solid var(--mark);margin-right:-10px}
+  .rules-view{grid-template-columns:1fr 1fr 1fr}
+  .rules-view .rule .ex{font-weight:600}
+  .rules-view .box .bh .n{white-space:nowrap}
   .s.on{background:var(--ink);color:#fff;border-color:var(--ink)} .s.on small{color:#cfc9c1}
   .s:focus-visible,.tog:focus-visible,.row:focus-visible,.back:focus-visible,.pbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .tog{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);background:none;border:none;cursor:pointer;padding:0}
@@ -118,6 +122,7 @@
 <div class="strip">
   <div class="wordmark">Athlete <span>Academy</span></div>
   <div class="unit">Intro to Training · G9</div>
+  <button class="s rules" id="rulesBtn" type="button">Rules<small>gym</small></button>
   <div class="timeline" id="timeline"></div>
   <button class="tog" id="exosTog" type="button" aria-pressed="false"><span class="sw"></span>Show structure names</button>
   <button class="pbtn" id="presentBtn" type="button" title="Full screen, hides this bar. Press F or Esc to leave.">Present</button>
@@ -225,8 +230,42 @@ const UNIT = [
 ];
 
 
+// =====================================================================
+// GYM RULES. Shown on the Rules tab (R key). Edit freely: each entry is
+// [headline, one line of why or how]. Three boxes: Safety, Respect, How we train.
+// =====================================================================
+const RULES = {
+  idea: '<b>The gym is shared, and it is heavy.</b> Three things keep everyone safe and everyone welcome: look after your body, look after the space, and train the way we train.',
+  boxes: [
+    { name:'Safety', mins:'Non-negotiable', cls:'', items:[
+      ['Collars on every bar','Before the first rep, both ends'],
+      ['Clear the bar path','Nobody walks in front of a lift. Step around, never through'],
+      ['Ask before a new weight','A bigger weight than last time means a word with Mr Bain first'],
+      ['Spot or be spotted','Bench and back squat with load get a spotter who knows the count'],
+      ['Stop if it hurts','Sharp pain is a stop, not a push through. Tell a teacher'],
+      ['Shoes on, laces done','Closed shoes always. Bare feet only where a teacher says so']
+    ]},
+    { name:'Respect', mins:'The space and each other', cls:'move', items:[
+      ['Re-rack everything','Bars stripped, plates on the tree, bells back in size order'],
+      ['Wipe down what you used','Bench, mat, pad. Spray is by the door'],
+      ['Share the kit','Work in with someone on the same station. Nobody owns a rack'],
+      ['Control the drop','Kettlebells and dumbbells are placed, not dropped'],
+      ['Phones away','Filming for a stamp is the only screen time in the gym'],
+      ['Leave it better','If you see something out of place, put it away, even if it is not yours']
+    ]},
+    { name:'How we train', mins:'The Athlete Academy way', cls:'', items:[
+      ['Technique before load','A pattern gets weight when it is stamped, not before'],
+      ['Last two reps hard, every rep clean','If a rep breaks down, the weight is too heavy. Go lighter and stay clean'],
+      ['Follow the tempo','Three seconds down, one up, unless the Board says otherwise'],
+      ['Aim for a 7 out of 10','Hard enough to matter, easy enough to repeat'],
+      ['Rest between sets','Ninety seconds on the big lifts. Rushing is not effort'],
+      ['Be honest on the Board','What you did is what you log. Nobody is impressed by a made-up number']
+    ]}
+  ]
+};
+
 const FLAT = []; UNIT.forEach(b => b.sessions.forEach(s => FLAT.push(Object.assign({block:b.block, blockTitle:b.title}, s))));
-let cur = 0, exos = false;
+let cur = 0, exos = false, showRules = false;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/</g,'&lt;');
 
@@ -234,7 +273,7 @@ function renderTimeline(){
   $('timeline').innerHTML = UNIT.map(b => `<div class="blk"><div class="bl">Block ${b.block} · ${b.title}</div><div class="ss">${
     b.sessions.map(s => { const i = FLAT.findIndex(f => f.day===s.day);
       const cls = s.type==='Classroom' ? 'cls' : s.type.toLowerCase();
-      return `<button type="button" class="s ${cls} ${i===cur?'on':''}" data-i="${i}">${s.n}<small>${s.type==='Classroom'?'Class':s.type}</small></button>`; }).join('')
+      return `<button type="button" class="s ${cls} ${(i===cur && !showRules)?'on':''}" data-i="${i}">${s.n}<small>${s.type==='Classroom'?'Class':s.type}</small></button>`; }).join('')
   }</div></div>`).join('');
 }
 
@@ -248,7 +287,15 @@ function box(cls, name, mins, exosText, inner){
   return `<section class="box ${cls}"><div class="bh"><span class="n">${name}</span><span class="m">${mins}</span><span class="exos">${exosText}</span></div><div class="rows">${inner}</div></section>`;
 }
 
+function renderRules(){
+  const head = `<div class="head"><div><div class="kicker">Intro to Training · every session</div><h1>Gym <span class="type">rules</span></h1></div><div class="idea">${RULES.idea}</div><div class="clk" id="clk2">00:00</div></div>`;
+  const boxes = RULES.boxes.map(b => box(b.cls, b.name, b.mins, '', b.items.map((it,i) => `<div class="row rule" style="cursor:default"><div class="top"><span class="ex">${it[0]}</span><span class="rx" style="color:var(--mute)">${String(i+1).padStart(2,'0')}</span></div><div class="cue">${it[1]}</div></div>`).join(''))).join('');
+  $('stage').innerHTML = head + `<div class="boxes rules-view">${boxes}</div><div class="foot"><div><b>Three things:</b> look after your body, look after the space, train the way we train.</div><div class="hide"><b>R</b> toggles this page. Arrows go back to the sessions.</div></div>`;
+  syncClock();
+}
 function render(){
+  $('rulesBtn').classList.toggle('on', showRules);
+  if(showRules){ renderTimeline(); document.body.classList.toggle('exos-on', exos); renderRules(); return; }
   const s = FLAT[cur];
   renderTimeline();
   document.body.classList.toggle('exos-on', exos); $('exosTog').classList.toggle('on', exos); $('exosTog').setAttribute('aria-pressed', String(exos));
@@ -292,7 +339,8 @@ function setPresent(on){
 }
 document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement) document.body.classList.remove('present'); });
 
-$('timeline').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; cur = +b.dataset.i; render(); });
+$('timeline').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; cur = +b.dataset.i; showRules = false; render(); });
+$('rulesBtn').addEventListener('click', () => { showRules = !showRules; render(); });
 $('stage').addEventListener('click', e => { const b = e.target.closest('button.row'); if(b) openRow(b); });
 $('back').addEventListener('click', closeRow);
 $('overlay').addEventListener('click', e => { if(e.target===$('overlay')) closeRow(); });
@@ -308,9 +356,10 @@ document.addEventListener('keydown', e => {
   const open = $('overlay').classList.contains('open');
   if(e.key==='Escape'){ if(open) closeRow(); else setPresent(false); return; }
   if(e.key==='f' || e.key==='F'){ setPresent(!document.body.classList.contains('present')); return; }
+  if(e.key==='r' || e.key==='R'){ showRules = !showRules; render(); return; }
   if(e.key===' ' && !e.target.closest('button')) { e.preventDefault(); toggleClock(); return; }
-  if(e.key==='ArrowRight' && !open){ cur=(cur+1)%FLAT.length; render(); }
-  if(e.key==='ArrowLeft'  && !open){ cur=(cur+FLAT.length-1)%FLAT.length; render(); }
+  if(e.key==='ArrowRight' && !open){ if(showRules){ showRules=false; } else { cur=(cur+1)%FLAT.length; } render(); }
+  if(e.key==='ArrowLeft'  && !open){ if(showRules){ showRules=false; } else { cur=(cur+FLAT.length-1)%FLAT.length; } render(); }
 });
 render();
 </script>
