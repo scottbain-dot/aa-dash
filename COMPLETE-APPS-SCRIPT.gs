@@ -4940,6 +4940,9 @@ function apEnsureCheckIns(ss) {
     sheet.getRange('1:1').setFontWeight('bold');
     apSeedCheckInOne(sheet);
   }
+  // Group-event model: one shared booking event (students as guests) + a hold
+  // event that reserves the time while the slot is empty.
+  apEnsureColumns(sheet, ['Event_ID', 'Hold_Event_ID']);
   return sheet;
 }
 // Check-in 1 — six group onboarding sessions across the first two weeks (Sep 2026).
@@ -4967,6 +4970,53 @@ function resetCheckIns() {
   if (last > 1) sheet.getRange(2, 1, last - 1, sheet.getLastColumn()).clearContent();
   apSeedCheckInOne(sheet);
   try { ui.alert('Check-in slots reset', 'Times re-seeded as text (Europe/Berlin). Reload the portal to see the corrected times.', ui.ButtonSet.OK); } catch (e) {}
+}
+
+// Minute helpers for slicing a time window into 15-minute slots.
+function apHmToMin_(hm) { var p = String(hm).split(':'); return (Number(p[0]) || 0) * 60 + (Number(p[1]) || 0); }
+function apMinToHm_(m) { var h = Math.floor(m / 60), mm = m % 60; return (h < 10 ? '0' : '') + h + ':' + (mm < 10 ? '0' : '') + mm; }
+
+// Check-in 2 — 15-minute one-to-one slots (Seq 2). Each window is sliced into
+// 15-min, capacity-1 slots. Appended after the existing rows.
+function apSeedCheckInTwo(sheet) {
+  var windows = [
+    { date: '2026-09-21', start: '11:40', end: '12:30', note: 'E-day lunch' },
+    { date: '2026-09-22', start: '15:30', end: '17:00', note: 'After school' },
+    { date: '2026-09-24', start: '07:15', end: '08:15', note: 'Before school' },
+    { date: '2026-09-25', start: '11:40', end: '12:30', note: 'A-day lunch' },
+    { date: '2026-09-28', start: '11:40', end: '12:30', note: 'B-day lunch' },
+    { date: '2026-09-29', start: '15:30', end: '17:00', note: 'After school' },
+    { date: '2026-10-01', start: '07:15', end: '08:15', note: 'Before school' }
+  ];
+  var rows = [];
+  windows.forEach(function (w) {
+    var t = apHmToMin_(w.start), endMin = apHmToMin_(w.end);
+    while (t + 15 <= endMin) {
+      var s = apMinToHm_(t), e = apMinToHm_(t + 15);
+      var id = 'ci2_' + w.date.replace(/-/g, '').slice(4) + '_' + s.replace(':', '');
+      rows.push([id, 2, 'Check-in 2 · Your program', w.date, s, e, 'individual', 1, 'open', w.note]);
+      t += 15;
+    }
+  });
+  if (!rows.length) return 0;
+  var startRow = sheet.getLastRow() + 1;
+  sheet.getRange(startRow, 4, rows.length, 3).setNumberFormat('@');   // Date/Start/End as text
+  sheet.getRange(startRow, 1, rows.length, 10).setValues(rows);
+  return rows.length;
+}
+
+// Menu: add the Check-in 2 one-to-one slots. Idempotent — refuses if Seq 2 rows
+// already exist (delete them first to re-seed).
+function seedCheckInTwo() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; }
+  var sheet = apEnsureCheckIns(ss);
+  var rows = apReadObjects(sheet);
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Seq) === '2') { if (ui) ui.alert('Check-in 2', 'Check-in 2 slots already exist. Delete those rows first if you want to re-seed.', ui.ButtonSet.OK); return; }
+  }
+  var n = apSeedCheckInTwo(sheet);
+  if (ui) ui.alert('Check-in 2', 'Added ' + n + ' one-to-one slots (15 min). Now run "Reserve my check-in times" to put the holds on your calendar.', ui.ButtonSet.OK);
 }
 function apEnsureBookings(ss) {
   var sheet = ss.getSheetByName('Bookings');
@@ -5061,10 +5111,14 @@ function apTimeStr(v) {
 // in as one of these emails can book while booking is otherwise locked. Edit this
 // list in code to add/remove testers.
 var AP_BOOKING_TESTER_EMAILS = ['scott_bain@fis.edu', 'scottybain@gmail.com'];
-// Booking stays locked for everyone else until BOOKING_LIVE is 'true' (Script
-// Property, set at launch from a computer). BOOKING_TESTERS (comma-separated
+// LAUNCH SWITCH: true = booking is open to every signed-in student. Set to false
+// to close it again (only testers / BOOKING_LIVE property can book then).
+var AP_BOOKING_LIVE = true;
+// Booking stays locked for everyone else until AP_BOOKING_LIVE is true (or the
+// BOOKING_LIVE Script Property is 'true'). BOOKING_TESTERS (comma-separated
 // athlete IDs) is an optional extra allowlist.
 function apBookingLiveFor(ss, athleteId) {
+  if (AP_BOOKING_LIVE) return true;
   try {
     var props = PropertiesService.getScriptProperties();
     if (String(props.getProperty('BOOKING_LIVE') || '').toLowerCase() === 'true') return true;
@@ -5079,7 +5133,132 @@ function apBookingLiveFor(ss, athleteId) {
   } catch (e2) { return false; }
 }
 
+// ── Group-event model helpers ─────────────────────────────────────────────
+// Each check-in slot has ONE shared booking event (students join as guests) plus
+// a HOLD event that reserves the time while the slot is empty. Exactly one of the
+// two exists at any moment: hold when 0 booked, booking event when >=1 booked.
+function apSlotTitle_(ci, count) {
+  var cap = Number(ci.Capacity) || 0;
+  return String(ci.Title) + ' (' + count + (cap ? '/' + cap : '') + ')';
+}
+function apSlotTimes_(ci) {
+  var d = apDateStr(ci.Date);
+  return { start: apParseDateTime(d, apTimeStr(ci.Start)), end: apParseDateTime(d, apTimeStr(ci.End)) };
+}
+function apSlotDescription_(ci) {
+  return 'Athlete Academy check-in with Mr Bain.' + (ci.Notes ? ' (' + ci.Notes + ')' : '') +
+    '\n\nMeet in the ' + AP_CHECKIN_LOCATION + '.' +
+    '\n\nTo change or cancel, use the Athlete Academy portal. Removing this event from your own calendar does NOT cancel your booking.';
+}
+// Count active (booked) rows for a slot.
+function apSlotBookedCount_(bookings, checkInId) {
+  var n = 0;
+  for (var i = 0; i < bookings.length; i++) {
+    if (String(bookings[i].Status) === 'booked' && String(bookings[i].CheckIn_ID).trim() === String(checkInId).trim()) n++;
+  }
+  return n;
+}
+// Best-effort: hide the guest list and lock the event so students can't see each
+// other or edit it. Needs the Calendar API (enabled). eventId is the iCalUID.
+function apLockEventGuests_(calId, iCalUid) {
+  try {
+    var uid = String(iCalUid || '').trim();
+    if (!uid || !calId) return;
+    var listUrl = 'https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(calId) +
+      '/events?maxResults=1&iCalUID=' + encodeURIComponent(uid);
+    var r = UrlFetchApp.fetch(listUrl, { method: 'get', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
+    if (r.getResponseCode() !== 200) return;
+    var items = (JSON.parse(r.getContentText()).items) || [];
+    if (!items.length) return;
+    var restId = items[0].id;
+    var patchUrl = 'https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(calId) +
+      '/events/' + encodeURIComponent(restId) + '?sendUpdates=none';
+    UrlFetchApp.fetch(patchUrl, {
+      method: 'patch', contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      payload: JSON.stringify({ guestsCanSeeOtherGuests: false, guestsCanInviteOthers: false, guestsCanModify: false }),
+      muteHttpExceptions: true
+    });
+  } catch (e) {}
+}
+// Remove the hold event for a slot (if any) and clear its id.
+function apDeleteHold_(ss, ci, checkinsSheet) {
+  var hid = String(ci.Hold_Event_ID || '').trim();
+  if (hid) { try { var ev = apCheckinCalendar().getEventById(hid); if (ev) ev.deleteEvent(); } catch (e) {} }
+  if (hid) { try { apUpdateRow(checkinsSheet, ci.__row, { 'Hold_Event_ID': '' }); ci.Hold_Event_ID = ''; } catch (e2) {} }
+}
+// Ensure a hold event exists for an open, future, empty slot (reserves the time).
+function apEnsureHold_(ss, ci, checkinsSheet) {
+  try {
+    if (String(ci.Status || 'open') !== 'open') return;
+    if (String(ci.Event_ID || '').trim()) return;           // a booking event already reserves it
+    var hid = String(ci.Hold_Event_ID || '').trim();
+    if (hid && !apEventIsGone_(apCheckinCalendarId(), hid)) return;   // still there
+    var t = apSlotTimes_(ci);
+    if (t.end < new Date()) return;                          // don't hold past slots
+    var ev = apCheckinCalendar().createEvent(String(ci.Title) + ' · open — bookable', t.start, t.end, {
+      description: 'Bookable Athlete Academy check-in slot. No one has booked yet — this reserves the time so you don’t double-book. It disappears once a student books.',
+      location: AP_CHECKIN_LOCATION
+    });
+    apUpdateRow(checkinsSheet, ci.__row, { 'Hold_Event_ID': ev.getId() });
+    ci.Hold_Event_ID = ev.getId();
+  } catch (e) {}
+}
+// Ensure the shared booking event exists for a slot; returns the CalendarEvent
+// (or null if the calendar can't be reached). Creates it with no guests.
+function apEnsureSlotEvent_(ss, ci, checkinsSheet, count) {
+  var cal = apCheckinCalendar();
+  var eid = String(ci.Event_ID || '').trim();
+  if (eid) { try { var ex = cal.getEventById(eid); if (ex) return ex; } catch (e) {} }
+  var t = apSlotTimes_(ci);
+  var ev = cal.createEvent(apSlotTitle_(ci, count || 0), t.start, t.end, {
+    description: apSlotDescription_(ci), location: AP_CHECKIN_LOCATION
+  });
+  var id = ev.getId();
+  apUpdateRow(checkinsSheet, ci.__row, { 'Event_ID': id });
+  ci.Event_ID = id;
+  apLockEventGuests_(apCheckinCalendarId(), id);   // hide guest list, lock editing
+  apDeleteHold_(ss, ci, checkinsSheet);            // the booking event now reserves the time
+  return ev;
+}
+// Shared cancel: mark the row cancelled, drop the student from the shared event,
+// and if the slot is now empty delete that event and put the hold back.
+function apCancelBookingRow_(ss, bookingsSheet, row, checkinsSheet, ci, notifyStudent) {
+  apUpdateRow(bookingsSheet, row.__row, { 'Status': 'cancelled', 'Updated': new Date() });
+  var email = String(row.Athlete_Email || '').trim();
+  if (!email) { try { var a = apGetAthleteById(ss, row.Athlete_ID); email = a ? String(a.Email || '').trim() : ''; } catch (e0) {} }
+  var eid = ci ? String(ci.Event_ID || '').trim() : '';
+  if (eid && email) { try { var ev = apCheckinCalendar().getEventById(eid); if (ev) ev.removeGuest(email); } catch (e) {} }
+  if (ci) {
+    var remaining = apSlotBookedCount_(apReadObjects(bookingsSheet), ci.CheckIn_ID);
+    if (remaining <= 0) {
+      if (eid) { try { var ev2 = apCheckinCalendar().getEventById(eid); if (ev2) ev2.deleteEvent(); } catch (e2) {} }
+      apUpdateRow(checkinsSheet, ci.__row, { 'Event_ID': '' }); ci.Event_ID = '';
+      apEnsureHold_(ss, ci, checkinsSheet);
+    } else if (eid) {
+      try { var ev3 = apCheckinCalendar().getEventById(eid); if (ev3) ev3.setTitle(apSlotTitle_(ci, remaining)); } catch (e3) {}
+    }
+  }
+  if (notifyStudent && email) {
+    try {
+      var nm = apAthleteName(apGetAthleteById(ss, row.Athlete_ID), row.Athlete_ID);
+      MailApp.sendEmail(email, 'Your Athlete Academy check-in was cancelled',
+        'Hi ' + nm + ',\n\nMr Bain has cancelled your check-in. Please book a new time in the Athlete Academy portal.\n');
+    } catch (e4) {}
+  }
+}
+
+// Serialize booking mutations so simultaneous group bookings can't create
+// duplicate calendar events, overbook a slot, or mis-count. Everything is read
+// inside the lock, so each booking sees the previous one's committed Event_ID.
+function apBookingLock_(waitMs) {
+  try { var l = LockService.getScriptLock(); if (l.tryLock(waitMs || 15000)) return l; } catch (e) {}
+  return null;
+}
+
 function handleBookCheckIn(ss, athleteId, checkInId) {
+  var lock = apBookingLock_(15000);
+  if (!lock) return { success: false, error: 'The booking system is busy for a second. Please try again.' };
   try {
     athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: false, error: 'athleteId is required' };
@@ -5118,20 +5297,17 @@ function handleBookCheckIn(ss, athleteId, checkInId) {
     var email = athlete ? String(athlete.Email || '').trim() : '';
     var name = apAthleteName(athlete, athleteId);
     var dateStr = apDateStr(ci.Date);
+    // Group-event model: one shared event per slot, student added as a guest.
     var eventId = '';
     try {
-      var cal = apCheckinCalendar();
-      var start = apParseDateTime(dateStr, apTimeStr(ci.Start));
-      var end = apParseDateTime(dateStr, apTimeStr(ci.End));
-      var opts = {
-        description: 'Athlete Academy check-in with Mr Bain.' + (ci.Notes ? ' (' + ci.Notes + ')' : '') + '\n\nMeet in the ' + AP_CHECKIN_LOCATION + '.\n\nTo change or cancel, use the Athlete Academy portal. Removing this event from your own calendar does NOT cancel your booking.',
-        location: AP_CHECKIN_LOCATION,
-        sendInvites: true
-      };
-      if (email) opts.guests = email;
-      var ev = cal.createEvent(String(ci.Title) + (name ? ' — ' + name : ''), start, end, opts);
-      eventId = ev.getId();
-    } catch (e) { eventId = ''; }   // calendar not configured/authorised yet — the booking still records
+      var checkinsSheet = apEnsureCheckIns(ss);
+      var ev = apEnsureSlotEvent_(ss, ci, checkinsSheet, count);   // creates it (and clears the hold) if needed
+      if (ev) {
+        if (email) ev.addGuest(email);
+        ev.setTitle(apSlotTitle_(ci, count + 1));
+        eventId = String(ci.Event_ID || ev.getId() || '');
+      }
+    } catch (e) { eventId = ''; }   // calendar not reachable — the booking still records
     var id = 'bk_' + Utilities.getUuid().slice(0, 8);
     var now = new Date();
     bookingsSheet.appendRow([id, checkInId, athleteId, email, 'booked', eventId, now, now, '']);
@@ -5142,19 +5318,30 @@ function handleBookCheckIn(ss, athleteId, checkInId) {
     } catch (e) {}
     return { success: true, bookingId: id, eventCreated: !!eventId };
   } catch (error) { return { success: false, error: error.toString() }; }
+  finally { try { SpreadsheetApp.flush(); } catch (e) {} lock.releaseLock(); }
+}
+
+// Look up a slot object (with __row) by CheckIn_ID.
+function apFindCheckIn_(checkins, checkInId) {
+  for (var i = 0; i < checkins.length; i++) if (String(checkins[i].CheckIn_ID).trim() === String(checkInId).trim()) return checkins[i];
+  return null;
 }
 
 function handleCancelBooking(ss, athleteId, bookingId) {
+  var lock = apBookingLock_(15000);
   try {
     athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: false, error: 'athleteId is required' };
     if (!apBookingLiveFor(ss, athleteId)) return { success: false, error: 'Booking isn’t open yet.' };
     var sheet = apEnsureBookings(ss);
+    var checkinsSheet = apEnsureCheckIns(ss);
+    var checkins = apReadObjects(checkinsSheet);
     var rows = apReadObjects(sheet);
     for (var i = 0; i < rows.length; i++) {
       if (String(rows[i].Booking_ID).trim() === String(bookingId).trim() && String(rows[i].Athlete_ID).trim() === athleteId) {
-        try { if (rows[i].Calendar_Event_ID) { var ev = apCheckinCalendar().getEventById(rows[i].Calendar_Event_ID); if (ev) ev.deleteEvent(); } } catch (e) {}
-        apUpdateRow(sheet, rows[i].__row, { 'Status': 'cancelled', 'Updated': new Date() });
+        if (String(rows[i].Status) !== 'booked') return { success: true, id: bookingId, already: true };
+        var ci = apFindCheckIn_(checkins, rows[i].CheckIn_ID);
+        apCancelBookingRow_(ss, sheet, rows[i], checkinsSheet, ci, false);
         try {
           var coach = apCoachEmail();
           var name = apAthleteName(apGetAthleteById(ss, athleteId), athleteId);
@@ -5165,6 +5352,7 @@ function handleCancelBooking(ss, athleteId, bookingId) {
     }
     return { success: true, id: bookingId, missing: true };
   } catch (error) { return { success: false, error: error.toString() }; }
+  finally { if (lock) { try { SpreadsheetApp.flush(); } catch (e) {} lock.releaseLock(); } }
 }
 
 // ── Calendar → sheet sync ────────────────────────────────────────────────
@@ -5216,34 +5404,98 @@ function apEventIsGone_(calId, iCalUid) {
   // synced-client cancel, but is safe and better than doing nothing.
   try { return apCheckinCalendar().getEventById(uid) === null; } catch (e2) { return false; }
 }
+// Group-event model reconcile. For each slot with booked rows, look at its ONE
+// shared event: if the whole event is gone → cancel everyone on that slot; else
+// read its guest list and cancel any booked student who is no longer a guest
+// (the coach removed them from the event). Also tops up holds for empty open
+// slots so the time is always reserved. onlyAthleteId limits work to one student
+// (used on portal open); a full sweep also maintains holds.
 function apReconcileBookings(ss, onlyAthleteId) {
   var out = { checked: 0, cancelled: 0 };
   try {
     onlyAthleteId = String(onlyAthleteId || '').trim();
     var sheet = apEnsureBookings(ss);
+    var checkinsSheet = apEnsureCheckIns(ss);
+    var checkins = apReadObjects(checkinsSheet);
     var rows = apReadObjects(sheet);
     var calId = apCheckinCalendarId();
     if (!calId) return out;
+    // Group booked rows by check-in.
+    var bySlot = {};
     for (var i = 0; i < rows.length; i++) {
-      var r = rows[i];
-      if (String(r.Status) !== 'booked') continue;
-      if (onlyAthleteId && String(r.Athlete_ID).trim() !== onlyAthleteId) continue;
-      var evId = String(r.Calendar_Event_ID || '').trim();
-      if (!evId) continue;                 // no event to verify — leave as-is
+      if (String(rows[i].Status) !== 'booked') continue;
+      if (onlyAthleteId && String(rows[i].Athlete_ID).trim() !== onlyAthleteId) continue;
+      var cid = String(rows[i].CheckIn_ID).trim();
+      (bySlot[cid] = bySlot[cid] || []).push(rows[i]);
+    }
+    for (var cid2 in bySlot) {
+      if (!bySlot.hasOwnProperty(cid2)) continue;
+      var ci = apFindCheckIn_(checkins, cid2);
+      if (!ci) continue;
+      var eid = String(ci.Event_ID || '').trim();
+      if (!eid) continue;                                   // nothing to verify
       out.checked++;
-      if (apEventIsGone_(calId, evId)) {
-        apUpdateRow(sheet, r.__row, { 'Status': 'cancelled', 'Updated': new Date() });
-        out.cancelled++;
-        try {
-          var coach = apCoachEmail();
-          var nm = apAthleteName(apGetAthleteById(ss, r.Athlete_ID), r.Athlete_ID);
-          if (coach) MailApp.sendEmail(coach, 'Check-in slot freed (calendar cancel): ' + nm,
-            nm + '’s booking was cancelled from the calendar, so the slot has been freed in the portal.');
-        } catch (e3) {}
+      // Whole event deleted → cancel every booked row for this slot.
+      if (apEventIsGone_(calId, eid)) {
+        var group = bySlot[cid2];
+        for (var g = 0; g < group.length; g++) { apCancelBookingRow_(ss, sheet, group[g], checkinsSheet, ci, false); out.cancelled++; }
+        continue;
       }
+      // Event alive → cancel anyone the coach removed from the guest list.
+      var guests = {};
+      try {
+        var ev = apCheckinCalendar().getEventById(eid);
+        if (ev) { var gl = ev.getGuestList(); for (var q = 0; q < gl.length; q++) guests[String(gl[q].getEmail()).trim().toLowerCase()] = true; }
+        else continue;                                      // couldn't read — skip, never cancel on doubt
+      } catch (e) { continue; }
+      var group2 = bySlot[cid2];
+      for (var h = 0; h < group2.length; h++) {
+        var em = String(group2[h].Athlete_Email || '').trim().toLowerCase();
+        if (!em) { try { var a = apGetAthleteById(ss, group2[h].Athlete_ID); em = a ? String(a.Email || '').trim().toLowerCase() : ''; } catch (e5) {} }
+        if (em && !guests[em]) { apCancelBookingRow_(ss, sheet, group2[h], checkinsSheet, ci, false); out.cancelled++; }
+      }
+    }
+    // Full sweep also keeps holds current for open, empty, future slots.
+    if (!onlyAthleteId) {
+      for (var k = 0; k < checkins.length; k++) {
+        var c = checkins[k];
+        if (String(c.Status || 'open') !== 'open') continue;
+        if (apSlotBookedCount_(rows, c.CheckIn_ID) > 0) continue;   // a booking event reserves it
+        apEnsureHold_(ss, c, checkinsSheet);
+      }
+    }
+    if (out.cancelled) {
+      try { var coach = apCoachEmail(); if (coach) MailApp.sendEmail(coach, 'Check-in slots freed (calendar cancel)', out.cancelled + ' booking(s) were cancelled from the calendar, so those slots are free again in the portal.'); } catch (e6) {}
     }
   } catch (error) {}
   return out;
+}
+
+// Menu: put a "reserved" hold on every open, future, empty check-in slot so the
+// time blocks your calendar and you don't double-book. Run once after adding the
+// group-event model (and any time you add new slots).
+function reserveCheckinTimes() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e0) { ui = null; }
+  var checkinsSheet = apEnsureCheckIns(ss);
+  var checkins = apReadObjects(checkinsSheet);
+  var rows = apReadObjects(apEnsureBookings(ss));
+  var holds = 0, events = 0;
+  for (var i = 0; i < checkins.length; i++) {
+    var c = checkins[i];
+    if (String(c.Status || 'open') !== 'open') continue;
+    var booked = apSlotBookedCount_(rows, c.CheckIn_ID);
+    if (booked > 0) {
+      if (!String(c.Event_ID || '').trim()) { apEnsureSlotEvent_(ss, c, checkinsSheet, booked); events++; }
+    } else {
+      var had = String(c.Hold_Event_ID || '').trim();
+      apEnsureHold_(ss, c, checkinsSheet);
+      if (String(c.Hold_Event_ID || '').trim() && String(c.Hold_Event_ID) !== had) holds++;
+    }
+  }
+  if (ui) ui.alert('Reserve check-in times',
+    'Done. Placed ' + holds + ' hold(s) on open slots' + (events ? ' and rebuilt ' + events + ' booking event(s)' : '') +
+    '.\n\nOpen slots now show as reserved on your check-ins calendar, so you won’t book over them.', ui.ButtonSet.OK);
 }
 
 // Menu / trigger entry point: full sweep across every booking.
@@ -5264,7 +5516,8 @@ function coachCancelBooking() {
   var ui = SpreadsheetApp.getUi();
   var sheet = apEnsureBookings(ss);
   var rows = apReadObjects(sheet);
-  var checkins = apReadObjects(apEnsureCheckIns(ss));
+  var checkinsSheet = apEnsureCheckIns(ss);
+  var checkins = apReadObjects(checkinsSheet);
   var ciById = {};
   for (var c = 0; c < checkins.length; c++) ciById[String(checkins[c].CheckIn_ID).trim()] = checkins[c];
   var booked = [];
@@ -5281,24 +5534,10 @@ function coachCancelBooking() {
   var n = parseInt(resp.getResponseText(), 10);
   if (!(n >= 1 && n <= booked.length)) { ui.alert('Cancel a booking', 'That was not a valid number — nothing cancelled.', ui.ButtonSet.OK); return; }
   var pick = booked[n - 1];
-  var evNote = '';
-  try {
-    var evId = String(pick.row.Calendar_Event_ID || '').trim();
-    if (evId) {
-      var ev = apCheckinCalendar().getEventById(evId);
-      if (ev) { ev.deleteEvent(); evNote = ' Calendar event deleted.'; }
-      else { evNote = ' (calendar event was already gone).'; }
-    } else { evNote = ' (no calendar event was recorded).'; }
-  } catch (e) { evNote = ' (could not delete the calendar event: ' + e + ')'; }
-  apUpdateRow(sheet, pick.row.__row, { 'Status': 'cancelled', 'Updated': new Date() });
-  try {
-    var athlete = apGetAthleteById(ss, pick.row.Athlete_ID);
-    var semail = athlete ? String(athlete.Email || '').trim() : '';
-    var nm2 = apAthleteName(athlete, pick.row.Athlete_ID);
-    if (semail) MailApp.sendEmail(semail, 'Your Athlete Academy check-in was cancelled',
-      'Hi ' + nm2 + ',\n\nMr Bain has cancelled your check-in (' + (pick.ci.Title || '') + ' on ' + apDateStr(pick.ci.Date) + '). Please book a new time in the Athlete Academy portal.\n');
-  } catch (e2) {}
-  ui.alert('Cancel a booking', 'Cancelled: ' + pick.label + '.' + evNote + '\n\nThe slot is now free in the portal.', ui.ButtonSet.OK);
+  // Drop the student from the shared event (put the hold back if the slot empties)
+  // and email the student to rebook.
+  apCancelBookingRow_(ss, sheet, pick.row, checkinsSheet, (pick.ci && pick.ci.__row ? pick.ci : null), true);
+  ui.alert('Cancel a booking', 'Cancelled: ' + pick.label + '.\n\nThe slot is now free in the portal.', ui.ButtonSet.OK);
 }
 
 // Diagnostic: for every booked slot, log what the calendar reports — the stored
@@ -5398,6 +5637,106 @@ function authorizeBooking() {
   return msg;
 }
 
+// ── Check-in attendance register + report ─────────────────────────────────
+// Grade number from "Grade"/"Year_Group" values like 11, "11", "G11", "Grade 11".
+function apGradeNum_(v) {
+  var s = String(v == null ? '' : v).toUpperCase().replace(/GRADE|YEAR|GROUP|^G/g, ' ');
+  var m = s.match(/\d+/);
+  return m ? Number(m[0]) : null;
+}
+function apEnsureCheckinRegister(ss) {
+  var sheet = ss.getSheetByName('CheckIn_Register');
+  if (!sheet) {
+    sheet = ss.insertSheet('CheckIn_Register');
+    sheet.getRange(1, 1, 1, 8).setValues([['Seq', 'Check-in', 'Date', 'Time', 'Name', 'Email', 'Booking_ID', 'Attendance']]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+// Build the attendance register from current bookings. Preserves any attendance
+// already marked (matched by Booking_ID), so it's safe to re-run after new
+// bookings or cancellations. Cancelled bookings drop off.
+function buildCheckinRegister() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; }
+  var reg = apEnsureCheckinRegister(ss);
+  var prev = {};
+  apReadObjects(reg).forEach(function (r) { if (r.Booking_ID) prev[String(r.Booking_ID).trim()] = r.Attendance || ''; });
+  var checkins = apReadObjects(apEnsureCheckIns(ss));
+  var ciById = {}; checkins.forEach(function (c) { ciById[String(c.CheckIn_ID).trim()] = c; });
+  var rows = [];
+  apReadObjects(apEnsureBookings(ss)).forEach(function (b) {
+    if (String(b.Status) !== 'booked') return;
+    var ci = ciById[String(b.CheckIn_ID).trim()]; if (!ci) return;
+    var nm = apAthleteName(apGetAthleteById(ss, b.Athlete_ID), b.Athlete_ID);
+    rows.push([ci.Seq, ci.Title, apDateStr(ci.Date), apTimeStr(ci.Start), nm, b.Athlete_Email || '', b.Booking_ID, prev[String(b.Booking_ID).trim()] || 'Attended']);
+  });
+  rows.sort(function (a, c) { var ka = a[2] + a[3] + a[0], kb = c[2] + c[3] + c[0]; return ka < kb ? -1 : ka > kb ? 1 : 0; });
+  var last = reg.getLastRow(); if (last > 1) reg.getRange(2, 1, last - 1, 8).clearContent();
+  if (rows.length) {
+    reg.getRange(2, 3, rows.length, 2).setNumberFormat('@');   // Date/Time as text
+    reg.getRange(2, 1, rows.length, 8).setValues(rows);
+    var rule = SpreadsheetApp.newDataValidation().requireValueInList(['Attended', 'No-show'], true).setAllowInvalid(true).build();
+    reg.getRange(2, 8, rows.length, 1).setDataValidation(rule);
+  }
+  if (ui) ui.alert('Check-in register', 'Built the register with ' + rows.length + ' booking(s) on the "CheckIn_Register" tab.\n\nEveryone defaults to Attended — just change the ones who didn’t show to No-show, then run "Check-in report".', ui.ButtonSet.OK);
+}
+// Summarise attendance per check-in: seen, no-show, unmarked-past, still-to-come,
+// and Grade 10-12 athletes who never booked. Writes a "CheckIn_Report" tab.
+function checkinReport() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; }
+  var att = {};
+  apReadObjects(apEnsureCheckinRegister(ss)).forEach(function (r) { if (r.Booking_ID) att[String(r.Booking_ID).trim()] = String(r.Attendance || '').trim(); });
+  var checkins = apReadObjects(apEnsureCheckIns(ss));
+  var ciById = {}, seqTitle = {};
+  checkins.forEach(function (c) { ciById[String(c.CheckIn_ID).trim()] = c; seqTitle[String(c.Seq)] = String(c.Title); });
+  var now = new Date();
+  var bySeq = {};
+  apReadObjects(apEnsureBookings(ss)).forEach(function (b) {
+    if (String(b.Status) !== 'booked') return;
+    var ci = ciById[String(b.CheckIn_ID).trim()]; if (!ci) return;
+    var seq = String(ci.Seq);
+    var g = bySeq[seq] = bySeq[seq] || { ids: {}, attended: [], noshow: [], toCome: [], unmarked: [] };
+    g.ids[String(b.Athlete_ID).trim()] = true;
+    var nm = apAthleteName(apGetAthleteById(ss, b.Athlete_ID), b.Athlete_ID);
+    var a = att[String(b.Booking_ID).trim()] || '';
+    var start = null; try { start = apParseDateTime(apDateStr(ci.Date), apTimeStr(ci.Start)); } catch (e) {}
+    if (start && start > now) g.toCome.push(nm + ' (' + apDateStr(ci.Date) + ')');   // future: not happened yet, even though it defaults to Attended
+    else if (a === 'No-show') g.noshow.push(nm);
+    else if (a === 'Attended') g.attended.push(nm);
+    else g.unmarked.push(nm + ' (' + apDateStr(ci.Date) + ')');
+  });
+  // Roster: Grades 10-12 only.
+  var roster = [];
+  var ath = ss.getSheetByName('Athletes');
+  if (ath) {
+    apReadObjects(ath).forEach(function (r) {
+      var gr = apGradeNum_(r.Grade); if (gr == null) gr = apGradeNum_(r.Year_Group);
+      if (gr === 10 || gr === 11 || gr === 12) roster.push({ id: String(r.Athlete_ID).trim(), name: apAthleteName(r, r.Athlete_ID) });
+    });
+  }
+  var rep = ss.getSheetByName('CheckIn_Report'); if (rep) rep.clear(); else rep = ss.insertSheet('CheckIn_Report');
+  var out = [], summary = [];
+  Object.keys(bySeq).sort().forEach(function (seq) {
+    var g = bySeq[seq], title = seqTitle[seq] || ('Check-in ' + seq);
+    var notBooked = roster.filter(function (p) { return !g.ids[p.id]; }).map(function (p) { return p.name; });
+    out.push([title, '']);
+    out.push(['  Attended (' + g.attended.length + ')', g.attended.join(', ')]);
+    out.push(['  No-show (' + g.noshow.length + ')', g.noshow.join(', ')]);
+    out.push(['  Unmarked, past (' + g.unmarked.length + ')', g.unmarked.join(', ')]);
+    out.push(['  Still to come (' + g.toCome.length + ')', g.toCome.join(', ')]);
+    out.push(['  Not booked, G10-12 (' + notBooked.length + ')', notBooked.join(', ')]);
+    out.push(['', '']);
+    summary.push(title + ': ' + g.attended.length + ' seen · ' + g.noshow.length + ' no-show · ' + g.unmarked.length + ' unmarked · ' + g.toCome.length + ' to come · ' + notBooked.length + ' not booked');
+  });
+  if (!out.length) out.push(['No bookings yet.', '']);
+  rep.getRange(1, 1, out.length, 2).setValues(out);
+  rep.setColumnWidth(1, 230); rep.setColumnWidth(2, 620);
+  if (ui) ui.alert('Check-in report', (summary.length ? summary.join('\n') : 'No bookings yet.') + '\n\nFull breakdown is on the "CheckIn_Report" tab.', ui.ButtonSet.OK);
+}
+
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Athlete Academy')
@@ -5408,6 +5747,10 @@ function onOpen() {
     .addItem('Set up / authorize booking', 'authorizeBooking')
     .addItem('Set up booking sync (auto, run once)', 'setupBookingSync')
     .addItem('Cancel a check-in booking', 'coachCancelBooking')
+    .addItem('Build check-in register', 'buildCheckinRegister')
+    .addItem('Check-in report (seen / no-show / not booked)', 'checkinReport')
+    .addItem('Add Check-in 2 slots (1:1)', 'seedCheckInTwo')
+    .addItem('Reserve my check-in times (calendar holds)', 'reserveCheckinTimes')
     .addItem('Sync check-in cancellations now', 'syncCheckinCancellations')
     .addItem('Debug booking sync (log)', 'debugBookingSync')
     .addItem('Check Calendar API', 'checkCalendarApi')
