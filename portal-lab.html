@@ -2537,6 +2537,9 @@
   /* Swap sheet stacks above the open session sheet */
   .sheet-backdrop.sheet-top { z-index: 110; }
   .sheet.sheet-top { z-index: 120; }
+  /* PB sheet sits above everything, including full-screen Workout mode (z 300) */
+  #pb-backdrop.open { z-index: 390; }
+  #pbSheet.open { z-index: 400; }
   /* Swap affordance on a workout step */
   .workout-swap {
     flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line);
@@ -3562,6 +3565,7 @@
     if(action==='cancelBooking') return Promise.resolve({ success:true, id: payload.bookingId });
     if(action==='saveSession') return Promise.resolve({ success:true, id: 'demo_'+Date.now() });
     if(action==='deleteSession') return Promise.resolve({ success:true, id: payload.id });
+    if(action==='savePB'){ state.pbs = state.pbs||[]; state.pbs.unshift(Object.assign({ id:'demo_pb_'+Date.now() }, payload.pb)); return Promise.resolve({ success:true, id:'demo_pb_'+Date.now() }); }
     if(action==='saveWeeklyTemplate') return Promise.resolve({ success:true });
     if(action==='getWeeklyTemplate') return Promise.resolve({ success:true, weeklyTemplate: state.weeklyTemplate });
     if(action==='generateProgram') { const sp = payload.spec || {}; const mins = sp.minutes || 45; return Promise.resolve({ success:true, program: {
@@ -3851,7 +3855,7 @@
   const LAUNCH_MODE = true;
   // My Program (week) is live so students can build their own program, and Book
   // (check-ins) is now live too. Load/PBs stay teased until they're ready.
-  const LIVE_TABS = { year:true, week:true, book:true };
+  const LIVE_TABS = { year:true, week:true, book:true, pbs:true };
   // Booking is still in testing — students see the "coming soon" teaser. It's
   // unlocked only for the demo, a ?book=1 override, and named testers. This just
   // reveals the UI; the SERVER enforces the real lock (BOOKING_LIVE / tester
@@ -5605,7 +5609,7 @@
         (rx? '<p class="wkt-ex-rx">'+esc(rx)+'</p>':'')+
         (cue? '<p class="wkt-ex-cue">'+esc(cue)+'</p>':'')+
         (caution? '<span class="wkt-ex-caution"><i class="ti ti-alert-triangle" aria-hidden="true"></i> '+esc(caution)+'</span>':'')+
-        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' weight / reps</button></div>')+
+        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' weight / reps</button><button class="wkt-ex-btn" onclick="wktLogPB('+i+')"><i class="ti ti-trophy" aria-hidden="true"></i> PB</button></div>')+
         editor+
       '</div>'+
     '</div>';
@@ -5618,6 +5622,15 @@
     if(now) wktRest(90);   // auto-rest after finishing a set (fun + useful)
     renderWorkoutMode();
   }
+  // Log a PB for this exact exercise, prefilled with its current weight/reps.
+  function wktLogPB(i){
+    const it = ((wktSession && wktSession.workout) || [])[i] || {};
+    const sx = it.sx || wktParse(it.detail || '');
+    const value = (sx && (sx.weight || sx.reps)) || '';
+    openPBForm({ sport: (wktSession && wktSession.sport) || '', exercise: it.name || '', value: value,
+      date: (wktSession && wktSession.date) || isoToday(), sessionId: (wktSession && wktSession.id) || '' });
+  }
+  window.wktLogPB = wktLogPB;
   function wktEdit(i){ wktEditing = i; renderWorkoutMode(); }
   function wktCancelEdit(){ wktEditing = -1; renderWorkoutMode(); }
   function wktSaveEx(i){
