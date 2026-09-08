@@ -1034,6 +1034,20 @@
   .sheet-save .btn-secondary {
     border: 1px solid var(--line);
   }
+  .sheet-save .sheet-delete-btn {
+    flex: 0 0 auto;
+    width: 50px;
+    padding: 14px 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--int-hard);
+    font-size: 17px;
+  }
+  .sheet-save .sheet-delete-btn:hover {
+    background: var(--int-hard);
+    border-color: var(--int-hard);
+    color: #fff;
+  }
 
   /* ============================
      AUTH GATE + APP SHELL
@@ -1814,6 +1828,7 @@
   </div>
 
   <div class="sheet-save">
+    <button class="sheet-delete-btn" id="sheetDeleteBtn" style="display:none;" title="Delete this session" aria-label="Delete this session" onclick="deleteCurrentSession()"><i class="ti ti-trash" aria-hidden="true"></i></button>
     <button class="btn-secondary" onclick="closeSheet()">Cancel</button>
     <button class="btn-primary" id="sheetSaveBtn" onclick="saveCurrentSession()">Save session</button>
   </div>
@@ -4311,6 +4326,18 @@
   }
   window.openSession = openSession;
 
+  // Delete the session currently open in the detail sheet (the discoverable
+  // path on desktop, where the row's left-swipe Delete isn't reachable).
+  function deleteCurrentSession(){
+    if(!editing || !editing.id) return;
+    const id = editing.id;
+    const nm = editing.name || 'this session';
+    if(!confirm('Delete “'+nm+'”? This can’t be undone.')) return;
+    closeSheet();
+    deleteSessionSwipe(null, id);
+  }
+  window.deleteCurrentSession = deleteCurrentSession;
+
   function showPlanHeader(){
     document.getElementById('planHeader').style.display = '';
     document.getElementById('planToggle').style.display = 'none';
@@ -4342,6 +4369,9 @@
     // LOG mode: lead with logging, planning fields behind the toggle.
     const isNew = !s.id;
     sheetMode = isNew ? 'plan' : 'log';
+    // Delete is only offered for a session that already exists (nothing to delete on a new one).
+    const delBtn = document.getElementById('sheetDeleteBtn');
+    if(delBtn) delBtn.style.display = isNew ? 'none' : '';
     // Day + length + details are always visible now — they used to hide behind an
     // "Edit plan details" toggle, which made them feel broken.
     document.getElementById('planHeader').style.display = '';
