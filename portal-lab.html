@@ -1160,24 +1160,8 @@
   .demo-pill[hidden] { display: none; }
 
   /* ============================
-     LAB — read-only Target (shown at log time) + Readiness block
+     LAB — Readiness block
      ============================ */
-  .target-readonly {
-    display: flex; align-items: flex-start; gap: 10px;
-    background: var(--cream); border-radius: 12px;
-    padding: 12px 14px; margin-bottom: 18px;
-    border-left: 4px solid var(--gold);
-  }
-  .target-readonly .ti { color: var(--burgundy); font-size: 16px; margin-top: 1px; }
-  .target-readonly-text { min-width: 0; }
-  .target-readonly-label {
-    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--ink-mute); font-weight: 700; margin: 0 0 3px;
-  }
-  .target-readonly-value {
-    font-family: 'Fraunces', serif; font-size: 14px; color: var(--ink); margin: 0; line-height: 1.35;
-  }
-
   /* Collapsible Readiness section */
   .readiness-head {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -1670,9 +1654,6 @@
         </div>
       </div>
 
-      <label class="field-label" for="planTarget">Session goal · optional</label>
-      <input class="duration-input plan-field" id="planTarget" placeholder="e.g. 5km · hold 6:00/km · 3×8 at 40kg">
-
       <div id="resultSection" style="display:none;">
         <label class="field-label" for="planResult" style="margin-top:14px;">Result · optional</label>
         <input class="duration-input plan-field" id="planResult" placeholder="e.g. Won 3–1 · scored 2 · lost in a tiebreak">
@@ -1692,15 +1673,6 @@
           </div>
         </div>
         <div class="toggle-switch" id="repeatToggle"></div>
-      </div>
-    </div>
-
-    <!-- LAB: read-only target shown at log time (actual-vs-target) -->
-    <div class="target-readonly" id="targetReadonly" style="display:none;">
-      <i class="ti ti-target" aria-hidden="true"></i>
-      <div class="target-readonly-text">
-        <p class="target-readonly-label">Today's target</p>
-        <p class="target-readonly-value" id="targetReadonlyValue">—</p>
       </div>
     </div>
 
@@ -4395,15 +4367,6 @@
     updateLoad();
     // note
     document.getElementById('sheetNote').value = s.note || '';
-    // LAB: target — editable in the plan header, read-only at log time
-    document.getElementById('planTarget').value = s.target || '';
-    const tro = document.getElementById('targetReadonly');
-    if(!isNew && s.target){
-      document.getElementById('targetReadonlyValue').textContent = s.target;
-      tro.style.display = '';
-    } else {
-      tro.style.display = 'none';
-    }
     // LAB: readiness — collapsed by default
     fillReadiness(s.readiness);
     // Plan/log split + date-aware fields.
@@ -5302,7 +5265,7 @@
       note: val('sheetNote'),
       noticed: val('sheetNoticed'),
       blocker: val('sheetBlocker'),
-      target: val('planTarget').trim(),
+      target: (editing && editing.target) || '',   // session-goal field removed; keep any legacy value
       readiness: isFuture ? null : collectReadiness()
     };
     // "Part of my program" governs the repeating template. Three cases:
