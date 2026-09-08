@@ -2899,7 +2899,10 @@
   .ym-marker.a-priority { color: var(--gold); }
   .ym-marker.testing { color: var(--ink); }
   .ym-marker.commitment { color: var(--ink-mute); }
+  .ym-marker.game { color: var(--gold); }
   .ym-peak .ym-marker.testing { color: var(--cream); }
+  .year-addcomp { margin-top: 12px; width: 100%; background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 10px; padding: 9px; font: 600 13px 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
+  .year-addcomp:hover { border-color: var(--burgundy); color: var(--burgundy); }
   .ym-suggest-edit {
     position: absolute; top: 2px; right: 2px; width: 16px; height: 16px;
     display: flex; align-items: center; justify-content: center;
@@ -6870,6 +6873,7 @@
         (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
         '<div class="year-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
         renderMonths(sport, si, curMonth)+
+        '<button class="year-addcomp" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a competition</button>'+
       '</div>';
     });
 
@@ -6957,6 +6961,14 @@
     if(isA) m += '<span class="ym-marker a-priority" title="A-priority">★</span>';
     if(tw) m += '<span class="ym-marker testing" title="Testing window">◆</span>';
     if(busy) m += '<span class="ym-marker commitment" title="Busy — mocks/exams/travel">▲</span>';
+    // Competitions / games for this sport, plotted on the month they fall in
+    // (the A-priority big event already shows as ★, so it's excluded here).
+    var apDate = (ap && ap.date) || '';
+    var games = (state.games||[]).filter(function(g){ return g && g.date && g.date!==apDate && MONTHS[parseISO(g.date).getMonth()]===month && (!g.sport || g.sport===sport.name); });
+    if(games.length){
+      var gt = games.map(function(g){ return (g.name||'Competition') + (g.date? ' ('+fmtNice(g.date)+')':''); }).join(', ');
+      m += '<span class="ym-marker game" title="'+esc(gt)+'">●</span>';
+    }
     return m;
   }
 
