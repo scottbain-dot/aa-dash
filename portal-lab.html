@@ -2568,8 +2568,8 @@
   .myprog-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
   .myprog-item-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
   .myprog-item-sub { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); }
-  .myprog-remove { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-  .myprog-remove:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .myprog-remove { flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.15s; }
+  .myprog-remove:hover { border-color: var(--int-hard); color: #fff; background: var(--int-hard); }
 
   /* ===== PROGRAM TAB — the home for building / switching the owned program ===== */
   .prog-head { margin: 4px 2px 16px; }
@@ -6187,7 +6187,7 @@
               '<span class="myprog-item-main"><span class="myprog-item-name">'+esc(o.t.name)+typeTag(o.t)+'</span>'+
                 '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+((o.t.type==='training'||!o.t.type)&&n?' · '+n+' exercise'+(n===1?'':'s'):'')+'</span></span>'+
               '<i class="ti ti-chevron-right myprog-go" aria-hidden="true"></i>'+
-              '<button class="myprog-remove" aria-label="Remove from program" onclick="event.stopPropagation(); removeFromProgramAt('+o.i+')"><i class="ti ti-x" aria-hidden="true"></i></button>'+
+              '<button class="myprog-remove" aria-label="Remove this day from your program" title="Remove this day" onclick="event.stopPropagation(); removeFromProgramAt('+o.i+')"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
             '</div>'; }).join('')
           : '<div class="myprog-rest">Rest</div>')+
       '</div>';
@@ -6228,7 +6228,7 @@
         '<span class="prog-repeat-chip"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats weekly</span></div>'+
       '<div class="myprog-list">'+programDaysHTML()+'</div>'+
       '<button class="prog-add-day" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Add a day</button>'+
-      '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Drag <i class="ti ti-grip-vertical" aria-hidden="true"></i> to move a session to another day. Tap <i class="ti ti-x" aria-hidden="true"></i> to remove a day.</p>';
+      '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Drag <i class="ti ti-grip-vertical" aria-hidden="true"></i> to move a session to another day. Tap <i class="ti ti-trash" aria-hidden="true"></i> to remove a day.</p>';
     initProgramDrag();   // grip-drag a session onto another day of the week
   }
   function refreshProgramSheet(){ if(document.getElementById('myProgramSheet').classList.contains('open')) renderMyProgram(); }
