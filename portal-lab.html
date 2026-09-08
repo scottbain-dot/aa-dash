@@ -2558,6 +2558,9 @@
   .myprog-dow { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--ink-mute); margin-bottom: 6px; }
   .myprog-rest { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
   .myprog-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+  .myprog-grip { flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-mute); cursor: grab; touch-action: none; font-size: 15px; margin: 0 -2px 0 -4px; opacity: 0.45; }
+  .myprog-grip:active { cursor: grabbing; }
+  .myprog-item.dragging { opacity: 0.3; }
   .myprog-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--line); flex-shrink: 0; }
   .myprog-dot.easy { background: var(--int-easy); }
   .myprog-dot.moderate { background: var(--int-moderate); }
@@ -6174,11 +6177,12 @@
     let html = '';
     for(let d=0; d<7; d++){
       const day = indexed.filter(o => o.t.dow===d);
-      html += '<div class="myprog-day">'+
+      html += '<div class="myprog-day" data-dow="'+d+'">'+
         '<div class="myprog-dow">'+DOW_FULL[d]+'</div>'+
         (day.length
           ? day.map(o => { const n = (o.t.workout||[]).length;
-              return '<div class="myprog-item clickable" onclick="openProgramDay('+o.i+')">'+
+              return '<div class="myprog-item clickable" data-idx="'+o.i+'" onclick="openProgramDay('+o.i+')">'+
+              '<span class="myprog-grip" aria-label="Drag to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
               '<span class="myprog-dot'+(o.t.intensity?' '+esc(o.t.intensity):'')+'" aria-hidden="true"></span>'+
               '<span class="myprog-item-main"><span class="myprog-item-name">'+esc(o.t.name)+typeTag(o.t)+'</span>'+
                 '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+((o.t.type==='training'||!o.t.type)&&n?' · '+n+' exercise'+(n===1?'':'s'):'')+'</span></span>'+
@@ -6224,9 +6228,70 @@
         '<span class="prog-repeat-chip"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats weekly</span></div>'+
       '<div class="myprog-list">'+programDaysHTML()+'</div>'+
       '<button class="prog-add-day" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Add a day</button>'+
-      '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Tap <i class="ti ti-x" aria-hidden="true"></i> to remove a day.</p>';
+      '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Drag <i class="ti ti-grip-vertical" aria-hidden="true"></i> to move a session to another day. Tap <i class="ti ti-x" aria-hidden="true"></i> to remove a day.</p>';
+    initProgramDrag();   // grip-drag a session onto another day of the week
   }
   function refreshProgramSheet(){ if(document.getElementById('myProgramSheet').classList.contains('open')) renderMyProgram(); }
+
+  // Move a program session to another day of the week (dow 0=Mon..6=Sun), persist,
+  // and re-render the sheet. Same idea as the Week grip-drag, keyed by dow not date.
+  function moveTemplateSessionToDow(idx, dow){
+    const sessions = templateSessions();
+    const s = sessions[idx];
+    if(!s || s.dow===dow) return;
+    s.dow = dow;
+    persistTemplate();
+    renderMyProgram();
+    showToast('Moved to '+DOW_FULL[dow]+'. Your program is saved.', 'success');
+  }
+  // Grip-drag a program session onto another day (touch + mouse). #myProgramBody is
+  // rebuilt on every render, so the .myprog-list is fresh each time and binds once.
+  function initProgramDrag(){
+    const list = document.querySelector('#myProgramBody .myprog-list');
+    if(!list || list._dragBound) return;
+    list._dragBound = true;
+    let drag = null;
+    list.addEventListener('pointerdown', function(e){
+      const grip = e.target.closest('.myprog-grip');
+      if(!grip) return;
+      const item = grip.closest('.myprog-item');
+      if(!item) return;
+      e.preventDefault();
+      const rect = item.getBoundingClientRect();
+      const ghost = item.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.style.width = rect.width+'px'; ghost.style.left = rect.left+'px'; ghost.style.top = rect.top+'px';
+      document.body.appendChild(ghost);
+      item.classList.add('dragging');
+      const fromDay = item.closest('[data-dow]');
+      drag = { idx: parseInt(item.getAttribute('data-idx'),10), from: fromDay ? fromDay.getAttribute('data-dow') : null, item: item, ghost: ghost, offY: e.clientY-rect.top, target: null, targetEl: null };
+      try { list.setPointerCapture(e.pointerId); } catch(_){}
+    });
+    list.addEventListener('pointermove', function(e){
+      if(!drag) return;
+      e.preventDefault();
+      drag.ghost.style.top = (e.clientY - drag.offY)+'px';
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const t = el && el.closest('[data-dow]');
+      if(t !== drag.targetEl){
+        list.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
+        drag.targetEl = t || null;
+        drag.target = t ? t.getAttribute('data-dow') : null;
+        if(t && drag.target !== drag.from) t.classList.add('drop-target');
+      }
+    });
+    function endDrag(){
+      if(!drag) return;
+      const idx = drag.idx, target = drag.target, from = drag.from;
+      if(drag.ghost) drag.ghost.remove();
+      list.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
+      if(drag.item) drag.item.classList.remove('dragging');
+      drag = null;
+      if(target !== null && target !== from) moveTemplateSessionToDow(idx, parseInt(target,10));
+    }
+    list.addEventListener('pointerup', endDrag);
+    list.addEventListener('pointercancel', endDrag);
+  }
 
   // ---- Auto-repeat: does the owned program carry into empty weeks? (default on) ----
   function autoRepeatOn(){
