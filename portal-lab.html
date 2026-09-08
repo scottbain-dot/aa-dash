@@ -1749,19 +1749,19 @@
     </div>
 
     <div class="sheet-section" id="pbSection">
-      <p class="sheet-section-label">Mark as a PB?</p>
-      <div class="pb-toggle" onclick="togglePB(this)">
+      <p class="sheet-section-label">Personal best</p>
+      <button type="button" class="pb-toggle" style="width:100%; cursor:pointer; text-align:left;" onclick="logPBFromSession()">
         <div class="pb-toggle-content">
           <div class="pb-toggle-icon">
             <i class="ti ti-trophy" aria-hidden="true"></i>
           </div>
           <div class="pb-toggle-text">
-            <strong>New personal best</strong>
-            <small>Tap to flag this session</small>
+            <strong>Log a personal best</strong>
+            <small>Hit a new best? Record the exercise and the number, e.g. Back squat 60kg</small>
           </div>
         </div>
-        <div class="toggle-switch" id="pbToggle"></div>
-      </div>
+        <i class="ti ti-chevron-right" aria-hidden="true" style="color:var(--ink-mute); font-size:18px;"></i>
+      </button>
     </div>
 
     <!-- LAB: readiness — collapsed by default, one tap to skip when fine -->
@@ -4353,8 +4353,6 @@
     // duration (actual)
     document.getElementById('duration-input').value = s.duration != null ? s.duration : (s.plannedDuration != null ? s.plannedDuration : '');
     updateLoad();
-    // PB toggle
-    document.getElementById('pbToggle').classList.toggle('on', !!s.isPB);
     // note
     document.getElementById('sheetNote').value = s.note || '';
     // LAB: target — editable in the plan header, read-only at log time
@@ -5224,8 +5222,12 @@
     if(!sel){ el.innerHTML = '<em>rate your effort</em>'; return; }
     el.innerHTML = (parseInt(sel.dataset.val,10)*dur) + ' <em>au</em>';
   }
-  function togglePB(){ document.getElementById('pbToggle').classList.toggle('on'); }
-  window.togglePB = togglePB;
+  // Log a PB tied to a specific exercise + result (opens the proper PB form),
+  // carrying over the session's sport and date — not the session name.
+  function logPBFromSession(){
+    openPBForm({ sport: (editing && editing.sport) || '', date: (editing && editing.date) || isoToday(), sessionId: (editing && editing.id) || '' });
+  }
+  window.logPBFromSession = logPBFromSession;
 
   async function saveCurrentSession(){
     if(!editing) return;
@@ -5254,7 +5256,7 @@
       duration: logged ? duration : null,
       load: logged ? rpe * duration : null,
       status: logged ? 'done' : 'planned',
-      isPB: document.getElementById('pbToggle').classList.contains('on'),
+      isPB: !!(editing && editing.isPB),   // PBs are logged explicitly now, not toggled per-session
       workout: editing.workout || [],
       _checked: editing._checked || [],
       note: val('sheetNote'),
@@ -5296,7 +5298,6 @@
       const res = await apiData({ action:'saveSession', session: Object.assign({}, session, { id: isNew ? null : session.id }) });
       if(!res.success) throw new Error(res.error || 'save failed');
       if(isNew && res.id){ session.id = res.id; renderWeek(); if(session.type === 'game'){ removeGameLocal(prevId); upsertGameLocal(session); } }
-      if(session.isPB){ openPBForm({ sport: session.sport, exercise: session.name, date: session.date, sessionId: session.id }); }
     } catch(e){
       console.error('saveSession', e);
       showToast('Saved on your device but couldn’t reach the server — reopen to retry.', 'error');
