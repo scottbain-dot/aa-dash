@@ -2888,11 +2888,16 @@
   .yog-cell.suggest { opacity: 0.42; }
   .yog-cell.now { outline: 2px solid var(--burgundy); outline-offset: -2px; }
   .yog-cell .yog-mark {
-    position: absolute; bottom: 1px; right: 1px; display: flex; align-items: center; gap: 1px;
-    background: rgba(20,13,11,0.74); color: var(--gold); border-radius: 5px; padding: 1px 3px; line-height: 1;
+    position: absolute; top: 3px; right: 3px; min-width: 22px; height: 22px; padding: 0 3px;
+    display: flex; align-items: center; justify-content: center; gap: 1px; border: none; cursor: pointer;
+    background: var(--gold); color: var(--burgundy-dark); border-radius: 999px; line-height: 1;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.32); transition: transform 0.12s;
   }
-  .yog-cell .yog-mark .ti { font-size: 10px; }
-  .yog-cell .yog-mark b { font-size: 8px; font-weight: 800; }
+  .yog-cell .yog-mark:hover { transform: scale(1.18); }
+  .yog-cell .yog-mark .ti { font-size: 14px; }
+  .yog-cell .yog-mark b { font-size: 10px; font-weight: 800; margin-left: 1px; }
+  @keyframes yog-card-flash { 0%,100% { box-shadow: var(--card-shadow, 0 0 0 rgba(0,0,0,0)); } 30% { box-shadow: 0 0 0 3px var(--gold); } }
+  .year-flash { animation: yog-card-flash 1.1s ease; }
   .yog-rowlabel { grid-column: 1 / -1; height: 2px; }
   .yog-hint { font: 500 12px 'Inter', sans-serif; color: var(--ink-mute); margin: 12px 0 0; text-align: center; }
   .year-detail-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -7306,7 +7311,7 @@
     if(up.length) body += '<div class="fx-list">'+rowsHTML(up)+'</div>';
     else body += '<p class="card-empty-line">No games coming up. Add your fixtures so your training can work around them.</p>';
     if(past.length) body += '<p class="fx-past-label">Recent</p><div class="fx-list fx-list-past">'+rowsHTML(past)+'</div>';
-    return '<div class="card"><p class="card-eyebrow">My games or competitions</p>'+
+    return '<div class="card" id="yearGamesCard"><p class="card-eyebrow">My games or competitions</p>'+
       '<p class="kd-intro">Your fixtures across the season — the days your training points at.</p>'+
       body+
       '<button class="card-cta card-cta-ghost" style="width:100%; margin-top:12px;" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a game</button>'+
@@ -7368,6 +7373,15 @@
   }
   function yearBackToGrid(){ yearFocus = null; renderYear(); }
   window.yearBackToGrid = yearBackToGrid;
+  // Tapping a competition badge jumps to the "My games or competitions" card.
+  function goToGames(){
+    if(yearFocus !== null){ yearFocus = null; renderYear(); }
+    setTimeout(function(){
+      const el = document.getElementById('yearGamesCard');
+      if(el){ el.scrollIntoView({ behavior:'smooth', block:'center' }); el.classList.add('year-flash'); setTimeout(function(){ el.classList.remove('year-flash'); }, 1200); }
+    }, 30);
+  }
+  window.goToGames = goToGames;
   function toggleYearGrid(){ yearForceGrid = !yearForceGrid; yearFocus = null; renderYear(); }
   window.toggleYearGrid = toggleYearGrid;
 
@@ -7416,17 +7430,21 @@
     const apHere = !!(ap && ap.event && ap.month===month && (!ap.sport || ap.sport===sport.name));
     const apDate = (ap && ap.date) || '';
     const monthGames = (state.games||[]).filter(g => g && g.date && g.date!==apDate && MONTHS[parseISO(g.date).getMonth()]===month && (!g.sport || g.sport===sport.name));
-    // A gold badge shows a competition sits in this month: a star for the one big
-    // A-priority event, a trophy (with a count) for games/comps.
-    let mark = '';
-    if(apHere) mark = '<span class="yog-mark" aria-hidden="true"><i class="ti ti-star-filled"></i></span>';
-    else if(monthGames.length) mark = '<span class="yog-mark" aria-hidden="true"><i class="ti ti-trophy"></i>'+(monthGames.length>1?'<b>'+monthGames.length+'</b>':'')+'</span>';
-    const cls = 'yog-cell '+(stt?'ym-'+stt:'')+(suggest?' suggest':'')+(isNow?' now':'');
-    const style = stt2 ? ' style="background:linear-gradient(90deg, var(--st-'+stt+') 0 50%, var(--st-'+stt2+') 50% 100%);"' : '';
     const names = [];
     if(apHere) names.push(ap.event + (ap.date? ' ('+fmtNice(ap.date)+')' : ''));
     monthGames.forEach(g => names.push((g.name||'Competition') + (g.date? ' ('+fmtNice(g.date)+')' : '')));
-    const title = month + (stt? ' · '+PHASE_FRIENDLY[stt]+(stt2?' → '+PHASE_FRIENDLY[stt2]:'')+(suggest?' (suggested)':'') : '') + (names.length? ' · '+names.join(', ') : '');
+    // A big gold badge shows a competition sits in this month: a star for the one
+    // A-priority event, a trophy (with a count) for games/comps. Its own tooltip
+    // names them, and tapping it jumps to "My games or competitions".
+    let mark = '';
+    if(apHere || monthGames.length){
+      const icon = apHere ? 'ti-star-filled' : 'ti-trophy';
+      const cnt = (!apHere && monthGames.length>1) ? '<b>'+monthGames.length+'</b>' : '';
+      mark = '<button class="yog-mark" onclick="event.stopPropagation(); goToGames()" title="'+esc(names.join(', '))+'" aria-label="'+esc(names.join(', '))+' — open games"><i class="ti '+icon+'" aria-hidden="true"></i>'+cnt+'</button>';
+    }
+    const cls = 'yog-cell '+(stt?'ym-'+stt:'')+(suggest?' suggest':'')+(isNow?' now':'');
+    const style = stt2 ? ' style="background:linear-gradient(90deg, var(--st-'+stt+') 0 50%, var(--st-'+stt2+') 50% 100%);"' : '';
+    const title = month + (stt? ' · '+PHASE_FRIENDLY[stt]+(stt2?' → '+PHASE_FRIENDLY[stt2]:'')+(suggest?' (suggested)':'') : '');
     return '<div class="'+cls+'"'+style+' onclick="openBlock('+si+',\''+month+'\')" title="'+esc(title)+'">'+mark+'</div>';
   }
 
@@ -7470,7 +7488,7 @@
     if(gridMode){
       html += overviewGridHTML(ym, curMonth, ap);
       html += '<button class="card-cta card-cta-ghost" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
-      html += yearTestingCard() + seasonFixturesCard() + seasonKeyDatesCard();
+      html += seasonFixturesCard() + yearTestingCard() + seasonKeyDatesCard();
     } else {
       const si = (yearFocus != null && ym.sports[yearFocus]) ? yearFocus : 0;
       if(multi){
@@ -7491,7 +7509,7 @@
         // Single sport: everything reachable inline, as before — plus a way into the grid.
         html += '<button class="year-view-toggle" style="margin:4px auto 2px;" onclick="toggleYearGrid()"><i class="ti ti-layout-grid" aria-hidden="true"></i> Compare in a grid</button>';
         html += '<button class="card-cta card-cta-ghost" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
-        html += yearTestingCard() + seasonFixturesCard() + seasonKeyDatesCard();
+        html += seasonFixturesCard() + yearTestingCard() + seasonKeyDatesCard();
       }
     }
 
