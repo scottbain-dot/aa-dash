@@ -2788,6 +2788,11 @@
     display: flex; align-items: center; gap: 8px; line-height: 1.1;
   }
   .year-sport-star { color: var(--gold); font-size: 16px; }
+  .year-sport-rename {
+    background: none; border: none; cursor: pointer; color: var(--ink-mute); padding: 4px;
+    font-size: 15px; line-height: 1; display: inline-flex; align-items: center; border-radius: 6px; transition: all 0.15s;
+  }
+  .year-sport-rename:hover { color: var(--burgundy); background: var(--cream); }
   .year-now-chip {
     font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; white-space: nowrap;
     padding: 6px 12px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
@@ -7004,7 +7009,9 @@
         '</p>'+
         '<div class="year-sport-head"><div class="year-sport-titles">'+
           '<p class="year-sport-name">'+esc(sport.name)+
-            (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+'</p>'+
+            (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
+            ' <button class="year-sport-rename" onclick="renameSport('+si+')" title="Rename sport" aria-label="Rename sport"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+          '</p>'+
         '</div></div>'+
         (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
         '<div class="year-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
@@ -7255,6 +7262,27 @@
     renderYear();
   }
   window.addSport = addSport;
+
+  // Rename a sport in place, carrying the name through anything keyed by it
+  // (the A-priority event's sport, and any games tagged with the old name).
+  function renameSport(si){
+    const sport = state.yearMap.sports[si];
+    if(!sport) return;
+    const cur = sport.name || '';
+    const next = (window.prompt('Rename this sport', cur) || '').trim();
+    if(!next || next===cur) return;
+    if(state.yearMap.sports.some((s, i) => i!==si && s.name.toLowerCase()===next.toLowerCase())){
+      showToast('That sport is already on your year.', 'error'); return;
+    }
+    sport.name = next;
+    const ap = state.yearMap.aPriority;
+    if(ap && ap.sport===cur) ap.sport = next;
+    (state.games||[]).forEach(g => { if(g && g.sport===cur) g.sport = next; });
+    markYearDirty();
+    renderYear(); renderBlockBar();
+    showToast('Sport renamed', 'success');
+  }
+  window.renameSport = renameSport;
 
   function serialiseYearMap(){
     const ym = state.yearMap;
