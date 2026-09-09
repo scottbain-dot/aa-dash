@@ -1871,23 +1871,6 @@
   </div>
 </div>
 
-<!-- EDIT PHASES — per-sport month list (states + focus titles) -->
-<div class="sheet-backdrop" id="phases-backdrop" onclick="closePhases()"></div>
-<div class="sheet" id="phasesSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <div class="sheet-header-content">
-      <p class="sheet-eyebrow" id="phasesEyebrow">Periodisation</p>
-      <h2 class="sheet-title">Edit <em>phases &amp; titles</em>.</h2>
-    </div>
-    <button class="sheet-close" onclick="closePhases()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
-  </div>
-  <div class="sheet-body">
-    <p class="ql-help" style="margin-top:0;">Tap any month to set its phase, split it, or give it a focus title. Suggested months aren't fixed until you tap them.</p>
-    <div id="phasesBody"></div>
-  </div>
-</div>
-
 <!-- PB ADD / EDIT SHEET -->
 <div class="sheet-backdrop" id="pb-backdrop" onclick="closePB()"></div>
 <div class="sheet" id="pbSheet">
@@ -2805,6 +2788,11 @@
     display: flex; align-items: center; gap: 8px; line-height: 1.1;
   }
   .year-sport-star { color: var(--gold); font-size: 16px; }
+  .year-sport-rename {
+    background: none; border: none; cursor: pointer; color: var(--ink-mute); padding: 4px;
+    font-size: 15px; line-height: 1; display: inline-flex; align-items: center; border-radius: 6px; transition: all 0.15s;
+  }
+  .year-sport-rename:hover { color: var(--burgundy); background: var(--cream); }
   .year-now-chip {
     font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; white-space: nowrap;
     padding: 6px 12px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
@@ -2917,39 +2905,6 @@
   }
   .ym-suggest-edit:hover { opacity: 1; color: var(--burgundy); }
 
-
-  /* Per-sport "Edit phases & titles" — button on the card + the list sheet */
-  .year-card-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-  .year-editphases {
-    width: 100%; background: var(--burgundy); border: 1px solid var(--burgundy); color: var(--cream);
-    border-radius: 10px; padding: 10px; font: 600 13px 'Inter', sans-serif;
-    display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.15s;
-  }
-  .year-editphases:hover { background: var(--burgundy-dark); border-color: var(--burgundy-dark); }
-  .phase-row {
-    display: flex; align-items: center; gap: 12px; padding: 12px 4px;
-    border-bottom: 1px solid var(--line-soft); cursor: pointer; transition: background 0.12s;
-  }
-  .phase-row:last-child { border-bottom: none; }
-  .phase-row:hover { background: var(--cream); }
-  .phase-row-month {
-    flex: 0 0 42px; font: 700 11px 'Inter', sans-serif; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--ink-mute);
-  }
-  .phase-row-chip {
-    flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px;
-    border-radius: 999px; padding: 4px 10px; font: 600 12px 'Inter', sans-serif;
-  }
-  .phase-row-chip.ym-build    { background: var(--st-build);    color: var(--st-build-ink); }
-  .phase-row-chip.ym-maintain { background: var(--st-maintain); color: var(--st-maintain-ink); }
-  .phase-row-chip.ym-peak     { background: var(--st-peak);     color: var(--st-peak-ink); }
-  .phase-row-chip.ym-recover  { background: var(--st-recover);  color: var(--st-recover-ink); border: 1px solid var(--line); }
-  .phase-row-chip.ym-off      { background: var(--st-off);      color: var(--st-off-ink); }
-  .phase-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-  .phase-row-focus { font: 500 13px 'Inter', sans-serif; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .phase-row-focus.muted { color: var(--ink-mute); font-style: italic; font-weight: 400; }
-  .phase-row-suggest { font: 600 9px 'Inter', sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
-  .phase-row-go { flex: 0 0 auto; color: var(--ink-mute); font-size: 16px; }
 
   /* State picker in block sheet */
   .state-picker { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -7054,15 +7009,14 @@
         '</p>'+
         '<div class="year-sport-head"><div class="year-sport-titles">'+
           '<p class="year-sport-name">'+esc(sport.name)+
-            (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+'</p>'+
+            (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
+            ' <button class="year-sport-rename" onclick="renameSport('+si+')" title="Rename sport" aria-label="Rename sport"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+          '</p>'+
         '</div></div>'+
         (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
         '<div class="year-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
         renderMonths(sport, si, curMonth)+
-        '<div class="year-card-actions">'+
-          '<button class="year-editphases" onclick="openSportPhases('+si+')"><i class="ti ti-list-details" aria-hidden="true"></i> Edit phases &amp; titles</button>'+
-          '<button class="year-addcomp" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a competition</button>'+
-        '</div>'+
+        '<button class="year-addcomp" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a competition</button>'+
       '</div>';
     });
 
@@ -7208,76 +7162,16 @@
     const block = { month: month, state: stt, focus:'', loadTarget:null, note:'' };
     applyBlockLocally(sport.name, block);
     renderYear(); renderBlockBar();
-    refreshPhasesList();
     markYearDirty();   // saves the full map (device now, sheet in the background)
   }
   window.confirmSuggestion = confirmSuggestion;
 
   // ----- Block detail sheet -----
-  function openBlockSheet(top){
-    const bd = document.getElementById('block-backdrop'), sh = document.getElementById('blockSheet');
-    bd.classList.toggle('sheet-top', !!top); sh.classList.toggle('sheet-top', !!top);  // sit above the phases list
-    bd.classList.add('open'); sh.classList.add('open'); document.body.style.overflow='hidden';
-  }
-  function closeBlock(){
-    const bd = document.getElementById('block-backdrop'), sh = document.getElementById('blockSheet');
-    bd.classList.remove('open'); sh.classList.remove('open'); bd.classList.remove('sheet-top'); sh.classList.remove('sheet-top');
-    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';   // keep locked if the phases list is still open
-  }
+  function openBlockSheet(){ document.getElementById('block-backdrop').classList.add('open'); document.getElementById('blockSheet').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeBlock(){ document.getElementById('block-backdrop').classList.remove('open'); document.getElementById('blockSheet').classList.remove('open'); document.body.style.overflow=''; }
   window.closeBlock = closeBlock;
 
-  // ----- Edit phases: a per-sport month list (states + focus titles) -----
-  let phasesSportIdx = -1;
-  function openSportPhases(si){
-    const sport = state.yearMap.sports[si];
-    if(!sport) return;
-    phasesSportIdx = si;
-    document.getElementById('phasesEyebrow').textContent = sport.name + ' · periodisation';
-    renderPhasesList();
-    document.getElementById('phases-backdrop').classList.add('open');
-    document.getElementById('phasesSheet').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  window.openSportPhases = openSportPhases;
-  function closePhases(){
-    document.getElementById('phases-backdrop').classList.remove('open');
-    document.getElementById('phasesSheet').classList.remove('open');
-    phasesSportIdx = -1;
-    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
-  }
-  window.closePhases = closePhases;
-  function phasesListOpen(){ return document.getElementById('phasesSheet').classList.contains('open'); }
-  function refreshPhasesList(){ if(phasesListOpen() && phasesSportIdx >= 0 && state.yearMap.sports[phasesSportIdx]) renderPhasesList(); }
-  function renderPhasesList(){
-    const sport = state.yearMap.sports[phasesSportIdx];
-    if(!sport) return;
-    const ap = state.yearMap.aPriority;
-    const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
-    const busy = busyMonthsSet();
-    const curMonth = MONTHS[new Date().getMonth()];
-    let html = '';
-    ACADEMIC_MONTHS.forEach(month => {
-      const ms = (sport.monthlyStates||[]).find(x => x.month===month);
-      const committed = ms && ms.state ? ms.state : '';
-      const stt = committed || suggestState(month, apIndex, busy);
-      const stt2 = (committed && ms && ms.state2) ? ms.state2 : '';
-      const chipLabel = stt ? (PHASE_EMOJI[stt]+' '+PHASE_FRIENDLY[stt] + (stt2? ' → '+PHASE_EMOJI[stt2]+' '+PHASE_FRIENDLY[stt2] : '')) : '';
-      const focus = (committed && ms && ms.focus) ? ms.focus : '';
-      const focusHTML = focus
-        ? '<span class="phase-row-focus">'+esc(focus)+'</span>'
-        : '<span class="phase-row-focus muted">Add a focus title</span>';
-      const suggestTag = committed ? '' : '<span class="phase-row-suggest">Suggested</span>';
-      html += '<div class="phase-row" onclick="openBlock('+phasesSportIdx+',\''+month+'\',true)">'+
-        '<span class="phase-row-month">'+month.slice(0,3)+(month===curMonth?' ·':'')+'</span>'+
-        (stt ? '<span class="phase-row-chip ym-'+stt+'">'+chipLabel+'</span>' : '')+
-        '<span class="phase-row-body">'+focusHTML+suggestTag+'</span>'+
-        '<i class="ti ti-chevron-right phase-row-go" aria-hidden="true"></i>'+
-      '</div>';
-    });
-    document.getElementById('phasesBody').innerHTML = html;
-  }
-
-  function openBlock(sportIdx, month, fromPhases){
+  function openBlock(sportIdx, month){
     const sport = state.yearMap.sports[sportIdx];
     if(!sport) return;
     const existing = (sport.monthlyStates||[]).find(x => x.month===month) || { month:month, state:'', focus:'', loadTarget:'', note:'' };
@@ -7299,7 +7193,7 @@
     document.getElementById('blockFocus').value = existing.focus || '';
     document.getElementById('blockLoad').value = existing.loadTarget || '';
     document.getElementById('blockNote').value = existing.note || '';
-    openBlockSheet(!!fromPhases);
+    openBlockSheet();
   }
   window.openBlock = openBlock;
 
@@ -7342,7 +7236,6 @@
     applyBlockLocally(sportName, block);
     closeBlock();
     renderYear(); renderBlockBar();
-    refreshPhasesList();   // keep the Edit-phases list in step if it's still open underneath
     showToast('Block saved', 'success');
     markYearDirty();   // full-map save (device now, sheet in the background, with retry)
   }
@@ -7369,6 +7262,27 @@
     renderYear();
   }
   window.addSport = addSport;
+
+  // Rename a sport in place, carrying the name through anything keyed by it
+  // (the A-priority event's sport, and any games tagged with the old name).
+  function renameSport(si){
+    const sport = state.yearMap.sports[si];
+    if(!sport) return;
+    const cur = sport.name || '';
+    const next = (window.prompt('Rename this sport', cur) || '').trim();
+    if(!next || next===cur) return;
+    if(state.yearMap.sports.some((s, i) => i!==si && s.name.toLowerCase()===next.toLowerCase())){
+      showToast('That sport is already on your year.', 'error'); return;
+    }
+    sport.name = next;
+    const ap = state.yearMap.aPriority;
+    if(ap && ap.sport===cur) ap.sport = next;
+    (state.games||[]).forEach(g => { if(g && g.sport===cur) g.sport = next; });
+    markYearDirty();
+    renderYear(); renderBlockBar();
+    showToast('Sport renamed', 'success');
+  }
+  window.renameSport = renameSport;
 
   function serialiseYearMap(){
     const ym = state.yearMap;
