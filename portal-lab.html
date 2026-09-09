@@ -2867,6 +2867,39 @@
   .year-sport-goal strong { color: var(--ink); font-weight: 600; }
   .year-sport-goal .ti { color: var(--burgundy); }
 
+  /* ---- Multi-sport overview heatmap (compare all sports down a column) ---- */
+  .yog-legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 2px 0 14px; }
+  .yog { display: grid; grid-template-columns: 84px repeat(12, 1fr); gap: 3px; align-items: center; }
+  .yog-corner { }
+  .yog-mhead { font: 700 8.5px 'Inter', sans-serif; letter-spacing: 0.02em; text-transform: uppercase; text-align: center; color: var(--ink-mute); padding-bottom: 2px; }
+  .yog-mhead.now { color: var(--burgundy); }
+  .yog-label {
+    font: 700 12.5px 'Fraunces', serif; color: var(--ink); cursor: pointer; padding-right: 6px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 4px;
+  }
+  .yog-label:hover { color: var(--burgundy); }
+  .yog-label .ti { font-size: 13px; color: var(--ink-mute); flex-shrink: 0; }
+  .yog-cell {
+    aspect-ratio: 1 / 1; border-radius: 5px; cursor: pointer; position: relative; background: var(--cream);
+    transition: transform 0.1s;
+  }
+  .yog-cell:hover { transform: scale(1.08); z-index: 1; }
+  .yog-cell.ym-recover, .yog-cell.ym-off { border: 1px solid var(--line); }
+  .yog-cell.suggest { opacity: 0.42; }
+  .yog-cell.now { outline: 2px solid var(--burgundy); outline-offset: -2px; }
+  .yog-cell .yog-dot { position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1px rgba(0,0,0,0.15); }
+  .yog-rowlabel { grid-column: 1 / -1; height: 2px; }
+  .yog-hint { font: 500 12px 'Inter', sans-serif; color: var(--ink-mute); margin: 12px 0 0; text-align: center; }
+  .year-detail-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .year-back-btn {
+    display: inline-flex; align-items: center; gap: 6px; background: var(--cream); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 12px; font: 600 13px 'Inter', sans-serif; color: var(--ink); cursor: pointer; transition: all 0.15s;
+  }
+  .year-back-btn:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .year-view-toggle {
+    background: none; border: none; color: var(--burgundy); font: 600 12px 'Inter', sans-serif; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px; padding: 4px;
+  }
   .year-months {
     display: grid; grid-template-columns: repeat(12, minmax(42px, 1fr)); gap: 5px;
     overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 12px 0 2px;
@@ -7272,16 +7305,19 @@
 
   function hasYear(){ return state.yearMap && state.yearMap.sports && state.yearMap.sports.length; }
 
-  function renderYear(){
-    const view = document.getElementById('view-year');
-    if(!hasYear()){ view.innerHTML = onboardHTML(); return; }
-    const curMonth = MONTHS[new Date().getMonth()];
-    const ym = state.yearMap;
-    const ap = ym.aPriority;
-    let html = '<div class="card-stack">';
+  // Year view state: which sport is expanded to full detail, and (single-sport
+  // only) whether the student chose the compare grid.
+  let yearFocus = null;
+  let yearForceGrid = false;
+  function focusSport(si){ yearFocus = si; renderYear(); const v=document.getElementById('view-year'); if(v) v.scrollTop = 0; window.scrollTo(0,0); }
+  window.focusSport = focusSport;
+  function yearBackToGrid(){ yearFocus = null; renderYear(); }
+  window.yearBackToGrid = yearBackToGrid;
+  function toggleYearGrid(){ yearForceGrid = !yearForceGrid; yearFocus = null; renderYear(); }
+  window.toggleYearGrid = toggleYearGrid;
 
-    // Hero — the athlete's headline goal (vision + A-priority event).
-    html += '<div class="card card-hero">'+
+  function yearHeroHTML(ym, ap){
+    return '<div class="card card-hero">'+
       '<p class="card-hero-eyebrow">Your year · '+esc(ym.year||'2026–27')+'</p>'+
       '<h2 class="card-hero-title">'+(ym.vision? esc(ym.vision) : 'Map your <em>year</em>.')+'</h2>'+
       '<p class="card-hero-sub">'+(ap&&ap.event
@@ -7290,40 +7326,100 @@
       '<div class="week-today-cta" style="display:flex; gap:10px;"><button class="card-cta card-cta-ghost" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Edit goal</button>'+
         '<button class="card-cta card-cta-ghost" onclick="openYearHelp()"><i class="ti ti-help-circle" aria-hidden="true"></i> How to plan my year</button></div>'+
     '</div>';
+  }
 
-    // One card per sport — monthly states via the existing month tiles / statePicker.
-    ym.sports.forEach((sport, si) => {
-      const evt = (ap && ap.event && (!ap.sport || ap.sport===sport.name)) ? ap : null;
-      const nowPhase = currentSportPhase(sport, curMonth);
-      html += '<div class="card year-sport">'+
-        '<p class="card-eyebrow">'+(sport.isPriority? 'Priority sport' : 'Sport')+
-          (nowPhase? '<span class="card-eyebrow-action"><span class="year-now-chip ym-'+nowPhase+'"><span class="nc-emoji">'+PHASE_EMOJI[nowPhase]+'</span> Now · '+PHASE_FRIENDLY[nowPhase]+'</span></span>' : '')+
+  // The full, editable strip for one sport (also the carousel detail pane).
+  function sportDetailHTML(sport, si, curMonth, ap){
+    const evt = (ap && ap.event && (!ap.sport || ap.sport===sport.name)) ? ap : null;
+    const nowPhase = currentSportPhase(sport, curMonth);
+    return '<div class="card year-sport">'+
+      '<p class="card-eyebrow">'+(sport.isPriority? 'Priority sport' : 'Sport')+
+        (nowPhase? '<span class="card-eyebrow-action"><span class="year-now-chip ym-'+nowPhase+'"><span class="nc-emoji">'+PHASE_EMOJI[nowPhase]+'</span> Now · '+PHASE_FRIENDLY[nowPhase]+'</span></span>' : '')+
+      '</p>'+
+      '<div class="year-sport-head"><div class="year-sport-titles">'+
+        '<p class="year-sport-name">'+esc(sport.name)+
+          (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
+          ' <button class="year-sport-rename" onclick="renameSport('+si+')" title="Rename sport" aria-label="Rename sport"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+          '<button class="year-sport-rename year-sport-del" onclick="deleteSport('+si+')" title="Remove sport" aria-label="Remove sport"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
         '</p>'+
-        '<div class="year-sport-head"><div class="year-sport-titles">'+
-          '<p class="year-sport-name">'+esc(sport.name)+
-            (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
-            ' <button class="year-sport-rename" onclick="renameSport('+si+')" title="Rename sport" aria-label="Rename sport"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
-            '<button class="year-sport-rename year-sport-del" onclick="deleteSport('+si+')" title="Remove sport" aria-label="Remove sport"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
-          '</p>'+
-        '</div></div>'+
-        (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
-        '<div class="year-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
-        renderMonths(sport, si, curMonth)+
-        '<button class="year-addcomp" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a competition</button>'+
-      '</div>';
+      '</div></div>'+
+      (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
+      '<div class="year-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
+      renderMonths(sport, si, curMonth)+
+      '<button class="year-addcomp" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a competition</button>'+
+    '</div>';
+  }
+
+  // One heatmap cell for a sport-month in the overview grid.
+  function overviewCellHTML(sport, si, month, curMonth, apIndex, busy, ap){
+    const ms = (sport.monthlyStates||[]).find(x => x.month===month);
+    const committed = ms && ms.state ? ms.state : '';
+    const stt = committed || suggestState(month, apIndex, busy);
+    const stt2 = (committed && ms && ms.state2) ? ms.state2 : '';
+    const isNow = month===curMonth;
+    const suggest = !committed && !!stt;
+    const apHere = !!(ap && ap.event && ap.month===month && (!ap.sport || ap.sport===sport.name));
+    const apDate = (ap && ap.date) || '';
+    const games = (state.games||[]).some(g => g && g.date && g.date!==apDate && MONTHS[parseISO(g.date).getMonth()]===month && (!g.sport || g.sport===sport.name));
+    const dot = (apHere || games) ? '<span class="yog-dot"></span>' : '';
+    const cls = 'yog-cell '+(stt?'ym-'+stt:'')+(suggest?' suggest':'')+(isNow?' now':'');
+    const style = stt2 ? ' style="background:linear-gradient(90deg, var(--st-'+stt+') 0 50%, var(--st-'+stt2+') 50% 100%);"' : '';
+    const title = month + (stt? ' · '+PHASE_FRIENDLY[stt]+(stt2?' → '+PHASE_FRIENDLY[stt2]:'')+(suggest?' (suggested)':'') : '');
+    return '<div class="'+cls+'"'+style+' onclick="openBlock('+si+',\''+month+'\')" title="'+esc(title)+'">'+dot+'</div>';
+  }
+
+  // The compare-all-sports heatmap: shared month axis, one row per sport.
+  function overviewGridHTML(ym, curMonth, ap){
+    const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
+    const busy = busyMonthsSet();
+    let grid = '<div class="yog"><div class="yog-corner"></div>'+
+      ACADEMIC_MONTHS.map(m => '<div class="yog-mhead'+(m===curMonth?' now':'')+'">'+m.slice(0,1)+'</div>').join('');
+    ym.sports.forEach((sport, si) => {
+      grid += '<div class="yog-label" onclick="focusSport('+si+')" title="Open '+esc(sport.name)+'">'+
+        esc(sport.name)+(sport.isPriority? ' <i class="ti ti-star-filled" style="color:var(--gold);font-size:11px;" aria-hidden="true"></i>':'')+'</div>'+
+        ACADEMIC_MONTHS.map(m => overviewCellHTML(sport, si, m, curMonth, apIndex, busy, ap)).join('');
     });
+    grid += '</div>';
+    const toggle = (ym.sports.length < 2)
+      ? '<span class="card-eyebrow-action"><button class="year-view-toggle" onclick="toggleYearGrid()">Detailed view <i class="ti ti-chevron-right" aria-hidden="true"></i></button></span>'
+      : '';
+    return '<div class="card">'+
+      '<p class="card-eyebrow">Your sports · compare across the year'+toggle+'</p>'+
+      '<div class="yog-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
+      grid+
+      '<p class="yog-hint"><i class="ti ti-hand-finger" aria-hidden="true"></i> Tap a month to plan it, or a sport name to open its full year.</p>'+
+    '</div>';
+  }
 
-    // Add-a-sport — a ghost action, not its own card.
-    html += '<button class="card-cta card-cta-ghost" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
+  function renderYear(){
+    const view = document.getElementById('view-year');
+    if(!hasYear()){ view.innerHTML = onboardHTML(); return; }
+    const curMonth = MONTHS[new Date().getMonth()];
+    const ym = state.yearMap;
+    const ap = ym.aPriority;
+    if(yearFocus != null && !ym.sports[yearFocus]) yearFocus = null;   // stale after a delete
+    const multi = ym.sports.length >= 2;
+    const gridMode = (multi || yearForceGrid) && yearFocus === null;
+    let html = '<div class="card-stack">';
+    html += yearHeroHTML(ym, ap);
 
-    // Testing & busy months, surfaced from the year map.
-    html += yearTestingCard();
-
-    // My games — the student's own fixtures across the season.
-    html += seasonFixturesCard();
-
-    // Season key dates — at the bottom: the big dates, no prescriptive advice.
-    html += seasonKeyDatesCard();
+    if(gridMode){
+      html += overviewGridHTML(ym, curMonth, ap);
+      html += '<button class="card-cta card-cta-ghost" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
+      html += yearTestingCard() + seasonFixturesCard() + seasonKeyDatesCard();
+    } else {
+      const si = (yearFocus != null && ym.sports[yearFocus]) ? yearFocus : 0;
+      if(multi || yearForceGrid){
+        html += '<div class="year-detail-nav"><button class="year-back-btn" onclick="yearBackToGrid()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All sports</button></div>';
+      }
+      html += sportDetailHTML(ym.sports[si], si, curMonth, ap);
+      if(!multi){
+        // Single sport: everything reachable inline, as before — plus a way into the grid.
+        html += '<button class="year-view-toggle" style="margin:4px auto 2px;" onclick="toggleYearGrid()"><i class="ti ti-layout-grid" aria-hidden="true"></i> Compare in a grid</button>';
+        html += '<button class="card-cta card-cta-ghost" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
+        html += yearTestingCard() + seasonFixturesCard() + seasonKeyDatesCard();
+      }
+    }
 
     html += '</div>';
     view.innerHTML = html;
@@ -7588,6 +7684,7 @@
     const ap = state.yearMap.aPriority;
     if(ap && ap.sport===sport.name) ap.sport = '';   // big event stays, just unlinked from the removed sport
     state.yearMap.sports.splice(si, 1);
+    yearFocus = null;   // indexes shifted — return to the overview
     // If we removed the priority sport, promote the first remaining one so the
     // shared phase / block bar still has a sport to read.
     if(wasPriority && state.yearMap.sports.length && !state.yearMap.sports.some(s => s.isPriority)){
