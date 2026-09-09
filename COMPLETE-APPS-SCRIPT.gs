@@ -426,7 +426,7 @@ function doPost(e) {
     }
     if (data.action === 'saveWeeklyTemplate') {
       var ssApT = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSaveWeeklyTemplate(ssApT, data.athleteId, data.template));
+      return apJson(handleSaveWeeklyTemplate(ssApT, data.athleteId, data.template, data.library));
     }
     if (data.action === 'saveSession') {
       var ssAp3 = SpreadsheetApp.getActiveSpreadsheet();
@@ -3040,10 +3040,20 @@ function apEnsureWeeklyTemplates(ss) {
   var sheet = ss.getSheetByName('Weekly_Templates');
   if (!sheet) {
     sheet = ss.insertSheet('Weekly_Templates');
-    sheet.getRange(1, 1, 1, 4).setValues([[
-      'Athlete_ID', 'Name', 'Sessions_JSON', 'Updated'
+    sheet.getRange(1, 1, 1, 5).setValues([[
+      'Athlete_ID', 'Name', 'Sessions_JSON', 'Library_JSON', 'Updated'
     ]]);
     sheet.getRange('1:1').setFontWeight('bold');
+    return sheet;
+  }
+  // Migrate an older 4-column sheet in place: add Library_JSON before Updated so
+  // the program library can be stored without disturbing the legacy single week.
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  if (headers.indexOf('Library_JSON') === -1) {
+    var updCol = headers.indexOf('Updated');
+    var insertAt = updCol === -1 ? headers.length + 1 : updCol + 1;   // 1-based
+    sheet.insertColumnBefore(insertAt);
+    sheet.getRange(1, insertAt).setValue('Library_JSON').setFontWeight('bold');
   }
   return sheet;
 }
@@ -3057,6 +3067,7 @@ function apLoadWeeklyTemplate(ss, athleteId) {
         __row: rows[i].__row,
         name: rows[i].Name || '',
         sessions: apParse(rows[i].Sessions_JSON, []),
+        library: apParse(rows[i].Library_JSON, null),
         updated: rows[i].Updated || ''
       };
     }
@@ -3067,16 +3078,17 @@ function apLoadWeeklyTemplate(ss, athleteId) {
 function handleGetWeeklyTemplate(ss, athleteId) {
   try {
     athleteId = String(athleteId || '').trim();
-    if (!athleteId) return { success: true, weeklyTemplate: null };
+    if (!athleteId) return { success: true, weeklyTemplate: null, library: null };
     var tpl = apLoadWeeklyTemplate(ss, athleteId);
-    if (tpl) delete tpl.__row;
-    return { success: true, weeklyTemplate: tpl };
+    var library = null;
+    if (tpl) { delete tpl.__row; library = tpl.library || null; delete tpl.library; }
+    return { success: true, weeklyTemplate: tpl, library: library };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
 }
 
-function handleSaveWeeklyTemplate(ss, athleteId, template) {
+function handleSaveWeeklyTemplate(ss, athleteId, template, library) {
   try {
     athleteId = String(athleteId || '').trim();
     if (!athleteId) return { success: false, error: 'athleteId is required' };
@@ -3086,7 +3098,8 @@ function handleSaveWeeklyTemplate(ss, athleteId, template) {
     var fields = {
       'Athlete_ID': athleteId,
       'Name': template.name || '',
-      'Sessions_JSON': JSON.stringify(template.sessions || []),
+      'Sessions_JSON': JSON.stringify(template.sessions || []),   // legacy single active week
+      'Library_JSON': library ? JSON.stringify(library) : '',      // full program library
       'Updated': new Date()
     };
     if (existing && existing.__row) apUpdateRow(sheet, existing.__row, fields);
@@ -3392,7 +3405,8 @@ function handleGetPortalBootstrap(ss, email) {
     var map = apLoadYearMap(ss, athleteId);
     if (map) delete map.__row;
     var tpl = apLoadWeeklyTemplate(ss, athleteId);
-    if (tpl) delete tpl.__row;
+    var library = null;
+    if (tpl) { delete tpl.__row; library = tpl.library || null; delete tpl.library; }
     var week = handleGetWeek(ss, athleteId, new Date());
     var load = apComputeLoad(ss, athleteId);
     var pbsRes = handleGetPBs(ss, athleteId);
@@ -3401,6 +3415,7 @@ function handleGetPortalBootstrap(ss, email) {
       athlete: athlete,
       yearMap: map,
       weeklyTemplate: tpl,
+      library: library,
       week: { weekStart: week.weekStart, sessions: week.sessions || [] },
       pbs: pbsRes.pbs || [],
       load: { weeks: load.weeks, summary: load.summary },

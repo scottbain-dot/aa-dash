@@ -3415,7 +3415,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, games: [], booking: null, planName: '', athleteId: '' };
+  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, games: [], booking: null, planName: '', athleteId: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -3638,7 +3638,10 @@
       // Heal the sheet: if the server had no year but the device does (a save
       // that never landed), push it back up so the sheet becomes complete.
       if(!data.yearMap && state.yearMap) markYearDirty();
-      state.weeklyTemplate = data.weeklyTemplate || loadTemplateLocal() || null;
+      // Program library: prefer the server's library; otherwise migrate the legacy
+      // single-week template (server or device) into a one-program library. This is
+      // non-destructive — the old template row is left as-is and kept in sync on save.
+      initLibrary(data.library, data.weeklyTemplate);
       state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
       state.pbs = data.pbs || [];
@@ -3675,7 +3678,8 @@
     state.athleteId = 'demo';
     athlete = demo.athlete;
     state.yearMap = demo.yearMap;
-    state.weeklyTemplate = demo.weeklyTemplate;
+    state.library = libraryFromTemplate(demo.weeklyTemplate);
+    syncTemplateFromLibrary();
     state.week = demo.week;
     state.pbs = demo.pbs;
     state.load = demo.load;
@@ -5322,7 +5326,77 @@
   // ============================================================
   function tplKey(){ return 'aaPortalTemplate:' + ((currentUser && currentUser.email) || 'anon'); }
   function loadTemplateLocal(){ try { return JSON.parse(localStorage.getItem(tplKey())); } catch(e){ return null; } }
-  function saveTemplateLocal(){ try { localStorage.setItem(tplKey(), JSON.stringify(state.weeklyTemplate || null)); } catch(e){} }
+  function saveTemplateLocal(){ try { localStorage.setItem(tplKey(), JSON.stringify(state.weeklyTemplate || null)); localStorage.setItem(libKey(), JSON.stringify(state.library || null)); } catch(e){} }
+
+  // ============================================================
+  // PROGRAM LIBRARY (Phase 0 foundation)
+  // A student can own several named programs, each a 1-4 week repeating cycle:
+  //   program = { id, name, sport, autoRepeat, weeks: [ [dayObj,...], ... ], activeWeek }
+  //   library = { activeId, programs: [program, ...] }
+  // `state.weeklyTemplate` stays the working view of the ACTIVE program's ACTIVE
+  // week — its `sessions` array is the SAME reference as weeks[activeWeek], so all
+  // existing edit/drag/fill code keeps mutating the library in place. On save we
+  // fold the view back into the library (syncLibraryFromTemplate) and persist both
+  // the library and the legacy single-week template, so nothing breaks pre-redeploy
+  // and an old cached client keeps working.
+  // ============================================================
+  function libKey(){ return 'aaPortalLibrary:' + ((currentUser && currentUser.email) || 'anon'); }
+  function loadLibraryLocal(){ try { return JSON.parse(localStorage.getItem(libKey())); } catch(e){ return null; } }
+  function newProgramId(){ return 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+  // Wrap a legacy single-week template into a one-program, one-week library.
+  function libraryFromTemplate(tpl){
+    tpl = tpl || emptyTemplate();
+    const id = newProgramId();
+    const sport = (tpl.sessions && tpl.sessions[0] && tpl.sessions[0].sport) || '';
+    return { activeId: id, programs: [ {
+      id: id, name: tpl.name || 'My program', sport: sport,
+      autoRepeat: tpl.autoRepeat !== false, weeks: [ tpl.sessions || [] ], activeWeek: 0
+    } ] };
+  }
+  // Normalise a loaded library so every field the rest of the code assumes exists.
+  function normaliseLibrary(lib){
+    if(!lib || !Array.isArray(lib.programs) || !lib.programs.length) return null;
+    lib.programs.forEach(function(p){
+      if(!p.id) p.id = newProgramId();
+      if(!Array.isArray(p.weeks) || !p.weeks.length) p.weeks = [ [] ];
+      p.weeks = p.weeks.map(function(w){ return Array.isArray(w) ? w : []; });
+      if(typeof p.activeWeek !== 'number' || p.activeWeek < 0 || p.activeWeek >= p.weeks.length) p.activeWeek = 0;
+      if(!p.name) p.name = 'My program';
+    });
+    if(!lib.activeId || !lib.programs.some(function(p){ return p.id === lib.activeId; })) lib.activeId = lib.programs[0].id;
+    return lib;
+  }
+  function activeProgram(){
+    const lib = state.library; if(!lib || !lib.programs || !lib.programs.length) return null;
+    return lib.programs.find(function(p){ return p.id === lib.activeId; }) || lib.programs[0];
+  }
+  // Point state.weeklyTemplate at the active program's active week (shared refs).
+  function syncTemplateFromLibrary(){
+    const p = activeProgram();
+    if(!p){ state.weeklyTemplate = null; return; }
+    let wk = p.activeWeek || 0; if(wk < 0 || wk >= p.weeks.length) wk = 0;
+    if(!Array.isArray(p.weeks[wk])) p.weeks[wk] = [];
+    state.weeklyTemplate = { name: p.name, autoRepeat: p.autoRepeat !== false, sessions: p.weeks[wk] };
+  }
+  // Fold the working view back into the active program (name + active week's sessions).
+  function syncLibraryFromTemplate(){
+    if(!state.library) state.library = libraryFromTemplate(state.weeklyTemplate);
+    const p = activeProgram(); if(!p) return;
+    if(state.weeklyTemplate){
+      p.name = state.weeklyTemplate.name || p.name;
+      p.autoRepeat = state.weeklyTemplate.autoRepeat !== false;
+      let wk = p.activeWeek || 0; if(wk < 0 || wk >= p.weeks.length) wk = 0;
+      p.weeks[wk] = state.weeklyTemplate.sessions || [];
+    }
+  }
+  // Establish state.library from whatever we loaded (server library, or a migrated
+  // legacy template), then set the working view. Safe to call with nothing.
+  function initLibrary(serverLibrary, legacyTemplate){
+    let lib = normaliseLibrary(serverLibrary) || normaliseLibrary(loadLibraryLocal());
+    if(!lib) lib = libraryFromTemplate(legacyTemplate || loadTemplateLocal());
+    state.library = lib;
+    syncTemplateFromLibrary();
+  }
   // Year map gets the same on-device safety net as the template: if a server save
   // fails (Apps Script is slow/flaky), the student's year still survives a refresh.
   function yearKey(){ return 'aaPortalYear:' + ((currentUser && currentUser.email) || 'anon'); }
@@ -5434,9 +5508,13 @@
   // server in the background (best-effort until the Apps Script action is live).
   async function persistTemplate(){
     if(state.weeklyTemplate) state.planName = state.weeklyTemplate.name || state.planName;
-    saveTemplateLocal();
+    syncLibraryFromTemplate();   // fold the working view back into the active program
+    saveTemplateLocal();         // writes both the legacy template and the library locally
     try {
-      const r = await apiData({ action:'saveWeeklyTemplate', template: state.weeklyTemplate });
+      // Send both: `template` keeps the legacy single-week row valid for old clients,
+      // `library` carries the full multi-program/multi-week model (ignored by an
+      // un-redeployed server, which still persists the legacy template).
+      const r = await apiData({ action:'saveWeeklyTemplate', template: state.weeklyTemplate, library: state.library });
       if(!r.success) throw new Error(r.error||'save failed');
     } catch(e){ /* localStorage holds it; syncs on the next successful save */ }
   }
