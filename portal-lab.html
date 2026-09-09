@@ -2896,6 +2896,16 @@
     border-radius: 10px; padding: 8px 12px; font: 600 13px 'Inter', sans-serif; color: var(--ink); cursor: pointer; transition: all 0.15s;
   }
   .year-back-btn:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .year-detail-pager { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .ydp-arrow {
+    width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line); background: var(--cream);
+    color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 17px; transition: all 0.15s;
+  }
+  .ydp-arrow:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .ydp-dots { display: flex; gap: 5px; }
+  .ydp-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); transition: all 0.15s; }
+  .ydp-dot.on { background: var(--burgundy); transform: scale(1.35); }
+  #yearDetailSwipe { touch-action: pan-y; }
   .year-view-toggle {
     background: none; border: none; color: var(--burgundy); font: 600 12px 'Inter', sans-serif; cursor: pointer;
     display: inline-flex; align-items: center; gap: 5px; padding: 4px;
@@ -7311,6 +7321,34 @@
   let yearForceGrid = false;
   function focusSport(si){ yearFocus = si; renderYear(); const v=document.getElementById('view-year'); if(v) v.scrollTop = 0; window.scrollTo(0,0); }
   window.focusSport = focusSport;
+  // Carousel step through sports (wraps), keeping the same scroll position.
+  function focusSportBy(delta){
+    const n = (state.yearMap.sports||[]).length; if(n < 2) return;
+    const cur = (yearFocus != null ? yearFocus : 0);
+    yearFocus = ((cur + delta) % n + n) % n;
+    renderYear();
+  }
+  window.focusSportBy = focusSportBy;
+  // Suppress a stray month-tile tap that ends a horizontal swipe.
+  let _yearSwipeGuard = 0;
+  function initYearSwipe(){
+    const el = document.getElementById('yearDetailSwipe');
+    if(!el || el._swipeBound) return;
+    el._swipeBound = true;
+    let x0 = null, y0 = null, moved = false;
+    el.addEventListener('pointerdown', function(e){ x0 = e.clientX; y0 = e.clientY; moved = false; });
+    el.addEventListener('pointermove', function(e){ if(x0==null) return; if(Math.abs(e.clientX-x0) > 12) moved = true; });
+    el.addEventListener('pointerup', function(e){
+      if(x0==null) return;
+      const dx = e.clientX - x0, dy = e.clientY - y0;
+      x0 = y0 = null;
+      if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)*1.6){
+        _yearSwipeGuard = Date.now();     // openBlock ignores the tap that ends the swipe
+        focusSportBy(dx < 0 ? 1 : -1);
+      }
+    });
+    el.addEventListener('pointercancel', function(){ x0 = y0 = null; });
+  }
   function yearBackToGrid(){ yearFocus = null; renderYear(); }
   window.yearBackToGrid = yearBackToGrid;
   function toggleYearGrid(){ yearForceGrid = !yearForceGrid; yearFocus = null; renderYear(); }
@@ -7409,10 +7447,20 @@
       html += yearTestingCard() + seasonFixturesCard() + seasonKeyDatesCard();
     } else {
       const si = (yearFocus != null && ym.sports[yearFocus]) ? yearFocus : 0;
-      if(multi || yearForceGrid){
+      if(multi){
+        const dots = ym.sports.map((_, i) => '<span class="ydp-dot'+(i===si?' on':'')+'"></span>').join('');
+        html += '<div class="year-detail-nav">'+
+          '<button class="year-back-btn" onclick="yearBackToGrid()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All sports</button>'+
+          '<div class="year-detail-pager">'+
+            '<button class="ydp-arrow" onclick="focusSportBy(-1)" aria-label="Previous sport"><i class="ti ti-chevron-left" aria-hidden="true"></i></button>'+
+            '<div class="ydp-dots">'+dots+'</div>'+
+            '<button class="ydp-arrow" onclick="focusSportBy(1)" aria-label="Next sport"><i class="ti ti-chevron-right" aria-hidden="true"></i></button>'+
+          '</div>'+
+        '</div>';
+      } else if(yearForceGrid){
         html += '<div class="year-detail-nav"><button class="year-back-btn" onclick="yearBackToGrid()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All sports</button></div>';
       }
-      html += sportDetailHTML(ym.sports[si], si, curMonth, ap);
+      html += '<div id="yearDetailSwipe">'+sportDetailHTML(ym.sports[si], si, curMonth, ap)+'</div>';
       if(!multi){
         // Single sport: everything reachable inline, as before — plus a way into the grid.
         html += '<button class="year-view-toggle" style="margin:4px auto 2px;" onclick="toggleYearGrid()"><i class="ti ti-layout-grid" aria-hidden="true"></i> Compare in a grid</button>';
@@ -7423,6 +7471,7 @@
 
     html += '</div>';
     view.innerHTML = html;
+    if(!gridMode && multi) initYearSwipe();   // swipe left/right between sports
   }
 
   // Testing windows + busy months as a card, mirroring the ◆ / ▲ month markers.
@@ -7561,6 +7610,7 @@
   window.closeBlock = closeBlock;
 
   function openBlock(sportIdx, month){
+    if(Date.now() - _yearSwipeGuard < 350) return;   // ignore the tap that ends a sport swipe
     const sport = state.yearMap.sports[sportIdx];
     if(!sport) return;
     const existing = (sport.monthlyStates||[]).find(x => x.month===month) || { month:month, state:'', focus:'', loadTarget:'', note:'' };
