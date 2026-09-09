@@ -2887,7 +2887,12 @@
   .yog-cell.ym-recover, .yog-cell.ym-off { border: 1px solid var(--line); }
   .yog-cell.suggest { opacity: 0.42; }
   .yog-cell.now { outline: 2px solid var(--burgundy); outline-offset: -2px; }
-  .yog-cell .yog-dot { position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1px rgba(0,0,0,0.15); }
+  .yog-cell .yog-mark {
+    position: absolute; bottom: 1px; right: 1px; display: flex; align-items: center; gap: 1px;
+    background: rgba(20,13,11,0.74); color: var(--gold); border-radius: 5px; padding: 1px 3px; line-height: 1;
+  }
+  .yog-cell .yog-mark .ti { font-size: 10px; }
+  .yog-cell .yog-mark b { font-size: 8px; font-weight: 800; }
   .yog-rowlabel { grid-column: 1 / -1; height: 2px; }
   .yog-hint { font: 500 12px 'Inter', sans-serif; color: var(--ink-mute); margin: 12px 0 0; text-align: center; }
   .year-detail-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -7398,12 +7403,19 @@
     const suggest = !committed && !!stt;
     const apHere = !!(ap && ap.event && ap.month===month && (!ap.sport || ap.sport===sport.name));
     const apDate = (ap && ap.date) || '';
-    const games = (state.games||[]).some(g => g && g.date && g.date!==apDate && MONTHS[parseISO(g.date).getMonth()]===month && (!g.sport || g.sport===sport.name));
-    const dot = (apHere || games) ? '<span class="yog-dot"></span>' : '';
+    const monthGames = (state.games||[]).filter(g => g && g.date && g.date!==apDate && MONTHS[parseISO(g.date).getMonth()]===month && (!g.sport || g.sport===sport.name));
+    // A gold badge shows a competition sits in this month: a star for the one big
+    // A-priority event, a trophy (with a count) for games/comps.
+    let mark = '';
+    if(apHere) mark = '<span class="yog-mark" aria-hidden="true"><i class="ti ti-star-filled"></i></span>';
+    else if(monthGames.length) mark = '<span class="yog-mark" aria-hidden="true"><i class="ti ti-trophy"></i>'+(monthGames.length>1?'<b>'+monthGames.length+'</b>':'')+'</span>';
     const cls = 'yog-cell '+(stt?'ym-'+stt:'')+(suggest?' suggest':'')+(isNow?' now':'');
     const style = stt2 ? ' style="background:linear-gradient(90deg, var(--st-'+stt+') 0 50%, var(--st-'+stt2+') 50% 100%);"' : '';
-    const title = month + (stt? ' · '+PHASE_FRIENDLY[stt]+(stt2?' → '+PHASE_FRIENDLY[stt2]:'')+(suggest?' (suggested)':'') : '');
-    return '<div class="'+cls+'"'+style+' onclick="openBlock('+si+',\''+month+'\')" title="'+esc(title)+'">'+dot+'</div>';
+    const names = [];
+    if(apHere) names.push(ap.event + (ap.date? ' ('+fmtNice(ap.date)+')' : ''));
+    monthGames.forEach(g => names.push((g.name||'Competition') + (g.date? ' ('+fmtNice(g.date)+')' : '')));
+    const title = month + (stt? ' · '+PHASE_FRIENDLY[stt]+(stt2?' → '+PHASE_FRIENDLY[stt2]:'')+(suggest?' (suggested)':'') : '') + (names.length? ' · '+names.join(', ') : '');
+    return '<div class="'+cls+'"'+style+' onclick="openBlock('+si+',\''+month+'\')" title="'+esc(title)+'">'+mark+'</div>';
   }
 
   // The compare-all-sports heatmap: shared month axis, one row per sport.
@@ -7423,7 +7435,9 @@
       : '';
     return '<div class="card">'+
       '<p class="card-eyebrow">Your sports · compare across the year'+toggle+'</p>'+
-      '<div class="yog-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
+      '<div class="yog-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+
+        '<span class="year-legend-item"><span class="legend-emoji"><i class="ti ti-trophy" style="color:var(--gold);" aria-hidden="true"></i></span><strong>Comp</strong> · game / event</span>'+
+      '</div>'+
       grid+
       '<p class="yog-hint"><i class="ti ti-hand-finger" aria-hidden="true"></i> Tap a month to plan it, or a sport name to open its full year.</p>'+
     '</div>';
