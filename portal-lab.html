@@ -5766,7 +5766,10 @@
   let wktRestInterval = null, wktRestLeft = 0;
 
   function wktKey(id){ return 'aaWorkout:' + ((currentUser && currentUser.email) || 'anon') + ':' + id; }
-  function saveWktProgress(){ try { if(wktSession) localStorage.setItem(wktKey(wktSession.id), JSON.stringify({ checked: wktSession._checked, sx: (wktSession.workout||[]).map(w => w.sx||null) })); } catch(e){} }
+  // Progress stores ONLY tick state. The session's own workout (name/detail/sx) is
+  // the single source of truth for targets — a separate sx store used to be
+  // re-applied by index and would clobber later plan edits / misalign on changes.
+  function saveWktProgress(){ try { if(wktSession) localStorage.setItem(wktKey(wktSession.id), JSON.stringify({ checked: wktSession._checked })); } catch(e){} }
   function loadWktProgress(id){ try { return JSON.parse(localStorage.getItem(wktKey(id))); } catch(e){ return null; } }
   function clearWktProgress(id){ try { localStorage.removeItem(wktKey(id)); } catch(e){} }
 
@@ -5795,10 +5798,11 @@
     wktSession.workout = (wktSession.workout||[]).map(w => typeof w==='string' ? { name:w, detail:'', exId:null } : Object.assign({}, w));
     if(!wktSession._checked || wktSession._checked.length !== wktSession.workout.length)
       wktSession._checked = wktSession.workout.map((_,i) => (wktSession._checked && wktSession._checked[i]) || false);
+    // Restore tick progress only, and only when it still lines up with the current
+    // workout — never re-derive targets from the store (the session already holds them).
     const prog = loadWktProgress(id);
-    if(prog){
-      if(Array.isArray(prog.checked)) wktSession._checked = wktSession.workout.map((_,i) => !!prog.checked[i]);
-      if(Array.isArray(prog.sx)) wktSession.workout.forEach((w,i) => { if(prog.sx[i]){ w.sx = prog.sx[i]; const d=wktCompose(w.sx); if(d) w.detail=d; } });
+    if(prog && Array.isArray(prog.checked) && prog.checked.length === wktSession.workout.length){
+      wktSession._checked = wktSession.workout.map((_,i) => !!prog.checked[i]);
     }
     wktEditing = -1;
     _wktOpenSig = structuralSig(wktSession);
@@ -5895,6 +5899,14 @@
     const it = wktSession.workout[i];
     it.sx = sx; const d = wktCompose(sx); if(d) it.detail = d;
     wktEditing = -1; saveWktProgress(); renderWorkoutMode();
+    persistWktSession();   // carry the change to the day session now, not only on Finish
+  }
+  // Save the in-progress session (wktSession IS the real week session) so a target
+  // edited mid-workout survives a reload without waiting for Finish. Best-effort.
+  function persistWktSession(){
+    if(!wktSession || !wktSession.id || String(wktSession.id).startsWith('tmp_')) return;
+    upsertLocalSession(wktSession);
+    try { apiData({ action:'saveSession', session: Object.assign({}, wktSession, { id: wktSession.id }) }).catch(function(){}); } catch(e){}
   }
   window.wktToggle = wktToggle; window.wktEdit = wktEdit; window.wktCancelEdit = wktCancelEdit; window.wktSaveEx = wktSaveEx;
 
