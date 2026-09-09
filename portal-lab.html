@@ -1988,6 +1988,24 @@
   </div>
 </div>
 
+<!-- MY PROGRAMS — the library: switch, rename, duplicate, delete, new (sits above Edit my program) -->
+<div class="sheet-backdrop" id="programs-backdrop" onclick="closePrograms()"></div>
+<div class="sheet" id="programsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">Your programs</p>
+      <h2 class="sheet-title">My <em>programs</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closePrograms()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <p class="ql-help" style="margin-top:0;">Keep a program for each phase of your year — swap the active one whenever you like. The active program is the one that fills your weeks.</p>
+    <div id="programsBody"></div>
+    <button class="prog-add-day" style="margin-top:14px;" onclick="newProgram()"><i class="ti ti-plus" aria-hidden="true"></i> New program</button>
+  </div>
+</div>
+
 <!-- SWAP — matched alternatives for one exercise slot (sits above the session sheet) -->
 <div class="sheet-backdrop sheet-top" id="swap-backdrop" onclick="closeSwap()"></div>
 <div class="sheet sheet-top" id="swapSheet">
@@ -2600,6 +2618,33 @@
   .pw-tab.pw-add { color: var(--ink-mute); padding: 7px 11px; }
   .pw-remove { color: var(--int-hard); }
   .pw-remove:hover { border-color: var(--int-hard); color: var(--int-hard); }
+  /* My programs library */
+  .lib-prog {
+    display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line);
+    border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; background: var(--surface);
+  }
+  .lib-prog:hover { border-color: var(--burgundy); }
+  .lib-prog.active { border-color: var(--sage); background: #f2f6f2; }
+  .lib-prog-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .lib-prog-name { font: 700 15px 'Inter', sans-serif; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .lib-prog-badge { flex-shrink: 0; font: 700 9px 'Inter', sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sage); background: #e4ede4; border-radius: 999px; padding: 2px 7px; }
+  .lib-prog-sub { font: 500 12px 'Inter', sans-serif; color: var(--ink-mute); }
+  .lib-prog-actions { flex-shrink: 0; display: flex; gap: 4px; }
+  .lib-prog-btn {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+    color: var(--ink-mute); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.15s;
+  }
+  .lib-prog-btn:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .lib-prog-btn.del:hover { border-color: var(--int-hard); color: var(--int-hard); }
+  .prog-switcher {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--cream); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px;
+    cursor: pointer; transition: all 0.15s; font-family: 'Inter', sans-serif;
+  }
+  .prog-switcher:hover { border-color: var(--burgundy); }
+  .prog-switcher-label { font: 700 10px 'Inter', sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); }
+  .prog-switcher-name { font: 600 14px 'Inter', sans-serif; color: var(--ink); display: flex; align-items: center; gap: 6px; }
+  .prog-switcher-name .ti { color: var(--ink-mute); }
   .prog-rename { flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
   .prog-rename:hover { border-color: var(--burgundy); color: var(--burgundy); }
   .prog-add-day { width: 100%; margin-top: 12px; padding: 12px; border: 1.5px dashed var(--line); border-radius: 12px; background: transparent; color: var(--burgundy); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.15s; }
@@ -6264,6 +6309,8 @@
       (weekN ? moreRow('ti-bookmark', 'Save this week as my program', 'Make this week your repeating program', 'moreSaveWeek') : '')+
       (n ? moreRow('ti-list-check', 'Edit my program', progSub, 'moreMyProgram')
          : moreRow('ti-plus', 'Build your own', 'Start from a blank week and add days', 'moreAddDay'))+
+      (state.library && state.library.programs && state.library.programs.length > 1
+         ? moreRow('ti-stack-2', 'My programs', state.library.programs.length+' saved · switch between them', 'moreMyPrograms') : '')+
       (n ? moreRow('ti-calendar-plus', 'Fill this week from my program', 'Adds your program’s sessions to empty days', 'moreFillWeek') : '')+
       moreRow('ti-books', 'Exercise library', 'Coming soon — demos &amp; video for every move', 'moreLibrary')+
       '<div class="more-divider">Add to this week</div>'+
@@ -6290,6 +6337,8 @@
   function moreSwitchProgram(){ closeMoreActions(); openPlanSheet(); }
   function moreFillWeek(){ closeMoreActions(); fillWeekFromTemplate(); }
   function moreMyProgram(){ closeMoreActions(); openMyProgram(); }
+  function moreMyPrograms(){ closeMoreActions(); openMyProgram(); openPrograms(); }
+  window.moreMyPrograms = moreMyPrograms;
   function moreAddDay(){ closeMoreActions(); openProgramDay(-1); }
   function moreSaveWeek(){ closeMoreActions(); saveWeekAsProgram(); }
   window.moreSaveWeek = moreSaveWeek;
@@ -6326,6 +6375,126 @@
   }
   window.openMyProgram = openMyProgram;
   window.closeMyProgram = closeMyProgram;
+
+  // ============================================================
+  // MY PROGRAMS — the library: switch / rename / duplicate / delete / new.
+  // The active program is the one that fills weeks; switching is non-destructive
+  // (it never overwrites the current calendar week — that happens on the next
+  // empty week or an explicit "Fill this week").
+  // ============================================================
+  function programSessionCount(p){ return (p && p.weeks && p.weeks[0] ? p.weeks[0].length : 0); }
+  function programSummary(p){
+    const weeks = (p && p.weeks && p.weeks.length) || 1;
+    const days = programSessionCount(p);
+    if(weeks > 1) return weeks+'-week cycle';
+    return days ? (days+' session'+(days===1?'':'s')+' a week') : 'Empty — add days';
+  }
+  function openPrograms(){
+    renderProgramsList();
+    const bd = document.getElementById('programs-backdrop'), sh = document.getElementById('programsSheet');
+    bd.classList.add('open','sheet-top'); sh.classList.add('open','sheet-top');
+    document.body.style.overflow = 'hidden';
+  }
+  window.openPrograms = openPrograms;
+  function closePrograms(){
+    const bd = document.getElementById('programs-backdrop'), sh = document.getElementById('programsSheet');
+    bd.classList.remove('open','sheet-top'); sh.classList.remove('open','sheet-top');
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+  }
+  window.closePrograms = closePrograms;
+  function programsListOpen(){ return document.getElementById('programsSheet').classList.contains('open'); }
+  function renderProgramsList(){
+    const lib = state.library; if(!lib){ return; }
+    const html = (lib.programs||[]).map(function(p){
+      const active = p.id === lib.activeId;
+      return '<div class="lib-prog'+(active?' active':'')+'" onclick="setActiveProgram(\''+p.id+'\')">'+
+        '<div class="lib-prog-main">'+
+          '<span class="lib-prog-name">'+esc(p.name||'Program')+(active?'<span class="lib-prog-badge">Active</span>':'')+'</span>'+
+          '<span class="lib-prog-sub">'+esc(programSummary(p))+'</span>'+
+        '</div>'+
+        '<div class="lib-prog-actions">'+
+          '<button class="lib-prog-btn" title="Rename" aria-label="Rename program" onclick="event.stopPropagation(); renameProgramInList(\''+p.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+          '<button class="lib-prog-btn" title="Duplicate" aria-label="Duplicate program" onclick="event.stopPropagation(); duplicateProgram(\''+p.id+'\')"><i class="ti ti-copy" aria-hidden="true"></i></button>'+
+          '<button class="lib-prog-btn del" title="Delete" aria-label="Delete program" onclick="event.stopPropagation(); deleteProgram(\''+p.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+    document.getElementById('programsBody').innerHTML = html || '<p class="myprog-rest">No programs yet.</p>';
+  }
+  function refreshProgramsList(){ if(programsListOpen()) renderProgramsList(); }
+  function setActiveProgram(id){
+    const lib = state.library; if(!lib) return;
+    if(!lib.programs.some(function(p){ return p.id===id; })) return;
+    if(lib.activeId === id){ closePrograms(); return; }
+    lib.activeId = id;
+    syncTemplateFromLibrary();
+    state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
+    renderMyProgram();
+    closePrograms();
+    if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
+    showToast('Switched to “'+(state.weeklyTemplate && state.weeklyTemplate.name || 'program')+'”', 'success');
+    persistTemplate();
+  }
+  window.setActiveProgram = setActiveProgram;
+  function newProgram(){
+    const lib = state.library; if(!lib) return;
+    const name = (window.prompt('Name your new program', 'New program') || '').trim();
+    if(!name) return;
+    const id = newProgramId();
+    lib.programs.push({ id:id, name:name, sport:'', autoRepeat:true, weeks:[ [] ], activeWeek:0 });
+    lib.activeId = id;
+    syncTemplateFromLibrary();
+    state.planName = name;
+    renderProgramsList();
+    renderMyProgram();
+    persistTemplate();
+    showToast('“'+name+'” created — add days to build it', 'success');
+  }
+  window.newProgram = newProgram;
+  function duplicateProgram(id){
+    const lib = state.library; if(!lib) return;
+    const src = lib.programs.find(function(p){ return p.id===id; }); if(!src) return;
+    const copy = JSON.parse(JSON.stringify(src));
+    copy.id = newProgramId();
+    copy.name = (src.name||'Program') + ' (copy)';
+    lib.programs.push(copy);
+    lib.activeId = copy.id;
+    syncTemplateFromLibrary();
+    state.planName = copy.name;
+    renderProgramsList();
+    renderMyProgram();
+    persistTemplate();
+    showToast('Copied to “'+copy.name+'”', 'success');
+  }
+  window.duplicateProgram = duplicateProgram;
+  function renameProgramInList(id){
+    const lib = state.library; if(!lib) return;
+    const p = lib.programs.find(function(x){ return x.id===id; }); if(!p) return;
+    const next = (window.prompt('Rename program', p.name||'') || '').trim();
+    if(!next || next===p.name) return;
+    p.name = next;
+    if(p.id === lib.activeId){ if(state.weeklyTemplate) state.weeklyTemplate.name = next; state.planName = next; }
+    renderProgramsList();
+    if(document.getElementById('myProgramSheet').classList.contains('open')) renderMyProgram();
+    persistTemplate();
+    showToast('Program renamed', 'success');
+  }
+  window.renameProgramInList = renameProgramInList;
+  function deleteProgram(id){
+    const lib = state.library; if(!lib) return;
+    if(lib.programs.length <= 1){ showToast('You need at least one program.', ''); return; }
+    const p = lib.programs.find(function(x){ return x.id===id; }); if(!p) return;
+    if(!confirm('Delete “'+(p.name||'this program')+'”? This can’t be undone.')) return;
+    lib.programs = lib.programs.filter(function(x){ return x.id!==id; });
+    if(lib.activeId === id) lib.activeId = lib.programs[0].id;
+    syncTemplateFromLibrary();
+    state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
+    renderProgramsList();
+    if(document.getElementById('myProgramSheet').classList.contains('open')) renderMyProgram();
+    persistTemplate();
+    showToast('Program deleted', 'success');
+  }
+  window.deleteProgram = deleteProgram;
 
   // Shared Mon–Sun render of the owned template (used by the Program tab + the sheet).
   function programDaysHTML(){
@@ -6365,6 +6534,20 @@
     return '<div class="pw-tabs">'+tabs+'</div>';
   }
 
+  // Entry-point to the program library, shown atop the Edit My Program sheet.
+  function programSwitcherHTML(){
+    const lib = state.library; if(!lib) return '';
+    const count = (lib.programs||[]).length;
+    const name = (state.weeklyTemplate && state.weeklyTemplate.name) || 'My program';
+    return '<button class="prog-switcher" onclick="openPrograms()">'+
+      '<span style="display:flex;flex-direction:column;gap:2px;text-align:left;min-width:0;">'+
+        '<span class="prog-switcher-label">Program'+(count>1?' · '+count+' saved':'')+'</span>'+
+        '<span class="prog-switcher-name">'+esc(name)+'</span>'+
+      '</span>'+
+      '<span class="prog-switcher-name" style="flex-shrink:0;"><i class="ti ti-arrows-left-right" aria-hidden="true"></i> '+(count>1?'Switch':'My programs')+'</span>'+
+    '</button>';
+  }
+
   function renderMyProgram(){
     const sessions = templateSessions();          // the active week's days
     const body = document.getElementById('myProgramBody');
@@ -6374,6 +6557,7 @@
     if(fill) fill.style.display = anySessions ? '' : 'none';
     if(!anySessions){
       body.innerHTML =
+        programSwitcherHTML()+
         '<div class="prog-empty-card" style="box-shadow:none; background:transparent; padding:6px 0 0;">'+
           '<div class="prog-empty-icon"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>'+
           '<p class="prog-empty-lead">You don’t have a program yet.</p>'+
@@ -6389,6 +6573,7 @@
     const multi = weekCount > 1;
     const headLabel = multi ? ('Week '+(activeWk+1)+' of '+weekCount) : 'Your week';
     body.innerHTML =
+      programSwitcherHTML()+
       '<div class="prog-name-row" style="margin-bottom:14px;"><p class="prog-name">'+esc(name||'My program')+'</p>'+
         '<button class="prog-rename" aria-label="Rename program" title="Rename" onclick="renameProgram()"><i class="ti ti-pencil" aria-hidden="true"></i></button></div>'+
       '<div class="pb-toggle prog-auto" onclick="toggleAutoRepeat()">'+
