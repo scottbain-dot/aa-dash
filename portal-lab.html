@@ -2589,6 +2589,17 @@
   .prog-repeat-chip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--sage); background: #e9efe9; padding: 3px 8px; border-radius: 999px; }
   .prog-repeat-chip .ti { font-size: 11px; }
   .prog-name-row { display: flex; align-items: center; gap: 8px; }
+  /* Multi-week cycle switcher */
+  .pw-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+  .pw-tab {
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
+    font: 600 12px 'Inter', sans-serif; color: var(--ink-mute); cursor: pointer; transition: all 0.15s;
+  }
+  .pw-tab:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .pw-tab.on { background: var(--burgundy); border-color: var(--burgundy); color: var(--cream); }
+  .pw-tab.pw-add { color: var(--ink-mute); padding: 7px 11px; }
+  .pw-remove { color: var(--int-hard); }
+  .pw-remove:hover { border-color: var(--int-hard); color: var(--int-hard); }
   .prog-rename { flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
   .prog-rename:hover { border-color: var(--burgundy); color: var(--burgundy); }
   .prog-add-day { width: 100%; margin-top: 12px; padding: 12px; border: 1.5px dashed var(--line); border-radius: 12px; background: transparent; color: var(--burgundy); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.15s; }
@@ -5403,6 +5414,75 @@
     state.library = lib;
     syncTemplateFromLibrary();
   }
+
+  // ---- Multi-week cycles (1-4 weeks that rotate) --------------------------
+  const MAX_PROGRAM_WEEKS = 4;
+  function weeksBetweenISO(a, b){ return Math.round((parseISO(b) - parseISO(a)) / (7*86400000)); }
+  // Anchor the cycle to a stored Monday so Week 1 lands on a known week; default
+  // to this week's Monday the first time a rotation is needed.
+  function programCycleStart(p){
+    if(!p.cycleStart) p.cycleStart = fmtISO(mondayOf(new Date()));
+    return p.cycleStart;
+  }
+  // Which week of the cycle (0-based) a given calendar Monday runs.
+  function cycleWeekIndexFor(p, ws){
+    const n = (p && p.weeks && p.weeks.length) || 1;
+    if(n <= 1) return 0;
+    const d = weeksBetweenISO(programCycleStart(p), ws);
+    return ((d % n) + n) % n;
+  }
+  // Sessions the active program lays onto a given calendar Monday (cycle-aware).
+  function programSessionsForWeek(ws){
+    const p = activeProgram();
+    if(!p) return [];
+    const n = (p.weeks && p.weeks.length) || 1;
+    if(n <= 1) return templateSessions();
+    return p.weeks[cycleWeekIndexFor(p, ws)] || [];
+  }
+  function programHasAnySessions(){
+    const p = activeProgram();
+    return !!(p && (p.weeks||[]).some(w => (w||[]).length));
+  }
+  function activeWeekIndex(){ const p = activeProgram(); return p ? (p.activeWeek||0) : 0; }
+  function programWeekCount(){ const p = activeProgram(); return p ? ((p.weeks||[]).length||1) : 1; }
+  // Switch which week of the cycle the editor is showing.
+  function switchProgramWeek(idx){
+    const p = activeProgram(); if(!p) return;
+    if(idx < 0 || idx >= p.weeks.length) return;
+    p.activeWeek = idx;
+    syncTemplateFromLibrary();
+    renderMyProgram();
+  }
+  window.switchProgramWeek = switchProgramWeek;
+  // Add a week to the cycle (up to 4). Seeds the new week from the current one so
+  // the student edits a progression rather than starting from scratch.
+  function addProgramWeek(){
+    const p = activeProgram(); if(!p) return;
+    if(p.weeks.length >= MAX_PROGRAM_WEEKS){ showToast('A program can hold up to '+MAX_PROGRAM_WEEKS+' weeks.', ''); return; }
+    programCycleStart(p);   // anchor the rotation from now
+    const seed = (p.weeks[p.activeWeek||0] || []).map(d => JSON.parse(JSON.stringify(d)));
+    p.weeks.push(seed);
+    p.activeWeek = p.weeks.length - 1;
+    syncTemplateFromLibrary();
+    renderMyProgram();
+    showToast('Week '+p.weeks.length+' added — a copy of Week '+((p.activeWeek))+' to tweak', 'success');
+    persistTemplate();
+  }
+  window.addProgramWeek = addProgramWeek;
+  // Remove the week currently shown (keeps at least one).
+  function removeProgramWeek(){
+    const p = activeProgram(); if(!p) return;
+    if(p.weeks.length <= 1){ showToast('A program needs at least one week.', ''); return; }
+    const wk = p.activeWeek||0;
+    if(!confirm('Remove Week '+(wk+1)+' from this program? Its days will be lost.')) return;
+    p.weeks.splice(wk, 1);
+    p.activeWeek = Math.max(0, Math.min(wk, p.weeks.length-1));
+    syncTemplateFromLibrary();
+    renderMyProgram();
+    showToast('Week removed', 'success');
+    persistTemplate();
+  }
+  window.removeProgramWeek = removeProgramWeek;
   // Year map gets the same on-device safety net as the template: if a server save
   // fails (Apps Script is slow/flaky), the student's year still survives a refresh.
   function yearKey(){ return 'aaPortalYear:' + ((currentUser && currentUser.email) || 'anon'); }
@@ -5797,9 +5877,9 @@
   // Drop the program's sessions onto the visible week. Days that already have a
   // session are left untouched — the student's week edits always win.
   async function fillWeekFromTemplate(){
-    const sessions = templateSessions();
-    if(!sessions.length){ showToast('Your program is empty — mark a session “Repeat every week” to build it.', ''); return; }
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const sessions = programSessionsForWeek(ws);   // cycle-aware: the right week of the rotation
+    if(!sessions.length){ showToast('Your program is empty — mark a session “Repeat every week” to build it.', ''); return; }
     const busy = {}; (state.week.sessions||[]).forEach(s => { busy[s.date] = true; });
     const stamp = Date.now();
     const created = [];
@@ -6272,13 +6352,27 @@
     return html;
   }
 
+  // Week switcher for a multi-week cycle (only shown when a program has >1 week).
+  function programWeekTabsHTML(){
+    const p = activeProgram(); if(!p) return '';
+    const n = p.weeks.length; if(n <= 1) return '';
+    const active = p.activeWeek||0;
+    let tabs = '';
+    for(let i=0;i<n;i++){
+      tabs += '<button class="pw-tab'+(i===active?' on':'')+'" onclick="switchProgramWeek('+i+')">Week '+(i+1)+'</button>';
+    }
+    if(n < MAX_PROGRAM_WEEKS) tabs += '<button class="pw-tab pw-add" onclick="addProgramWeek()" title="Add a week" aria-label="Add a week"><i class="ti ti-plus" aria-hidden="true"></i></button>';
+    return '<div class="pw-tabs">'+tabs+'</div>';
+  }
+
   function renderMyProgram(){
-    const sessions = templateSessions();
+    const sessions = templateSessions();          // the active week's days
     const body = document.getElementById('myProgramBody');
     const fill = document.getElementById('myProgramFill');
     const name = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
-    if(fill) fill.style.display = sessions.length ? '' : 'none';
-    if(!sessions.length){
+    const anySessions = programHasAnySessions();
+    if(fill) fill.style.display = anySessions ? '' : 'none';
+    if(!anySessions){
       body.innerHTML =
         '<div class="prog-empty-card" style="box-shadow:none; background:transparent; padding:6px 0 0;">'+
           '<div class="prog-empty-icon"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>'+
@@ -6290,6 +6384,10 @@
       return;
     }
     const auto = autoRepeatOn();
+    const weekCount = programWeekCount();
+    const activeWk = activeWeekIndex();
+    const multi = weekCount > 1;
+    const headLabel = multi ? ('Week '+(activeWk+1)+' of '+weekCount) : 'Your week';
     body.innerHTML =
       '<div class="prog-name-row" style="margin-bottom:14px;"><p class="prog-name">'+esc(name||'My program')+'</p>'+
         '<button class="prog-rename" aria-label="Rename program" title="Rename" onclick="renameProgram()"><i class="ti ti-pencil" aria-hidden="true"></i></button></div>'+
@@ -6297,14 +6395,22 @@
         '<div class="pb-toggle-content">'+
           '<div class="pb-toggle-icon" style="background:var(--sage); color:var(--cream);"><i class="ti ti-repeat" aria-hidden="true"></i></div>'+
           '<div class="pb-toggle-text"><strong>Repeat my program each week</strong>'+
-            '<small>Empty weeks fill from your program. Weeks you’ve already changed are never touched.</small></div>'+
+            '<small>'+(multi
+              ? 'Your '+weekCount+'-week cycle rotates through empty weeks in order. Weeks you’ve already changed are never touched.'
+              : 'Empty weeks fill from your program. Weeks you’ve already changed are never touched.')+'</small></div>'+
         '</div>'+
         '<div class="toggle-switch'+(auto?' on':'')+'" id="autoRepeatToggle"></div>'+
       '</div>'+
-      '<div class="prog-week-head" style="margin-top:20px;"><div class="card-label" style="margin:0;">Your week · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div>'+
-        '<span class="prog-repeat-chip"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats weekly</span></div>'+
+      programWeekTabsHTML()+
+      '<div class="prog-week-head" style="margin-top:'+(multi?'14':'20')+'px;"><div class="card-label" style="margin:0;">'+headLabel+' · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div>'+
+        '<span class="prog-repeat-chip"><i class="ti ti-repeat" aria-hidden="true"></i> '+(multi?'Cycles':'Repeats weekly')+'</span></div>'+
       '<div class="myprog-list">'+programDaysHTML()+'</div>'+
       '<button class="prog-add-day" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Add a day</button>'+
+      (multi
+        ? '<button class="prog-add-day pw-remove" onclick="removeProgramWeek()"><i class="ti ti-trash" aria-hidden="true"></i> Remove Week '+(activeWk+1)+'</button>'
+        : (weekCount < MAX_PROGRAM_WEEKS
+            ? '<button class="prog-add-day" onclick="addProgramWeek()"><i class="ti ti-calendar-plus" aria-hidden="true"></i> Add another week — build a 2–4 week cycle</button>'
+            : ''))+
       '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Drag <i class="ti ti-grip-vertical" aria-hidden="true"></i> to move a session to another day. Tap <i class="ti ti-trash" aria-hidden="true"></i> to remove a day.</p>';
     initProgramDrag();   // grip-drag a session onto another day of the week
   }
@@ -6372,7 +6478,7 @@
 
   // ---- Auto-repeat: does the owned program carry into empty weeks? (default on) ----
   function autoRepeatOn(){
-    return !!(state.weeklyTemplate && state.weeklyTemplate.autoRepeat !== false && templateSessions().length);
+    return !!(state.weeklyTemplate && state.weeklyTemplate.autoRepeat !== false && programHasAnySessions());
   }
   // Weeks we've already auto-filled once, remembered per device. This lets a
   // student delete a program day from a future week and have it *stay* gone —
@@ -6393,7 +6499,7 @@
     const busy = {}; (state.week.sessions||[]).forEach(s => { busy[s.date] = true; });
     const stamp = Date.now();
     const created = [];
-    templateSessions().forEach((t, idx) => {
+    programSessionsForWeek(ws).forEach((t, idx) => {          // cycle-aware: rotate through the program's weeks
       const date = addDays(ws, t.dow);
       if(busy[date]) return;                              // day already has a session — leave it
       created.push(buildWeekSession(t, ws, stamp, idx));
