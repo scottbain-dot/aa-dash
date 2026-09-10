@@ -2923,7 +2923,7 @@ function apEnsureTrainingSessions(ss) {
   // Ensure the optional LAB columns exist on the live sheet. Appends by NAME,
   // so an existing sheet (which may not be a fresh 16-column one) is upgraded
   // in place without disturbing existing columns or data.
-  apEnsureColumns(sheet, ['Target', 'Readiness_JSON', 'Type', 'Result']);
+  apEnsureColumns(sheet, ['Target', 'Readiness_JSON', 'Type', 'Result', 'Time']);
   return sheet;
 }
 
@@ -3150,6 +3150,7 @@ function apSessionObj(r) {
   return {
     id: r.Session_ID,
     date: apDateStr(r.Date),
+    time: r.Time || '',
     weekStart: apDateStr(r.Week_Start),
     sport: r.Sport || '',
     name: r.Name || '',
@@ -3232,6 +3233,7 @@ function handleSaveSession(ss, athleteId, session) {
       'Session_ID': id,
       'Athlete_ID': athleteId,
       'Date': dateStr,
+      'Time': session.time || '',
       'Week_Start': apWeekStart(dateStr),
       'Sport': session.sport || '',
       'Name': session.name || '',

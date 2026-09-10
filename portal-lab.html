@@ -1646,6 +1646,10 @@
           <input type="date" class="duration-input plan-field" id="planDate" onchange="applyDateAwareSheet()">
         </div>
         <div style="flex:1; min-width:0;">
+          <label class="field-label" for="planTime">Time <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-mute);">· optional</span></label>
+          <input type="time" class="duration-input plan-field" id="planTime">
+        </div>
+        <div style="flex:1; min-width:0;">
           <label class="field-label" for="planDuration">How long?</label>
           <div class="duration-row">
             <input type="text" inputmode="numeric" class="duration-input plan-field" id="planDuration" placeholder="e.g. 45">
@@ -1653,6 +1657,7 @@
           </div>
         </div>
       </div>
+      <p class="ql-help" style="margin-top:8px;">Two sessions in a day? Set a time so your morning and afternoon sessions sort in order.</p>
 
       <div id="resultSection" style="display:none;">
         <label class="field-label" for="planResult" style="margin-top:14px;">Result · optional</label>
@@ -2771,6 +2776,12 @@
     margin-left: 6px; vertical-align: middle;
   }
   .type-tag i { font-size: 11px; }
+  .plan-time {
+    display: inline-flex; align-items: center; gap: 3px; font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 700; color: var(--burgundy); background: var(--cream);
+    border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: middle;
+  }
+  .plan-time i { font-size: 11px; }
   .type-tag.type-practice { background: rgba(135,75,70,.13); color: var(--burgundy); }
   .type-tag.type-game     { background: var(--gold); color: var(--burgundy-dark); }
 
@@ -3573,6 +3584,9 @@
   function dowShort(iso){ return DOW[parseISO(iso).getDay()]; }
   function monShort(iso){ return MONTHS[parseISO(iso).getMonth()].slice(0,3); }
   function fmtNice(iso){ return iso ? dayNum(iso)+' '+monShort(iso) : ''; }
+  // Session time-of-day helpers (24h "HH:MM"). Untimed sessions sort after timed ones.
+  function timeSortKey(s){ return (s && s.time && /^\d{1,2}:\d{2}$/.test(s.time)) ? s.time.padStart(5,'0') : '99:99'; }
+  function fmt12(t){ if(!t || !/^\d{1,2}:\d{2}$/.test(t)) return ''; let [h,m]=t.split(':').map(Number); const ap=h<12?'AM':'PM'; h=h%12||12; return h+':'+String(m).padStart(2,'0')+' '+ap; }
 
   // ============================================================
   // AUTH
@@ -4108,6 +4122,8 @@
     const curMon = fmtISO(mondayOf(new Date()));
     const byDay = {};
     state.week.sessions.forEach(s => { (byDay[s.date] = byDay[s.date] || []).push(s); });
+    // Same-day sessions sort by time (a set time comes first, in order; untimed after).
+    Object.keys(byDay).forEach(k => byDay[k].sort((a,b) => { const ta=timeSortKey(a), tb=timeSortKey(b); return ta<tb?-1:ta>tb?1:0; }));
     const todays = byDay[today] || [];
 
     document.getElementById('weekStack').innerHTML =
@@ -4270,6 +4286,7 @@
     else if(s.status==='missed') statusCls = ' is-missed';
     const dotCls = s.intensity ? ' '+s.intensity : '';
     const resultBit = (s.type==='game' && s.result) ? ' · '+esc(s.result) : '';
+    const timeChip = fmt12(s.time) ? '<span class="plan-time"><i class="ti ti-clock" aria-hidden="true"></i> '+fmt12(s.time)+'</span>' : '';
     let meta;
     if(s.status==='missed') meta = 'Missed' + (s.note? ' · '+esc(s.note) : '');
     else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au'+resultBit;
@@ -4283,7 +4300,7 @@
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
-        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+typeTag(s)+pb+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
         '<span class="plan-grip" aria-label="Drag to move to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
       '</div>'+
@@ -4436,7 +4453,7 @@
   window.showPlanHeader = showPlanHeader;
 
   function newSession(dateIso){
-    editing = { id:null, date:dateIso, sport:(athlete && athlete.Sport_1)||'', name:'', intensity:'',
+    editing = { id:null, date:dateIso, time:'', sport:(athlete && athlete.Sport_1)||'', name:'', intensity:'',
       plannedDuration:null, rpe:null, duration:null, status:'planned', isPB:false, workout:[], note:'',
       target:'', readiness:null };
     fillSheet(editing);
@@ -4455,6 +4472,7 @@
     pickType(s.type || 'training');          // Training / Practice / Game (also sets section visibility)
     document.getElementById('planResult').value = s.result || '';
     document.getElementById('planDate').value = s.date || isoToday();
+    document.getElementById('planTime').value = s.time || '';
     document.getElementById('planDuration').value = s.plannedDuration != null ? s.plannedDuration : '';
     // New session → PLAN mode (short, no logging fields). Existing session →
     // LOG mode: lead with logging, planning fields behind the toggle.
@@ -5169,7 +5187,7 @@
   function weekHasSessions(){ return (state.week.sessions||[]).length > 0; }
   function hasProgram(){ return templateSessions().length > 0; }
   function buildWeekSession(t, ws, stamp, idx){
-    return { id:'tmp_ap_'+stamp+'_'+idx, date: addDays(ws, t.dow), type: t.type||'training', result:'',
+    return { id:'tmp_ap_'+stamp+'_'+idx, date: addDays(ws, t.dow), time: t.time||'', type: t.type||'training', result:'',
       sport: t.sport||'', name: t.name||'Session', intensity: t.intensity||'',
       plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null), rpe:null, duration:null, load:null,
       status:'planned', isPB:false, workout:(t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
@@ -5240,7 +5258,7 @@
     (state.week.sessions||[]).slice()
       .sort((a,b) => (dowOf(a.date)-dowOf(b.date)))
       .forEach(s => out.push({
-        dow: dowOf(s.date), name: s.name || 'Session', sport: s.sport || '', intensity: s.intensity || '',
+        dow: dowOf(s.date), name: s.name || 'Session', time: s.time || '', sport: s.sport || '', intensity: s.intensity || '',
         plannedDuration: (s.plannedDuration!=null ? s.plannedDuration : (s.duration!=null ? s.duration : null)),
         target: s.target || '', workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x))
       }));
@@ -5368,6 +5386,7 @@
     const session = {
       id: editing.id || ('tmp_' + Date.now()),
       date: sessionDate,
+      time: (val('planTime')||'').trim(),
       type: sType,
       result: (sType === 'game') ? val('planResult').trim() : '',
       sport: val('planSport').trim(),
@@ -5708,7 +5727,7 @@
     if(!state.weeklyTemplate) state.weeklyTemplate = emptyTemplate();
     if(!state.weeklyTemplate.sessions) state.weeklyTemplate.sessions = [];
     const dow = dowOf(s.date);
-    const entry = { dow: dow, name: s.name, type: s.type||'training', sport: s.sport||'', intensity: s.intensity||'',
+    const entry = { dow: dow, name: s.name, time: s.time||'', type: s.type||'training', sport: s.sport||'', intensity: s.intensity||'',
       plannedDuration: (s.plannedDuration!=null?s.plannedDuration:null), target: s.target||'',
       workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)) };
     const arr = state.weeklyTemplate.sessions;
@@ -5996,7 +6015,7 @@
     sessions.forEach((t, idx) => {
       const date = addDays(ws, t.dow);
       if(busy[date]) return;
-      const session = { id:'tmp_tpl_'+stamp+'_'+idx, date: date, type: t.type||'training', result:'', sport: t.sport||'', name: t.name||'',
+      const session = { id:'tmp_tpl_'+stamp+'_'+idx, date: date, time: t.time||'', type: t.type||'training', result:'', sport: t.sport||'', name: t.name||'',
         intensity: t.intensity||'', plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null),
         rpe:null, duration:null, load:null, status:'planned', isPB:false,
         workout: (t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
