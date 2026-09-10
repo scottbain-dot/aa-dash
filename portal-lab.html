@@ -1034,6 +1034,20 @@
   .sheet-save .btn-secondary {
     border: 1px solid var(--line);
   }
+  .sheet-save .sheet-delete-btn {
+    flex: 0 0 auto;
+    width: 50px;
+    padding: 14px 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--int-hard);
+    font-size: 17px;
+  }
+  .sheet-save .sheet-delete-btn:hover {
+    background: var(--int-hard);
+    border-color: var(--int-hard);
+    color: #fff;
+  }
 
   /* ============================
      AUTH GATE + APP SHELL
@@ -1146,24 +1160,8 @@
   .demo-pill[hidden] { display: none; }
 
   /* ============================
-     LAB — read-only Target (shown at log time) + Readiness block
+     LAB — Readiness block
      ============================ */
-  .target-readonly {
-    display: flex; align-items: flex-start; gap: 10px;
-    background: var(--cream); border-radius: 12px;
-    padding: 12px 14px; margin-bottom: 18px;
-    border-left: 4px solid var(--gold);
-  }
-  .target-readonly .ti { color: var(--burgundy); font-size: 16px; margin-top: 1px; }
-  .target-readonly-text { min-width: 0; }
-  .target-readonly-label {
-    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--ink-mute); font-weight: 700; margin: 0 0 3px;
-  }
-  .target-readonly-value {
-    font-family: 'Fraunces', serif; font-size: 14px; color: var(--ink); margin: 0; line-height: 1.35;
-  }
-
   /* Collapsible Readiness section */
   .readiness-head {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -1439,7 +1437,7 @@
       <h2 class="wt-title">Your year, <em>mapped</em>.</h2>
       <p class="wt-body">When you set your <strong>big event</strong>, the portal automatically colours your months around it — so you don’t have to work it out yourself:</p>
       <div class="wt-legend">
-        <span class="wt-legend-item"><span class="le-emoji">💪</span><strong>Build</strong> · <em>most of your year — push a bit harder and get fitter, stronger, faster.</em></span>
+        <span class="wt-legend-item"><span class="le-emoji">💪</span><strong>Build</strong> · <em>push a bit harder and get fitter, stronger, faster. How much of your year you build depends on your sport and season.</em></span>
         <span class="wt-legend-item"><span class="le-emoji">⚡</span><strong>Maintain</strong> · <em>hold your level when school or games are busy — don’t over-reach.</em></span>
         <span class="wt-legend-item"><span class="le-emoji">🏆</span><strong>Peak</strong> · <em>the week or two before your event — train a little less so you arrive fresh and sharp.</em></span>
         <span class="wt-legend-item"><span class="le-emoji">🌙</span><strong>Recover</strong> · <em>just after a big event — ease right off and let your body absorb the work.</em></span>
@@ -1648,6 +1646,10 @@
           <input type="date" class="duration-input plan-field" id="planDate" onchange="applyDateAwareSheet()">
         </div>
         <div style="flex:1; min-width:0;">
+          <label class="field-label" for="planTime">Time <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-mute);">· optional</span></label>
+          <input type="time" class="duration-input plan-field" id="planTime">
+        </div>
+        <div style="flex:1; min-width:0;">
           <label class="field-label" for="planDuration">How long?</label>
           <div class="duration-row">
             <input type="text" inputmode="numeric" class="duration-input plan-field" id="planDuration" placeholder="e.g. 45">
@@ -1655,9 +1657,7 @@
           </div>
         </div>
       </div>
-
-      <label class="field-label" for="planTarget">Session goal · optional</label>
-      <input class="duration-input plan-field" id="planTarget" placeholder="e.g. 5km · hold 6:00/km · 3×8 at 40kg">
+      <p class="ql-help" style="margin-top:8px;">Two sessions in a day? Set a time so your morning and afternoon sessions sort in order.</p>
 
       <div id="resultSection" style="display:none;">
         <label class="field-label" for="planResult" style="margin-top:14px;">Result · optional</label>
@@ -1678,15 +1678,6 @@
           </div>
         </div>
         <div class="toggle-switch" id="repeatToggle"></div>
-      </div>
-    </div>
-
-    <!-- LAB: read-only target shown at log time (actual-vs-target) -->
-    <div class="target-readonly" id="targetReadonly" style="display:none;">
-      <i class="ti ti-target" aria-hidden="true"></i>
-      <div class="target-readonly-text">
-        <p class="target-readonly-label">Today's target</p>
-        <p class="target-readonly-value" id="targetReadonlyValue">—</p>
       </div>
     </div>
 
@@ -1749,19 +1740,19 @@
     </div>
 
     <div class="sheet-section" id="pbSection">
-      <p class="sheet-section-label">Mark as a PB?</p>
-      <div class="pb-toggle" onclick="togglePB(this)">
+      <p class="sheet-section-label">Personal best</p>
+      <button type="button" class="pb-toggle" style="width:100%; cursor:pointer; text-align:left;" onclick="logPBFromSession()">
         <div class="pb-toggle-content">
           <div class="pb-toggle-icon">
             <i class="ti ti-trophy" aria-hidden="true"></i>
           </div>
           <div class="pb-toggle-text">
-            <strong>New personal best</strong>
-            <small>Tap to flag this session</small>
+            <strong>Log a personal best</strong>
+            <small>Hit a new best? Record the exercise and the number, e.g. Back squat 60kg</small>
           </div>
         </div>
-        <div class="toggle-switch" id="pbToggle"></div>
-      </div>
+        <i class="ti ti-chevron-right" aria-hidden="true" style="color:var(--ink-mute); font-size:18px;"></i>
+      </button>
     </div>
 
     <!-- LAB: readiness — collapsed by default, one tap to skip when fine -->
@@ -1814,6 +1805,7 @@
   </div>
 
   <div class="sheet-save">
+    <button class="sheet-delete-btn" id="sheetDeleteBtn" style="display:none;" title="Delete this session" aria-label="Delete this session" onclick="deleteCurrentSession()"><i class="ti ti-trash" aria-hidden="true"></i></button>
     <button class="btn-secondary" onclick="closeSheet()">Cancel</button>
     <button class="btn-primary" id="sheetSaveBtn" onclick="saveCurrentSession()">Save session</button>
   </div>
@@ -1998,6 +1990,24 @@
   <div class="sheet-save">
     <button class="btn-secondary" onclick="clearMyProgram()">Clear</button>
     <button class="btn-primary" id="myProgramFill" onclick="myProgramFill()"><i class="ti ti-calendar-plus" aria-hidden="true"></i> Fill this week</button>
+  </div>
+</div>
+
+<!-- MY PROGRAMS — the library: switch, rename, duplicate, delete, new (sits above Edit my program) -->
+<div class="sheet-backdrop" id="programs-backdrop" onclick="closePrograms()"></div>
+<div class="sheet" id="programsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">Your programs</p>
+      <h2 class="sheet-title">My <em>programs</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closePrograms()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body">
+    <p class="ql-help" style="margin-top:0;">Keep a program for each phase of your year — swap the active one whenever you like. The active program is the one that fills your weeks.</p>
+    <div id="programsBody"></div>
+    <button class="prog-add-day" style="margin-top:14px;" onclick="newProgram()"><i class="ti ti-plus" aria-hidden="true"></i> New program</button>
   </div>
 </div>
 
@@ -2537,6 +2547,9 @@
   /* Swap sheet stacks above the open session sheet */
   .sheet-backdrop.sheet-top { z-index: 110; }
   .sheet.sheet-top { z-index: 120; }
+  /* PB sheet sits above everything, including full-screen Workout mode (z 300) */
+  #pb-backdrop.open { z-index: 390; }
+  #pbSheet.open { z-index: 400; }
   /* Swap affordance on a workout step */
   .workout-swap {
     flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line);
@@ -2555,6 +2568,9 @@
   .myprog-dow { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--ink-mute); margin-bottom: 6px; }
   .myprog-rest { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
   .myprog-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+  .myprog-grip { flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-mute); cursor: grab; touch-action: none; font-size: 15px; margin: 0 -2px 0 -4px; opacity: 0.45; }
+  .myprog-grip:active { cursor: grabbing; }
+  .myprog-item.dragging { opacity: 0.3; }
   .myprog-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--line); flex-shrink: 0; }
   .myprog-dot.easy { background: var(--int-easy); }
   .myprog-dot.moderate { background: var(--int-moderate); }
@@ -2562,8 +2578,8 @@
   .myprog-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
   .myprog-item-name { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
   .myprog-item-sub { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); }
-  .myprog-remove { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-  .myprog-remove:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .myprog-remove { flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.15s; }
+  .myprog-remove:hover { border-color: var(--int-hard); color: #fff; background: var(--int-hard); }
 
   /* ===== PROGRAM TAB — the home for building / switching the owned program ===== */
   .prog-head { margin: 4px 2px 16px; }
@@ -2596,6 +2612,44 @@
   .prog-repeat-chip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--sage); background: #e9efe9; padding: 3px 8px; border-radius: 999px; }
   .prog-repeat-chip .ti { font-size: 11px; }
   .prog-name-row { display: flex; align-items: center; gap: 8px; }
+  /* Multi-week cycle switcher */
+  .pw-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+  .pw-tab {
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
+    font: 600 12px 'Inter', sans-serif; color: var(--ink-mute); cursor: pointer; transition: all 0.15s;
+  }
+  .pw-tab:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .pw-tab.on { background: var(--burgundy); border-color: var(--burgundy); color: var(--cream); }
+  .pw-tab.pw-add { color: var(--ink-mute); padding: 7px 11px; }
+  .pw-remove { color: var(--int-hard); }
+  .pw-remove:hover { border-color: var(--int-hard); color: var(--int-hard); }
+  /* My programs library */
+  .lib-prog {
+    display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line);
+    border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; background: var(--surface);
+  }
+  .lib-prog:hover { border-color: var(--burgundy); }
+  .lib-prog.active { border-color: var(--sage); background: #f2f6f2; }
+  .lib-prog-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .lib-prog-name { font: 700 15px 'Inter', sans-serif; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .lib-prog-badge { flex-shrink: 0; font: 700 9px 'Inter', sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sage); background: #e4ede4; border-radius: 999px; padding: 2px 7px; }
+  .lib-prog-sub { font: 500 12px 'Inter', sans-serif; color: var(--ink-mute); }
+  .lib-prog-actions { flex-shrink: 0; display: flex; gap: 4px; }
+  .lib-prog-btn {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+    color: var(--ink-mute); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.15s;
+  }
+  .lib-prog-btn:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .lib-prog-btn.del:hover { border-color: var(--int-hard); color: var(--int-hard); }
+  .prog-switcher {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--cream); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px;
+    cursor: pointer; transition: all 0.15s; font-family: 'Inter', sans-serif;
+  }
+  .prog-switcher:hover { border-color: var(--burgundy); }
+  .prog-switcher-label { font: 700 10px 'Inter', sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); }
+  .prog-switcher-name { font: 600 14px 'Inter', sans-serif; color: var(--ink); display: flex; align-items: center; gap: 6px; }
+  .prog-switcher-name .ti { color: var(--ink-mute); }
   .prog-rename { flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
   .prog-rename:hover { border-color: var(--burgundy); color: var(--burgundy); }
   .prog-add-day { width: 100%; margin-top: 12px; padding: 12px; border: 1.5px dashed var(--line); border-radius: 12px; background: transparent; color: var(--burgundy); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.15s; }
@@ -2722,6 +2776,12 @@
     margin-left: 6px; vertical-align: middle;
   }
   .type-tag i { font-size: 11px; }
+  .plan-time {
+    display: inline-flex; align-items: center; gap: 3px; font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 700; color: var(--burgundy); background: var(--cream);
+    border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: middle;
+  }
+  .plan-time i { font-size: 11px; }
   .type-tag.type-practice { background: rgba(135,75,70,.13); color: var(--burgundy); }
   .type-tag.type-game     { background: var(--gold); color: var(--burgundy-dark); }
 
@@ -2795,6 +2855,12 @@
     display: flex; align-items: center; gap: 8px; line-height: 1.1;
   }
   .year-sport-star { color: var(--gold); font-size: 16px; }
+  .year-sport-rename {
+    background: none; border: none; cursor: pointer; color: var(--ink-mute); padding: 4px;
+    font-size: 15px; line-height: 1; display: inline-flex; align-items: center; border-radius: 6px; transition: all 0.15s;
+  }
+  .year-sport-rename:hover { color: var(--burgundy); background: var(--cream); }
+  .year-sport-del:hover { color: var(--int-hard); }
   .year-now-chip {
     font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; white-space: nowrap;
     padding: 6px 12px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
@@ -2812,6 +2878,59 @@
   .year-sport-goal strong { color: var(--ink); font-weight: 600; }
   .year-sport-goal .ti { color: var(--burgundy); }
 
+  /* ---- Multi-sport overview heatmap (compare all sports down a column) ---- */
+  .yog-legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 2px 0 14px; }
+  .yog { display: grid; grid-template-columns: 84px repeat(12, 1fr); gap: 3px; align-items: center; }
+  .yog-corner { }
+  .yog-mhead { font: 700 8.5px 'Inter', sans-serif; letter-spacing: 0.02em; text-transform: uppercase; text-align: center; color: var(--ink-mute); padding-bottom: 2px; }
+  .yog-mhead.now { color: var(--burgundy); }
+  .yog-label {
+    font: 700 12.5px 'Fraunces', serif; color: var(--ink); cursor: pointer; padding-right: 6px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 4px;
+  }
+  .yog-label:hover { color: var(--burgundy); }
+  .yog-label .ti { font-size: 13px; color: var(--ink-mute); flex-shrink: 0; }
+  .yog-cell {
+    aspect-ratio: 1 / 1; border-radius: 5px; cursor: pointer; position: relative; background: var(--cream);
+    transition: transform 0.1s;
+  }
+  .yog-cell:hover { transform: scale(1.08); z-index: 1; }
+  .yog-cell.ym-recover, .yog-cell.ym-off { border: 1px solid var(--line); }
+  .yog-cell.suggest { opacity: 0.42; }
+  .yog-cell.now { outline: 2px solid var(--burgundy); outline-offset: -2px; }
+  .yog-cell .yog-mark {
+    position: absolute; top: 3px; right: 3px; min-width: 22px; height: 22px; padding: 0 3px;
+    display: flex; align-items: center; justify-content: center; gap: 1px; border: none; cursor: pointer;
+    background: var(--gold); color: var(--burgundy-dark); border-radius: 999px; line-height: 1;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.32); transition: transform 0.12s;
+  }
+  .yog-cell .yog-mark:hover { transform: scale(1.18); }
+  .yog-cell .yog-mark .ti { font-size: 14px; }
+  .yog-cell .yog-mark b { font-size: 10px; font-weight: 800; margin-left: 1px; }
+  @keyframes yog-card-flash { 0%,100% { box-shadow: var(--card-shadow, 0 0 0 rgba(0,0,0,0)); } 30% { box-shadow: 0 0 0 3px var(--gold); } }
+  .year-flash { animation: yog-card-flash 1.1s ease; }
+  .yog-rowlabel { grid-column: 1 / -1; height: 2px; }
+  .yog-hint { font: 500 12px 'Inter', sans-serif; color: var(--ink-mute); margin: 12px 0 0; text-align: center; }
+  .year-detail-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .year-back-btn {
+    display: inline-flex; align-items: center; gap: 6px; background: var(--cream); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 12px; font: 600 13px 'Inter', sans-serif; color: var(--ink); cursor: pointer; transition: all 0.15s;
+  }
+  .year-back-btn:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .year-detail-pager { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .ydp-arrow {
+    width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line); background: var(--cream);
+    color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 17px; transition: all 0.15s;
+  }
+  .ydp-arrow:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .ydp-dots { display: flex; gap: 5px; }
+  .ydp-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); transition: all 0.15s; }
+  .ydp-dot.on { background: var(--burgundy); transform: scale(1.35); }
+  #yearDetailSwipe { touch-action: pan-y; }
+  .year-view-toggle {
+    background: none; border: none; color: var(--burgundy); font: 600 12px 'Inter', sans-serif; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px; padding: 4px;
+  }
   .year-months {
     display: grid; grid-template-columns: repeat(12, minmax(42px, 1fr)); gap: 5px;
     overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 12px 0 2px;
@@ -2896,7 +3015,10 @@
   .ym-marker.a-priority { color: var(--gold); }
   .ym-marker.testing { color: var(--ink); }
   .ym-marker.commitment { color: var(--ink-mute); }
+  .ym-marker.game { color: var(--gold); }
   .ym-peak .ym-marker.testing { color: var(--cream); }
+  .year-addcomp { margin-top: 12px; width: 100%; background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 10px; padding: 9px; font: 600 13px 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
+  .year-addcomp:hover { border-color: var(--burgundy); color: var(--burgundy); }
   .ym-suggest-edit {
     position: absolute; top: 2px; right: 2px; width: 16px; height: 16px;
     display: flex; align-items: center; justify-content: center;
@@ -3076,7 +3198,7 @@
   }
   .plan-list { margin-top: 12px; }
   .plan-row {
-    display: grid; grid-template-columns: 46px 14px 1fr 30px; align-items: center; gap: 14px;
+    display: grid; grid-template-columns: 46px 14px 1fr 30px 22px; align-items: center; gap: 14px;
     padding: 14px 8px; border-bottom: 1px solid var(--line-soft); cursor: pointer;
     border-radius: 10px; transition: background 0.15s;
   }
@@ -3115,9 +3237,19 @@
   .plan-row:hover .plan-add { opacity: 0.55; }
   .plan-add:hover { background: var(--surface); color: var(--burgundy); opacity: 1; }
   .plan-rest .plan-add { opacity: 0.4; }
+  /* Drag-to-move day: grip handle + ghost + drop target */
+  .plan-grip { display: flex; align-items: center; justify-content: center; color: var(--ink-mute); cursor: grab; touch-action: none; opacity: 0; transition: opacity 0.15s; font-size: 16px; }
+  .plan-row:hover .plan-grip { opacity: 0.55; }
+  .plan-grip:active { cursor: grabbing; }
+  @media (max-width: 560px) { .plan-grip { opacity: 0.5; } }
+  .drag-ghost { position: fixed; z-index: 1200; pointer-events: none; opacity: 0.96; background: var(--surface); box-shadow: 0 14px 34px rgba(0,0,0,0.22); border-radius: 12px; padding: 14px 8px; }
+  .swipe-wrap.dragging .plan-row { opacity: 0.3; }
+  .drop-target { outline: 2px dashed var(--burgundy); outline-offset: -2px; border-radius: 12px; background: var(--cream); }
+  .week-saveorder { width: 100%; margin-top: 10px; background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 10px; padding: 9px; font: 600 13px 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
+  .week-saveorder:hover { border-color: var(--burgundy); color: var(--burgundy); }
   @media (max-width: 560px) {
     .plan-card { padding: 18px 18px; }
-    .plan-row { padding: 13px 4px; gap: 10px; grid-template-columns: 42px 12px 1fr 28px; }
+    .plan-row { padding: 13px 4px; gap: 10px; grid-template-columns: 42px 12px 1fr 28px 20px; }
     .plan-add { opacity: 0.45; }
   }
   /* Plan-card header row + Change-plan button + plan label */
@@ -3409,7 +3541,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, games: [], booking: null, planName: '', athleteId: '' };
+  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, games: [], booking: null, planName: '', athleteId: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -3452,6 +3584,9 @@
   function dowShort(iso){ return DOW[parseISO(iso).getDay()]; }
   function monShort(iso){ return MONTHS[parseISO(iso).getMonth()].slice(0,3); }
   function fmtNice(iso){ return iso ? dayNum(iso)+' '+monShort(iso) : ''; }
+  // Session time-of-day helpers (24h "HH:MM"). Untimed sessions sort after timed ones.
+  function timeSortKey(s){ return (s && s.time && /^\d{1,2}:\d{2}$/.test(s.time)) ? s.time.padStart(5,'0') : '99:99'; }
+  function fmt12(t){ if(!t || !/^\d{1,2}:\d{2}$/.test(t)) return ''; let [h,m]=t.split(':').map(Number); const ap=h<12?'AM':'PM'; h=h%12||12; return h+':'+String(m).padStart(2,'0')+' '+ap; }
 
   // ============================================================
   // AUTH
@@ -3552,6 +3687,7 @@
     if(action==='cancelBooking') return Promise.resolve({ success:true, id: payload.bookingId });
     if(action==='saveSession') return Promise.resolve({ success:true, id: 'demo_'+Date.now() });
     if(action==='deleteSession') return Promise.resolve({ success:true, id: payload.id });
+    if(action==='savePB'){ state.pbs = state.pbs||[]; state.pbs.unshift(Object.assign({ id:'demo_pb_'+Date.now() }, payload.pb)); return Promise.resolve({ success:true, id:'demo_pb_'+Date.now() }); }
     if(action==='saveWeeklyTemplate') return Promise.resolve({ success:true });
     if(action==='getWeeklyTemplate') return Promise.resolve({ success:true, weeklyTemplate: state.weeklyTemplate });
     if(action==='generateProgram') { const sp = payload.spec || {}; const mins = sp.minutes || 45; return Promise.resolve({ success:true, program: {
@@ -3631,7 +3767,10 @@
       // Heal the sheet: if the server had no year but the device does (a save
       // that never landed), push it back up so the sheet becomes complete.
       if(!data.yearMap && state.yearMap) markYearDirty();
-      state.weeklyTemplate = data.weeklyTemplate || loadTemplateLocal() || null;
+      // Program library: prefer the server's library; otherwise migrate the legacy
+      // single-week template (server or device) into a one-program library. This is
+      // non-destructive — the old template row is left as-is and kept in sync on save.
+      initLibrary(data.library, data.weeklyTemplate);
       state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
       state.pbs = data.pbs || [];
@@ -3668,7 +3807,8 @@
     state.athleteId = 'demo';
     athlete = demo.athlete;
     state.yearMap = demo.yearMap;
-    state.weeklyTemplate = demo.weeklyTemplate;
+    state.library = libraryFromTemplate(demo.weeklyTemplate);
+    syncTemplateFromLibrary();
     state.week = demo.week;
     state.pbs = demo.pbs;
     state.load = demo.load;
@@ -3841,7 +3981,7 @@
   const LAUNCH_MODE = true;
   // My Program (week) is live so students can build their own program, and Book
   // (check-ins) is now live too. Load/PBs stay teased until they're ready.
-  const LIVE_TABS = { year:true, week:true, book:true };
+  const LIVE_TABS = { year:true, week:true, book:true, pbs:true };
   // Booking is still in testing — students see the "coming soon" teaser. It's
   // unlocked only for the demo, a ?book=1 override, and named testers. This just
   // reveals the UI; the SERVER enforces the real lock (BOOKING_LIVE / tester
@@ -3982,6 +4122,8 @@
     const curMon = fmtISO(mondayOf(new Date()));
     const byDay = {};
     state.week.sessions.forEach(s => { (byDay[s.date] = byDay[s.date] || []).push(s); });
+    // Same-day sessions sort by time (a set time comes first, in order; untimed after).
+    Object.keys(byDay).forEach(k => byDay[k].sort((a,b) => { const ta=timeSortKey(a), tb=timeSortKey(b); return ta<tb?-1:ta>tb?1:0; }));
     const todays = byDay[today] || [];
 
     document.getElementById('weekStack').innerHTML =
@@ -3992,6 +4134,7 @@
       weekMixCard();
 
     initSwipe();   // LAB: bind swipe-to-delete (delegated on #weekGrid)
+    initWeekDrag();   // grip-drag a session onto another day
   }
 
   // Prominent "Build my program" entry — top of My Program, opens the build hub
@@ -4083,6 +4226,7 @@
       nextGameStrip(ws)+
       fillPrompt+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
+      ((state.week.sessions||[]).length ? '<button class="week-saveorder" onclick="saveWeekAsProgram()"><i class="ti ti-device-floppy" aria-hidden="true"></i> Save this order to my program</button>' : '')+
       '<div class="week-actions">'+
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add game</button>'+
@@ -4142,6 +4286,7 @@
     else if(s.status==='missed') statusCls = ' is-missed';
     const dotCls = s.intensity ? ' '+s.intensity : '';
     const resultBit = (s.type==='game' && s.result) ? ' · '+esc(s.result) : '';
+    const timeChip = fmt12(s.time) ? '<span class="plan-time"><i class="ti ti-clock" aria-hidden="true"></i> '+fmt12(s.time)+'</span>' : '';
     let meta;
     if(s.status==='missed') meta = 'Missed' + (s.note? ' · '+esc(s.note) : '');
     else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au'+resultBit;
@@ -4151,18 +4296,19 @@
     const ref = lastWeekRefs[s.id];
     const refLine = ref ? '<div class="plan-lastweek-ref"><i class="ti ti-history" aria-hidden="true"></i>'+esc(ref)+'</div>' : '';
     // LAB: wrapped so a left-swipe reveals a Delete action (see swipe handlers).
-    return '<div class="swipe-wrap" data-id="'+esc(s.id)+'">'+
+    return '<div class="swipe-wrap" data-id="'+esc(s.id)+'" data-day="'+esc(iso)+'">'+
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
-        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+typeTag(s)+pb+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
+        '<span class="plan-grip" aria-label="Drag to move to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
       '</div>'+
       '<button class="swipe-delete" aria-label="Remove session" onclick="deleteSessionSwipe(event,\''+s.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i> Delete</button>'+
     '</div>';
   }
   function planRestRow(dayLabelHTML, iso, isToday, isPast){
-    return '<div class="plan-row plan-rest'+(isToday?' is-today':'')+'" onclick="newSession(\''+iso+'\')">'+
+    return '<div class="plan-row plan-rest'+(isToday?' is-today':'')+'" data-day="'+esc(iso)+'" onclick="newSession(\''+iso+'\')">'+
       '<span class="plan-day">'+dayLabelHTML+'</span>'+
       '<span class="plan-dot is-empty" aria-hidden="true"></span>'+
       '<div class="plan-info"><div class="plan-name muted">'+(isPast?'Nothing logged':'Rest day')+'</div>'+
@@ -4288,6 +4434,18 @@
   }
   window.openSession = openSession;
 
+  // Delete the session currently open in the detail sheet (the discoverable
+  // path on desktop, where the row's left-swipe Delete isn't reachable).
+  function deleteCurrentSession(){
+    if(!editing || !editing.id) return;
+    const id = editing.id;
+    const nm = editing.name || 'this session';
+    if(!confirm('Delete “'+nm+'”? This can’t be undone.')) return;
+    closeSheet();
+    deleteSessionSwipe(null, id);
+  }
+  window.deleteCurrentSession = deleteCurrentSession;
+
   function showPlanHeader(){
     document.getElementById('planHeader').style.display = '';
     document.getElementById('planToggle').style.display = 'none';
@@ -4295,7 +4453,7 @@
   window.showPlanHeader = showPlanHeader;
 
   function newSession(dateIso){
-    editing = { id:null, date:dateIso, sport:(athlete && athlete.Sport_1)||'', name:'', intensity:'',
+    editing = { id:null, date:dateIso, time:'', sport:(athlete && athlete.Sport_1)||'', name:'', intensity:'',
       plannedDuration:null, rpe:null, duration:null, status:'planned', isPB:false, workout:[], note:'',
       target:'', readiness:null };
     fillSheet(editing);
@@ -4314,11 +4472,15 @@
     pickType(s.type || 'training');          // Training / Practice / Game (also sets section visibility)
     document.getElementById('planResult').value = s.result || '';
     document.getElementById('planDate').value = s.date || isoToday();
+    document.getElementById('planTime').value = s.time || '';
     document.getElementById('planDuration').value = s.plannedDuration != null ? s.plannedDuration : '';
     // New session → PLAN mode (short, no logging fields). Existing session →
     // LOG mode: lead with logging, planning fields behind the toggle.
     const isNew = !s.id;
     sheetMode = isNew ? 'plan' : 'log';
+    // Delete is only offered for a session that already exists (nothing to delete on a new one).
+    const delBtn = document.getElementById('sheetDeleteBtn');
+    if(delBtn) delBtn.style.display = isNew ? 'none' : '';
     // Day + length + details are always visible now — they used to hide behind an
     // "Edit plan details" toggle, which made them feel broken.
     document.getElementById('planHeader').style.display = '';
@@ -4340,19 +4502,8 @@
     // duration (actual)
     document.getElementById('duration-input').value = s.duration != null ? s.duration : (s.plannedDuration != null ? s.plannedDuration : '');
     updateLoad();
-    // PB toggle
-    document.getElementById('pbToggle').classList.toggle('on', !!s.isPB);
     // note
     document.getElementById('sheetNote').value = s.note || '';
-    // LAB: target — editable in the plan header, read-only at log time
-    document.getElementById('planTarget').value = s.target || '';
-    const tro = document.getElementById('targetReadonly');
-    if(!isNew && s.target){
-      document.getElementById('targetReadonlyValue').textContent = s.target;
-      tro.style.display = '';
-    } else {
-      tro.style.display = 'none';
-    }
     // LAB: readiness — collapsed by default
     fillReadiness(s.readiness);
     // Plan/log split + date-aware fields.
@@ -5036,7 +5187,7 @@
   function weekHasSessions(){ return (state.week.sessions||[]).length > 0; }
   function hasProgram(){ return templateSessions().length > 0; }
   function buildWeekSession(t, ws, stamp, idx){
-    return { id:'tmp_ap_'+stamp+'_'+idx, date: addDays(ws, t.dow), type: t.type||'training', result:'',
+    return { id:'tmp_ap_'+stamp+'_'+idx, date: addDays(ws, t.dow), time: t.time||'', type: t.type||'training', result:'',
       sport: t.sport||'', name: t.name||'Session', intensity: t.intensity||'',
       plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null), rpe:null, duration:null, load:null,
       status:'planned', isPB:false, workout:(t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
@@ -5107,7 +5258,7 @@
     (state.week.sessions||[]).slice()
       .sort((a,b) => (dowOf(a.date)-dowOf(b.date)))
       .forEach(s => out.push({
-        dow: dowOf(s.date), name: s.name || 'Session', sport: s.sport || '', intensity: s.intensity || '',
+        dow: dowOf(s.date), name: s.name || 'Session', time: s.time || '', sport: s.sport || '', intensity: s.intensity || '',
         plannedDuration: (s.plannedDuration!=null ? s.plannedDuration : (s.duration!=null ? s.duration : null)),
         target: s.target || '', workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x))
       }));
@@ -5125,6 +5276,67 @@
     showToast('Saved — this week is now your program', 'success');
   }
   window.saveWeekAsProgram = saveWeekAsProgram;
+
+  // Move a session to a new day: re-render, persist the session (real ids only),
+  // and nudge to save the order to the program.
+  function moveSessionToDay(s){
+    renderWeek();
+    if(s.id && !String(s.id).startsWith('tmp_')){
+      try { apiData({ action:'saveSession', session: Object.assign({}, s, { id: s.id }) }).catch(function(){}); } catch(e){}
+    }
+    showToast('Moved to '+dowShort(s.date)+' '+dayNum(s.date)+'. Save the order to your program to keep it.', 'success');
+  }
+  // Grip-drag a session row onto another day (touch + mouse). Bound each render;
+  // #weekGrid is rebuilt so the listeners live on the fresh element.
+  function initWeekDrag(){
+    const grid = document.getElementById('weekGrid');
+    if(!grid || grid._dragBound) return;
+    grid._dragBound = true;
+    let drag = null;
+    grid.addEventListener('pointerdown', function(e){
+      const grip = e.target.closest('.plan-grip');
+      if(!grip) return;
+      const wrap = grip.closest('.swipe-wrap');
+      const row = wrap && wrap.querySelector('.plan-row');
+      if(!wrap || !row) return;
+      e.preventDefault();
+      const rect = row.getBoundingClientRect();
+      const ghost = row.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.style.width = rect.width+'px'; ghost.style.left = rect.left+'px'; ghost.style.top = rect.top+'px';
+      document.body.appendChild(ghost);
+      wrap.classList.add('dragging');
+      drag = { id: wrap.getAttribute('data-id'), from: wrap.getAttribute('data-day'), ghost: ghost, offY: e.clientY-rect.top, target: null, targetEl: null };
+      try { grid.setPointerCapture(e.pointerId); } catch(_){}
+    });
+    grid.addEventListener('pointermove', function(e){
+      if(!drag) return;
+      e.preventDefault();
+      drag.ghost.style.top = (e.clientY - drag.offY)+'px';
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const t = el && el.closest('[data-day]');
+      if(t !== drag.targetEl){
+        grid.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
+        drag.targetEl = t || null;
+        drag.target = t ? t.getAttribute('data-day') : null;
+        if(t && drag.target !== drag.from) t.classList.add('drop-target');
+      }
+    });
+    function endDrag(){
+      if(!drag) return;
+      const id = drag.id, target = drag.target, from = drag.from;
+      if(drag.ghost) drag.ghost.remove();
+      grid.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
+      const w = grid.querySelector('.swipe-wrap.dragging'); if(w) w.classList.remove('dragging');
+      drag = null;
+      if(target && target !== from){
+        const s = (state.week.sessions||[]).find(function(x){ return x.id===id; });
+        if(s){ s.date = target; moveSessionToDay(s); }
+      }
+    }
+    grid.addEventListener('pointerup', endDrag);
+    grid.addEventListener('pointercancel', endDrag);
+  }
 
   function editWorkout(){
     if(workoutEditing){
@@ -5150,8 +5362,12 @@
     if(!sel){ el.innerHTML = '<em>rate your effort</em>'; return; }
     el.innerHTML = (parseInt(sel.dataset.val,10)*dur) + ' <em>au</em>';
   }
-  function togglePB(){ document.getElementById('pbToggle').classList.toggle('on'); }
-  window.togglePB = togglePB;
+  // Log a PB tied to a specific exercise + result (opens the proper PB form),
+  // carrying over the session's sport and date — not the session name.
+  function logPBFromSession(){
+    openPBForm({ sport: (editing && editing.sport) || '', date: (editing && editing.date) || isoToday(), sessionId: (editing && editing.id) || '' });
+  }
+  window.logPBFromSession = logPBFromSession;
 
   async function saveCurrentSession(){
     if(!editing) return;
@@ -5170,6 +5386,7 @@
     const session = {
       id: editing.id || ('tmp_' + Date.now()),
       date: sessionDate,
+      time: (val('planTime')||'').trim(),
       type: sType,
       result: (sType === 'game') ? val('planResult').trim() : '',
       sport: val('planSport').trim(),
@@ -5180,13 +5397,13 @@
       duration: logged ? duration : null,
       load: logged ? rpe * duration : null,
       status: logged ? 'done' : 'planned',
-      isPB: document.getElementById('pbToggle').classList.contains('on'),
+      isPB: !!(editing && editing.isPB),   // PBs are logged explicitly now, not toggled per-session
       workout: editing.workout || [],
       _checked: editing._checked || [],
       note: val('sheetNote'),
       noticed: val('sheetNoticed'),
       blocker: val('sheetBlocker'),
-      target: val('planTarget').trim(),
+      target: (editing && editing.target) || '',   // session-goal field removed; keep any legacy value
       readiness: isFuture ? null : collectReadiness()
     };
     // "Part of my program" governs the repeating template. Three cases:
@@ -5222,7 +5439,6 @@
       const res = await apiData({ action:'saveSession', session: Object.assign({}, session, { id: isNew ? null : session.id }) });
       if(!res.success) throw new Error(res.error || 'save failed');
       if(isNew && res.id){ session.id = res.id; renderWeek(); if(session.type === 'game'){ removeGameLocal(prevId); upsertGameLocal(session); } }
-      if(session.isPB){ openPBForm({ sport: session.sport, exercise: session.name, date: session.date, sessionId: session.id }); }
     } catch(e){
       console.error('saveSession', e);
       showToast('Saved on your device but couldn’t reach the server — reopen to retry.', 'error');
@@ -5244,7 +5460,146 @@
   // ============================================================
   function tplKey(){ return 'aaPortalTemplate:' + ((currentUser && currentUser.email) || 'anon'); }
   function loadTemplateLocal(){ try { return JSON.parse(localStorage.getItem(tplKey())); } catch(e){ return null; } }
-  function saveTemplateLocal(){ try { localStorage.setItem(tplKey(), JSON.stringify(state.weeklyTemplate || null)); } catch(e){} }
+  function saveTemplateLocal(){ try { localStorage.setItem(tplKey(), JSON.stringify(state.weeklyTemplate || null)); localStorage.setItem(libKey(), JSON.stringify(state.library || null)); } catch(e){} }
+
+  // ============================================================
+  // PROGRAM LIBRARY (Phase 0 foundation)
+  // A student can own several named programs, each a 1-4 week repeating cycle:
+  //   program = { id, name, sport, autoRepeat, weeks: [ [dayObj,...], ... ], activeWeek }
+  //   library = { activeId, programs: [program, ...] }
+  // `state.weeklyTemplate` stays the working view of the ACTIVE program's ACTIVE
+  // week — its `sessions` array is the SAME reference as weeks[activeWeek], so all
+  // existing edit/drag/fill code keeps mutating the library in place. On save we
+  // fold the view back into the library (syncLibraryFromTemplate) and persist both
+  // the library and the legacy single-week template, so nothing breaks pre-redeploy
+  // and an old cached client keeps working.
+  // ============================================================
+  function libKey(){ return 'aaPortalLibrary:' + ((currentUser && currentUser.email) || 'anon'); }
+  function loadLibraryLocal(){ try { return JSON.parse(localStorage.getItem(libKey())); } catch(e){ return null; } }
+  function newProgramId(){ return 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+  // Wrap a legacy single-week template into a one-program, one-week library.
+  function libraryFromTemplate(tpl){
+    tpl = tpl || emptyTemplate();
+    const id = newProgramId();
+    const sport = (tpl.sessions && tpl.sessions[0] && tpl.sessions[0].sport) || '';
+    return { activeId: id, programs: [ {
+      id: id, name: tpl.name || 'My program', sport: sport,
+      autoRepeat: tpl.autoRepeat !== false, weeks: [ tpl.sessions || [] ], activeWeek: 0
+    } ] };
+  }
+  // Normalise a loaded library so every field the rest of the code assumes exists.
+  function normaliseLibrary(lib){
+    if(!lib || !Array.isArray(lib.programs) || !lib.programs.length) return null;
+    lib.programs.forEach(function(p){
+      if(!p.id) p.id = newProgramId();
+      if(!Array.isArray(p.weeks) || !p.weeks.length) p.weeks = [ [] ];
+      p.weeks = p.weeks.map(function(w){ return Array.isArray(w) ? w : []; });
+      if(typeof p.activeWeek !== 'number' || p.activeWeek < 0 || p.activeWeek >= p.weeks.length) p.activeWeek = 0;
+      if(!p.name) p.name = 'My program';
+    });
+    if(!lib.activeId || !lib.programs.some(function(p){ return p.id === lib.activeId; })) lib.activeId = lib.programs[0].id;
+    return lib;
+  }
+  function activeProgram(){
+    const lib = state.library; if(!lib || !lib.programs || !lib.programs.length) return null;
+    return lib.programs.find(function(p){ return p.id === lib.activeId; }) || lib.programs[0];
+  }
+  // Point state.weeklyTemplate at the active program's active week (shared refs).
+  function syncTemplateFromLibrary(){
+    const p = activeProgram();
+    if(!p){ state.weeklyTemplate = null; return; }
+    let wk = p.activeWeek || 0; if(wk < 0 || wk >= p.weeks.length) wk = 0;
+    if(!Array.isArray(p.weeks[wk])) p.weeks[wk] = [];
+    state.weeklyTemplate = { name: p.name, autoRepeat: p.autoRepeat !== false, sessions: p.weeks[wk] };
+  }
+  // Fold the working view back into the active program (name + active week's sessions).
+  function syncLibraryFromTemplate(){
+    if(!state.library) state.library = libraryFromTemplate(state.weeklyTemplate);
+    const p = activeProgram(); if(!p) return;
+    if(state.weeklyTemplate){
+      p.name = state.weeklyTemplate.name || p.name;
+      p.autoRepeat = state.weeklyTemplate.autoRepeat !== false;
+      let wk = p.activeWeek || 0; if(wk < 0 || wk >= p.weeks.length) wk = 0;
+      p.weeks[wk] = state.weeklyTemplate.sessions || [];
+    }
+  }
+  // Establish state.library from whatever we loaded (server library, or a migrated
+  // legacy template), then set the working view. Safe to call with nothing.
+  function initLibrary(serverLibrary, legacyTemplate){
+    let lib = normaliseLibrary(serverLibrary) || normaliseLibrary(loadLibraryLocal());
+    if(!lib) lib = libraryFromTemplate(legacyTemplate || loadTemplateLocal());
+    state.library = lib;
+    syncTemplateFromLibrary();
+  }
+
+  // ---- Multi-week cycles (1-4 weeks that rotate) --------------------------
+  const MAX_PROGRAM_WEEKS = 4;
+  function weeksBetweenISO(a, b){ return Math.round((parseISO(b) - parseISO(a)) / (7*86400000)); }
+  // Anchor the cycle to a stored Monday so Week 1 lands on a known week; default
+  // to this week's Monday the first time a rotation is needed.
+  function programCycleStart(p){
+    if(!p.cycleStart) p.cycleStart = fmtISO(mondayOf(new Date()));
+    return p.cycleStart;
+  }
+  // Which week of the cycle (0-based) a given calendar Monday runs.
+  function cycleWeekIndexFor(p, ws){
+    const n = (p && p.weeks && p.weeks.length) || 1;
+    if(n <= 1) return 0;
+    const d = weeksBetweenISO(programCycleStart(p), ws);
+    return ((d % n) + n) % n;
+  }
+  // Sessions the active program lays onto a given calendar Monday (cycle-aware).
+  function programSessionsForWeek(ws){
+    const p = activeProgram();
+    if(!p) return [];
+    const n = (p.weeks && p.weeks.length) || 1;
+    if(n <= 1) return templateSessions();
+    return p.weeks[cycleWeekIndexFor(p, ws)] || [];
+  }
+  function programHasAnySessions(){
+    const p = activeProgram();
+    return !!(p && (p.weeks||[]).some(w => (w||[]).length));
+  }
+  function activeWeekIndex(){ const p = activeProgram(); return p ? (p.activeWeek||0) : 0; }
+  function programWeekCount(){ const p = activeProgram(); return p ? ((p.weeks||[]).length||1) : 1; }
+  // Switch which week of the cycle the editor is showing.
+  function switchProgramWeek(idx){
+    const p = activeProgram(); if(!p) return;
+    if(idx < 0 || idx >= p.weeks.length) return;
+    p.activeWeek = idx;
+    syncTemplateFromLibrary();
+    renderMyProgram();
+  }
+  window.switchProgramWeek = switchProgramWeek;
+  // Add a week to the cycle (up to 4). Seeds the new week from the current one so
+  // the student edits a progression rather than starting from scratch.
+  function addProgramWeek(){
+    const p = activeProgram(); if(!p) return;
+    if(p.weeks.length >= MAX_PROGRAM_WEEKS){ showToast('A program can hold up to '+MAX_PROGRAM_WEEKS+' weeks.', ''); return; }
+    programCycleStart(p);   // anchor the rotation from now
+    const seed = (p.weeks[p.activeWeek||0] || []).map(d => JSON.parse(JSON.stringify(d)));
+    p.weeks.push(seed);
+    p.activeWeek = p.weeks.length - 1;
+    syncTemplateFromLibrary();
+    renderMyProgram();
+    showToast('Week '+p.weeks.length+' added — a copy of Week '+((p.activeWeek))+' to tweak', 'success');
+    persistTemplate();
+  }
+  window.addProgramWeek = addProgramWeek;
+  // Remove the week currently shown (keeps at least one).
+  function removeProgramWeek(){
+    const p = activeProgram(); if(!p) return;
+    if(p.weeks.length <= 1){ showToast('A program needs at least one week.', ''); return; }
+    const wk = p.activeWeek||0;
+    if(!confirm('Remove Week '+(wk+1)+' from this program? Its days will be lost.')) return;
+    p.weeks.splice(wk, 1);
+    p.activeWeek = Math.max(0, Math.min(wk, p.weeks.length-1));
+    syncTemplateFromLibrary();
+    renderMyProgram();
+    showToast('Week removed', 'success');
+    persistTemplate();
+  }
+  window.removeProgramWeek = removeProgramWeek;
   // Year map gets the same on-device safety net as the template: if a server save
   // fails (Apps Script is slow/flaky), the student's year still survives a refresh.
   function yearKey(){ return 'aaPortalYear:' + ((currentUser && currentUser.email) || 'anon'); }
@@ -5356,9 +5711,13 @@
   // server in the background (best-effort until the Apps Script action is live).
   async function persistTemplate(){
     if(state.weeklyTemplate) state.planName = state.weeklyTemplate.name || state.planName;
-    saveTemplateLocal();
+    syncLibraryFromTemplate();   // fold the working view back into the active program
+    saveTemplateLocal();         // writes both the legacy template and the library locally
     try {
-      const r = await apiData({ action:'saveWeeklyTemplate', template: state.weeklyTemplate });
+      // Send both: `template` keeps the legacy single-week row valid for old clients,
+      // `library` carries the full multi-program/multi-week model (ignored by an
+      // un-redeployed server, which still persists the legacy template).
+      const r = await apiData({ action:'saveWeeklyTemplate', template: state.weeklyTemplate, library: state.library });
       if(!r.success) throw new Error(r.error||'save failed');
     } catch(e){ /* localStorage holds it; syncs on the next successful save */ }
   }
@@ -5368,7 +5727,7 @@
     if(!state.weeklyTemplate) state.weeklyTemplate = emptyTemplate();
     if(!state.weeklyTemplate.sessions) state.weeklyTemplate.sessions = [];
     const dow = dowOf(s.date);
-    const entry = { dow: dow, name: s.name, type: s.type||'training', sport: s.sport||'', intensity: s.intensity||'',
+    const entry = { dow: dow, name: s.name, time: s.time||'', type: s.type||'training', sport: s.sport||'', intensity: s.intensity||'',
       plannedDuration: (s.plannedDuration!=null?s.plannedDuration:null), target: s.target||'',
       workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)) };
     const arr = state.weeklyTemplate.sessions;
@@ -5431,7 +5790,10 @@
   let wktRestInterval = null, wktRestLeft = 0;
 
   function wktKey(id){ return 'aaWorkout:' + ((currentUser && currentUser.email) || 'anon') + ':' + id; }
-  function saveWktProgress(){ try { if(wktSession) localStorage.setItem(wktKey(wktSession.id), JSON.stringify({ checked: wktSession._checked, sx: (wktSession.workout||[]).map(w => w.sx||null) })); } catch(e){} }
+  // Progress stores ONLY tick state. The session's own workout (name/detail/sx) is
+  // the single source of truth for targets — a separate sx store used to be
+  // re-applied by index and would clobber later plan edits / misalign on changes.
+  function saveWktProgress(){ try { if(wktSession) localStorage.setItem(wktKey(wktSession.id), JSON.stringify({ checked: wktSession._checked })); } catch(e){} }
   function loadWktProgress(id){ try { return JSON.parse(localStorage.getItem(wktKey(id))); } catch(e){ return null; } }
   function clearWktProgress(id){ try { localStorage.removeItem(wktKey(id)); } catch(e){} }
 
@@ -5460,10 +5822,11 @@
     wktSession.workout = (wktSession.workout||[]).map(w => typeof w==='string' ? { name:w, detail:'', exId:null } : Object.assign({}, w));
     if(!wktSession._checked || wktSession._checked.length !== wktSession.workout.length)
       wktSession._checked = wktSession.workout.map((_,i) => (wktSession._checked && wktSession._checked[i]) || false);
+    // Restore tick progress only, and only when it still lines up with the current
+    // workout — never re-derive targets from the store (the session already holds them).
     const prog = loadWktProgress(id);
-    if(prog){
-      if(Array.isArray(prog.checked)) wktSession._checked = wktSession.workout.map((_,i) => !!prog.checked[i]);
-      if(Array.isArray(prog.sx)) wktSession.workout.forEach((w,i) => { if(prog.sx[i]){ w.sx = prog.sx[i]; const d=wktCompose(w.sx); if(d) w.detail=d; } });
+    if(prog && Array.isArray(prog.checked) && prog.checked.length === wktSession.workout.length){
+      wktSession._checked = wktSession.workout.map((_,i) => !!prog.checked[i]);
     }
     wktEditing = -1;
     _wktOpenSig = structuralSig(wktSession);
@@ -5530,7 +5893,7 @@
         (rx? '<p class="wkt-ex-rx">'+esc(rx)+'</p>':'')+
         (cue? '<p class="wkt-ex-cue">'+esc(cue)+'</p>':'')+
         (caution? '<span class="wkt-ex-caution"><i class="ti ti-alert-triangle" aria-hidden="true"></i> '+esc(caution)+'</span>':'')+
-        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' weight / reps</button></div>')+
+        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' weight / reps</button><button class="wkt-ex-btn" onclick="wktLogPB('+i+')"><i class="ti ti-trophy" aria-hidden="true"></i> PB</button></div>')+
         editor+
       '</div>'+
     '</div>';
@@ -5543,6 +5906,15 @@
     if(now) wktRest(90);   // auto-rest after finishing a set (fun + useful)
     renderWorkoutMode();
   }
+  // Log a PB for this exact exercise, prefilled with its current weight/reps.
+  function wktLogPB(i){
+    const it = ((wktSession && wktSession.workout) || [])[i] || {};
+    const sx = it.sx || wktParse(it.detail || '');
+    const value = (sx && (sx.weight || sx.reps)) || '';
+    openPBForm({ sport: (wktSession && wktSession.sport) || '', exercise: it.name || '', value: value,
+      date: (wktSession && wktSession.date) || isoToday(), sessionId: (wktSession && wktSession.id) || '' });
+  }
+  window.wktLogPB = wktLogPB;
   function wktEdit(i){ wktEditing = i; renderWorkoutMode(); }
   function wktCancelEdit(){ wktEditing = -1; renderWorkoutMode(); }
   function wktSaveEx(i){
@@ -5551,6 +5923,14 @@
     const it = wktSession.workout[i];
     it.sx = sx; const d = wktCompose(sx); if(d) it.detail = d;
     wktEditing = -1; saveWktProgress(); renderWorkoutMode();
+    persistWktSession();   // carry the change to the day session now, not only on Finish
+  }
+  // Save the in-progress session (wktSession IS the real week session) so a target
+  // edited mid-workout survives a reload without waiting for Finish. Best-effort.
+  function persistWktSession(){
+    if(!wktSession || !wktSession.id || String(wktSession.id).startsWith('tmp_')) return;
+    upsertLocalSession(wktSession);
+    try { apiData({ action:'saveSession', session: Object.assign({}, wktSession, { id: wktSession.id }) }).catch(function(){}); } catch(e){}
   }
   window.wktToggle = wktToggle; window.wktEdit = wktEdit; window.wktCancelEdit = wktCancelEdit; window.wktSaveEx = wktSaveEx;
 
@@ -5626,16 +6006,16 @@
   // Drop the program's sessions onto the visible week. Days that already have a
   // session are left untouched — the student's week edits always win.
   async function fillWeekFromTemplate(){
-    const sessions = templateSessions();
-    if(!sessions.length){ showToast('Your program is empty — mark a session “Repeat every week” to build it.', ''); return; }
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    const sessions = programSessionsForWeek(ws);   // cycle-aware: the right week of the rotation
+    if(!sessions.length){ showToast('Your program is empty — mark a session “Repeat every week” to build it.', ''); return; }
     const busy = {}; (state.week.sessions||[]).forEach(s => { busy[s.date] = true; });
     const stamp = Date.now();
     const created = [];
     sessions.forEach((t, idx) => {
       const date = addDays(ws, t.dow);
       if(busy[date]) return;
-      const session = { id:'tmp_tpl_'+stamp+'_'+idx, date: date, type: t.type||'training', result:'', sport: t.sport||'', name: t.name||'',
+      const session = { id:'tmp_tpl_'+stamp+'_'+idx, date: date, time: t.time||'', type: t.type||'training', result:'', sport: t.sport||'', name: t.name||'',
         intensity: t.intensity||'', plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null),
         rpe:null, duration:null, load:null, status:'planned', isPB:false,
         workout: (t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
@@ -6013,6 +6393,8 @@
       (weekN ? moreRow('ti-bookmark', 'Save this week as my program', 'Make this week your repeating program', 'moreSaveWeek') : '')+
       (n ? moreRow('ti-list-check', 'Edit my program', progSub, 'moreMyProgram')
          : moreRow('ti-plus', 'Build your own', 'Start from a blank week and add days', 'moreAddDay'))+
+      (state.library && state.library.programs && state.library.programs.length > 1
+         ? moreRow('ti-stack-2', 'My programs', state.library.programs.length+' saved · switch between them', 'moreMyPrograms') : '')+
       (n ? moreRow('ti-calendar-plus', 'Fill this week from my program', 'Adds your program’s sessions to empty days', 'moreFillWeek') : '')+
       moreRow('ti-books', 'Exercise library', 'Coming soon — demos &amp; video for every move', 'moreLibrary')+
       '<div class="more-divider">Add to this week</div>'+
@@ -6039,6 +6421,8 @@
   function moreSwitchProgram(){ closeMoreActions(); openPlanSheet(); }
   function moreFillWeek(){ closeMoreActions(); fillWeekFromTemplate(); }
   function moreMyProgram(){ closeMoreActions(); openMyProgram(); }
+  function moreMyPrograms(){ closeMoreActions(); openMyProgram(); openPrograms(); }
+  window.moreMyPrograms = moreMyPrograms;
   function moreAddDay(){ closeMoreActions(); openProgramDay(-1); }
   function moreSaveWeek(){ closeMoreActions(); saveWeekAsProgram(); }
   window.moreSaveWeek = moreSaveWeek;
@@ -6076,6 +6460,126 @@
   window.openMyProgram = openMyProgram;
   window.closeMyProgram = closeMyProgram;
 
+  // ============================================================
+  // MY PROGRAMS — the library: switch / rename / duplicate / delete / new.
+  // The active program is the one that fills weeks; switching is non-destructive
+  // (it never overwrites the current calendar week — that happens on the next
+  // empty week or an explicit "Fill this week").
+  // ============================================================
+  function programSessionCount(p){ return (p && p.weeks && p.weeks[0] ? p.weeks[0].length : 0); }
+  function programSummary(p){
+    const weeks = (p && p.weeks && p.weeks.length) || 1;
+    const days = programSessionCount(p);
+    if(weeks > 1) return weeks+'-week cycle';
+    return days ? (days+' session'+(days===1?'':'s')+' a week') : 'Empty — add days';
+  }
+  function openPrograms(){
+    renderProgramsList();
+    const bd = document.getElementById('programs-backdrop'), sh = document.getElementById('programsSheet');
+    bd.classList.add('open','sheet-top'); sh.classList.add('open','sheet-top');
+    document.body.style.overflow = 'hidden';
+  }
+  window.openPrograms = openPrograms;
+  function closePrograms(){
+    const bd = document.getElementById('programs-backdrop'), sh = document.getElementById('programsSheet');
+    bd.classList.remove('open','sheet-top'); sh.classList.remove('open','sheet-top');
+    document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
+  }
+  window.closePrograms = closePrograms;
+  function programsListOpen(){ return document.getElementById('programsSheet').classList.contains('open'); }
+  function renderProgramsList(){
+    const lib = state.library; if(!lib){ return; }
+    const html = (lib.programs||[]).map(function(p){
+      const active = p.id === lib.activeId;
+      return '<div class="lib-prog'+(active?' active':'')+'" onclick="setActiveProgram(\''+p.id+'\')">'+
+        '<div class="lib-prog-main">'+
+          '<span class="lib-prog-name">'+esc(p.name||'Program')+(active?'<span class="lib-prog-badge">Active</span>':'')+'</span>'+
+          '<span class="lib-prog-sub">'+esc(programSummary(p))+'</span>'+
+        '</div>'+
+        '<div class="lib-prog-actions">'+
+          '<button class="lib-prog-btn" title="Rename" aria-label="Rename program" onclick="event.stopPropagation(); renameProgramInList(\''+p.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+          '<button class="lib-prog-btn" title="Duplicate" aria-label="Duplicate program" onclick="event.stopPropagation(); duplicateProgram(\''+p.id+'\')"><i class="ti ti-copy" aria-hidden="true"></i></button>'+
+          '<button class="lib-prog-btn del" title="Delete" aria-label="Delete program" onclick="event.stopPropagation(); deleteProgram(\''+p.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+    document.getElementById('programsBody').innerHTML = html || '<p class="myprog-rest">No programs yet.</p>';
+  }
+  function refreshProgramsList(){ if(programsListOpen()) renderProgramsList(); }
+  function setActiveProgram(id){
+    const lib = state.library; if(!lib) return;
+    if(!lib.programs.some(function(p){ return p.id===id; })) return;
+    if(lib.activeId === id){ closePrograms(); return; }
+    lib.activeId = id;
+    syncTemplateFromLibrary();
+    state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
+    renderMyProgram();
+    closePrograms();
+    if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
+    showToast('Switched to “'+(state.weeklyTemplate && state.weeklyTemplate.name || 'program')+'”', 'success');
+    persistTemplate();
+  }
+  window.setActiveProgram = setActiveProgram;
+  function newProgram(){
+    const lib = state.library; if(!lib) return;
+    const name = (window.prompt('Name your new program', 'New program') || '').trim();
+    if(!name) return;
+    const id = newProgramId();
+    lib.programs.push({ id:id, name:name, sport:'', autoRepeat:true, weeks:[ [] ], activeWeek:0 });
+    lib.activeId = id;
+    syncTemplateFromLibrary();
+    state.planName = name;
+    renderProgramsList();
+    renderMyProgram();
+    persistTemplate();
+    showToast('“'+name+'” created — add days to build it', 'success');
+  }
+  window.newProgram = newProgram;
+  function duplicateProgram(id){
+    const lib = state.library; if(!lib) return;
+    const src = lib.programs.find(function(p){ return p.id===id; }); if(!src) return;
+    const copy = JSON.parse(JSON.stringify(src));
+    copy.id = newProgramId();
+    copy.name = (src.name||'Program') + ' (copy)';
+    lib.programs.push(copy);
+    lib.activeId = copy.id;
+    syncTemplateFromLibrary();
+    state.planName = copy.name;
+    renderProgramsList();
+    renderMyProgram();
+    persistTemplate();
+    showToast('Copied to “'+copy.name+'”', 'success');
+  }
+  window.duplicateProgram = duplicateProgram;
+  function renameProgramInList(id){
+    const lib = state.library; if(!lib) return;
+    const p = lib.programs.find(function(x){ return x.id===id; }); if(!p) return;
+    const next = (window.prompt('Rename program', p.name||'') || '').trim();
+    if(!next || next===p.name) return;
+    p.name = next;
+    if(p.id === lib.activeId){ if(state.weeklyTemplate) state.weeklyTemplate.name = next; state.planName = next; }
+    renderProgramsList();
+    if(document.getElementById('myProgramSheet').classList.contains('open')) renderMyProgram();
+    persistTemplate();
+    showToast('Program renamed', 'success');
+  }
+  window.renameProgramInList = renameProgramInList;
+  function deleteProgram(id){
+    const lib = state.library; if(!lib) return;
+    if(lib.programs.length <= 1){ showToast('You need at least one program.', ''); return; }
+    const p = lib.programs.find(function(x){ return x.id===id; }); if(!p) return;
+    if(!confirm('Delete “'+(p.name||'this program')+'”? This can’t be undone.')) return;
+    lib.programs = lib.programs.filter(function(x){ return x.id!==id; });
+    if(lib.activeId === id) lib.activeId = lib.programs[0].id;
+    syncTemplateFromLibrary();
+    state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
+    renderProgramsList();
+    if(document.getElementById('myProgramSheet').classList.contains('open')) renderMyProgram();
+    persistTemplate();
+    showToast('Program deleted', 'success');
+  }
+  window.deleteProgram = deleteProgram;
+
   // Shared Mon–Sun render of the owned template (used by the Program tab + the sheet).
   function programDaysHTML(){
     const sessions = templateSessions();
@@ -6083,16 +6587,17 @@
     let html = '';
     for(let d=0; d<7; d++){
       const day = indexed.filter(o => o.t.dow===d);
-      html += '<div class="myprog-day">'+
+      html += '<div class="myprog-day" data-dow="'+d+'">'+
         '<div class="myprog-dow">'+DOW_FULL[d]+'</div>'+
         (day.length
           ? day.map(o => { const n = (o.t.workout||[]).length;
-              return '<div class="myprog-item clickable" onclick="openProgramDay('+o.i+')">'+
+              return '<div class="myprog-item clickable" data-idx="'+o.i+'" onclick="openProgramDay('+o.i+')">'+
+              '<span class="myprog-grip" aria-label="Drag to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
               '<span class="myprog-dot'+(o.t.intensity?' '+esc(o.t.intensity):'')+'" aria-hidden="true"></span>'+
               '<span class="myprog-item-main"><span class="myprog-item-name">'+esc(o.t.name)+typeTag(o.t)+'</span>'+
                 '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+((o.t.type==='training'||!o.t.type)&&n?' · '+n+' exercise'+(n===1?'':'s'):'')+'</span></span>'+
               '<i class="ti ti-chevron-right myprog-go" aria-hidden="true"></i>'+
-              '<button class="myprog-remove" aria-label="Remove from program" onclick="event.stopPropagation(); removeFromProgramAt('+o.i+')"><i class="ti ti-x" aria-hidden="true"></i></button>'+
+              '<button class="myprog-remove" aria-label="Remove this day from your program" title="Remove this day" onclick="event.stopPropagation(); removeFromProgramAt('+o.i+')"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
             '</div>'; }).join('')
           : '<div class="myprog-rest">Rest</div>')+
       '</div>';
@@ -6100,14 +6605,43 @@
     return html;
   }
 
+  // Week switcher for a multi-week cycle (only shown when a program has >1 week).
+  function programWeekTabsHTML(){
+    const p = activeProgram(); if(!p) return '';
+    const n = p.weeks.length; if(n <= 1) return '';
+    const active = p.activeWeek||0;
+    let tabs = '';
+    for(let i=0;i<n;i++){
+      tabs += '<button class="pw-tab'+(i===active?' on':'')+'" onclick="switchProgramWeek('+i+')">Week '+(i+1)+'</button>';
+    }
+    if(n < MAX_PROGRAM_WEEKS) tabs += '<button class="pw-tab pw-add" onclick="addProgramWeek()" title="Add a week" aria-label="Add a week"><i class="ti ti-plus" aria-hidden="true"></i></button>';
+    return '<div class="pw-tabs">'+tabs+'</div>';
+  }
+
+  // Entry-point to the program library, shown atop the Edit My Program sheet.
+  function programSwitcherHTML(){
+    const lib = state.library; if(!lib) return '';
+    const count = (lib.programs||[]).length;
+    const name = (state.weeklyTemplate && state.weeklyTemplate.name) || 'My program';
+    return '<button class="prog-switcher" onclick="openPrograms()">'+
+      '<span style="display:flex;flex-direction:column;gap:2px;text-align:left;min-width:0;">'+
+        '<span class="prog-switcher-label">Program'+(count>1?' · '+count+' saved':'')+'</span>'+
+        '<span class="prog-switcher-name">'+esc(name)+'</span>'+
+      '</span>'+
+      '<span class="prog-switcher-name" style="flex-shrink:0;"><i class="ti ti-arrows-left-right" aria-hidden="true"></i> '+(count>1?'Switch':'My programs')+'</span>'+
+    '</button>';
+  }
+
   function renderMyProgram(){
-    const sessions = templateSessions();
+    const sessions = templateSessions();          // the active week's days
     const body = document.getElementById('myProgramBody');
     const fill = document.getElementById('myProgramFill');
     const name = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
-    if(fill) fill.style.display = sessions.length ? '' : 'none';
-    if(!sessions.length){
+    const anySessions = programHasAnySessions();
+    if(fill) fill.style.display = anySessions ? '' : 'none';
+    if(!anySessions){
       body.innerHTML =
+        programSwitcherHTML()+
         '<div class="prog-empty-card" style="box-shadow:none; background:transparent; padding:6px 0 0;">'+
           '<div class="prog-empty-icon"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>'+
           '<p class="prog-empty-lead">You don’t have a program yet.</p>'+
@@ -6118,28 +6652,102 @@
       return;
     }
     const auto = autoRepeatOn();
+    const weekCount = programWeekCount();
+    const activeWk = activeWeekIndex();
+    const multi = weekCount > 1;
+    const headLabel = multi ? ('Week '+(activeWk+1)+' of '+weekCount) : 'Your week';
     body.innerHTML =
+      programSwitcherHTML()+
       '<div class="prog-name-row" style="margin-bottom:14px;"><p class="prog-name">'+esc(name||'My program')+'</p>'+
         '<button class="prog-rename" aria-label="Rename program" title="Rename" onclick="renameProgram()"><i class="ti ti-pencil" aria-hidden="true"></i></button></div>'+
       '<div class="pb-toggle prog-auto" onclick="toggleAutoRepeat()">'+
         '<div class="pb-toggle-content">'+
           '<div class="pb-toggle-icon" style="background:var(--sage); color:var(--cream);"><i class="ti ti-repeat" aria-hidden="true"></i></div>'+
           '<div class="pb-toggle-text"><strong>Repeat my program each week</strong>'+
-            '<small>Empty weeks fill from your program. Weeks you’ve already changed are never touched.</small></div>'+
+            '<small>'+(multi
+              ? 'Your '+weekCount+'-week cycle rotates through empty weeks in order. Weeks you’ve already changed are never touched.'
+              : 'Empty weeks fill from your program. Weeks you’ve already changed are never touched.')+'</small></div>'+
         '</div>'+
         '<div class="toggle-switch'+(auto?' on':'')+'" id="autoRepeatToggle"></div>'+
       '</div>'+
-      '<div class="prog-week-head" style="margin-top:20px;"><div class="card-label" style="margin:0;">Your week · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div>'+
-        '<span class="prog-repeat-chip"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats weekly</span></div>'+
+      programWeekTabsHTML()+
+      '<div class="prog-week-head" style="margin-top:'+(multi?'14':'20')+'px;"><div class="card-label" style="margin:0;">'+headLabel+' · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div>'+
+        '<span class="prog-repeat-chip"><i class="ti ti-repeat" aria-hidden="true"></i> '+(multi?'Cycles':'Repeats weekly')+'</span></div>'+
       '<div class="myprog-list">'+programDaysHTML()+'</div>'+
       '<button class="prog-add-day" onclick="openProgramDay(-1)"><i class="ti ti-plus" aria-hidden="true"></i> Add a day</button>'+
-      '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Tap <i class="ti ti-x" aria-hidden="true"></i> to remove a day.</p>';
+      (multi
+        ? '<button class="prog-add-day pw-remove" onclick="removeProgramWeek()"><i class="ti ti-trash" aria-hidden="true"></i> Remove Week '+(activeWk+1)+'</button>'
+        : (weekCount < MAX_PROGRAM_WEEKS
+            ? '<button class="prog-add-day" onclick="addProgramWeek()"><i class="ti ti-calendar-plus" aria-hidden="true"></i> Add another week — build a 2–4 week cycle</button>'
+            : ''))+
+      '<p class="prog-week-hint">Tap a day to edit it — swap, add or remove exercises. Drag <i class="ti ti-grip-vertical" aria-hidden="true"></i> to move a session to another day. Tap <i class="ti ti-trash" aria-hidden="true"></i> to remove a day.</p>';
+    initProgramDrag();   // grip-drag a session onto another day of the week
   }
   function refreshProgramSheet(){ if(document.getElementById('myProgramSheet').classList.contains('open')) renderMyProgram(); }
 
+  // Move a program session to another day of the week (dow 0=Mon..6=Sun), persist,
+  // and re-render the sheet. Same idea as the Week grip-drag, keyed by dow not date.
+  function moveTemplateSessionToDow(idx, dow){
+    const sessions = templateSessions();
+    const s = sessions[idx];
+    if(!s || s.dow===dow) return;
+    s.dow = dow;
+    persistTemplate();
+    renderMyProgram();
+    showToast('Moved to '+DOW_FULL[dow]+'. Your program is saved.', 'success');
+  }
+  // Grip-drag a program session onto another day (touch + mouse). #myProgramBody is
+  // rebuilt on every render, so the .myprog-list is fresh each time and binds once.
+  function initProgramDrag(){
+    const list = document.querySelector('#myProgramBody .myprog-list');
+    if(!list || list._dragBound) return;
+    list._dragBound = true;
+    let drag = null;
+    list.addEventListener('pointerdown', function(e){
+      const grip = e.target.closest('.myprog-grip');
+      if(!grip) return;
+      const item = grip.closest('.myprog-item');
+      if(!item) return;
+      e.preventDefault();
+      const rect = item.getBoundingClientRect();
+      const ghost = item.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.style.width = rect.width+'px'; ghost.style.left = rect.left+'px'; ghost.style.top = rect.top+'px';
+      document.body.appendChild(ghost);
+      item.classList.add('dragging');
+      const fromDay = item.closest('[data-dow]');
+      drag = { idx: parseInt(item.getAttribute('data-idx'),10), from: fromDay ? fromDay.getAttribute('data-dow') : null, item: item, ghost: ghost, offY: e.clientY-rect.top, target: null, targetEl: null };
+      try { list.setPointerCapture(e.pointerId); } catch(_){}
+    });
+    list.addEventListener('pointermove', function(e){
+      if(!drag) return;
+      e.preventDefault();
+      drag.ghost.style.top = (e.clientY - drag.offY)+'px';
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const t = el && el.closest('[data-dow]');
+      if(t !== drag.targetEl){
+        list.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
+        drag.targetEl = t || null;
+        drag.target = t ? t.getAttribute('data-dow') : null;
+        if(t && drag.target !== drag.from) t.classList.add('drop-target');
+      }
+    });
+    function endDrag(){
+      if(!drag) return;
+      const idx = drag.idx, target = drag.target, from = drag.from;
+      if(drag.ghost) drag.ghost.remove();
+      list.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
+      if(drag.item) drag.item.classList.remove('dragging');
+      drag = null;
+      if(target !== null && target !== from) moveTemplateSessionToDow(idx, parseInt(target,10));
+    }
+    list.addEventListener('pointerup', endDrag);
+    list.addEventListener('pointercancel', endDrag);
+  }
+
   // ---- Auto-repeat: does the owned program carry into empty weeks? (default on) ----
   function autoRepeatOn(){
-    return !!(state.weeklyTemplate && state.weeklyTemplate.autoRepeat !== false && templateSessions().length);
+    return !!(state.weeklyTemplate && state.weeklyTemplate.autoRepeat !== false && programHasAnySessions());
   }
   // Weeks we've already auto-filled once, remembered per device. This lets a
   // student delete a program day from a future week and have it *stay* gone —
@@ -6160,7 +6768,7 @@
     const busy = {}; (state.week.sessions||[]).forEach(s => { busy[s.date] = true; });
     const stamp = Date.now();
     const created = [];
-    templateSessions().forEach((t, idx) => {
+    programSessionsForWeek(ws).forEach((t, idx) => {          // cycle-aware: rotate through the program's weeks
       const date = addDays(ws, t.dow);
       if(busy[date]) return;                              // day already has a session — leave it
       created.push(buildWeekSession(t, ws, stamp, idx));
@@ -6722,7 +7330,7 @@
     if(up.length) body += '<div class="fx-list">'+rowsHTML(up)+'</div>';
     else body += '<p class="card-empty-line">No games coming up. Add your fixtures so your training can work around them.</p>';
     if(past.length) body += '<p class="fx-past-label">Recent</p><div class="fx-list fx-list-past">'+rowsHTML(past)+'</div>';
-    return '<div class="card"><p class="card-eyebrow">My games or competitions</p>'+
+    return '<div class="card" id="yearGamesCard"><p class="card-eyebrow">My games or competitions</p>'+
       '<p class="kd-intro">Your fixtures across the season — the days your training points at.</p>'+
       body+
       '<button class="card-cta card-cta-ghost" style="width:100%; margin-top:12px;" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a game</button>'+
@@ -6748,16 +7356,56 @@
 
   function hasYear(){ return state.yearMap && state.yearMap.sports && state.yearMap.sports.length; }
 
-  function renderYear(){
-    const view = document.getElementById('view-year');
-    if(!hasYear()){ view.innerHTML = onboardHTML(); return; }
-    const curMonth = MONTHS[new Date().getMonth()];
-    const ym = state.yearMap;
-    const ap = ym.aPriority;
-    let html = '<div class="card-stack">';
+  // Year view state: which sport is expanded to full detail, and (single-sport
+  // only) whether the student chose the compare grid.
+  let yearFocus = null;
+  let yearForceGrid = false;
+  function focusSport(si){ yearFocus = si; renderYear(); const v=document.getElementById('view-year'); if(v) v.scrollTop = 0; window.scrollTo(0,0); }
+  window.focusSport = focusSport;
+  // Carousel step through sports (wraps), keeping the same scroll position.
+  function focusSportBy(delta){
+    const n = (state.yearMap.sports||[]).length; if(n < 2) return;
+    const cur = (yearFocus != null ? yearFocus : 0);
+    yearFocus = ((cur + delta) % n + n) % n;
+    renderYear();
+  }
+  window.focusSportBy = focusSportBy;
+  // Suppress a stray month-tile tap that ends a horizontal swipe.
+  let _yearSwipeGuard = 0;
+  function initYearSwipe(){
+    const el = document.getElementById('yearDetailSwipe');
+    if(!el || el._swipeBound) return;
+    el._swipeBound = true;
+    let x0 = null, y0 = null, moved = false;
+    el.addEventListener('pointerdown', function(e){ x0 = e.clientX; y0 = e.clientY; moved = false; });
+    el.addEventListener('pointermove', function(e){ if(x0==null) return; if(Math.abs(e.clientX-x0) > 12) moved = true; });
+    el.addEventListener('pointerup', function(e){
+      if(x0==null) return;
+      const dx = e.clientX - x0, dy = e.clientY - y0;
+      x0 = y0 = null;
+      if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)*1.6){
+        _yearSwipeGuard = Date.now();     // openBlock ignores the tap that ends the swipe
+        focusSportBy(dx < 0 ? 1 : -1);
+      }
+    });
+    el.addEventListener('pointercancel', function(){ x0 = y0 = null; });
+  }
+  function yearBackToGrid(){ yearFocus = null; renderYear(); }
+  window.yearBackToGrid = yearBackToGrid;
+  // Tapping a competition badge jumps to the "My games or competitions" card.
+  function goToGames(){
+    if(yearFocus !== null){ yearFocus = null; renderYear(); }
+    setTimeout(function(){
+      const el = document.getElementById('yearGamesCard');
+      if(el){ el.scrollIntoView({ behavior:'smooth', block:'center' }); el.classList.add('year-flash'); setTimeout(function(){ el.classList.remove('year-flash'); }, 1200); }
+    }, 30);
+  }
+  window.goToGames = goToGames;
+  function toggleYearGrid(){ yearForceGrid = !yearForceGrid; yearFocus = null; renderYear(); }
+  window.toggleYearGrid = toggleYearGrid;
 
-    // Hero — the athlete's headline goal (vision + A-priority event).
-    html += '<div class="card card-hero">'+
+  function yearHeroHTML(ym, ap){
+    return '<div class="card card-hero">'+
       '<p class="card-hero-eyebrow">Your year · '+esc(ym.year||'2026–27')+'</p>'+
       '<h2 class="card-hero-title">'+(ym.vision? esc(ym.vision) : 'Map your <em>year</em>.')+'</h2>'+
       '<p class="card-hero-sub">'+(ap&&ap.event
@@ -6766,39 +7414,127 @@
       '<div class="week-today-cta" style="display:flex; gap:10px;"><button class="card-cta card-cta-ghost" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Edit goal</button>'+
         '<button class="card-cta card-cta-ghost" onclick="openYearHelp()"><i class="ti ti-help-circle" aria-hidden="true"></i> How to plan my year</button></div>'+
     '</div>';
+  }
 
-    // One card per sport — monthly states via the existing month tiles / statePicker.
-    ym.sports.forEach((sport, si) => {
-      const evt = (ap && ap.event && (!ap.sport || ap.sport===sport.name)) ? ap : null;
-      const nowPhase = currentSportPhase(sport, curMonth);
-      html += '<div class="card year-sport">'+
-        '<p class="card-eyebrow">'+(sport.isPriority? 'Priority sport' : 'Sport')+
-          (nowPhase? '<span class="card-eyebrow-action"><span class="year-now-chip ym-'+nowPhase+'"><span class="nc-emoji">'+PHASE_EMOJI[nowPhase]+'</span> Now · '+PHASE_FRIENDLY[nowPhase]+'</span></span>' : '')+
+  // The full, editable strip for one sport (also the carousel detail pane).
+  function sportDetailHTML(sport, si, curMonth, ap){
+    const evt = (ap && ap.event && (!ap.sport || ap.sport===sport.name)) ? ap : null;
+    const nowPhase = currentSportPhase(sport, curMonth);
+    return '<div class="card year-sport">'+
+      '<p class="card-eyebrow">'+(sport.isPriority? 'Priority sport' : 'Sport')+
+        (nowPhase? '<span class="card-eyebrow-action"><span class="year-now-chip ym-'+nowPhase+'"><span class="nc-emoji">'+PHASE_EMOJI[nowPhase]+'</span> Now · '+PHASE_FRIENDLY[nowPhase]+'</span></span>' : '')+
+      '</p>'+
+      '<div class="year-sport-head"><div class="year-sport-titles">'+
+        '<p class="year-sport-name">'+esc(sport.name)+
+          (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
+          ' <button class="year-sport-rename" onclick="renameSport('+si+')" title="Rename sport" aria-label="Rename sport"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+          '<button class="year-sport-rename year-sport-del" onclick="deleteSport('+si+')" title="Remove sport" aria-label="Remove sport"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
         '</p>'+
-        '<div class="year-sport-head"><div class="year-sport-titles">'+
-          '<p class="year-sport-name">'+esc(sport.name)+
-            (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+'</p>'+
-        '</div></div>'+
-        (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
-        '<div class="year-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
-        renderMonths(sport, si, curMonth)+
-      '</div>';
+      '</div></div>'+
+      (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
+      '<div class="year-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
+      renderMonths(sport, si, curMonth)+
+      '<button class="year-addcomp" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a competition</button>'+
+    '</div>';
+  }
+
+  // One heatmap cell for a sport-month in the overview grid.
+  function overviewCellHTML(sport, si, month, curMonth, apIndex, busy, ap){
+    const ms = (sport.monthlyStates||[]).find(x => x.month===month);
+    const committed = ms && ms.state ? ms.state : '';
+    const stt = committed || suggestState(month, apIndex, busy);
+    const stt2 = (committed && ms && ms.state2) ? ms.state2 : '';
+    const isNow = month===curMonth;
+    const suggest = !committed && !!stt;
+    const apHere = !!(ap && ap.event && ap.month===month && (!ap.sport || ap.sport===sport.name));
+    const apDate = (ap && ap.date) || '';
+    const monthGames = (state.games||[]).filter(g => g && g.date && g.date!==apDate && MONTHS[parseISO(g.date).getMonth()]===month && (!g.sport || g.sport===sport.name));
+    const names = [];
+    if(apHere) names.push(ap.event + (ap.date? ' ('+fmtNice(ap.date)+')' : ''));
+    monthGames.forEach(g => names.push((g.name||'Competition') + (g.date? ' ('+fmtNice(g.date)+')' : '')));
+    // A big gold badge shows a competition sits in this month: a star for the one
+    // A-priority event, a trophy (with a count) for games/comps. Its own tooltip
+    // names them, and tapping it jumps to "My games or competitions".
+    let mark = '';
+    if(apHere || monthGames.length){
+      const icon = apHere ? 'ti-star-filled' : 'ti-trophy';
+      const cnt = (!apHere && monthGames.length>1) ? '<b>'+monthGames.length+'</b>' : '';
+      mark = '<button class="yog-mark" onclick="event.stopPropagation(); goToGames()" title="'+esc(names.join(', '))+'" aria-label="'+esc(names.join(', '))+' — open games"><i class="ti '+icon+'" aria-hidden="true"></i>'+cnt+'</button>';
+    }
+    const cls = 'yog-cell '+(stt?'ym-'+stt:'')+(suggest?' suggest':'')+(isNow?' now':'');
+    const style = stt2 ? ' style="background:linear-gradient(90deg, var(--st-'+stt+') 0 50%, var(--st-'+stt2+') 50% 100%);"' : '';
+    const title = month + (stt? ' · '+PHASE_FRIENDLY[stt]+(stt2?' → '+PHASE_FRIENDLY[stt2]:'')+(suggest?' (suggested)':'') : '');
+    return '<div class="'+cls+'"'+style+' onclick="openBlock('+si+',\''+month+'\')" title="'+esc(title)+'">'+mark+'</div>';
+  }
+
+  // The compare-all-sports heatmap: shared month axis, one row per sport.
+  function overviewGridHTML(ym, curMonth, ap){
+    const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
+    const busy = busyMonthsSet();
+    let grid = '<div class="yog"><div class="yog-corner"></div>'+
+      ACADEMIC_MONTHS.map(m => '<div class="yog-mhead'+(m===curMonth?' now':'')+'">'+m.slice(0,1)+'</div>').join('');
+    ym.sports.forEach((sport, si) => {
+      grid += '<div class="yog-label" onclick="focusSport('+si+')" title="Open '+esc(sport.name)+'">'+
+        esc(sport.name)+(sport.isPriority? ' <i class="ti ti-star-filled" style="color:var(--gold);font-size:11px;" aria-hidden="true"></i>':'')+'</div>'+
+        ACADEMIC_MONTHS.map(m => overviewCellHTML(sport, si, m, curMonth, apIndex, busy, ap)).join('');
     });
+    grid += '</div>';
+    const toggle = (ym.sports.length < 2)
+      ? '<span class="card-eyebrow-action"><button class="year-view-toggle" onclick="toggleYearGrid()">Detailed view <i class="ti ti-chevron-right" aria-hidden="true"></i></button></span>'
+      : '';
+    return '<div class="card">'+
+      '<p class="card-eyebrow">Your sports · compare across the year'+toggle+'</p>'+
+      '<div class="yog-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+
+        '<span class="year-legend-item"><span class="legend-emoji"><i class="ti ti-trophy" style="color:var(--gold);" aria-hidden="true"></i></span><strong>Comp</strong> · game / event</span>'+
+      '</div>'+
+      grid+
+      '<p class="yog-hint"><i class="ti ti-hand-finger" aria-hidden="true"></i> Tap a month to plan it, or a sport name to open its full year.</p>'+
+    '</div>';
+  }
 
-    // Add-a-sport — a ghost action, not its own card.
-    html += '<button class="card-cta card-cta-ghost" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
+  function renderYear(){
+    const view = document.getElementById('view-year');
+    if(!hasYear()){ view.innerHTML = onboardHTML(); return; }
+    const curMonth = MONTHS[new Date().getMonth()];
+    const ym = state.yearMap;
+    const ap = ym.aPriority;
+    if(yearFocus != null && !ym.sports[yearFocus]) yearFocus = null;   // stale after a delete
+    const multi = ym.sports.length >= 2;
+    const gridMode = (multi || yearForceGrid) && yearFocus === null;
+    let html = '<div class="card-stack">';
+    html += yearHeroHTML(ym, ap);
 
-    // Testing & busy months, surfaced from the year map.
-    html += yearTestingCard();
-
-    // My games — the student's own fixtures across the season.
-    html += seasonFixturesCard();
-
-    // Season key dates — at the bottom: the big dates, no prescriptive advice.
-    html += seasonKeyDatesCard();
+    if(gridMode){
+      html += overviewGridHTML(ym, curMonth, ap);
+      html += '<button class="card-cta card-cta-ghost" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
+      html += seasonFixturesCard() + yearTestingCard() + seasonKeyDatesCard();
+    } else {
+      const si = (yearFocus != null && ym.sports[yearFocus]) ? yearFocus : 0;
+      if(multi){
+        const dots = ym.sports.map((_, i) => '<span class="ydp-dot'+(i===si?' on':'')+'"></span>').join('');
+        html += '<div class="year-detail-nav">'+
+          '<button class="year-back-btn" onclick="yearBackToGrid()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All sports</button>'+
+          '<div class="year-detail-pager">'+
+            '<button class="ydp-arrow" onclick="focusSportBy(-1)" aria-label="Previous sport"><i class="ti ti-chevron-left" aria-hidden="true"></i></button>'+
+            '<div class="ydp-dots">'+dots+'</div>'+
+            '<button class="ydp-arrow" onclick="focusSportBy(1)" aria-label="Next sport"><i class="ti ti-chevron-right" aria-hidden="true"></i></button>'+
+          '</div>'+
+        '</div>';
+      } else if(yearForceGrid){
+        html += '<div class="year-detail-nav"><button class="year-back-btn" onclick="yearBackToGrid()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All sports</button></div>';
+      }
+      html += '<div id="yearDetailSwipe">'+sportDetailHTML(ym.sports[si], si, curMonth, ap)+'</div>';
+      if(!multi){
+        // Single sport: everything reachable inline, as before — plus a way into the grid.
+        html += '<button class="year-view-toggle" style="margin:4px auto 2px;" onclick="toggleYearGrid()"><i class="ti ti-layout-grid" aria-hidden="true"></i> Compare in a grid</button>';
+        html += '<button class="card-cta card-cta-ghost" onclick="addSport()"><i class="ti ti-plus" aria-hidden="true"></i> Add a sport</button>';
+        html += seasonFixturesCard() + yearTestingCard() + seasonKeyDatesCard();
+      }
+    }
 
     html += '</div>';
     view.innerHTML = html;
+    if(!gridMode && multi) initYearSwipe();   // swipe left/right between sports
   }
 
   // Testing windows + busy months as a card, mirroring the ◆ / ▲ month markers.
@@ -6869,6 +7605,14 @@
     if(isA) m += '<span class="ym-marker a-priority" title="A-priority">★</span>';
     if(tw) m += '<span class="ym-marker testing" title="Testing window">◆</span>';
     if(busy) m += '<span class="ym-marker commitment" title="Busy — mocks/exams/travel">▲</span>';
+    // Competitions / games for this sport, plotted on the month they fall in
+    // (the A-priority big event already shows as ★, so it's excluded here).
+    var apDate = (ap && ap.date) || '';
+    var games = (state.games||[]).filter(function(g){ return g && g.date && g.date!==apDate && MONTHS[parseISO(g.date).getMonth()]===month && (!g.sport || g.sport===sport.name); });
+    if(games.length){
+      var gt = games.map(function(g){ return (g.name||'Competition') + (g.date? ' ('+fmtNice(g.date)+')':''); }).join(', ');
+      m += '<span class="ym-marker game" title="'+esc(gt)+'">●</span>';
+    }
     return m;
   }
 
@@ -6929,6 +7673,7 @@
   window.closeBlock = closeBlock;
 
   function openBlock(sportIdx, month){
+    if(Date.now() - _yearSwipeGuard < 350) return;   // ignore the tap that ends a sport swipe
     const sport = state.yearMap.sports[sportIdx];
     if(!sport) return;
     const existing = (sport.monthlyStates||[]).find(x => x.month===month) || { month:month, state:'', focus:'', loadTarget:'', note:'' };
@@ -7019,6 +7764,50 @@
     renderYear();
   }
   window.addSport = addSport;
+
+  // Rename a sport in place, carrying the name through anything keyed by it
+  // (the A-priority event's sport, and any games tagged with the old name).
+  function renameSport(si){
+    const sport = state.yearMap.sports[si];
+    if(!sport) return;
+    const cur = sport.name || '';
+    const next = (window.prompt('Rename this sport', cur) || '').trim();
+    if(!next || next===cur) return;
+    if(state.yearMap.sports.some((s, i) => i!==si && s.name.toLowerCase()===next.toLowerCase())){
+      showToast('That sport is already on your year.', 'error'); return;
+    }
+    sport.name = next;
+    const ap = state.yearMap.aPriority;
+    if(ap && ap.sport===cur) ap.sport = next;
+    (state.games||[]).forEach(g => { if(g && g.sport===cur) g.sport = next; });
+    markYearDirty();
+    renderYear(); renderBlockBar();
+    showToast('Sport renamed', 'success');
+  }
+  window.renameSport = renameSport;
+
+  // Remove a sport from the year. Keeps at least one sport (the year needs one to
+  // render), and if the removed sport owned the big event, that link is cleared.
+  function deleteSport(si){
+    const sport = state.yearMap.sports[si];
+    if(!sport) return;
+    if((state.yearMap.sports||[]).length <= 1){ showToast('You need at least one sport on your year.', 'error'); return; }
+    if(!confirm('Remove “'+(sport.name||'this sport')+'” from your year? Its month phases will be lost.')) return;
+    const wasPriority = sport.isPriority;
+    const ap = state.yearMap.aPriority;
+    if(ap && ap.sport===sport.name) ap.sport = '';   // big event stays, just unlinked from the removed sport
+    state.yearMap.sports.splice(si, 1);
+    yearFocus = null;   // indexes shifted — return to the overview
+    // If we removed the priority sport, promote the first remaining one so the
+    // shared phase / block bar still has a sport to read.
+    if(wasPriority && state.yearMap.sports.length && !state.yearMap.sports.some(s => s.isPriority)){
+      state.yearMap.sports[0].isPriority = true;
+    }
+    markYearDirty();
+    renderYear(); renderBlockBar();
+    showToast('Sport removed', 'success');
+  }
+  window.deleteSport = deleteSport;
 
   function serialiseYearMap(){
     const ym = state.yearMap;
@@ -7161,7 +7950,7 @@
           '<p class="wt-body">The point of your year isn’t to go flat-out all the time — it’s to know <strong>when to push a little harder, when to hold steady, and when to back off and recover</strong>. Go hard forever and you break down; plan it and you get better.</p>'+
           wtYearStripHTML()+
           '<div class="wt-legend">'+
-            '<span class="wt-legend-item"><span class="le-emoji">💪</span><strong>Build</strong> · <em>push a bit harder — get fitter and stronger. This is most of your year.</em></span>'+
+            '<span class="wt-legend-item"><span class="le-emoji">💪</span><strong>Build</strong> · <em>push a bit harder and get fitter and stronger. How much of your year you build depends on your sport and season.</em></span>'+
             '<span class="wt-legend-item"><span class="le-emoji">⚡</span><strong>Maintain</strong> · <em>hold your level. Don’t over-reach when school or games are busy.</em></span>'+
             '<span class="wt-legend-item"><span class="le-emoji">🏆</span><strong>Peak</strong> · <em>the clever one — see below.</em></span>'+
             '<span class="wt-legend-item"><span class="le-emoji">🌙</span><strong>Recover</strong> · <em>ease right off and let your body absorb the work.</em></span>'+
