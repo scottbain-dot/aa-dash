@@ -2671,6 +2671,10 @@
   .preview-ex-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 5px; }
   .preview-ex-list li { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink); display: flex; justify-content: space-between; gap: 12px; }
   .preview-ex-rx { color: var(--ink-mute); font-size: 12px; white-space: nowrap; }
+  .preview-day-note { display: flex; align-items: flex-start; gap: 6px; margin: 8px 0 0; font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.45; color: var(--ink-soft); background: var(--cream); border-radius: 8px; padding: 7px 9px; }
+  .preview-day-note i { color: var(--burgundy); font-size: 13px; margin-top: 1px; flex-shrink: 0; }
+  .preview-week-head { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--burgundy); margin: 16px 0 2px; padding-top: 10px; border-top: 2px solid var(--line); }
+  .preview-week-head:first-child { border-top: none; padding-top: 0; margin-top: 0; }
 
   /* ===== PROGRAM DAY EDITOR (builder) ===== */
   .dow-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
@@ -3702,14 +3706,24 @@
       ]
     }}); }
     if(action==='parseProgram') return Promise.resolve({ success:true, program: {
-      name: 'My Program (from notes)',
+      name: 'Hybrid 2-week Block',
       days: [
-        { dow:0, name:'Lower body', sport:'Strength', intensity:'hard', duration:55, exercises:[
-          { name:'Back Squat', detail:'5×5' }, { name:'Deadlift', detail:'3×5' }, { name:'Walking Lunge', detail:'3×10' } ] },
-        { dow:2, name:'Upper body', sport:'Strength', intensity:'hard', duration:50, exercises:[
-          { name:'Bench Press', detail:'5×5' }, { name:'Pull-Up', detail:'4×8' }, { name:'Barbell Press', detail:'3×8' } ] },
-        { dow:4, name:'Conditioning', sport:'Strength', intensity:'moderate', duration:40, exercises:[
-          { name:'Kettlebell Swing', detail:'5×15' }, { name:'Row Intervals', detail:'8×250m' }, { name:'Farmer Carry', detail:'4×40m' } ] }
+        { week:0, dow:0, name:'Push + Bike', sport:'Strength', intensity:'hard', duration:60, note:'Bike Z2 HR 130-141. Brace on for loaded leg work.', exercises:[
+          { name:'Hex squat', detail:'4×5 @ ~130kg' }, { name:'DB bench', detail:'4×5 @ 36kg' }, { name:'DB single-arm push press', detail:'3×5/side @ 28kg' } ] },
+        { week:0, dow:1, name:'Base — Bike Z2', sport:'Bike', intensity:'easy', duration:45, note:'HR 130-141, ~150-180W steady.', exercises:[
+          { name:'Bike', detail:'40-50min steady Z2' } ] },
+        { week:0, dow:3, name:'VO2 — Curve', sport:'Conditioning', intensity:'hard', duration:25, note:'Warm-up 10min + 3×30s build. Cool-down 5min.', exercises:[
+          { name:'Curve sprints', detail:'6×30s all-out, 2min walk (~20km/h)' } ] },
+        { week:0, dow:4, name:'Pull', sport:'Strength', intensity:'hard', duration:60, note:'Deadlift light/paused — stop on any knee signal.', exercises:[
+          { name:'Hex deadlift', detail:'4×5 @ ~120kg' }, { name:'Power clean', detail:'4×3 @ 85kg' }, { name:'KB row', detail:'3×6/side @ 32kg' } ] },
+        { week:0, dow:6, name:'Base Run (braced)', sport:'Run', intensity:'easy', duration:35, note:'HR 130-141, ~6:15-6:30/km. Stop on calf or knee signal.', exercises:[
+          { name:'Easy outdoor run', detail:'5-6km flat' } ] },
+        { week:1, dow:0, name:'Push + Bike', sport:'Strength', intensity:'hard', duration:60, note:'As week 1 Day 1.', exercises:[
+          { name:'Hex squat', detail:'4×5 @ ~130kg' }, { name:'DB bench', detail:'4×5 @ 36kg' } ] },
+        { week:1, dow:2, name:'Threshold', sport:'Conditioning', intensity:'hard', duration:40, note:'Warm-up 10min. Choose one modality. Cool-down 5min.', exercises:[
+          { name:'Bike threshold', detail:'4×5min @ ~230-250W, 95rpm, 3min easy' } ] },
+        { week:1, dow:4, name:'Pull', sport:'Strength', intensity:'hard', duration:60, note:'As week 1 Day 5.', exercises:[
+          { name:'Hex deadlift', detail:'4×5 @ ~120kg' }, { name:'Power clean', detail:'4×3 @ 85kg' } ] }
       ]
     }});
     if(action==='parseSessions') return Promise.resolve({ success:true, sessions: [
@@ -5112,20 +5126,39 @@
   }
   function normIntensity(v){ v = String(v||'').toLowerCase(); return (v==='easy'||v==='moderate'||v==='hard') ? v : ''; }
   function clampDow(d){ d = parseInt(d,10); return (isNaN(d) || d<0 || d>6) ? 0 : d; }
-  // Turn a parsed {name, days:[...]} into an owned template, matching exercises to the library.
-  function buildTemplateFromParsed(program){
-    const sessions = (program.days||[]).map(d => ({
-      dow: clampDow(d.dow), name: (d.name||'Session').slice(0,80), sport: (d.sport||'Strength').slice(0,40),
-      intensity: normIntensity(d.intensity), plannedDuration: numOrNull(d.duration), target: '',
+  function clampWeek(w){ w = parseInt(w,10); return (isNaN(w) || w<0) ? 0 : Math.min(w, MAX_PROGRAM_WEEKS-1); }
+  // Map one parsed day → a template day (matches exercises, keeps notes for zones/cues).
+  function mapParsedDay(d){
+    return {
+      dow: clampDow(d.dow), name: (d.name||'Session').slice(0,80), time:'', type:'training',
+      sport: (d.sport||'Strength').slice(0,40), intensity: normIntensity(d.intensity),
+      plannedDuration: numOrNull(d.duration), target: '', note: String(d.note||'').slice(0,400),
       workout: (d.exercises||[]).map(ex => {
         const nm = ex && (ex.name || ex.exercise || '');
         const detail = ex && (ex.detail || ex.rx || ex.prescription || '');
         const id = matchExercise(nm);
         return id ? { name: exById(id).name, detail: (detail || exById(id).rx), exId: id }
-                  : { name: String(nm||'Exercise').slice(0,60), detail: String(detail||'').slice(0,60) };
+                  : { name: String(nm||'Exercise').slice(0,60), detail: String(detail||'').slice(0,80) };
       })
-    })).filter(s => s.name && s.workout.length);
-    return { name: (program.name || 'My program').slice(0,60), autoRepeat: true, sessions: sessions };
+    };
+  }
+  // Turn a parsed program into an owned program of 1–4 repeating weeks. Accepts either
+  // {weeks:[[day,...],...]} or {days:[...]} where each day may carry a 0-based `week`.
+  // A day survives if it has exercises OR a note (so a note-only cardio/rest day stays).
+  function buildTemplateFromParsed(program){
+    let weekArrays;
+    if(Array.isArray(program.weeks)){
+      weekArrays = program.weeks.slice(0, MAX_PROGRAM_WEEKS).map(w => Array.isArray(w) ? w : (w && w.days) || []);
+    } else {
+      const g = {};
+      (program.days||[]).forEach(d => { const wk = clampWeek(d.week); (g[wk] = g[wk] || []).push(d); });
+      const keys = Object.keys(g).map(Number).sort((a,b)=>a-b);
+      weekArrays = (keys.length ? keys : [0]).map(k => g[k] || []);
+    }
+    let weeks = weekArrays.map(days => (days||[]).map(mapParsedDay).filter(s => s.name && ((s.workout||[]).length || s.note)));
+    while(weeks.length > 1 && !weeks[weeks.length-1].length) weeks.pop();   // trim empty trailing weeks
+    if(!weeks.length) weeks = [[]];
+    return { name: (program.name || 'My program').slice(0,60), autoRepeat: true, weeks: weeks, sessions: weeks[0] };
   }
   async function submitAIBuild(){
     hideAIError();
@@ -5160,16 +5193,24 @@
     aiBusy = false;
   }
   function renderAIReview(){
-    const t = aiParsed; let matched = 0, total = 0;
-    const days = t.sessions.map(s => {
+    const t = aiParsed; let matched = 0, total = 0, dayCount = 0;
+    const weeks = t.weeks || [t.sessions || []];
+    const dayHTML = s => {
       const exs = (s.workout||[]).map(w => {
         total++; const m = !!w.exId; if(m) matched++;
         return '<li><span>'+esc(w.name)+(m?'':' <span class="ai-freetag">custom</span>')+'</span><span class="preview-ex-rx">'+esc(w.detail||'')+'</span></li>';
       }).join('');
-      return '<div class="preview-day"><div class="preview-day-head"><span class="preview-dow">'+DOW_FULL[s.dow]+'</span><span class="preview-day-name">'+esc(s.name)+'</span>'+(s.plannedDuration?'<span class="preview-day-min">'+s.plannedDuration+' min</span>':'')+'</div><ul class="preview-ex-list">'+exs+'</ul></div>';
+      const noteHTML = s.note ? '<p class="preview-day-note"><i class="ti ti-notes" aria-hidden="true"></i> '+esc(s.note)+'</p>' : '';
+      return '<div class="preview-day"><div class="preview-day-head"><span class="preview-dow">'+DOW_FULL[s.dow]+'</span><span class="preview-day-name">'+esc(s.name)+'</span>'+(s.plannedDuration?'<span class="preview-day-min">'+s.plannedDuration+' min</span>':'')+'</div><ul class="preview-ex-list">'+exs+'</ul>'+noteHTML+'</div>';
+    };
+    const body = weeks.map((wk, wi) => {
+      dayCount += wk.length;
+      const head = weeks.length>1 ? '<p class="preview-week-head">Week '+(wi+1)+'</p>' : '';
+      return head + wk.map(dayHTML).join('');
     }).join('');
+    const weekBit = weeks.length>1 ? weeks.length+'-week cycle · ' : '';
     document.getElementById('aiReviewBody').innerHTML =
-      '<div class="ai-match-note"><strong>'+t.name+'</strong> · '+t.sessions.length+' day'+(t.sessions.length===1?'':'s')+' · '+matched+'/'+total+' exercises matched to the library (matched ones are swappable; “custom” ones you can swap later by editing the day). Tweak anything after.</div>'+days;
+      '<div class="ai-match-note"><strong>'+esc(t.name)+'</strong> · '+weekBit+dayCount+' day'+(dayCount===1?'':'s')+' · '+matched+'/'+total+' exercises matched to the library (matched ones are swappable; “custom” ones you can swap later by editing the day). Notes carry your zones and cues. Tweak anything after.</div>'+body;
   }
   async function applyAIProgram(){
     if(!aiParsed) return;
@@ -5191,20 +5232,25 @@
       sport: t.sport||'', name: t.name||'Session', intensity: t.intensity||'',
       plannedDuration: (t.plannedDuration!=null?t.plannedDuration:null), rpe:null, duration:null, load:null,
       status:'planned', isPB:false, workout:(t.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)),
-      _checked:[], note:'', noticed:'', blocker:'', target: t.target||'', readiness:null };
+      _checked:[], note: t.note||'', noticed:'', blocker:'', target: t.target||'', readiness:null };
   }
   // Entry point. A clean slate (no week sessions AND no program) just becomes the
-  // program — no need to ask. Otherwise the student picks.
+  // program — no need to ask. Otherwise the student picks. Carries a full 1–4 week
+  // cycle when the built program has one.
   function applyBuiltProgram(template){
-    _pendingApply = { template: { name: template.name || 'My program', autoRepeat: true, sessions: template.sessions || [] } };
-    if(!(_pendingApply.template.sessions || []).length){ showToast('That program is empty.', ''); return; }
+    const weeks = (template.weeks && template.weeks.length) ? template.weeks : [template.sessions || []];
+    _pendingApply = { name: template.name || 'My program', weeks: weeks };
+    const total = weeks.reduce((n,w)=> n + (w||[]).length, 0);
+    if(!total){ showToast('That program is empty.', ''); return; }
     if(!weekHasSessions() && !hasProgram()){ commitProgram(); return; }
-    openApplyChoice(_pendingApply.template);
+    openApplyChoice(_pendingApply);
   }
   function openApplyChoice(t){
-    const days = (t.sessions||[]).length;
+    const weeks = t.weeks || [t.sessions||[]];
+    const days = weeks.reduce((n,w)=> n + (w||[]).length, 0);
+    const wkBit = weeks.length>1 ? weeks.length+'-week cycle · ' : '';
     document.getElementById('applyChoiceName').textContent = t.name || 'Your program';
-    document.getElementById('applyChoiceSub').textContent = days+' session'+(days===1?'':'s')+' a week';
+    document.getElementById('applyChoiceSub').textContent = wkBit + days + ' session'+(days===1?'':'s');
     document.getElementById('applyChoice').hidden = false;
     document.body.style.overflow = 'hidden';
   }
@@ -5214,10 +5260,17 @@
   // "Make this my program" — becomes the repeating program and lays onto this week,
   // replacing planned sessions but keeping anything already logged.
   async function commitProgram(){
-    const t = _pendingApply && _pendingApply.template; if(!t) return;
+    const t = _pendingApply; if(!t) return;
     closeApplyChoice();
-    state.weeklyTemplate = { name: t.name || 'My program', autoRepeat: true, sessions: t.sessions || [] };
-    state.planName = state.weeklyTemplate.name;
+    const weeks = (t.weeks && t.weeks.length ? t.weeks : [t.sessions||[]]).map(w => (w||[]).map(d => JSON.parse(JSON.stringify(d))));
+    // Put the built program into the library as the active program (replacing its
+    // content), carrying the full 1–4 week cycle. syncTemplateFromLibrary points the
+    // working view at week 1.
+    if(!state.library) state.library = libraryFromTemplate(null);
+    const p = activeProgram();
+    if(p){ p.name = t.name || 'My program'; p.weeks = weeks; p.activeWeek = 0; p.autoRepeat = true; if(weeks.length>1) programCycleStart(p); }
+    syncTemplateFromLibrary();
+    state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || 'My program';
     await persistTemplate();
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
     // Keep anything already logged, drop the old planned sessions, and lay the FULL
@@ -5226,7 +5279,7 @@
     const logged = (state.week.sessions||[]).filter(s => isLogged(s));
     const planned = (state.week.sessions||[]).filter(s => !isLogged(s) && s.id && !String(s.id).startsWith('tmp_'));
     const stamp = Date.now();
-    const fresh = (state.weeklyTemplate.sessions||[]).map((t2, i) => buildWeekSession(t2, ws, stamp, i));
+    const fresh = programSessionsForWeek(ws).map((t2, i) => buildWeekSession(t2, ws, stamp, i));   // cycle-aware
     state.week.sessions = logged.concat(fresh);
     renderWeek(); renderBlockBar(); refreshProgramSheet();
     showToast('“'+state.weeklyTemplate.name+'” is now your program', 'success');
@@ -5239,11 +5292,12 @@
   // "Just add to this week" — add the sessions IN ADDITION (even on busy days),
   // this week only; the repeating program is left unchanged.
   async function addBuiltToWeek(){
-    const t = _pendingApply && _pendingApply.template; if(!t) return;
+    const t = _pendingApply; if(!t) return;
     closeApplyChoice();
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
     const stamp = Date.now();
-    const created = (t.sessions||[]).map((t2, i) => buildWeekSession(t2, ws, stamp, i));
+    const wk1 = (t.weeks && t.weeks.length ? t.weeks[0] : t.sessions) || [];   // add just week 1 to this week
+    const created = wk1.map((t2, i) => buildWeekSession(t2, ws, stamp, i));
     created.forEach(upsertLocalSession);
     renderWeek(); renderBlockBar();
     showToast(created.length+' session'+(created.length===1?'':'s')+' added to this week', 'success');
@@ -5260,7 +5314,7 @@
       .forEach(s => out.push({
         dow: dowOf(s.date), name: s.name || 'Session', time: s.time || '', sport: s.sport || '', intensity: s.intensity || '',
         plannedDuration: (s.plannedDuration!=null ? s.plannedDuration : (s.duration!=null ? s.duration : null)),
-        target: s.target || '', workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x))
+        target: s.target || '', note: s.note || '', workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x))
       }));
     return out;
   }
@@ -5728,7 +5782,7 @@
     if(!state.weeklyTemplate.sessions) state.weeklyTemplate.sessions = [];
     const dow = dowOf(s.date);
     const entry = { dow: dow, name: s.name, time: s.time||'', type: s.type||'training', sport: s.sport||'', intensity: s.intensity||'',
-      plannedDuration: (s.plannedDuration!=null?s.plannedDuration:null), target: s.target||'',
+      plannedDuration: (s.plannedDuration!=null?s.plannedDuration:null), target: s.target||'', note: s.note||'',
       workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)) };
     const arr = state.weeklyTemplate.sessions;
     const i = arr.findIndex(x => x.dow===dow && (x.name||'').toLowerCase()===(s.name||'').toLowerCase());
