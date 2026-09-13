@@ -3646,9 +3646,10 @@
   // API
   // ============================================================
   const REQ_TIMEOUT = 20000; // Apps Script can be slow; never hang forever.
-  async function apiFetch(url, opts){
+  const AI_TIMEOUT = 90000;  // AI endpoints (parse/generate) run an LLM — give them room.
+  async function apiFetch(url, opts, timeoutMs){
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), REQ_TIMEOUT);
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs || REQ_TIMEOUT);
     try {
       const r = await fetch(url, Object.assign({ signal: ctrl.signal }, opts || {}));
       const text = await r.text();
@@ -3664,9 +3665,9 @@
     const qs = Object.keys(params).map(k => k+'='+encodeURIComponent(params[k])).join('&');
     return apiFetch(APPS_SCRIPT_URL + '?' + qs);
   }
-  async function apiPost(body){
+  async function apiPost(body, timeoutMs){
     if(DEMO_MODE) return demoApi(body);
-    return apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body) });
+    return apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body) }, timeoutMs);
   }
 
   // ============================================================
@@ -3677,7 +3678,7 @@
   // data endpoint. `node tools/check-identity.js` enforces this.
   // ============================================================
   function currentAthleteId(){ return (currentUser && currentUser.athleteId) || state.athleteId || ''; }
-  function apiData(payload){ return apiPost(Object.assign({ athleteId: currentAthleteId() }, payload)); }
+  function apiData(payload, timeoutMs){ return apiPost(Object.assign({ athleteId: currentAthleteId() }, payload), timeoutMs); }
   function apiDataGet(params){ return apiGet(Object.assign({ athleteId: currentAthleteId() }, params)); }
   // Demo short-circuit: keep every interaction local, never touch the network.
   function demoApi(payload){
@@ -5174,8 +5175,8 @@
     document.getElementById('aiLoadingText').textContent = useSpec ? 'Building your program…' : 'Reading your program…';
     try {
       const res = useSpec
-        ? await apiData({ action:'generateProgram', spec: spec })
-        : await apiData({ action:'parseProgram', text: paste });
+        ? await apiData({ action:'generateProgram', spec: spec }, AI_TIMEOUT)
+        : await apiData({ action:'parseProgram', text: paste }, AI_TIMEOUT);
       if(!res || !res.success || !res.program) throw new Error((res && res.error) || 'Couldn’t build that.');
       aiGenBump();
       aiParsed = buildTemplateFromParsed(res.program);
@@ -7014,7 +7015,7 @@
     document.getElementById('qlogLoadingText').textContent = 'Reading your sessions…';
     setQlogMode('loading');
     try {
-      const res = await apiData({ action:'parseSessions', text: text, todayISO: isoToday() });
+      const res = await apiData({ action:'parseSessions', text: text, todayISO: isoToday() }, AI_TIMEOUT);
       if(!res.success) throw new Error(res.error || 'Couldn’t parse that text');
       const sessions = Array.isArray(res.sessions) ? res.sessions : [];
       if(!sessions.length){
