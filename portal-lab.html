@@ -2145,6 +2145,11 @@
   </div>
   <div class="sheet-body">
     <div id="aiInput">
+      <div class="ai-mode-seg">
+        <button type="button" class="ai-mode-btn on" id="aiModeDescribe" onclick="aiSetMode('describe')"><i class="ti ti-message-2" aria-hidden="true"></i> Describe it</button>
+        <button type="button" class="ai-mode-btn" id="aiModePaste" onclick="aiSetMode('paste')"><i class="ti ti-clipboard-text" aria-hidden="true"></i> Paste a plan</button>
+      </div>
+      <div id="aiDescribeMode">
       <p class="ql-help">Tell us what you want <strong>in your own words</strong> — the more you say, the better the program. The quick choices below help too, but this is where you really shape it.</p>
       <label class="ai-guide-label" for="aiNotes" style="display:block;">In your own words · what are you after?</label>
       <textarea class="note-input ai-notes-primary" id="aiNotes" style="min-height:120px;" placeholder="e.g. I play rugby and want to get more explosive for next season. My left knee gets sore so nothing too heavy on squats. I can train 3 days a week, about 45 min, and I’d like a real core focus."></textarea>
@@ -2230,10 +2235,12 @@
         <p class="ai-guide-label">Sport · optional</p>
         <input class="duration-input plan-field" id="aiSport" list="sportOptions" autocomplete="off" placeholder="e.g. Rugby, Swimming">
       </div>
-      <details class="ai-paste">
-        <summary>Or paste an existing plan instead</summary>
-        <textarea class="note-input" id="aiText" style="min-height:150px; margin-top:10px;" placeholder="Mon — Lower: back squat 5x5, deadlift 3x5&#10;Wed — Upper: bench 5x5, pull-ups 4x8&#10;Fri — Conditioning: KB swings 5x15, row 8x250m"></textarea>
-      </details>
+      </div><!-- /#aiDescribeMode -->
+      <div id="aiPasteMode" hidden>
+        <p class="ql-help">Paste a plan you already have — a coach's block, a spreadsheet, a training doc. Claude turns it into an editable program. It handles <strong>multi-week cycles</strong> (Day 1…14), keeps your loads, and carries any zones or notes.</p>
+        <label class="ai-guide-label" for="aiText" style="display:block;">Your plan</label>
+        <textarea class="note-input" id="aiText" style="min-height:220px;" placeholder="DAY 1 — PUSH&#10;Back squat — 4x5 @ 130kg&#10;DB bench — 4x5 @ 36kg&#10;Bike Z2 — 20min, HR 130-141&#10;&#10;DAY 2 — BASE&#10;Bike — 40-50min steady Z2&#10;&#10;…paste the whole thing, weeks and all."></textarea>
+      </div>
       <div class="qlog-error" id="aiError" style="display:none;"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="aiErrorText"></span></div>
     </div>
     <div id="aiLoading" style="display:none; text-align:center; padding:40px 0;">
@@ -2988,11 +2995,14 @@
   .ai-notes-primary { border: 1.5px solid var(--burgundy-light); background: var(--surface); font-size: 15px; }
   .ai-notes-primary:focus { border-color: var(--burgundy); outline: none; }
   .ai-guide-hint { font-size: 12px; color: var(--ink-mute); margin: 6px 2px 0; }
-  .ai-paste { margin-top: 14px; }
-  .ai-paste > summary { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-mute); cursor: pointer; list-style: none; }
-  .ai-paste > summary::-webkit-details-marker { display: none; }
-  .ai-paste > summary::before { content: '＋ '; }
-  .ai-paste[open] > summary::before { content: '－ '; }
+  .ai-mode-seg { display: flex; gap: 6px; background: var(--cream); border-radius: 12px; padding: 4px; margin-bottom: 16px; }
+  .ai-mode-btn {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px;
+    border: none; background: transparent; border-radius: 9px; cursor: pointer; transition: all 0.15s;
+    font: 700 13px 'Inter', sans-serif; color: var(--ink-mute);
+  }
+  .ai-mode-btn i { font-size: 15px; }
+  .ai-mode-btn.on { background: var(--surface); color: var(--burgundy); box-shadow: 0 1px 4px rgba(26,20,17,0.1); }
   /* Exercise library (read-only browse) rows + specialist-lift caution */
   .lib-row { padding: 12px 4px; border-bottom: 1px solid var(--line-soft); }
   .lib-row-name { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink); }
@@ -5038,6 +5048,7 @@
     }
     fillSportOptions();
     hideAIError();
+    aiSetMode('describe');
     setAIMode('input');
     document.getElementById('aibuild-backdrop').classList.add('open');
     document.getElementById('aiBuildSheet').classList.add('open');
@@ -5050,6 +5061,21 @@
     else group.querySelectorAll('.ai-chip').forEach(c => c.classList.toggle('sel', c===el));
   }
   window.aiPick = aiPick;
+  // Describe-it vs Paste-a-plan — a front-and-centre choice at the top of the builder.
+  let aiInputMode = 'describe';
+  function aiSetMode(m){
+    aiInputMode = (m==='paste') ? 'paste' : 'describe';
+    document.getElementById('aiDescribeMode').hidden = (aiInputMode==='paste');
+    document.getElementById('aiPasteMode').hidden = (aiInputMode!=='paste');
+    document.getElementById('aiModeDescribe').classList.toggle('on', aiInputMode==='describe');
+    document.getElementById('aiModePaste').classList.toggle('on', aiInputMode==='paste');
+    hideAIError();
+    const prim = document.getElementById('aiPrimaryBtn');
+    if(prim) prim.innerHTML = (aiInputMode==='paste')
+      ? '<i class="ti ti-sparkles" aria-hidden="true"></i> Build from my plan'
+      : '<i class="ti ti-sparkles" aria-hidden="true"></i> Build my program';
+  }
+  window.aiSetMode = aiSetMode;
   function collectAISpec(){
     const get = k => { const s = document.querySelector('#aiInput .ai-chips[data-k="'+k+'"] .ai-chip.sel'); return s ? s.dataset.val : ''; };
     const getMulti = k => [...document.querySelectorAll('#aiInput .ai-chips[data-k="'+k+'"] .ai-chip.sel')].map(c => c.dataset.val);
@@ -5097,7 +5123,9 @@
       secondary.textContent = 'Back';
     } else {
       title.innerHTML = 'Build with <em>AI</em>.';
-      primary.innerHTML = '<i class="ti ti-sparkles" aria-hidden="true"></i> Build my program';
+      primary.innerHTML = (mode==='input' && aiInputMode==='paste')
+        ? '<i class="ti ti-sparkles" aria-hidden="true"></i> Build from my plan'
+        : '<i class="ti ti-sparkles" aria-hidden="true"></i> Build my program';
       secondary.textContent = 'Cancel';
     }
     primary.style.display = mode==='loading' ? 'none' : '';
@@ -5166,22 +5194,25 @@
     const paste = (document.getElementById('aiText').value || '').trim();
     const spec = collectAISpec();
     const hasNotes = spec.notes.length >= 8;
-    const useSpec = !!(spec.goal || hasNotes);   // a description alone is enough — it's the strongest input
-    if(!useSpec && !paste){ showAIError('Tell us what you want — describe it up top, or tap a goal.'); return; }
-    if(spec.goal === 'Other' && !hasNotes){ showAIError('You picked “Other” — say what you’re after in the box up top.'); return; }
-    if(!useSpec && paste.length < 8){ showAIError('Add a bit more detail — day names and a few exercises.'); return; }
+    const usePaste = (aiInputMode === 'paste');   // explicit choice at the top
+    if(usePaste){
+      if(paste.length < 8){ showAIError('Paste your plan — day names and a few exercises.'); return; }
+    } else {
+      if(!spec.goal && !hasNotes){ showAIError('Tell us what you want — describe it up top, or tap a goal.'); return; }
+      if(spec.goal === 'Other' && !hasNotes){ showAIError('You picked “Other” — say what you’re after in the box up top.'); return; }
+    }
     if(aiGenLeftToday() <= 0){ showAIError('You’ve built a lot today — tweak what you have, or try again tomorrow.'); return; }
     setAIMode('loading'); aiBusy = true;
-    document.getElementById('aiLoadingText').textContent = useSpec ? 'Building your program…' : 'Reading your program…';
+    document.getElementById('aiLoadingText').textContent = usePaste ? 'Reading your plan…' : 'Building your program…';
     try {
-      const res = useSpec
-        ? await apiData({ action:'generateProgram', spec: spec }, AI_TIMEOUT)
-        : await apiData({ action:'parseProgram', text: paste }, AI_TIMEOUT);
+      const res = usePaste
+        ? await apiData({ action:'parseProgram', text: paste }, AI_TIMEOUT)
+        : await apiData({ action:'generateProgram', spec: spec }, AI_TIMEOUT);
       if(!res || !res.success || !res.program) throw new Error((res && res.error) || 'Couldn’t build that.');
       aiGenBump();
       aiParsed = buildTemplateFromParsed(res.program);
       if(!aiParsed.sessions.length){
-        setAIMode('input'); showAIError(useSpec ? 'That came back empty — try different choices.' : 'Couldn’t find any training days. Add day names and exercises.'); aiBusy = false; return;
+        setAIMode('input'); showAIError(usePaste ? 'Couldn’t find any training days. Add day names and exercises.' : 'That came back empty — try different choices.'); aiBusy = false; return;
       }
       renderAIReview();
       setAIMode('review');
