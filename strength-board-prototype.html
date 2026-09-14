@@ -6,9 +6,9 @@
     --paper:#f7f5f1; --sheet:#ffffff; --ink:#18161a; --ink-2:#4b4750; --mute:#8a8590; --rule:#e4e0da; --rule-2:#c9c3bb;
     --accent:#874B46; --accent-soft:#f4ebe9; --mark:#b8922a;
     /* type scale follows the screen width so the wall copy reads from the rack */
-    --ex: clamp(17px, 1.4vw, 31px);
-    --rx: clamp(19px, 1.55vw, 35px);
-    --cue: clamp(13px, .96vw, 21px);
+    --ex: clamp(16px, 1.28vw, 29px);
+    --rx: clamp(18px, 1.42vw, 33px);
+    --cue: clamp(12px, .9vw, 20px);
     --eyebrow: clamp(10px, .62vw, 14px);
   }
   *{box-sizing:border-box}
@@ -45,9 +45,9 @@
   .clock{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:22px;font-variant-numeric:tabular-nums;min-width:64px;text-align:right;cursor:pointer;color:var(--ink-2)}
 
   /* ---------- session ---------- */
-  .stage{flex:1;display:flex;flex-direction:column;padding:clamp(14px,1.6vw,30px) clamp(16px,2vw,40px) clamp(12px,1.4vw,26px);gap:clamp(10px,1.2vw,22px);min-height:0}
+  .stage{flex:1;display:flex;flex-direction:column;padding:clamp(10px,1.1vw,22px) clamp(16px,2vw,40px) clamp(10px,1vw,20px);gap:clamp(8px,.9vw,18px);min-height:0}
   .head{display:flex;align-items:baseline;gap:clamp(14px,2vw,40px);flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:clamp(8px,.8vw,14px)}
-  .head h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:clamp(36px,3.8vw,76px);line-height:.92;margin:0;text-transform:uppercase;white-space:nowrap}
+  .head h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:clamp(34px,3.4vw,68px);line-height:.92;margin:0;text-transform:uppercase;white-space:nowrap}
   .head h1 .type{color:var(--accent)}
   .head .kicker{font-size:var(--eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600;white-space:nowrap}
   .head .idea{font-size:clamp(15px,1.25vw,27px);color:var(--ink-2);flex:1;min-width:260px;max-width:70ch}
@@ -55,7 +55,7 @@
   .head .clk{display:none;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:clamp(22px,2vw,40px);font-variant-numeric:tabular-nums;color:var(--ink-2);margin-left:auto}
   .present .head .clk{display:block}
 
-  .boxes{flex:1;display:grid;grid-template-columns:1fr 1.9fr 1fr;gap:clamp(10px,1.2vw,22px);min-height:0}
+  .boxes{flex:1;display:grid;grid-template-columns:1fr 2.3fr 1fr;gap:clamp(10px,1.2vw,22px);min-height:0}
   @media (max-width:900px){.boxes{grid-template-columns:1fr}}
   .box{background:var(--sheet);border:1px solid var(--rule);border-top:3px solid var(--ink);display:flex;flex-direction:column;min-height:0}
   .box.move{border-top-color:var(--accent)}
@@ -73,6 +73,7 @@
   .tbl .th{font-size:var(--eyebrow);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:600;text-align:center;padding:clamp(6px,.6vw,10px) .5em 4px;border-bottom:1px solid var(--rule);white-space:nowrap}
   .tbl .th:first-child{text-align:left;padding-left:0}
   .tbl .sub{grid-column:1/-1}
+  .tbl .sub .note{display:block;font-size:calc(var(--cue) * .88);letter-spacing:0;text-transform:none;color:var(--ink-2);font-weight:400;line-height:1.25;margin-top:2px;max-width:60ch}
   .tbl .row{display:contents}
   .tbl .row > *{padding-top:clamp(5px,.55vw,11px);padding-bottom:clamp(5px,.55vw,11px);border-bottom:1px solid var(--rule);min-width:0}
   .tbl .row:hover > *,.tbl .row:focus > *{background:var(--accent-soft)}
@@ -180,28 +181,33 @@ const PATTERNS = {
 // =====================================================================
 const EXOS = { prep:'Pillar prep · Movement prep · Plyometrics', move:'Strength and power', finish:'Energy systems · Regeneration' };
 const FILM = 'Technique · watch side on';
+// The two halves of Move. Practice is technique only; Train is the work.
+const NOTES = {
+  Practice: 'Learn the movement. Slow, no load, technique only, a partner or Mr Bain watching. Stamps come from here.',
+  Train: 'Do the work. Sets, reps and effort as written. Rest 60 s max between sets and exercises.'
+};
 
 const UNIT = [
  { block:1, title:'Learn the shape', sessions:[
   { n:1, type:'Pull', day:'Gym 1', idea:'<b>Goal.</b> Be able to complete the hinge and the row.',
     prep:[ ['Warm up','General warm up','5 min',''], ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','3 each side','Slow, reach tall on the twist'], ['Crawl','Inchworm','5','Walk the hands out, hold, walk back'] ],
-    sub1:'Learn', learn:[ ['Hinge',1,'Bodyweight hinge',FILM,'Push the <b>hips back</b> first, hands slide down the thighs. Flat back the whole way.',true], ['Pull',1,'Banded row',FILM,'Anchor the band at waist height and step back. <b>Squeeze the shoulder blades</b> as you pull to the ribs, chest up, no shrug.',true] ],
-    sub2:'Practise', work:[ ['Lower','Bodyweight hinge, or kettlebell deadlift if the hinge is stamped','2 × 10','Slow. Feel the hamstrings load. Add the bell only if your hinge is stamped'], ['Upper','Banded row, or horizontal bar pull if stamped','2 × 8','Tall chest. Step back for more tension, in closer if it is too hard. Bar pull only if your pull is stamped'], ['Trunk','Glute bridge','2 × 10','Squeeze at the top for two seconds'] ],
+    sub1:'Practice', learn:[ ['Hinge',1,'Bodyweight hinge',FILM,'Push the <b>hips back</b> first, hands slide down the thighs. Flat back the whole way.',true], ['Pull',1,'Banded row',FILM,'Anchor the band at waist height and step back. <b>Squeeze the shoulder blades</b> as you pull to the ribs, chest up, no shrug.',true] ],
+    sub2:'Train', work:[ ['Lower','Bodyweight hinge, or kettlebell deadlift if the hinge is stamped','2 × 10','Slow. Feel the hamstrings load. Add the bell only if your hinge is stamped'], ['Upper','Banded row, or horizontal bar pull if stamped','2 × 8','Tall chest. Step back for more tension, in closer if it is too hard. Bar pull only if your pull is stamped'], ['Trunk','Glute bridge','2 × 10','Squeeze at the top for two seconds'] ],
     finish:[ ['Cool down','Walk it out, then hamstring stretch','3 min','Breathe slowly through the nose'], ['Check-out','Which felt harder, hinge or pull?','1 min','Tell a partner why'], ['Extras','Core challenge','','If there is time. Your choice'] ] },
   { n:2, type:'Push', day:'Gym 2', idea:'<b>Goal.</b> Be able to complete the squat and the push-up.',
     prep:[ ['Warm up','General warm up','5 min',''], ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','3 each side',''], ['Crawl','Bear crawl','20 m out and back','Knees an inch off the floor, hips low'] ],
-    sub1:'Learn', learn:[ ['Squat',1,'Bodyweight squat',FILM,'<b>Feet flat</b>, knees over the toes, hips below the knee. Two seconds down.',true], ['Push',1,'Floor push-up',FILM,'Elbows at <b>45 degrees</b>. Body in one line from head to heel. Hands on a box if needed.',true] ],
-    sub2:'Practise', work:[ ['Lower','Bodyweight squat, or goblet squat if stamped','2 × 10','Pause for one second at the bottom. Light bell only if your squat is stamped'], ['Upper','Push-up, floor or box, or dumbbell floor press if stamped','2 × 8','Choose the height where you can do eight clean. Floor press only if your push is stamped'], ['Trunk','Dead bug','2 × 8 each side','Lower back stays pressed into the floor'] ],
+    sub1:'Practice', learn:[ ['Squat',1,'Bodyweight squat',FILM,'<b>Feet flat</b>, knees over the toes, hips below the knee. Two seconds down.',true], ['Push',1,'Floor push-up',FILM,'Elbows at <b>45 degrees</b>. Body in one line from head to heel. Hands on a box if needed.',true] ],
+    sub2:'Train', work:[ ['Lower','Bodyweight squat, or goblet squat if stamped','2 × 10','Pause for one second at the bottom. Light bell only if your squat is stamped'], ['Upper','Push-up, floor or box, or dumbbell floor press if stamped','2 × 8','Choose the height where you can do eight clean. Floor press only if your push is stamped'], ['Trunk','Dead bug','2 × 8 each side','Lower back stays pressed into the floor'] ],
     finish:[ ['Cool down','Walk it out, then quad and chest stretch','3 min',''], ['Check-out','Which push-up height did you choose and why?','1 min',''], ['Extras','Core challenge','','If there is time. Your choice'] ] },
   { n:3, type:'Pull', day:'Gym 3', idea:'<b>Do it again, and check it.</b> Same two movements as Gym 1. Today you partner-check each other against the criteria, and the first stamps go in.',
     prep:[ ['Warm up','General warm up','5 min',''], ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','3 each side',''], ['Crawl','Inchworm to a push-up','5',''], ['Land','Snap down and stick','2 × 5','Land quiet, knees soft, hold for two seconds'] ],
-    sub1:'Learn', learn:[ ['Hinge',1,'Bodyweight hinge, partner check','Criteria card','Partner watches side on. Tick the six criteria. Swap.',false], ['Pull',1,'Banded row, partner check','Criteria card','Partner watches front on. Tick the six. Swap.',false] ],
-    sub2:'Practise · rest 60 s max between sets and exercises', work:[ ['Lower','Bodyweight hinge, dowel on the back, or kettlebell deadlift if stamped','3 × 10 · 6/7','Dowel touches head, upper back and tailbone the whole time. Bell only if your hinge is stamped'], ['Upper','Banded row, or horizontal bar pull if stamped','3 × 8 · 6/7','One second squeeze at the top. Bar pull only if your pull is stamped'], ['Trunk','Single-leg glute bridge','3 × 8 each side · 6/7','Hips level, no twist'] ],
+    sub1:'Practice', learn:[ ['Hinge',1,'Bodyweight hinge, partner check','Criteria card','Partner watches side on. Tick the six criteria. Swap.',false], ['Pull',1,'Banded row, partner check','Criteria card','Partner watches front on. Tick the six. Swap.',false] ],
+    sub2:'Train', work:[ ['Lower','Bodyweight hinge, dowel on the back, or kettlebell deadlift if stamped','3 × 10 · 6/7','Dowel touches head, upper back and tailbone the whole time. Bell only if your hinge is stamped'], ['Upper','Banded row, or horizontal bar pull if stamped','3 × 8 · 6/7','One second squeeze at the top. Bar pull only if your pull is stamped'], ['Trunk','Single-leg glute bridge','3 × 8 each side · 6/7','Hips level, no twist'] ],
     finish:[ ['Challenge','Plank hold','2 × max hold','As long as possible. Straight line from head to heel, set ends when the hips drop. Note your time'], ['Check-out','Which criterion did your partner tick last?','1 min','That is the one to work on'], ['Extras','Core challenge','','If there is time. Your choice'] ] },
   { n:4, type:'Push', day:'Gym 4', idea:'<b>One leg, and overhead.</b> Two new movements: the lunge is the single-leg squat, the press is the push-up turned upright. All six patterns are now in.',
     prep:[ ['Warm up','General warm up','5 min',''], ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','3 each side',''], ['Crawl','Bear crawl','20 m out and back',''], ['Land','Snap down and stick','2 × 5','Quiet feet'] ],
-    sub1:'Learn', learn:[ ['Lunge',1,'Bodyweight lunge',FILM,'Step long. <b>Front heel down</b>, back knee near the floor, torso tall.',true], ['Press',1,'Band overhead press',FILM,'Ribs down, <b>lock out</b> overhead. Head moves back, the band goes straight up.',true] ],
-    sub2:'Practise', work:[ ['Lower','Bodyweight squat (goblet if stamped), then lunge (dumbbells if stamped)','2 × 8 + 6 each side','Squat set, then lunge set, then rest. Load either only if that pattern is stamped'], ['Upper','Push-up, floor or box, or dumbbell floor press if stamped','2 × 8','Floor press only if your push is stamped'], ['Trunk','Front plank','2 × 30 s','Squeeze the glutes, long neck'] ],
+    sub1:'Practice', learn:[ ['Lunge',1,'Bodyweight lunge',FILM,'Step long. <b>Front heel down</b>, back knee near the floor, torso tall.',true], ['Press',1,'Band overhead press',FILM,'Ribs down, <b>lock out</b> overhead. Head moves back, the band goes straight up.',true] ],
+    sub2:'Train', work:[ ['Lower','Bodyweight squat (goblet if stamped), then lunge (dumbbells if stamped)','2 × 8 + 6 each side','Squat set, then lunge set, then rest. Load either only if that pattern is stamped'], ['Upper','Push-up, floor or box, or dumbbell floor press if stamped','2 × 8','Floor press only if your push is stamped'], ['Trunk','Front plank','2 × 30 s','Squeeze the glutes, long neck'] ],
     finish:[ ['Cool down','Walk it out, hip flexor and shoulder stretch','3 min',''], ['Check-out','Which of the six patterns feels least controlled?','1 min','You will answer this again in the classroom'], ['Extras','Core challenge','','If there is time. Your choice'] ] },
   { n:'A', type:'Classroom', day:'Classroom A', idea:'<b>Consolidate.</b> Meet the portal and the passport. Watch the six videos. Self-check against the criteria. Say which pattern feels least controlled.',
     cls:{ do:[ ['Sign in and open the passport','What a stamp means, and that stamps arrive whenever you are ready'], ['Watch the six pattern videos','One minute each, pause on the criteria'], ['Self-check each pattern','Tick the criteria you are sure of, leave the rest blank'], ['Reflection','Which pattern feels least controlled, and which criterion is the reason?'] ],
@@ -210,18 +216,18 @@ const UNIT = [
  { block:2, title:'All six, one idea at a time', sessions:[
   { n:5, type:'Pull', day:'Gym 5', idea:'<b>Horizontal and vertical.</b> The bar pull and the band pull-down are the same squeeze in two directions. Tempo is the cue of this block: three seconds down, one up.',
     prep:[ ['Warm up','General warm up','5 min',''], ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','3 each side',''], ['Crawl','Inchworm to a push-up','5',''], ['Land','Hop and stick, forward','2 × 5 each leg','Land on one foot, quiet, hold two seconds'], ['Prehab','Shoulder taps in a plank','2 × 10','Hips still'] ],
-    sub1:'Primary', learn:[ ['Hinge',1,'Bodyweight hinge, or kettlebell hinge if stamped','3 × 8 · tempo 3-1-1','Three seconds down. The bell is only for stamped hinges.',false], ['Pull',1,'Banded row, or horizontal bar pull if stamped','3 × 8 · tempo 3-1-1','A step further back is harder. Bar pull only if your pull is stamped. Choose where eight is hard but clean.',false] ],
-    sub2:'Accessory', work:[ ['Vertical pull','Band pull-down','2 × 10','Elbows to the ribs, no shrug'], ['Lower','Single-leg glute bridge','2 × 8 each side',''], ['Trunk','Side plank','2 × 20 s each side','Hips high'] ],
+    sub1:'Train · primary lifts', learn:[ ['Hinge',1,'Bodyweight hinge, or kettlebell hinge if stamped','3 × 8 · tempo 3-1-1','Three seconds down. The bell is only for stamped hinges.',false], ['Pull',1,'Banded row, or horizontal bar pull if stamped','3 × 8 · tempo 3-1-1','A step further back is harder. Bar pull only if your pull is stamped. Choose where eight is hard but clean.',false] ],
+    sub2:'Train · accessory', work:[ ['Vertical pull','Band pull-down','2 × 10','Elbows to the ribs, no shrug'], ['Lower','Single-leg glute bridge','2 × 8 each side',''], ['Trunk','Side plank','2 × 20 s each side','Hips high'] ],
     finish:[ ['Finisher','Bike or shuttles','4 × 30 s on, 30 s off','Hard on, easy off'], ['Cool down','Hamstring and lat stretch','2 min',''], ['Extras','Core challenge','','If there is time. Your choice'] ] },
   { n:6, type:'Push', day:'Gym 6', idea:'<b>One leg and two legs.</b> The lunge is the honest version of the squat: it shows which side is weaker. Tempo again: three down, one up.',
     prep:[ ['Warm up','General warm up','5 min',''], ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','3 each side',''], ['Crawl','Bear crawl','20 m out and back',''], ['Land','Hop and stick, sideways','2 × 5 each leg','Push sideways, land quiet'], ['Prehab','Groin squeeze on a ball','2 × 10','Five-second squeeze'] ],
-    sub1:'Primary', learn:[ ['Squat',1,'Bodyweight squat, or goblet squat if stamped','3 × 8 · tempo 3-1-1','Goblet only for stamped squats. Light bell, elbows inside the knees.',false], ['Push',1,'Push-up, floor or box, or dumbbell floor press if stamped','3 × 8 · tempo 3-1-1','Same height as last time or one lower. Floor press only if your push is stamped.',false] ],
-    sub2:'Accessory', work:[ ['Single leg','Bodyweight lunge','2 × 6 each side','Note which side wobbles'], ['Overhead','Band overhead press','2 × 10','Ribs down, full lockout'], ['Trunk','Dead bug','2 × 8 each side',''] ],
+    sub1:'Train · primary lifts', learn:[ ['Squat',1,'Bodyweight squat, or goblet squat if stamped','3 × 8 · tempo 3-1-1','Goblet only for stamped squats. Light bell, elbows inside the knees.',false], ['Push',1,'Push-up, floor or box, or dumbbell floor press if stamped','3 × 8 · tempo 3-1-1','Same height as last time or one lower. Floor press only if your push is stamped.',false] ],
+    sub2:'Train · accessory', work:[ ['Single leg','Bodyweight lunge','2 × 6 each side','Note which side wobbles'], ['Overhead','Band overhead press','2 × 10','Ribs down, full lockout'], ['Trunk','Dead bug','2 × 8 each side',''] ],
     finish:[ ['Finisher','Bike or shuttles','4 × 30 s on, 30 s off',''], ['Cool down','Quad, hip flexor and chest stretch','2 min',''], ['Extras','Core challenge','','If there is time. Your choice'] ] },
   { n:7, type:'Pull', day:'Gym 7', idea:'<b>Upper and lower.</b> Hinge is the biggest lower-body pull, the row is the upper one. Both need a flat back. Partner-check again: second round of stamps.',
     prep:[ ['Warm up','General warm up','5 min',''], ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','3 each side',''], ['Crawl','Inchworm to a push-up','5',''], ['Land','Hop and stick, forward','2 × 5 each leg',''], ['Prehab','Shoulder taps in a plank','2 × 10',''] ],
-    sub1:'Primary', learn:[ ['Hinge',1,'Hinge, partner check, then kettlebell hinge if stamped','3 × 8','Partner ticks the six first. Bell only if all six are ticked.',false], ['Pull',1,'Banded row, partner check, then horizontal bar pull if stamped','3 × 8','Partner ticks the six. Bar pull only if your pull is stamped. Then do your sets.',false] ],
-    sub2:'Accessory', work:[ ['Vertical pull','Band pull-down','2 × 10',''], ['Lower','Single-leg hinge, hand on the wall','2 × 6 each side','Back leg long, hips square'], ['Throw','Med-ball slam','2 × 6','As hard as you can. Reset every rep'] ],
+    sub1:'Train · primary lifts', learn:[ ['Hinge',1,'Hinge, partner check, then kettlebell hinge if stamped','3 × 8','Partner ticks the six first. Bell only if all six are ticked.',false], ['Pull',1,'Banded row, partner check, then horizontal bar pull if stamped','3 × 8','Partner ticks the six. Bar pull only if your pull is stamped. Then do your sets.',false] ],
+    sub2:'Train · accessory', work:[ ['Vertical pull','Band pull-down','2 × 10',''], ['Lower','Single-leg hinge, hand on the wall','2 × 6 each side','Back leg long, hips square'], ['Throw','Med-ball slam','2 × 6','As hard as you can. Reset every rep'] ],
     finish:[ ['Finisher','Bike or shuttles','4 × 30 s on, 30 s off',''], ['Cool down','Hamstring and lat stretch','2 min',''], ['Extras','Core challenge','','If there is time. Your choice'] ] },
   { n:'B', type:'Classroom', day:'Classroom B', idea:'<b>Reading a prescription.</b> What 3 × 8 at tempo 3-1-1 means. How to choose a weight. What a 7 out of 10 feels like. Then a second self-check against all six.',
     cls:{ do:[ ['Reading a prescription','Sets, reps, tempo, rest. Read three lines from the Board out loud and explain each'], ['Choosing a weight','The last two reps are hard, every rep is clean. If either fails, go lighter'], ['Effort out of 10','What a 7 feels like, what a 9 feels like. Why we train at 7 first'], ['Self-check all six','Compare to Classroom A. What changed?'], ['Reflection','Which patterns are you ready to be stamped on? What is the evidence?'] ],
@@ -230,18 +236,18 @@ const UNIT = [
  { block:3, title:'Load it, then run it', sessions:[
   { n:8, type:'Pull', day:'Gym 8', idea:'<b>First real load.</b> Stamped patterns pick up a weight today. The rule: last two reps hard, every rep clean. Unstamped patterns keep practising at bodyweight, no penalty.',
     prep:[ ['Warm up','General warm up','5 min',''], ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','3 each side',''], ['Crawl','Inchworm to a push-up','5',''], ['Land','Hop and stick, forward','2 × 5 each leg',''], ['Prehab','Shoulder taps in a plank','2 × 10',''] ],
-    sub1:'Primary', learn:[ ['Hinge',2,'Kettlebell deadlift if stamped, else bodyweight hinge','3 × 8 · 7 of 10','Start light. Add a bell only if all eight were clean.',false], ['Pull',1,'Banded row, or horizontal bar pull if stamped','3 × 8 · 7 of 10','Step back a little if eight were easy. Bar pull only if your pull is stamped.',false] ],
-    sub2:'Accessory', work:[ ['Vertical pull','Assisted pull-up or band pull-down','3 × 5','Band or box for help. Chin over the bar'], ['Lower','Nordic lower','3 × 3','Lower slowly, hands ready to catch'], ['Trunk','Hanging knee raise','2 × 8','No swing'] ],
+    sub1:'Train · primary lifts', learn:[ ['Hinge',2,'Kettlebell deadlift if stamped, else bodyweight hinge','3 × 8 · 7 of 10','Start light. Add a bell only if all eight were clean.',false], ['Pull',1,'Banded row, or horizontal bar pull if stamped','3 × 8 · 7 of 10','Step back a little if eight were easy. Bar pull only if your pull is stamped.',false] ],
+    sub2:'Train · accessory', work:[ ['Vertical pull','Assisted pull-up or band pull-down','3 × 5','Band or box for help. Chin over the bar'], ['Lower','Nordic lower','3 × 3','Lower slowly, hands ready to catch'], ['Trunk','Hanging knee raise','2 × 8','No swing'] ],
     finish:[ ['Finisher','Bike or shuttles','5 × 30 s on, 30 s off',''], ['Cool down','Hamstring and lat stretch','2 min',''], ['Check-out','What weight did you use, and was it right?','1 min','You will log this in the classroom'], ['Extras','Core challenge','','If there is time. Your choice'] ] },
   { n:9, type:'Push', day:'Gym 9', idea:'<b>Choose your own weight.</b> Same rule as last time. Squat, lunge and press pick up load if stamped. Aim for a 7 out of 10 and be honest.',
     prep:[ ['Warm up','General warm up','5 min',''], ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','3 each side',''], ['Crawl','Bear crawl','20 m out and back',''], ['Land','Hop and stick, sideways','2 × 5 each leg',''], ['Prehab','Groin squeeze on a ball','2 × 10',''] ],
-    sub1:'Primary', learn:[ ['Squat',2,'Goblet squat if stamped, else bodyweight squat','3 × 8 · 7 of 10','Pick the bell where the last two reps are hard.',false], ['Push',1,'Push-up, or dumbbell floor press if stamped','3 × 8 · 7 of 10','Floor press: elbows at 45, pause on the floor.',false] ],
-    sub2:'Accessory', work:[ ['Single leg','Lunge, dumbbells if stamped','3 × 6 each side',''], ['Overhead','Dumbbell press if stamped, else band','3 × 8','Full lockout, ribs down'], ['Throw','Med-ball rotational throw','2 × 6 each side','Hips first, then the ball'] ],
+    sub1:'Train · primary lifts', learn:[ ['Squat',2,'Goblet squat if stamped, else bodyweight squat','3 × 8 · 7 of 10','Pick the bell where the last two reps are hard.',false], ['Push',1,'Push-up, or dumbbell floor press if stamped','3 × 8 · 7 of 10','Floor press: elbows at 45, pause on the floor.',false] ],
+    sub2:'Train · accessory', work:[ ['Single leg','Lunge, dumbbells if stamped','3 × 6 each side',''], ['Overhead','Dumbbell press if stamped, else band','3 × 8','Full lockout, ribs down'], ['Throw','Med-ball rotational throw','2 × 6 each side','Hips first, then the ball'] ],
     finish:[ ['Finisher','Bike or shuttles','5 × 30 s on, 30 s off',''], ['Cool down','Quad, hip flexor and chest stretch','2 min',''], ['Check-out','Rate the session out of 10','1 min','Remember the number'], ['Extras','Core challenge','','If there is time. Your choice'] ] },
   { n:10, type:'Pull', day:'Gym 10', idea:'<b>Run it yourself.</b> The Board is up, nobody is cueing. Warm up, choose your weights, keep the tempo, rate your effort. Unit complete.',
     prep:[ ['Warm up','General warm up','5 min',''], ['Game','Game · your choice','5 min',''], ['Mobility','World\'s Greatest Stretch','3 each side',''], ['Crawl','Inchworm to a push-up','5',''], ['Land','Hop and stick, your choice','2 × 5 each leg',''], ['Prehab','Shoulder taps in a plank','2 × 10',''] ],
-    sub1:'Primary', learn:[ ['Hinge',2,'Kettlebell deadlift if stamped, else bodyweight hinge','3 × 8 · 7 of 10','Your weight from Gym 8, or a little more if it was easy.',false], ['Pull',1,'Banded row, or horizontal bar pull if stamped','3 × 8 · 7 of 10','Bar pull only if your pull is stamped.',false] ],
-    sub2:'Accessory', work:[ ['Vertical pull','Assisted pull-up or band pull-down','3 × 5',''], ['Lower','Nordic lower','3 × 3',''], ['Trunk','Hanging knee raise','2 × 8',''] ],
+    sub1:'Train · primary lifts', learn:[ ['Hinge',2,'Kettlebell deadlift if stamped, else bodyweight hinge','3 × 8 · 7 of 10','Your weight from Gym 8, or a little more if it was easy.',false], ['Pull',1,'Banded row, or horizontal bar pull if stamped','3 × 8 · 7 of 10','Bar pull only if your pull is stamped.',false] ],
+    sub2:'Train · accessory', work:[ ['Vertical pull','Assisted pull-up or band pull-down','3 × 5',''], ['Lower','Nordic lower','3 × 3',''], ['Trunk','Hanging knee raise','2 × 8',''] ],
     finish:[ ['Finisher','Bike or shuttles','5 × 30 s on, 30 s off',''], ['Cool down','Your choice','2 min',''], ['Check-out','Rate the session out of 10','1 min','Log it in Classroom C'], ['Extras','Core challenge','','If there is time. Your choice'] ] },
   { n:'C', type:'Classroom', day:'Classroom C', idea:'<b>Log it, and look ahead.</b> Enter the last gym session in the portal, with your weights and your rating. Then a preview of Foundations, where the session shape gets its full names.',
     cls:{ do:[ ['Log Gym 10','Every exercise, sets, reps, weight or height, and the effort out of 10'], ['Final self-check','All six patterns. Compare to A and B'], ['Preview Foundations','The full session map with its names, and what "this week" will look like'], ['Reflection','Which pattern moved the most this unit? What is the next stamp you want?'] ],
@@ -345,8 +351,10 @@ function render(){
     return;
   }
   const prep = s.prep.map(p => row('prep', p[0], p[1], p[2], p[3])).join('');
-  let move = `<div class="sub">${s.sub1}</div>` + s.learn.map(l => row('learn', l[0], l[2], l[3], l[4], l[0], l[1], l[5], l[3]===FILM || l[3]==='Criteria card')).join('');
-  move += `<div class="sub">${s.sub2}</div>` + s.work.map(w => row('work', w[0], w[1], w[2], w[3])).join('');
+  const seen = {};
+  const sub = t => { const k = t.split(' ')[0]; const n = (NOTES[k] && !seen[k]) ? `<span class="note">${NOTES[k]}</span>` : ''; seen[k] = true; return `<div class="sub">${t}${n}</div>`; };
+  let move = sub(s.sub1) + s.learn.map(l => row('learn', l[0], l[2], l[3], l[4], l[0], l[1], l[5], l[3]===FILM || l[3]==='Criteria card')).join('');
+  move += sub(s.sub2) + s.work.map(w => row('work', w[0], w[1], w[2], w[3])).join('');
   const fin = s.finish.map(f => row('finish', f[0], f[1], f[2], f[3])).join('');
   $('stage').innerHTML = head + `<div class="boxes">${
     box('prep', 'Prep', s.block===1?'15 min':'17 min', EXOS.prep, prep, true)}${
@@ -358,7 +366,7 @@ function render(){
 
 function openRow(btn){
   const d = btn.dataset, p = d.pat ? PATTERNS[d.pat] : null, lvl = parseInt(d.level)||0;
-  const kind = d.kind==='learn'?'Learn':d.kind==='work'?'Practise':d.kind==='prep'?'Prep':'Finish';
+  const kind = d.kind==='learn'?'Practice':d.kind==='work'?'Train':d.kind==='prep'?'Prep':'Finish';
   const left = `<div><div class="k">${kind}${d.pat?' · '+d.pat+' pattern':''}</div><h2>${d.ex}</h2><div class="rxbig">${d.rx}</div>${d.cue?`<div class="cuebig">${d.cue}</div>`:''}</div>`;
   const right = p ? `<div><h3>What good looks like</h3><ul class="crit">${p.criteria.map(c=>`<li><span>${c[0]}<em>${c[1]}</em></span></li>`).join('')}</ul>
       <h3 style="margin-top:22px">The ladder</h3><div class="ladder">${p.ladder.map((n,i)=>`<div data-n="${i+1}" class="${i+1===lvl?'here':(i+1<lvl?'done':'')}">${n}</div>`).join('')}</div></div>`
