@@ -2314,6 +2314,20 @@
     margin: 0 0 12px; display: flex; align-items: center; gap: 8px;
   }
   .card-eyebrow-action { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+  /* Gamified training streak chip (on the Today hero) */
+  .hero-eyebrow-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .hero-eyebrow-row .card-hero-eyebrow { margin: 0; }
+  .streak-chip {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+    font: 800 13px 'Inter', sans-serif; color: var(--burgundy);
+    background: var(--gold-light); border: 1px solid var(--gold); border-radius: 999px; padding: 5px 11px;
+    transition: transform 0.12s;
+  }
+  .streak-chip:hover { transform: scale(1.04); }
+  .streak-chip .ti { font-size: 15px; color: #d97a1e; }
+  .streak-chip-label { font-weight: 700; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.8; }
+  .streak-chip.streak-off { color: var(--ink-mute); background: var(--cream); border-color: var(--line); font-weight: 700; font-size: 12px; }
+  .streak-chip.streak-off .ti { color: var(--ink-mute); }
   /* The single hero / priority card per tab — a touch stronger */
   .card-hero { padding: 22px 22px 20px; }
   .card-hero-eyebrow {
@@ -3932,7 +3946,9 @@
     const load = { weeks: weeks, summary: {
       thisWeekLoad: doneLoad,
       acwr: weeks.length ? weeks[weeks.length-1].acwr : null,
-      weeksLogged: list.length
+      weeksLogged: list.length,
+      // Demo streak: a run of recent training days (with normal rest gaps).
+      loggedDates: [ -8, -6, -4, -3, -1 ].map(n => addDays(isoToday(), n))
     }};
 
     // Coach check-ins + a personal calendar (demo/visual only).
@@ -4176,6 +4192,49 @@
       '<i class="ti ti-chevron-right build-cta-go" aria-hidden="true"></i></button>';
   }
 
+  // ---- Training streak (gamified "days logged") -----------------------------
+  // A day counts when a session there is logged. A rest gap of up to STREAK_GRACE
+  // days keeps the streak alive, so normal rest days don't break it.
+  const STREAK_GRACE = 3;
+  function loggedDaySet(){
+    const set = {};
+    const server = (state.load && state.load.summary && state.load.summary.loggedDates) || [];
+    server.forEach(d => { if(d) set[d] = 1; });
+    (state.week.sessions||[]).forEach(s => { if(isLogged(s) && s.date) set[s.date] = 1; });   // today's logs count live
+    return Object.keys(set).sort();
+  }
+  function streakInfo(){
+    const dates = loggedDaySet();
+    const total = dates.length;
+    if(!total) return { streak:0, total:0 };
+    const last = dates[dates.length-1];
+    if(daysBetween(last, isoToday()) > STREAK_GRACE) return { streak:0, total:total };   // gone cold
+    let streak = 1;
+    for(let i=dates.length-1; i>0; i--){
+      if(daysBetween(dates[i-1], dates[i]) <= STREAK_GRACE) streak++; else break;
+    }
+    return { streak: streak, total: total };
+  }
+  function streakLabel(n){
+    if(n>=60) return 'Unstoppable';
+    if(n>=30) return 'Relentless';
+    if(n>=14) return 'Locked in';
+    if(n>=7)  return 'On a roll';
+    if(n>=3)  return 'Building momentum';
+    return 'Warming up';
+  }
+  function streakChipHTML(){
+    const s = streakInfo();
+    if(!s.streak) return '<button class="streak-chip streak-off" onclick="streakTap()" aria-label="Start a streak"><i class="ti ti-flame" aria-hidden="true"></i> Start a streak</button>';
+    return '<button class="streak-chip" onclick="streakTap()" aria-label="Training streak"><i class="ti ti-flame" aria-hidden="true"></i> '+s.streak+' <span class="streak-chip-label">'+streakLabel(s.streak)+'</span></button>';
+  }
+  function streakTap(){
+    const s = streakInfo();
+    if(!s.streak) showToast('Log a session to start your streak — keep training and it grows.', '');
+    else showToast('🔥 '+s.streak+'-day streak · '+s.total+' training days logged. Log again within '+STREAK_GRACE+' days to keep it going.', 'success');
+  }
+  window.streakTap = streakTap;
+
   // (a) TODAY hero — date, big session name, primary CTA, slim progress line (no load number).
   function weekTodayCard(todays, today){
     const eyebrow = dowShort(today)+' '+dayNum(today)+' '+monShort(today)+' · Today';
@@ -4207,7 +4266,7 @@
       cta = '<button class="card-cta card-cta-gold" onclick="newSession(\''+today+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add today’s session</button>';
     }
     return '<div class="card card-hero">'+
-      '<p class="card-hero-eyebrow">'+eyebrow+'</p>'+
+      '<div class="hero-eyebrow-row"><p class="card-hero-eyebrow">'+eyebrow+'</p>'+streakChipHTML()+'</div>'+
       '<h2 class="card-hero-title">'+titleHTML+'</h2>'+
       '<p class="card-hero-sub">'+subHTML+'</p>'+
       '<div class="week-today-cta">'+cta+'</div>'+

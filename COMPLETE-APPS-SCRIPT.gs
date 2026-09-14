@@ -3302,12 +3302,17 @@ function apComputeLoad(ss, athleteId) {
   var sheet = apEnsureTrainingSessions(ss);
   var rows = apReadObjects(sheet);
   var byWeek = {};
+  var loggedSet = {};
   for (var i = 0; i < rows.length; i++) {
     if (String(rows[i].Athlete_ID).trim() !== String(athleteId).trim()) continue;
     var ws = apDateStr(rows[i].Week_Start);
     if (!ws) continue;
     var l = rows[i].Load_au === '' ? 0 : Number(rows[i].Load_au) || 0;
     byWeek[ws] = (byWeek[ws] || 0) + l;
+    // A day counts as "logged" for the streak if a session there was completed.
+    var st = String(rows[i].Status || '').trim().toLowerCase();
+    var d = apDateStr(rows[i].Date);
+    if (d && (st === 'done' || st === 'modified' || l > 0)) loggedSet[d] = 1;
   }
   var weeks = Object.keys(byWeek).sort();
   var series = [];
@@ -3322,7 +3327,8 @@ function apComputeLoad(ss, athleteId) {
   var weeksLogged = weeks.length;
   var thisWeekLoad = weeksLogged ? byWeek[weeks[weeksLogged - 1]] : 0;
   var latestAcwr = weeksLogged >= 4 ? series[series.length - 1].acwr : null;
-  return { weeks: series, summary: { thisWeekLoad: thisWeekLoad, acwr: latestAcwr, weeksLogged: weeksLogged } };
+  var loggedDates = Object.keys(loggedSet).sort();
+  return { weeks: series, summary: { thisWeekLoad: thisWeekLoad, acwr: latestAcwr, weeksLogged: weeksLogged, loggedDates: loggedDates } };
 }
 
 function handleGetYearLoad(ss, athleteId) {
