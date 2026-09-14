@@ -72,8 +72,10 @@
   .box.prep .tbl .n.reps,.box.finish .tbl .n.reps{max-width:6em}
   .tbl .th{font-size:var(--eyebrow);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:600;text-align:center;padding:clamp(6px,.6vw,10px) .5em 4px;border-bottom:1px solid var(--rule);white-space:nowrap}
   .tbl .th:first-child{text-align:left;padding-left:0}
-  .tbl .sub{grid-column:1/-1}
-  .tbl .sub .note{display:block;font-size:calc(var(--cue) * .88);letter-spacing:0;text-transform:none;color:var(--ink-2);font-weight:400;line-height:1.25;margin-top:2px;max-width:60ch}
+  /* Practice / Train: a full-width band that splits the Move block in two */
+  .tbl .sub{grid-column:1/-1;display:flex;align-items:baseline;gap:.6em 1.2em;flex-wrap:wrap;margin:clamp(8px,.8vw,14px) calc(-1 * clamp(12px,1.2vw,22px)) 0;padding:clamp(6px,.6vw,11px) clamp(12px,1.2vw,22px);background:var(--accent-soft);border-top:2px solid var(--accent);letter-spacing:0;text-transform:none}
+  .tbl .sub .lbl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:calc(var(--ex) * 1.15);text-transform:uppercase;letter-spacing:.04em;color:var(--accent);line-height:1;white-space:nowrap}
+  .tbl .sub .note{flex:1 1 20ch;font-family:Inter,sans-serif;font-size:var(--cue);color:var(--ink);font-weight:500;line-height:1.25;letter-spacing:0}
   .tbl .row{display:contents}
   .tbl .row > *{padding-top:clamp(5px,.55vw,11px);padding-bottom:clamp(5px,.55vw,11px);border-bottom:1px solid var(--rule);min-width:0}
   .tbl .row:hover > *,.tbl .row:focus > *{background:var(--accent-soft)}
@@ -352,7 +354,7 @@ function render(){
   }
   const prep = s.prep.map(p => row('prep', p[0], p[1], p[2], p[3])).join('');
   const seen = {};
-  const sub = t => { const k = t.split(' ')[0]; const n = (NOTES[k] && !seen[k]) ? `<span class="note">${NOTES[k]}</span>` : ''; seen[k] = true; return `<div class="sub">${t}${n}</div>`; };
+  const sub = t => { const k = t.split(' ')[0]; const n = (NOTES[k] && !seen[k]) ? `<span class="note">${NOTES[k]}</span>` : ''; seen[k] = true; return `<div class="sub"><span class="lbl">${t}</span>${n}</div>`; };
   let move = sub(s.sub1) + s.learn.map(l => row('learn', l[0], l[2], l[3], l[4], l[0], l[1], l[5], l[3]===FILM || l[3]==='Criteria card')).join('');
   move += sub(s.sub2) + s.work.map(w => row('work', w[0], w[1], w[2], w[3])).join('');
   const fin = s.finish.map(f => row('finish', f[0], f[1], f[2], f[3])).join('');
