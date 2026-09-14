@@ -2130,35 +2130,43 @@ function handleParseProgram(email, text) {
       return { success: false, error: 'No text to parse' };
     }
 
-    var systemPrompt = 'You convert a student athlete\'s freeform text (a pasted program, a coach\'s plan, or a description of their training week) into a structured WEEKLY training program.\n'
+    var systemPrompt = 'You convert a student athlete\'s freeform text (a pasted program, a coach\'s plan, or a description of their training) into a structured training program that may repeat over 1 to 4 weeks.\n'
       + 'You output ONLY a JSON object — no preamble, no explanation, no markdown code fences.\n\n'
       + 'The object has exactly these fields:\n'
       + '{\n'
       + '  "name": "a short program name (infer one if none given, e.g. \\"Strength Block\\")",\n'
       + '  "days": [\n'
       + '    {\n'
+      + '      "week": integer 0-3 (0 = week 1). Use 0 for a single-week plan,\n'
       + '      "dow": integer 0-6 where 0=Monday .. 6=Sunday,\n'
-      + '      "name": "short day name, e.g. \\"Lower body\\" or \\"Upper — push\\"",\n'
-      + '      "sport": "Strength" | "Power" | "Run" | "Swim" | "Conditioning" | "Mobility" | "Other",\n'
+      + '      "name": "short day name, e.g. \\"Lower body\\", \\"Upper — push\\", \\"VO2 — curve\\"",\n'
+      + '      "sport": "Strength" | "Power" | "Run" | "Bike" | "Swim" | "Conditioning" | "Mobility" | "Other",\n'
       + '      "intensity": "easy" | "moderate" | "hard" | "",\n'
       + '      "duration": integer minutes or null,\n'
-      + '      "exercises": [ { "name": "exercise name", "detail": "sets/reps/tempo/load as written, else empty string" } ]\n'
+      + '      "note": "a short note for anything that is NOT a discrete exercise: warm-up/cool-down summary, HR/pace/power zones or targets, and any cautions (e.g. \\"brace on, stop on knee signal\\"). Empty string if none.",\n'
+      + '      "exercises": [ { "name": "exercise or modality name", "detail": "sets/reps/tempo/load/interval as written, else empty string" } ]\n'
       + '    }\n'
       + '  ]\n'
       + '}\n\n'
       + 'Rules:\n'
-      + '- One array element per training day. Use dow to place it on a weekday; if days are only labelled generically (Day 1, Day 2, A/B), spread them Mon/Wed/Fri style starting at dow 0.\n'
-      + '- Use standard, canonical exercise names (e.g. "Back Squat", "Deadlift", "Bench Press", "Pull-Up", "Kettlebell Swing", "Box Jump", "Med-Ball Slam", "Row Intervals") so they map cleanly — but keep the student\'s exercise if it has no standard name.\n'
-      + '- "detail" is the prescription exactly as written (e.g. "5x5", "3x8 @ 40kg", "8x250m"). If none is given, use an empty string. Do NOT invent loads or reps.\n'
-      + '- duration is whole minutes (integer) or null if not stated. intensity only if obvious, else empty string.\n'
-      + '- Ignore warm-ups/cool-downs unless they are the only content; focus on the main work.\n'
+      + '- ONE array element per labelled training day in the source. If the source has "DAY 1" through "DAY 14", output ONE day object for EACH of those days (omitting only pure-rest days with no content). Do NOT collapse, merge, or deduplicate days — a plan of 14 days yields ~13-14 day objects, never 7.\n'
+      + '- MULTI-WEEK MAPPING: when days are numbered sequentially and span more than 7 days, for "Day N" set week = floor((N-1)/7) and dow = (N-1) mod 7 (cap week at 3). Worked example for a 14-day plan: Day 1 -> week 0, dow 0; Day 4 -> week 0, dow 3; Day 7 -> week 0, dow 6; Day 8 -> week 1, dow 0; Day 10 -> week 1, dow 2; Day 13 -> week 1, dow 5; Day 14 -> week 1, dow 6.\n'
+      + '- REPEATED DAYS: if a day says "(as Day X)" or "same as Day X", it is STILL its own separate training day — reproduce Day X\'s exercises and note here, placed at THIS day\'s own week and dow. Never skip it or fold it back into Day X.\n'
+      + '- If the plan already uses weekday names or is clearly a single week, put everything in week 0.\n'
+      + '- CARDIO / INTERVALS ARE SESSIONS TOO: a bike/run/swim/conditioning day (e.g. "Bike Z2 40-50min", "6 x 30s all-out", "4 x 5min @ 230-250W") is a real training day — include it, putting the modality as the exercise name and the prescription in detail. Never drop it.\n'
+      + '- Use standard, canonical names for gym lifts (e.g. "Back Squat", "Deadlift", "Bench Press", "Pull-Up", "Power Clean", "Kettlebell Swing") so they map cleanly — but keep the athlete\'s own name if it has no standard form.\n'
+      + '- "detail" is the prescription exactly as written (e.g. "4x5 @ ~130kg", "6x30s all-out, 2min walk"). Keep any "~" or "@". Do NOT invent loads or reps.\n'
+      + '- Put warm-up/cool-down text and zone/target/caution guidance in "note", not as exercises.\n'
+      + '- A pure rest day with NO training and NO notable content: omit it. A rest day that still has mobility/rehab work or important cautions: include it (sport "Mobility") with those.\n'
+      + '- A reference block of zones/paces/targets that is not itself a day is context — do not make it a day, but you may fold the relevant numbers into the notes of the days they apply to.\n'
+      + '- duration is whole minutes (integer) or null. intensity only if obvious, else empty string.\n'
       + '- If you cannot find any training days, return {"name":"","days":[]}.';
 
-    var userMessage = 'Turn this into a weekly program:\n\n' + String(text);
+    var userMessage = 'Turn this into a program (1-4 repeating weeks):\n\n' + String(text);
 
     var payload = {
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2500,
+      max_tokens: 6000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }]
     };
