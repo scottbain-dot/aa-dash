@@ -2429,34 +2429,30 @@
   .badge-cel-more { font: 700 12px 'Inter', sans-serif; color: var(--gold-strong, #b8860b); margin: 10px 0 0; }
 
   /* ---- Athlete rank card (Week tab) ---- */
-  .rank-card { width: 100%; display: flex; align-items: center; gap: 15px; text-align: left; cursor: pointer;
-    background: linear-gradient(135deg, #7c4340 0%, #8f5450 45%, #5f3430 100%); color: var(--cream);
-    border: none; border-radius: 20px; padding: 16px 14px 16px 16px; position: relative; overflow: hidden;
-    box-shadow: 0 10px 26px rgba(107,58,54,0.28); transition: transform 0.14s ease, box-shadow 0.2s ease; }
-  .rank-card::after { content: ''; position: absolute; top: -40%; right: -10%; width: 160px; height: 160px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(212,175,55,0.28), rgba(212,175,55,0) 70%); pointer-events: none; }
-  .rank-card:hover { transform: translateY(-1px); box-shadow: 0 14px 32px rgba(107,58,54,0.36); }
+  /* Slim rank line folded into the Today hero */
+  .hero-rank { width: 100%; display: flex; align-items: center; gap: 11px; text-align: left; cursor: pointer;
+    background: none; border: none; border-top: 1px solid var(--line-soft); margin-top: 14px; padding: 13px 0 2px; }
+  .hero-rank-medal { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 3px; }
+  .hero-rank-medal-in { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, #874B46, #6b3a36); color: #f6d873; font: 800 14px 'Fraunces', serif; }
+  .hero-rank-body { flex: 1; min-width: 0; }
+  .hero-rank-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .hero-rank-name { font: 800 14px 'Inter', sans-serif; color: var(--ink); }
+  .hero-rank-xp { font: 800 11px 'Inter', sans-serif; color: var(--gold-strong, #b8860b); flex-shrink: 0; }
+  .hero-rank-bar { display: block; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; margin: 5px 0 4px; }
+  .hero-rank-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #e8c969, #D4AF37); transition: width 0.5s ease; }
+  .hero-rank-next { font: 600 10.5px 'Inter', sans-serif; color: var(--ink-mute); }
+  .hero-rank-go { color: var(--ink-mute); font-size: 17px; flex-shrink: 0; align-self: center; }
+
+  /* Rank medallion + XP bar (shared by the Trophy Room hero) */
   .rank-medal { width: 62px; height: 62px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
     padding: 4px; position: relative; z-index: 1; box-shadow: 0 0 0 1px rgba(255,255,255,0.14); }
   .rank-medal-inner { width: 100%; height: 100%; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
     background: linear-gradient(160deg, #3a201e, #521f1c); color: var(--gold); line-height: 1; }
   .rank-medal-lv { font: 800 8px 'Inter', sans-serif; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; }
   .rank-medal-num { font: 800 26px 'Fraunces', serif; color: #f6d873; }
-  .rank-body { flex: 1; min-width: 0; position: relative; z-index: 1; }
-  .rank-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-  .rank-name { font: 800 19px 'Fraunces', serif; color: #fff; }
-  .rank-xp { font: 800 12px 'Inter', sans-serif; color: #f6d873; flex-shrink: 0; }
   .rank-bar { height: 7px; border-radius: 999px; background: rgba(255,255,255,0.18); overflow: hidden; margin: 7px 0 5px; }
   .rank-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f6d873, #d4af37); box-shadow: 0 0 8px rgba(246,216,115,0.6); transition: width 0.5s ease; }
-  .rank-next { font: 600 11px 'Inter', sans-serif; color: rgba(250,243,237,0.82); }
-  .rank-badges { display: flex; align-items: center; gap: 5px; margin-top: 9px; }
-  .rank-badge-mini { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
-    background: linear-gradient(145deg, #f6d873, #c99a1e); color: #5a3d06; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-  .rank-badge-mini .ti { font-size: 13px; }
-  .rank-badge-more { font: 800 11px 'Inter', sans-serif; color: #f6d873; margin-left: 1px; }
-  .rank-badges-label { font: 600 11px 'Inter', sans-serif; color: rgba(250,243,237,0.82); margin-left: auto; }
-  .rank-badges-empty { font: 600 11px 'Inter', sans-serif; color: rgba(250,243,237,0.72); margin-top: 9px; }
-  .rank-go { position: absolute; right: 12px; bottom: 12px; font-size: 18px; color: rgba(250,243,237,0.6); z-index: 1; }
 
   /* ---- Trophy room sheet ---- */
   .trophy-hero { display: flex; align-items: center; gap: 16px; padding: 18px; border-radius: 20px; margin-bottom: 8px;
@@ -4383,7 +4379,6 @@
 
     document.getElementById('weekStack').innerHTML =
       weekTodayCard(todays, today) +
-      rankCardHTML() +
       weekBuildCard() +
       weekThisWeekCard(ws, curMon, byDay, today) +
       weekLoadCard() +
@@ -4599,29 +4594,21 @@
     '</div>';
   }
 
-  // Compact rank card for the Week stack — taps through to the trophy room.
-  function rankCardHTML(){
+  // Slim rank line folded into the Today hero — taps through to the trophy room.
+  function heroRankHTML(){
     const g = gameStats();
     const r = g.rank;
-    const earned = g.badges.filter(b => b.earned);
-    let badgesRow;
-    if(earned.length){
-      const shown = earned.slice(0, 4).map(b => '<span class="rank-badge-mini" title="'+esc(b.name)+'"><i class="ti '+b.icon+'" aria-hidden="true"></i></span>').join('');
-      const more = earned.length > 4 ? '<span class="rank-badge-more">+'+(earned.length-4)+'</span>' : '';
-      badgesRow = '<div class="rank-badges">'+shown+more+'<span class="rank-badges-label">'+earned.length+' badge'+(earned.length===1?'':'s')+'</span></div>';
-    } else {
-      badgesRow = '<div class="rank-badges-empty">Log a session to earn your first badge</div>';
-    }
-    const nextLine = r.next ? ('<strong>'+r.toNext+' XP</strong> to '+esc(r.next.name)) : 'Top rank reached — legend.';
-    return '<button class="rank-card" onclick="openTrophyRoom()" aria-label="Your athlete rank and badges">'+
-      rankMedalHTML(r)+
-      '<div class="rank-body">'+
-        '<div class="rank-top"><span class="rank-name">'+esc(r.name)+'</span><span class="rank-xp">'+r.xp+' XP</span></div>'+
-        '<div class="rank-bar"><span style="width:'+r.pct+'%"></span></div>'+
-        '<div class="rank-next">'+nextLine+'</div>'+
-        badgesRow+
-      '</div>'+
-      '<i class="ti ti-chevron-right rank-go" aria-hidden="true"></i>'+
+    const ring = 'background: conic-gradient(var(--gold) '+r.pct+'%, var(--line) 0);';
+    const badges = g.earnedCount ? (' · '+g.earnedCount+' badge'+(g.earnedCount===1?'':'s')) : '';
+    const nextLine = (r.next ? (r.toNext+' XP to '+esc(r.next.name)) : 'Top rank — legend') + badges;
+    return '<button class="hero-rank" onclick="openTrophyRoom()" aria-label="Your rank and badges">'+
+      '<span class="hero-rank-medal" style="'+ring+'"><span class="hero-rank-medal-in">'+r.level+'</span></span>'+
+      '<span class="hero-rank-body">'+
+        '<span class="hero-rank-top"><span class="hero-rank-name">'+esc(r.name)+'</span><span class="hero-rank-xp">'+r.xp+' XP</span></span>'+
+        '<span class="hero-rank-bar"><span style="width:'+r.pct+'%"></span></span>'+
+        '<span class="hero-rank-next">'+nextLine+'</span>'+
+      '</span>'+
+      '<i class="ti ti-chevron-right hero-rank-go" aria-hidden="true"></i>'+
     '</button>';
   }
 
@@ -4747,6 +4734,7 @@
       '<p class="card-hero-sub">'+subHTML+'</p>'+
       '<div class="week-today-cta">'+cta+'</div>'+
       '<p class="week-progress"><span class="week-progress-track"><span style="width:'+pct+'%"></span></span>'+esc(progress)+'</p>'+
+      heroRankHTML()+
     '</div>';
   }
 
