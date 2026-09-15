@@ -1413,6 +1413,20 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- STREAK CELEBRATION — a burst whenever the training streak grows -->
+<div class="streak-cel" id="streakCelebrate" hidden onclick="closeStreakCelebration()">
+  <div class="streak-cel-confetti" id="streakConfetti" aria-hidden="true"></div>
+  <div class="streak-cel-card" onclick="event.stopPropagation()">
+    <p class="streak-cel-milestone" id="streakCelMilestone" hidden><i class="ti ti-medal" aria-hidden="true"></i> Milestone</p>
+    <div class="streak-cel-flame">🔥</div>
+    <div class="streak-cel-num" id="streakCelNum">3</div>
+    <p class="streak-cel-days">day streak</p>
+    <p class="streak-cel-badge" id="streakCelBadge">Momentum</p>
+    <p class="streak-cel-sub" id="streakCelSub">Three in a row.</p>
+    <button class="streak-cel-btn" onclick="closeStreakCelebration()">Keep it up <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+  </div>
+</div>
+
 <!-- FIRST-RUN WALKTHROUGH — guides writing a vision + periodising the year -->
 <div class="wt" id="walkthrough" hidden>
   <div class="wt-card">
@@ -2328,6 +2342,29 @@
   .streak-chip-label { font-weight: 700; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.8; }
   .streak-chip.streak-off { color: var(--ink-mute); background: var(--cream); border-color: var(--line); font-weight: 700; font-size: 12px; }
   .streak-chip.streak-off .ti { color: var(--ink-mute); }
+  /* Streak celebration overlay */
+  .streak-cel { position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(26,20,17,0.62); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .streak-cel.open { opacity: 1; pointer-events: auto; }
+  .streak-cel-card { position: relative; z-index: 2; width: 100%; max-width: 340px; text-align: center;
+    background: var(--surface); border-radius: 24px; padding: 30px 26px 26px; box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    transform: scale(0.86) translateY(10px); opacity: 0; transition: transform 0.32s cubic-bezier(0.2,0.9,0.3,1.3), opacity 0.25s; }
+  .streak-cel.open .streak-cel-card { transform: scale(1) translateY(0); opacity: 1; }
+  .streak-cel-milestone { display: inline-flex; align-items: center; gap: 5px; font: 800 10px 'Inter', sans-serif; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--burgundy-dark); background: var(--gold); border-radius: 999px; padding: 4px 12px; margin: 0 0 12px; }
+  .streak-cel-flame { font-size: 60px; line-height: 1; animation: streak-flame 0.9s ease infinite alternate; }
+  @keyframes streak-flame { from { transform: scale(1) rotate(-4deg); } to { transform: scale(1.14) rotate(4deg); } }
+  .streak-cel-num { font: 800 76px 'Fraunces', serif; color: var(--burgundy); line-height: 1; margin-top: 4px; }
+  .streak-cel-days { font: 700 12px 'Inter', sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mute); margin: 2px 0 14px; }
+  .streak-cel-badge { font: 800 17px 'Inter', sans-serif; color: var(--gold-strong, #b8860b); margin: 0 0 6px; }
+  .streak-cel-sub { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); line-height: 1.5; margin: 0 0 20px; }
+  .streak-cel-btn { width: 100%; border: none; border-radius: 12px; padding: 14px; cursor: pointer;
+    background: var(--burgundy); color: var(--cream); font: 700 14px 'Inter', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .streak-cel-btn:hover { background: var(--burgundy-dark); }
+  .streak-cel-confetti { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+  .streak-cel-confetti .cfti { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; opacity: 0.95;
+    animation-name: cfti-fall; animation-timing-function: cubic-bezier(0.3,0.5,0.5,1); animation-iteration-count: 1; animation-fill-mode: both; }
+  @keyframes cfti-fall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(105vh) rotate(540deg); opacity: 0.9; } }
   /* The single hero / priority card per tab — a touch stronger */
   .card-hero { padding: 22px 22px 20px; }
   .card-hero-eyebrow {
@@ -3814,6 +3851,7 @@
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
       state.pbs = data.pbs || [];
       state.load = data.load || { weeks: [], summary: {} };
+      syncStreakSeen();   // baseline the streak so opening the app never triggers a celebration
       renderNav();
       await maybeAutoFillWeek();   // carry the owned program into an empty current week
       // A refresh resumes the tab you were on (sessionStorage). A fresh open
@@ -3854,6 +3892,7 @@
     state.games = demo.games || [];
     state.booking = demo.booking;
     state.planName = (demo.weeklyTemplate && demo.weeklyTemplate.name) || 'Swimming Performance';
+    syncStreakSeen();
     document.body.classList.add('signed-in');
     document.getElementById('appError').classList.remove('active');
     setLoading(false);
@@ -4234,6 +4273,63 @@
     else showToast('🔥 '+s.streak+'-day streak · '+s.total+' training days logged. Log again within '+STREAK_GRACE+' days to keep it going.', 'success');
   }
   window.streakTap = streakTap;
+
+  // ---- Streak celebration: a burst whenever the streak grows -----------------
+  function streakSeenKey(){ return 'aaStreakSeen:' + ((currentUser && currentUser.email) || 'anon'); }
+  function getStreakSeen(){ const v = parseInt(localStorage.getItem(streakSeenKey()),10); return isNaN(v) ? 0 : v; }
+  function setStreakSeen(n){ try { localStorage.setItem(streakSeenKey(), String(n)); } catch(e){} }
+  // Sync the stored value to the current streak WITHOUT celebrating — call on load
+  // so opening the app never triggers the screen; only a fresh log can.
+  function syncStreakSeen(){ setStreakSeen(streakInfo().streak); }
+  // Call after a session is logged: celebrate if the streak grew past what we've shown.
+  function maybeCelebrateStreak(){
+    const s = streakInfo().streak;
+    const seen = getStreakSeen();
+    setStreakSeen(s);
+    if(s > seen && s > 0) showStreakCelebration(s);
+  }
+  const STREAK_MILESTONES = [3,7,14,30,60,100];
+  function streakCelSub(n){
+    if(n>=100) return 'One hundred. You’re in rare company now.';
+    if(n>=60) return 'Sixty deep. This is just who you are.';
+    if(n>=30) return 'A full month. Serious athlete behaviour.';
+    if(n>=14) return 'Two weeks straight — the habit is real.';
+    if(n>=7)  return 'A full week of showing up. Big.';
+    if(n>=3)  return 'Three in a row. The engine’s turning over.';
+    return 'Streak started. Keep it rolling.';
+  }
+  function spawnStreakConfetti(){
+    const wrap = document.getElementById('streakConfetti'); if(!wrap) return;
+    const colors = ['#D4AF37','#874B46','#e0a52e','#4a9d5b','#f5e6b3'];
+    let html = '';
+    for(let i=0;i<26;i++){
+      const left = Math.round(Math.random()*100);
+      const delay = (Math.random()*0.5).toFixed(2);
+      const dur = (1.4 + Math.random()*1.2).toFixed(2);
+      const c = colors[i % colors.length];
+      const rot = Math.round(Math.random()*360);
+      html += '<span class="cfti" style="left:'+left+'%; background:'+c+'; animation-delay:'+delay+'s; animation-duration:'+dur+'s; transform:rotate('+rot+'deg);"></span>';
+    }
+    wrap.innerHTML = html;
+  }
+  function showStreakCelebration(n){
+    document.getElementById('streakCelNum').textContent = n;
+    document.getElementById('streakCelBadge').textContent = streakLabel(n);
+    document.getElementById('streakCelSub').textContent = streakCelSub(n);
+    const mile = document.getElementById('streakCelMilestone');
+    if(mile) mile.hidden = (STREAK_MILESTONES.indexOf(n) === -1);
+    spawnStreakConfetti();
+    const el = document.getElementById('streakCelebrate');
+    el.hidden = false; requestAnimationFrame(() => el.classList.add('open'));
+    try { navigator.vibrate && navigator.vibrate([25,40,25,40,60]); } catch(e){}
+  }
+  window.showStreakCelebration = showStreakCelebration;
+  function closeStreakCelebration(){
+    const el = document.getElementById('streakCelebrate');
+    el.classList.remove('open');
+    setTimeout(() => { el.hidden = true; const c=document.getElementById('streakConfetti'); if(c) c.innerHTML=''; }, 280);
+  }
+  window.closeStreakCelebration = closeStreakCelebration;
 
   // (a) TODAY hero — date, big session name, primary CTA, slim progress line (no load number).
   function weekTodayCard(todays, today){
@@ -5578,6 +5674,7 @@
     closeSheet();
     renderWeek(); renderBlockBar();
     showToast((logged ? 'Session logged' : 'Session planned') + programMsg, 'success');
+    if(logged) maybeCelebrateStreak();
     if(tplChanged) persistTemplate();
     if(askProgram) openProgramEditChoice(session.name);
     try {
@@ -6139,6 +6236,7 @@
     document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
     if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
     showToast(logged ? 'Workout logged 💪' : 'Workout saved', 'success');
+    if(logged) maybeCelebrateStreak();
     try {
       const res = await apiData({ action:'saveSession', session: Object.assign({}, wktSession, { id: isNew ? null : wktSession.id }) });
       if(res.success && res.id && isNew){ wktSession.id = res.id; if(activeTab==='week') renderWeek(); }
@@ -7317,6 +7415,7 @@
     }
     closeQuickLog();
     showToast('Logged '+saved+' session'+(saved===1?'':'s'), 'success');
+    if(saved) maybeCelebrateStreak();
   }
   window.confirmSaveAll = confirmSaveAll;
 
