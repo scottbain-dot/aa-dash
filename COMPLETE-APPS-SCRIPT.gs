@@ -244,6 +244,9 @@ function doGet(e) {
     if (action === 'getPBs') {
       return apJson(handleGetPBs(ss, e.parameter.athleteId));
     }
+    if (action === 'getExerciseHistory') {
+      return apJson(handleGetExerciseHistory(ss, e.parameter.athleteId, e.parameter.name, e.parameter.todayISO));
+    }
 
     // ===== CLASH OF THE CODES ACTIONS =====
     if (action === 'getClashTeams') {
@@ -3371,6 +3374,39 @@ function handleGetPBs(ss, athleteId) {
     }
     out.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
     return { success: true, pbs: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleGetExerciseHistory(ss, athleteId, name, todayISO) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    var q = String(name || '').trim().toLowerCase();
+    if (!athleteId || !q) return { success: true, name: name || '', history: [] };
+    var today = String(todayISO || '').trim();
+    var sheet = apEnsureTrainingSessions(ss);
+    var rows = apReadObjects(sheet);
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Athlete_ID).trim() !== String(athleteId).trim()) continue;
+      var d = apDateStr(rows[i].Date);
+      if (!d) continue;
+      if (today && d > today) continue;
+      var workout = apParse(rows[i].Planned_JSON, []);
+      if (!workout || !workout.length) continue;
+      for (var j = 0; j < workout.length; j++) {
+        var it = workout[j];
+        var nm = (it && (typeof it === 'string' ? it : it.name)) || '';
+        if (String(nm).trim().toLowerCase() !== q) continue;
+        var detail = (it && typeof it === 'object' && it.detail) ? it.detail : '';
+        var st = String(rows[i].Status || '').trim().toLowerCase();
+        out.push({ date: d, detail: detail, sport: rows[i].Sport || '', sessionName: rows[i].Name || '', logged: (st === 'done' || st === 'modified') });
+        break;
+      }
+    }
+    out.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
+    return { success: true, name: name || '', history: out };
   } catch (error) {
     return { success: false, error: error.toString() };
   }

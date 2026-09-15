@@ -1890,6 +1890,20 @@
   </div>
 </div>
 
+<!-- EXERCISE HISTORY — every past session with this exercise (sits above workout mode) -->
+<div class="sheet-backdrop" id="exhist-backdrop" onclick="closeExerciseHistory()"></div>
+<div class="sheet" id="exhistSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">Exercise history</p>
+      <h2 class="sheet-title" id="exhistTitle">Exercise</h2>
+    </div>
+    <button class="sheet-close" onclick="closeExerciseHistory()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body" id="exhistBody"></div>
+</div>
+
 <!-- PB ADD / EDIT SHEET -->
 <div class="sheet-backdrop" id="pb-backdrop" onclick="closePB()"></div>
 <div class="sheet" id="pbSheet">
@@ -2608,6 +2622,21 @@
   /* PB sheet sits above everything, including full-screen Workout mode (z 300) */
   #pb-backdrop.open { z-index: 390; }
   #pbSheet.open { z-index: 400; }
+  /* Exercise history sheet — must sit above workout mode (z ~300) and the PB sheet */
+  #exhist-backdrop.open { z-index: 410; }
+  #exhistSheet.open { z-index: 420; }
+  .exhist-pb { display: flex; align-items: center; gap: 8px; background: var(--gold-light); border-radius: 12px; padding: 11px 14px; margin: 0 0 14px;
+    font: 600 13px 'Inter', sans-serif; color: var(--burgundy); }
+  .exhist-pb .ti { font-size: 17px; color: #b8860b; }
+  .exhist-list { display: flex; flex-direction: column; }
+  .exhist-row { display: flex; align-items: center; gap: 12px; padding: 11px 2px; border-bottom: 1px solid var(--line-soft); }
+  .exhist-row:last-child { border-bottom: none; }
+  .exhist-date { flex: 0 0 58px; font: 700 11px 'Inter', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-mute); }
+  .exhist-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .exhist-detail { font: 600 14px 'Inter', sans-serif; color: var(--ink); }
+  .exhist-sub { font: 400 12px 'Inter', sans-serif; color: var(--ink-mute); }
+  .exhist-done { flex: 0 0 auto; color: var(--sage); font-size: 15px; }
+  .exhist-empty { text-align: center; padding: 24px 16px; color: var(--ink-mute); font-family: 'Inter', sans-serif; font-size: 13px; line-height: 1.55; }
   /* Swap affordance on a workout step */
   .workout-swap {
     flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line);
@@ -3801,6 +3830,11 @@
           { name:'Hex deadlift', detail:'4×5 @ ~120kg' }, { name:'Power clean', detail:'4×3 @ 85kg' } ] }
       ]
     }});
+    if(action==='getExerciseHistory') return Promise.resolve({ success:true, name: payload.name, history: [
+      { date: addDays(isoToday(),-3),  detail:'4x5 @ 130kg',   sport:'Strength', sessionName:'Lower - push', logged:true },
+      { date: addDays(isoToday(),-10), detail:'4x5 @ 127.5kg', sport:'Strength', sessionName:'Lower - push', logged:true },
+      { date: addDays(isoToday(),-17), detail:'4x5 @ 125kg',   sport:'Strength', sessionName:'Lower',        logged:true }
+    ]});
     if(action==='parseSessions') return Promise.resolve({ success:true, sessions: [
       { date: isoToday(), sport:'Run', name:'Easy run', duration:30, rpe:5, intensity:'easy',
         target:'Steady pace', note:'Felt good', readiness:{ feel:4, niggle:{ area:'left calf', severity:3, note:'tight after 20min' } }, confidence:'high' },
@@ -4868,10 +4902,13 @@
       const swap = (exId && swapCandidates(exId).length>1)
         ? '<button class="workout-swap" title="Swap exercise" aria-label="Swap exercise" onclick="event.stopPropagation(); openSwap('+i+')"><i class="ti ti-arrows-left-right" aria-hidden="true"></i></button>'
         : '';
+      const hist = name
+        ? '<button class="workout-swap" title="Exercise history" aria-label="Exercise history" onclick="event.stopPropagation(); stepExHistory('+i+')"><i class="ti ti-history" aria-hidden="true"></i></button>'
+        : '';
       return '<li class="workout-step tickable'+(isDone?' done':'')+'" onclick="toggleStep('+i+')">'+
         '<span class="workout-check"><i class="ti ti-check" aria-hidden="true"></i></span>'+
         '<div class="workout-step-content"><p class="workout-step-name">'+esc(name)+'</p>'+
-        (detail? '<p class="workout-step-detail">'+esc(detail)+'</p>':'')+'</div>'+swap+'</li>';
+        (detail? '<p class="workout-step-detail">'+esc(detail)+'</p>':'')+'</div>'+hist+swap+'</li>';
     }).join('');
     if(prog){
       const all = steps.length;
@@ -6148,7 +6185,7 @@
         (rx? '<p class="wkt-ex-rx">'+esc(rx)+'</p>':'')+
         (cue? '<p class="wkt-ex-cue">'+esc(cue)+'</p>':'')+
         (caution? '<span class="wkt-ex-caution"><i class="ti ti-alert-triangle" aria-hidden="true"></i> '+esc(caution)+'</span>':'')+
-        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' weight / reps</button><button class="wkt-ex-btn" onclick="wktLogPB('+i+')"><i class="ti ti-trophy" aria-hidden="true"></i> PB</button></div>')+
+        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' weight / reps</button><button class="wkt-ex-btn" onclick="wktExHistory('+i+')"><i class="ti ti-history" aria-hidden="true"></i> History</button><button class="wkt-ex-btn" onclick="wktLogPB('+i+')"><i class="ti ti-trophy" aria-hidden="true"></i> PB</button></div>')+
         editor+
       '</div>'+
     '</div>';
@@ -6170,6 +6207,52 @@
       date: (wktSession && wktSession.date) || isoToday(), sessionId: (wktSession && wktSession.id) || '' });
   }
   window.wktLogPB = wktLogPB;
+  function wktExHistory(i){ const it=((wktSession&&wktSession.workout)||[])[i]; if(it && it.name) openExerciseHistory(it.name, (wktSession&&wktSession.sport)||''); }
+  window.wktExHistory = wktExHistory;
+
+  // ---- Exercise history: every past session with this exercise -----------------
+  async function openExerciseHistory(name, sport){
+    if(!name) return;
+    document.getElementById('exhistTitle').textContent = name;
+    document.getElementById('exhistBody').innerHTML = '<p class="ql-help" style="margin-top:0;">Loading your history…</p>';
+    document.getElementById('exhist-backdrop').classList.add('open');
+    document.getElementById('exhistSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    let res = null;
+    try { res = await apiDataGet({ action:'getExerciseHistory', name: name, todayISO: isoToday() }); } catch(e){ res = null; }
+    renderExerciseHistory(name, (res && res.success) ? (res.history||[]) : null);
+  }
+  window.openExerciseHistory = openExerciseHistory;
+  function renderExerciseHistory(name, history){
+    const body = document.getElementById('exhistBody');
+    const pbs = (state.pbs||[]).filter(pb => (pb.exercise||'').toLowerCase() === (name||'').toLowerCase());
+    let head = '';
+    if(pbs.length){
+      const pb = pbs[0];
+      head = '<div class="exhist-pb"><i class="ti ti-trophy" aria-hidden="true"></i> <span>Personal best · <strong>'+esc(String(pb.value))+(pb.unit?' '+esc(pb.unit):'')+'</strong>'+(pb.date?' · '+fmtNice(pb.date):'')+'</span></div>';
+    }
+    if(history === null){ body.innerHTML = head + '<p class="ql-help">Couldn’t load your history right now — try again in a moment.</p>'; return; }
+    if(!history.length){ body.innerHTML = head + '<div class="exhist-empty"><div class="empty-state-icon"><i class="ti ti-history" aria-hidden="true"></i></div><p>No history yet. Log this exercise and every time you do it shows here — so you can see your progress.</p></div>'; return; }
+    const rows = history.map(h => '<div class="exhist-row">'+
+        '<span class="exhist-date">'+esc(fmtNice(h.date))+'</span>'+
+        '<span class="exhist-main"><span class="exhist-detail">'+esc(h.detail || '—')+'</span>'+
+          (h.sessionName ? '<span class="exhist-sub">'+esc(h.sessionName)+(h.sport?' · '+esc(h.sport):'')+'</span>' : '')+'</span>'+
+        (h.logged ? '<i class="ti ti-check exhist-done" title="Logged" aria-hidden="true"></i>' : '')+
+      '</div>').join('');
+    body.innerHTML = head +
+      '<p class="ql-help" style="margin-top:0;">'+history.length+' time'+(history.length===1?'':'s')+' — newest first.</p>'+
+      '<div class="exhist-list">'+rows+'</div>';
+  }
+  function closeExerciseHistory(){
+    document.getElementById('exhist-backdrop').classList.remove('open');
+    document.getElementById('exhistSheet').classList.remove('open');
+    const stillOpen = document.querySelector('.sheet.open') || document.getElementById('workoutMode').classList.contains('open');
+    document.body.style.overflow = stillOpen ? 'hidden' : '';
+  }
+  window.closeExerciseHistory = closeExerciseHistory;
+  function stepExHistory(i){ const it=((editing&&editing.workout)||[])[i]; if(!it) return; const nm = typeof it==='string'?it:it.name; if(nm) openExerciseHistory(nm, (editing&&editing.sport)||''); }
+  window.stepExHistory = stepExHistory;
+
   function wktEdit(i){ wktEditing = i; renderWorkoutMode(); }
   function wktCancelEdit(){ wktEditing = -1; renderWorkoutMode(); }
   function wktSaveEx(i){
