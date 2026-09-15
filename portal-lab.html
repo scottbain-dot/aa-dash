@@ -3422,21 +3422,28 @@
   .plan-dot.moderate { background: var(--int-moderate); }
   .plan-dot.hard { background: var(--int-hard); }
   .plan-dot.is-empty { background: transparent; border: 1.5px dashed var(--line); width: 11px; height: 11px; }
+  /* Completed session — the "check off" medallion in the timeline column */
   .plan-row.is-done .plan-dot { box-shadow: none; }
   .plan-dot.done {
-    width: 15px; height: 15px; background: linear-gradient(150deg, #8bab86 0%, #5f8b5c 100%);
+    width: 18px; height: 18px; background: linear-gradient(150deg, #93b58d 0%, #5a8757 100%);
     display: inline-flex; align-items: center; justify-content: center; color: #fff;
-    box-shadow: 0 1px 4px rgba(95,139,92,0.5), 0 0 0 3px rgba(122,144,120,0.16); }
-  .plan-dot.done .ti { font-size: 10px; font-weight: 800; }
+    box-shadow: 0 2px 5px rgba(90,135,87,0.45), 0 0 0 4px rgba(122,144,120,0.14);
+    animation: done-check-in 0.42s cubic-bezier(0.2,0.9,0.3,1.6) both; }
+  .plan-dot.done .ti { font-size: 12px; font-weight: 900; stroke-width: 2.5px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.18)); }
+  @keyframes done-check-in { 0% { transform: scale(0); } 55% { transform: scale(1.18); } 100% { transform: scale(1); } }
+  /* Completed session — the motivational reward chip */
   .done-flag {
-    display: inline-flex; align-items: center; gap: 3px; font-family: 'Inter', sans-serif; font-size: 10px;
-    font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #fff;
-    background: linear-gradient(135deg, #8bab86 0%, #5f8b5c 100%);
-    box-shadow: 0 1px 5px rgba(95,139,92,0.4), inset 0 1px 0 rgba(255,255,255,0.28);
-    border-radius: 999px; padding: 3px 9px 3px 6px; margin-left: 6px; vertical-align: middle;
-    animation: done-pop 0.34s cubic-bezier(0.2,0.9,0.3,1.5) both; }
-  .done-flag .ti { font-size: 12px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.12)); }
-  @keyframes done-pop { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+    display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; white-space: nowrap;
+    font-family: 'Inter', sans-serif; font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: #fff;
+    background: linear-gradient(135deg, #93b58d 0%, #5a8757 100%);
+    box-shadow: 0 2px 6px rgba(90,135,87,0.35), inset 0 1px 0 rgba(255,255,255,0.38);
+    border-radius: 999px; padding: 3px 10px 3px 3px; margin-left: 3px; vertical-align: middle;
+    animation: done-pop 0.38s cubic-bezier(0.2,0.9,0.3,1.5) both; }
+  .done-flag-ico {
+    display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%;
+    background: rgba(255,255,255,0.26); box-shadow: inset 0 1px 1px rgba(255,255,255,0.35); }
+  .done-flag .ti { font-size: 10px; font-weight: 900; }
+  @keyframes done-pop { 0% { transform: scale(0.5); opacity: 0; } 55% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
   .plan-info { min-width: 0; }
   .plan-name {
     font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink);
@@ -4829,7 +4836,7 @@
 
   // One clean row per session (mockup-style: day · dot · name + detail).
   // A stable, upbeat "done" word per session (deterministic from its id).
-  const DONE_WORDS = ['Done','Nailed it','Crushed it','In the bank','Smashed it','Logged'];
+  const DONE_WORDS = ['Done','Nailed it','Crushed it','Banked','Smashed it','Logged'];
   function doneWord(s){ let h=0; const id=String((s&&s.id)||(s&&s.name)||''); for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return DONE_WORDS[h % DONE_WORDS.length]; }
 
   function planRow(s, dayLabelHTML, iso, isToday){
@@ -4839,7 +4846,7 @@
     const dotCls = s.intensity ? ' '+s.intensity : '';
     const resultBit = (s.type==='game' && s.result) ? ' · '+esc(s.result) : '';
     const timeChip = fmt12(s.time) ? '<span class="plan-time"><i class="ti ti-clock" aria-hidden="true"></i> '+fmt12(s.time)+'</span>' : '';
-    const doneFlag = isLogged(s) ? ' <span class="done-flag"><i class="ti ti-circle-check-filled" aria-hidden="true"></i> '+doneWord(s)+'</span>' : '';
+    const doneFlag = isLogged(s) ? ' <span class="done-flag"><span class="done-flag-ico"><i class="ti ti-check" aria-hidden="true"></i></span>'+doneWord(s)+'</span>' : '';
     let meta;
     if(s.status==='missed') meta = 'Missed' + (s.note? ' · '+esc(s.note) : '');
     else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au'+resultBit;
