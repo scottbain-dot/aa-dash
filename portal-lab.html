@@ -3315,6 +3315,14 @@
   .plan-dot.hard { background: var(--int-hard); }
   .plan-dot.is-empty { background: transparent; border: 1.5px dashed var(--line); width: 11px; height: 11px; }
   .plan-row.is-done .plan-dot { box-shadow: 0 0 0 3px rgba(122,144,120,0.22); }
+  .plan-dot.done { background: var(--sage); box-shadow: none; display: inline-flex; align-items: center; justify-content: center; color: #fff; }
+  .plan-dot.done .ti { font-size: 9px; font-weight: 700; }
+  .done-flag {
+    display: inline-flex; align-items: center; gap: 3px; font-family: 'Inter', sans-serif; font-size: 10px;
+    font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; color: #fff; background: var(--sage);
+    border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: middle;
+  }
+  .done-flag .ti { font-size: 11px; }
   .plan-info { min-width: 0; }
   .plan-name {
     font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink);
@@ -4507,6 +4515,10 @@
   }
 
   // One clean row per session (mockup-style: day · dot · name + detail).
+  // A stable, upbeat "done" word per session (deterministic from its id).
+  const DONE_WORDS = ['Done','Nailed it','Crushed it','In the bank','Smashed it','Logged'];
+  function doneWord(s){ let h=0; const id=String((s&&s.id)||(s&&s.name)||''); for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return DONE_WORDS[h % DONE_WORDS.length]; }
+
   function planRow(s, dayLabelHTML, iso, isToday){
     let statusCls = '';
     if(s.status==='done' || s.status==='modified') statusCls = ' is-done';
@@ -4514,6 +4526,7 @@
     const dotCls = s.intensity ? ' '+s.intensity : '';
     const resultBit = (s.type==='game' && s.result) ? ' · '+esc(s.result) : '';
     const timeChip = fmt12(s.time) ? '<span class="plan-time"><i class="ti ti-clock" aria-hidden="true"></i> '+fmt12(s.time)+'</span>' : '';
+    const doneFlag = isLogged(s) ? ' <span class="done-flag"><i class="ti ti-circle-check-filled" aria-hidden="true"></i> '+doneWord(s)+'</span>' : '';
     let meta;
     if(s.status==='missed') meta = 'Missed' + (s.note? ' · '+esc(s.note) : '');
     else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au'+resultBit;
@@ -4526,8 +4539,8 @@
     return '<div class="swipe-wrap" data-id="'+esc(s.id)+'" data-day="'+esc(iso)+'">'+
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
-        '<span class="plan-dot'+dotCls+'" aria-hidden="true"></span>'+
-        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
+        '<span class="plan-dot'+dotCls+(isLogged(s)?' done':'')+'" aria-hidden="true">'+(isLogged(s)?'<i class="ti ti-check"></i>':'')+'</span>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+doneFlag+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
         '<span class="plan-grip" aria-label="Drag to move to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
       '</div>'+
