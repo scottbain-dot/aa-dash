@@ -247,8 +247,9 @@
     <a href="#repeat"><b>7</b> Make it repeat</a>
     <a href="#workout"><b>8</b> Run your workout</a>
     <a href="#log"><b>9</b> Log a session</a>
-    <a href="#book"><b>10</b> Book a check-in</a>
-    <a href="#soon"><b>11</b> Coming soon</a>
+    <a href="#rewards"><b>10</b> Streak, XP and badges</a>
+    <a href="#book"><b>11</b> Book a check-in</a>
+    <a href="#soon"><b>12</b> Coming soon</a>
   </nav>
 
   <!-- 1 -->
@@ -322,7 +323,9 @@
       </div>
       <ul class="dos" style="margin-top:16px;">
         <li><strong>Today</strong>: one tap to log or add today's session.</li>
-        <li><strong>This week</strong>: every day, with arrows to look ahead or back.</li>
+        <li><strong>Your streak and rank</strong> sit right on the Today card, so you can see what showing up is earning you (step 10).</li>
+        <li><strong>This week</strong>: every day, with arrows to look ahead or back. A day you've logged gets a green tick and a well-done.</li>
+        <li><strong>Two sessions in one day?</strong> Give them a <strong>time</strong> and they sit in the right order, so a morning gym and an afternoon practice don't get mixed up.</li>
         <li><strong>Load</strong>: plain-language read on whether you're doing too much, too little, or about right.</li>
         <li><strong>This week's mix</strong>: how many easy / moderate / hard days you've got.</li>
       </ul>
@@ -333,13 +336,17 @@
   <section class="step" id="build">
     <div class="step-head">
       <span class="step-num">4</span>
-      <div class="step-titles"><p class="step-sub">Build my program</p><h2>Three ways to build it</h2></div>
+      <div class="step-titles"><p class="step-sub">Build my program</p><h2>Four ways to build it</h2></div>
     </div>
     <div class="step-body">
-      <p>Tap <strong>Build my program</strong> at the top of My Program. You've got three routes:</p>
+      <p>Tap <strong>Build my program</strong> at the top of My Program. You've got a few routes:</p>
       <div class="mock">
         <div class="m-pad">
-          <p class="m-eyebrow">Build with AI · your choices</p>
+          <p class="m-eyebrow">Build with AI · two ways in</p>
+          <div style="display:flex;gap:4px;background:var(--sunk);padding:4px;border-radius:10px;margin-bottom:14px;">
+            <span style="flex:1;text-align:center;padding:8px;border-radius:7px;background:var(--burgundy);color:#fff;font-weight:700;font-size:13px;">Describe it</span>
+            <span style="flex:1;text-align:center;padding:8px;border-radius:7px;color:var(--ink-mute);font-weight:700;font-size:13px;">Paste a plan</span>
+          </div>
           <p class="chip-lbl">Your goal</p>
           <div class="m-chips"><span class="chip on">💪 Strength</span><span class="chip">⚡ Power</span><span class="chip">🏃 Endurance</span><span class="chip">✨ Other</span></div>
           <p class="chip-lbl">Days per week</p>
@@ -349,10 +356,12 @@
         </div>
       </div>
       <ol class="dos" style="margin-top:16px;">
-        <li><strong>Build with AI</strong>: answer a few quick taps (goal, days, time, equipment, team days), then it writes you a program you can review and tweak.</li>
+        <li><strong>Build with AI · Describe it</strong>: answer a few quick taps (goal, days, time, equipment, team days), then it writes you a program you can review and tweak.</li>
+        <li><strong>Build with AI · Paste a plan</strong>: already got a program from a coach, a website or a screenshot you've typed up? Paste the whole thing in and it reads it and builds it for you. It can handle a plan up to <strong>4 weeks</strong> long, and keeps each week separate.</li>
         <li><strong>Add sessions yourself</strong>: build your week by hand, one session at a time.</li>
         <li><strong>Ready-made programs</strong>: pick-and-go plans by goal and sport. <em>Coming soon.</em></li>
       </ol>
+      <div class="tip"><span class="t-ic">✅</span><span><strong>Nothing is saved until you say so.</strong> Whichever route you pick, you get a review screen first: tick the days you want to keep, drop the ones you don't, then save.</span></div>
       <div class="tip"><span class="t-ic">✍️</span><span><strong>The text box is the most powerful part.</strong> The chips are quick hints, but the “anything else” box is where you say what you really want in your own words: “I play rugby and want to get more explosive, my left knee gets sore so nothing too heavy on squats.” It listens to that first.</span></div>
     </div>
   </section>
@@ -414,7 +423,10 @@
         <li><strong>Auto-repeat</strong> fills your empty future weeks from your program, so you're never staring at a blank week.</li>
         <li>On a week that's only half full, <strong>“Fill this week from your program”</strong> tops up the missing days.</li>
         <li>Change a repeating session (swap an exercise, change the plan) and it asks whether to <strong>save that to your program</strong> or keep it to this week.</li>
+        <li><strong>A program can be longer than one week.</strong> Build it as <strong>1 to 4 weeks</strong> and it loops, so a proper block (two steady weeks, a hard week, then an easier one) repeats by itself.</li>
+        <li><strong>You can keep more than one program.</strong> Give each a name (in-season, off-season, exam weeks) and switch which one is <strong>active</strong>. Only the active one fills your weeks, and the others sit there waiting.</li>
       </ul>
+      <div class="tip"><span class="t-ic">🔁</span><span><strong>Switching programs doesn't wipe anything.</strong> Weeks you've already logged stay exactly as they were. The new program just takes over from here.</span></div>
       <div class="tip"><span class="t-ic">💡</span><span>Just logging your weights or reps <strong>never</strong> changes your program. That's your record of the session, not the plan. Only changes to the plan itself ask.</span></div>
     </div>
   </section>
@@ -443,6 +455,7 @@
         <li><strong>Tick each exercise off</strong> as you finish it. The bar at the top fills as you go.</li>
         <li><strong>Went heavier or lighter?</strong> Change the weight, reps, sets or time on the exercise. If you change the target, it asks whether to <strong>save that to your program</strong> for next time.</li>
         <li><strong>Rest timer</strong> between sets: tap to start, add time if you need it.</li>
+        <li><strong>History</strong> on any exercise shows every time you've done it before, newest first, with your best on top. Handy when you can't remember what you lifted last week.</li>
         <li><strong>Finish</strong> and it logs the session for you, so your load stays up to date.</li>
       </ul>
       <div class="tip"><span class="t-ic">🏋️</span><span>Not a gym day? Team practices and games have no workout screen. Just log the time and effort, that's the next step.</span></div>
@@ -471,9 +484,62 @@
   </section>
 
   <!-- 10 -->
-  <section class="step" id="book">
+  <section class="step" id="rewards">
     <div class="step-head">
       <span class="step-num">10</span>
+      <div class="step-titles"><p class="step-sub">What logging earns you</p><h2>Your streak, XP and badges</h2></div>
+    </div>
+    <div class="step-body">
+      <p>Every session you log counts for something. The portal keeps score of <strong>how consistently you show up</strong>, not how strong you are, so this is one part of the app where turning up regularly beats being the most talented.</p>
+      <div class="mock"><div class="m-pad">
+        <p class="m-eyebrow">On your Today card</p>
+        <span style="display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,#ffb03a,#f77f1c 48%,#e2551d);color:#fff;font-weight:800;font-size:14px;border-radius:999px;padding:6px 13px 6px 8px;box-shadow:0 3px 10px rgba(226,85,29,.34);">
+          <span style="width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#fff5d6,#ffd24a 60%,#ffab2e);display:inline-flex;align-items:center;justify-content:center;font-size:12px;">🔥</span>
+          6 <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase;opacity:.92;">day streak</span>
+        </span>
+        <div style="display:flex;align-items:center;gap:11px;margin-top:15px;padding-top:14px;border-top:1px solid var(--line);">
+          <span style="width:34px;height:34px;border-radius:50%;background:conic-gradient(var(--gold) 72%, var(--line) 0);display:flex;align-items:center;justify-content:center;padding:3px;flex:0 0 auto;">
+            <span style="width:100%;height:100%;border-radius:50%;background:#7c4340;color:#f6d873;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">2</span>
+          </span>
+          <span style="flex:1;min-width:0;">
+            <span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;"><b style="font-size:14px;">Prospect</b><b style="font-size:11px;color:var(--gold);">240 XP</b></span>
+            <span style="display:block;height:6px;border-radius:999px;background:var(--line);overflow:hidden;margin:6px 0 4px;"><i style="display:block;height:100%;width:72%;border-radius:999px;background:linear-gradient(90deg,#e8c969,#d4af37);"></i></span>
+            <span style="font-size:10.5px;color:var(--ink-mute);">10 XP to Contender · 3 badges</span>
+          </span>
+        </div>
+      </div></div>
+      <p class="mock-cap">Tap that rank line any time to open your <strong>trophy room</strong>.</p>
+      <ul class="dos" style="margin-top:16px;">
+        <li><strong>Your streak</strong> counts the days you've logged training. Rest days don't kill it: leave it a few days and it keeps going, but disappear for a week and it resets. Hit a week and the flame turns up a notch.</li>
+        <li><strong>XP and your rank.</strong> Every session is <strong>+10 XP</strong>, every PB <strong>+30</strong>, every badge <strong>+20</strong>. Enough XP and you rank up: Rookie → Prospect → Contender → Competitor → Athlete → Elite → Champion → Legend.</li>
+        <li><strong>Badges</strong> come in three sets: <strong>Consistency</strong> (streaks), <strong>Volume</strong> (sessions logged) and <strong>Records</strong> (PBs). Locked ones show how close you are, like <em>6 / 7</em>.</li>
+        <li><strong>The trophy room</strong> has the lot: your rank, sessions logged, PBs, best streak ever, and every badge you've earned or are chasing.</li>
+      </ul>
+      <div class="mock" style="margin-top:16px;"><div class="m-pad">
+        <p class="m-eyebrow">Consistency</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+          <div style="text-align:center;border:1px solid var(--gold-soft);border-radius:14px;padding:12px 6px;background:var(--sunk);">
+            <span style="width:36px;height:36px;margin:0 auto 7px;border-radius:12px;background:linear-gradient(145deg,#f6d873,#d4af37 55%,#b8860b);display:flex;align-items:center;justify-content:center;font-size:17px;">🔥</span>
+            <b style="font-size:11.5px;display:block;">Momentum</b><span style="font-size:10px;color:var(--gold);font-weight:700;">Earned</span>
+          </div>
+          <div style="text-align:center;border:1px solid var(--line);border-radius:14px;padding:12px 6px;">
+            <span style="width:36px;height:36px;margin:0 auto 7px;border-radius:12px;background:var(--line-soft);display:flex;align-items:center;justify-content:center;font-size:17px;opacity:.45;">🔥</span>
+            <b style="font-size:11.5px;display:block;color:var(--ink-mute);">Week Warrior</b><span style="font-size:10px;color:var(--ink-mute);font-weight:700;">6 / 7</span>
+          </div>
+          <div style="text-align:center;border:1px solid var(--line);border-radius:14px;padding:12px 6px;">
+            <span style="width:36px;height:36px;margin:0 auto 7px;border-radius:12px;background:var(--line-soft);display:flex;align-items:center;justify-content:center;font-size:17px;opacity:.45;">⚡</span>
+            <b style="font-size:11.5px;display:block;color:var(--ink-mute);">Locked In</b><span style="font-size:10px;color:var(--ink-mute);font-weight:700;">6 / 14</span>
+          </div>
+        </div>
+      </div></div>
+      <div class="tip"><span class="t-ic">🏅</span><span>Grow your streak or unlock a badge and you get a little celebration on screen. Log honestly though: the point is the training, and a streak you faked doesn't make you fitter.</span></div>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="step" id="book">
+    <div class="step-head">
+      <span class="step-num">11</span>
       <div class="step-titles"><p class="step-sub">The Book tab</p><h2>Book a check-in with Mr Bain</h2></div>
     </div>
     <div class="step-body">
@@ -500,10 +566,10 @@
     </div>
   </section>
 
-  <!-- 11 -->
+  <!-- 12 -->
   <section class="step" id="soon">
     <div class="step-head">
-      <span class="step-num">11</span>
+      <span class="step-num">12</span>
       <div class="step-titles"><p class="step-sub">On the way</p><h2>Coming soon</h2></div>
     </div>
     <div class="step-body">
