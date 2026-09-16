@@ -2574,11 +2574,21 @@
     const payload = JSON.parse(atob(response.credential.split('.')[1]));
     currentUser = {
       email: payload.email,
-      name: payload.name
+      name: payload.name,
+      // Kept so the server can VERIFY who this is with Google. Nothing decoded
+      // here is trusted for authorisation — the client can't be believed.
+      credential: response.credential
     };
     document.getElementById('authGate').classList.add('hidden');
     document.getElementById('userBadge').style.display = 'flex';
     document.getElementById('userName').textContent = currentUser.name.split(' ')[0];
+    if (isTeacherView) {
+      // Class-wide results: show the teacher view only if the SERVER agrees
+      // this signed-in account is staff.
+      document.getElementById('teacherRoot').style.display = 'block';
+      loadTeacherData();
+      return;
+    }
     document.getElementById('appRoot').style.display = 'block';
     // checklist progress is keyed by email — reload now that we know who it is
     loadTasks();
@@ -2688,15 +2698,30 @@
   }
 
   // ============================================
-  // TEACHER VIEW — ungated, matches admin.html convention
+  // TEACHER VIEW — staff only. Requires a signed-in Google account that the
+  // server verifies with Google and checks against the staff allowlist.
   // ============================================
   async function loadTeacherData() {
     document.getElementById('teacherStats').innerHTML = '<div class="empty-state">Loading…</div>';
     document.getElementById('teacherQuestions').innerHTML = '';
+    if (!currentUser || !currentUser.credential) {
+      document.getElementById('teacherStats').innerHTML = '<div class="empty-state">Sign in with your school account to see class results.</div>';
+      return;
+    }
     try {
-      const url = APPS_SCRIPT_URL + '?action=getFuelLabQuizStats&_t=' + Date.now();
+      const url = APPS_SCRIPT_URL + '?action=getFuelLabQuizStats'
+        + '&idToken=' + encodeURIComponent(currentUser.credential)
+        + '&_t=' + Date.now();
       const res = await fetch(url);
       const data = await res.json();
+      if (data && data.success === false) {
+        document.getElementById('teacherStats').innerHTML =
+          '<div class="empty-state">' + (data.error === 'Not authorised'
+            ? 'This page is for staff only.'
+            : 'Sign in with your school account to see class results.') + '</div>';
+        document.getElementById('teacherQuestions').innerHTML = '';
+        return;
+      }
       renderTeacherView(data);
     } catch (err) {
       document.getElementById('teacherStats').innerHTML = '<div class="empty-state">Could not load stats: ' + err.message + '</div>';
@@ -2764,17 +2789,16 @@
   }
 
   // ============================================
-  // INIT — teacher view skips the auth gate (matches the admin.html convention,
-  // which is reachable directly by URL). Student view requires Google sign-in.
+  // INIT — both views require Google sign-in. The teacher view used to skip the
+  // gate entirely, which meant anyone who guessed ?view=teacher saw class-wide
+  // results. It now signs in like everyone else and the server decides.
   // ============================================
   document.addEventListener('DOMContentLoaded', () => {
     if (isTeacherView) {
-      document.getElementById('authGate').classList.add('hidden');
       document.getElementById('appRoot').style.display = 'none';
-      document.getElementById('teacherRoot').style.display = 'block';
-      loadTeacherData();
+      document.getElementById('teacherRoot').style.display = 'none';
     }
-    // Student flow: leave auth gate visible. Google's data-callback wires up
+    // Both flows: leave the auth gate visible. Google's data-callback wires up
     // handleCredentialResponse automatically once the user signs in.
   });
 
