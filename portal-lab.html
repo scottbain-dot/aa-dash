@@ -2504,6 +2504,111 @@
     border-radius: 12px; padding: 12px 14px; font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin: 0 0 16px; }
   .learn-lesson-note .ti { color: var(--burgundy); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 
+  /* ---- Learn lesson bodies ---- */
+  .learn-lesson-intro { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); line-height: 1.55; margin: 0 0 18px; }
+  .learn-p { font: 400 14px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.6; margin: 0 0 12px; }
+  .learn-sec { font: 800 10px 'Inter', sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: var(--burgundy); margin: 26px 0 12px; }
+  .learn-videos { display: flex; flex-direction: column; gap: 14px; }
+  .learn-video iframe { width: 100%; aspect-ratio: 16/9; border: none; border-radius: 14px; background: var(--cream); display: block; }
+  .learn-video-cap { font: 600 12px 'Inter', sans-serif; color: var(--ink-mute); margin: 6px 0 0; }
+  /* Myth cards — tap to flip, two faces stacked */
+  .myth-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .myth-card { position: relative; min-height: 132px; cursor: pointer; text-align: left; border: 1px solid var(--line);
+    background: var(--cream); border-radius: 14px; padding: 13px; overflow: hidden; transition: border-color 0.15s, box-shadow 0.15s; }
+  .myth-card:hover { border-color: var(--burgundy); box-shadow: var(--shadow-card); }
+  .myth-front, .myth-back { display: flex; flex-direction: column; gap: 6px; transition: opacity 0.22s ease; }
+  .myth-back { position: absolute; inset: 0; padding: 13px; background: var(--surface); opacity: 0; pointer-events: none; overflow-y: auto; }
+  .myth-card.flipped .myth-front { opacity: 0; }
+  .myth-card.flipped .myth-back { opacity: 1; }
+  .myth-label { font: 800 9px 'Inter', sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mute); }
+  .myth-claim { font: 600 13.5px 'Inter', sans-serif; color: var(--ink); line-height: 1.35; }
+  .myth-tap { margin-top: auto; font: italic 400 11px 'Fraunces', serif; color: var(--burgundy); }
+  .myth-verdict { align-self: flex-start; font: 800 9px 'Inter', sans-serif; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #fff; background: var(--burgundy); border-radius: 999px; padding: 3px 9px; }
+  .myth-text { font: 400 11.5px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.45; }
+  /* Lesson questions */
+  .lq-list { display: flex; flex-direction: column; gap: 16px; }
+  .lq { display: flex; gap: 11px; padding: 14px; border: 1px solid var(--line-soft); border-radius: 14px; background: var(--cream); }
+  .lq.needs { border-color: var(--int-hard); background: #fdf3f2; }
+  .lq-n { width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--burgundy); color: var(--cream); font: 800 12px 'Inter', sans-serif; }
+  .lq-body { flex: 1; min-width: 0; }
+  .lq-q { font: 600 14.5px 'Inter', sans-serif; color: var(--ink); line-height: 1.4; margin: 2px 0 10px; }
+  .lq-hint { font: italic 400 12px 'Fraunces', serif; color: var(--ink-mute); margin: -6px 0 10px; }
+  .lq-opts { display: flex; flex-direction: column; gap: 7px; }
+  .lq-opt { display: flex; align-items: flex-start; gap: 9px; cursor: pointer; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; transition: border-color 0.15s, background 0.15s; }
+  .lq-opt:hover { border-color: var(--burgundy); }
+  .lq-opt input { margin: 2px 0 0; accent-color: var(--burgundy); flex-shrink: 0; }
+  .lq-opt span { font: 400 13.5px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.4; }
+  .lq-opt:has(input:checked) { border-color: var(--burgundy); background: var(--gold-light, #f5e6b3); }
+  .lq-text { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; resize: vertical;
+    font: 400 14px 'Inter', sans-serif; color: var(--ink); background: var(--surface); }
+  .lq-text:focus { outline: none; border-color: var(--burgundy); }
+  /* Marked results */
+  .lm-wrap { margin: 20px 0 4px; }
+  .lm-head { font: 800 11px 'Inter', sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--burgundy); margin: 0 0 12px; }
+  .lm { display: flex; gap: 10px; padding: 11px 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--line-soft); background: var(--cream); }
+  .lm-ic { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; }
+  .lm-ic .ti { font-size: 13px; }
+  .lm.ok   .lm-ic { background: var(--sage); }
+  .lm.part .lm-ic { background: var(--amber); }
+  .lm.no   .lm-ic { background: var(--int-hard); }
+  .lm.pend .lm-ic { background: var(--ink-mute); }
+  .lm.ok { border-color: rgba(122,144,120,0.4); }
+  .lm-q { font: 600 13px 'Inter', sans-serif; color: var(--ink); margin: 0 0 3px; line-height: 1.35; }
+  .lm-fb { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-soft); margin: 0; line-height: 1.5; }
+  .lm-fb em { color: var(--burgundy); font-style: italic; }
+  .learn-done-btn { width: 100%; margin-top: 20px; }
+  /* Sport picker */
+  .sportpick-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 8px; }
+  .sportpick { cursor: pointer; background: var(--cream); border: 1px solid var(--line); border-radius: 10px; padding: 11px 10px;
+    font: 600 13px 'Inter', sans-serif; color: var(--ink-soft); transition: all 0.14s; }
+  .sportpick:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .sportpick.active { background: var(--burgundy); border-color: var(--burgundy); color: var(--cream); font-weight: 700; }
+  .sport-out { margin-top: 20px; }
+  .sysbar { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .sysbar-lab { font: 600 11.5px 'Inter', sans-serif; color: var(--ink-mute); width: 118px; flex-shrink: 0; }
+  .sysbar-track { flex: 1; height: 10px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
+  .sysbar-fill { display: block; height: 100%; border-radius: 999px; transition: width 0.5s ease; }
+  .sysbar-fill.red { background: var(--int-hard); }
+  .sysbar-fill.yellow { background: var(--int-moderate); }
+  .sysbar-fill.green { background: var(--int-easy); }
+  .sysbar-val { font: 800 12px 'Inter', sans-serif; color: var(--ink); width: 34px; text-align: right; flex-shrink: 0; }
+  .sport-take { font: italic 400 14px 'Fraunces', serif; color: var(--ink-soft); line-height: 1.55; margin: 14px 0 0; }
+  .fuelmatch { margin-top: 16px; border: 1px solid var(--gold); background: #fffaf0; border-radius: 14px; padding: 14px 16px; }
+  .fuelmatch-label { font: 800 12px 'Inter', sans-serif; color: var(--gold-strong, #b8860b); margin: 0 0 8px; letter-spacing: 0.03em; }
+  .fuelmatch ul { margin: 0; padding-left: 18px; }
+  .fuelmatch li { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin-bottom: 6px; }
+  /* Recovery lesson */
+  .art-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+  .art-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--cream); }
+  .art-letter { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9px;
+    background: var(--burgundy); color: var(--cream); font: 800 16px 'Fraunces', serif; }
+  .art-word { font: 800 17px 'Fraunces', serif; color: var(--ink); margin: 8px 0 6px; }
+  .art-card ul { margin: 0; padding-left: 17px; }
+  .art-card li { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.45; margin-bottom: 5px; }
+  .learn-callout { border-left: 3px solid var(--burgundy); background: var(--cream); border-radius: 0 12px 12px 0; padding: 14px 16px; margin: 20px 0; }
+  .learn-callout.gold { border-left-color: var(--gold); background: #fffaf0; }
+  .learn-callout p { font: 400 13.5px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.6; margin: 0; }
+  .learn-callout h4 { font: 800 20px 'Fraunces', serif; color: var(--ink); margin: 0 0 6px; }
+  .lc-eyebrow { font: 800 9px 'Inter', sans-serif !important; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--gold-strong, #b8860b) !important; margin: 0 0 4px !important; }
+  .snack-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+  .snack-chip { font: 600 12.5px 'Inter', sans-serif; color: var(--ink-soft); background: var(--cream);
+    border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+  .vs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+  .vs-side { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--cream); }
+  .vs-side h4 { font: 800 15px 'Fraunces', serif; color: var(--burgundy); margin: 0 0 6px; }
+  .vs-side p { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin: 0 0 8px; }
+  .vs-when { font: 700 10px 'Inter', sans-serif; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-mute); }
+  .sign-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .sign-col { border: 1px solid var(--line-soft); border-radius: 14px; padding: 13px; }
+  .sign-col h4 { font: 700 13.5px 'Inter', sans-serif; color: var(--ink); margin: 0; }
+  .sign-sub { font: italic 400 11px 'Fraunces', serif; color: var(--ink-mute); margin: 2px 0 8px; }
+  .sign-col ul { margin: 0; padding-left: 16px; }
+  .sign-col li { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin-bottom: 4px; }
+
   /* ---- Trophy room sheet ---- */
   .trophy-hero { display: flex; align-items: center; gap: 16px; padding: 18px; border-radius: 20px; margin-bottom: 8px;
     background: linear-gradient(135deg, #7c4340 0%, #8f5450 45%, #5f3430 100%); color: var(--cream); position: relative; overflow: hidden; }
@@ -4592,26 +4697,284 @@
     '</div>';
   }
 
-  // Lesson bodies land in the next phases; the shell proves navigation and
-  // that progress round-trips to the sheet.
+  // ---- Fuel block content (ported from the Fuel Lab unit) ----
+  const FUEL_VIDEOS = [
+    { id:'440fa39a30394d14a48f0d90ed300d8d', title:'What is Food? — Part 1' },
+    { id:'f2202193bc0c47888850cbb2252abc2a', title:'What is Food? — Part 2' },
+    { id:'9d71f8bf4362480aa646e454b551d9ae', title:'What is Food? — Part 3' }
+  ];
+  const FUEL_MYTHS = [
+    { claim:'“Energy drinks give you long-lasting energy.”', verdict:'Mostly false', text:'Energy drinks give you a short caffeine + sugar spike followed by a crash. They’re not “fuel” — they’re stimulants with sugar. For sustained energy in sport, food and a sensible pre-game meal beats them every time.' },
+    { claim:'“You need a protein shake right after training or you’ll lose your gains.”', verdict:'Exaggerated', text:'The “anabolic window” is wider than 30 minutes. Eating decent protein within a few hours of training is what matters. A sandwich, milk, or a normal meal works fine — shakes are convenient, not magic.' },
+    { claim:'“Carbs are bad and make you slow.”', verdict:'False', text:'For most sports, carbs are the #1 fuel for working muscles. Skipping them tanks your performance. The type matters (whole grains, fruit, veg over refined sugar most of the time) but cutting carbs as an athlete is a bad call.' },
+    { claim:'“Skipping breakfast is fine, you’ll burn more fat.”', verdict:'Bad for performance', text:'For an athlete training in school PE or before a game, skipping breakfast means you start the day under-fuelled. You’ll feel flat, lose focus, and underperform. Fat loss isn’t the goal — performance is.' },
+    { claim:'“Eating fat makes you fat.”', verdict:'False', text:'Healthy fats (avocado, nuts, olive oil, oily fish) are essential for hormones, brain function, and joints. What makes you gain unwanted weight is a sustained surplus of total energy — not fat specifically.' },
+    { claim:'“Athletes need supplements to perform.”', verdict:'Mostly false', text:'For 99% of school-age athletes, real food covers it. Supplements are a tiny edge at the very top end. Get your sleep, hydration, and three good meals dialled before even thinking about a tub of anything.' },
+    { claim:'“Sports drinks are necessary for any workout.”', verdict:'Mostly false', text:'For a normal PE session or short game, water is fine. Sports drinks earn their place in long efforts (over 60–90 min) or hot conditions where you’re losing meaningful sweat and fuel.' },
+    { claim:'“You should eat right before competing for energy.”', verdict:'Depends', text:'A big meal too close to competition can leave you sluggish or queasy. A proper meal 2–3 hours before, and a small top-up snack 30–60 min before, is the usual play.' }
+  ];
+  // The Nutrition Intro questions. MCQs mark themselves; written answers go to
+  // the AI marker against the rubric, which is never shown to the student.
+  const FUEL_INTRO_Q = [
+    { id:'q1',  type:'mcq', q:'What are macronutrients?',
+      options:['Carbohydrates, Vitamins, Fat','Vitamins, Minerals, Water','Carbohydrates, Protein, Fat, Water','Carbohydrates, Protein, Fat, Calcium'], answer:2 },
+    { id:'q2',  type:'mcq', q:'Carbs are our main source of energy?', options:['True','False'], answer:0 },
+    { id:'q3',  type:'written', q:'Why are simple carbs generally thought of as the “bad” carbs?',
+      rubric:'Refined or heavily processed, with nutrients and fibre stripped out; they digest fast so energy spikes and then crashes.' },
+    { id:'q4',  type:'mcq', q:'When can simple carbs be useful for an athlete?',
+      options:['When they want a treat','When they need quick energy','When they don’t have other options available','All of the above'], answer:3 },
+    { id:'q5',  type:'written', q:'Why are complex carbs generally thought of as the “good” carbs?',
+      rubric:'Closer to natural or whole food so they keep their vitamins and minerals, and they break down slowly so the energy lasts longer.' },
+    { id:'q6',  type:'mcq', q:'Protein is made up of long chains of what?',
+      options:['Aminos','Amino Acids','Acids','Athletic Academies'], answer:1 },
+    { id:'q7',  type:'written', q:'Why is it important to have a range of good protein sources?', hint:'Think essential amino acids.',
+      rubric:'No single protein source has all nine essential amino acids, and the body cannot make them itself, so eating a variety covers the gaps.' },
+    { id:'q8',  type:'mcq', q:'What are the main reasons for including good quality fats in our diet?',
+      options:['Energy','Brain function','Hormone Production','All of the above'], answer:3 },
+    { id:'q9',  type:'mcq', q:'What are micronutrients?',
+      options:['Small Fats, Carbs and Protein','Vitamins and Minerals','Supplements and Pills','None of the above'], answer:1 },
+    { id:'q10', type:'written', q:'What is a possible problem with diets that tell you to cut out a macronutrient (carbs or fats)?',
+      rubric:'Cutting one out removes something the body needs — energy, hormone production or brain function — which causes deficiencies and is not sustainable.' },
+    { id:'q11', type:'mcq', q:'How can we make sure we get enough micronutrients in our diets?',
+      options:['Follow a popular diet like vegan, carnivore, low carb etc','Take supplements for every vitamin to be sure','Eat a wide range of foods from quality sources'], answer:2 },
+    { id:'q12', type:'written', q:'What is a healthy diet for an Athlete? Write your own personal definition.',
+      rubric:'Judged on genuine personal thinking rather than one right answer: mentions variety and food quality, and links what they eat to training, performance or recovery.' }
+  ];
+  const WRITTEN_MIN = 15;   // characters — a real attempt, not a shrug
+  const FUEL_SPORTS = [
+    { id:'basketball',        name:'Basketball',            red:60, yellow:20, green:20, takeaway:'Lots of explosive starts and stops, but you’re out there a long time. Carbs to fuel the bursts; aerobic base to keep coming back game after game.' },
+    { id:'soccer',            name:'Soccer',                red:50, yellow:20, green:30, takeaway:'Repeated sprints across 90 minutes. Carbs are your main fuel — you’ll need plenty before the game and a top-up at half time.' },
+    { id:'rugby',             name:'Rugby',                 red:50, yellow:25, green:25, takeaway:'Collisions and sprints in short bursts, but games run long. Big breakfast, smaller top-ups, recovery snack between games in tournaments.' },
+    { id:'tennis',            name:'Tennis',                red:70, yellow:20, green:10, takeaway:'Bursts of high effort with rest in between. Carbs for the bursts; small snacks during long matches.' },
+    { id:'hockey',            name:'Field Hockey',          red:50, yellow:20, green:30, takeaway:'Like soccer — repeat sprint efforts over a long game. Carbs first, with a hydration plan for the whole match.' },
+    { id:'volleyball',        name:'Volleyball',            red:80, yellow:5,  green:15, takeaway:'Mostly explosive jumps and short rallies. Quick energy when you need it; full meal a few hours out.' },
+    { id:'swimming-distance', name:'Swimming (distance)',   red:10, yellow:20, green:70, takeaway:'Long sustained effort. Carbs + fat + oxygen do the work. Fuel up properly the night before and at breakfast.' },
+    { id:'swimming-sprint',   name:'Swimming (50m sprint)', red:40, yellow:55, green:5,  takeaway:'Almost all anaerobic. Short and brutal — you’ll feel the burn. Carbs are the right fuel, but volume matters less than for distance events.' },
+    { id:'running-distance',  name:'Distance Running',      red:10, yellow:20, green:70, takeaway:'Mostly aerobic. Carbs + fat + oxygen for the long haul. Don’t go in under-fuelled.' },
+    { id:'gymnastics',        name:'Gymnastics',            red:80, yellow:15, green:5,  takeaway:'Short, explosive routines. Quick energy you can call on instantly. Eat enough to support skill work — under-fuelling shows up fast in technical sports.' },
+    { id:'rowing',            name:'Rowing',                red:20, yellow:30, green:50, takeaway:'A blend of all three. Big aerobic base with a sprint finish. You need both long-game fuel and ready carbs to push at the end.' },
+    { id:'golf',              name:'Golf',                  red:95, yellow:5,  green:0,  takeaway:'Each swing is short and explosive, but the round is long. Steady snacks across 4–5 hours matter more than peak fuelling.' }
+  ];
+  // Profile comes from the numbers alone, so adding a sport needs no new copy.
+  function fuelProfileFor(d){
+    if(d.red + d.yellow > 60) return { label:'Carb-heavy · explosive fuelling', points:[
+      'Top up carbs 1–2 hours before training or a game. You burn through them fast — don’t show up empty.',
+      'Recover with carbs + protein within 30 minutes of finishing.',
+      'A bigger carb meal 2–3 hours out fills the tank before the explosive work starts.' ] };
+    if(d.green > 70) return { label:'Fat-tolerant · endurance fuelling', points:[
+      'Fuel up properly the night before and at breakfast — your tank needs to be full for the long haul.',
+      'For efforts over an hour, take carbs on board during (drink, gel, banana).',
+      'Train your gut: practise eating and drinking on the move so race day feels normal.' ] };
+    return { label:'Mixed fuelling', points:[
+      'You need both — a solid carb base for the bursts and enough fuel to last the distance.',
+      'Eat a real carb-led meal 2–3 hours before, then a light top-up closer to the start.',
+      'Recovery carbs + protein after, especially if you’re back on again tomorrow.' ] };
+  }
+
+  // ---- lesson shell + router ----
+  function learnLessonShell(block, lesson, bodyHTML){
+    return '<div class="card-stack">'+
+      '<button class="learn-back" onclick="renderLearn()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All lessons</button>'+
+      '<div class="card">'+
+        '<p class="card-eyebrow">Lesson '+lesson.n+' · '+esc(block.name)+'</p>'+
+        '<h2 class="learn-lesson-title">'+esc(lesson.title)+'</h2>'+
+        bodyHTML+
+      '</div>'+
+    '</div>';
+  }
   function openLesson(blockId, lessonId){
     const block = learnBlock(blockId); if(!block) return;
     const lesson = block.lessons.filter(l => l.id === lessonId)[0]; if(!lesson) return;
-    const done = lessonDone(blockId, lessonId);
-    document.getElementById('view-learn').innerHTML =
-      '<div class="card-stack">'+
-        '<button class="learn-back" onclick="renderLearn()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All lessons</button>'+
-        '<div class="card">'+
-          '<p class="card-eyebrow">Lesson '+lesson.n+' · '+esc(block.name)+'</p>'+
-          '<h2 class="learn-lesson-title">'+esc(lesson.title)+'</h2>'+
-          '<p class="learn-lesson-note"><i class="ti ti-tools" aria-hidden="true"></i> This lesson’s content is being built. The page and your progress already work.</p>'+
-          '<button class="card-cta card-cta-gold" onclick="completeLesson(\''+blockId+'\',\''+lessonId+'\')">'+
-            '<i class="ti ti-check" aria-hidden="true"></i> '+(done ? 'Marked done — mark again' : 'Mark this lesson done')+'</button>'+
-        '</div>'+
-      '</div>';
+    let body;
+    if(lessonId === 'basics')        body = lessonBasicsHTML(blockId, lessonId);
+    else if(lessonId === 'sport')    body = lessonSportHTML(blockId, lessonId);
+    else if(lessonId === 'recovery') body = lessonRecoveryHTML(blockId, lessonId);
+    else body = '<p class="learn-lesson-note"><i class="ti ti-tools" aria-hidden="true"></i> This lesson’s content is being built. Your progress already works.</p>'+
+      learnDoneBtn(blockId, lessonId, 'Mark this lesson done');
+    document.getElementById('view-learn').innerHTML = learnLessonShell(block, lesson, body);
+    if(lessonId === 'sport') restoreSportPick(blockId);
     window.scrollTo(0,0);
   }
   window.openLesson = openLesson;
+  function learnDoneBtn(blockId, lessonId, label){
+    const done = lessonDone(blockId, lessonId);
+    return '<button class="card-cta card-cta-gold learn-done-btn" onclick="completeLesson(\''+blockId+'\',\''+lessonId+'\')">'+
+      '<i class="ti ti-check" aria-hidden="true"></i> '+(done ? 'Done — tap to re-save' : esc(label))+'</button>';
+  }
+
+  // ---- Lesson 1: food basics, myths, and the intro questions ----
+  function lessonBasicsHTML(blockId, lessonId){
+    const saved = ((learnState(blockId).progress.lessons || {})[lessonId] || {});
+    const prev = saved.answers || {};
+    const videos = FUEL_VIDEOS.map(v =>
+      '<div class="learn-video"><iframe src="https://www.loom.com/embed/'+v.id+'" title="'+esc(v.title)+'" frameborder="0" allowfullscreen loading="lazy"></iframe>'+
+      '<p class="learn-video-cap">'+esc(v.title)+'</p></div>').join('');
+    const myths = FUEL_MYTHS.map((m, i) =>
+      '<button class="myth-card" onclick="this.classList.toggle(\'flipped\')" aria-label="Flip myth '+(i+1)+'">'+
+        '<span class="myth-front"><span class="myth-label">Myth '+(i+1<10?'0':'')+(i+1)+'</span><span class="myth-claim">'+esc(m.claim)+'</span><span class="myth-tap">Tap to flip</span></span>'+
+        '<span class="myth-back"><span class="myth-verdict">'+esc(m.verdict)+'</span><span class="myth-text">'+esc(m.text)+'</span></span>'+
+      '</button>').join('');
+    const qs = FUEL_INTRO_Q.map((q, i) => {
+      const n = '<span class="lq-n">'+(i+1)+'</span>';
+      if(q.type === 'mcq'){
+        const opts = q.options.map((o, oi) =>
+          '<label class="lq-opt"><input type="radio" name="'+q.id+'" value="'+oi+'"'+(prev[q.id]===oi?' checked':'')+'><span>'+esc(o)+'</span></label>').join('');
+        return '<div class="lq" data-q="'+q.id+'">'+n+'<div class="lq-body"><p class="lq-q">'+esc(q.q)+'</p><div class="lq-opts">'+opts+'</div></div></div>';
+      }
+      const hint = q.hint ? '<p class="lq-hint">'+esc(q.hint)+'</p>' : '';
+      return '<div class="lq" data-q="'+q.id+'">'+n+'<div class="lq-body"><p class="lq-q">'+esc(q.q)+'</p>'+hint+
+        '<textarea class="lq-text" id="lq_'+q.id+'" rows="3" placeholder="Your answer…">'+esc(prev[q.id] || '')+'</textarea></div></div>';
+    }).join('');
+    const marked = saved.marks ? learnMarksHTML(saved) : '';
+    return '<p class="learn-lesson-intro">Watch the three clips, flip through the myths, then answer the questions at the bottom. Your written answers get marked and you’ll get feedback straight back.</p>'+
+      '<p class="learn-sec">Watch first</p>'+
+      '<div class="learn-videos">'+videos+'</div>'+
+      '<p class="learn-sec">Myth busters</p>'+
+      '<div class="myth-grid">'+myths+'</div>'+
+      '<p class="learn-sec">Your turn</p>'+
+      '<div class="lq-list" id="lqList">'+qs+'</div>'+
+      '<div id="lqResult">'+marked+'</div>'+
+      '<button class="card-cta card-cta-gold learn-done-btn" id="lqSubmit" onclick="submitIntroQuestions(\''+blockId+'\',\''+lessonId+'\')">'+
+        '<i class="ti ti-send" aria-hidden="true"></i> '+(saved.marks ? 'Answer again' : 'Submit my answers')+'</button>';
+  }
+  function learnMarksHTML(saved){
+    const byId = {};
+    (saved.marks || []).forEach(m => { byId[String(m.id)] = m; });
+    const rows = FUEL_INTRO_Q.map((q, i) => {
+      if(q.type === 'mcq'){
+        const ok = saved.answers && saved.answers[q.id] === q.answer;
+        return '<div class="lm '+(ok?'ok':'no')+'"><span class="lm-ic"><i class="ti '+(ok?'ti-check':'ti-x')+'" aria-hidden="true"></i></span>'+
+          '<div><p class="lm-q">'+(i+1)+'. '+esc(q.q)+'</p>'+
+          (ok ? '<p class="lm-fb">Correct.</p>' : '<p class="lm-fb">The answer is <strong>'+esc(q.options[q.answer])+'</strong>.</p>')+'</div></div>';
+      }
+      const m = byId[q.id];
+      const v = m ? m.verdict : null;
+      const cls = v === 'met' ? 'ok' : (v === 'partial' ? 'part' : (v === 'not_met' ? 'no' : 'pend'));
+      const ic = v === 'met' ? 'ti-check' : (v === 'partial' ? 'ti-minus' : (v === 'not_met' ? 'ti-x' : 'ti-clock'));
+      const fb = m ? (esc(m.feedback || '') + (m.tip ? ' <em>'+esc(m.tip)+'</em>' : '')) : 'Not marked yet — your answer is saved.';
+      return '<div class="lm '+cls+'"><span class="lm-ic"><i class="ti '+ic+'" aria-hidden="true"></i></span>'+
+        '<div><p class="lm-q">'+(i+1)+'. '+esc(q.q)+'</p><p class="lm-fb">'+fb+'</p></div></div>';
+    }).join('');
+    const mcqTotal = FUEL_INTRO_Q.filter(q => q.type==='mcq').length;
+    const mcqRight = FUEL_INTRO_Q.filter(q => q.type==='mcq' && saved.answers && saved.answers[q.id] === q.answer).length;
+    return '<div class="lm-wrap"><p class="lm-head">Marked · '+mcqRight+' of '+mcqTotal+' multiple choice correct</p>'+rows+'</div>';
+  }
+  async function submitIntroQuestions(blockId, lessonId){
+    const answers = {};
+    const missing = [];
+    FUEL_INTRO_Q.forEach(q => {
+      if(q.type === 'mcq'){
+        const picked = document.querySelector('input[name="'+q.id+'"]:checked');
+        if(picked) answers[q.id] = parseInt(picked.value, 10); else missing.push(q.id);
+      } else {
+        const el = document.getElementById('lq_'+q.id);
+        const v = el ? el.value.trim() : '';
+        answers[q.id] = v;
+        if(v.length < WRITTEN_MIN) missing.push(q.id);
+      }
+    });
+    if(missing.length){
+      showToast(missing.length+' question'+(missing.length===1?'':'s')+' still need'+(missing.length===1?'s':'')+' a proper answer.', 'error');
+      const first = document.querySelector('.lq[data-q="'+missing[0]+'"]');
+      document.querySelectorAll('.lq').forEach(el => el.classList.toggle('needs', missing.indexOf(el.dataset.q) !== -1));
+      if(first) first.scrollIntoView({ behavior:'smooth', block:'center' });
+      return;
+    }
+    document.querySelectorAll('.lq').forEach(el => el.classList.remove('needs'));
+    const btn = document.getElementById('lqSubmit');
+    if(btn){ btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2" aria-hidden="true"></i> Marking your answers…'; }
+    // Written answers go to the marker. A failure is soft — the work still saves.
+    const items = FUEL_INTRO_Q.filter(q => q.type === 'written')
+      .map(q => ({ id:q.id, question:q.q, rubric:q.rubric, answer:answers[q.id] }));
+    let marks = [];
+    try {
+      const res = await apiData({ action:'gradeLearnAnswers', items: items }, 60000);
+      if(res && res.success && Array.isArray(res.marks)) marks = res.marks;
+    } catch(e){ marks = []; }
+    if(!marks.length) showToast('Saved. Your written answers will be marked shortly.', '');
+    await completeLesson(blockId, lessonId, { answers: answers, marks: marks });
+    openLesson(blockId, lessonId);
+    const r = document.getElementById('lqResult');
+    if(r) r.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  window.submitIntroQuestions = submitIntroQuestions;
+
+  // ---- Lesson 3: your sport's fuel profile ----
+  function lessonSportHTML(blockId, lessonId){
+    const btns = FUEL_SPORTS.map(s =>
+      '<button class="sportpick" data-sport="'+s.id+'" onclick="pickSport(\''+blockId+'\',\''+lessonId+'\',\''+s.id+'\')">'+esc(s.name)+'</button>').join('');
+    return '<p class="learn-lesson-intro">Every sport leans on the three energy systems differently, and that changes how you should fuel. Pick yours.</p>'+
+      '<div class="sportpick-grid">'+btns+'</div>'+
+      '<div id="sportOut"></div>';
+  }
+  function pickSport(blockId, lessonId, sportId){
+    const s = FUEL_SPORTS.filter(x => x.id === sportId)[0]; if(!s) return;
+    document.querySelectorAll('.sportpick').forEach(b => b.classList.toggle('active', b.dataset.sport === sportId));
+    const p = fuelProfileFor(s);
+    const bar = (label, val, cls) =>
+      '<div class="sysbar"><span class="sysbar-lab">'+label+'</span>'+
+        '<span class="sysbar-track"><span class="sysbar-fill '+cls+'" style="width:'+val+'%"></span></span>'+
+        '<span class="sysbar-val">'+val+'%</span></div>';
+    document.getElementById('sportOut').innerHTML =
+      '<div class="sport-out">'+
+        '<p class="learn-sec" style="margin-top:0;">'+esc(s.name)+'</p>'+
+        bar('Red · 0–10 sec', s.red, 'red')+
+        bar('Yellow · 10 sec–2 min', s.yellow, 'yellow')+
+        bar('Green · 2 min+', s.green, 'green')+
+        '<p class="sport-take">'+esc(s.takeaway)+'</p>'+
+        '<div class="fuelmatch"><p class="fuelmatch-label">'+esc(p.label)+'</p><ul>'+
+          p.points.map(x => '<li>'+esc(x)+'</li>').join('')+'</ul></div>'+
+      '</div>'+
+      learnDoneBtn(blockId, lessonId, 'Save my profile');
+    // Remember the pick so reopening the lesson restores it.
+    const s0 = learnState(blockId);
+    const p0 = Object.assign({}, s0.progress);
+    p0.lessons = Object.assign({}, p0.lessons || {});
+    p0.lessons[lessonId] = Object.assign({}, p0.lessons[lessonId] || {}, { sport: sportId });
+    saveLearn(blockId, p0, {});
+  }
+  window.pickSport = pickSport;
+  function restoreSportPick(blockId){
+    const saved = ((learnState(blockId).progress.lessons || {}).sport || {}).sport;
+    if(saved) pickSport(blockId, 'sport', saved);
+  }
+
+  // ---- Lesson 6: recovery ----
+  const ART = [
+    { l:'A', w:'Act', items:['Stay calm under pressure — your team will follow your energy.','Stay focused — know why you’re there, on and off the pitch.','Be confident, not arrogant.','Lead — what you do and say influences everyone around you.','Have fun (at the right times).'] },
+    { l:'R', w:'Recover', items:['Plan recovery times — when do you eat, drink, rest?','Find time to rest. Stay out of the sun.','Active in between games — passive between days.','Sleep. Bring snacks. Hydrate fast after performing.','Time your food (2 hrs to break down complex meals).'] },
+    { l:'T', w:'Think', items:['Focus on what you can control.','Ignore distractions — other teams, other athletes, noise.','Worry about you and your team alone.'] }
+  ];
+  const RECOVERY_SNACKS = ['Flavoured milk','Fruit smoothie','Banana bread or fruit muffins','Trail mix / nut bars','Oat-based protein balls','Fresh fruit','Yoghurt pouches','Sandwich or wrap'];
+  const RECOVERY_SIGNS = [
+    { h:'Physiological', s:'What your body’s doing', items:['Resting heart rate','Body weight (steady)','Muscle soreness','Yesterday’s performance'] },
+    { h:'Symptomatic',   s:'What you can feel',      items:['Sleep quality','Hydration (pee colour)','Appetite','Reduced soreness'] },
+    { h:'Psychological', s:'What’s in your head',    items:['Energy level','Mood','Motivation to train','General wellbeing'] }
+  ];
+  function lessonRecoveryHTML(blockId, lessonId){
+    const art = ART.map(a => '<div class="art-card"><span class="art-letter">'+a.l+'</span><p class="art-word">'+esc(a.w)+'</p><ul>'+
+      a.items.map(i => '<li>'+esc(i)+'</li>').join('')+'</ul></div>').join('');
+    const snacks = RECOVERY_SNACKS.map(s => '<span class="snack-chip">'+esc(s)+'</span>').join('');
+    const signs = RECOVERY_SIGNS.map(c => '<div class="sign-col"><h4>'+esc(c.h)+'</h4><p class="sign-sub">'+esc(c.s)+'</p><ul>'+
+      c.items.map(i => '<li>'+esc(i)+'</li>').join('')+'</ul></div>').join('');
+    return '<p class="learn-lesson-intro">Training is the stress. Recovery is where you actually get better. Here’s how to do it properly.</p>'+
+      '<p class="learn-sec">The ART of tournament performance</p>'+
+      '<div class="art-grid">'+art+'</div>'+
+      '<div class="learn-callout gold"><p class="lc-eyebrow">#1 recovery tool</p><h4>Sleep.</h4>'+
+        '<p>It’s free, you already do it, and nothing else comes close. 8–10 hours for teenagers, in a cool dark room, no screens for an hour before bed. Your body releases growth hormone, repairs muscle and locks in what you learned in training while you sleep. Skip it and you cancel out half the work you did that day.</p></div>'+
+      '<p class="learn-sec">Recovery snacks that actually work</p>'+
+      '<p class="learn-p">Between short recovery windows (1–2 hours), pick something that’s mostly carbs with a bit of protein and is easy to digest.</p>'+
+      '<div class="snack-grid">'+snacks+'</div>'+
+      '<p class="learn-sec">Active vs passive recovery</p>'+
+      '<div class="vs-grid">'+
+        '<div class="vs-side"><h4>Active</h4><p>Low-intensity movement after a hard session — easy jog, swim, cycle, walk. Clears lactate and gets blood flow to the muscles.</p><span class="vs-when">Between games or hard reps</span></div>'+
+        '<div class="vs-side"><h4>Passive</h4><p>Complete rest. No exercise. Sitting, lying down, sleeping, doing nothing at all.</p><span class="vs-when">Between training days, and overnight</span></div>'+
+      '</div>'+
+      '<p class="learn-sec">How do you know you’re recovered?</p>'+
+      '<div class="sign-grid">'+signs+'</div>'+
+      '<div class="learn-callout"><p>There’s no physiological difference between <strong>under-recovery</strong> and <strong>overtraining</strong>. If you keep hammering without recovering, you’re a rat on a wheel — moving lots, getting nowhere.</p></div>'+
+      learnDoneBtn(blockId, lessonId, 'Mark this lesson done');
+  }
 
   function openLearnQuiz(blockId){
     showToast('The block quiz lands in a later phase.', '');
