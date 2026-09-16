@@ -250,6 +250,9 @@ function doGet(e) {
     if (action === 'getLearnProgress') {
       return apJson(handleGetLearnProgress(ss, e.parameter.athleteId));
     }
+    if (action === 'getGrit') {
+      return apJson(handleGetGrit(ss, e.parameter.athleteId));
+    }
 
     // ===== CLASH OF THE CODES ACTIONS =====
     if (action === 'getClashTeams') {
@@ -3515,8 +3518,194 @@ function handleGetPortalBootstrap(ss, email) {
       pbs: pbsRes.pbs || [],
       load: { weeks: load.weeks, summary: load.summary },
       learn: (learnRes && learnRes.success && learnRes.learn) ? learnRes.learn : { blocks: {} },
+      grit: apComputeGrit(ss, athleteId),
       firstTime: !map
     };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ============================================================
+// GRIT SCORE
+// Grit is not activity. It is the gap between what a student said they would
+// do and what they actually did, plus how they behave when it gets hard.
+// Three components, weighted:
+//   Adherence 60 — of the sessions YOU planned, how many did you actually do
+//   Check-ins  25 — did you book your check-ins and keep them
+//   Hard spell 15 — did you keep training in the months you marked quiet
+// A component with no data is dropped and the remaining weights are
+// renormalised, so a student who has had no check-ins offered yet is not
+// punished for it.
+// ============================================================
+var GRIT_WEIGHTS = { adherence: 60, checkins: 25, hard: 15 };
+var GRIT_WINDOW_WEEKS = 8;     // rolling
+var GRIT_MIN_PLANNED = 2;      // a week needs this many planned sessions to count
+var GRIT_MIN_WEEKS = 2;        // below this there isn't enough to judge
+
+function apGritBand(score) {
+  if (score >= 80) return 'Relentless';
+  if (score >= 55) return 'Consistent';
+  return 'Building';
+}
+
+function apComputeGrit(ss, athleteId) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    var out = {
+      score: null, band: null, enough: false,
+      parts: { adherence: null, checkins: null, hard: null },
+      windowWeeks: GRIT_WINDOW_WEEKS
+    };
+    if (!athleteId) return out;
+
+    var today = new Date();
+    var from = new Date(today.getTime() - GRIT_WINDOW_WEEKS * 7 * 86400000);
+    var fromIso = Utilities.formatDate(from, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    var todayIso = Utilities.formatDate(today, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+
+    // ---- 1. Adherence ----
+    // Only sessions whose date has already passed can count for or against.
+    // Weeks with fewer than GRIT_MIN_PLANNED sessions are ignored entirely, so
+    // planning one easy session a week and always doing it scores nothing.
+    var sessSheet = apEnsureTrainingSessions(ss);
+    var rows = apReadObjects(sessSheet);
+    var byWeek = {};
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (String(r.Athlete_ID).trim() !== athleteId) continue;
+      var d = r.Date ? String(apIsoDate_(r.Date)) : '';
+      if (!d || d < fromIso || d > todayIso) continue;
+      var wk = r.Week_Start ? String(apIsoDate_(r.Week_Start)) : d;
+      if (!byWeek[wk]) byWeek[wk] = { planned: 0, done: 0 };
+      byWeek[wk].planned++;
+      var st = String(r.Status || '').toLowerCase();
+      if (st === 'done' || st === 'modified') byWeek[wk].done++;
+    }
+    var aPlanned = 0, aDone = 0, aWeeks = 0;
+    for (var w in byWeek) {
+      if (!byWeek.hasOwnProperty(w)) continue;
+      if (byWeek[w].planned < GRIT_MIN_PLANNED) continue;   // too thin to judge
+      aPlanned += byWeek[w].planned;
+      aDone += byWeek[w].done;
+      aWeeks++;
+    }
+    if (aWeeks >= GRIT_MIN_WEEKS && aPlanned > 0) {
+      out.parts.adherence = {
+        pct: Math.round(aDone / aPlanned * 100),
+        done: aDone, planned: aPlanned, weeks: aWeeks
+      };
+    }
+
+    // ---- 2. Check-in reliability ----
+    // What we can see today: did they book a check-in that was open to them,
+    // and did they keep it rather than cancelling. Actual attendance is not
+    // recorded anywhere yet — when it is, add it here.
+    try {
+      var ciSheet = ss.getSheetByName('Check_Ins');
+      var bkSheet = ss.getSheetByName('Bookings');
+      if (ciSheet && bkSheet) {
+        var cis = apReadObjects(ciSheet);
+        var bks = apReadObjects(bkSheet);
+        var offered = 0, kept = 0, cancelled = 0;
+        var mine = {};
+        for (var b = 0; b < bks.length; b++) {
+          if (String(bks[b].Athlete_ID).trim() !== athleteId) continue;
+          var cid = String(bks[b].CheckIn_ID || '').trim();
+          var bst = String(bks[b].Status || '').toLowerCase();
+          if (!cid) continue;
+          // A later row for the same check-in wins.
+          mine[cid] = bst;
+        }
+        for (var c = 0; c < cis.length; c++) {
+          var ciId = String(cis[c].CheckIn_ID || '').trim();
+          var ciDate = cis[c].Date ? String(apIsoDate_(cis[c].Date)) : '';
+          if (!ciId || !ciDate) continue;
+          if (ciDate < fromIso || ciDate > todayIso) continue;   // only ones already past
+          offered++;
+          var status = mine[ciId];
+          if (status === 'booked') kept++;
+          else if (status === 'cancelled') cancelled++;
+        }
+        if (offered > 0) {
+          out.parts.checkins = {
+            pct: Math.round(kept / offered * 100),
+            kept: kept, offered: offered, cancelled: cancelled,
+            attendanceTracked: false
+          };
+        }
+      }
+    } catch (ciErr) { /* check-ins are optional — leave the component out */ }
+
+    // ---- 3. Training through a quiet spell ----
+    // Months the athlete marked off / recover / maintain are the ones where
+    // motivation is lowest. Training logged then counts for more.
+    try {
+      var map = apLoadYearMap(ss, athleteId);
+      if (map && map.sports && map.sports.length) {
+        var quiet = {};   // month name -> true
+        for (var s = 0; s < map.sports.length; s++) {
+          var ms = map.sports[s].monthlyStates || [];
+          for (var m = 0; m < ms.length; m++) {
+            var stt = String(ms[m].state || '').toLowerCase();
+            if (stt === 'off' || stt === 'recover' || stt === 'maintain') quiet[ms[m].month] = true;
+          }
+        }
+        var MONTHS_ = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        var quietWeeks = {}, quietTrained = {};
+        for (var k = 0; k < rows.length; k++) {
+          var rr = rows[k];
+          if (String(rr.Athlete_ID).trim() !== athleteId) continue;
+          var dd = rr.Date ? String(apIsoDate_(rr.Date)) : '';
+          if (!dd || dd < fromIso || dd > todayIso) continue;
+          var mon = MONTHS_[parseInt(dd.substring(5, 7), 10) - 1];
+          if (!quiet[mon]) continue;
+          var wk2 = rr.Week_Start ? String(apIsoDate_(rr.Week_Start)) : dd;
+          quietWeeks[wk2] = true;
+          var st2 = String(rr.Status || '').toLowerCase();
+          if (st2 === 'done' || st2 === 'modified') quietTrained[wk2] = true;
+        }
+        var qw = Object.keys(quietWeeks).length;
+        if (qw > 0) {
+          out.parts.hard = {
+            pct: Math.round(Object.keys(quietTrained).length / qw * 100),
+            weeksTrained: Object.keys(quietTrained).length, weeksQuiet: qw
+          };
+        }
+      }
+    } catch (hErr) { /* no year map — leave the component out */ }
+
+    // ---- Combine, renormalising over whatever we actually have ----
+    var total = 0, weight = 0;
+    ['adherence', 'checkins', 'hard'].forEach(function (key) {
+      var p = out.parts[key];
+      if (!p) return;
+      total += p.pct * GRIT_WEIGHTS[key];
+      weight += GRIT_WEIGHTS[key];
+    });
+    // Adherence is the backbone — without it there is no honest grit score.
+    if (weight > 0 && out.parts.adherence) {
+      out.score = Math.round(total / weight);
+      out.band = apGritBand(out.score);
+      out.enough = true;
+    }
+    return out;
+  } catch (error) {
+    return { score: null, band: null, enough: false, parts: {}, error: error.toString() };
+  }
+}
+
+// Sheet dates come back as Date objects or strings depending on the column.
+function apIsoDate_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return String(v).trim().substring(0, 10);
+}
+
+function handleGetGrit(ss, athleteId) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
+    return { success: true, grit: apComputeGrit(ss, athleteId) };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
