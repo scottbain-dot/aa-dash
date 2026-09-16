@@ -3540,8 +3540,11 @@ function handleGetPortalBootstrap(ss, email) {
 // ============================================================
 var GRIT_WEIGHTS = { adherence: 60, checkins: 25, hard: 15 };
 var GRIT_WINDOW_WEEKS = 8;     // rolling
-var GRIT_MIN_PLANNED = 2;      // a week needs this many planned sessions to count
+var GRIT_WEEKLY_TARGET = 3;    // sessions a week for full credit — the one tuning knob
 var GRIT_MIN_WEEKS = 2;        // below this there isn't enough to judge
+// Any of these on a check-in's calendar event title means "I've processed this
+// one". Without it the session is unknown and simply doesn't count either way.
+var GRIT_DONE_MARKS = ['✅', '✔', '✓'];   // ✅ ✔ ✓
 
 function apGritBand(score) {
   if (score >= 80) return 'Relentless';
@@ -3564,75 +3567,77 @@ function apComputeGrit(ss, athleteId) {
     var fromIso = Utilities.formatDate(from, Session.getScriptTimeZone(), 'yyyy-MM-dd');
     var todayIso = Utilities.formatDate(today, Session.getScriptTimeZone(), 'yyyy-MM-dd');
 
-    // ---- 1. Adherence ----
-    // Only sessions whose date has already passed can count for or against.
-    // Weeks with fewer than GRIT_MIN_PLANNED sessions are ignored entirely, so
-    // planning one easy session a week and always doing it scores nothing.
+    // ---- 1. Weekly training credit ----
+    // Credit only: you earn for sessions logged, and nothing ever takes credit
+    // away. Capped at GRIT_WEEKLY_TARGET a week, which is what makes this grit
+    // rather than volume — a single heroic week cannot cover four empty ones,
+    // so the only way to score is to keep turning up.
+    // Nothing the student PLANNED enters the maths, so there is no denominator
+    // to shrink and unlogged training costs nothing beyond not earning.
     var sessSheet = apEnsureTrainingSessions(ss);
     var rows = apReadObjects(sessSheet);
-    var byWeek = {};
+    var loggedByWeek = {};
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       if (String(r.Athlete_ID).trim() !== athleteId) continue;
       var d = r.Date ? String(apIsoDate_(r.Date)) : '';
       if (!d || d < fromIso || d > todayIso) continue;
-      var wk = r.Week_Start ? String(apIsoDate_(r.Week_Start)) : d;
-      if (!byWeek[wk]) byWeek[wk] = { planned: 0, done: 0 };
-      byWeek[wk].planned++;
       var st = String(r.Status || '').toLowerCase();
-      if (st === 'done' || st === 'modified') byWeek[wk].done++;
+      if (st !== 'done' && st !== 'modified') continue;      // only logged work earns
+      var wk = r.Week_Start ? String(apIsoDate_(r.Week_Start)) : d;
+      loggedByWeek[wk] = (loggedByWeek[wk] || 0) + 1;
     }
-    var aPlanned = 0, aDone = 0, aWeeks = 0;
-    for (var w in byWeek) {
-      if (!byWeek.hasOwnProperty(w)) continue;
-      if (byWeek[w].planned < GRIT_MIN_PLANNED) continue;   // too thin to judge
-      aPlanned += byWeek[w].planned;
-      aDone += byWeek[w].done;
-      aWeeks++;
+    // Every week in the window counts, including the ones with nothing in them.
+    var weekKeys = [];
+    for (var wi = 0; wi < GRIT_WINDOW_WEEKS; wi++) {
+      var wd = new Date(today.getTime() - wi * 7 * 86400000);
+      var dow = (wd.getDay() + 6) % 7;                        // Monday = 0
+      wd.setDate(wd.getDate() - dow);
+      weekKeys.push(Utilities.formatDate(wd, Session.getScriptTimeZone(), 'yyyy-MM-dd'));
     }
-    if (aWeeks >= GRIT_MIN_WEEKS && aPlanned > 0) {
+    // The current week is only part-way through, so judging it against a full
+    // week's target would drag every score down on a Monday and drift up all
+    // week. Pro-rate it instead: the live week is measured on whether they're
+    // on pace, not whether they've finished.
+    var elapsedThisWeek = ((today.getDay() + 6) % 7) + 1;   // Mon = 1 … Sun = 7
+    var creditSum = 0, weeksFull = 0, sessionsTotal = 0;
+    for (var wk2 = 0; wk2 < weekKeys.length; wk2++) {
+      var n = loggedByWeek[weekKeys[wk2]] || 0;
+      sessionsTotal += n;
+      var weekTarget = (wk2 === 0)
+        ? Math.max(1, GRIT_WEEKLY_TARGET * (elapsedThisWeek / 7))
+        : GRIT_WEEKLY_TARGET;
+      var credit = Math.min(n / weekTarget, 1);
+      creditSum += credit;
+      if (credit >= 1) weeksFull++;
+    }
+    // A student with nothing logged yet gets no score rather than a bleak zero.
+    if (weekKeys.length >= GRIT_MIN_WEEKS && sessionsTotal > 0) {
       out.parts.adherence = {
-        pct: Math.round(aDone / aPlanned * 100),
-        done: aDone, planned: aPlanned, weeks: aWeeks
+        pct: Math.round(creditSum / weekKeys.length * 100),
+        sessions: sessionsTotal, weeks: weekKeys.length,
+        weeksFull: weeksFull, target: GRIT_WEEKLY_TARGET
       };
     }
 
-    // ---- 2. Check-in reliability ----
-    // What we can see today: did they book a check-in that was open to them,
-    // and did they keep it rather than cancelling. Actual attendance is not
-    // recorded anywhere yet — when it is, add it here.
+    // ---- 2. Check-in attendance, read from the calendar ----
+    // Marking a check-in's calendar event with a tick emoji means "I've dealt
+    // with this one". Anyone still on the guest list then gets the credit;
+    // anyone removed beforehand doesn't. An UNMARKED event is unknown and is
+    // skipped entirely, so forgetting to process a session can never hand out
+    // credit by default.
     try {
       var ciSheet = ss.getSheetByName('Check_Ins');
-      var bkSheet = ss.getSheetByName('Bookings');
-      if (ciSheet && bkSheet) {
-        var cis = apReadObjects(ciSheet);
-        var bks = apReadObjects(bkSheet);
-        var offered = 0, kept = 0, cancelled = 0;
-        var mine = {};
-        for (var b = 0; b < bks.length; b++) {
-          if (String(bks[b].Athlete_ID).trim() !== athleteId) continue;
-          var cid = String(bks[b].CheckIn_ID || '').trim();
-          var bst = String(bks[b].Status || '').toLowerCase();
-          if (!cid) continue;
-          // A later row for the same check-in wins.
-          mine[cid] = bst;
-        }
-        for (var c = 0; c < cis.length; c++) {
-          var ciId = String(cis[c].CheckIn_ID || '').trim();
-          var ciDate = cis[c].Date ? String(apIsoDate_(cis[c].Date)) : '';
-          if (!ciId || !ciDate) continue;
-          if (ciDate < fromIso || ciDate > todayIso) continue;   // only ones already past
-          offered++;
-          var status = mine[ciId];
-          if (status === 'booked') kept++;
-          else if (status === 'cancelled') cancelled++;
-        }
-        if (offered > 0) {
+      if (ciSheet) {
+        var att = apCheckInAttendance_(ss, athleteId, fromIso, todayIso);
+        if (att.processed > 0) {
           out.parts.checkins = {
-            pct: Math.round(kept / offered * 100),
-            kept: kept, offered: offered, cancelled: cancelled,
-            attendanceTracked: false
+            pct: Math.round(att.attended / att.processed * 100),
+            attended: att.attended, processed: att.processed, unmarked: att.unmarked
           };
+        } else if (att.unmarked > 0) {
+          // Nothing marked yet — report it so the teacher view can nudge.
+          out.parts.checkinsPending = att.unmarked;
         }
       }
     } catch (ciErr) { /* check-ins are optional — leave the component out */ }
@@ -3693,6 +3698,68 @@ function apComputeGrit(ss, athleteId) {
   } catch (error) {
     return { score: null, band: null, enough: false, parts: {}, error: error.toString() };
   }
+}
+
+// Is this check-in event marked as processed? The teacher adds a tick emoji to
+// the event title in Google Calendar; anything else means "not looked at yet".
+function apEventMarkedDone_(title) {
+  var t = String(title || '');
+  for (var i = 0; i < GRIT_DONE_MARKS.length; i++) {
+    if (t.indexOf(GRIT_DONE_MARKS[i]) !== -1) return true;
+  }
+  return false;
+}
+
+// Attendance for one athlete across the check-ins in a window.
+// processed = events the teacher has ticked; attended = ticked events where
+// this athlete is still on the guest list. Unticked events are counted as
+// unmarked and excluded from the score entirely.
+function apCheckInAttendance_(ss, athleteId, fromIso, toIso) {
+  var out = { attended: 0, processed: 0, unmarked: 0 };
+  var ciSheet = ss.getSheetByName('Check_Ins');
+  var bkSheet = ss.getSheetByName('Bookings');
+  if (!ciSheet || !bkSheet) return out;
+
+  // Which check-ins did this athlete book? Only those can count either way —
+  // a check-in they never booked isn't a no-show.
+  var bks = apReadObjects(bkSheet);
+  var booked = {};
+  var myEmail = '';
+  for (var b = 0; b < bks.length; b++) {
+    if (String(bks[b].Athlete_ID).trim() !== String(athleteId).trim()) continue;
+    var cid = String(bks[b].CheckIn_ID || '').trim();
+    if (!cid) continue;
+    booked[cid] = String(bks[b].Status || '').toLowerCase();
+    if (bks[b].Athlete_Email) myEmail = String(bks[b].Athlete_Email).toLowerCase().trim();
+  }
+  if (!myEmail) return out;
+
+  var cal = null;
+  try { cal = apCheckinCalendar(); } catch (e) { return out; }
+  if (!cal) return out;
+
+  var cis = apReadObjects(ciSheet);
+  for (var c = 0; c < cis.length; c++) {
+    var id = String(cis[c].CheckIn_ID || '').trim();
+    var date = cis[c].Date ? String(apIsoDate_(cis[c].Date)) : '';
+    if (!id || !date || date < fromIso || date > toIso) continue;
+    if (booked[id] !== 'booked') continue;            // they didn't book it
+    var evId = String(cis[c].Event_ID || '').trim();
+    if (!evId) { out.unmarked++; continue; }
+    var ev = null;
+    try { ev = cal.getEventById(evId); } catch (evErr) { ev = null; }
+    if (!ev) { out.unmarked++; continue; }
+    if (!apEventMarkedDone_(ev.getTitle())) { out.unmarked++; continue; }
+    out.processed++;
+    // Still on the guest list => they were there.
+    try {
+      var guests = ev.getGuestList() || [];
+      for (var g = 0; g < guests.length; g++) {
+        if (String(guests[g].getEmail() || '').toLowerCase().trim() === myEmail) { out.attended++; break; }
+      }
+    } catch (gErr) { /* can't read guests — counts as processed, not attended */ }
+  }
+  return out;
 }
 
 // Sheet dates come back as Date objects or strings depending on the column.
