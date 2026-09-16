@@ -1601,8 +1601,7 @@
       <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
       <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
       <button class="tab" data-tab="learn" onclick="switchTab('learn')">Level Up</button>
-      <button class="tab" data-tab="pbs" onclick="switchTab('pbs')">PBs</button>
-      <button class="tab" data-tab="age" onclick="switchTab('age')">Training Age</button>
+      <button class="tab" data-tab="cv" onclick="switchTab('cv')">CV</button>
     </div>
   </div>
 </div>
@@ -1634,8 +1633,8 @@
 <div class="tab-view" id="view-learn"></div>
 
 <!-- ===== PBS TAB ===== -->
-<div class="tab-view" id="view-pbs"></div>
-<div class="tab-view" id="view-age"></div>
+<!-- ===== CV TAB — the athletic CV (absorbs PBs + Training Age) ===== -->
+<div class="tab-view" id="view-cv"></div>
 
 </div><!-- /.content -->
 </div><!-- /#portal -->
@@ -2541,6 +2540,66 @@
   .lv-check { position: absolute; top: 9px; right: 9px; width: 18px; height: 18px; border-radius: 50%;
     background: var(--sage); color: #fff; display: flex; align-items: center; justify-content: center; }
   .lv-check .ti { font-size: 11px; }
+
+  /* ---- CV tab ---- */
+  .cv-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 22px 20px;
+    border-radius: 20px; background: linear-gradient(135deg, #7c4340 0%, #8f5450 45%, #5f3430 100%); color: var(--cream);
+    position: relative; overflow: hidden; box-shadow: 0 10px 26px rgba(107,58,54,0.22); }
+  .cv-head::after { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,0.26), rgba(212,175,55,0) 70%); pointer-events: none; }
+  .cv-head-main { position: relative; z-index: 1; min-width: 0; }
+  .cv-eyebrow { font: 700 10px 'Inter', sans-serif; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin: 0; }
+  .cv-name { font: 800 28px 'Fraunces', serif; color: #fff; margin: 4px 0 2px; line-height: 1.1; }
+  .cv-sub { font: 600 13px 'Inter', sans-serif; color: rgba(250,243,237,0.9); margin: 0; }
+  .cv-org { font: 400 11.5px 'Inter', sans-serif; color: rgba(250,243,237,0.7); margin: 6px 0 0; }
+  .cv-print { flex-shrink: 0; position: relative; z-index: 1; cursor: pointer; background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.28); color: var(--cream); border-radius: 999px; padding: 8px 14px;
+    font: 700 12px 'Inter', sans-serif; display: inline-flex; align-items: center; gap: 5px; }
+  .cv-print:hover { background: rgba(255,255,255,0.22); }
+  .cv-grit { text-align: center; padding: 6px 0 14px; }
+  .cv-grit-band { display: inline-block; font: 800 13px 'Inter', sans-serif; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 999px; padding: 6px 16px; color: #fff; }
+  .cv-band-relentless { background: linear-gradient(135deg, #f6d873, #b8860b); color: #4a3405; }
+  .cv-band-consistent { background: linear-gradient(135deg, #93b58d, #5a8757); }
+  .cv-band-building   { background: var(--line); color: var(--ink-soft); }
+  .cv-band-none       { background: var(--line); color: var(--ink-mute); }
+  .cv-grit-line { font: italic 400 13px 'Fraunces', serif; color: var(--ink-soft); margin: 10px 0 0; }
+  .cv-grit-bar { height: 7px; border-radius: 999px; background: var(--line-soft); overflow: hidden; margin: 10px auto 0; max-width: 260px; }
+  .cv-grit-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #93b58d, #5a8757); }
+  .cv-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .cv-stat { text-align: center; background: var(--cream); border: 1px solid var(--line-soft); border-radius: 14px; padding: 12px 4px; }
+  .cv-stat-n { display: block; font: 800 22px 'Fraunces', serif; color: var(--burgundy); line-height: 1; }
+  .cv-stat-l { display: block; font: 700 9px 'Inter', sans-serif; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--ink-mute); margin-top: 5px; line-height: 1.25; }
+  .cv-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+  .cv-add { cursor: pointer; background: var(--cream); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
+    font: 700 12px 'Inter', sans-serif; color: var(--burgundy); display: inline-flex; align-items: center; gap: 4px; }
+  .cv-add:hover { border-color: var(--burgundy); }
+  .cv-group { font: 800 10px 'Inter', sans-serif; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-mute); margin: 16px 0 4px; }
+  .cv-empty { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-mute); margin: 8px 0 0; line-height: 1.5; }
+  .cv-results { display: flex; flex-direction: column; }
+  .cv-result { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid var(--line-soft); }
+  .cv-result:last-child { border-bottom: none; }
+  .cv-result-name { font: 600 14.5px 'Inter', sans-serif; color: var(--ink); margin: 0; }
+  .cv-result-sub { font: 400 12px 'Inter', sans-serif; color: var(--ink-mute); margin: 2px 0 0; }
+  .cv-result-val { font: 700 14px 'Inter', sans-serif; color: var(--burgundy); margin: 0; text-align: right; flex-shrink: 0; }
+  .cv-blocks { display: flex; flex-wrap: wrap; gap: 7px; }
+  .cv-block { display: inline-flex; align-items: center; gap: 5px; font: 700 12.5px 'Inter', sans-serif; color: #4a3405;
+    background: linear-gradient(135deg, #f6d873, #e0bf55); border-radius: 999px; padding: 6px 13px; }
+  .cv-block .ti { font-size: 14px; }
+  .cv-foot { font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); text-align: center; line-height: 1.5; margin: 4px 8px 0; }
+  /* Printing: just the CV, nothing else. */
+  @media print {
+    body.cv-printing .nav, body.cv-printing .tabs, body.cv-printing .block-bar,
+    body.cv-printing .tab-view:not(#view-cv), body.cv-printing .cv-print,
+    body.cv-printing .cv-add, body.cv-printing .sheet, body.cv-printing .sheet-backdrop,
+    body.cv-printing .toast, body.cv-printing #demoPill { display: none !important; }
+    body.cv-printing .card { box-shadow: none; border: 1px solid #e0e0e0; break-inside: avoid; }
+    body.cv-printing .cv-head { box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.cv-printing .cv-grit-band, body.cv-printing .cv-block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
 
   /* ---- Learn lesson bodies ---- */
   .learn-lesson-intro { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); line-height: 1.55; margin: 0 0 18px; }
@@ -4111,7 +4170,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, availability: [], games: [], booking: null, planName: '', athleteId: '' };
+  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, availability: [], grit: null, games: [], booking: null, planName: '', athleteId: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -4254,6 +4313,7 @@
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
     if(action==='saveAvailability' || action==='clearAvailability') return Promise.resolve({ success:true });
     if(action==='getAvailability') return Promise.resolve({ success:true, availability: state.availability||[] });
+    if(action==='getGrit') return Promise.resolve({ success:true, grit: state.grit });
     if(action==='getLearnProgress') return Promise.resolve({ success:true, learn: state.learn || { blocks:{} } });
     if(action==='saveLearnProgress'){
       const b = (state.learn && state.learn.blocks && state.learn.blocks[payload.blockId]) || {};
@@ -4372,6 +4432,7 @@
       state.load = data.load || { weeks: [], summary: {} };
       state.learn = data.learn || { blocks: {} };
       state.availability = data.availability || [];
+      state.grit = data.grit || null;
       syncStreakSeen();   // baseline the streak so opening the app never triggers a celebration
       syncBadgesSeen();   // baseline earned badges so opening the app never triggers a celebration
       renderNav();
@@ -4381,7 +4442,7 @@
       // land on Year and get the walkthrough to set their vision first.
       var savedTab = null;
       try { savedTab = sessionStorage.getItem('aa_tab'); } catch(e){}
-      var resume = savedTab && ['week','year','load','book','pbs','learn'].indexOf(savedTab) >= 0;
+      var resume = savedTab && ['week','year','load','book','cv','learn'].indexOf(savedTab) >= 0;
       switchTab(resume ? savedTab : (hasYear() ? 'week' : 'year'));
       if(!hasYear() && !resume) openWalkthrough();
       setLoading(false);
@@ -4414,6 +4475,8 @@
     state.load = demo.load;
     state.learn = demo.learn || { blocks: {} };
     state.availability = [];
+    state.grit = { score: 78, band: 'Consistent', enough: true,
+      parts: { adherence:{pct:80,sessions:19,weeks:8,weeksFull:5,target:3}, checkins:{pct:100,attended:2,processed:2,unmarked:0} } };
     state.games = demo.games || [];
     state.booking = demo.booking;
     state.planName = (demo.weeklyTemplate && demo.weeklyTemplate.name) || 'Swimming Performance';
@@ -4593,7 +4656,7 @@
   const LAUNCH_MODE = true;
   // My Program (week) is live so students can build their own program, and Book
   // (check-ins) is now live too. Load/PBs stay teased until they're ready.
-  const LIVE_TABS = { year:true, week:true, book:true, pbs:true, load:true };
+  const LIVE_TABS = { year:true, week:true, book:true, cv:true, load:true };
   // Booking is still in testing — students see the "coming soon" teaser. It's
   // unlocked only for the demo, a ?book=1 override, and named testers. This just
   // reveals the UI; the SERVER enforces the real lock (BOOKING_LIVE / tester
@@ -4639,7 +4702,7 @@
     else if(tab==='load') renderLoad();
     else if(tab==='book'){ renderBook(); loadBooking(); }
     else if(tab==='learn') renderLearn();
-    else if(tab==='pbs') renderPBs();
+    else if(tab==='cv') renderCV();
     window.scrollTo(0,0);
   }
   window.switchTab = switchTab;
@@ -4650,7 +4713,7 @@
     week: { icon:'ti-barbell',   title:'Your training programs', line:'Build a full training week, swap exercises to match your gear, and let it repeat. Nearly ready.' },
     load: { icon:'ti-activity',  title:'Training load',          line:'See how hard you’re training week to week — and whether it’s too much, too little, or just right.' },
     book: { icon:'ti-calendar-event', title:'Book your sessions', line:'Reserve your spot in Athlete Academy sessions, straight from your phone.' },
-    pbs:  { icon:'ti-trophy',    title:'Personal bests',         line:'Track every PB and watch your numbers climb across the year.' },
+    cv:   { icon:'ti-id-badge-2', title:'My athletic CV',        line:'Your bests, your results and your training record — one page you can take to a coach.' },
     learn:{ icon:'ti-book',      title:'Level Up',               line:'Short blocks on fuelling, recovery, strength and mindset — do the work, pass the block, earn the badge.' },
     age:  { icon:'ti-radar',     title:'My Training Age',        line:'Your athletic development across psychology, physiology and skills — one score that grows as you do. Coming soon.' }
   };
@@ -10643,36 +10706,132 @@
   // ============================================================
   // PBS TAB
   // ============================================================
-  function renderPBs(){
-    const view = document.getElementById('view-pbs');
+  // ============================================================
+  // CV — the one page a student can take to a coach or a college.
+  // Absorbs personal bests and (later) Training Age. Deliberately shows
+  // EFFORT as well as achievement, so a student with modest numbers but real
+  // consistency has something to be proud of.
+  // Export is a print-to-PDF the student hands over themselves — there is no
+  // public link, because this is the one outward-facing page in the portal and
+  // it carries a minor's name, school and history.
+  // ============================================================
+  function athleteName(){
+    return (athlete && (athlete.Name || ((athlete.First_Name||'')+' '+(athlete.Last_Name||'')).trim()))
+      || (currentUser && currentUser.name) || 'Athlete';
+  }
+  // Grade comes through as "11", "G11" or "Grade 11" depending on the sheet —
+  // don't end up with "Grade G11".
+  function gradeLabel(g){
+    const v = String(g == null ? '' : g).trim();
+    if(!v) return '';
+    if(/^grade\b/i.test(v)) return esc(v);
+    if(/^g\s*\d+$/i.test(v)) return 'Grade '+esc(v.replace(/^g\s*/i, ''));
+    return 'Grade '+esc(v);
+  }
+  function athleteSports(){
+    return [athlete && athlete.Sport_1, athlete && athlete.Sport_2, athlete && athlete.Sport_3]
+      .filter(s => s && String(s).trim()).join(' · ');
+  }
+  // Competition results the student has actually recorded.
+  function cvResults(){
+    return (state.games || [])
+      .filter(g => g.result && String(g.result).trim())
+      .sort((a,b) => (a.date < b.date ? 1 : -1));
+  }
+  function renderCV(){
+    const view = document.getElementById('view-cv');
+    const g = gameStats();
+    const grit = state.grit || null;
     const pbs = state.pbs || [];
-    if(!pbs.length){
-      view.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-trophy" aria-hidden="true"></i></div>'+
-        '<h2 class="empty-state-title">No <em>bests</em> yet.</h2>'+
-        '<p class="empty-state-text">Log a session and mark it as a PB, or add one here. Every best you set shows up on this board.</p>'+
-        '<button class="btn-primary" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>';
-      return;
-    }
-    const latest = pbs[0];
-    const groups = {};
-    pbs.forEach(p => { const k = p.sport || 'Other'; (groups[k] = groups[k] || []).push(p); });
-    let html = '<div class="card-stack">';
-    // Hero — headline + Add a PB.
-    html += '<div class="card card-hero">'+
-      '<p class="card-hero-eyebrow">Personal bests</p>'+
-      '<h2 class="card-hero-title">Your <em>bests</em>.</h2>'+
-      '<p class="card-hero-sub">'+(latest? 'Latest · <strong>'+esc(latest.exercise)+'</strong> '+esc(String(latest.value))+(latest.unit?' '+esc(latest.unit):'')+(latest.date?' · '+fmtNice(latest.date):'') : 'Every best you set lands here.')+'</p>'+
-      '<div class="week-today-cta"><button class="card-cta card-cta-ghost" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>'+
+    const results = cvResults();
+    const blocks = LEARN_BLOCKS.filter(b => learnBlockPassed(b));
+    const grade = (athlete && (athlete.Grade || athlete.Year_Group)) || '';
+    const sports = athleteSports();
+
+    // --- header ---
+    let html = '<div class="card-stack" id="cvSheetWrap">'+
+      '<div class="cv-head">'+
+        '<div class="cv-head-main">'+
+          '<p class="cv-eyebrow">Athletic CV</p>'+
+          '<h2 class="cv-name">'+esc(athleteName())+'</h2>'+
+          '<p class="cv-sub">'+[gradeLabel(grade), esc(sports)].filter(Boolean).join(' · ')+'</p>'+
+          '<p class="cv-org">Athlete Academy · Frankfurt International School</p>'+
+        '</div>'+
+        '<button class="cv-print" onclick="exportCV()"><i class="ti ti-download" aria-hidden="true"></i> Save as PDF</button>'+
+      '</div>';
+
+    // --- grit + training record ---
+    const gritCard = grit && grit.enough
+      ? '<div class="cv-grit">'+
+          '<span class="cv-grit-band cv-band-'+esc(String(grit.band||'').toLowerCase())+'">'+esc(grit.band)+'</span>'+
+          '<p class="cv-grit-line">Grit — how consistently this athlete trains</p>'+
+          '<div class="cv-grit-bar"><span style="width:'+Math.max(4, grit.score)+'%"></span></div>'+
+        '</div>'
+      : '<div class="cv-grit"><span class="cv-grit-band cv-band-none">Building</span>'+
+          '<p class="cv-grit-line">Keep logging your training and your Grit rating appears here.</p></div>';
+    html += '<div class="card">'+
+      '<p class="card-eyebrow">Training record</p>'+
+      gritCard+
+      '<div class="cv-stats">'+
+        '<div class="cv-stat"><span class="cv-stat-n">'+g.days+'</span><span class="cv-stat-l">Sessions logged</span></div>'+
+        '<div class="cv-stat"><span class="cv-stat-n">'+g.best+'</span><span class="cv-stat-l">Longest streak</span></div>'+
+        '<div class="cv-stat"><span class="cv-stat-n">'+pbs.length+'</span><span class="cv-stat-l">Personal bests</span></div>'+
+        '<div class="cv-stat"><span class="cv-stat-n">'+blocks.length+'</span><span class="cv-stat-l">Blocks passed</span></div>'+
+      '</div>'+
     '</div>';
-    // One card per sport.
-    Object.keys(groups).sort().forEach(sport => {
-      html += '<div class="card pb-group"><p class="card-eyebrow">'+esc(sport)+'</p>';
-      groups[sport].forEach(p => { html += pbPageItem(p); });
-      html += '</div>';
-    });
+
+    // --- personal bests, grouped by sport ---
+    html += '<div class="card"><div class="cv-sec-head"><p class="card-eyebrow" style="margin:0;">Personal bests</p>'+
+      '<button class="cv-add" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add</button></div>';
+    if(!pbs.length){
+      html += '<p class="cv-empty">No bests recorded yet. Log a session and mark it as a PB, or add one here.</p>';
+    } else {
+      const groups = {};
+      pbs.forEach(p => { const k = p.sport || 'Other'; (groups[k] = groups[k] || []).push(p); });
+      Object.keys(groups).sort().forEach(sport => {
+        html += '<p class="cv-group">'+esc(sport)+'</p>';
+        groups[sport].forEach(p => { html += pbPageItem(p); });
+      });
+    }
+    html += '</div>';
+
+    // --- competition results ---
+    html += '<div class="card"><p class="card-eyebrow">Competition results</p>';
+    if(!results.length){
+      html += '<p class="cv-empty">Add a result to a game in My Program and it appears here.</p>';
+    } else {
+      html += '<div class="cv-results">'+results.map(r =>
+        '<div class="cv-result"><div><p class="cv-result-name">'+esc(r.name||'Game')+'</p>'+
+          '<p class="cv-result-sub">'+[r.date?fmtNice(r.date):'', esc(r.sport||'')].filter(Boolean).join(' · ')+'</p></div>'+
+          '<p class="cv-result-val">'+esc(r.result)+'</p></div>').join('')+'</div>';
+    }
+    html += '</div>';
+
+    // --- what they've studied ---
+    html += '<div class="card"><p class="card-eyebrow">Development blocks</p>';
+    if(!blocks.length){
+      html += '<p class="cv-empty">Pass a block in Level Up and it lands here as a credential.</p>';
+    } else {
+      html += '<div class="cv-blocks">'+blocks.map(b =>
+        '<span class="cv-block"><i class="ti ti-rosette-discount-check-filled" aria-hidden="true"></i> '+esc(b.name)+'</span>').join('')+'</div>';
+    }
+    html += '</div>';
+
+    html += '<p class="cv-foot">Generated from this athlete’s own training record. '+
+      'Training is self-logged; competition results and coach check-ins are recorded by the Academy.</p>';
     html += '</div>';
     view.innerHTML = html;
   }
+  window.renderCV = renderCV;
+  // Print-to-PDF: the student saves it and hands it over themselves. No link,
+  // nothing published, nothing indexable.
+  function exportCV(){
+    document.body.classList.add('cv-printing');
+    const done = () => { document.body.classList.remove('cv-printing'); window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    setTimeout(() => { window.print(); setTimeout(done, 1500); }, 60);
+  }
+  window.exportCV = exportCV;
 
   function pbPageItem(p){
     const cur = parseFloat(p.value), prev = parseFloat(p.previousValue);
@@ -10749,7 +10908,7 @@
       const res = await apiDataGet({ action:'getPBs' });
       if(res.success) state.pbs = res.pbs || [];
     } catch(e){ /* keep existing on failure */ }
-    if(activeTab==='pbs') renderPBs();
+    if(activeTab==='cv') renderCV();
     renderWeekPBs();
   }
 
