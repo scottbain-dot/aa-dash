@@ -4764,6 +4764,7 @@
     p.lessons = Object.assign({}, p.lessons || {});
     p.lessons[lessonId] = Object.assign({}, p.lessons[lessonId] || {}, extra || {}, { done: true, at: isoToday() });
     await saveLearn(blockId, p, { status: 'in_progress' });
+    maybeCelebrateBadges();   // finishing a lesson can unlock a Learn badge
   }
   window.completeLesson = completeLesson;
   // The explicit "I'm finished" button: record it, then go back to the list so
@@ -5698,6 +5699,7 @@
       quizScore: quizState.score,
       status: blockNowPassed ? 'passed' : 'in_progress'
     });
+    maybeCelebrateBadges();   // passing the block earns the graduate badge
   }
 
   function renderWeek(){
@@ -5881,13 +5883,37 @@
     { id:'pb10',     name:'Record Hunter', icon:'ti-award',        metric:'pbs',  goal:10,  blurb:'Set 10 personal bests',    track:'Records'     },
     { id:'day50',    name:'Iron Athlete',  icon:'ti-shield-bolt',  metric:'days', goal:50,  blurb:'Log 50 sessions',          track:'Volume'      },
     { id:'streak30', name:'Unbreakable',   icon:'ti-shield-check', metric:'best', goal:30,  blurb:'Reach a 30-day streak',    track:'Consistency' },
-    { id:'day100',   name:'Centurion',     icon:'ti-crown',        metric:'days', goal:100, blurb:'Log 100 sessions',         track:'Volume'      }
+    { id:'day100',   name:'Centurion',     icon:'ti-crown',        metric:'days', goal:100, blurb:'Log 100 sessions',         track:'Volume'      },
+    { id:'lrn_basics',   name:'Fuel Basics',       icon:'ti-apple',            metric:'lBasics',      goal:1, blurb:'Finish the food basics lesson',   track:'Learn' },
+    { id:'lrn_energy',   name:'Energy Systems',    icon:'ti-bolt',             metric:'lEnergy',      goal:1, blurb:'Match 6 of 8 efforts',            track:'Learn' },
+    { id:'lrn_gameday',  name:'Game Day Planner',  icon:'ti-tools-kitchen-2',  metric:'lGameday',     goal:1, blurb:'Score 70+ on a game-day plan',    track:'Learn' },
+    { id:'lrn_recovery', name:'Recovery Smart',    icon:'ti-moon',             metric:'lRecovery',    goal:1, blurb:'Finish the recovery lesson',      track:'Learn' },
+    { id:'lrn_grad',     name:'Fuel Lab Graduate', icon:'ti-school',           metric:'blocksPassed', goal:1, blurb:'Pass the whole Fuel block',       track:'Learn' }
   ];
   const BADGE_TRACKS = [
     { key:'Consistency', icon:'ti-flame' },
     { key:'Volume',      icon:'ti-calendar-check' },
-    { key:'Records',     icon:'ti-trophy' }
+    { key:'Records',     icon:'ti-trophy' },
+    { key:'Learn',       icon:'ti-book' }
   ];
+
+  // Learn counts toward XP, but deliberately less than training does: a term of
+  // actual sessions should still out-earn the classroom work.
+  const XP_LESSON = 15;   // per lesson finished
+  const XP_BLOCK  = 50;   // bonus for passing a whole block
+  function learnMetrics(){
+    const out = { lessons:0, blocksPassed:0, lBasics:0, lEnergy:0, lGameday:0, lRecovery:0 };
+    (typeof LEARN_BLOCKS === 'undefined' ? [] : LEARN_BLOCKS).forEach(b => {
+      const ls = (learnState(b.id).progress || {}).lessons || {};
+      b.lessons.forEach(l => { if(ls[l.id] && ls[l.id].done) out.lessons++; });
+      if(learnBlockPassed(b)) out.blocksPassed++;
+    });
+    const fuel = (learnState('fuel').progress || {}).lessons || {};
+    const done = id => (fuel[id] && fuel[id].done) ? 1 : 0;
+    out.lBasics = done('basics'); out.lEnergy = done('energy');
+    out.lGameday = done('gameday'); out.lRecovery = done('recovery');
+    return out;
+  }
 
   // Best streak ever reached — persisted so streak badges stay earned even
   // after a streak lapses. Bumped whenever the current streak sets a new high.
@@ -5905,14 +5931,17 @@
     const pbs  = (state.pbs || []).length;
     const best = bumpBestStreak();
     const cur  = streakInfo().streak;
-    const m = { days:days, pbs:pbs, best:best, cur:cur };
+    const lm = learnMetrics();
+    const m = Object.assign({ days:days, pbs:pbs, best:best, cur:cur }, lm);
     const badges = BADGES.map(b => {
       const have = m[b.metric] || 0;
       return Object.assign({}, b, { have:have, earned: have >= b.goal });
     });
     const earnedCount = badges.filter(b => b.earned).length;
-    const xp = days*XP_SESSION + pbs*XP_PB + earnedCount*XP_BADGE;
-    return { days:days, pbs:pbs, best:best, cur:cur, badges:badges, earnedCount:earnedCount, xp:xp, rank:rankFor(xp) };
+    const xp = days*XP_SESSION + pbs*XP_PB + earnedCount*XP_BADGE
+             + lm.lessons*XP_LESSON + lm.blocksPassed*XP_BLOCK;
+    return { days:days, pbs:pbs, best:best, cur:cur, lessons:lm.lessons, blocksPassed:lm.blocksPassed,
+             badges:badges, earnedCount:earnedCount, xp:xp, rank:rankFor(xp) };
   }
 
   function rankMedalHTML(rank, cls){
@@ -5976,7 +6005,8 @@
     BADGE_TRACKS.forEach(t => {
       const tiles = g.badges.filter(b => b.track === t.key).map(b => {
         const cls = b.earned ? 'earned' : 'locked';
-        const sub = b.earned ? 'Earned' : Math.min(b.have, b.goal)+' / '+b.goal;
+        // A one-off badge reads "Not yet" rather than a meaningless "0 / 1".
+        const sub = b.earned ? 'Earned' : (b.goal === 1 ? 'Not yet' : Math.min(b.have, b.goal)+' / '+b.goal);
         const check = b.earned ? '<span class="badge-check"><i class="ti ti-check" aria-hidden="true"></i></span>' : '';
         return '<div class="badge-tile '+cls+'">'+check+
           '<div class="badge-ico"><i class="ti '+b.icon+'" aria-hidden="true"></i></div>'+
