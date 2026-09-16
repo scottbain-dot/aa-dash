@@ -31,7 +31,8 @@ if (fs.existsSync('COMPLETE-APPS-SCRIPT.gs')) {
   const gs = fs.readFileSync('COMPLETE-APPS-SCRIPT.gs', 'utf8');
   const portalHandlers = ['handleGetYearMap','handleGetWeeklyTemplate','handleGetWeek','handleGetGames','handleGetYearLoad',
     'handleGetPBs','handleSaveYearMap','handleSaveBlock','handleSaveWeeklyTemplate','handleSaveSession',
-    'handleDeleteSession','handleSavePB','handleGetBookingData','handleBookCheckIn','handleCancelBooking'];
+    'handleDeleteSession','handleSavePB','handleGetBookingData','handleBookCheckIn','handleCancelBooking',
+    'handleGetLearnProgress','handleSaveLearnProgress'];
   // Dispatch must not pass email to these handlers
   portalHandlers.forEach(fn => {
     const re = new RegExp(fn + '\\([^)]*\\.email\\b');
