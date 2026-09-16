@@ -2633,6 +2633,65 @@
   .match-done.pass .match-score { color: var(--sage); }
   .match-score small { font-size: 22px; opacity: 0.6; }
   .match-msg { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); margin: 10px 0 16px; }
+  /* Timing strip */
+  .tm-strip { display: flex; flex-direction: column; gap: 8px; }
+  .tm-card { border: 1px solid var(--line); border-radius: 12px; background: var(--cream); overflow: hidden; }
+  .tm-card summary { display: flex; align-items: center; gap: 11px; padding: 12px 14px; cursor: pointer; list-style: none; }
+  .tm-card summary::-webkit-details-marker { display: none; }
+  .tm-e { font-size: 22px; flex-shrink: 0; }
+  .tm-txt { display: flex; flex-direction: column; }
+  .tm-when { font: 800 10px 'Inter', sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--burgundy); }
+  .tm-what { font: 600 14.5px 'Inter', sans-serif; color: var(--ink); }
+  .tm-desc, .tm-why, .tm-heads { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin: 0 14px 10px; }
+  .tm-desc { margin-top: 2px; }
+  .tm-heads { color: var(--int-hard); }
+  /* Plan builder */
+  .slot-list { display: flex; flex-direction: column; gap: 9px; }
+  .slot { border: 2px dashed var(--line); border-radius: 14px; padding: 12px 13px; cursor: pointer; background: var(--surface); transition: all 0.15s; }
+  .slot:hover { border-color: var(--burgundy-light, #a06b66); }
+  .slot.active { border-style: solid; border-color: var(--burgundy); background: var(--cream); box-shadow: 0 0 0 3px rgba(135,75,70,0.1); }
+  .slot-name { font: 700 13px 'Inter', sans-serif; color: var(--burgundy); margin: 0 0 8px; }
+  .slot-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .slot-rename { flex: 1; min-width: 0; border: none; background: transparent; font: 700 13px 'Inter', sans-serif; color: var(--burgundy);
+    border-bottom: 1px dashed var(--line); padding: 2px 0; }
+  .slot-rename:focus { outline: none; border-bottom-color: var(--burgundy); }
+  .slot-del { background: none; border: none; cursor: pointer; color: var(--ink-mute); padding: 2px 4px; font-size: 15px; }
+  .slot-del:hover { color: var(--int-hard); }
+  .slot-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; align-items: center; }
+  .slot-empty { font: italic 400 12px 'Fraunces', serif; color: var(--ink-mute); }
+  .slot-chip { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; background: var(--cream);
+    border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px; font: 600 12px 'Inter', sans-serif; color: var(--ink-soft); }
+  .slot-chip:hover { border-color: var(--int-hard); color: var(--int-hard); }
+  .slot-chip .ti { font-size: 11px; opacity: 0.6; }
+  /* Food bank */
+  .food-bank { display: flex; flex-direction: column; gap: 12px; }
+  .fb-cat { font: 800 9px 'Inter', sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 6px; }
+  .fb-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 6px; }
+  .fb-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: grab; background: var(--cream);
+    border: 1px solid var(--line); border-radius: 11px; padding: 9px 4px; transition: all 0.13s; }
+  .fb-item:hover { border-color: var(--burgundy); transform: translateY(-1px); }
+  .fb-item:active { cursor: grabbing; }
+  .fb-e { font-size: 20px; line-height: 1; }
+  .fb-n { font: 600 10.5px 'Inter', sans-serif; color: var(--ink-soft); text-align: center; line-height: 1.2; }
+  /* Builder score */
+  .bs { margin-top: 16px; border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--cream); text-align: center; }
+  .bs.pass { border-color: var(--sage); background: #f2f8f3; }
+  .bs-num { font: 800 46px 'Fraunces', serif; color: var(--ink-mute); line-height: 1; margin: 0 0 12px; }
+  .bs.pass .bs-num { color: var(--sage); }
+  .bs-num small { font-size: 19px; opacity: 0.55; }
+  .bs-tags { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+  .bs-tag { display: flex; align-items: flex-start; gap: 6px; font: 600 12px 'Inter', sans-serif; line-height: 1.4; }
+  .bs-tag .ti { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .bs-tag.ok { color: #357843; }
+  .bs-tag.no { color: var(--ink-mute); }
+  /* Principles checklist */
+  .prin-list { display: flex; flex-direction: column; gap: 7px; }
+  .prin { display: flex; align-items: flex-start; gap: 9px; cursor: pointer; background: var(--cream);
+    border: 1px solid var(--line); border-radius: 11px; padding: 11px 13px; transition: all 0.14s; }
+  .prin:hover { border-color: var(--burgundy); }
+  .prin.on { border-color: var(--sage); background: #f2f8f3; }
+  .prin input { margin: 2px 0 0; accent-color: var(--sage); flex-shrink: 0; }
+  .prin span { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.45; }
   /* Recovery lesson */
   .art-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
   .art-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--cream); }
@@ -4849,12 +4908,16 @@
     if(lessonId === 'basics')        body = lessonBasicsHTML(blockId, lessonId);
     else if(lessonId === 'energy')   body = lessonEnergyHTML(blockId, lessonId);
     else if(lessonId === 'sport')    body = lessonSportHTML(blockId, lessonId);
+    else if(lessonId === 'gameday')  body = lessonGamedayHTML(blockId, lessonId);
+    else if(lessonId === 'ownplan')  body = lessonOwnplanHTML(blockId, lessonId);
     else if(lessonId === 'recovery') body = lessonRecoveryHTML(blockId, lessonId);
     else body = '<p class="learn-lesson-note"><i class="ti ti-tools" aria-hidden="true"></i> This lesson’s content is being built. Your progress already works.</p>'+
       learnDoneBtn(blockId, lessonId, 'Mark this lesson done');
     document.getElementById('view-learn').innerHTML = learnLessonShell(block, lesson, body);
     if(lessonId === 'sport') restoreSportPick(blockId);
     if(lessonId === 'energy'){ updateDial(); matchState = { i:0, score:0, done:false }; renderMatcher(blockId, lessonId); }
+    if(lessonId === 'gameday'){ renderGameday(blockId, lessonId); initFoodDrag(); }
+    if(lessonId === 'ownplan'){ renderOwnplan(blockId, lessonId); initFoodDrag(); }
     window.scrollTo(0,0);
   }
   window.openLesson = openLesson;
@@ -5151,10 +5214,299 @@
     saveLearn(blockId, p0, {});
   }
   window.pickSport = pickSport;
+  // Desktop nicety: let a food be dragged onto a slot. Delegated once per open,
+  // so re-rendering the bank never loses it. Phones use the tap path instead.
+  function initFoodDrag(){
+    const view = document.getElementById('view-learn'); if(!view || view._foodDrag) return;
+    view._foodDrag = true;
+    view.addEventListener('dragstart', e => {
+      const it = e.target.closest && e.target.closest('.fb-item');
+      if(it && e.dataTransfer) e.dataTransfer.setData('text/plain', it.dataset.food || '');
+    });
+  }
   function restoreSportPick(blockId){
     const saved = ((learnState(blockId).progress.lessons || {}).sport || {}).sport;
     if(saved) pickSport(blockId, 'sport', saved);
   }
+
+  // ---- Lessons 4 & 5: the meal-plan builders ----
+  // Scoring reads an item's tags only — never its name or which drawer it came
+  // from — so a smoothie can legitimately count as fluid + carb + protein.
+  const FOOD_BANK = [
+    { cat:'Carbs',   items:[ {e:'🍝',n:'Pasta',tags:['carb']}, {e:'🍚',n:'Rice',tags:['carb']}, {e:'🍞',n:'Toast',tags:['carb']},
+                             {e:'🥣',n:'Oats',tags:['carb']}, {e:'🥔',n:'Potato',tags:['carb']}, {e:'🥯',n:'Bagel',tags:['carb']} ] },
+    { cat:'Protein', items:[ {e:'🥚',n:'Eggs',tags:['protein']}, {e:'🍗',n:'Chicken',tags:['protein']}, {e:'🐟',n:'Fish',tags:['protein']},
+                             {e:'🥛',n:'Milk',tags:['protein','fluid']}, {e:'🫘',n:'Beans',tags:['protein']}, {e:'🍶',n:'Yoghurt',tags:['protein']} ] },
+    { cat:'Fats',    items:[ {e:'🥑',n:'Avocado',tags:['fat']}, {e:'🥜',n:'Nuts',tags:['fat']}, {e:'🫒',n:'Olive oil',tags:['fat']},
+                             {e:'🫙',n:'Peanut butter',tags:['fat']}, {e:'🧀',n:'Cheese',tags:['protein','fat']}, {e:'🌻',n:'Seeds',tags:['fat']} ] },
+    { cat:'Fluids',  items:[ {e:'💧',n:'Water',tags:['fluid']}, {e:'🧃',n:'Sports drink',tags:['fluid','carb']},
+                             {e:'🥤',n:'Smoothie',tags:['fluid','carb','protein']}, {e:'🧋',n:'Milk drink',tags:['fluid','carb','protein']},
+                             {e:'🥥',n:'Coconut water',tags:['fluid']}, {e:'🍹',n:'Juice',tags:['fluid','carb']} ] },
+    { cat:'Snacks',  items:[ {e:'🍫',n:'Cereal bar',tags:['carb']}, {e:'🍯',n:'Honey toast',tags:['carb']}, {e:'🍎',n:'Fruit',tags:['carb']},
+                             {e:'🥨',n:'Crackers',tags:['carb']}, {e:'🍌',n:'Banana',tags:['carb']}, {e:'🌰',n:'Trail mix',tags:['carb','fat']} ] }
+  ];
+  const FOOD_BY_NAME = {};
+  FOOD_BANK.forEach(g => g.items.forEach(it => { FOOD_BY_NAME[it.n] = it; }));
+
+  const TIMING_STRIP = [
+    { e:'🍝', when:'2–3 hrs before', what:'Real meal', desc:'Slow-release carbs (oats, pasta, rice), some protein, easy on the fat. This is the meal that fills the tank.',
+      why:'Slow carbs give steady energy and a little protein holds you over — easy on the fat so it digests in time.', heads:'Skip anything fried, heavy or high-fibre — leave time to digest.' },
+    { e:'🍌', when:'1–2 hrs before', what:'Top-up snack', desc:'Quicker carbs — banana, toast with honey, sports drink. Small enough not to sit heavy.',
+      why:'Fast carbs that are ready as fuel by the time you start.', heads:'This close, skip the protein-, fat- or fibre-heavy stuff.' },
+    { e:'💧', when:'During (under 60 min)', what:'Water is fine', desc:'For most short sessions or games, plain water keeps you going. Sip, don’t gulp.',
+      why:'For short sessions you’ve got enough fuel on board — hydration is the job.', heads:'' },
+    { e:'⚡', when:'During (60+ min)', what:'Add carbs', desc:'Sports drink, gel, banana or similar. Top up little and often.',
+      why:'Past 60 minutes your carb stores dip — topping up keeps your output high to the end.', heads:'Never try something new on game day — practise it in training.' },
+    { e:'🥛', when:'Within 30–60 min after', what:'Recovery snack', desc:'Carbs + protein. Flavoured milk, sandwich, smoothie, yoghurt with fruit.',
+      why:'This window is when your body refills carbs and rebuilds muscle fastest — get both, plus fluids.', heads:'Don’t leave it too long — the longer the gap, the slower you recover.' },
+    { e:'🍽️', when:'Evening, 2–3 hrs later', what:'Dinner — refill and rebuild', desc:'A proper meal to top up carbs and rebuild muscle. Vegetables matter here too.',
+      why:'Carbs refill, protein rebuilds, and veg brings the vitamins and minerals that drive recovery.', heads:'' }
+  ];
+
+  const WORKED_SCENARIO = { slots:[
+    { name:'3 hours before',    role:'load' },
+    { name:'Pre-game (1 hour)', role:'pregame' },
+    { name:'In game',           role:'during' },
+    { name:'Recovery (after)',  role:'recovery' }
+  ]};
+  const GAMEDAY_PASS = 70;
+  const PERSONAL_DAYS = {
+    training: { label:'Training day', help:'A normal training day — fuel the session, then recover well afterwards.',
+      template:['2 hours before','Pre-session','During','Recovery'],
+      principles:['Carbs in the slots before training','Light, easy foods close to training (no heavy fat or fibre right before)','Fluids spread across the whole day','Carbs + protein in the recovery window','Realistic — foods you’d actually eat','Timed — you know when each thing happens'] },
+    game: { label:'Game day', help:'A single game or match — fuel up, top up, and recover.',
+      template:['3 hours before','Pre-game (1 hour)','In game','Recovery'],
+      principles:['Carbs 3 hours before','Light, easy fuel 1 hour before (no heavy fat or fibre)','Fluids before, during and after','Carbs + protein in the recovery window (within 60 mins)','Realistic — foods you’d actually eat','Timed — you know when each thing happens'] },
+    multi: { label:'Multi-event day', help:'One day with several races, games or events — a track meet, swim meet or tournament.',
+      template:['3 hours before first event','Between events','During an event','After the meet'],
+      principles:['Carbs and fluids 3 hours before the first event','Easy carbs and fluids between events (nothing heavy)','Fluids during events, sports drink if it’s a long one','Carbs + protein after the meet','Realistic — foods you’d actually eat','Timed — you know when each thing happens'] },
+    rest: { label:'Rest / recovery day', help:'A day off training — focus on balanced eating and staying hydrated.',
+      template:['Breakfast','Lunch','Afternoon','Evening'],
+      principles:['Balance across the day — carbs, protein, fats and fluids all show up','Protein included to support recovery','Fluids spread across the day','Not over-restricting — you’re still eating enough','Realistic — foods you’d actually eat','Timed — you know when each meal happens'] }
+  };
+  const PRINCIPLES_PASS = 4;
+  const MAX_SLOTS = 8;
+
+  // ---- scoring engine (tags only) ----
+  function itemsTags(plan, name){ return (plan[name] || []).reduce((a, it) => a.concat(it.tags || []), []); }
+  function slotHas(plan, name, tag){ return itemsTags(plan, name).indexOf(tag) !== -1; }
+  function slotFilled(plan, name){ return !!(plan[name] && plan[name].length); }
+  function scoreGameday(plan){
+    const tags = [];
+    let score = 25;
+    const roleSlot = r => WORKED_SCENARIO.slots.filter(s => s.role === r)[0].name;
+    const load = roleSlot('load'), pre = roleSlot('pregame'), during = roleSlot('during'), rec = roleSlot('recovery');
+
+    if(slotHas(plan, load, 'carb')){ score += 15; tags.push([true, 'Carbs in your '+load+' meal']); }
+    else tags.push([false, 'Add carbs at '+load]);
+
+    if(slotHas(plan, pre, 'carb')){ score += 10; tags.push([true, 'Light carbs before you start']); }
+    else tags.push([false, 'Add light carbs at '+pre]);
+    if(slotHas(plan, pre, 'fat') || slotHas(plan, pre, 'protein')){
+      score -= 10; tags.push([false, 'Keep '+pre+' light — heavy food sits in your stomach']);
+    } else if(slotFilled(plan, pre)) score += 5;
+
+    if(slotHas(plan, rec, 'carb') && slotHas(plan, rec, 'protein')){ score += 25; tags.push([true, 'Carbs + protein to recover']); }
+    else if(slotHas(plan, rec, 'carb') || slotHas(plan, rec, 'protein')){ score += 10; tags.push([false, 'Recovery needs both carbs AND protein']); }
+    else tags.push([false, 'Refuel after with carbs + protein']);
+
+    if(slotHas(plan, during, 'fluid')){ score += 10; tags.push([true, 'Drinking during the event']); }
+    else tags.push([false, 'Take fluids '+during]);
+
+    const fl = WORKED_SCENARIO.slots.filter(s => slotHas(plan, s.name, 'fluid')).length;
+    score += [0,3,7,10,15][Math.min(fl, 4)];
+    if(fl >= 4) tags.push([true, 'Hydrating all day']);
+    else if(fl < 2) tags.push([false, 'Spread fluids across more slots']);
+
+    const empties = [load, rec].filter(n => !slotFilled(plan, n));
+    if(empties.length){ score -= empties.length * 15; tags.push([false, empties.join(' and ')+' still empty']); }
+    return { score: Math.max(0, Math.min(100, Math.round(score))), tags: tags };
+  }
+
+  // ---- shared builder UI ----
+  // Tap a slot to make it active, then tap foods to drop them in. Dragging works
+  // too on a desktop; the tap path is what actually gets used on a phone.
+  let gdPlan = {}, gdActive = '';
+  let ppState = { day:'', event:'', slots:[], ticked:{} };
+
+  function foodBankHTML(onPick){
+    return FOOD_BANK.map(g =>
+      '<div class="fb-group"><p class="fb-cat">'+esc(g.cat)+'</p><div class="fb-items">'+
+      g.items.map(it => '<button class="fb-item" draggable="true" data-food="'+esc(it.n)+'" onclick="'+onPick+'(\''+esc(it.n).replace(/'/g,"\\'")+'\')">'+
+        '<span class="fb-e">'+it.e+'</span><span class="fb-n">'+esc(it.n)+'</span></button>').join('')+
+      '</div></div>').join('');
+  }
+  function chipsHTML(items, removeFn, slotKey){
+    if(!items || !items.length) return '<span class="slot-empty">Tap here, then tap foods below</span>';
+    return items.map((it, i) => '<button class="slot-chip" onclick="event.stopPropagation(); '+removeFn+'(\''+slotKey.replace(/'/g,"\\'")+'\','+i+')">'+
+      (it.e || '')+' '+esc(it.n)+' <i class="ti ti-x" aria-hidden="true"></i></button>').join('');
+  }
+
+  // ---- Lesson 4: game-day timing + the worked plan ----
+  function lessonGamedayHTML(blockId, lessonId){
+    const saved = ((learnState(blockId).progress.lessons || {})[lessonId] || {});
+    gdPlan = saved.plan ? JSON.parse(JSON.stringify(saved.plan)) : {};
+    WORKED_SCENARIO.slots.forEach(s => { if(!gdPlan[s.name]) gdPlan[s.name] = []; });
+    gdActive = WORKED_SCENARIO.slots[0].name;
+    const strip = TIMING_STRIP.map(t =>
+      '<details class="tm-card"><summary><span class="tm-e">'+t.e+'</span>'+
+        '<span class="tm-txt"><span class="tm-when">'+esc(t.when)+'</span><span class="tm-what">'+esc(t.what)+'</span></span></summary>'+
+        '<p class="tm-desc">'+esc(t.desc)+'</p>'+
+        '<p class="tm-why"><strong>Why:</strong> '+esc(t.why)+'</p>'+
+        (t.heads ? '<p class="tm-heads"><strong>Heads up:</strong> '+esc(t.heads)+'</p>' : '')+
+      '</details>').join('');
+    return '<p class="learn-lesson-intro">Eat too early and you’re empty. Too late and you’re sluggish. Here’s the framework — then build a game day for yourself.</p>'+
+      '<p class="learn-sec">When to eat</p>'+
+      '<div class="tm-strip">'+strip+'</div>'+
+      '<p class="learn-sec">Build a game day</p>'+
+      '<p class="learn-p">Tap a slot, then tap foods to fill it. Your plan is scored out of 100 — you need <strong>'+GAMEDAY_PASS+'</strong> to finish this lesson.</p>'+
+      '<div class="builder" id="gdBuilder"></div>'+
+      '<p class="learn-sec">Food bank</p>'+
+      '<div class="food-bank">'+foodBankHTML('gdAdd')+'</div>';
+  }
+  function renderGameday(blockId, lessonId){
+    const host = document.getElementById('gdBuilder'); if(!host) return;
+    const r = scoreGameday(gdPlan);
+    const slots = WORKED_SCENARIO.slots.map(s =>
+      '<div class="slot'+(gdActive === s.name ? ' active' : '')+'" onclick="gdPick(\''+s.name.replace(/'/g,"\\'")+'\')"'+
+        ' ondragover="event.preventDefault()" ondrop="gdDrop(event,\''+s.name.replace(/'/g,"\\'")+'\')">'+
+        '<p class="slot-name">'+esc(s.name)+'</p>'+
+        '<div class="slot-chips">'+chipsHTML(gdPlan[s.name], 'gdRemove', s.name)+'</div>'+
+      '</div>').join('');
+    const tags = r.tags.map(t => '<span class="bs-tag '+(t[0]?'ok':'no')+'"><i class="ti '+(t[0]?'ti-check':'ti-alert-triangle')+'" aria-hidden="true"></i> '+esc(t[1])+'</span>').join('');
+    const passed = r.score >= GAMEDAY_PASS;
+    host.innerHTML = '<div class="slot-list">'+slots+'</div>'+
+      '<div class="bs'+(passed?' pass':'')+'"><p class="bs-num">'+r.score+'<small>/100</small></p>'+
+        '<div class="bs-tags">'+tags+'</div></div>'+
+      '<button class="card-cta card-cta-gold learn-done-btn"'+(passed?'':' disabled')+' onclick="saveGameday(\''+blockId+'\',\''+lessonId+'\')">'+
+        '<i class="ti ti-check" aria-hidden="true"></i> '+(passed ? 'Save my plan' : 'Reach '+GAMEDAY_PASS+' to save')+'</button>';
+  }
+  function gdPick(slot){ gdActive = slot; renderGameday('fuel','gameday'); }
+  window.gdPick = gdPick;
+  function gdAdd(name){
+    const f = FOOD_BY_NAME[name]; if(!f || !gdActive) return;
+    gdPlan[gdActive] = (gdPlan[gdActive] || []).concat([{ n:f.n, e:f.e, tags:f.tags }]);
+    renderGameday('fuel','gameday');
+  }
+  window.gdAdd = gdAdd;
+  function gdRemove(slot, i){ (gdPlan[slot] || []).splice(i, 1); renderGameday('fuel','gameday'); }
+  window.gdRemove = gdRemove;
+  function gdDrop(ev, slot){
+    ev.preventDefault();
+    const name = ev.dataTransfer && ev.dataTransfer.getData('text/plain');
+    if(name){ gdActive = slot; gdAdd(name); }
+  }
+  window.gdDrop = gdDrop;
+  async function saveGameday(blockId, lessonId){
+    const r = scoreGameday(gdPlan);
+    if(r.score < GAMEDAY_PASS){ showToast('Get to '+GAMEDAY_PASS+' first — check the tips under your score.', 'error'); return; }
+    await completeLesson(blockId, lessonId, { plan: gdPlan, score: r.score });
+    showToast('Plan saved · '+r.score+'/100', 'success');
+    renderLearn();
+  }
+  window.saveGameday = saveGameday;
+
+  // ---- Lesson 5: your own fuel plan ----
+  function lessonOwnplanHTML(blockId, lessonId){
+    const saved = ((learnState(blockId).progress.lessons || {})[lessonId] || {});
+    ppState = {
+      day: saved.day || '',
+      event: saved.event || '',
+      slots: saved.slots ? JSON.parse(JSON.stringify(saved.slots)) : [],
+      ticked: saved.ticked ? Object.assign({}, saved.ticked) : {}
+    };
+    return '<p class="learn-lesson-intro">Now build one for a real day of your own. Pick the kind of day, say what’s happening, then plan how you’ll fuel it.</p>'+
+      '<div id="ppBody"></div>';
+  }
+  function renderOwnplan(blockId, lessonId){
+    const host = document.getElementById('ppBody'); if(!host) return;
+    const days = Object.keys(PERSONAL_DAYS).map(k =>
+      '<button class="sportpick'+(ppState.day === k ? ' active' : '')+'" onclick="ppSetDay(\''+k+'\')">'+esc(PERSONAL_DAYS[k].label)+'</button>').join('');
+    let out = '<p class="learn-sec" style="margin-top:0;">What kind of day?</p><div class="sportpick-grid">'+days+'</div>';
+    if(!ppState.day){ host.innerHTML = out; return; }
+    const day = PERSONAL_DAYS[ppState.day];
+    out += '<p class="learn-p" style="margin-top:14px;">'+esc(day.help)+'</p>'+
+      '<p class="learn-sec">What’s happening?</p>'+
+      '<input class="lq-text" id="ppEvent" maxlength="120" placeholder="e.g. Saturday league game, 2pm kick-off" value="'+esc(ppState.event)+'" oninput="ppState.event=this.value">'+
+      '<p class="learn-sec">Your plan</p>'+
+      '<div class="slot-list">'+
+        ppState.slots.map((s, i) =>
+          '<div class="slot'+(ppState.active === i ? ' active' : '')+'" onclick="ppPick('+i+')"'+
+            ' ondragover="event.preventDefault()" ondrop="ppDrop(event,'+i+')">'+
+            '<div class="slot-head">'+
+              '<input class="slot-rename" value="'+esc(s.label)+'" onclick="event.stopPropagation()" oninput="ppRename('+i+',this.value)" aria-label="Slot name">'+
+              '<button class="slot-del" onclick="event.stopPropagation(); ppDelSlot('+i+')" aria-label="Remove slot"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+            '</div>'+
+            '<div class="slot-chips">'+chipsHTML(s.foods, 'ppRemove', String(i))+'</div>'+
+          '</div>').join('')+
+      '</div>'+
+      (ppState.slots.length < MAX_SLOTS ? '<button class="week-saveorder" onclick="ppAddSlot()"><i class="ti ti-plus" aria-hidden="true"></i> Add a slot</button>' : '')+
+      '<p class="learn-sec">Food bank</p><div class="food-bank">'+foodBankHTML('ppAdd')+'</div>'+
+      '<p class="learn-sec">Check your plan</p>'+
+      '<p class="learn-p">Tick every principle your plan actually meets. You need at least <strong>'+PRINCIPLES_PASS+'</strong>.</p>'+
+      '<div class="prin-list">'+
+        day.principles.map((p, i) =>
+          '<label class="prin'+(ppState.ticked[i] ? ' on' : '')+'"><input type="checkbox"'+(ppState.ticked[i]?' checked':'')+
+          ' onchange="ppTick('+i+',this.checked)"><span>'+esc(p)+'</span></label>').join('')+
+      '</div>'+
+      '<button class="card-cta card-cta-gold learn-done-btn" onclick="savePersonalPlan(\''+blockId+'\',\''+lessonId+'\')">'+
+        '<i class="ti ti-check" aria-hidden="true"></i> Save my plan</button>';
+    host.innerHTML = out;
+  }
+  function ppSetDay(k){
+    if(ppState.day !== k){
+      ppState.day = k;
+      ppState.slots = PERSONAL_DAYS[k].template.map(l => ({ label:l, foods:[] }));
+      ppState.ticked = {}; ppState.active = 0;
+    }
+    renderOwnplan('fuel','ownplan');
+  }
+  window.ppSetDay = ppSetDay;
+  function ppPick(i){ ppState.active = i; renderOwnplan('fuel','ownplan'); }
+  window.ppPick = ppPick;
+  function ppAdd(name){
+    const f = FOOD_BY_NAME[name]; const i = ppState.active;
+    if(!f || i === undefined || !ppState.slots[i]) return;
+    ppState.slots[i].foods = (ppState.slots[i].foods || []).concat([{ n:f.n, e:f.e, tags:f.tags }]);
+    renderOwnplan('fuel','ownplan');
+  }
+  window.ppAdd = ppAdd;
+  function ppRemove(i, j){ const s = ppState.slots[parseInt(i,10)]; if(s){ s.foods.splice(j,1); renderOwnplan('fuel','ownplan'); } }
+  window.ppRemove = ppRemove;
+  function ppRename(i, v){ if(ppState.slots[i]) ppState.slots[i].label = v; }
+  window.ppRename = ppRename;
+  function ppAddSlot(){
+    if(ppState.slots.length >= MAX_SLOTS) return;
+    ppState.slots.push({ label:'New slot', foods:[] });
+    ppState.active = ppState.slots.length - 1;
+    renderOwnplan('fuel','ownplan');
+  }
+  window.ppAddSlot = ppAddSlot;
+  function ppDelSlot(i){
+    ppState.slots.splice(i, 1);
+    if(ppState.active >= ppState.slots.length) ppState.active = Math.max(0, ppState.slots.length - 1);
+    renderOwnplan('fuel','ownplan');
+  }
+  window.ppDelSlot = ppDelSlot;
+  function ppTick(i, on){ ppState.ticked[i] = !!on; renderOwnplan('fuel','ownplan'); }
+  window.ppTick = ppTick;
+  function ppDrop(ev, i){
+    ev.preventDefault();
+    const name = ev.dataTransfer && ev.dataTransfer.getData('text/plain');
+    if(name){ ppState.active = i; ppAdd(name); }
+  }
+  window.ppDrop = ppDrop;
+  async function savePersonalPlan(blockId, lessonId){
+    const ticks = Object.keys(ppState.ticked).filter(k => ppState.ticked[k]).length;
+    const anyFood = ppState.slots.some(s => (s.foods || []).length);
+    if(!ppState.event.trim()){ showToast('Say what day you’re planning for.', 'error'); return; }
+    if(!anyFood){ showToast('Add some food to your plan first.', 'error'); return; }
+    if(ticks < PRINCIPLES_PASS){ showToast('Tick at least '+PRINCIPLES_PASS+' principles your plan meets.', 'error'); return; }
+    await completeLesson(blockId, lessonId, { day: ppState.day, event: ppState.event, slots: ppState.slots, ticked: ppState.ticked });
+    showToast('Your plan is saved.', 'success');
+    renderLearn();
+  }
+  window.savePersonalPlan = savePersonalPlan;
 
   // ---- Lesson 6: recovery ----
   const ART = [
