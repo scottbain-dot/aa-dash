@@ -1601,8 +1601,7 @@
       <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
       <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
       <button class="tab" data-tab="learn" onclick="switchTab('learn')">Level Up</button>
-      <button class="tab" data-tab="pbs" onclick="switchTab('pbs')">PBs</button>
-      <button class="tab" data-tab="age" onclick="switchTab('age')">Training Age</button>
+      <button class="tab" data-tab="cv" onclick="switchTab('cv')">CV</button>
     </div>
   </div>
 </div>
@@ -1634,8 +1633,8 @@
 <div class="tab-view" id="view-learn"></div>
 
 <!-- ===== PBS TAB ===== -->
-<div class="tab-view" id="view-pbs"></div>
-<div class="tab-view" id="view-age"></div>
+<!-- ===== CV TAB — the athletic CV (absorbs PBs + Training Age) ===== -->
+<div class="tab-view" id="view-cv"></div>
 
 </div><!-- /.content -->
 </div><!-- /#portal -->
@@ -2503,6 +2502,136 @@
   .learn-lesson-note { display: flex; align-items: flex-start; gap: 8px; background: var(--cream); border: 1px solid var(--line);
     border-radius: 12px; padding: 12px 14px; font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin: 0 0 16px; }
   .learn-lesson-note .ti { color: var(--burgundy); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .learn-locked { display: flex; align-items: flex-start; gap: 12px; background: var(--cream); border: 1px dashed var(--line);
+    border-radius: 14px; padding: 16px; margin-top: 8px; }
+  .learn-locked-ic { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; background: var(--line-soft); color: var(--ink-mute); }
+  .learn-locked-ic .ti { font-size: 17px; }
+  .learn-locked-t { font: 700 14px 'Inter', sans-serif; color: var(--ink); margin: 2px 0 3px; }
+  .learn-locked-l { font: 400 13px 'Inter', sans-serif; color: var(--ink-mute); line-height: 1.5; margin: 0; }
+  /* Level Up header — level, badges and the block board */
+  .lv-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .lv-rank { font: 800 22px 'Fraunces', serif; color: var(--ink); margin: 2px 0 0; }
+  .lv-rank span { font: 600 12px 'Inter', sans-serif; color: var(--ink-mute); }
+  .lv-trophy { flex-shrink: 0; cursor: pointer; background: var(--cream); border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 12px; font: 700 12px 'Inter', sans-serif; color: var(--burgundy); display: inline-flex; align-items: center; gap: 3px; }
+  .lv-trophy:hover { border-color: var(--burgundy); }
+  .lv-badges { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .lv-badge { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    background: var(--line-soft); color: #b7a89d; }
+  .lv-badge.on { background: linear-gradient(145deg, #f6d873, #c99a1e); color: #5a3d06; box-shadow: 0 1px 4px rgba(184,134,11,0.3); }
+  .lv-badge .ti { font-size: 15px; }
+  .lv-badges-lab { font: 600 11px 'Inter', sans-serif; color: var(--ink-mute); margin-left: auto; }
+  .lv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 9px; }
+  .lv-tile { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+    border: 1px solid var(--line); border-radius: 14px; padding: 13px 12px; background: var(--cream); text-align: left; }
+  .lv-tile.open { cursor: pointer; border-color: var(--burgundy); background: var(--surface); box-shadow: var(--shadow-card); }
+  .lv-tile.done { cursor: pointer; border-color: var(--sage); background: #f2f8f3; }
+  .lv-tile.locked { opacity: 0.62; }
+  .lv-ic { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    background: var(--line-soft); color: var(--ink-mute); margin-bottom: 4px; }
+  .lv-tile.open .lv-ic { background: var(--burgundy); color: var(--cream); }
+  .lv-tile.done .lv-ic { background: var(--sage); color: #fff; }
+  .lv-ic .ti { font-size: 17px; }
+  .lv-name { font: 700 13.5px 'Inter', sans-serif; color: var(--ink); line-height: 1.2; }
+  .lv-tile.locked .lv-name { color: var(--ink-mute); }
+  .lv-meta { font: 600 11px 'Inter', sans-serif; color: var(--ink-mute); }
+  .lv-tile.open .lv-meta { color: var(--burgundy); }
+  .lv-check { position: absolute; top: 9px; right: 9px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--sage); color: #fff; display: flex; align-items: center; justify-content: center; }
+  .lv-check .ti { font-size: 11px; }
+
+  /* ---- CV tab ---- */
+  .cv-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 22px 20px;
+    border-radius: 20px; background: linear-gradient(135deg, #7c4340 0%, #8f5450 45%, #5f3430 100%); color: var(--cream);
+    position: relative; overflow: hidden; box-shadow: 0 10px 26px rgba(107,58,54,0.22); }
+  .cv-head::after { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,0.26), rgba(212,175,55,0) 70%); pointer-events: none; }
+  .cv-head-main { position: relative; z-index: 1; min-width: 0; }
+  .cv-eyebrow { font: 700 10px 'Inter', sans-serif; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin: 0; }
+  .cv-name { font: 800 28px 'Fraunces', serif; color: #fff; margin: 4px 0 2px; line-height: 1.1; }
+  .cv-sub { font: 600 13px 'Inter', sans-serif; color: rgba(250,243,237,0.9); margin: 0; }
+  .cv-org { font: 400 11.5px 'Inter', sans-serif; color: rgba(250,243,237,0.7); margin: 6px 0 0; }
+  .cv-print { flex-shrink: 0; position: relative; z-index: 1; cursor: pointer; background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.28); color: var(--cream); border-radius: 999px; padding: 8px 14px;
+    font: 700 12px 'Inter', sans-serif; display: inline-flex; align-items: center; gap: 5px; }
+  .cv-print:hover { background: rgba(255,255,255,0.22); }
+  .cv-grit { text-align: center; padding: 6px 0 14px; }
+  .cv-grit-band { display: inline-block; font: 800 13px 'Inter', sans-serif; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 999px; padding: 6px 16px; color: #fff; }
+  .cv-band-relentless { background: linear-gradient(135deg, #f6d873, #b8860b); color: #4a3405; }
+  .cv-band-consistent { background: linear-gradient(135deg, #93b58d, #5a8757); }
+  .cv-band-building   { background: var(--line); color: var(--ink-soft); }
+  .cv-band-none       { background: var(--line); color: var(--ink-mute); }
+  .cv-grit-line { font: italic 400 13px 'Fraunces', serif; color: var(--ink-soft); margin: 10px 0 0; }
+  .cv-grit-bar { height: 7px; border-radius: 999px; background: var(--line-soft); overflow: hidden; margin: 10px auto 0; max-width: 260px; }
+  .cv-grit-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #93b58d, #5a8757); }
+  .cv-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .cv-stat { text-align: center; background: var(--cream); border: 1px solid var(--line-soft); border-radius: 14px; padding: 12px 4px; }
+  .cv-stat-n { display: block; font: 800 22px 'Fraunces', serif; color: var(--burgundy); line-height: 1; }
+  .cv-stat-l { display: block; font: 700 9px 'Inter', sans-serif; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--ink-mute); margin-top: 5px; line-height: 1.25; }
+  .cv-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+  .cv-add { cursor: pointer; background: var(--cream); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
+    font: 700 12px 'Inter', sans-serif; color: var(--burgundy); display: inline-flex; align-items: center; gap: 4px; }
+  .cv-add:hover { border-color: var(--burgundy); }
+  .cv-group { font: 800 10px 'Inter', sans-serif; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-mute); margin: 16px 0 4px; }
+  .cv-empty { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-mute); margin: 8px 0 0; line-height: 1.5; }
+  .cv-results { display: flex; flex-direction: column; }
+  .cv-result { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid var(--line-soft); }
+  .cv-result:last-child { border-bottom: none; }
+  .cv-result-name { font: 600 14.5px 'Inter', sans-serif; color: var(--ink); margin: 0; }
+  .cv-result-sub { font: 400 12px 'Inter', sans-serif; color: var(--ink-mute); margin: 2px 0 0; }
+  .cv-result-val { font: 700 14px 'Inter', sans-serif; color: var(--burgundy); margin: 0; text-align: right; flex-shrink: 0; }
+  .cv-blocks { display: flex; flex-wrap: wrap; gap: 7px; }
+  .cv-block { display: inline-flex; align-items: center; gap: 5px; font: 700 12.5px 'Inter', sans-serif; color: #4a3405;
+    background: linear-gradient(135deg, #f6d873, #e0bf55); border-radius: 999px; padding: 6px 13px; }
+  .cv-block .ti { font-size: 14px; }
+  .cv-foot { font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); text-align: center; line-height: 1.5; margin: 4px 8px 0; }
+  /* Printing: just the CV, nothing else. */
+  @media print {
+    body.cv-printing .nav, body.cv-printing .tabs, body.cv-printing .block-bar,
+    body.cv-printing .tab-view:not(#view-cv), body.cv-printing .cv-print,
+    body.cv-printing .cv-add, body.cv-printing .sheet, body.cv-printing .sheet-backdrop,
+    body.cv-printing .toast, body.cv-printing #demoPill { display: none !important; }
+    body.cv-printing .card { box-shadow: none; border: 1px solid #e0e0e0; break-inside: avoid; }
+    body.cv-printing .cv-head { box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.cv-printing .cv-grit-band, body.cv-printing .cv-block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* CV: testing + strength levels, with blurred locks for what's not done */
+  .cv-note { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 4px 0 12px; }
+  .cv-tests { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 9px; }
+  .cv-test { position: relative; border: 1px solid var(--line-soft); border-radius: 14px; padding: 13px 12px; background: var(--cream); }
+  .cv-test-name { font: 700 11px 'Inter', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-mute); margin: 0; }
+  .cv-test-val { font: 800 26px 'Fraunces', serif; color: var(--burgundy); margin: 5px 0 0; line-height: 1; }
+  .cv-test-val small { font-size: 13px; margin-left: 2px; opacity: 0.65; }
+  .cv-test-sub { font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); margin: 5px 0 0; }
+  .cv-test-move { font: 700 11px 'Inter', sans-serif; color: var(--ink-mute); margin: 4px 0 0; }
+  .cv-test-move.up { color: #357843; }
+  .cv-levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 9px; }
+  .cv-level { position: relative; border: 1px solid var(--line-soft); border-radius: 14px; padding: 13px 12px;
+    background: var(--cream); overflow: hidden; }
+  .cv-level.earned { border-color: var(--line); background: var(--surface); box-shadow: var(--shadow-card); }
+  .cv-level-img { position: absolute; top: 0; right: 0; width: 52%; height: 100%; object-fit: cover;
+    object-position: center top; opacity: 0.38; pointer-events: none;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
+    mask-image: linear-gradient(90deg, transparent, #000 45%); }
+  .cv-level-body { position: relative; z-index: 1; }
+  .cv-level-name { font: 700 13px 'Inter', sans-serif; color: var(--ink); margin: 0; }
+  .cv-level-dots { display: flex; gap: 4px; margin: 8px 0 6px; }
+  .cv-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
+  .cv-dot.on { background: linear-gradient(150deg, #f6d873, #b8860b); }
+  .cv-level-meta { font: 600 11px 'Inter', sans-serif; color: var(--burgundy); margin: 0; }
+  /* Locked = you can see the shape of what's coming, not a zero */
+  .cv-test.locked, .cv-level.locked { border-style: dashed; background: transparent; }
+  .blurred { filter: blur(4px); opacity: 0.5; user-select: none; }
+  .cv-lock { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--line-soft); color: var(--ink-mute); display: flex; align-items: center; justify-content: center; }
+  .cv-lock .ti { font-size: 11px; }
+  .cv-block.locked { background: var(--line-soft); color: var(--ink-mute); }
 
   /* ---- Learn lesson bodies ---- */
   .learn-lesson-intro { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); line-height: 1.55; margin: 0 0 18px; }
@@ -3760,6 +3889,12 @@
   .drop-target { outline: 2px dashed var(--burgundy); outline-offset: -2px; border-radius: 12px; background: var(--cream); }
   .week-saveorder { width: 100%; margin-top: 10px; background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 10px; padding: 9px; font: 600 13px 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
   .week-saveorder:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .week-out { width: 100%; margin-top: 10px; background: transparent; border: 1px dashed var(--line); color: var(--ink-mute);
+    border-radius: 10px; padding: 9px; font: 600 12.5px 'Inter', sans-serif; display: flex; align-items: center;
+    justify-content: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
+  .week-out:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .week-out.is-on { border-style: solid; border-color: var(--amber); background: #fffaf0; color: var(--ink-soft); }
+  .week-out.is-on strong { color: var(--ink); }
   @media (max-width: 560px) {
     .plan-card { padding: 18px 18px; }
     .plan-row { padding: 13px 4px; gap: 10px; grid-template-columns: 42px 12px 1fr 28px 20px; }
@@ -4067,7 +4202,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, games: [], booking: null, planName: '', athleteId: '' };
+  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, availability: [], grit: null, testing: [], strengthLevels: [], games: [], booking: null, planName: '', athleteId: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -4208,6 +4343,9 @@
     if(action==='getWeek') return Promise.resolve({ success:true, weekStart: payload.weekStart,
       sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
+    if(action==='saveAvailability' || action==='clearAvailability') return Promise.resolve({ success:true });
+    if(action==='getAvailability') return Promise.resolve({ success:true, availability: state.availability||[] });
+    if(action==='getGrit') return Promise.resolve({ success:true, grit: state.grit });
     if(action==='getLearnProgress') return Promise.resolve({ success:true, learn: state.learn || { blocks:{} } });
     if(action==='saveLearnProgress'){
       const b = (state.learn && state.learn.blocks && state.learn.blocks[payload.blockId]) || {};
@@ -4321,9 +4459,14 @@
       initLibrary(data.library, data.weeklyTemplate);
       state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
+      cacheWeek(state.week.weekStart, state.week.sessions);   // seed the week cache from bootstrap
       state.pbs = data.pbs || [];
       state.load = data.load || { weeks: [], summary: {} };
       state.learn = data.learn || { blocks: {} };
+      state.availability = data.availability || [];
+      state.grit = data.grit || null;
+      state.testing = data.testing || [];
+      state.strengthLevels = data.strengthLevels || [];
       syncStreakSeen();   // baseline the streak so opening the app never triggers a celebration
       syncBadgesSeen();   // baseline earned badges so opening the app never triggers a celebration
       renderNav();
@@ -4333,10 +4476,11 @@
       // land on Year and get the walkthrough to set their vision first.
       var savedTab = null;
       try { savedTab = sessionStorage.getItem('aa_tab'); } catch(e){}
-      var resume = savedTab && ['week','year','load','book','pbs'].indexOf(savedTab) >= 0;
+      var resume = savedTab && ['week','year','load','book','cv','learn'].indexOf(savedTab) >= 0;
       switchTab(resume ? savedTab : (hasYear() ? 'week' : 'year'));
       if(!hasYear() && !resume) openWalkthrough();
       setLoading(false);
+      prefetchAround(state.week.weekStart);   // so the first week step is instant too
       loadGames();   // fire-and-forget: fill the season fixtures list once we're painted
       if(bookingUnlocked()) loadBooking(); // testers only — booking is still gated
     } catch(e){
@@ -4364,6 +4508,24 @@
     state.pbs = demo.pbs;
     state.load = demo.load;
     state.learn = demo.learn || { blocks: {} };
+    state.availability = [];
+    state.grit = { score: 78, band: 'Consistent', enough: true,
+      parts: { adherence:{pct:80,sessions:19,weeks:8,weeksFull:5,target:3}, checkins:{pct:100,attended:2,processed:2,unmarked:0} } };
+    // Demo CV data: some tested, some not, so the blurred locks are visible.
+    state.testing = [
+      { key:'broad_jump', label:'Broad jump', unit:'cm', done:true, value:212, date:'2026-09-02', tests:2, first:198, delta:{ raw:14, improved:true } },
+      { key:'sprint_40m', label:'40m sprint', unit:'s',  done:true, value:5.82, date:'2026-09-02', tests:2, first:6.11, delta:{ raw:0.29, improved:true } },
+      { key:'agility',    label:'5-10-5 agility', unit:'s', done:false },
+      { key:'cooper',     label:'Cooper 12 min',  unit:'m', done:true, value:2480, date:'2026-06-14', tests:1, first:null, delta:null }
+    ];
+    state.strengthLevels = [
+      { pattern:'Squat', tech:4, load:3, done:true },
+      { pattern:'Push',  tech:3, load:2, done:true },
+      { pattern:'Pull',  tech:2, load:0, done:true },
+      { pattern:'Hinge', tech:0, load:0, done:false },
+      { pattern:'Lunge', tech:3, load:3, done:true },
+      { pattern:'Press', tech:0, load:0, done:false }
+    ];
     state.games = demo.games || [];
     state.booking = demo.booking;
     state.planName = (demo.weeklyTemplate && demo.weeklyTemplate.name) || 'Swimming Performance';
@@ -4543,7 +4705,7 @@
   const LAUNCH_MODE = true;
   // My Program (week) is live so students can build their own program, and Book
   // (check-ins) is now live too. Load/PBs stay teased until they're ready.
-  const LIVE_TABS = { year:true, week:true, book:true, pbs:true, load:true };
+  const LIVE_TABS = { year:true, week:true, book:true, cv:true, load:true };
   // Booking is still in testing — students see the "coming soon" teaser. It's
   // unlocked only for the demo, a ?book=1 override, and named testers. This just
   // reveals the UI; the SERVER enforces the real lock (BOOKING_LIVE / tester
@@ -4589,7 +4751,7 @@
     else if(tab==='load') renderLoad();
     else if(tab==='book'){ renderBook(); loadBooking(); }
     else if(tab==='learn') renderLearn();
-    else if(tab==='pbs') renderPBs();
+    else if(tab==='cv') renderCV();
     window.scrollTo(0,0);
   }
   window.switchTab = switchTab;
@@ -4600,8 +4762,8 @@
     week: { icon:'ti-barbell',   title:'Your training programs', line:'Build a full training week, swap exercises to match your gear, and let it repeat. Nearly ready.' },
     load: { icon:'ti-activity',  title:'Training load',          line:'See how hard you’re training week to week — and whether it’s too much, too little, or just right.' },
     book: { icon:'ti-calendar-event', title:'Book your sessions', line:'Reserve your spot in Athlete Academy sessions, straight from your phone.' },
-    pbs:  { icon:'ti-trophy',    title:'Personal bests',         line:'Track every PB and watch your numbers climb across the year.' },
-    learn:{ icon:'ti-book',      title:'Level Up',               line:'Short lessons on fuelling and recovery — do the work, pass the block, earn the badge.' },
+    cv:   { icon:'ti-id-badge-2', title:'My athletic CV',        line:'Your bests, your results and your training record — one page you can take to a coach.' },
+    learn:{ icon:'ti-book',      title:'Level Up',               line:'Short blocks on fuelling, recovery, strength and mindset — do the work, pass the block, earn the badge.' },
     age:  { icon:'ti-radar',     title:'My Training Age',        line:'Your athletic development across psychology, physiology and skills — one score that grows as you do. Coming soon.' }
   };
   function renderTeaser(tab){
@@ -4702,16 +4864,17 @@
   const LEARN_BLOCKS = [{
     id: 'fuel',
     name: 'Fuel',
-    subtitle: 'Nutrition & recovery',
+    subtitle: 'Nutrition',
     icon: 'ti-apple',
-    intro: 'How food powers your training, what to eat and when, and why recovery is where you actually get better.',
+    intro: 'How food powers your training, what to eat and when, and how to build a fuelling plan for your own week.',
     lessons: [
       { id:'basics',   n:1, title:'Food basics & myths',       mins:20, gate:'Answer the intro questions' },
       { id:'energy',   n:2, title:'The three energy systems',  mins:20, gate:'Match 6 of 8 scenarios' },
       { id:'sport',    n:3, title:'Your sport’s fuel profile', mins:10, gate:'Find your profile' },
       { id:'gameday',  n:4, title:'Game-day timing',           mins:20, gate:'Plan scores 70+' },
-      { id:'ownplan',  n:5, title:'Your own fuel plan',        mins:20, gate:'Save your plan' },
-      { id:'recovery', n:6, title:'Recovery',                  mins:15, gate:'Work through it' }
+      { id:'ownplan',  n:5, title:'Your own fuel plan',        mins:20, gate:'Save your plan' }
+      // Recovery moved out of Fuel — it was thin here and belongs in its own
+      // block. lessonRecoveryHTML and its content are kept below, ready for it.
     ],
     quiz: { title:'Block quiz', pass: 8, total: 10 }
   }];
@@ -4739,6 +4902,31 @@
     const s = learnState(block.id);
     return s.bestQuiz !== null && s.bestQuiz >= block.quiz.pass;
   }
+  // Lessons run in order: lesson N opens once lesson N-1 is done. The first is
+  // always open, and anything already finished stays reachable so a student can
+  // go back and re-read it.
+  function lessonOpen(block, lessonId){
+    const idx = block.lessons.map(l => l.id).indexOf(lessonId);
+    if(idx <= 0) return true;
+    if(lessonDone(block.id, lessonId)) return true;
+    return lessonDone(block.id, block.lessons[idx - 1].id);
+  }
+  // Inside lesson 1 the questions stay shut until the videos are marked watched.
+  function videosWatched(blockId){
+    const l = (learnState(blockId).progress || {}).lessons || {};
+    return !!(l.basics && l.basics.watched);
+  }
+  async function markVideosWatched(blockId){
+    const s = learnState(blockId);
+    const p = Object.assign({}, s.progress);
+    p.lessons = Object.assign({}, p.lessons || {});
+    p.lessons.basics = Object.assign({}, p.lessons.basics || {}, { watched: true });
+    await saveLearn(blockId, p, {});
+    openLesson(blockId, 'basics');
+    const q = document.getElementById('lqList');
+    if(q) q.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  window.markVideosWatched = markVideosWatched;
   function learnBlockPassed(block){
     const c = learnCounts(block);
     return c.done === c.total && learnQuizPassed(block);
@@ -4790,12 +4978,68 @@
   window.finishLesson = finishLesson;
 
   // ---- views ----
+  // The six blocks on the board this year. Only 'fuel' is built; the rest show
+  // as locked so students can see where this is going. Add a block here and to
+  // LEARN_BLOCKS when it's ready, and it becomes live.
+  const BLOCK_ROADMAP = [
+    { id:'fuel',      name:'Fuel',              icon:'ti-apple',        sub:'Nutrition' },
+    { id:'recovery',  name:'Recovery',          icon:'ti-moon',         sub:'Rest & repair' },
+    { id:'programming',name:'Programming',      icon:'ti-calendar-stats', sub:'Plan your year' },
+    { id:'strength1', name:'Strength 1',        icon:'ti-barbell',      sub:'Foundations' },
+    { id:'cond1',     name:'Conditioning 1',    icon:'ti-heartbeat',    sub:'Engine' },
+    { id:'psych1',    name:'Psychology Basics', icon:'ti-brain',        sub:'Mindset' }
+  ];
+  // Next up once these land: MDS 1–3, Strength 2–3, Conditioning 2–3,
+  // Psych Skills, Training Load, Mobility, Injury & Niggles, Sleep.
+
   function renderLearn(){
     const block = LEARN_BLOCKS[0];
     document.getElementById('view-learn').innerHTML =
-      '<div class="card-stack">'+ learnBlockCard(block) + learnLessonsCard(block) +'</div>';
+      '<div class="card-stack">'+ learnTopHTML() + learnBlockCard(block) + learnLessonsCard(block) +'</div>';
   }
   window.renderLearn = renderLearn;
+
+  // Top of Level Up: what you've earned, and the board of blocks.
+  function learnTopHTML(){
+    const g = gameStats();
+    const learnBadges = g.badges.filter(b => b.track === 'Learn');
+    const earned = learnBadges.filter(b => b.earned);
+    const badgeRow = learnBadges.map(b =>
+      '<span class="lv-badge'+(b.earned?' on':'')+'" title="'+esc(b.name+' — '+b.blurb)+'">'+
+        '<i class="ti '+(b.earned ? b.icon : 'ti-lock')+'" aria-hidden="true"></i></span>').join('');
+    const tiles = BLOCK_ROADMAP.map(b => {
+      const live = learnBlock(b.id);
+      if(live){
+        const c = learnCounts(live);
+        const passed = learnBlockPassed(live);
+        const state = passed ? 'done' : 'open';
+        const meta = passed ? 'Passed' : c.done+'/'+c.total+' lessons';
+        return '<button class="lv-tile '+state+'" onclick="renderLearn()">'+
+          '<span class="lv-ic"><i class="ti '+b.icon+'" aria-hidden="true"></i></span>'+
+          '<span class="lv-name">'+esc(b.name)+'</span>'+
+          '<span class="lv-meta">'+esc(meta)+'</span>'+
+          (passed ? '<span class="lv-check"><i class="ti ti-check" aria-hidden="true"></i></span>' : '')+
+        '</button>';
+      }
+      return '<div class="lv-tile locked">'+
+        '<span class="lv-ic"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
+        '<span class="lv-name">'+esc(b.name)+'</span>'+
+        '<span class="lv-meta">'+esc(b.sub)+'</span>'+
+      '</div>';
+    }).join('');
+    return '<div class="card">'+
+      '<div class="lv-head">'+
+        '<div><p class="card-eyebrow" style="margin:0;">Your level</p>'+
+          '<p class="lv-rank">'+esc(g.rank.name)+' <span>· Lv '+g.rank.level+'</span></p></div>'+
+        '<button class="lv-trophy" onclick="openTrophyRoom()">'+g.earnedCount+' badge'+(g.earnedCount===1?'':'s')+
+          ' <i class="ti ti-chevron-right" aria-hidden="true"></i></button>'+
+      '</div>'+
+      '<div class="lv-badges">'+badgeRow+
+        '<span class="lv-badges-lab">'+earned.length+' of '+learnBadges.length+' Level Up badges</span></div>'+
+      '<p class="learn-sec">Blocks</p>'+
+      '<div class="lv-grid">'+tiles+'</div>'+
+    '</div>';
+  }
 
   function learnBlockCard(block){
     const c = learnCounts(block);
@@ -4816,13 +5060,18 @@
   }
 
   function learnLessonsCard(block){
-    const rows = block.lessons.map(l => {
+    const rows = block.lessons.map((l, i) => {
       const done = lessonDone(block.id, l.id);
+      const open = lessonOpen(block, l.id);
       const mark = done
         ? '<span class="learn-num done"><i class="ti ti-check" aria-hidden="true"></i></span>'
-        : '<span class="learn-num">'+l.n+'</span>';
-      const meta = done ? 'Done' : (l.mins+' min · '+l.gate);
-      return '<button class="learn-row'+(done?' is-done':'')+'" onclick="openLesson(\''+block.id+'\',\''+l.id+'\')">'+
+        : (open ? '<span class="learn-num">'+l.n+'</span>'
+                : '<span class="learn-num locked"><i class="ti ti-lock" aria-hidden="true"></i></span>');
+      const meta = done ? 'Done'
+        : (open ? (l.mins+' min · '+l.gate)
+                : 'Finish lesson '+i+' first');
+      return '<button class="learn-row'+(done?' is-done':'')+(open?'':' is-locked')+'"'+
+        (open ? ' onclick="openLesson(\''+block.id+'\',\''+l.id+'\')"' : ' disabled')+'>'+
         mark+
         '<span class="learn-row-body"><span class="learn-row-title">'+esc(l.title)+'</span>'+
           '<span class="learn-row-meta">'+esc(meta)+'</span></span>'+
@@ -4944,6 +5193,9 @@
   function openLesson(blockId, lessonId){
     const block = learnBlock(blockId); if(!block) return;
     const lesson = block.lessons.filter(l => l.id === lessonId)[0]; if(!lesson) return;
+    // Guard the route too, not just the button — a locked lesson can't be
+    // opened by any path.
+    if(!lessonOpen(block, lessonId)){ showToast('Finish the lesson before this one first.', ''); renderLearn(); return; }
     let body;
     if(lessonId === 'basics')        body = lessonBasicsHTML(blockId, lessonId);
     else if(lessonId === 'energy')   body = lessonEnergyHTML(blockId, lessonId);
@@ -4991,16 +5243,27 @@
         '<textarea class="lq-text" id="lq_'+q.id+'" rows="3" placeholder="Your answer…">'+esc(prev[q.id] || '')+'</textarea></div></div>';
     }).join('');
     const marked = saved.marks ? learnMarksHTML(saved) : '';
-    return '<p class="learn-lesson-intro">Watch the three clips, flip through the myths, then answer the questions at the bottom. Your written answers get marked and you’ll get feedback straight back.</p>'+
+    const watched = videosWatched(blockId);
+    // The questions stay shut until the videos are marked watched. We can't tell
+    // whether a Loom clip actually played, so this is an honesty check, not a
+    // detector — it's there to stop students skipping straight to the answers.
+    const questionBlock = watched
+      ? '<p class="learn-sec">Your turn</p>'+
+        '<div class="lq-list" id="lqList">'+qs+'</div>'+
+        '<div id="lqResult">'+marked+'</div>'+
+        '<button class="card-cta card-cta-gold learn-done-btn" id="lqSubmit" onclick="submitIntroQuestions(\''+blockId+'\',\''+lessonId+'\')">'+
+          '<i class="ti ti-send" aria-hidden="true"></i> '+(saved.marks ? 'Answer again' : 'Submit my answers')+'</button>'
+      : '<div class="learn-locked"><span class="learn-locked-ic"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
+          '<div><p class="learn-locked-t">Questions locked</p>'+
+          '<p class="learn-locked-l">Watch all three clips above, then confirm below to unlock them.</p></div></div>'+
+        '<button class="card-cta card-cta-gold learn-done-btn" onclick="markVideosWatched(\''+blockId+'\')">'+
+          '<i class="ti ti-player-play" aria-hidden="true"></i> I’ve watched all three</button>';
+    return '<p class="learn-lesson-intro">Watch the three clips, flip through the myths, then answer the questions. Your written answers get marked and you’ll get feedback straight back.</p>'+
       '<p class="learn-sec">Watch first</p>'+
       '<div class="learn-videos">'+videos+'</div>'+
       '<p class="learn-sec">Myth busters</p>'+
       '<div class="myth-grid">'+myths+'</div>'+
-      '<p class="learn-sec">Your turn</p>'+
-      '<div class="lq-list" id="lqList">'+qs+'</div>'+
-      '<div id="lqResult">'+marked+'</div>'+
-      '<button class="card-cta card-cta-gold learn-done-btn" id="lqSubmit" onclick="submitIntroQuestions(\''+blockId+'\',\''+lessonId+'\')">'+
-        '<i class="ti ti-send" aria-hidden="true"></i> '+(saved.marks ? 'Answer again' : 'Submit my answers')+'</button>';
+      questionBlock;
   }
   function learnMarksHTML(saved){
     const byId = {};
@@ -5717,6 +5980,9 @@
 
   function renderWeek(){
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    // Keep the cache pointed at the live array, so an edit can never leave a
+    // stale copy behind for the next time this week is stepped back to.
+    if(typeof cacheWeek === 'function') cacheWeek(ws, state.week.sessions);
     const today = isoToday();
     const curMon = fmtISO(mondayOf(new Date()));
     const byDay = {};
@@ -5900,7 +6166,8 @@
     { id:'lrn_basics',   name:'Fuel Basics',       icon:'ti-apple',            metric:'lBasics',      goal:1, blurb:'Finish the food basics lesson',   track:'Learn' },
     { id:'lrn_energy',   name:'Energy Systems',    icon:'ti-bolt',             metric:'lEnergy',      goal:1, blurb:'Match 6 of 8 efforts',            track:'Learn' },
     { id:'lrn_gameday',  name:'Game Day Planner',  icon:'ti-tools-kitchen-2',  metric:'lGameday',     goal:1, blurb:'Score 70+ on a game-day plan',    track:'Learn' },
-    { id:'lrn_recovery', name:'Recovery Smart',    icon:'ti-moon',             metric:'lRecovery',    goal:1, blurb:'Finish the recovery lesson',      track:'Learn' },
+    { id:'lrn_ownplan',  name:'Own Plan',          icon:'ti-clipboard-check',  metric:'lOwnplan',     goal:1, blurb:'Build and save your own fuel plan', track:'Learn' },
+    // Recovery Smart returns with the Recovery block — it has no lesson to key off now.
     { id:'lrn_grad',     name:'Fuel Lab Graduate', icon:'ti-school',           metric:'blocksPassed', goal:1, blurb:'Pass the whole Fuel block',       track:'Learn' }
   ];
   const BADGE_TRACKS = [
@@ -5915,7 +6182,7 @@
   const XP_LESSON = 15;   // per lesson finished
   const XP_BLOCK  = 50;   // bonus for passing a whole block
   function learnMetrics(){
-    const out = { lessons:0, blocksPassed:0, lBasics:0, lEnergy:0, lGameday:0, lRecovery:0 };
+    const out = { lessons:0, blocksPassed:0, lBasics:0, lEnergy:0, lGameday:0, lOwnplan:0 };
     (typeof LEARN_BLOCKS === 'undefined' ? [] : LEARN_BLOCKS).forEach(b => {
       const ls = (learnState(b.id).progress || {}).lessons || {};
       b.lessons.forEach(l => { if(ls[l.id] && ls[l.id].done) out.lessons++; });
@@ -5924,7 +6191,7 @@
     const fuel = (learnState('fuel').progress || {}).lessons || {};
     const done = id => (fuel[id] && fuel[id].done) ? 1 : 0;
     out.lBasics = done('basics'); out.lEnergy = done('energy');
-    out.lGameday = done('gameday'); out.lRecovery = done('recovery');
+    out.lGameday = done('gameday'); out.lOwnplan = done('ownplan');
     return out;
   }
 
@@ -6150,8 +6417,59 @@
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add game</button>'+
       '</div>'+
+      outWeekHTML(ws)+
     '</div>';
   }
+
+  // ---- Injured / ill: take a week out rather than score it as a blank ----
+  // A flagged week is removed from the Grit window entirely, so it neither
+  // helps nor hurts. Teacher sees every flag and its reason.
+  function weekFlag(ws){
+    const end = addDays(ws, 6);
+    return (state.availability || []).filter(f => f.from <= end && (f.to || f.from) >= ws)[0] || null;
+  }
+  function outWeekHTML(ws){
+    const f = weekFlag(ws);
+    if(f){
+      const label = f.kind === 'ill' ? 'ill' : 'injured';
+      return '<button class="week-out is-on" onclick="clearOutWeek(\''+esc(f.from)+'\')">'+
+        '<i class="ti ti-heart-broken" aria-hidden="true"></i> Marked <strong>'+label+'</strong> this week — won’t count against you. Tap to undo.</button>';
+    }
+    return '<button class="week-out" onclick="openOutWeek(\''+ws+'\')">'+
+      '<i class="ti ti-first-aid-kit" aria-hidden="true"></i> Injured or ill this week?</button>';
+  }
+  function openOutWeek(ws){
+    const end = addDays(ws, 6);
+    const pick = window.prompt(
+      'Taking this week out means it won’t count for or against your Grit Score.\n\n'+
+      'Type "injured" or "ill", and add a short note if you like.\n'+
+      '(e.g. injured — rolled my ankle)', 'injured');
+    if(pick === null) return;
+    const raw = String(pick).trim();
+    if(!raw) return;
+    const kind = /ill|sick/i.test(raw) ? 'ill' : 'injured';
+    const note = raw.replace(/^(injured|ill|sick)\s*[-—:]?\s*/i, '').trim();
+    saveOutWeek(ws, end, kind, note);
+  }
+  window.openOutWeek = openOutWeek;
+  async function saveOutWeek(from, to, kind, note){
+    state.availability = (state.availability || []).concat([{ from, to, kind, note }]);
+    renderWeek();
+    try {
+      const res = await apiData({ action:'saveAvailability', entry: { from, to, kind, note } });
+      if(!res || !res.success) throw new Error((res && res.error) || 'save failed');
+      showToast('This week won’t count against your Grit Score.', 'success');
+    } catch(e){
+      showToast('Saved on your device. It’ll sync when you’re back online.', '');
+    }
+  }
+  async function clearOutWeek(from){
+    state.availability = (state.availability || []).filter(f => f.from !== from);
+    renderWeek();
+    try { await apiData({ action:'clearAvailability', from: from }); } catch(e){}
+    showToast('Back in — this week counts again.', '');
+  }
+  window.clearOutWeek = clearOutWeek;
 
   // A quiet "next game" line on This Week — the soonest upcoming fixture, with a
   // countdown, so a match on the horizon is always visible. Tapping opens its week.
@@ -10262,15 +10580,50 @@
       refLine + bars + line + dots + ticks + '</svg>';
   }
 
+  // Weeks already fetched this session, keyed by weekStart. Apps Script round
+  // trips are slow, so stepping back and forth used to mean a full-screen wait
+  // every single time. A week we've already seen now renders instantly, and the
+  // neighbours are fetched quietly in the background so the next step usually is
+  // instant too. renderWeek writes the live array back in, so the cache can't go
+  // stale behind an edit.
+  const weekCache = {};     // weekStart -> sessions array
+  const weekPending = {};   // weekStart -> in-flight promise, so we never ask twice
+  function cacheWeek(ws, sessions){ if(ws) weekCache[ws] = sessions || []; }
+  // One request per week, ever. A step that lands on a week the prefetch is
+  // already loading joins that request instead of starting a second one.
+  function fetchWeekOnce(ws){
+    if(weekCache[ws]) return Promise.resolve(weekCache[ws]);
+    if(weekPending[ws]) return weekPending[ws];
+    weekPending[ws] = apiDataGet({ action:'getWeek', weekStart: ws })
+      .then(r => {
+        const sessions = (r && r.success) ? (r.sessions || []) : [];
+        cacheWeek(ws, sessions); delete weekPending[ws]; return sessions;
+      })
+      .catch(err => { delete weekPending[ws]; throw err; });
+    return weekPending[ws];
+  }
+  function prefetchAround(ws){
+    [addDays(ws, -7), addDays(ws, 7)].forEach(w => { fetchWeekOnce(w).catch(() => {}); });
+  }
   async function drillWeek(weekStartIso){
+    const cached = weekCache[weekStartIso];
+    if(cached){
+      // Instant path — no spinner, no network.
+      state.week = { weekStart: weekStartIso, sessions: cached };
+      switchTab('week');
+      prefetchAround(weekStartIso);
+      if(await maybeAutoFillWeek()) renderWeek();   // an empty week may fill from the program
+      return;
+    }
     setLoading(true, 'Loading that week…');
-    try {
-      const wk = await apiDataGet({ action:'getWeek', weekStart: weekStartIso });
-      state.week = wk.success ? { weekStart: wk.weekStart, sessions: wk.sessions||[] } : { weekStart: weekStartIso, sessions: [] };
-    } catch(e){ state.week = { weekStart: weekStartIso, sessions: [] }; }
+    let sessions = [];
+    try { sessions = await fetchWeekOnce(weekStartIso); } catch(e){ sessions = []; }
+    state.week = { weekStart: weekStartIso, sessions: sessions };
+    cacheWeek(weekStartIso, state.week.sessions);
     await maybeAutoFillWeek();   // empty week carries the program forward
     setLoading(false);
     switchTab('week');
+    prefetchAround(weekStartIso);
   }
   window.drillWeek = drillWeek;
 
@@ -10331,13 +10684,16 @@
   async function copyLastWeek(){
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
     const prevWs = addDays(ws, -7);
-    setLoading(true, 'Loading last week…');
-    let prev = [];
-    try {
-      const wk = await apiDataGet({ action:'getWeek', weekStart: prevWs });
-      prev = (wk && wk.success) ? (wk.sessions || []) : [];
-    } catch(e){ prev = []; }
-    setLoading(false);
+    let prev = weekCache[prevWs] || null;   // usually already prefetched
+    if(!prev){
+      setLoading(true, 'Loading last week…');
+      try {
+        const wk = await apiDataGet({ action:'getWeek', weekStart: prevWs });
+        prev = (wk && wk.success) ? (wk.sessions || []) : [];
+        cacheWeek(prevWs, prev);
+      } catch(e){ prev = []; }
+      setLoading(false);
+    }
 
     if(!prev.length){ showToast('Nothing to copy from last week', ''); return; }
 
@@ -10399,36 +10755,193 @@
   // ============================================================
   // PBS TAB
   // ============================================================
-  function renderPBs(){
-    const view = document.getElementById('view-pbs');
+  // ============================================================
+  // CV — the one page a student can take to a coach or a college.
+  // Absorbs personal bests and (later) Training Age. Deliberately shows
+  // EFFORT as well as achievement, so a student with modest numbers but real
+  // consistency has something to be proud of.
+  // Export is a print-to-PDF the student hands over themselves — there is no
+  // public link, because this is the one outward-facing page in the portal and
+  // it carries a minor's name, school and history.
+  // ============================================================
+  function athleteName(){
+    return (athlete && (athlete.Name || ((athlete.First_Name||'')+' '+(athlete.Last_Name||'')).trim()))
+      || (currentUser && currentUser.name) || 'Athlete';
+  }
+  // Grade comes through as "11", "G11" or "Grade 11" depending on the sheet —
+  // don't end up with "Grade G11".
+  function gradeLabel(g){
+    const v = String(g == null ? '' : g).trim();
+    if(!v) return '';
+    if(/^grade\b/i.test(v)) return esc(v);
+    if(/^g\s*\d+$/i.test(v)) return 'Grade '+esc(v.replace(/^g\s*/i, ''));
+    return 'Grade '+esc(v);
+  }
+  // The movement photos the G9 strength portal uses, reused here so an earned
+  // pattern looks like something rather than a row of text.
+  // NOTE: these source files are 1.4-2.2MB each. They're lazy-loaded and only
+  // fetched for patterns the athlete has actually passed, but they should be
+  // resized down to thumbnails when there's tooling to do it.
+  const PATTERN_IMAGES = {
+    Squat: 'strength-squat.jpg', Hinge: 'strength-hinge.jpg', Push: 'strength-push.jpg',
+    Pull:  'strength-pull.jpg',  Lunge: 'strength-lunge.jpg', Press: 'strength-press.jpg'
+  };
+  // Five dots, filled to the level reached.
+  function cvDots(n, max){
+    let out = '';
+    for(let i=1;i<=max;i++) out += '<span class="cv-dot'+(i<=n?' on':'')+'"></span>';
+    return out;
+  }
+  function athleteSports(){
+    return [athlete && athlete.Sport_1, athlete && athlete.Sport_2, athlete && athlete.Sport_3]
+      .filter(s => s && String(s).trim()).join(' · ');
+  }
+  // Competition results the student has actually recorded.
+  function cvResults(){
+    return (state.games || [])
+      .filter(g => g.result && String(g.result).trim())
+      .sort((a,b) => (a.date < b.date ? 1 : -1));
+  }
+  function renderCV(){
+    const view = document.getElementById('view-cv');
+    const g = gameStats();
+    const grit = state.grit || null;
     const pbs = state.pbs || [];
-    if(!pbs.length){
-      view.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ti ti-trophy" aria-hidden="true"></i></div>'+
-        '<h2 class="empty-state-title">No <em>bests</em> yet.</h2>'+
-        '<p class="empty-state-text">Log a session and mark it as a PB, or add one here. Every best you set shows up on this board.</p>'+
-        '<button class="btn-primary" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>';
-      return;
-    }
-    const latest = pbs[0];
-    const groups = {};
-    pbs.forEach(p => { const k = p.sport || 'Other'; (groups[k] = groups[k] || []).push(p); });
-    let html = '<div class="card-stack">';
-    // Hero — headline + Add a PB.
-    html += '<div class="card card-hero">'+
-      '<p class="card-hero-eyebrow">Personal bests</p>'+
-      '<h2 class="card-hero-title">Your <em>bests</em>.</h2>'+
-      '<p class="card-hero-sub">'+(latest? 'Latest · <strong>'+esc(latest.exercise)+'</strong> '+esc(String(latest.value))+(latest.unit?' '+esc(latest.unit):'')+(latest.date?' · '+fmtNice(latest.date):'') : 'Every best you set lands here.')+'</p>'+
-      '<div class="week-today-cta"><button class="card-cta card-cta-ghost" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a PB</button></div>'+
-    '</div>';
-    // One card per sport.
-    Object.keys(groups).sort().forEach(sport => {
-      html += '<div class="card pb-group"><p class="card-eyebrow">'+esc(sport)+'</p>';
-      groups[sport].forEach(p => { html += pbPageItem(p); });
+    const results = cvResults();
+    const blocks = LEARN_BLOCKS.filter(b => learnBlockPassed(b));
+    const grade = (athlete && (athlete.Grade || athlete.Year_Group)) || '';
+    const sports = athleteSports();
+
+    // --- header ---
+    let html = '<div class="card-stack" id="cvSheetWrap">'+
+      '<div class="cv-head">'+
+        '<div class="cv-head-main">'+
+          '<p class="cv-eyebrow">Athletic CV</p>'+
+          '<h2 class="cv-name">'+esc(athleteName())+'</h2>'+
+          '<p class="cv-sub">'+[gradeLabel(grade), esc(sports)].filter(Boolean).join(' · ')+'</p>'+
+          '<p class="cv-org">Athlete Academy · Frankfurt International School</p>'+
+        '</div>'+
+        /* Export not offered yet. exportCV() and the print stylesheet are
+           already in place, so adding the button back is a one-liner. */
+      '</div>';
+
+    // --- training record ---
+    // Only ever shows what's been earned. The Grit band appears from
+    // "Consistent" up; below that we show the effort honestly with no label,
+    // because nobody should read a bottom-tier verdict on their own CV.
+    const stats = [];
+    if(g.days)         stats.push(['Sessions logged', g.days]);
+    if(g.best >= 3)    stats.push(['Longest streak', g.best]);
+    if(pbs.length)     stats.push(['Personal bests', pbs.length]);
+    if(blocks.length)  stats.push(['Blocks passed', blocks.length]);
+    const bandEarned = grit && grit.enough && (grit.band === 'Consistent' || grit.band === 'Relentless');
+    if(bandEarned || stats.length){
+      html += '<div class="card"><p class="card-eyebrow">Training record</p>';
+      if(bandEarned){
+        html += '<div class="cv-grit">'+
+          '<span class="cv-grit-band cv-band-'+esc(String(grit.band).toLowerCase())+'">'+esc(grit.band)+'</span>'+
+          '<p class="cv-grit-line">Grit — how consistently this athlete trains</p></div>';
+      }
+      if(stats.length){
+        html += '<div class="cv-stats">'+stats.map(s =>
+          '<div class="cv-stat"><span class="cv-stat-n">'+s[1]+'</span><span class="cv-stat-l">'+esc(s[0])+'</span></div>').join('')+'</div>';
+      }
       html += '</div>';
-    });
+    }
+
+    // --- fitness testing: Academy-measured, so it belongs on a CV ---
+    const tests = state.testing || [];
+    if(tests.length){
+      html += '<div class="card"><p class="card-eyebrow">Fitness testing</p>'+
+        '<div class="cv-tests">'+ tests.map(t => {
+          if(!t.done){
+            return '<div class="cv-test locked"><span class="cv-lock"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
+              '<p class="cv-test-name">'+esc(t.label)+'</p>'+
+              '<p class="cv-test-val blurred">00.0</p><p class="cv-test-sub">Not tested yet</p></div>';
+          }
+          let move = '';
+          if(t.delta && t.delta.raw){
+            move = '<p class="cv-test-move '+(t.delta.improved?'up':'')+'">'+
+              (t.delta.improved?'▲':'▼')+' '+t.delta.raw+' '+esc(t.unit)+' since first test</p>';
+          }
+          return '<div class="cv-test"><p class="cv-test-name">'+esc(t.label)+'</p>'+
+            '<p class="cv-test-val">'+t.value+'<small>'+esc(t.unit)+'</small></p>'+
+            '<p class="cv-test-sub">'+(t.date?fmtNice(t.date):'')+'</p>'+move+'</div>';
+        }).join('')+'</div></div>';
+    }
+
+    // --- strength: technique passed + level tested, both staff-assessed ---
+    const levels = (state.strengthLevels || []);
+    if(levels.length){
+      html += '<div class="card"><p class="card-eyebrow">Strength levels</p>'+
+        '<p class="cv-note">Technique passed and load level tested by a coach.</p>'+
+        '<div class="cv-levels">'+ levels.map(l => {
+          if(!l.done){
+            // No photo on a locked pattern: it shouldn't tease with a nice
+            // picture, and it saves a student who's done least the download.
+            return '<div class="cv-level locked"><span class="cv-lock"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
+              '<p class="cv-level-name">'+esc(l.pattern)+'</p><p class="cv-level-dots blurred">'+cvDots(0,5)+'</p>'+
+              '<p class="cv-test-sub">Not assessed</p></div>';
+          }
+          const img = PATTERN_IMAGES[l.pattern];
+          const imgTag = img ? '<img class="cv-level-img" src="'+esc(img)+'" alt="" loading="lazy">' : '';
+          return '<div class="cv-level earned">'+imgTag+
+            '<div class="cv-level-body"><p class="cv-level-name">'+esc(l.pattern)+'</p>'+
+            '<p class="cv-level-dots">'+cvDots(l.tech,5)+'</p>'+
+            '<p class="cv-level-meta">Technique L'+l.tech+(l.load?' · Load L'+l.load:'')+'</p></div></div>';
+        }).join('')+'</div></div>';
+    }
+
+    // --- personal bests ---
+    html += '<div class="card"><div class="cv-sec-head"><p class="card-eyebrow" style="margin:0;">Personal bests</p>'+
+      '<button class="cv-add" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add</button></div>';
+    if(!pbs.length){
+      html += '<p class="cv-empty">Your bests land here as you set them.</p>';
+    } else {
+      const groups = {};
+      pbs.forEach(p => { const k = p.sport || 'Other'; (groups[k] = groups[k] || []).push(p); });
+      Object.keys(groups).sort().forEach(sport => {
+        html += '<p class="cv-group">'+esc(sport)+'</p>';
+        groups[sport].forEach(p => { html += pbPageItem(p); });
+      });
+    }
+    html += '</div>';
+
+    // --- competition results (only when there are some) ---
+    if(results.length){
+      html += '<div class="card"><p class="card-eyebrow">Competition results</p>'+
+        '<div class="cv-results">'+results.map(r =>
+          '<div class="cv-result"><div><p class="cv-result-name">'+esc(r.name||'Game')+'</p>'+
+            '<p class="cv-result-sub">'+[r.date?fmtNice(r.date):'', esc(r.sport||'')].filter(Boolean).join(' · ')+'</p></div>'+
+            '<p class="cv-result-val">'+esc(r.result)+'</p></div>').join('')+'</div></div>';
+    }
+
+    // --- development blocks: earned ones crisp, the rest blurred ---
+    const allBlocks = BLOCK_ROADMAP;
+    html += '<div class="card"><p class="card-eyebrow">Development blocks</p>'+
+      '<div class="cv-blocks">'+ allBlocks.map(b => {
+        const live = learnBlock(b.id);
+        const passed = live && learnBlockPassed(live);
+        return passed
+          ? '<span class="cv-block"><i class="ti ti-rosette-discount-check-filled" aria-hidden="true"></i> '+esc(b.name)+'</span>'
+          : '<span class="cv-block locked blurred"><i class="ti ti-lock" aria-hidden="true"></i> '+esc(b.name)+'</span>';
+      }).join('')+'</div></div>';
+
+    html += '<p class="cv-foot">Fitness tests, strength levels and check-ins are recorded by the Academy. '+
+      'Training sessions are logged by the athlete.</p>';
     html += '</div>';
     view.innerHTML = html;
   }
+  window.renderCV = renderCV;
+  // Print-to-PDF: the student saves it and hands it over themselves. No link,
+  // nothing published, nothing indexable.
+  function exportCV(){
+    document.body.classList.add('cv-printing');
+    const done = () => { document.body.classList.remove('cv-printing'); window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    setTimeout(() => { window.print(); setTimeout(done, 1500); }, 60);
+  }
+  window.exportCV = exportCV;
 
   function pbPageItem(p){
     const cur = parseFloat(p.value), prev = parseFloat(p.previousValue);
@@ -10505,7 +11018,7 @@
       const res = await apiDataGet({ action:'getPBs' });
       if(res.success) state.pbs = res.pbs || [];
     } catch(e){ /* keep existing on failure */ }
-    if(activeTab==='pbs') renderPBs();
+    if(activeTab==='cv') renderCV();
     renderWeekPBs();
   }
 
