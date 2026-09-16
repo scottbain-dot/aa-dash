@@ -2612,7 +2612,14 @@
   .cv-test-move { font: 700 11px 'Inter', sans-serif; color: var(--ink-mute); margin: 4px 0 0; }
   .cv-test-move.up { color: #357843; }
   .cv-levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 9px; }
-  .cv-level { position: relative; border: 1px solid var(--line-soft); border-radius: 14px; padding: 13px 12px; background: var(--cream); }
+  .cv-level { position: relative; border: 1px solid var(--line-soft); border-radius: 14px; padding: 13px 12px;
+    background: var(--cream); overflow: hidden; }
+  .cv-level.earned { border-color: var(--line); background: var(--surface); box-shadow: var(--shadow-card); }
+  .cv-level-img { position: absolute; top: 0; right: 0; width: 52%; height: 100%; object-fit: cover;
+    object-position: center top; opacity: 0.38; pointer-events: none;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
+    mask-image: linear-gradient(90deg, transparent, #000 45%); }
+  .cv-level-body { position: relative; z-index: 1; }
   .cv-level-name { font: 700 13px 'Inter', sans-serif; color: var(--ink); margin: 0; }
   .cv-level-dots { display: flex; gap: 4px; margin: 8px 0 6px; }
   .cv-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
@@ -10770,6 +10777,15 @@
     if(/^g\s*\d+$/i.test(v)) return 'Grade '+esc(v.replace(/^g\s*/i, ''));
     return 'Grade '+esc(v);
   }
+  // The movement photos the G9 strength portal uses, reused here so an earned
+  // pattern looks like something rather than a row of text.
+  // NOTE: these source files are 1.4-2.2MB each. They're lazy-loaded and only
+  // fetched for patterns the athlete has actually passed, but they should be
+  // resized down to thumbnails when there's tooling to do it.
+  const PATTERN_IMAGES = {
+    Squat: 'strength-squat.jpg', Hinge: 'strength-hinge.jpg', Push: 'strength-push.jpg',
+    Pull:  'strength-pull.jpg',  Lunge: 'strength-lunge.jpg', Press: 'strength-press.png'
+  };
   // Five dots, filled to the level reached.
   function cvDots(n, max){
     let out = '';
@@ -10861,13 +10877,18 @@
         '<p class="cv-note">Technique passed and load level tested by a coach.</p>'+
         '<div class="cv-levels">'+ levels.map(l => {
           if(!l.done){
+            // No photo on a locked pattern: it shouldn't tease with a nice
+            // picture, and it saves a student who's done least the download.
             return '<div class="cv-level locked"><span class="cv-lock"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
               '<p class="cv-level-name">'+esc(l.pattern)+'</p><p class="cv-level-dots blurred">'+cvDots(0,5)+'</p>'+
               '<p class="cv-test-sub">Not assessed</p></div>';
           }
-          return '<div class="cv-level"><p class="cv-level-name">'+esc(l.pattern)+'</p>'+
+          const img = PATTERN_IMAGES[l.pattern];
+          const imgTag = img ? '<img class="cv-level-img" src="'+esc(img)+'" alt="" loading="lazy">' : '';
+          return '<div class="cv-level earned">'+imgTag+
+            '<div class="cv-level-body"><p class="cv-level-name">'+esc(l.pattern)+'</p>'+
             '<p class="cv-level-dots">'+cvDots(l.tech,5)+'</p>'+
-            '<p class="cv-level-meta">Technique L'+l.tech+(l.load?' · Load L'+l.load:'')+'</p></div>';
+            '<p class="cv-level-meta">Technique L'+l.tech+(l.load?' · Load L'+l.load:'')+'</p></div></div>';
         }).join('')+'</div></div>';
     }
 
