@@ -4555,8 +4555,21 @@
     const email = ((currentUser && currentUser.email) || '').toLowerCase();
     return BOOKING_TESTERS.indexOf(email) >= 0;
   }
+  // Learn is in testing — students still get the teaser. Same shape as booking:
+  // named testers, ?learn=1, or the demo. Unlike booking there's no server lock
+  // behind this, so ?learn=1 is a reveal a curious student could find. That's
+  // acceptable here — the worst case is someone works through the lessons early,
+  // and their progress is still written against their own Athlete_ID.
+  const LEARN_TESTERS = ['scott_bain@fis.edu', 'scottybain@gmail.com'];
+  function learnUnlocked(){
+    if(typeof DEMO_MODE !== 'undefined' && DEMO_MODE) return true;
+    try { if(/[?&]learn=1(&|$)/.test(location.search)) return true; } catch(e){}
+    const email = ((currentUser && currentUser.email) || '').toLowerCase();
+    return LEARN_TESTERS.indexOf(email) >= 0;
+  }
   function tabGated(tab){
-    if(tab==='book' && bookingUnlocked()) return false;   // testers see the live tab
+    if(tab==='book' && bookingUnlocked()) return false;    // testers see the live tab
+    if(tab==='learn' && learnUnlocked()) return false;
     return LAUNCH_MODE && !LIVE_TABS[tab];
   }
 
