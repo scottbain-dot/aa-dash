@@ -1600,6 +1600,7 @@
       <button class="tab" data-tab="year" onclick="switchTab('year')">Year</button>
       <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
       <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
+      <button class="tab" data-tab="learn" onclick="switchTab('learn')">Learn</button>
       <button class="tab" data-tab="pbs" onclick="switchTab('pbs')">PBs</button>
       <button class="tab" data-tab="age" onclick="switchTab('age')">Training Age</button>
     </div>
@@ -1628,6 +1629,9 @@
 
 <!-- ===== BOOK TAB ===== -->
 <div class="tab-view" id="view-book"></div>
+
+<!-- ===== LEARN TAB ===== -->
+<div class="tab-view" id="view-learn"></div>
 
 <!-- ===== PBS TAB ===== -->
 <div class="tab-view" id="view-pbs"></div>
@@ -2453,6 +2457,52 @@
   .rank-medal-num { font: 800 26px 'Fraunces', serif; color: #f6d873; }
   .rank-bar { height: 7px; border-radius: 999px; background: rgba(255,255,255,0.18); overflow: hidden; margin: 7px 0 5px; }
   .rank-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f6d873, #d4af37); box-shadow: 0 0 8px rgba(246,216,115,0.6); transition: width 0.5s ease; }
+
+  /* ---- Learn tab (all learn-* prefixed to stay clear of shared classes) ---- */
+  .learn-hero { display: flex; align-items: center; gap: 16px; padding: 20px 18px; border-radius: 20px;
+    background: linear-gradient(135deg, #7c4340 0%, #8f5450 45%, #5f3430 100%); color: var(--cream);
+    position: relative; overflow: hidden; box-shadow: 0 10px 26px rgba(107,58,54,0.22); }
+  .learn-hero::after { content: ''; position: absolute; top: -50%; right: -12%; width: 190px; height: 190px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,0.28), rgba(212,175,55,0) 70%); pointer-events: none; }
+  .learn-hero-ring { width: 68px; height: 68px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    padding: 4px; position: relative; z-index: 1; }
+  .learn-hero-ring-in { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, #3a201e, #521f1c); color: #f6d873; }
+  .learn-hero-ring-in .ti { font-size: 26px; }
+  .learn-hero-body { flex: 1; min-width: 0; position: relative; z-index: 1; }
+  .learn-hero-eyebrow { font: 600 10px 'Inter', sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(250,243,237,0.75); margin: 0; }
+  .learn-hero-title { font: 800 26px 'Fraunces', serif; color: #fff; margin: 2px 0 0; }
+  .learn-hero-bar { height: 7px; border-radius: 999px; background: rgba(255,255,255,0.18); overflow: hidden; margin: 10px 0 6px; }
+  .learn-hero-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f6d873, #d4af37); transition: width 0.5s ease; }
+  .learn-hero-sub { font: 600 11.5px 'Inter', sans-serif; color: rgba(250,243,237,0.85); }
+  .learn-hero-flag { display: inline-flex; align-items: center; gap: 5px; font: 800 11px 'Inter', sans-serif; color: #f6d873; }
+  .learn-hero-flag .ti { font-size: 15px; }
+  .learn-intro { font: italic 400 14px 'Fraunces', serif; color: var(--ink-soft); line-height: 1.5; margin: 6px 0 14px; }
+  .learn-list { display: flex; flex-direction: column; }
+  .learn-row { display: flex; align-items: center; gap: 13px; width: 100%; text-align: left; cursor: pointer;
+    background: none; border: none; border-top: 1px solid var(--line-soft); padding: 14px 2px; transition: background 0.15s; }
+  .learn-row:first-child { border-top: none; }
+  .learn-row:hover:not(:disabled) { background: var(--cream); }
+  .learn-row.is-locked { cursor: default; opacity: 0.55; }
+  .learn-num { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    background: var(--cream); border: 1px solid var(--line); color: var(--burgundy); font: 800 13px 'Inter', sans-serif; }
+  .learn-num .ti { font-size: 15px; }
+  .learn-num.locked { color: var(--ink-mute); }
+  .learn-num.done { background: linear-gradient(150deg, #93b58d 0%, #5a8757 100%); border-color: transparent; color: #fff;
+    box-shadow: 0 2px 5px rgba(90,135,87,0.4); }
+  .learn-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .learn-row-title { font: 600 15px 'Inter', sans-serif; color: var(--ink); line-height: 1.25; }
+  .learn-row.is-done .learn-row-title { color: var(--ink-soft); }
+  .learn-row-meta { font: 400 12px 'Inter', sans-serif; color: var(--ink-mute); }
+  .learn-row.is-done .learn-row-meta { color: var(--sage); font-weight: 700; }
+  .learn-row-go { flex-shrink: 0; font-size: 17px; color: var(--ink-mute); }
+  .learn-row-quiz .learn-row-title { font-family: 'Fraunces', serif; font-weight: 700; }
+  .learn-back { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; cursor: pointer;
+    background: none; border: none; padding: 2px 0 2px; font: 700 13px 'Inter', sans-serif; color: var(--burgundy); }
+  .learn-lesson-title { font: 800 26px 'Fraunces', serif; color: var(--ink); margin: 2px 0 12px; line-height: 1.15; }
+  .learn-lesson-note { display: flex; align-items: flex-start; gap: 8px; background: var(--cream); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin: 0 0 16px; }
+  .learn-lesson-note .ti { color: var(--burgundy); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 
   /* ---- Trophy room sheet ---- */
   .trophy-hero { display: flex; align-items: center; gap: 16px; padding: 18px; border-radius: 20px; margin-bottom: 8px;
@@ -3774,7 +3824,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, games: [], booking: null, planName: '', athleteId: '' };
+  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, games: [], booking: null, planName: '', athleteId: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -3915,6 +3965,12 @@
     if(action==='getWeek') return Promise.resolve({ success:true, weekStart: payload.weekStart,
       sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
+    if(action==='getLearnProgress') return Promise.resolve({ success:true, learn: state.learn || { blocks:{} } });
+    if(action==='saveLearnProgress'){
+      const b = (state.learn && state.learn.blocks && state.learn.blocks[payload.blockId]) || {};
+      return Promise.resolve({ success:true, bestQuiz: b.bestQuiz === undefined ? null : b.bestQuiz, attempts: b.attempts || 0, status: b.status || 'in_progress' });
+    }
+    if(action==='gradeLearnAnswers') return Promise.resolve({ success:true, marks: (payload.items||[]).map(it => ({ id: it.id, verdict:'met', feedback:'Good — you’ve got the key idea here.', tip:'' })) });
     if(action==='getGames') return Promise.resolve({ success:true, games: (state.games||[]) });
     if(action==='getBookingData') return Promise.resolve({ success:true, slots: (state.booking && state.booking.slots) || [] });
     if(action==='bookCheckIn') return Promise.resolve({ success:true, bookingId:'demo_bk_'+Date.now(), eventCreated:false });
@@ -4024,6 +4080,7 @@
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
       state.pbs = data.pbs || [];
       state.load = data.load || { weeks: [], summary: {} };
+      state.learn = data.learn || { blocks: {} };
       syncStreakSeen();   // baseline the streak so opening the app never triggers a celebration
       syncBadgesSeen();   // baseline earned badges so opening the app never triggers a celebration
       renderNav();
@@ -4063,6 +4120,7 @@
     state.week = demo.week;
     state.pbs = demo.pbs;
     state.load = demo.load;
+    state.learn = demo.learn || { blocks: {} };
     state.games = demo.games || [];
     state.booking = demo.booking;
     state.planName = (demo.weeklyTemplate && demo.weeklyTemplate.name) || 'Swimming Performance';
@@ -4199,7 +4257,13 @@
       { id:'demo_g1', date: gSat,               name:'vs Riverside (Home)', sport:'Swimming Gala', result:'', rpe:null, duration:null },
       { id:'demo_g2', date: addDays(gSat, 14),  name:'Regional Meet',       sport:'Swimming',      result:'', rpe:null, duration:null }
     ];
-    return { athlete, yearMap, weeklyTemplate, week, pbs, load, booking, games };
+    // Demo Learn progress: two lessons done, so the block card shows real progress.
+    const learn = { blocks: { fuel: {
+      blockId: 'fuel', status: 'in_progress',
+      progress: { lessons: { basics: { done: true, at: isoToday() }, sport: { done: true, at: isoToday() } } },
+      bestQuiz: null, attempts: 0
+    } } };
+    return { athlete, yearMap, weeklyTemplate, week, pbs, load, learn, booking, games };
   }
 
   function renderNav(){
@@ -4268,6 +4332,7 @@
     else if(tab==='year') renderYear();
     else if(tab==='load') renderLoad();
     else if(tab==='book'){ renderBook(); loadBooking(); }
+    else if(tab==='learn') renderLearn();
     else if(tab==='pbs') renderPBs();
     window.scrollTo(0,0);
   }
@@ -4280,6 +4345,7 @@
     load: { icon:'ti-activity',  title:'Training load',          line:'See how hard you’re training week to week — and whether it’s too much, too little, or just right.' },
     book: { icon:'ti-calendar-event', title:'Book your sessions', line:'Reserve your spot in Athlete Academy sessions, straight from your phone.' },
     pbs:  { icon:'ti-trophy',    title:'Personal bests',         line:'Track every PB and watch your numbers climb across the year.' },
+    learn:{ icon:'ti-book',      title:'Learn',                  line:'Short lessons on fuelling and recovery — do the work, pass the block, earn the badge.' },
     age:  { icon:'ti-radar',     title:'My Training Age',        line:'Your athletic development across psychology, physiology and skills — one score that grows as you do. Coming soon.' }
   };
   function renderTeaser(tab){
@@ -4371,6 +4437,187 @@
 
   // The Week tab is one card stack, in the approved order:
   //   (a) Today hero  (b) This week  (c) Load  (d) This week's mix
+  // ============================================================
+  // LEARN — lesson blocks. A block is a set of short lessons plus a quiz;
+  // finishing the lessons and passing the quiz passes the block and earns
+  // the badge. Progress lives server-side in Learn_Progress, keyed by
+  // Athlete_ID, and rides in on the bootstrap so this paints instantly.
+  // ============================================================
+  const LEARN_BLOCKS = [{
+    id: 'fuel',
+    name: 'Fuel',
+    subtitle: 'Nutrition & recovery',
+    icon: 'ti-apple',
+    intro: 'How food powers your training, what to eat and when, and why recovery is where you actually get better.',
+    lessons: [
+      { id:'basics',   n:1, title:'Food basics & myths',       mins:20, gate:'Answer the intro questions' },
+      { id:'energy',   n:2, title:'The three energy systems',  mins:20, gate:'Match 6 of 8 scenarios' },
+      { id:'sport',    n:3, title:'Your sport’s fuel profile', mins:10, gate:'Find your profile' },
+      { id:'gameday',  n:4, title:'Game-day timing',           mins:20, gate:'Plan scores 70+' },
+      { id:'ownplan',  n:5, title:'Your own fuel plan',        mins:20, gate:'Save your plan' },
+      { id:'recovery', n:6, title:'Recovery',                  mins:15, gate:'Work through it' }
+    ],
+    quiz: { title:'Block quiz', pass: 8, total: 10 }
+  }];
+  function learnBlock(id){ return LEARN_BLOCKS.filter(b => b.id === id)[0] || null; }
+
+  // ---- progress model ----
+  function learnState(blockId){
+    const b = (state.learn && state.learn.blocks && state.learn.blocks[blockId]) || null;
+    return {
+      status:   b ? (b.status || 'in_progress') : 'not_started',
+      progress: (b && b.progress) || {},
+      bestQuiz: b && b.bestQuiz !== undefined ? b.bestQuiz : null,
+      attempts: (b && b.attempts) || 0
+    };
+  }
+  function lessonDone(blockId, lessonId){
+    const l = (learnState(blockId).progress || {}).lessons || {};
+    return !!(l[lessonId] && l[lessonId].done);
+  }
+  function learnCounts(block){
+    const done = block.lessons.filter(l => lessonDone(block.id, l.id)).length;
+    return { done: done, total: block.lessons.length, pct: block.lessons.length ? Math.round(done/block.lessons.length*100) : 0 };
+  }
+  function learnQuizPassed(block){
+    const s = learnState(block.id);
+    return s.bestQuiz !== null && s.bestQuiz >= block.quiz.pass;
+  }
+  function learnBlockPassed(block){
+    const c = learnCounts(block);
+    return c.done === c.total && learnQuizPassed(block);
+  }
+
+  // Persist a block's progress. Optimistic locally so the UI never waits,
+  // then reconciled with whatever the sheet says (best score, attempts).
+  async function saveLearn(blockId, progress, meta){
+    meta = meta || {};
+    state.learn = state.learn || { blocks: {} };
+    state.learn.blocks = state.learn.blocks || {};
+    const cur = state.learn.blocks[blockId] ||
+      { blockId: blockId, status: 'in_progress', progress: {}, bestQuiz: null, attempts: 0 };
+    cur.progress = progress;
+    if(meta.status) cur.status = meta.status;
+    if(meta.quizScore !== undefined && meta.quizScore !== null){
+      cur.attempts = (cur.attempts || 0) + 1;
+      if(cur.bestQuiz === null || meta.quizScore > cur.bestQuiz) cur.bestQuiz = meta.quizScore;
+    }
+    state.learn.blocks[blockId] = cur;
+    try {
+      const res = await apiData({ action:'saveLearnProgress', blockId: blockId, progress: progress, meta: meta });
+      if(res && res.success){
+        if(res.bestQuiz !== undefined) cur.bestQuiz = res.bestQuiz;
+        if(res.attempts !== undefined) cur.attempts = res.attempts;
+        if(res.status) cur.status = res.status;
+      }
+    } catch(e){
+      showToast('Saved on your device. It’ll sync when you’re back online.', '');
+    }
+  }
+  // Mark a lesson finished, carrying any work it produced (scores, answers).
+  async function completeLesson(blockId, lessonId, extra){
+    const s = learnState(blockId);
+    const p = Object.assign({}, s.progress);
+    p.lessons = Object.assign({}, p.lessons || {});
+    p.lessons[lessonId] = Object.assign({}, p.lessons[lessonId] || {}, extra || {}, { done: true, at: isoToday() });
+    await saveLearn(blockId, p, { status: 'in_progress' });
+    renderLearn();
+  }
+  window.completeLesson = completeLesson;
+
+  // ---- views ----
+  function renderLearn(){
+    const block = LEARN_BLOCKS[0];
+    document.getElementById('view-learn').innerHTML =
+      '<div class="card-stack">'+ learnBlockCard(block) + learnLessonsCard(block) +'</div>';
+  }
+  window.renderLearn = renderLearn;
+
+  function learnBlockCard(block){
+    const c = learnCounts(block);
+    const passed = learnBlockPassed(block);
+    const ring = 'background: conic-gradient(var(--gold) '+c.pct+'%, rgba(255,255,255,0.18) 0);';
+    const status = passed
+      ? '<span class="learn-hero-flag"><i class="ti ti-rosette-discount-check-filled" aria-hidden="true"></i> Block passed</span>'
+      : '<span class="learn-hero-sub">'+c.done+' of '+c.total+' lesson'+(c.total===1?'':'s')+' done</span>';
+    return '<div class="learn-hero">'+
+      '<div class="learn-hero-ring" style="'+ring+'"><span class="learn-hero-ring-in"><i class="ti '+block.icon+'" aria-hidden="true"></i></span></div>'+
+      '<div class="learn-hero-body">'+
+        '<p class="learn-hero-eyebrow">'+esc(block.subtitle)+'</p>'+
+        '<h2 class="learn-hero-title">'+esc(block.name)+'</h2>'+
+        '<div class="learn-hero-bar"><span style="width:'+c.pct+'%"></span></div>'+
+        status+
+      '</div>'+
+    '</div>';
+  }
+
+  function learnLessonsCard(block){
+    const rows = block.lessons.map(l => {
+      const done = lessonDone(block.id, l.id);
+      const mark = done
+        ? '<span class="learn-num done"><i class="ti ti-check" aria-hidden="true"></i></span>'
+        : '<span class="learn-num">'+l.n+'</span>';
+      const meta = done ? 'Done' : (l.mins+' min · '+l.gate);
+      return '<button class="learn-row'+(done?' is-done':'')+'" onclick="openLesson(\''+block.id+'\',\''+l.id+'\')">'+
+        mark+
+        '<span class="learn-row-body"><span class="learn-row-title">'+esc(l.title)+'</span>'+
+          '<span class="learn-row-meta">'+esc(meta)+'</span></span>'+
+        '<i class="ti ti-chevron-right learn-row-go" aria-hidden="true"></i>'+
+      '</button>';
+    }).join('');
+    // The quiz sits after the lessons and unlocks once they're all done.
+    const c = learnCounts(block);
+    const s = learnState(block.id);
+    const quizReady = c.done === c.total;
+    const quizPassed = learnQuizPassed(block);
+    const quizMeta = quizPassed
+      ? ('Passed · best '+s.bestQuiz+'/'+block.quiz.total)
+      : (quizReady
+          ? (s.attempts ? ('Best '+s.bestQuiz+'/'+block.quiz.total+' · '+block.quiz.pass+' to pass') : (block.quiz.total+' questions · '+block.quiz.pass+' to pass'))
+          : 'Finish the lessons to unlock');
+    const quizMark = quizPassed
+      ? '<span class="learn-num done"><i class="ti ti-check" aria-hidden="true"></i></span>'
+      : '<span class="learn-num'+(quizReady?'':' locked')+'"><i class="ti '+(quizReady?'ti-help-circle':'ti-lock')+'" aria-hidden="true"></i></span>';
+    const quizRow = '<button class="learn-row learn-row-quiz'+(quizPassed?' is-done':'')+(quizReady?'':' is-locked')+'"'+
+      (quizReady ? ' onclick="openLearnQuiz(\''+block.id+'\')"' : ' disabled')+'>'+
+      quizMark+
+      '<span class="learn-row-body"><span class="learn-row-title">'+esc(block.quiz.title)+'</span>'+
+        '<span class="learn-row-meta">'+esc(quizMeta)+'</span></span>'+
+      '<i class="ti ti-chevron-right learn-row-go" aria-hidden="true"></i>'+
+    '</button>';
+    return '<div class="card">'+
+      '<p class="card-eyebrow">Lessons</p>'+
+      '<p class="learn-intro">'+esc(block.intro)+'</p>'+
+      '<div class="learn-list">'+rows+quizRow+'</div>'+
+    '</div>';
+  }
+
+  // Lesson bodies land in the next phases; the shell proves navigation and
+  // that progress round-trips to the sheet.
+  function openLesson(blockId, lessonId){
+    const block = learnBlock(blockId); if(!block) return;
+    const lesson = block.lessons.filter(l => l.id === lessonId)[0]; if(!lesson) return;
+    const done = lessonDone(blockId, lessonId);
+    document.getElementById('view-learn').innerHTML =
+      '<div class="card-stack">'+
+        '<button class="learn-back" onclick="renderLearn()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All lessons</button>'+
+        '<div class="card">'+
+          '<p class="card-eyebrow">Lesson '+lesson.n+' · '+esc(block.name)+'</p>'+
+          '<h2 class="learn-lesson-title">'+esc(lesson.title)+'</h2>'+
+          '<p class="learn-lesson-note"><i class="ti ti-tools" aria-hidden="true"></i> This lesson’s content is being built. The page and your progress already work.</p>'+
+          '<button class="card-cta card-cta-gold" onclick="completeLesson(\''+blockId+'\',\''+lessonId+'\')">'+
+            '<i class="ti ti-check" aria-hidden="true"></i> '+(done ? 'Marked done — mark again' : 'Mark this lesson done')+'</button>'+
+        '</div>'+
+      '</div>';
+    window.scrollTo(0,0);
+  }
+  window.openLesson = openLesson;
+
+  function openLearnQuiz(blockId){
+    showToast('The block quiz lands in a later phase.', '');
+  }
+  window.openLearnQuiz = openLearnQuiz;
+
   function renderWeek(){
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
     const today = isoToday();
