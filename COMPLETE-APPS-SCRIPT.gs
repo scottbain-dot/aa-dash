@@ -3577,6 +3577,9 @@ function handleSaveLearnProgress(ss, athleteId, blockId, progress, meta) {
     var attempts = (existing ? existing.attempts : 0) + (isAttempt ? 1 : 0);
 
     var status = meta.status || (existing ? existing.status : 'in_progress');
+    // A block never un-passes. A worse retake can't take back a pass already
+    // earned, whatever the client sends.
+    if (existing && existing.status === 'passed') status = 'passed';
     var passedAt = existing ? existing.passedAt : '';
     if (status === 'passed' && !passedAt) passedAt = new Date();
 

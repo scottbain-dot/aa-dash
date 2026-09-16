@@ -2633,6 +2633,32 @@
   .match-done.pass .match-score { color: var(--sage); }
   .match-score small { font-size: 22px; opacity: 0.6; }
   .match-msg { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); margin: 10px 0 16px; }
+  /* Block quiz */
+  .quiz-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .quiz-count { font: 800 10px 'Inter', sans-serif; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mute); }
+  .quiz-running { font: 800 12px 'Inter', sans-serif; color: var(--burgundy); }
+  .quiz-track { height: 5px; border-radius: 999px; background: var(--line-soft); overflow: hidden; margin-bottom: 18px; }
+  .quiz-track > span { display: block; height: 100%; border-radius: 999px; background: var(--gold); transition: width 0.35s ease; }
+  .quiz-q { font: 800 20px 'Fraunces', serif; color: var(--ink); line-height: 1.25; margin: 0 0 16px; }
+  .quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt { width: 100%; text-align: left; cursor: pointer; background: var(--cream); border: 2px solid var(--line);
+    border-radius: 12px; padding: 13px 15px; font: 500 14px 'Inter', sans-serif; color: var(--ink-soft); transition: all 0.14s; }
+  .quiz-opt:hover:not(:disabled) { border-color: var(--burgundy); color: var(--burgundy); }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-opt.is-right { background: #f2f8f3; border-color: var(--int-easy); color: #2f6b3c; font-weight: 700; }
+  .quiz-opt.is-wrong { background: #fdf3f2; border-color: var(--int-hard); color: var(--int-hard); font-weight: 700; }
+  .quiz-opt.is-dim { opacity: 0.5; }
+  .quiz-fb { margin-top: 14px; border-radius: 12px; padding: 14px; border: 1px solid var(--line); background: var(--cream); }
+  .quiz-fb.ok { border-color: rgba(74,157,91,0.45); background: #f2f8f3; }
+  .quiz-fb.no { border-color: rgba(192,67,59,0.35); background: #fdf3f2; }
+  .quiz-fb p { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.55; margin: 0 0 12px; }
+  .quiz-result { text-align: center; padding: 14px 0 4px; }
+  .quiz-score { font: 800 64px 'Fraunces', serif; color: var(--ink-mute); line-height: 1; margin: 0; }
+  .quiz-result.pass .quiz-score { color: var(--sage); }
+  .quiz-score small { font-size: 26px; opacity: 0.55; }
+  .quiz-msg { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); line-height: 1.5; margin: 12px 0 18px; }
+  .quiz-result-btns { display: flex; gap: 8px; }
+  .quiz-result-btns button { flex: 1; }
   /* Timing strip */
   .tm-strip { display: flex; flex-direction: column; gap: 8px; }
   .tm-card { border: 1px solid var(--line); border-radius: 12px; background: var(--cream); overflow: hidden; }
@@ -5545,10 +5571,134 @@
       learnDoneBtn(blockId, lessonId, 'Mark this lesson done');
   }
 
+  // ---- Block quiz ----
+  // Unlimited retakes on purpose: understanding it is the point, and the sheet
+  // keeps the best score alongside the attempt count so the effort still shows.
+  const FUEL_QUIZ = [
+    { q:'For most sports, what is the main fuel for working muscles?',
+      options:['Fat','Protein','Carbohydrates','Water'], correct:2,
+      explain:'Carbs are the dominant fuel for the yellow (lactic) system and a big chunk of the green (aerobic) one — which most sports lean on heavily.' },
+    { q:'Which energy system provides energy for explosive efforts under 10 seconds?',
+      options:['Red (ATP-CP)','Yellow (lactic acid)','Green (aerobic)','All three equally'], correct:0,
+      explain:'Red uses ATP and creatine phosphate already stored in the muscle — instant power, but it runs out fast.' },
+    { q:'When should you eat your main pre-competition meal?',
+      options:['Right before the event','30 minutes before','2–3 hours before','Skip it — you’ll perform on empty'], correct:2,
+      explain:'2–3 hours before gives your body time to digest and absorb the energy without it sitting heavy in your stomach.' },
+    { q:'True or false: energy drinks give you long-lasting energy.',
+      options:['True','False'], correct:1,
+      explain:'Energy drinks give a short caffeine and sugar spike followed by a crash. They’re stimulants with sugar, not real fuel.' },
+    { q:'What’s the best recovery snack within 30–60 minutes after a hard session?',
+      options:['Just water','Carbs + protein together (flavoured milk, smoothie, sandwich)','A protein shake on its own','Nothing — let your body rest'], correct:1,
+      explain:'Carbs refill glycogen and protein helps muscle repair. Together they’re more effective than either on its own.' },
+    { q:'What is the number one recovery tool an athlete has?',
+      options:['Ice baths','Protein supplements','Sleep','Compression garments'], correct:2,
+      explain:'Free, powerful, and you already do it. Growth hormone release, muscle repair and memory consolidation all happen while you sleep.' },
+    { q:'When should you use active recovery rather than passive recovery?',
+      options:['Active between games or races, passive between days','Always passive — you need full rest','Always active — keep moving','It doesn’t matter'], correct:0,
+      explain:'Light activity between events helps clear lactate and keeps you loose. Between days, full rest lets your body actually rebuild.' },
+    { q:'What does the ART framework stand for?',
+      options:['Athlete, Recovery, Training','Act, Recover, Think','Aerobic, Resistance, Tempo','Active, Rest, Train'], correct:1,
+      explain:'Act like a champ, Recover with intent, Think about what you can control — three things to stay on top of across any tournament day.' },
+    { q:'Which of these is NOT a sign you’re well recovered?',
+      options:['Resting heart rate is normal','You feel motivated to train','Your sleep was solid last night','You’ve been sore for 4 days and feel tired'], correct:3,
+      explain:'Persistent soreness and fatigue are clear signals your body hasn’t recovered — back off, sleep more, eat more, ease the load.' },
+    { q:'Should you try a new pre-game meal or sports drink for the first time at a major competition?',
+      options:['Yes, it might give you an edge','No — test it at training first'], correct:1,
+      explain:'Don’t experiment in competition. Something new could cause stomach trouble at the worst possible moment. Test it in training and find what works for you.' }
+  ];
+  let quizState = { i:0, score:0, picked:-1, done:false };
+
   function openLearnQuiz(blockId){
-    showToast('The block quiz lands in a later phase.', '');
+    const block = learnBlock(blockId); if(!block) return;
+    if(learnCounts(block).done < block.lessons.length){
+      showToast('Finish all six lessons first.', ''); return;
+    }
+    quizState = { i:0, score:0, picked:-1, done:false };
+    document.getElementById('view-learn').innerHTML =
+      '<div class="card-stack">'+
+        '<button class="learn-back" onclick="renderLearn()"><i class="ti ti-arrow-left" aria-hidden="true"></i> All lessons</button>'+
+        '<div class="card"><p class="card-eyebrow">'+esc(block.name)+' · block quiz</p>'+
+          '<h2 class="learn-lesson-title">'+esc(block.quiz.title)+'</h2>'+
+          '<div id="quizBody"></div></div>'+
+      '</div>';
+    renderQuiz(blockId);
+    window.scrollTo(0,0);
   }
   window.openLearnQuiz = openLearnQuiz;
+
+  function renderQuiz(blockId){
+    const block = learnBlock(blockId);
+    const host = document.getElementById('quizBody'); if(!host) return;
+    const total = FUEL_QUIZ.length;
+    if(quizState.done){ renderQuizResult(blockId); return; }
+    const q = FUEL_QUIZ[quizState.i];
+    const answered = quizState.picked >= 0;
+    const opts = q.options.map((o, i) => {
+      let cls = '';
+      if(answered){
+        if(i === q.correct) cls = ' is-right';
+        else if(i === quizState.picked) cls = ' is-wrong';
+        else cls = ' is-dim';
+      }
+      return '<button class="quiz-opt'+cls+'"'+(answered?' disabled':'')+
+        ' onclick="pickQuiz(\''+blockId+'\','+i+')">'+esc(o)+'</button>';
+    }).join('');
+    const fb = answered
+      ? '<div class="quiz-fb '+(quizState.picked === q.correct ? 'ok' : 'no')+'">'+
+          '<p>'+(quizState.picked === q.correct ? '<strong>Correct.</strong> ' : '<strong>Not quite.</strong> ')+esc(q.explain)+'</p>'+
+          '<button class="btn-primary" onclick="nextQuiz(\''+blockId+'\')">'+
+            (quizState.i + 1 >= total ? 'See my score' : 'Next question')+'</button>'+
+        '</div>'
+      : '';
+    host.innerHTML =
+      '<div class="quiz-top"><span class="quiz-count">Question '+(quizState.i+1)+' of '+total+'</span>'+
+        '<span class="quiz-running">'+quizState.score+' right</span></div>'+
+      '<div class="quiz-track"><span style="width:'+Math.round(quizState.i/total*100)+'%"></span></div>'+
+      '<p class="quiz-q">'+esc(q.q)+'</p>'+
+      '<div class="quiz-opts">'+opts+'</div>'+ fb;
+  }
+  function pickQuiz(blockId, i){
+    if(quizState.picked >= 0) return;
+    quizState.picked = i;
+    if(i === FUEL_QUIZ[quizState.i].correct) quizState.score++;
+    renderQuiz(blockId);
+  }
+  window.pickQuiz = pickQuiz;
+  function nextQuiz(blockId){
+    quizState.i++; quizState.picked = -1;
+    if(quizState.i >= FUEL_QUIZ.length) quizState.done = true;
+    renderQuiz(blockId);
+  }
+  window.nextQuiz = nextQuiz;
+
+  async function renderQuizResult(blockId){
+    const block = learnBlock(blockId);
+    const host = document.getElementById('quizBody'); if(!host) return;
+    const total = FUEL_QUIZ.length;
+    const passed = quizState.score >= block.quiz.pass;   // this attempt
+    // The block is judged on the BEST score, so a worse retake never undoes a pass.
+    const s0 = learnState(blockId);
+    const best = (s0.bestQuiz === null) ? quizState.score : Math.max(s0.bestQuiz, quizState.score);
+    const blockNowPassed = (best >= block.quiz.pass) && learnCounts(block).done === block.lessons.length;
+    host.innerHTML =
+      '<div class="quiz-result'+(passed?' pass':'')+'">'+
+        '<p class="quiz-score">'+quizState.score+'<small>/'+total+'</small></p>'+
+        '<p class="quiz-msg">'+(passed
+          ? (blockNowPassed ? 'That’s the block done. Nice work.' : 'Passed — '+block.quiz.pass+' was the bar.')
+          : 'You need '+block.quiz.pass+' to pass. Go again — the explanations are the useful bit.')+'</p>'+
+        '<div class="quiz-result-btns">'+
+          '<button class="btn-secondary" onclick="openLearnQuiz(\''+blockId+'\')">Try again</button>'+
+          '<button class="btn-primary" onclick="renderLearn()">Back to lessons</button>'+
+        '</div>'+
+      '</div>';
+    // Record the attempt. The sheet keeps the best score, so a worse retake
+    // never costs a pass already earned.
+    const s = learnState(blockId);
+    await saveLearn(blockId, s.progress, {
+      quizScore: quizState.score,
+      status: blockNowPassed ? 'passed' : 'in_progress'
+    });
+  }
 
   function renderWeek(){
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
