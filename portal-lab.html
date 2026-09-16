@@ -2510,6 +2510,37 @@
   .learn-locked-ic .ti { font-size: 17px; }
   .learn-locked-t { font: 700 14px 'Inter', sans-serif; color: var(--ink); margin: 2px 0 3px; }
   .learn-locked-l { font: 400 13px 'Inter', sans-serif; color: var(--ink-mute); line-height: 1.5; margin: 0; }
+  /* Level Up header — level, badges and the block board */
+  .lv-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .lv-rank { font: 800 22px 'Fraunces', serif; color: var(--ink); margin: 2px 0 0; }
+  .lv-rank span { font: 600 12px 'Inter', sans-serif; color: var(--ink-mute); }
+  .lv-trophy { flex-shrink: 0; cursor: pointer; background: var(--cream); border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 12px; font: 700 12px 'Inter', sans-serif; color: var(--burgundy); display: inline-flex; align-items: center; gap: 3px; }
+  .lv-trophy:hover { border-color: var(--burgundy); }
+  .lv-badges { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .lv-badge { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    background: var(--line-soft); color: #b7a89d; }
+  .lv-badge.on { background: linear-gradient(145deg, #f6d873, #c99a1e); color: #5a3d06; box-shadow: 0 1px 4px rgba(184,134,11,0.3); }
+  .lv-badge .ti { font-size: 15px; }
+  .lv-badges-lab { font: 600 11px 'Inter', sans-serif; color: var(--ink-mute); margin-left: auto; }
+  .lv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 9px; }
+  .lv-tile { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+    border: 1px solid var(--line); border-radius: 14px; padding: 13px 12px; background: var(--cream); text-align: left; }
+  .lv-tile.open { cursor: pointer; border-color: var(--burgundy); background: var(--surface); box-shadow: var(--shadow-card); }
+  .lv-tile.done { cursor: pointer; border-color: var(--sage); background: #f2f8f3; }
+  .lv-tile.locked { opacity: 0.62; }
+  .lv-ic { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    background: var(--line-soft); color: var(--ink-mute); margin-bottom: 4px; }
+  .lv-tile.open .lv-ic { background: var(--burgundy); color: var(--cream); }
+  .lv-tile.done .lv-ic { background: var(--sage); color: #fff; }
+  .lv-ic .ti { font-size: 17px; }
+  .lv-name { font: 700 13.5px 'Inter', sans-serif; color: var(--ink); line-height: 1.2; }
+  .lv-tile.locked .lv-name { color: var(--ink-mute); }
+  .lv-meta { font: 600 11px 'Inter', sans-serif; color: var(--ink-mute); }
+  .lv-tile.open .lv-meta { color: var(--burgundy); }
+  .lv-check { position: absolute; top: 9px; right: 9px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--sage); color: #fff; display: flex; align-items: center; justify-content: center; }
+  .lv-check .ti { font-size: 11px; }
 
   /* ---- Learn lesson bodies ---- */
   .learn-lesson-intro { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); line-height: 1.55; margin: 0 0 18px; }
@@ -4610,7 +4641,7 @@
     load: { icon:'ti-activity',  title:'Training load',          line:'See how hard you’re training week to week — and whether it’s too much, too little, or just right.' },
     book: { icon:'ti-calendar-event', title:'Book your sessions', line:'Reserve your spot in Athlete Academy sessions, straight from your phone.' },
     pbs:  { icon:'ti-trophy',    title:'Personal bests',         line:'Track every PB and watch your numbers climb across the year.' },
-    learn:{ icon:'ti-book',      title:'Level Up',               line:'Short lessons on fuelling and recovery — do the work, pass the block, earn the badge.' },
+    learn:{ icon:'ti-book',      title:'Level Up',               line:'Short blocks on fuelling, recovery, strength and mindset — do the work, pass the block, earn the badge.' },
     age:  { icon:'ti-radar',     title:'My Training Age',        line:'Your athletic development across psychology, physiology and skills — one score that grows as you do. Coming soon.' }
   };
   function renderTeaser(tab){
@@ -4711,16 +4742,17 @@
   const LEARN_BLOCKS = [{
     id: 'fuel',
     name: 'Fuel',
-    subtitle: 'Nutrition & recovery',
+    subtitle: 'Nutrition',
     icon: 'ti-apple',
-    intro: 'How food powers your training, what to eat and when, and why recovery is where you actually get better.',
+    intro: 'How food powers your training, what to eat and when, and how to build a fuelling plan for your own week.',
     lessons: [
       { id:'basics',   n:1, title:'Food basics & myths',       mins:20, gate:'Answer the intro questions' },
       { id:'energy',   n:2, title:'The three energy systems',  mins:20, gate:'Match 6 of 8 scenarios' },
       { id:'sport',    n:3, title:'Your sport’s fuel profile', mins:10, gate:'Find your profile' },
       { id:'gameday',  n:4, title:'Game-day timing',           mins:20, gate:'Plan scores 70+' },
-      { id:'ownplan',  n:5, title:'Your own fuel plan',        mins:20, gate:'Save your plan' },
-      { id:'recovery', n:6, title:'Recovery',                  mins:15, gate:'Work through it' }
+      { id:'ownplan',  n:5, title:'Your own fuel plan',        mins:20, gate:'Save your plan' }
+      // Recovery moved out of Fuel — it was thin here and belongs in its own
+      // block. lessonRecoveryHTML and its content are kept below, ready for it.
     ],
     quiz: { title:'Block quiz', pass: 8, total: 10 }
   }];
@@ -4824,12 +4856,68 @@
   window.finishLesson = finishLesson;
 
   // ---- views ----
+  // The six blocks on the board this year. Only 'fuel' is built; the rest show
+  // as locked so students can see where this is going. Add a block here and to
+  // LEARN_BLOCKS when it's ready, and it becomes live.
+  const BLOCK_ROADMAP = [
+    { id:'fuel',      name:'Fuel',              icon:'ti-apple',        sub:'Nutrition' },
+    { id:'recovery',  name:'Recovery',          icon:'ti-moon',         sub:'Rest & repair' },
+    { id:'programming',name:'Programming',      icon:'ti-calendar-stats', sub:'Plan your year' },
+    { id:'strength1', name:'Strength 1',        icon:'ti-barbell',      sub:'Foundations' },
+    { id:'cond1',     name:'Conditioning 1',    icon:'ti-heartbeat',    sub:'Engine' },
+    { id:'psych1',    name:'Psychology Basics', icon:'ti-brain',        sub:'Mindset' }
+  ];
+  // Next up once these land: MDS 1–3, Strength 2–3, Conditioning 2–3,
+  // Psych Skills, Training Load, Mobility, Injury & Niggles, Sleep.
+
   function renderLearn(){
     const block = LEARN_BLOCKS[0];
     document.getElementById('view-learn').innerHTML =
-      '<div class="card-stack">'+ learnBlockCard(block) + learnLessonsCard(block) +'</div>';
+      '<div class="card-stack">'+ learnTopHTML() + learnBlockCard(block) + learnLessonsCard(block) +'</div>';
   }
   window.renderLearn = renderLearn;
+
+  // Top of Level Up: what you've earned, and the board of blocks.
+  function learnTopHTML(){
+    const g = gameStats();
+    const learnBadges = g.badges.filter(b => b.track === 'Learn');
+    const earned = learnBadges.filter(b => b.earned);
+    const badgeRow = learnBadges.map(b =>
+      '<span class="lv-badge'+(b.earned?' on':'')+'" title="'+esc(b.name+' — '+b.blurb)+'">'+
+        '<i class="ti '+(b.earned ? b.icon : 'ti-lock')+'" aria-hidden="true"></i></span>').join('');
+    const tiles = BLOCK_ROADMAP.map(b => {
+      const live = learnBlock(b.id);
+      if(live){
+        const c = learnCounts(live);
+        const passed = learnBlockPassed(live);
+        const state = passed ? 'done' : 'open';
+        const meta = passed ? 'Passed' : c.done+'/'+c.total+' lessons';
+        return '<button class="lv-tile '+state+'" onclick="renderLearn()">'+
+          '<span class="lv-ic"><i class="ti '+b.icon+'" aria-hidden="true"></i></span>'+
+          '<span class="lv-name">'+esc(b.name)+'</span>'+
+          '<span class="lv-meta">'+esc(meta)+'</span>'+
+          (passed ? '<span class="lv-check"><i class="ti ti-check" aria-hidden="true"></i></span>' : '')+
+        '</button>';
+      }
+      return '<div class="lv-tile locked">'+
+        '<span class="lv-ic"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
+        '<span class="lv-name">'+esc(b.name)+'</span>'+
+        '<span class="lv-meta">'+esc(b.sub)+'</span>'+
+      '</div>';
+    }).join('');
+    return '<div class="card">'+
+      '<div class="lv-head">'+
+        '<div><p class="card-eyebrow" style="margin:0;">Your level</p>'+
+          '<p class="lv-rank">'+esc(g.rank.name)+' <span>· Lv '+g.rank.level+'</span></p></div>'+
+        '<button class="lv-trophy" onclick="openTrophyRoom()">'+g.earnedCount+' badge'+(g.earnedCount===1?'':'s')+
+          ' <i class="ti ti-chevron-right" aria-hidden="true"></i></button>'+
+      '</div>'+
+      '<div class="lv-badges">'+badgeRow+
+        '<span class="lv-badges-lab">'+earned.length+' of '+learnBadges.length+' Level Up badges</span></div>'+
+      '<p class="learn-sec">Blocks</p>'+
+      '<div class="lv-grid">'+tiles+'</div>'+
+    '</div>';
+  }
 
   function learnBlockCard(block){
     const c = learnCounts(block);
@@ -5956,7 +6044,8 @@
     { id:'lrn_basics',   name:'Fuel Basics',       icon:'ti-apple',            metric:'lBasics',      goal:1, blurb:'Finish the food basics lesson',   track:'Learn' },
     { id:'lrn_energy',   name:'Energy Systems',    icon:'ti-bolt',             metric:'lEnergy',      goal:1, blurb:'Match 6 of 8 efforts',            track:'Learn' },
     { id:'lrn_gameday',  name:'Game Day Planner',  icon:'ti-tools-kitchen-2',  metric:'lGameday',     goal:1, blurb:'Score 70+ on a game-day plan',    track:'Learn' },
-    { id:'lrn_recovery', name:'Recovery Smart',    icon:'ti-moon',             metric:'lRecovery',    goal:1, blurb:'Finish the recovery lesson',      track:'Learn' },
+    { id:'lrn_ownplan',  name:'Own Plan',          icon:'ti-clipboard-check',  metric:'lOwnplan',     goal:1, blurb:'Build and save your own fuel plan', track:'Learn' },
+    // Recovery Smart returns with the Recovery block — it has no lesson to key off now.
     { id:'lrn_grad',     name:'Fuel Lab Graduate', icon:'ti-school',           metric:'blocksPassed', goal:1, blurb:'Pass the whole Fuel block',       track:'Learn' }
   ];
   const BADGE_TRACKS = [
@@ -5971,7 +6060,7 @@
   const XP_LESSON = 15;   // per lesson finished
   const XP_BLOCK  = 50;   // bonus for passing a whole block
   function learnMetrics(){
-    const out = { lessons:0, blocksPassed:0, lBasics:0, lEnergy:0, lGameday:0, lRecovery:0 };
+    const out = { lessons:0, blocksPassed:0, lBasics:0, lEnergy:0, lGameday:0, lOwnplan:0 };
     (typeof LEARN_BLOCKS === 'undefined' ? [] : LEARN_BLOCKS).forEach(b => {
       const ls = (learnState(b.id).progress || {}).lessons || {};
       b.lessons.forEach(l => { if(ls[l.id] && ls[l.id].done) out.lessons++; });
@@ -5980,7 +6069,7 @@
     const fuel = (learnState('fuel').progress || {}).lessons || {};
     const done = id => (fuel[id] && fuel[id].done) ? 1 : 0;
     out.lBasics = done('basics'); out.lEnergy = done('energy');
-    out.lGameday = done('gameday'); out.lRecovery = done('recovery');
+    out.lGameday = done('gameday'); out.lOwnplan = done('ownplan');
     return out;
   }
 
