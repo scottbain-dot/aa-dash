@@ -4321,6 +4321,7 @@
       initLibrary(data.library, data.weeklyTemplate);
       state.planName = (state.weeklyTemplate && state.weeklyTemplate.name) || '';
       state.week = data.week || { weekStart: fmtISO(mondayOf(new Date())), sessions: [] };
+      cacheWeek(state.week.weekStart, state.week.sessions);   // seed the week cache from bootstrap
       state.pbs = data.pbs || [];
       state.load = data.load || { weeks: [], summary: {} };
       state.learn = data.learn || { blocks: {} };
@@ -4333,10 +4334,11 @@
       // land on Year and get the walkthrough to set their vision first.
       var savedTab = null;
       try { savedTab = sessionStorage.getItem('aa_tab'); } catch(e){}
-      var resume = savedTab && ['week','year','load','book','pbs'].indexOf(savedTab) >= 0;
+      var resume = savedTab && ['week','year','load','book','pbs','learn'].indexOf(savedTab) >= 0;
       switchTab(resume ? savedTab : (hasYear() ? 'week' : 'year'));
       if(!hasYear() && !resume) openWalkthrough();
       setLoading(false);
+      prefetchAround(state.week.weekStart);   // so the first week step is instant too
       loadGames();   // fire-and-forget: fill the season fixtures list once we're painted
       if(bookingUnlocked()) loadBooking(); // testers only — booking is still gated
     } catch(e){
@@ -5717,6 +5719,9 @@
 
   function renderWeek(){
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    // Keep the cache pointed at the live array, so an edit can never leave a
+    // stale copy behind for the next time this week is stepped back to.
+    if(typeof cacheWeek === 'function') cacheWeek(ws, state.week.sessions);
     const today = isoToday();
     const curMon = fmtISO(mondayOf(new Date()));
     const byDay = {};
@@ -10262,15 +10267,50 @@
       refLine + bars + line + dots + ticks + '</svg>';
   }
 
+  // Weeks already fetched this session, keyed by weekStart. Apps Script round
+  // trips are slow, so stepping back and forth used to mean a full-screen wait
+  // every single time. A week we've already seen now renders instantly, and the
+  // neighbours are fetched quietly in the background so the next step usually is
+  // instant too. renderWeek writes the live array back in, so the cache can't go
+  // stale behind an edit.
+  const weekCache = {};     // weekStart -> sessions array
+  const weekPending = {};   // weekStart -> in-flight promise, so we never ask twice
+  function cacheWeek(ws, sessions){ if(ws) weekCache[ws] = sessions || []; }
+  // One request per week, ever. A step that lands on a week the prefetch is
+  // already loading joins that request instead of starting a second one.
+  function fetchWeekOnce(ws){
+    if(weekCache[ws]) return Promise.resolve(weekCache[ws]);
+    if(weekPending[ws]) return weekPending[ws];
+    weekPending[ws] = apiDataGet({ action:'getWeek', weekStart: ws })
+      .then(r => {
+        const sessions = (r && r.success) ? (r.sessions || []) : [];
+        cacheWeek(ws, sessions); delete weekPending[ws]; return sessions;
+      })
+      .catch(err => { delete weekPending[ws]; throw err; });
+    return weekPending[ws];
+  }
+  function prefetchAround(ws){
+    [addDays(ws, -7), addDays(ws, 7)].forEach(w => { fetchWeekOnce(w).catch(() => {}); });
+  }
   async function drillWeek(weekStartIso){
+    const cached = weekCache[weekStartIso];
+    if(cached){
+      // Instant path — no spinner, no network.
+      state.week = { weekStart: weekStartIso, sessions: cached };
+      switchTab('week');
+      prefetchAround(weekStartIso);
+      if(await maybeAutoFillWeek()) renderWeek();   // an empty week may fill from the program
+      return;
+    }
     setLoading(true, 'Loading that week…');
-    try {
-      const wk = await apiDataGet({ action:'getWeek', weekStart: weekStartIso });
-      state.week = wk.success ? { weekStart: wk.weekStart, sessions: wk.sessions||[] } : { weekStart: weekStartIso, sessions: [] };
-    } catch(e){ state.week = { weekStart: weekStartIso, sessions: [] }; }
+    let sessions = [];
+    try { sessions = await fetchWeekOnce(weekStartIso); } catch(e){ sessions = []; }
+    state.week = { weekStart: weekStartIso, sessions: sessions };
+    cacheWeek(weekStartIso, state.week.sessions);
     await maybeAutoFillWeek();   // empty week carries the program forward
     setLoading(false);
     switchTab('week');
+    prefetchAround(weekStartIso);
   }
   window.drillWeek = drillWeek;
 
@@ -10331,13 +10371,16 @@
   async function copyLastWeek(){
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
     const prevWs = addDays(ws, -7);
-    setLoading(true, 'Loading last week…');
-    let prev = [];
-    try {
-      const wk = await apiDataGet({ action:'getWeek', weekStart: prevWs });
-      prev = (wk && wk.success) ? (wk.sessions || []) : [];
-    } catch(e){ prev = []; }
-    setLoading(false);
+    let prev = weekCache[prevWs] || null;   // usually already prefetched
+    if(!prev){
+      setLoading(true, 'Loading last week…');
+      try {
+        const wk = await apiDataGet({ action:'getWeek', weekStart: prevWs });
+        prev = (wk && wk.success) ? (wk.sessions || []) : [];
+        cacheWeek(prevWs, prev);
+      } catch(e){ prev = []; }
+      setLoading(false);
+    }
 
     if(!prev.length){ showToast('Nothing to copy from last week', ''); return; }
 
