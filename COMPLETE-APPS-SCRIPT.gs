@@ -3529,6 +3529,8 @@ function handleGetPortalBootstrap(ss, email) {
       learn: (learnRes && learnRes.success && learnRes.learn) ? learnRes.learn : { blocks: {} },
       grit: apComputeGrit(ss, athleteId),
       availability: apLoadAvailability(ss, athleteId),
+      testing: apLoadTesting(ss, athleteId),
+      strengthLevels: apLoadStrengthLevels(ss, athleteId),
       firstTime: !map
     };
   } catch (error) {
@@ -3555,6 +3557,85 @@ var GRIT_MIN_WEEKS = 2;        // below this there isn't enough to judge
 // Any of these on a check-in's calendar event title means "I've processed this
 // one". Without it the session is unknown and simply doesn't count either way.
 var GRIT_DONE_MARKS = ['✅', '✔', '✓'];   // ✅ ✔ ✓
+
+// ============================================================
+// CV DATA — verified achievement only.
+// Fitness test results and strength levels come from sheets the ACADEMY
+// fills in, not from anything a student can type, which is what makes them
+// worth putting on a CV. Both are athleteId-keyed.
+// ============================================================
+var CV_TESTS = [
+  { key: 'broad_jump', col: 'Broad_Jump_cm', label: 'Broad jump',  unit: 'cm',  better: 'higher' },
+  { key: 'sprint_40m', col: '40m_sec',       label: '40m sprint',  unit: 's',   better: 'lower'  },
+  { key: 'agility',    col: '5_10_5_sec',    label: '5-10-5 agility', unit: 's', better: 'lower' },
+  { key: 'cooper',     col: 'Cooper_m',      label: 'Cooper 12 min', unit: 'm', better: 'higher' }
+];
+var CV_PATTERNS = ['Squat', 'Push', 'Pull', 'Hinge', 'Lunge', 'Press'];
+
+// Latest result per test, plus the first one on record, so the CV can show
+// movement rather than a bare number.
+function apLoadTesting(ss, athleteId) {
+  var out = [];
+  try {
+    var sheet = ss.getSheetByName('Performance');
+    if (!sheet) return out;
+    var rows = apReadObjects(sheet);
+    var mine = [];
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Athlete_ID).trim() !== String(athleteId).trim()) continue;
+      mine.push(rows[i]);
+    }
+    mine.sort(function (a, b) { return apIsoDate_(a.Date) < apIsoDate_(b.Date) ? -1 : 1; });
+    for (var t = 0; t < CV_TESTS.length; t++) {
+      var spec = CV_TESTS[t];
+      var vals = [];
+      for (var m = 0; m < mine.length; m++) {
+        var raw = mine[m][spec.col];
+        var num = parseFloat(raw);
+        if (raw === '' || raw === null || raw === undefined || isNaN(num) || num <= 0) continue;
+        vals.push({ value: num, date: apIsoDate_(mine[m].Date) });
+      }
+      if (!vals.length) { out.push({ key: spec.key, label: spec.label, unit: spec.unit, done: false }); continue; }
+      var first = vals[0], last = vals[vals.length - 1];
+      var delta = null;
+      if (vals.length > 1) {
+        var d = last.value - first.value;
+        // A lower time is an improvement; a bigger distance is an improvement.
+        delta = { raw: Math.round(Math.abs(d) * 100) / 100, improved: (spec.better === 'lower') ? (d < 0) : (d > 0) };
+      }
+      out.push({
+        key: spec.key, label: spec.label, unit: spec.unit, done: true,
+        value: last.value, date: last.date, tests: vals.length,
+        first: (vals.length > 1 ? first.value : null), delta: delta
+      });
+    }
+  } catch (e) { /* no testing yet */ }
+  return out;
+}
+
+// Per movement pattern: the technique level passed, and the load level tested
+// at that technique. Both are assessed by staff.
+function apLoadStrengthLevels(ss, athleteId) {
+  var out = [];
+  try {
+    var sheet = ss.getSheetByName('Strength');
+    if (!sheet) return out;
+    var rows = apReadObjects(sheet);
+    var latest = null;
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Athlete_ID).trim() !== String(athleteId).trim()) continue;
+      if (!latest || apIsoDate_(rows[i].Date) >= apIsoDate_(latest.Date)) latest = rows[i];
+    }
+    for (var p = 0; p < CV_PATTERNS.length; p++) {
+      var pat = CV_PATTERNS[p];
+      var tech = latest ? (parseInt(latest[pat + '_Tech'], 10) || 0) : 0;
+      var load = 0;
+      if (latest && tech >= 2 && tech <= 5) load = parseInt(latest[pat + '_Str_L' + tech], 10) || 0;
+      out.push({ pattern: pat, tech: tech, load: load, done: tech > 0 });
+    }
+  } catch (e) { /* no strength assessment yet */ }
+  return out;
+}
 
 // ---- Availability: injured / ill weeks that shouldn't count ----
 // A flagged week is REMOVED from the grit window rather than scored as zero,

@@ -2601,6 +2601,31 @@
     body.cv-printing .cv-grit-band, body.cv-printing .cv-block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 
+  /* CV: testing + strength levels, with blurred locks for what's not done */
+  .cv-note { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 4px 0 12px; }
+  .cv-tests { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 9px; }
+  .cv-test { position: relative; border: 1px solid var(--line-soft); border-radius: 14px; padding: 13px 12px; background: var(--cream); }
+  .cv-test-name { font: 700 11px 'Inter', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-mute); margin: 0; }
+  .cv-test-val { font: 800 26px 'Fraunces', serif; color: var(--burgundy); margin: 5px 0 0; line-height: 1; }
+  .cv-test-val small { font-size: 13px; margin-left: 2px; opacity: 0.65; }
+  .cv-test-sub { font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); margin: 5px 0 0; }
+  .cv-test-move { font: 700 11px 'Inter', sans-serif; color: var(--ink-mute); margin: 4px 0 0; }
+  .cv-test-move.up { color: #357843; }
+  .cv-levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 9px; }
+  .cv-level { position: relative; border: 1px solid var(--line-soft); border-radius: 14px; padding: 13px 12px; background: var(--cream); }
+  .cv-level-name { font: 700 13px 'Inter', sans-serif; color: var(--ink); margin: 0; }
+  .cv-level-dots { display: flex; gap: 4px; margin: 8px 0 6px; }
+  .cv-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
+  .cv-dot.on { background: linear-gradient(150deg, #f6d873, #b8860b); }
+  .cv-level-meta { font: 600 11px 'Inter', sans-serif; color: var(--burgundy); margin: 0; }
+  /* Locked = you can see the shape of what's coming, not a zero */
+  .cv-test.locked, .cv-level.locked { border-style: dashed; background: transparent; }
+  .blurred { filter: blur(4px); opacity: 0.5; user-select: none; }
+  .cv-lock { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--line-soft); color: var(--ink-mute); display: flex; align-items: center; justify-content: center; }
+  .cv-lock .ti { font-size: 11px; }
+  .cv-block.locked { background: var(--line-soft); color: var(--ink-mute); }
+
   /* ---- Learn lesson bodies ---- */
   .learn-lesson-intro { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); line-height: 1.55; margin: 0 0 18px; }
   .learn-p { font: 400 14px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.6; margin: 0 0 12px; }
@@ -4170,7 +4195,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, availability: [], grit: null, games: [], booking: null, planName: '', athleteId: '' };
+  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, availability: [], grit: null, testing: [], strengthLevels: [], games: [], booking: null, planName: '', athleteId: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -4433,6 +4458,8 @@
       state.learn = data.learn || { blocks: {} };
       state.availability = data.availability || [];
       state.grit = data.grit || null;
+      state.testing = data.testing || [];
+      state.strengthLevels = data.strengthLevels || [];
       syncStreakSeen();   // baseline the streak so opening the app never triggers a celebration
       syncBadgesSeen();   // baseline earned badges so opening the app never triggers a celebration
       renderNav();
@@ -4477,6 +4504,21 @@
     state.availability = [];
     state.grit = { score: 78, band: 'Consistent', enough: true,
       parts: { adherence:{pct:80,sessions:19,weeks:8,weeksFull:5,target:3}, checkins:{pct:100,attended:2,processed:2,unmarked:0} } };
+    // Demo CV data: some tested, some not, so the blurred locks are visible.
+    state.testing = [
+      { key:'broad_jump', label:'Broad jump', unit:'cm', done:true, value:212, date:'2026-09-02', tests:2, first:198, delta:{ raw:14, improved:true } },
+      { key:'sprint_40m', label:'40m sprint', unit:'s',  done:true, value:5.82, date:'2026-09-02', tests:2, first:6.11, delta:{ raw:0.29, improved:true } },
+      { key:'agility',    label:'5-10-5 agility', unit:'s', done:false },
+      { key:'cooper',     label:'Cooper 12 min',  unit:'m', done:true, value:2480, date:'2026-06-14', tests:1, first:null, delta:null }
+    ];
+    state.strengthLevels = [
+      { pattern:'Squat', tech:4, load:3, done:true },
+      { pattern:'Push',  tech:3, load:2, done:true },
+      { pattern:'Pull',  tech:2, load:0, done:true },
+      { pattern:'Hinge', tech:0, load:0, done:false },
+      { pattern:'Lunge', tech:3, load:3, done:true },
+      { pattern:'Press', tech:0, load:0, done:false }
+    ];
     state.games = demo.games || [];
     state.booking = demo.booking;
     state.planName = (demo.weeklyTemplate && demo.weeklyTemplate.name) || 'Swimming Performance';
@@ -10728,6 +10770,12 @@
     if(/^g\s*\d+$/i.test(v)) return 'Grade '+esc(v.replace(/^g\s*/i, ''));
     return 'Grade '+esc(v);
   }
+  // Five dots, filled to the level reached.
+  function cvDots(n, max){
+    let out = '';
+    for(let i=1;i<=max;i++) out += '<span class="cv-dot'+(i<=n?' on':'')+'"></span>';
+    return out;
+  }
   function athleteSports(){
     return [athlete && athlete.Sport_1, athlete && athlete.Sport_2, athlete && athlete.Sport_3]
       .filter(s => s && String(s).trim()).join(' · ');
@@ -10760,31 +10808,73 @@
         '<button class="cv-print" onclick="exportCV()"><i class="ti ti-download" aria-hidden="true"></i> Save as PDF</button>'+
       '</div>';
 
-    // --- grit + training record ---
-    const gritCard = grit && grit.enough
-      ? '<div class="cv-grit">'+
-          '<span class="cv-grit-band cv-band-'+esc(String(grit.band||'').toLowerCase())+'">'+esc(grit.band)+'</span>'+
-          '<p class="cv-grit-line">Grit — how consistently this athlete trains</p>'+
-          '<div class="cv-grit-bar"><span style="width:'+Math.max(4, grit.score)+'%"></span></div>'+
-        '</div>'
-      : '<div class="cv-grit"><span class="cv-grit-band cv-band-none">Building</span>'+
-          '<p class="cv-grit-line">Keep logging your training and your Grit rating appears here.</p></div>';
-    html += '<div class="card">'+
-      '<p class="card-eyebrow">Training record</p>'+
-      gritCard+
-      '<div class="cv-stats">'+
-        '<div class="cv-stat"><span class="cv-stat-n">'+g.days+'</span><span class="cv-stat-l">Sessions logged</span></div>'+
-        '<div class="cv-stat"><span class="cv-stat-n">'+g.best+'</span><span class="cv-stat-l">Longest streak</span></div>'+
-        '<div class="cv-stat"><span class="cv-stat-n">'+pbs.length+'</span><span class="cv-stat-l">Personal bests</span></div>'+
-        '<div class="cv-stat"><span class="cv-stat-n">'+blocks.length+'</span><span class="cv-stat-l">Blocks passed</span></div>'+
-      '</div>'+
-    '</div>';
+    // --- training record ---
+    // Only ever shows what's been earned. The Grit band appears from
+    // "Consistent" up; below that we show the effort honestly with no label,
+    // because nobody should read a bottom-tier verdict on their own CV.
+    const stats = [];
+    if(g.days)         stats.push(['Sessions logged', g.days]);
+    if(g.best >= 3)    stats.push(['Longest streak', g.best]);
+    if(pbs.length)     stats.push(['Personal bests', pbs.length]);
+    if(blocks.length)  stats.push(['Blocks passed', blocks.length]);
+    const bandEarned = grit && grit.enough && (grit.band === 'Consistent' || grit.band === 'Relentless');
+    if(bandEarned || stats.length){
+      html += '<div class="card"><p class="card-eyebrow">Training record</p>';
+      if(bandEarned){
+        html += '<div class="cv-grit">'+
+          '<span class="cv-grit-band cv-band-'+esc(String(grit.band).toLowerCase())+'">'+esc(grit.band)+'</span>'+
+          '<p class="cv-grit-line">Grit — how consistently this athlete trains</p></div>';
+      }
+      if(stats.length){
+        html += '<div class="cv-stats">'+stats.map(s =>
+          '<div class="cv-stat"><span class="cv-stat-n">'+s[1]+'</span><span class="cv-stat-l">'+esc(s[0])+'</span></div>').join('')+'</div>';
+      }
+      html += '</div>';
+    }
 
-    // --- personal bests, grouped by sport ---
+    // --- fitness testing: Academy-measured, so it belongs on a CV ---
+    const tests = state.testing || [];
+    if(tests.length){
+      html += '<div class="card"><p class="card-eyebrow">Fitness testing</p>'+
+        '<div class="cv-tests">'+ tests.map(t => {
+          if(!t.done){
+            return '<div class="cv-test locked"><span class="cv-lock"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
+              '<p class="cv-test-name">'+esc(t.label)+'</p>'+
+              '<p class="cv-test-val blurred">00.0</p><p class="cv-test-sub">Not tested yet</p></div>';
+          }
+          let move = '';
+          if(t.delta && t.delta.raw){
+            move = '<p class="cv-test-move '+(t.delta.improved?'up':'')+'">'+
+              (t.delta.improved?'▲':'▼')+' '+t.delta.raw+' '+esc(t.unit)+' since first test</p>';
+          }
+          return '<div class="cv-test"><p class="cv-test-name">'+esc(t.label)+'</p>'+
+            '<p class="cv-test-val">'+t.value+'<small>'+esc(t.unit)+'</small></p>'+
+            '<p class="cv-test-sub">'+(t.date?fmtNice(t.date):'')+'</p>'+move+'</div>';
+        }).join('')+'</div></div>';
+    }
+
+    // --- strength: technique passed + level tested, both staff-assessed ---
+    const levels = (state.strengthLevels || []);
+    if(levels.length){
+      html += '<div class="card"><p class="card-eyebrow">Strength levels</p>'+
+        '<p class="cv-note">Technique passed and load level tested by a coach.</p>'+
+        '<div class="cv-levels">'+ levels.map(l => {
+          if(!l.done){
+            return '<div class="cv-level locked"><span class="cv-lock"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
+              '<p class="cv-level-name">'+esc(l.pattern)+'</p><p class="cv-level-dots blurred">'+cvDots(0,5)+'</p>'+
+              '<p class="cv-test-sub">Not assessed</p></div>';
+          }
+          return '<div class="cv-level"><p class="cv-level-name">'+esc(l.pattern)+'</p>'+
+            '<p class="cv-level-dots">'+cvDots(l.tech,5)+'</p>'+
+            '<p class="cv-level-meta">Technique L'+l.tech+(l.load?' · Load L'+l.load:'')+'</p></div>';
+        }).join('')+'</div></div>';
+    }
+
+    // --- personal bests ---
     html += '<div class="card"><div class="cv-sec-head"><p class="card-eyebrow" style="margin:0;">Personal bests</p>'+
       '<button class="cv-add" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add</button></div>';
     if(!pbs.length){
-      html += '<p class="cv-empty">No bests recorded yet. Log a session and mark it as a PB, or add one here.</p>';
+      html += '<p class="cv-empty">Your bests land here as you set them.</p>';
     } else {
       const groups = {};
       pbs.forEach(p => { const k = p.sport || 'Other'; (groups[k] = groups[k] || []).push(p); });
@@ -10795,30 +10885,28 @@
     }
     html += '</div>';
 
-    // --- competition results ---
-    html += '<div class="card"><p class="card-eyebrow">Competition results</p>';
-    if(!results.length){
-      html += '<p class="cv-empty">Add a result to a game in My Program and it appears here.</p>';
-    } else {
-      html += '<div class="cv-results">'+results.map(r =>
-        '<div class="cv-result"><div><p class="cv-result-name">'+esc(r.name||'Game')+'</p>'+
-          '<p class="cv-result-sub">'+[r.date?fmtNice(r.date):'', esc(r.sport||'')].filter(Boolean).join(' · ')+'</p></div>'+
-          '<p class="cv-result-val">'+esc(r.result)+'</p></div>').join('')+'</div>';
+    // --- competition results (only when there are some) ---
+    if(results.length){
+      html += '<div class="card"><p class="card-eyebrow">Competition results</p>'+
+        '<div class="cv-results">'+results.map(r =>
+          '<div class="cv-result"><div><p class="cv-result-name">'+esc(r.name||'Game')+'</p>'+
+            '<p class="cv-result-sub">'+[r.date?fmtNice(r.date):'', esc(r.sport||'')].filter(Boolean).join(' · ')+'</p></div>'+
+            '<p class="cv-result-val">'+esc(r.result)+'</p></div>').join('')+'</div></div>';
     }
-    html += '</div>';
 
-    // --- what they've studied ---
-    html += '<div class="card"><p class="card-eyebrow">Development blocks</p>';
-    if(!blocks.length){
-      html += '<p class="cv-empty">Pass a block in Level Up and it lands here as a credential.</p>';
-    } else {
-      html += '<div class="cv-blocks">'+blocks.map(b =>
-        '<span class="cv-block"><i class="ti ti-rosette-discount-check-filled" aria-hidden="true"></i> '+esc(b.name)+'</span>').join('')+'</div>';
-    }
-    html += '</div>';
+    // --- development blocks: earned ones crisp, the rest blurred ---
+    const allBlocks = BLOCK_ROADMAP;
+    html += '<div class="card"><p class="card-eyebrow">Development blocks</p>'+
+      '<div class="cv-blocks">'+ allBlocks.map(b => {
+        const live = learnBlock(b.id);
+        const passed = live && learnBlockPassed(live);
+        return passed
+          ? '<span class="cv-block"><i class="ti ti-rosette-discount-check-filled" aria-hidden="true"></i> '+esc(b.name)+'</span>'
+          : '<span class="cv-block locked blurred"><i class="ti ti-lock" aria-hidden="true"></i> '+esc(b.name)+'</span>';
+      }).join('')+'</div></div>';
 
-    html += '<p class="cv-foot">Generated from this athlete’s own training record. '+
-      'Training is self-logged; competition results and coach check-ins are recorded by the Academy.</p>';
+    html += '<p class="cv-foot">Fitness tests, strength levels and check-ins are recorded by the Academy. '+
+      'Training sessions are logged by the athlete.</p>';
     html += '</div>';
     view.innerHTML = html;
   }
