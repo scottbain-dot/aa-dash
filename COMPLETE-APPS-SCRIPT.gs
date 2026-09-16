@@ -211,7 +211,7 @@ function doGet(e) {
 
     // ===== FUEL LAB QUIZ STATS (teacher view) =====
     if (action === 'getFuelLabQuizStats') {
-      var fuelStatsResult = handleGetFuelLabQuizStats(ss);
+      var fuelStatsResult = handleGetFuelLabQuizStats(ss, e.parameter.idToken);
       return ContentService.createTextOutput(JSON.stringify(fuelStatsResult))
         .setMimeType(ContentService.MimeType.JSON);
     }
@@ -2628,8 +2628,39 @@ function handleSubmitFuelLabQuiz(ss, data) {
   }
 }
 
-function handleGetFuelLabQuizStats(ss) {
+// ---- Teacher authorisation ----
+// Verifies a Google ID token with Google before trusting anything in it, then
+// checks the email against the staff allowlist. The token is signed by Google,
+// so unlike a client-supplied email this cannot simply be typed in.
+var AA_OAUTH_CLIENT_ID = '701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com';
+var AA_TEACHERS = ['scott_bain@fis.edu', 'scottybain@gmail.com'];
+
+function apVerifyTeacher(idToken) {
   try {
+    if (!idToken) return { ok: false, error: 'Sign in required' };
+    var res = UrlFetchApp.fetch(
+      'https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken),
+      { muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) return { ok: false, error: 'Sign in required' };
+    var p = JSON.parse(res.getContentText());
+    // The token must have been issued for THIS app, or anyone could present a
+    // Google token minted for some other site.
+    if (p.aud !== AA_OAUTH_CLIENT_ID) return { ok: false, error: 'Sign in required' };
+    if (String(p.email_verified) !== 'true') return { ok: false, error: 'Sign in required' };
+    var email = String(p.email || '').toLowerCase();
+    if (AA_TEACHERS.indexOf(email) === -1) return { ok: false, error: 'Not authorised' };
+    return { ok: true, email: email };
+  } catch (err) {
+    return { ok: false, error: 'Sign in required' };
+  }
+}
+
+function handleGetFuelLabQuizStats(ss, idToken) {
+  try {
+    // Class-wide results are staff-only. This used to be open to anyone with
+    // the URL; it now needs a verified teacher sign-in.
+    var auth = apVerifyTeacher(idToken);
+    if (!auth.ok) return { success: false, error: auth.error };
     var sheet = ss.getSheetByName('FuelLab_Quiz');
     if (!sheet) {
       return { success: true, totalSubmissions: 0, uniqueStudents: 0, avgScore: 0, lastUpdate: '', questions: [] };
