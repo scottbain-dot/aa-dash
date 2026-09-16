@@ -2503,6 +2503,13 @@
   .learn-lesson-note { display: flex; align-items: flex-start; gap: 8px; background: var(--cream); border: 1px solid var(--line);
     border-radius: 12px; padding: 12px 14px; font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin: 0 0 16px; }
   .learn-lesson-note .ti { color: var(--burgundy); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .learn-locked { display: flex; align-items: flex-start; gap: 12px; background: var(--cream); border: 1px dashed var(--line);
+    border-radius: 14px; padding: 16px; margin-top: 8px; }
+  .learn-locked-ic { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; background: var(--line-soft); color: var(--ink-mute); }
+  .learn-locked-ic .ti { font-size: 17px; }
+  .learn-locked-t { font: 700 14px 'Inter', sans-serif; color: var(--ink); margin: 2px 0 3px; }
+  .learn-locked-l { font: 400 13px 'Inter', sans-serif; color: var(--ink-mute); line-height: 1.5; margin: 0; }
 
   /* ---- Learn lesson bodies ---- */
   .learn-lesson-intro { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); line-height: 1.55; margin: 0 0 18px; }
@@ -4741,6 +4748,31 @@
     const s = learnState(block.id);
     return s.bestQuiz !== null && s.bestQuiz >= block.quiz.pass;
   }
+  // Lessons run in order: lesson N opens once lesson N-1 is done. The first is
+  // always open, and anything already finished stays reachable so a student can
+  // go back and re-read it.
+  function lessonOpen(block, lessonId){
+    const idx = block.lessons.map(l => l.id).indexOf(lessonId);
+    if(idx <= 0) return true;
+    if(lessonDone(block.id, lessonId)) return true;
+    return lessonDone(block.id, block.lessons[idx - 1].id);
+  }
+  // Inside lesson 1 the questions stay shut until the videos are marked watched.
+  function videosWatched(blockId){
+    const l = (learnState(blockId).progress || {}).lessons || {};
+    return !!(l.basics && l.basics.watched);
+  }
+  async function markVideosWatched(blockId){
+    const s = learnState(blockId);
+    const p = Object.assign({}, s.progress);
+    p.lessons = Object.assign({}, p.lessons || {});
+    p.lessons.basics = Object.assign({}, p.lessons.basics || {}, { watched: true });
+    await saveLearn(blockId, p, {});
+    openLesson(blockId, 'basics');
+    const q = document.getElementById('lqList');
+    if(q) q.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  window.markVideosWatched = markVideosWatched;
   function learnBlockPassed(block){
     const c = learnCounts(block);
     return c.done === c.total && learnQuizPassed(block);
@@ -4818,13 +4850,18 @@
   }
 
   function learnLessonsCard(block){
-    const rows = block.lessons.map(l => {
+    const rows = block.lessons.map((l, i) => {
       const done = lessonDone(block.id, l.id);
+      const open = lessonOpen(block, l.id);
       const mark = done
         ? '<span class="learn-num done"><i class="ti ti-check" aria-hidden="true"></i></span>'
-        : '<span class="learn-num">'+l.n+'</span>';
-      const meta = done ? 'Done' : (l.mins+' min · '+l.gate);
-      return '<button class="learn-row'+(done?' is-done':'')+'" onclick="openLesson(\''+block.id+'\',\''+l.id+'\')">'+
+        : (open ? '<span class="learn-num">'+l.n+'</span>'
+                : '<span class="learn-num locked"><i class="ti ti-lock" aria-hidden="true"></i></span>');
+      const meta = done ? 'Done'
+        : (open ? (l.mins+' min · '+l.gate)
+                : 'Finish lesson '+i+' first');
+      return '<button class="learn-row'+(done?' is-done':'')+(open?'':' is-locked')+'"'+
+        (open ? ' onclick="openLesson(\''+block.id+'\',\''+l.id+'\')"' : ' disabled')+'>'+
         mark+
         '<span class="learn-row-body"><span class="learn-row-title">'+esc(l.title)+'</span>'+
           '<span class="learn-row-meta">'+esc(meta)+'</span></span>'+
@@ -4946,6 +4983,9 @@
   function openLesson(blockId, lessonId){
     const block = learnBlock(blockId); if(!block) return;
     const lesson = block.lessons.filter(l => l.id === lessonId)[0]; if(!lesson) return;
+    // Guard the route too, not just the button — a locked lesson can't be
+    // opened by any path.
+    if(!lessonOpen(block, lessonId)){ showToast('Finish the lesson before this one first.', ''); renderLearn(); return; }
     let body;
     if(lessonId === 'basics')        body = lessonBasicsHTML(blockId, lessonId);
     else if(lessonId === 'energy')   body = lessonEnergyHTML(blockId, lessonId);
@@ -4993,16 +5033,27 @@
         '<textarea class="lq-text" id="lq_'+q.id+'" rows="3" placeholder="Your answer…">'+esc(prev[q.id] || '')+'</textarea></div></div>';
     }).join('');
     const marked = saved.marks ? learnMarksHTML(saved) : '';
-    return '<p class="learn-lesson-intro">Watch the three clips, flip through the myths, then answer the questions at the bottom. Your written answers get marked and you’ll get feedback straight back.</p>'+
+    const watched = videosWatched(blockId);
+    // The questions stay shut until the videos are marked watched. We can't tell
+    // whether a Loom clip actually played, so this is an honesty check, not a
+    // detector — it's there to stop students skipping straight to the answers.
+    const questionBlock = watched
+      ? '<p class="learn-sec">Your turn</p>'+
+        '<div class="lq-list" id="lqList">'+qs+'</div>'+
+        '<div id="lqResult">'+marked+'</div>'+
+        '<button class="card-cta card-cta-gold learn-done-btn" id="lqSubmit" onclick="submitIntroQuestions(\''+blockId+'\',\''+lessonId+'\')">'+
+          '<i class="ti ti-send" aria-hidden="true"></i> '+(saved.marks ? 'Answer again' : 'Submit my answers')+'</button>'
+      : '<div class="learn-locked"><span class="learn-locked-ic"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
+          '<div><p class="learn-locked-t">Questions locked</p>'+
+          '<p class="learn-locked-l">Watch all three clips above, then confirm below to unlock them.</p></div></div>'+
+        '<button class="card-cta card-cta-gold learn-done-btn" onclick="markVideosWatched(\''+blockId+'\')">'+
+          '<i class="ti ti-player-play" aria-hidden="true"></i> I’ve watched all three</button>';
+    return '<p class="learn-lesson-intro">Watch the three clips, flip through the myths, then answer the questions. Your written answers get marked and you’ll get feedback straight back.</p>'+
       '<p class="learn-sec">Watch first</p>'+
       '<div class="learn-videos">'+videos+'</div>'+
       '<p class="learn-sec">Myth busters</p>'+
       '<div class="myth-grid">'+myths+'</div>'+
-      '<p class="learn-sec">Your turn</p>'+
-      '<div class="lq-list" id="lqList">'+qs+'</div>'+
-      '<div id="lqResult">'+marked+'</div>'+
-      '<button class="card-cta card-cta-gold learn-done-btn" id="lqSubmit" onclick="submitIntroQuestions(\''+blockId+'\',\''+lessonId+'\')">'+
-        '<i class="ti ti-send" aria-hidden="true"></i> '+(saved.marks ? 'Answer again' : 'Submit my answers')+'</button>';
+      questionBlock;
   }
   function learnMarksHTML(saved){
     const byId = {};
