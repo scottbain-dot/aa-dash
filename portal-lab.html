@@ -3798,6 +3798,12 @@
   .drop-target { outline: 2px dashed var(--burgundy); outline-offset: -2px; border-radius: 12px; background: var(--cream); }
   .week-saveorder { width: 100%; margin-top: 10px; background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 10px; padding: 9px; font: 600 13px 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
   .week-saveorder:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .week-out { width: 100%; margin-top: 10px; background: transparent; border: 1px dashed var(--line); color: var(--ink-mute);
+    border-radius: 10px; padding: 9px; font: 600 12.5px 'Inter', sans-serif; display: flex; align-items: center;
+    justify-content: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
+  .week-out:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .week-out.is-on { border-style: solid; border-color: var(--amber); background: #fffaf0; color: var(--ink-soft); }
+  .week-out.is-on strong { color: var(--ink); }
   @media (max-width: 560px) {
     .plan-card { padding: 18px 18px; }
     .plan-row { padding: 13px 4px; gap: 10px; grid-template-columns: 42px 12px 1fr 28px 20px; }
@@ -4105,7 +4111,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, games: [], booking: null, planName: '', athleteId: '' };
+  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, availability: [], games: [], booking: null, planName: '', athleteId: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -4246,6 +4252,8 @@
     if(action==='getWeek') return Promise.resolve({ success:true, weekStart: payload.weekStart,
       sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
+    if(action==='saveAvailability' || action==='clearAvailability') return Promise.resolve({ success:true });
+    if(action==='getAvailability') return Promise.resolve({ success:true, availability: state.availability||[] });
     if(action==='getLearnProgress') return Promise.resolve({ success:true, learn: state.learn || { blocks:{} } });
     if(action==='saveLearnProgress'){
       const b = (state.learn && state.learn.blocks && state.learn.blocks[payload.blockId]) || {};
@@ -4363,6 +4371,7 @@
       state.pbs = data.pbs || [];
       state.load = data.load || { weeks: [], summary: {} };
       state.learn = data.learn || { blocks: {} };
+      state.availability = data.availability || [];
       syncStreakSeen();   // baseline the streak so opening the app never triggers a celebration
       syncBadgesSeen();   // baseline earned badges so opening the app never triggers a celebration
       renderNav();
@@ -4404,6 +4413,7 @@
     state.pbs = demo.pbs;
     state.load = demo.load;
     state.learn = demo.learn || { blocks: {} };
+    state.availability = [];
     state.games = demo.games || [];
     state.booking = demo.booking;
     state.planName = (demo.weeklyTemplate && demo.weeklyTemplate.name) || 'Swimming Performance';
@@ -6295,8 +6305,59 @@
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
         '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add game</button>'+
       '</div>'+
+      outWeekHTML(ws)+
     '</div>';
   }
+
+  // ---- Injured / ill: take a week out rather than score it as a blank ----
+  // A flagged week is removed from the Grit window entirely, so it neither
+  // helps nor hurts. Teacher sees every flag and its reason.
+  function weekFlag(ws){
+    const end = addDays(ws, 6);
+    return (state.availability || []).filter(f => f.from <= end && (f.to || f.from) >= ws)[0] || null;
+  }
+  function outWeekHTML(ws){
+    const f = weekFlag(ws);
+    if(f){
+      const label = f.kind === 'ill' ? 'ill' : 'injured';
+      return '<button class="week-out is-on" onclick="clearOutWeek(\''+esc(f.from)+'\')">'+
+        '<i class="ti ti-heart-broken" aria-hidden="true"></i> Marked <strong>'+label+'</strong> this week — won’t count against you. Tap to undo.</button>';
+    }
+    return '<button class="week-out" onclick="openOutWeek(\''+ws+'\')">'+
+      '<i class="ti ti-first-aid-kit" aria-hidden="true"></i> Injured or ill this week?</button>';
+  }
+  function openOutWeek(ws){
+    const end = addDays(ws, 6);
+    const pick = window.prompt(
+      'Taking this week out means it won’t count for or against your Grit Score.\n\n'+
+      'Type "injured" or "ill", and add a short note if you like.\n'+
+      '(e.g. injured — rolled my ankle)', 'injured');
+    if(pick === null) return;
+    const raw = String(pick).trim();
+    if(!raw) return;
+    const kind = /ill|sick/i.test(raw) ? 'ill' : 'injured';
+    const note = raw.replace(/^(injured|ill|sick)\s*[-—:]?\s*/i, '').trim();
+    saveOutWeek(ws, end, kind, note);
+  }
+  window.openOutWeek = openOutWeek;
+  async function saveOutWeek(from, to, kind, note){
+    state.availability = (state.availability || []).concat([{ from, to, kind, note }]);
+    renderWeek();
+    try {
+      const res = await apiData({ action:'saveAvailability', entry: { from, to, kind, note } });
+      if(!res || !res.success) throw new Error((res && res.error) || 'save failed');
+      showToast('This week won’t count against your Grit Score.', 'success');
+    } catch(e){
+      showToast('Saved on your device. It’ll sync when you’re back online.', '');
+    }
+  }
+  async function clearOutWeek(from){
+    state.availability = (state.availability || []).filter(f => f.from !== from);
+    renderWeek();
+    try { await apiData({ action:'clearAvailability', from: from }); } catch(e){}
+    showToast('Back in — this week counts again.', '');
+  }
+  window.clearOutWeek = clearOutWeek;
 
   // A quiet "next game" line on This Week — the soonest upcoming fixture, with a
   // countdown, so a match on the horizon is always visible. Tapping opens its week.

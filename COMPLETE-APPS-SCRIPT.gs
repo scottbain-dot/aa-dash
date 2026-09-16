@@ -253,6 +253,9 @@ function doGet(e) {
     if (action === 'getGrit') {
       return apJson(handleGetGrit(ss, e.parameter.athleteId));
     }
+    if (action === 'getAvailability') {
+      return apJson(handleGetAvailability(ss, e.parameter.athleteId));
+    }
 
     // ===== CLASH OF THE CODES ACTIONS =====
     if (action === 'getClashTeams') {
@@ -458,6 +461,12 @@ function doPost(e) {
     if (data.action === 'saveLearnProgress') {
       var ssLearn = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSaveLearnProgress(ssLearn, data.athleteId, data.blockId, data.progress, data.meta));
+    }
+    if (data.action === 'saveAvailability') {
+      return apJson(handleSaveAvailability(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.entry));
+    }
+    if (data.action === 'clearAvailability') {
+      return apJson(handleClearAvailability(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.from));
     }
     if (data.action === 'gradeLearnAnswers') {
       // Deliberately given no athleteId — nothing identifying goes to the model.
@@ -3519,6 +3528,7 @@ function handleGetPortalBootstrap(ss, email) {
       load: { weeks: load.weeks, summary: load.summary },
       learn: (learnRes && learnRes.success && learnRes.learn) ? learnRes.learn : { blocks: {} },
       grit: apComputeGrit(ss, athleteId),
+      availability: apLoadAvailability(ss, athleteId),
       firstTime: !map
     };
   } catch (error) {
@@ -3545,6 +3555,99 @@ var GRIT_MIN_WEEKS = 2;        // below this there isn't enough to judge
 // Any of these on a check-in's calendar event title means "I've processed this
 // one". Without it the session is unknown and simply doesn't count either way.
 var GRIT_DONE_MARKS = ['✅', '✔', '✓'];   // ✅ ✔ ✓
+
+// ---- Availability: injured / ill weeks that shouldn't count ----
+// A flagged week is REMOVED from the grit window rather than scored as zero,
+// so being injured neither helps nor hurts — it just doesn't count.
+// Deliberately not locked down technically: the teacher can see every flag and
+// its reason, so this rests on visibility rather than a rule a student would
+// only find ways around.
+function apEnsureAvailability(ss) {
+  var sheet = ss.getSheetByName('Availability');
+  var headers = ['Athlete_ID', 'From', 'To', 'Kind', 'Note', 'Created'];
+  if (!sheet) {
+    sheet = ss.insertSheet('Availability');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  apEnsureColumns(sheet, headers);
+  return sheet;
+}
+
+function apLoadAvailability(ss, athleteId) {
+  var rows = apReadObjects(apEnsureAvailability(ss));
+  var id = String(athleteId || '').trim();
+  var out = [];
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Athlete_ID).trim() !== id) continue;
+    var from = rows[i].From ? apIsoDate_(rows[i].From) : '';
+    var to = rows[i].To ? apIsoDate_(rows[i].To) : from;
+    if (!from) continue;
+    out.push({
+      from: from, to: to || from,
+      kind: String(rows[i].Kind || 'injured'),
+      note: String(rows[i].Note || ''),
+      created: rows[i].Created ? apIsoDate_(rows[i].Created) : ''
+    });
+  }
+  return out;
+}
+
+function handleGetAvailability(ss, athleteId) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
+    return { success: true, availability: apLoadAvailability(ss, athleteId) };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleSaveAvailability(ss, athleteId, entry) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
+    entry = entry || {};
+    var from = String(entry.from || '').trim().substring(0, 10);
+    if (!from) return { success: false, error: 'from date is required' };
+    var to = String(entry.to || from).trim().substring(0, 10);
+    if (to < from) to = from;
+    var sheet = apEnsureAvailability(ss);
+    sheet.appendRow(apBuildRow(sheet, {
+      'Athlete_ID': athleteId,
+      'From': from,
+      'To': to,
+      'Kind': String(entry.kind || 'injured').substring(0, 30),
+      'Note': String(entry.note || '').substring(0, 300),
+      'Created': new Date()
+    }));
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// Remove a flag (student changed their mind, or came back early).
+function handleClearAvailability(ss, athleteId, from) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    from = String(from || '').trim().substring(0, 10);
+    if (!athleteId || !from) return { success: false, error: 'athleteId and from are required' };
+    var sheet = apEnsureAvailability(ss);
+    var rows = apReadObjects(sheet);
+    for (var i = rows.length - 1; i >= 0; i--) {
+      if (String(rows[i].Athlete_ID).trim() !== athleteId) continue;
+      if (apIsoDate_(rows[i].From) !== from) continue;
+      sheet.deleteRow(rows[i].__row);
+      return { success: true };
+    }
+    return { success: true, missing: true };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
 
 function apGritBand(score) {
   if (score >= 80) return 'Relentless';
@@ -3599,26 +3702,43 @@ function apComputeGrit(ss, athleteId) {
     // week's target would drag every score down on a Monday and drift up all
     // week. Pro-rate it instead: the live week is measured on whether they're
     // on pace, not whether they've finished.
+    // Weeks the student flagged as injured or ill drop out of the window
+    // entirely — not scored as zero, just not counted.
+    var flags = apLoadAvailability(ss, athleteId);
+    function weekIsFlagged(weekStartIso) {
+      var weekEnd = Utilities.formatDate(
+        new Date(new Date(weekStartIso + 'T00:00:00Z').getTime() + 6 * 86400000),
+        Session.getScriptTimeZone(), 'yyyy-MM-dd');
+      for (var f = 0; f < flags.length; f++) {
+        if (flags[f].from <= weekEnd && flags[f].to >= weekStartIso) return true;  // overlaps
+      }
+      return false;
+    }
+
     var elapsedThisWeek = ((today.getDay() + 6) % 7) + 1;   // Mon = 1 … Sun = 7
-    var creditSum = 0, weeksFull = 0, sessionsTotal = 0;
+    var creditSum = 0, weeksFull = 0, sessionsTotal = 0, weeksCounted = 0, weeksFlagged = 0;
     for (var wk2 = 0; wk2 < weekKeys.length; wk2++) {
       var n = loggedByWeek[weekKeys[wk2]] || 0;
       sessionsTotal += n;
+      if (weekIsFlagged(weekKeys[wk2])) { weeksFlagged++; continue; }   // out of the window
       var weekTarget = (wk2 === 0)
         ? Math.max(1, GRIT_WEEKLY_TARGET * (elapsedThisWeek / 7))
         : GRIT_WEEKLY_TARGET;
       var credit = Math.min(n / weekTarget, 1);
       creditSum += credit;
+      weeksCounted++;
       if (credit >= 1) weeksFull++;
     }
-    // A student with nothing logged yet gets no score rather than a bleak zero.
-    if (weekKeys.length >= GRIT_MIN_WEEKS && sessionsTotal > 0) {
+    // A student with nothing logged yet gets no score rather than a bleak zero,
+    // and a window that's entirely flagged gets none either.
+    if (weeksCounted >= GRIT_MIN_WEEKS && sessionsTotal > 0) {
       out.parts.adherence = {
-        pct: Math.round(creditSum / weekKeys.length * 100),
-        sessions: sessionsTotal, weeks: weekKeys.length,
-        weeksFull: weeksFull, target: GRIT_WEEKLY_TARGET
+        pct: Math.round(creditSum / weeksCounted * 100),
+        sessions: sessionsTotal, weeks: weeksCounted,
+        weeksFull: weeksFull, weeksFlagged: weeksFlagged, target: GRIT_WEEKLY_TARGET
       };
     }
+    out.weeksFlagged = weeksFlagged;
 
     // ---- 2. Check-in attendance, read from the calendar ----
     // Marking a check-in's calendar event with a tick emoji means "I've dealt
