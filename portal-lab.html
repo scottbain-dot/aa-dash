@@ -2580,6 +2580,59 @@
   .fuelmatch-label { font: 800 12px 'Inter', sans-serif; color: var(--gold-strong, #b8860b); margin: 0 0 8px; letter-spacing: 0.03em; }
   .fuelmatch ul { margin: 0; padding-left: 18px; }
   .fuelmatch li { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin-bottom: 6px; }
+  /* Energy systems lesson */
+  .esys-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .esys { border-radius: 14px; padding: 14px; border: 1px solid var(--line); background: var(--cream); border-top-width: 4px; }
+  .esys-red    { border-top-color: var(--int-hard); }
+  .esys-yellow { border-top-color: var(--int-moderate); }
+  .esys-green  { border-top-color: var(--int-easy); }
+  .esys-name { font: 800 17px 'Fraunces', serif; color: var(--ink); margin: 0; }
+  .esys-red .esys-name    { color: var(--int-hard); }
+  .esys-yellow .esys-name { color: #b57d10; }
+  .esys-green .esys-name  { color: #357843; }
+  .esys-dur { font: 800 10px 'Inter', sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 3px 0 8px; }
+  .esys-desc { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin: 0 0 8px; }
+  .esys-fuel { font: 600 11.5px 'Inter', sans-serif; color: var(--burgundy); margin: 0; padding-top: 8px; border-top: 1px solid var(--line); }
+  /* Effort dial */
+  .dial-box { border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--cream); }
+  .dial-read { font: 400 15px 'Inter', sans-serif; color: var(--ink); margin: 0 0 14px; }
+  .dial-read strong { font: 800 19px 'Fraunces', serif; }
+  .dial-read span { color: var(--ink-mute); font-size: 13px; }
+  .dial-slider { width: 100%; margin: 14px 0 10px; accent-color: var(--burgundy); }
+  .dial-snaps { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dial-snap { cursor: pointer; background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+    padding: 5px 12px; font: 600 12px 'Inter', sans-serif; color: var(--ink-soft); transition: all 0.14s; }
+  .dial-snap:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  /* Scenario matcher */
+  .matcher { border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--surface); box-shadow: var(--shadow-card); }
+  .match-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .match-count { font: 800 10px 'Inter', sans-serif; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mute); }
+  .match-running { font: 800 12px 'Inter', sans-serif; color: var(--burgundy); }
+  .match-prompt { font: 800 22px 'Fraunces', serif; color: var(--ink); margin: 0; line-height: 1.15; }
+  .match-sub { font: 400 13px 'Inter', sans-serif; color: var(--ink-mute); margin: 5px 0 16px; }
+  .match-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .match-btn { cursor: pointer; border-radius: 12px; padding: 14px 8px; border: 2px solid var(--line);
+    background: var(--cream); font: 800 14px 'Inter', sans-serif; color: var(--ink-soft); transition: all 0.14s; }
+  .match-btn:hover:not(:disabled) { transform: translateY(-1px); }
+  .match-btn:disabled { cursor: default; opacity: 0.55; }
+  .match-red:hover:not(:disabled)    { border-color: var(--int-hard); color: var(--int-hard); }
+  .match-yellow:hover:not(:disabled) { border-color: var(--int-moderate); color: #b57d10; }
+  .match-green:hover:not(:disabled)  { border-color: var(--int-easy); color: #357843; }
+  .match-btn.is-right { background: var(--int-easy); border-color: var(--int-easy); color: #fff; opacity: 1; }
+  .match-btn.is-wrong { background: var(--int-hard); border-color: var(--int-hard); color: #fff; opacity: 1; }
+  .match-fb { margin-top: 14px; border-radius: 12px; padding: 13px 14px; border: 1px solid var(--line); background: var(--cream); }
+  .match-fb.ok { border-color: rgba(74,157,91,0.45); background: #f2f8f3; }
+  .match-fb.no { border-color: rgba(192,67,59,0.35); background: #fdf3f2; }
+  .match-fb p { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.5; margin: 0 0 10px; }
+  .match-dots { display: flex; gap: 5px; justify-content: center; margin-top: 14px; }
+  .match-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+  .match-dot.past { background: var(--burgundy); }
+  .match-dot.now { background: var(--gold); transform: scale(1.3); }
+  .match-done { text-align: center; padding: 10px 0 4px; }
+  .match-score { font: 800 52px 'Fraunces', serif; color: var(--ink-mute); line-height: 1; margin: 0; }
+  .match-done.pass .match-score { color: var(--sage); }
+  .match-score small { font-size: 22px; opacity: 0.6; }
+  .match-msg { font: italic 400 15px 'Fraunces', serif; color: var(--ink-soft); margin: 10px 0 16px; }
   /* Recovery lesson */
   .art-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
   .art-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--cream); }
@@ -4626,9 +4679,16 @@
     p.lessons = Object.assign({}, p.lessons || {});
     p.lessons[lessonId] = Object.assign({}, p.lessons[lessonId] || {}, extra || {}, { done: true, at: isoToday() });
     await saveLearn(blockId, p, { status: 'in_progress' });
-    renderLearn();
   }
   window.completeLesson = completeLesson;
+  // The explicit "I'm finished" button: record it, then go back to the list so
+  // the student sees their progress move. Activities that finish themselves
+  // (the matcher, the questions) call completeLesson directly and stay put.
+  async function finishLesson(blockId, lessonId){
+    await completeLesson(blockId, lessonId);
+    renderLearn();
+  }
+  window.finishLesson = finishLesson;
 
   // ---- views ----
   function renderLearn(){
@@ -4787,18 +4847,20 @@
     const lesson = block.lessons.filter(l => l.id === lessonId)[0]; if(!lesson) return;
     let body;
     if(lessonId === 'basics')        body = lessonBasicsHTML(blockId, lessonId);
+    else if(lessonId === 'energy')   body = lessonEnergyHTML(blockId, lessonId);
     else if(lessonId === 'sport')    body = lessonSportHTML(blockId, lessonId);
     else if(lessonId === 'recovery') body = lessonRecoveryHTML(blockId, lessonId);
     else body = '<p class="learn-lesson-note"><i class="ti ti-tools" aria-hidden="true"></i> This lesson’s content is being built. Your progress already works.</p>'+
       learnDoneBtn(blockId, lessonId, 'Mark this lesson done');
     document.getElementById('view-learn').innerHTML = learnLessonShell(block, lesson, body);
     if(lessonId === 'sport') restoreSportPick(blockId);
+    if(lessonId === 'energy'){ updateDial(); matchState = { i:0, score:0, done:false }; renderMatcher(blockId, lessonId); }
     window.scrollTo(0,0);
   }
   window.openLesson = openLesson;
   function learnDoneBtn(blockId, lessonId, label){
     const done = lessonDone(blockId, lessonId);
-    return '<button class="card-cta card-cta-gold learn-done-btn" onclick="completeLesson(\''+blockId+'\',\''+lessonId+'\')">'+
+    return '<button class="card-cta card-cta-gold learn-done-btn" onclick="finishLesson(\''+blockId+'\',\''+lessonId+'\')">'+
       '<i class="ti ti-check" aria-hidden="true"></i> '+(done ? 'Done — tap to re-save' : esc(label))+'</button>';
   }
 
@@ -4898,6 +4960,161 @@
     if(r) r.scrollIntoView({ behavior:'smooth', block:'start' });
   }
   window.submitIntroQuestions = submitIntroQuestions;
+
+  // ---- Lesson 2: the three energy systems ----
+  const ENERGY_SYSTEMS = [
+    { key:'red',    name:'Red',    dur:'Up to ~10 seconds', desc:'Maximum effort, instant power. Jumps, sprints, lifts, the first explosive move.', fuel:'ATP + creatine phosphate, already in the muscle' },
+    { key:'yellow', name:'Yellow', dur:'~10 sec to 2 min',  desc:'Hard efforts that hurt. Lactate builds up — this is the burn you feel going hard for a sustained burst.', fuel:'Carbohydrate (glucose)' },
+    { key:'green',  name:'Green',  dur:'2 min and up',      desc:'Steady, sustainable effort. Long games, distance running, anything you keep going for ages.', fuel:'Carbs + fat + oxygen' }
+  ];
+  const SCENARIOS = [
+    { prompt:'100m sprint',            sub:'All-out, over in about 10 seconds.',                  answer:'red',    explain:'Under 10 seconds of maximum power — that’s the Red system (ATP-CP) using energy already stored in the muscle.' },
+    { prompt:'5km run',                sub:'A steady effort lasting around 20 minutes.',          answer:'green',  explain:'Sustained effort well over 2 minutes runs on the Green (aerobic) system — carbs and fat with oxygen.' },
+    { prompt:'Rugby ruck',             sub:'A few seconds of maximum force, then it’s over.',     answer:'red',    explain:'A short explosive collision is Red (ATP-CP) — instant power, then you recover before the next one.' },
+    { prompt:'Tennis rally',           sub:'A burst of effort with rest between points.',         answer:'red',    explain:'Most points are short, sharp bursts under 10 seconds — Red system. The rest between points lets it recharge.' },
+    { prompt:'Marathon',               sub:'Hours of continuous running.',                        answer:'green',  explain:'Long, continuous effort is almost entirely Green (aerobic) — this is where fat becomes an important fuel alongside carbs.' },
+    { prompt:'Single heavy deadlift',  sub:'One maximum lift lasting a couple of seconds.',       answer:'red',    explain:'One huge effort over in seconds is pure Red (ATP-CP) — stored energy fires instantly.' },
+    { prompt:'400m run',               sub:'All-out for around 50–60 seconds — it really burns.', answer:'yellow', explain:'That deep burn from 10 seconds to about 2 minutes is the Yellow (lactic) system. The 400m is the classic example.' },
+    { prompt:'Football match',         sub:'Repeated sprints across 90 minutes.',                 answer:'red',    explain:'The decisive actions — sprints, tackles, jumps — are Red (ATP-CP). The Green system works in the background to keep you recovering between them.' }
+  ];
+  const MATCH_PASS = 6;   // of 8 — the lesson gate
+
+  // Effort dial: slider 0–1000 maps log-scale onto 5 sec … 60 min, so the
+  // short end (where the systems actually change fast) gets most of the travel.
+  const DIAL_MIN_S = 5, DIAL_MAX_S = 3600;
+  const DIAL_SNAPS = [ {label:'100m',sec:11}, {label:'400m',sec:55}, {label:'1500m',sec:240}, {label:'5km',sec:1080}, {label:'marathon',sec:3600} ];
+  function sliderToSeconds(v){ return DIAL_MIN_S * Math.pow(DIAL_MAX_S/DIAL_MIN_S, v/1000); }
+  function secondsToSlider(sec){
+    const t = Math.log(sec/DIAL_MIN_S) / Math.log(DIAL_MAX_S/DIAL_MIN_S);
+    return Math.round(Math.max(0, Math.min(1, t)) * 1000);
+  }
+  function fmtDuration(sec){
+    if(sec < 60) return Math.round(sec)+' sec';
+    if(sec < 3600) return (Math.round(sec/60*10)/10)+' min';
+    return Math.round(sec/60)+' min';
+  }
+  // Approximate blend of the three systems at a given effort duration.
+  function dialBlend(sec){
+    let red, yellow, green;
+    if(sec <= 10){
+      red = 90 - (sec/10)*35; yellow = (sec/10)*35; green = 10;
+    } else if(sec <= 120){
+      const t = (sec-10)/110;
+      red = 55 - t*45; yellow = 35 + t*5; green = 10 + t*40;
+    } else {
+      const t = Math.min(1, (sec-120)/(DIAL_MAX_S-120));
+      red = Math.max(2, 10 - t*8); yellow = 40 - t*33; green = 50 + t*43;
+    }
+    const sum = red + yellow + green;
+    return { red: red/sum*100, yellow: yellow/sum*100, green: green/sum*100 };
+  }
+  function dialExampleFor(sec){
+    let best = DIAL_SNAPS[0];
+    DIAL_SNAPS.forEach(sp => {
+      if(Math.abs(Math.log(sp.sec)-Math.log(sec)) < Math.abs(Math.log(best.sec)-Math.log(sec))) best = sp;
+    });
+    return best.label;
+  }
+
+  let matchState = { i: 0, score: 0, done: false };
+  function lessonEnergyHTML(blockId, lessonId){
+    const cards = ENERGY_SYSTEMS.map(s =>
+      '<div class="esys esys-'+s.key+'"><p class="esys-name">'+esc(s.name)+'</p><p class="esys-dur">'+esc(s.dur)+'</p>'+
+      '<p class="esys-desc">'+esc(s.desc)+'</p><p class="esys-fuel">Fuel: '+esc(s.fuel)+'</p></div>').join('');
+    const snaps = DIAL_SNAPS.map(sp => '<button class="dial-snap" onclick="dialTo('+sp.sec+')">'+esc(sp.label)+'</button>').join('');
+    return '<p class="learn-lesson-intro">Your body has three ways of making energy, and which one you use comes down to one thing: how long the effort lasts.</p>'+
+      '<div class="esys-grid">'+cards+'</div>'+
+      '<div class="learn-callout gold"><p class="lc-eyebrow">Key point</p>'+
+        '<p>In most sports, because of the energy systems they rely on, <strong>carbs are the main and most important fuel</strong> for the working muscles.</p></div>'+
+      '<p class="learn-sec">Slide the effort dial</p>'+
+      '<p class="learn-p">Drag it and watch the mix change. Short efforts are almost all Red; long ones are almost all Green.</p>'+
+      '<div class="dial-box">'+
+        '<p class="dial-read" id="dialRead">—</p>'+
+        '<div id="dialBars"></div>'+
+        '<input type="range" class="dial-slider" id="dialSlider" min="0" max="1000" value="'+secondsToSlider(11)+'" oninput="updateDial()" aria-label="Effort duration">'+
+        '<div class="dial-snaps">'+snaps+'</div>'+
+      '</div>'+
+      '<p class="learn-sec">Match the effort to the system</p>'+
+      '<p class="learn-p">Eight efforts. Get <strong>'+MATCH_PASS+' of '+SCENARIOS.length+'</strong> right to finish this lesson.</p>'+
+      '<div class="matcher" id="matcher"></div>';
+  }
+  function dialTo(sec){
+    const el = document.getElementById('dialSlider'); if(!el) return;
+    el.value = secondsToSlider(sec); updateDial();
+  }
+  window.dialTo = dialTo;
+  function updateDial(){
+    const el = document.getElementById('dialSlider'); if(!el) return;
+    const sec = sliderToSeconds(parseFloat(el.value));
+    const b = dialBlend(sec);
+    const read = document.getElementById('dialRead');
+    if(read) read.innerHTML = '<strong>'+esc(fmtDuration(sec))+'</strong> effort <span>— about a '+esc(dialExampleFor(sec))+'</span>';
+    const bar = (label, val, cls) =>
+      '<div class="sysbar"><span class="sysbar-lab">'+label+'</span>'+
+        '<span class="sysbar-track"><span class="sysbar-fill '+cls+'" style="width:'+Math.round(val)+'%"></span></span>'+
+        '<span class="sysbar-val">'+Math.round(val)+'%</span></div>';
+    const bars = document.getElementById('dialBars');
+    if(bars) bars.innerHTML = bar('Red', b.red, 'red') + bar('Yellow', b.yellow, 'yellow') + bar('Green', b.green, 'green');
+  }
+  window.updateDial = updateDial;
+
+  function renderMatcher(blockId, lessonId){
+    const host = document.getElementById('matcher'); if(!host) return;
+    const total = SCENARIOS.length;
+    if(matchState.done){
+      const passed = matchState.score >= MATCH_PASS;
+      host.innerHTML = '<div class="match-done'+(passed?' pass':'')+'">'+
+        '<p class="match-score">'+matchState.score+'<small>/'+total+'</small></p>'+
+        '<p class="match-msg">'+(passed
+          ? 'Nice work — you’ve got the energy systems.'
+          : 'Not quite. Have another go — read the explanation each time.')+'</p>'+
+        '<button class="btn-secondary" onclick="restartMatcher(\''+blockId+'\',\''+lessonId+'\')">Try again</button>'+
+      '</div>';
+      if(passed && !lessonDone(blockId, lessonId)) completeLesson(blockId, lessonId, { match: matchState.score });
+      return;
+    }
+    const s = SCENARIOS[matchState.i];
+    const dots = SCENARIOS.map((x, i) => '<span class="match-dot'+(i<matchState.i?' past':'')+(i===matchState.i?' now':'')+'"></span>').join('');
+    host.innerHTML =
+      '<div class="match-head"><span class="match-count">'+(matchState.i+1)+' of '+total+'</span>'+
+        '<span class="match-running">Score '+matchState.score+'</span></div>'+
+      '<p class="match-prompt">'+esc(s.prompt)+'</p>'+
+      '<p class="match-sub">'+esc(s.sub)+'</p>'+
+      '<div class="match-btns">'+
+        ENERGY_SYSTEMS.map(e => '<button class="match-btn match-'+e.key+'" onclick="answerMatch(\''+blockId+'\',\''+lessonId+'\',\''+e.key+'\')">'+esc(e.name)+'</button>').join('')+
+      '</div>'+
+      '<div class="match-fb" id="matchFb" hidden></div>'+
+      '<div class="match-dots">'+dots+'</div>';
+  }
+  function answerMatch(blockId, lessonId, pick){
+    const s = SCENARIOS[matchState.i]; if(!s) return;
+    const right = pick === s.answer;
+    if(right) matchState.score++;
+    document.querySelectorAll('.match-btn').forEach(b => { b.disabled = true; });
+    const chosen = document.querySelector('.match-'+pick);
+    if(chosen) chosen.classList.add(right ? 'is-right' : 'is-wrong');
+    if(!right){ const correct = document.querySelector('.match-'+s.answer); if(correct) correct.classList.add('is-right'); }
+    const fb = document.getElementById('matchFb');
+    if(fb){
+      fb.hidden = false;
+      fb.className = 'match-fb '+(right ? 'ok' : 'no');
+      fb.innerHTML = '<p>'+(right ? '<strong>Correct.</strong> ' : '<strong>Not quite.</strong> ')+esc(s.explain)+'</p>'+
+        '<button class="btn-secondary" onclick="nextMatch(\''+blockId+'\',\''+lessonId+'\')">'+
+          (matchState.i + 1 >= SCENARIOS.length ? 'See my score' : 'Next')+'</button>';
+    }
+  }
+  window.answerMatch = answerMatch;
+  function nextMatch(blockId, lessonId){
+    matchState.i++;
+    if(matchState.i >= SCENARIOS.length) matchState.done = true;
+    renderMatcher(blockId, lessonId);
+  }
+  window.nextMatch = nextMatch;
+  function restartMatcher(blockId, lessonId){
+    matchState = { i:0, score:0, done:false };
+    renderMatcher(blockId, lessonId);
+  }
+  window.restartMatcher = restartMatcher;
 
   // ---- Lesson 3: your sport's fuel profile ----
   function lessonSportHTML(blockId, lessonId){
