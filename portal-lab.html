@@ -2012,8 +2012,14 @@
     <button class="sheet-close" onclick="closeLibrary()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
   <div class="sheet-body">
-    <p class="ql-help" id="libHelp">Every exercise you can use — with a cue for each. To add one to your week, open a day and tap “Add exercise.”</p>
-    <input class="duration-input plan-field" id="libSearch" placeholder="Search — name, pattern or gear" oninput="renderLibrary(this.value)" style="margin:6px 0 14px;">
+    <p class="ql-help" id="libHelp">Browse every movement in the Academy — what it is, how to do it, and the level it’s for. To add one to your week, open a day and tap “Add exercise.”</p>
+    <div class="lib-toolbar" id="libToolbar">
+      <input class="duration-input plan-field" id="libSearch" placeholder="Search — name, goal or gear" oninput="libSetSearch(this.value)" style="margin:2px 0 0;">
+      <div class="lib-filter-label">Level</div>
+      <div class="lib-chips" id="libLevelChips"></div>
+      <div class="lib-filter-label">Equipment</div>
+      <div class="lib-chips" id="libEquipChips"></div>
+    </div>
     <div class="more-list" id="libList"></div>
   </div>
 </div>
@@ -2675,6 +2681,25 @@
   .lib-row-cue { font-family: 'Fraunces', serif; font-style: italic; font-size: 13.5px; color: var(--ink-soft); margin-top: 4px; }
   .ex-caution { color: var(--int-hard); font-size: 12.5px; font-weight: 600; margin-top: 4px; }
   .ex-caution-tag { display: inline-block; font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 700; color: #fff; background: var(--int-hard); border-radius: 6px; padding: 1px 6px; vertical-align: middle; }
+  /* ---- Exercise library: browsable resource (filters + rich cards) ---- */
+  .lib-toolbar { position: sticky; top: 0; z-index: 2; background: var(--cream); padding-bottom: 8px; margin-bottom: 4px; }
+  .lib-filter-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-mute); margin: 10px 2px 6px; }
+  .lib-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .lib-chip { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-soft); background: var(--surface); border: 1.5px solid var(--line); border-radius: 9999px; padding: 6px 13px; cursor: pointer; white-space: nowrap; }
+  .lib-chip.sel { background: var(--burgundy); color: var(--cream); border-color: var(--burgundy); }
+  .lib-count { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); margin: 12px 2px 2px; }
+  .lib-group-blurb { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); margin: 2px 2px 10px; line-height: 1.45; }
+  .lib-row-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .lib-row-desc { font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; margin-top: 5px; }
+  .lib-levels { display: inline-flex; gap: 4px; }
+  .lib-level { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; border-radius: 5px; padding: 1px 6px; vertical-align: middle; }
+  .lib-level.foundation { color: var(--int-easy); background: rgba(74,157,91,0.15); }
+  .lib-level.building { color: #a9791c; background: rgba(212,175,55,0.20); }
+  .lib-level.advanced { color: var(--burgundy); background: rgba(135,75,70,0.13); }
+  .lib-season { display: inline-block; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: var(--ink-mute); background: var(--surface); border: 1px solid var(--line-soft); border-radius: 6px; padding: 1px 7px; margin-top: 6px; }
+  .lib-actions { margin-top: 8px; }
+  .lib-video-btn { display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--burgundy); background: rgba(212,175,55,0.20); border-radius: 8px; padding: 6px 12px; text-decoration: none; }
+  .lib-video-btn:active { opacity: 0.85; }
   /* Apply-choice modal notes + "save this week as my program" button */
   .apply-choice-note { font-size: 12.5px; color: var(--ink-mute); line-height: 1.45; margin: 8px 2px 0; }
   .week-saveprog { width: 100%; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -4332,11 +4357,13 @@
     document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
   }
 
-  // Standalone, read-only browse of the whole exercise bank (reached from the hub).
-  // The browsable library is a rough list for now (rep ranges, no demos). Keep it
-  // gated until it's a proper resource with video for each movement. The underlying
-  // EXERCISE_LIBRARY still powers building + swapping — this only gates the browse.
-  const LIBRARY_LIVE = false;
+  // Standalone, browsable exercise library (reached from the hub). Now a proper
+  // student resource: plain-language demo text, level tiers, goal grouping,
+  // level/equipment filters, verbatim coach cues, ⚠ specialist cautions and an
+  // optional per-movement demo video (shows a "Watch demo" button wherever a
+  // `video` URL is filled in on EX_LIB_INFO). The same EXERCISE_LIBRARY still
+  // powers building + swapping — this only drives the browse view.
+  const LIBRARY_LIVE = true;
   const LIB_SOON_HTML =
     '<div class="teaser-veil" style="position:static; padding:24px 6px;">'+
       '<div class="teaser-badge"><i class="ti ti-sparkles" aria-hidden="true"></i> Coming soon</div>'+
@@ -4344,14 +4371,52 @@
       '<h3 class="teaser-title">A proper exercise library.</h3>'+
       '<p class="teaser-line">We’re building a real resource — a clear demo and <strong>video for every movement</strong>, plus guidance that fits your level. For now, you can still add and swap exercises inside any day of your program.</p>'+
     '</div>';
+  // Goal-oriented groups (student language) with a one-line intro each.
+  const LIB_GROUPS = [
+    { r:'warmup',   label:'Warm-up & prep',       blurb:'Get your body ready — mobility, activation and priming before you train.' },
+    { r:'lower',    label:'Lower-body strength',  blurb:'Squats, hinges and single-leg work to build powerful legs.' },
+    { r:'upper',    label:'Upper-body strength',  blurb:'Pushing and pulling for a strong, balanced upper body.' },
+    { r:'full',     label:'Total-body & Olympic', blurb:'Big lifts that train the whole body to produce power together.' },
+    { r:'core',     label:'Core & anti-rotation', blurb:'Bracing and stability so you can transfer force without leaking it.' },
+    { r:'plyo',     label:'Jumps & plyometrics',  blurb:'Learn to land, then to jump — springy, explosive power.' },
+    { r:'throw',    label:'Med-ball & throws',    blurb:'Explosive, whole-body throwing power.' },
+    { r:'speed',    label:'Speed & agility',      blurb:'Sprint mechanics, acceleration and changing direction fast.' },
+    { r:'cond',     label:'Conditioning',         blurb:'Build your engine — intervals, runs and circuits.' },
+    { r:'recovery', label:'Recovery & mobility',  blurb:'Stretch, breathe and recover so you come back stronger.' },
+  ];
+  // Equipment filter buckets — a chip only shows if something in the bank matches.
+  const LIB_EQUIP = [
+    { k:'none',      label:'No gear',        test:eq => eq.length===0 || eq.some(x=>/bodyweight|floor/.test(x)) },
+    { k:'barbell',   label:'Barbell',        test:eq => eq.some(x=>/barbell|hex|trap/.test(x)) },
+    { k:'dumbbell',  label:'Dumbbell',       test:eq => eq.some(x=>/dumbbell/.test(x)) },
+    { k:'kettlebell',label:'Kettlebell',     test:eq => eq.some(x=>/kettlebell/.test(x)) },
+    { k:'band',      label:'Bands',          test:eq => eq.some(x=>/band/.test(x)) },
+    { k:'medball',   label:'Med ball',       test:eq => eq.some(x=>/med ball|med\b|medicine|swiss/.test(x)) },
+    { k:'box',       label:'Box / bench',    test:eq => eq.some(x=>/box|bench|hurdle/.test(x)) },
+    { k:'cable',     label:'Cable / machine',test:eq => eq.some(x=>/cable|machine/.test(x)) },
+    { k:'ringstrx',  label:'Rings / TRX',    test:eq => eq.some(x=>/rings|trx/.test(x)) },
+    { k:'cardio',    label:'Cardio kit',     test:eq => eq.some(x=>/row|bike|watt|curve|track|treadmill|rope|slider|incline/.test(x)) },
+  ];
+  const LIB_LEVELS = [['','All'],['foundation','Foundation'],['building','Building'],['advanced','Advanced']];
+  const LIB_LEVEL_LABEL = { foundation:'Foundation', building:'Building', advanced:'Advanced' };
+  const LIB_SEASON_LABEL = { out:'Best out of season', in:'In-season prep' };
+  const libState = { q:'', level:'', equip:'' };
+  const libEqLower = e => (e.equip||[]).map(x => String(x).toLowerCase());
+
   function openLibrary(){
+    const tb = document.getElementById('libToolbar');
+    const h = document.getElementById('libHelp');
     if(!LIBRARY_LIVE){
-      const s = document.getElementById('libSearch'); if(s) s.style.display = 'none';
-      const h = document.getElementById('libHelp'); if(h) h.style.display = 'none';
+      if(tb) tb.style.display = 'none';
+      if(h) h.style.display = 'none';
       document.getElementById('libList').innerHTML = LIB_SOON_HTML;
     } else {
-      document.getElementById('libSearch').value = '';
-      renderLibrary('');
+      if(tb) tb.style.display = '';
+      if(h) h.style.display = '';
+      libState.q = ''; libState.level = ''; libState.equip = '';
+      const s = document.getElementById('libSearch'); if(s) s.value = '';
+      libRenderChips();
+      renderLibrary();
     }
     document.getElementById('lib-backdrop').classList.add('open');
     document.getElementById('libSheet').classList.add('open');
@@ -4363,26 +4428,70 @@
     document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
   }
   window.openLibrary = openLibrary; window.closeLibrary = closeLibrary;
-  function renderLibrary(q){
-    q = (q||'').toLowerCase().trim();
-    const match = EXERCISE_LIBRARY.filter(e => !q ||
-      e.name.toLowerCase().includes(q) || e.pattern.includes(q) || e.region.includes(q) ||
-      (e.equip||[]).join(' ').toLowerCase().includes(q) || (e.component||'').toLowerCase().includes(q));
-    let html = '';
-    REGION_ORDER.forEach(r => {
-      const g = match.filter(e => e.region===r);
-      if(!g.length) return;
-      html += '<div class="addex-group">'+esc(REGION_LABEL[r]||r)+' · '+g.length+'</div>'+
-        g.map(e => '<div class="lib-row">'+
-          '<div class="lib-row-name">'+esc(e.name)+(e.caution?' <span class="ex-caution-tag">⚠ specialist</span>':'')+'</div>'+
-          '<div class="lib-row-meta">'+esc(exMeta(e))+(e.rx?' · '+esc(e.rx):'')+'</div>'+
-          (e.cue?'<div class="lib-row-cue">“'+esc(e.cue)+'”</div>':'')+
-          (e.caution?'<div class="ex-caution">'+esc(e.caution)+'</div>':'')+
-        '</div>').join('');
+
+  function libRenderChips(){
+    document.getElementById('libLevelChips').innerHTML = LIB_LEVELS.map(([k,lab]) =>
+      '<button type="button" class="lib-chip'+(libState.level===k?' sel':'')+'" onclick="libSetLevel(\''+k+'\')">'+lab+'</button>').join('');
+    let eq = '<button type="button" class="lib-chip'+(libState.equip===''?' sel':'')+'" onclick="libSetEquip(\'\')">All</button>';
+    LIB_EQUIP.forEach(f => {
+      if(!EXERCISE_LIBRARY.some(e => f.test(libEqLower(e)))) return;
+      eq += '<button type="button" class="lib-chip'+(libState.equip===f.k?' sel':'')+'" onclick="libSetEquip(\''+f.k+'\')">'+esc(f.label)+'</button>';
     });
-    document.getElementById('libList').innerHTML = html || '<p class="ql-help">No matches — try another word.</p>';
+    document.getElementById('libEquipChips').innerHTML = eq;
   }
+  function libMatch(e){
+    if(libState.q){
+      const hay = (e.name+' '+e.pattern+' '+e.region+' '+(e.component||'')+' '+(e.equip||[]).join(' ')+' '+(e.desc||'')).toLowerCase();
+      if(!hay.includes(libState.q)) return false;
+    }
+    if(libState.level && !(e.levels||[]).includes(libState.level)) return false;
+    if(libState.equip){
+      const f = LIB_EQUIP.find(x => x.k===libState.equip);
+      if(f && !f.test(libEqLower(e))) return false;
+    }
+    return true;
+  }
+  function libLevelBadges(e){
+    const lv = e.levels || [];
+    if(!lv.length) return '';
+    return ' <span class="lib-levels">'+lv.map(k => '<span class="lib-level '+k+'">'+(LIB_LEVEL_LABEL[k]||k)+'</span>').join('')+'</span>';
+  }
+  function libCard(e){
+    const meta = [];
+    if(e.equip && e.equip.length) meta.push(e.equip.join(', '));
+    if(e.rx) meta.push(e.rx);
+    return '<div class="lib-row">'+
+      '<div class="lib-row-head"><span class="lib-row-name">'+esc(e.name)+'</span>'+libLevelBadges(e)+
+        (e.caution?' <span class="ex-caution-tag">⚠ specialist</span>':'')+'</div>'+
+      (e.desc?'<div class="lib-row-desc">'+esc(e.desc)+'</div>':'')+
+      (e.cue?'<div class="lib-row-cue">Coach cue: “'+esc(e.cue)+'”</div>':'')+
+      (meta.length?'<div class="lib-row-meta">'+esc(meta.join(' · '))+'</div>':'')+
+      (e.season && LIB_SEASON_LABEL[e.season]?'<div class="lib-season">'+esc(LIB_SEASON_LABEL[e.season])+'</div>':'')+
+      (e.video?'<div class="lib-actions"><a class="lib-video-btn" href="'+esc(e.video)+'" target="_blank" rel="noopener"><i class="ti ti-player-play" aria-hidden="true"></i> Watch demo</a></div>':'')+
+      (e.caution?'<div class="ex-caution">'+esc(e.caution)+'</div>':'')+
+    '</div>';
+  }
+  function renderLibrary(){
+    const match = EXERCISE_LIBRARY.filter(libMatch);
+    const total = match.length;
+    const filtered = libState.q || libState.level || libState.equip;
+    let html = '<div class="lib-count">'+total+' movement'+(total===1?'':'s')+(filtered?' match your filters':' in the library')+'</div>';
+    LIB_GROUPS.forEach(grp => {
+      const g = match.filter(e => e.region===grp.r);
+      if(!g.length) return;
+      html += '<div class="addex-group">'+esc(grp.label)+' · '+g.length+'</div>'+
+        '<div class="lib-group-blurb">'+esc(grp.blurb)+'</div>'+
+        g.map(libCard).join('');
+    });
+    document.getElementById('libList').innerHTML = total ? html : '<p class="ql-help">No movements match — try clearing a filter or another word.</p>';
+  }
+  function libSetSearch(v){ libState.q = (v||'').toLowerCase().trim(); renderLibrary(); }
+  function libSetLevel(k){ libState.level = k; libRenderChips(); renderLibrary(); }
+  function libSetEquip(k){ libState.equip = k; libRenderChips(); renderLibrary(); }
   window.renderLibrary = renderLibrary;
+  window.libSetSearch = libSetSearch;
+  window.libSetLevel = libSetLevel;
+  window.libSetEquip = libSetEquip;
   window.openAddEx = openAddEx;
   window.renderAddEx = renderAddEx;
   window.pickAddEx = pickAddEx;
@@ -5043,6 +5152,169 @@
     { id:'foamRollRecovery', name:'Foam Roll - recovery pass', region:'recovery', pattern:'recovery', laterality:'bi', fvZone:'recovery', tier:1, equip:['foam roller'], rx:'30 sec per area', cue:'Roll slower this time and pause on anything tight. Wait on that spot…', component:'Regeneration' },
     { id:'recoveryRoutine', name:'Recovery Routine', region:'recovery', pattern:'recovery', laterality:'bi', fvZone:'recovery', tier:1, equip:['bodyweight'], rx:'10-15 each', cue:'replaces stretch list in power cycles', component:'Regeneration' },
   ];
+  // ============================================================
+  // EXERCISE LIBRARY — student-facing enrichment (browsable resource).
+  // Plain-language demo text, level tiers (Foundation/Building/Advanced =
+  // AA1/AA2/AA3 = Gr 9 / 10 / 11-12) and season notes come from the AA Master
+  // Catalogue (EXOS). 'video' is an optional demo URL per movement — the
+  // library shows a 'Watch demo' button wherever one is filled in. Merged onto
+  // EXERCISE_LIBRARY below so the swap engine + Add-exercise picker are unchanged.
+  // To add a demo video, paste a URL into the matching id, e.g. hangClean: { video:'https://youtu.be/…' }.
+  // ============================================================
+  const EX_LIB_INFO = {
+    backSquat: { desc:'The classic barbell squat. Bar on your upper back, sit down between your hips like into a chair, then stand tall. Builds all-round leg strength.', levels:['foundation','building'], video:'' },
+    frontSquat: { desc:'A squat with the bar resting on the front of your shoulders. Keeps you upright and works the front of your thighs hard. Elbows stay high.', levels:['building','advanced'], video:'' },
+    gobletSquat: { desc:'Hold one kettlebell or dumbbell at your chest and squat. The easiest way to learn a good squat shape — great for building up to the barbell.', levels:['foundation','building','advanced'], video:'' },
+    airSquat: { desc:'A squat with just your bodyweight. Where everyone starts — nail the movement here before you add any weight.', levels:['foundation','building'], season:'out', video:'' },
+    deadlift: { desc:'Lift a barbell from the floor by pushing your hips back and standing tall. One of the best moves for whole-body strength. Keep a flat back.', levels:['foundation','building','advanced'], video:'' },
+    hexDeadlift: { desc:'A deadlift using the diamond-shaped hex bar, so the weight sits around you. Friendlier on your back than a straight bar — a good way to lift heavy safely.', levels:['advanced'], season:'out', video:'' },
+    kbDeadlift: { desc:'A deadlift with a single kettlebell between your feet. Perfect for learning to hinge at the hips before loading up a barbell.', levels:['foundation','building'], video:'' },
+    hipThruster: { desc:'Sit with your upper back on a bench and drive a bar over your hips up to the ceiling. Targets your glutes — big for sprinting and jumping power.', levels:['building'], video:'' },
+    kbSwing: { desc:'Swing a kettlebell from between your legs up to chest height using a sharp snap of the hips. Trains explosive, springy power.', levels:['foundation','building','advanced'], video:'' },
+    slRdl: { desc:'A one-leg version of the stiff-leg deadlift. Hinge forward on one leg with the other reaching behind. Builds balance and strong hamstrings.', levels:['advanced'], video:'' },
+    splitSquat: { desc:'A lunge with your back foot up on a bench. Lower straight down and drive back up. One of the best single-leg strength builders.', levels:['foundation','building'], video:'' },
+    walkingLunge: { desc:'Step forward into a lunge, then step through into the next one, holding dumbbells. Builds leg strength and control on the move.', levels:['foundation'], season:'out', video:'' },
+    slBoxSquat: { desc:'Squat down to a box on one leg, keeping the other leg out in front. A safe way to build single-leg strength and control.', levels:['foundation','advanced'], video:'' },
+    nordic: { desc:'Kneel with a partner holding your ankles and lower your body as slowly as you can. Brutal but brilliant for bulletproof hamstrings.', levels:['foundation','building'], video:'' },
+    hamSlides: { desc:'Lie on your back, heels on sliders, hips up, and slide your feet out and back in. Builds hamstring strength with no equipment needed.', levels:['foundation'], video:'' },
+    benchPress: { desc:'Lie on a bench and press a barbell from your chest to straight arms. The go-to move for upper-body pushing strength.', levels:['building'], video:'' },
+    dbBench: { desc:'Bench press using a dumbbell in each hand. The extra balance needed works your chest and shoulders through a bigger range.', levels:['foundation','building'], video:'' },
+    pushUp: { desc:'The classic push-up. Lower your chest to the floor and push back up in a straight line. Slow down on the way down, fast on the way up.', levels:['foundation','building','advanced'], video:'' },
+    floorPress: { desc:'A press lying flat on the floor with dumbbells. The floor stops your elbows going too low, so it\'s easier on the shoulders.', levels:['advanced'], video:'' },
+    explPushUp: { desc:'A push-up where you push so hard your hands leave the floor. Trains upper-body speed and power. Use a bench to make it easier.', levels:['building'], video:'' },
+    barPress: { desc:'Press a barbell from your shoulders straight overhead. Builds strong shoulders — keep your ribs down and don\'t lean back.', levels:['building','advanced'], video:'' },
+    dbPress: { desc:'Press dumbbells overhead from your shoulders. The dumbbells let each arm work evenly and move naturally.', levels:['foundation','building'], video:'' },
+    pushPress: { desc:'An overhead press with a small dip and drive of the legs to launch the bar up. Lets you move more weight, faster — a power move.', levels:['building','advanced'], video:'' },
+    wallWalk: { desc:'Start in a push-up facing away from a wall, then walk your feet up the wall and hands in towards it. Builds strong shoulders and a solid core.', levels:['foundation','building'], video:'' },
+    ringRow: { desc:'Lean back holding gymnastic rings and pull your chest to your hands. Bend your knees to make it easier — a great first pulling exercise.', levels:['foundation','building','advanced'], video:'' },
+    seatedRow: { desc:'Sit at a machine and pull the handle to your stomach. Simple, safe way to build back strength. Squeeze the shoulder blades.', levels:['foundation'], video:'' },
+    barRow: { desc:'Bend forward with a flat back and row a barbell to your stomach. Builds a strong back to balance out all your pushing.', levels:['building'], video:'' },
+    saRow: { desc:'Row a single kettlebell or dumbbell with one arm, the other hand supported. Keeps your body square — no twisting or leaning.', levels:['foundation','building','advanced'], video:'' },
+    pullUp: { desc:'Hang from a bar and pull your chin over it. The king of upper-body pulling. Use a band or a partner if you can\'t do one yet.', levels:['foundation','building','advanced'], video:'' },
+    assistPullUp: { desc:'A pull-up made easier with a band or a partner\'s help, so you can train the movement and get stronger towards a full one.', levels:['foundation','building','advanced'], video:'' },
+    latPulldown: { desc:'Sit at the cable machine and pull the bar down to your chest. A great way to build towards pull-ups. Drive your elbows down.', levels:['advanced'], video:'' },
+    hkChop: { desc:'Kneel on one knee and pull a cable or band across your body while staying dead still. Trains your core to resist twisting.', levels:['foundation','advanced'], video:'' },
+    standChop: { desc:'Stand tall and press a cable across your body without letting your hips turn. Builds a strong, stable core for sport.', levels:['advanced'], video:'' },
+    kneelChop: { desc:'Kneel on both knees and chop a cable or band across your body, staying square. Core stability without your legs helping.', levels:['foundation','advanced'], video:'' },
+    lungeChop: { desc:'In a lunge, rotate a cable across your body through your hips. Trains the twisting power you use in throwing and hitting.', levels:['advanced'], video:'' },
+    woodchopper: { desc:'Swing a cable or med ball diagonally across your body like chopping wood. Builds rotational power for sport.', levels:['building'], video:'' },
+    boxJump: { desc:'Jump up onto a box and land soft and quiet. Step down between reps. A safe, fun way to train jumping power.', levels:['foundation','building'], video:'' },
+    tuckJump: { desc:'Jump straight up and pull your knees to your chest, landing quietly. Trains quick, springy legs.', levels:['foundation','building'], video:'' },
+    cmjJump: { desc:'Dip down quickly then jump as high as you can, reaching tall. The basic jump that tells you how much power you\'ve got.', levels:['foundation','building'], video:'' },
+    boxJumpLow: { desc:'Jump onto a low box and focus on a soft, controlled landing. This is where you learn to land properly before jumping higher.', levels:['foundation'], video:'' },
+    dropLanding: { desc:'Step off a low box and \'stick\' the landing, holding it still for two seconds. Teaches your body to absorb force safely.', levels:['foundation'], video:'' },
+    ankleHops: { desc:'Small, fast hops using just your ankles, staying stiff and springy. Builds the bouncy feet you need for speed.', levels:['foundation','building'], video:'' },
+    broadJump: { desc:'Jump as far forward as you can and stick the landing. Trains explosive power you can push into the ground.', levels:['foundation','building','advanced'], video:'' },
+    tripleJump: { desc:'Three linked bounds forward, controlling the final landing. Builds power and coordination.', levels:['building','advanced'], video:'' },
+    lateralBound: { desc:'Push off sideways from one leg and land on the other, sticking it. Trains the sideways power used in cutting and changing direction.', levels:['building','advanced'], video:'' },
+    skaterHops: { desc:'Bound side to side from foot to foot like a speed skater. Builds sideways spring and balance.', levels:['building'], video:'' },
+    medSlam: { desc:'Lift a medicine ball overhead and slam it into the floor as hard as you can. A great way to let out power (and stress!).', levels:['foundation','building'], video:'' },
+    ohSlam: { desc:'A slam with a full overhead reach before driving the ball to the floor. Trains whole-body power.', levels:['foundation','building','advanced'], video:'' },
+    medOhThrow: { desc:'Throw a medicine ball up and back over your head for distance. Explosive, total-body power.', levels:['building','advanced'], video:'' },
+    backThrow: { desc:'Drive your hips and throw a med ball up and back over your head. One of the most explosive throws there is.', levels:['building','advanced'], video:'' },
+    rotThrow: { desc:'Throw a medicine ball sideways into a wall, turning through your hips. Builds the rotational power for throwing and hitting.', levels:['building','advanced'], video:'' },
+    shotThrow: { desc:'Push a med ball across your body off your back leg, like a shot-put. Trains one-sided, angled power.', levels:['building','advanced'], video:'' },
+    wallDrill: { desc:'Lean on a wall and drive one knee up and foot down hard, like the first steps of a sprint. Grooves good acceleration shape.', levels:['foundation','building','advanced'], video:'' },
+    aSkip: { desc:'A rhythmic skip driving the knee up tall. A key sprint drill that teaches good running mechanics.', levels:['foundation','building','advanced'], video:'' },
+    accelRun: { desc:'Short sprints from a standing start, focusing on driving out low and powerful. Full recovery between reps.', levels:['foundation','building','advanced'], video:'' },
+    flyingSprint: { desc:'Build up to top speed over a run-in, then sprint a short flat-out zone relaxed. Trains pure top-end speed.', levels:['advanced'], video:'' },
+    shuttleRun: { desc:'The 5-10-5: sprint, plant, and change direction fast around cones. Trains agility and quick turns.', levels:['advanced'], video:'' },
+    lateralShuffle: { desc:'Shuffle sideways staying low without crossing your feet. Builds the defensive, sideways movement used in most sports.', levels:['foundation','building'], video:'' },
+    bikeIntervals: { desc:'Hard efforts on the bike with easy spinning between. Builds fitness with no pounding on your legs.', levels:['foundation','building'], video:'' },
+    rowIntervals: { desc:'Hard rowing efforts with rest between. Great full-body conditioning — strong legs, steady breathing.', levels:['foundation','building'], video:'' },
+    tempoRun: { desc:'Smooth, controlled runs at a strong but not flat-out pace. Builds your engine and helps you recover.', levels:['foundation','building'], season:'out', video:'' },
+    shuttleCond: { desc:'Repeated shuttle runs with short rests. Trains you to keep repeating hard efforts — game-day fitness.', levels:['building','advanced'], season:'out', video:'' },
+    slTrxSquat: { desc:'A single-leg box squat holding a TRX or rings for support. Builds strong, balanced legs one at a time.', levels:['foundation','advanced'], video:'' },
+    kbJumpSquat: { desc:'Squat holding a kettlebell, then explode into a jump. Bridges strength and power — squat down, then jump!', levels:['advanced'], video:'' },
+    slDeadlift: { desc:'A one-leg hip hinge holding a kettlebell. Builds balance and hamstring strength. Get creative for weight.', levels:['foundation','building'], video:'' },
+    dropDeadlift: { desc:'A deadlift where you drop the bar at the top instead of lowering it, so there\'s no slow-down phase. Focuses on the powerful lift up.', levels:['building'], video:'' },
+    slHamCurl: { desc:'An explosive one-leg hamstring curl — curl to jump. Trains springy, powerful hamstrings.', levels:['building'], video:'' },
+    buPress: { desc:'Press a kettlebell held upside-down (bell on top) overhead. Go light — it\'s all about control and stable shoulders.', levels:['foundation','advanced'], video:'' },
+    saLatPull: { desc:'A lat pull-down using one arm at a time on a cable. Fixes side-to-side imbalances and builds pulling strength.', levels:['advanced'], video:'' },
+    hangClean: { desc:'Lift a bar from your thighs to your shoulders in one explosive move. A specialist Olympic-style lift — practise the movement light first.', levels:['foundation','building','advanced'], video:'' },
+    squatClean: { desc:'Catch a cleaned bar in a full squat. An advanced Olympic-style lift — movement practice with a light bar only.', levels:['foundation','building'], video:'' },
+    muscleSnatch: { desc:'A stiff-leg deadlift straight into a jump and pull overhead. Movement practice for the snatch — keep it light.', levels:['foundation'], video:'' },
+    foamRoll: { desc:'Roll tight muscles over a foam roller before or after training. Spend longer on any spots that feel tight.', levels:['foundation','building','advanced'], video:'' },
+    worldsGreatestStretc: { desc:'A lunge-and-reach stretch that opens up your hips, back and shoulders all at once. A brilliant all-in-one warm-up move.', levels:['foundation','building','advanced'], video:'' },
+    monkeyFrog: { desc:'Low squat \'monkey\' and \'frog\' moves that loosen your hips. Move around and explore the positions.', levels:['foundation','building','advanced'], video:'' },
+    bearCrawlBear: { desc:'Crawl on hands and feet with your hips low, flowing between bear and inchworm shapes. Warms up your whole body and core.', levels:['foundation','building','advanced'], video:'' },
+    quadrupedTspineRotat: { desc:'On hands and knees, reach one arm to the ceiling and rotate your upper back. Frees up a stiff mid-back.', levels:['foundation'], video:'' },
+    plankMountainClimber: { desc:'Hold a plank and drive your knees to your chest one at a time. Warms up your core and hips.', levels:['foundation'], video:'' },
+    ysAndVs: { desc:'Lying face down, lift your arms into Y and V shapes to switch on the muscles around your shoulder blades.', levels:['foundation','building'], video:'' },
+    fmsBasicPatterns: { desc:'Corrective drills chosen for your movement screen results. Work on your personal weak spots — ask Mr Bain for your sheet.', levels:['advanced'], video:'' },
+    alternatingGluteBrid: { desc:'Lie on your back and lift your hips, driving through one leg at a time. Switches on your glutes before training.', levels:['foundation','building'], video:'' },
+    sidePlankFront: { desc:'Hold a plank on your side and front. Builds the deep core strength that protects your back.', levels:['foundation','building'], video:'' },
+    swissBallRollout: { desc:'Kneel and roll a Swiss ball out in front of you, then pull it back, keeping your body straight. A tough anti-arch core move.', levels:['foundation','building','advanced'], video:'' },
+    hollowRock: { desc:'Lie on your back in a shallow \'banana\' shape and rock gently. Builds a strong, braced core.', levels:['foundation','building'], video:'' },
+    gluteBridgeLateral: { desc:'A circuit of glute bridges and sideways plank walks. Wakes up your hips and core for training.', levels:['advanced'], video:'' },
+    '20mSkippingCircuit': { desc:'A there-and-back skipping warm-up with different arm swings. Gets your heart rate up and your body moving.', levels:['foundation','building','advanced'], video:'' },
+    '10mDynamicCircuit': { desc:'A short moving warm-up — lunges, leg swings, carioca and more — finishing with an easy sprint. Preps you to move fast.', levels:['foundation','building','advanced'], video:'' },
+    spidermans: { desc:'A deep lunge where you drop your elbow towards the floor inside your front foot. Opens tight hips.', levels:['foundation','building','advanced'], video:'' },
+    inchworm: { desc:'From standing, walk your hands out to a plank and back. Warms up your hamstrings, shoulders and core.', levels:['foundation','building','advanced'], video:'' },
+    bandInandouts: { desc:'Sit or stand with a mini-band round your legs and push out against it. Fires up your glutes before training.', levels:['foundation','building','advanced'], video:'' },
+    bandMonsterWalks: { desc:'Walk forwards and back with a band round your legs, staying low. Switches on the hip muscles that protect your knees.', levels:['foundation','building','advanced'], video:'' },
+    bandLateralWalks: { desc:'Step sideways against a band round your legs, staying low. Builds strong, stable hips.', levels:['foundation','building','advanced'], video:'' },
+    bandedSquatsBand: { desc:'Squats and shoulder rotations against a band. A winter activation circuit to warm the hips and shoulders.', levels:['advanced'], video:'' },
+    kettlebellDeadliftBa: { desc:'A kettlebell deadlift with a band adding resistance. Wakes up your hips and hamstrings in the warm-up.', levels:['advanced'], video:'' },
+    facepulls: { desc:'Pull a band towards your face with elbows high. Looks after your shoulders — do all three prehab moves, then rest.', levels:['foundation','building'], video:'' },
+    quickFeet: { desc:'Fast little steps on the spot, forwards, back and sideways. Wakes up your nervous system — go fast!', levels:['foundation','building','advanced'], video:'' },
+    wallDrillPrep: { desc:'The wall drive drill in the warm-up: triple-extend the back leg, drive the front knee up. Grooves sprint mechanics.', levels:['foundation','building','advanced'], video:'' },
+    linearLateralMarch: { desc:'March forwards and sideways with tall knees and good posture. Builds the shapes you use when you sprint.', levels:['foundation','building','advanced'], video:'' },
+    plyoLandingsLinear: { desc:'Small forward jumps landing on two feet then one, focusing on control. You\'re learning to land, not to jump far.', levels:['foundation','advanced'], video:'' },
+    plyoLandingsLinear2: { desc:'Vertical hops over low hurdles, sticking each landing before going for height. Builds safe, springy landings.', levels:['foundation','advanced'], video:'' },
+    lateralVerticalLater: { desc:'Sideways jumps for height and distance, landing under control. Trains sideways power once you can land well.', levels:['advanced'], video:'' },
+    cmSinglelegHop: { desc:'Single-leg hops and bounds, forwards and sideways, sticking every landing. Advanced, reactive jump training.', levels:['advanced'], video:'' },
+    doublelegRotationalJ: { desc:'Two-footed jumps turning 90 or 180 degrees, landing under control. Fast up, slow and controlled on landing.', levels:['foundation','building'], video:'' },
+    broadJumpMax: { desc:'Jump forward for maximum distance. As far as you can, sticking the landing every time.', levels:['foundation','building','advanced'], video:'' },
+    ankleJumps: { desc:'Fast, stiff-ankle jumps staying low to the ground. Builds bouncy, reactive feet. Explosive!', levels:['foundation','building'], video:'' },
+    scissorSplitlungeJum: { desc:'Jump and switch your legs in mid-air from one lunge to the other. Trains single-leg power.', levels:['foundation','building'], video:'' },
+    dumbbellJumpSquat: { desc:'Jump squats holding a dumbbell in each hand. Adds a little load to your jumping power. Explode up.', levels:['foundation','building'], video:'' },
+    dumbbellJumpingLunge: { desc:'Jumping lunges holding light dumbbells. Lower slowly, then explode up. Pause between each rep.', levels:['foundation','building'], video:'' },
+    explosivePushupPushu: { desc:'Explosive push-ups where your hands leave the floor, sometimes catching on a bench. Upper-body power. Use a bench if needed.', levels:['foundation','building','advanced'], video:'' },
+    explosiveRingPull: { desc:'Explosive rows on rings or a bar, pulling as fast as you can. Trains pulling power — use your legs to help.', levels:['foundation','building'], video:'' },
+    bosuBallPlyo: { desc:'Fast little push-ups with your hands on a Bosu ball. Trains springy, stable shoulders.', levels:['foundation','building'], video:'' },
+    accelerations1030m70: { desc:'Short acceleration runs at 70, 80 then 90% effort. Focus on your technique and power, not just going flat out.', levels:['foundation','building','advanced'], video:'' },
+    wallDrillTopend: { desc:'Wall drills for both acceleration and top-speed running shapes. Triple extension, triple flexion, low knee punch.', levels:['foundation','building','advanced'], video:'' },
+    topendSkillRuns: { desc:'Runs focused on top-speed mechanics — stay tall, big knees, step over and drive down. Push the ground away.', levels:['advanced'], season:'in', video:'' },
+    curveTechniqueRuns: { desc:'Fast runs on a curve or curved treadmill, building up to top speed with good posture. Knees up, step over, drive down.', levels:['building','advanced'], season:'in', video:'' },
+    skaterDrill: { desc:'A lateral bounding drill working your angles of attack. Stay low and control your body.', levels:['advanced'], video:'' },
+    lateralShuffleBandre: { desc:'Lateral shuffles, sometimes against a band, staying low and quick. Builds sideways movement for sport.', levels:['foundation','advanced'], video:'' },
+    lateralSkipCrossover: { desc:'Sideways skips and carioca (grapevine) footwork. Coordination and warm-up for changing direction.', levels:['foundation','building'], video:'' },
+    sprintDrills: { desc:'The classic sprint drill set — A-marches and skips, ankling, heel-to-butt, butt kicks. Cleans up your running form.', levels:['building'], season:'in', video:'' },
+    mirrorBosuballDrill: { desc:'React to and mirror a partner on a Bosu ball. Sport-specific reaction and balance work.', levels:['building'], video:'' },
+    medBallPush: { desc:'Push a medicine ball forward from your chest as hard as you can, like a fast chest pass. Trains upper-body power.', levels:['foundation','building'], video:'' },
+    medBallOverhead: { desc:'Throw a medicine ball forward from overhead for power. Whole-body throwing action.', levels:['foundation','building'], video:'' },
+    medBallSlam: { desc:'Slam a medicine ball into the floor as hard as you can. A great power finisher (and stress reliever).', levels:['foundation','building','advanced'], video:'' },
+    medBallRotation: { desc:'Throw a med ball sideways off your back foot, shot-put or discus style. Rotational, one-sided power.', levels:['foundation','building'], video:'' },
+    lungestanceRotationa: { desc:'Throw a med ball rotationally from a lunge stance. Builds twisting power in a strong, stable base.', levels:['advanced'], video:'' },
+    medBallSwissball: { desc:'Throw a med or Swiss ball up against a wall and catch it, repeating fast. Simple, repeatable power work.', levels:['foundation','building','advanced'], video:'' },
+    medBallExternal: { desc:'Small external-rotation throws and catches with a med ball. Prehab to keep your shoulders healthy.', levels:['building'], video:'' },
+    squatandpressMedBall: { desc:'Squat holding a med ball, then stand and press it overhead. A simple total-body power move.', levels:['foundation','building'], video:'' },
+    teamWod: { desc:'A team workout rotating through stations — wall balls, plank, rower or ropes. Builds fitness and team spirit.', levels:['foundation','building','advanced'], season:'out', video:'' },
+    rowingMachine20: { desc:'A 20-minute non-stop row. Builds your aerobic engine — it should feel hard by the end.', levels:['advanced'], season:'out', video:'' },
+    '56KmRun': { desc:'A steady 5–6 km run for time. Builds your base fitness — only do this if you\'re out of season.', levels:['foundation','building'], season:'out', video:'' },
+    '20mShuttleRuns': { desc:'Repeated 20m shuttle runs at a set work-to-rest. Builds endurance and repeat-effort fitness.', levels:['foundation'], season:'out', video:'' },
+    alternatingBattleRop: { desc:'Alternating waves on the battle ropes in hard intervals. Tough conditioning for your arms, shoulders and lungs.', levels:['advanced'], video:'' },
+    sliderWorkout: { desc:'A partner circuit of slides (push-up, hamstring, plank) plus rowing. Full-body conditioning.', levels:['advanced'], season:'in', video:'' },
+    '5105Drill': { desc:'Repeated 5-10-5 shuttles as conditioning. Fast changes of direction with short rests.', levels:['advanced'], video:'' },
+    rolling40mSprints: { desc:'Rolling 40m sprints with short rest. Builds speed endurance — recover, then repeat.', levels:['advanced'], season:'in', video:'' },
+    sprintSets: { desc:'Sets of sprints over mixed distances. Enter your fastest rep. Sprint and walk back to recover.', levels:['foundation','building'], video:'' },
+    hillSprints: { desc:'Short sprints up a small hill. Builds power and speed with less strain than flat sprints.', levels:['foundation','building'], video:'' },
+    cycleCurveSprints: { desc:'All-out short sprints on a bike or curve trainer. Builds power and conditioning — go as fast as you can.', levels:['foundation','building'], video:'' },
+    '100mRow30sec': { desc:'A quick 100m row or 30-second bike sprint. A short, sharp finisher.', levels:['foundation'], video:'' },
+    colourcodedMetCon: { desc:'A mixed conditioning circuit using colour-coded work/rest (green, yellow, red). Trains different energy systems.', levels:['foundation','building'], video:'' },
+    shuffleGameWith: { desc:'A shuffle-and-react game with Mr Bain. Fun, competitive conditioning.', levels:['advanced'], video:'' },
+    continuousStretching: { desc:'A flowing stretch routine — lunge, reach, hamstring, quad and glute. Do all moves before resting, and focus on breathing.', levels:['foundation','building','advanced'], video:'' },
+    bodyScanBreathing: { desc:'Lie on your back and slowly scan your body, then focus on your breathing. Calms your body down and aids recovery.', levels:['foundation','building','advanced'], video:'' },
+    couchStretch: { desc:'A deep stretch for the front of your hips and thighs, back foot up against a wall or couch. Great after lots of sitting or running.', levels:['foundation','building'], video:'' },
+    hipflexorLungeHamstr: { desc:'Hip-flexor lunge and hamstring wall stretches. Loosens the front of the hips and the back of the legs.', levels:['foundation','building'], video:'' },
+    calfStretchGlutepiri: { desc:'Calf and glute/piriformis stretches. Eases tight lower legs and hips.', levels:['foundation','building'], video:'' },
+    kettlebellAnkleSquat: { desc:'Hold a kettlebell and sit into a deep squat, working your ankles and hips. A gentle mobility move.', levels:['foundation','building'], video:'' },
+    foamRollRecovery: { desc:'A slower recovery foam-roll. Pause on anything tight and wait for it to ease.', levels:['foundation','building','advanced'], video:'' },
+    recoveryRoutine: { desc:'Our set recovery routine — the Thursday-morning flow. Replaces the stretch list in power cycles.', levels:['building'], season:'in', video:'' },
+  };
+  // Merge enrichment onto the library (leaves swap/build fields intact).
+  EXERCISE_LIBRARY.forEach(e => { const info = EX_LIB_INFO[e.id]; if(info){ e.desc = info.desc; e.levels = info.levels; if(info.season) e.season = info.season; if(info.video) e.video = info.video; } });
   const EX_BY_ID = {}; EXERCISE_LIBRARY.forEach(e => { EX_BY_ID[e.id] = e; });
   function exById(id){ return EX_BY_ID[id] || null; }
   const FV_ORDER = ['foundation','strength','strengthspeed','speedstrength','speed'];
