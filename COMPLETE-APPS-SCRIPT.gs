@@ -3400,19 +3400,29 @@ function apComputeLoad(ss, athleteId) {
     var d = apDateStr(rows[i].Date);
     if (d && (st === 'done' || st === 'modified' || l > 0)) loggedSet[d] = 1;
   }
-  var weeks = Object.keys(byWeek).sort();
+  // A week gets a key here as soon as ANY session lands in it — a fixture weeks
+  // out, a planned rest day — and those rows carry no load. Future weeks must not
+  // be part of the load picture at all: taking the last key as "this week" once
+  // reported a fully logged week as 0 au because a game sat in the week after.
+  var curWeek = apWeekStart(new Date());
+  var allWeeks = Object.keys(byWeek).sort();
+  var weeks = [];
+  for (var q = 0; q < allWeeks.length; q++) if (allWeeks[q] <= curWeek) weeks.push(allWeeks[q]);
   var series = [];
+  var weeksLogged = 0;
   for (var w = 0; w < weeks.length; w++) {
     var acute = byWeek[weeks[w]];
+    if (acute > 0) weeksLogged++;
+    // Chronic = the weeks BEFORE this one, so a part-finished week never dilutes
+    // the baseline it is being measured against.
     var sum = 0, n = 0;
-    for (var k = Math.max(0, w - 3); k <= w; k++) { sum += byWeek[weeks[k]]; n++; }
+    for (var k = Math.max(0, w - 4); k < w; k++) { if (byWeek[weeks[k]] > 0) { sum += byWeek[weeks[k]]; n++; } }
     var chronic = n ? sum / n : 0;
-    var acwr = chronic > 0 ? acute / chronic : null;
+    var acwr = (n >= 3 && chronic > 0) ? acute / chronic : null;
     series.push({ weekStart: weeks[w], load: acute, acwr: acwr });
   }
-  var weeksLogged = weeks.length;
-  var thisWeekLoad = weeksLogged ? byWeek[weeks[weeksLogged - 1]] : 0;
-  var latestAcwr = weeksLogged >= 4 ? series[series.length - 1].acwr : null;
+  var thisWeekLoad = byWeek[curWeek] || 0;
+  var latestAcwr = (weeks.length && weeks[weeks.length - 1] === curWeek) ? series[series.length - 1].acwr : null;
   var loggedDates = Object.keys(loggedSet).sort();
   return { weeks: series, summary: { thisWeekLoad: thisWeekLoad, acwr: latestAcwr, weeksLogged: weeksLogged, loggedDates: loggedDates } };
 }

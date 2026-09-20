@@ -10422,31 +10422,58 @@
     return { build:'var(--gold)', maintain:'var(--sage)', peak:'var(--burgundy)', recover:'var(--cream)', off:'var(--line)' }[ms.state] || null;
   }
 
-  // ----- Legible, client-side load read (from acwr + weekly series only) -----
-  // No backend work: everything here is derived from state.load.summary.acwr and
-  // the state.load.weeks series the client already received.
+  // ----- Legible, client-side load read (from the weekly series only) -----
+  // Derived entirely from the state.load.weeks series the client already has, so
+  // it stays right regardless of what the summary block says.
+  //
+  // Two things this has to get right, and used to get wrong:
+  //  1. A week gets a row the moment ANY session lands in it — a fixture three
+  //     weeks out, a planned rest day. Those rows carry no load. Taking "the last
+  //     week with rows" as this week meant one future fixture reported the current
+  //     week as 0 au and called a hard week "easing off". This week is the week
+  //     that contains today, full stop.
+  //  2. A part-finished week is not a week. Comparing Wednesday's total against
+  //     finished weeks tells everyone they are slacking until Saturday. So the
+  //     comparison is made against how much of a usual week you'd have done BY NOW.
   function loadRead(){
-    const sum = (state.load && state.load.summary) || {};
     const series = (state.load && state.load.weeks) || [];
-    const logged = series.filter(w => w && w.load > 0);
-    const thisWeek = sum.thisWeekLoad || 0;
-    // "usual" = mean of the last ~4 logged weeks (the athlete's recent normal).
-    const recent = logged.slice(-4);
-    const usual = recent.length ? Math.round(recent.reduce((a,w)=>a+w.load,0)/recent.length) : 0;
-    const acwr = sum.acwr;
-    const weeksLogged = (sum.weeksLogged != null) ? sum.weeksLogged : logged.length;
+    const todayIso = fmtISO(new Date());
+    const curMon = fmtISO(mondayOf(new Date()));
+    // Past weeks that actually contain training — the athlete's recent normal.
+    const past = series.filter(w => w && w.weekStart < curMon && w.load > 0);
+    const cur = series.find(w => w && w.weekStart === curMon);
+    const thisWeek = (cur && cur.load) || 0;
 
-    // Need ~3 logged weeks before an acute:chronic read means anything.
-    if(weeksLogged < 3 || acwr == null){
-      return { enough:false, thisWeek, usual, weeksLogged, acwr:null, band:'building', tone:'building',
-               verdict:'Still building your baseline' };
+    // Day 1 = Monday, day 7 = Sunday. Sunday is a complete week.
+    const days = Math.min(7, Math.max(1, Math.round((parseISO(todayIso) - parseISO(curMon)) / 86400000) + 1));
+    const partial = days < 7;
+    const pace = partial ? Math.round(thisWeek * 7 / days) : thisWeek;
+
+    const recent = past.slice(-4);
+    const usual = recent.length ? Math.round(recent.reduce((a,w)=>a+w.load,0)/recent.length) : 0;
+    // What a usual week looks like by this point in it — the fair comparison.
+    const usualByNow = partial ? Math.round(usual * days / 7) : usual;
+    const weeksLogged = past.length + (thisWeek > 0 ? 1 : 0);
+    const base = { thisWeek, usual, usualByNow, pace, days, partial, weeksLogged };
+
+    // Need ~3 finished weeks behind you before a comparison means anything.
+    if(past.length < 3 || !usual){
+      return Object.assign(base, { enough:false, acwr:null, band:'building', tone:'building',
+               verdict:'Still building your baseline' });
     }
+    // Monday and Tuesday are too thin to project a week from — one session either
+    // way swings it from "easing off" to "ramping fast". Say nothing instead.
+    if(days <= 2){
+      return Object.assign(base, { enough:true, early:true, acwr:null, band:'healthy', tone:'steady',
+               verdict:'Early in the week' });
+    }
+    const acwr = pace / usual;
     let verdict, band, tone;
     if(acwr < 0.8){ verdict = 'Easing off'; band = 'healthy'; tone = 'easing'; }
     else if(acwr <= 1.3){ verdict = 'Building steadily'; band = 'healthy'; tone = 'steady'; }
     else if(acwr <= 1.5){ verdict = 'Pushing up'; band = 'healthy'; tone = 'push'; }
     else { verdict = 'Ramping fast — watch recovery'; band = 'ramp'; tone = 'ramp'; }
-    return { enough:true, thisWeek, usual, weeksLogged, acwr, verdict, band, tone };
+    return Object.assign(base, { enough:true, acwr, verdict, band, tone });
   }
 
   function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
@@ -10454,14 +10481,21 @@
   // A short, state-aware sentence: how this week compares to usual, tied to the
   // athlete's current training state (from the year map).
   function loadSentence(read, phase){
-    const thisWeek = read.thisWeek, usual = read.usual;
+    const usual = read.usual;
+    // Mid-week, judge the pace, not the running total — and say so, so nobody
+    // reads "down on your recent weeks" on a Wednesday as a verdict on the week.
+    const val = read.partial ? read.pace : read.thisWeek;
     let dir, rel;
+    if(read.early){
+      return 'Only ' + read.days + ' day' + (read.days===1?'':'s') +
+             ' in — your read shows once the week has more in it.';
+    }
     if(!usual){ dir='same'; rel='about the same as your recent weeks'; }
-    else if(thisWeek >= usual*1.35){ dir='above'; rel='well above your recent weeks'; }
-    else if(thisWeek >= usual*1.1){ dir='above'; rel='a little above your recent weeks'; }
-    else if(thisWeek <= usual*0.65){ dir='below'; rel='well below your recent weeks'; }
-    else if(thisWeek <= usual*0.9){ dir='below'; rel='a little below your recent weeks'; }
-    else { dir='same'; rel='about the same as your recent weeks'; }
+    else if(val >= usual*1.35){ dir='above'; rel = read.partial ? 'on pace for a big week' : 'well above your recent weeks'; }
+    else if(val >= usual*1.1){  dir='above'; rel = read.partial ? 'on pace to be up on your recent weeks' : 'a little above your recent weeks'; }
+    else if(val <= usual*0.65){ dir='below'; rel = read.partial ? 'well down on your recent weeks so far' : 'well below your recent weeks'; }
+    else if(val <= usual*0.9){  dir='below'; rel = read.partial ? 'a little down on your recent weeks so far' : 'a little below your recent weeks'; }
+    else { dir='same'; rel = read.partial ? 'on pace for a normal week' : 'about the same as your recent weeks'; }
     // A gentle, data-informed coaching tail keyed to the load tone / direction.
     let tail = '';
     if(read.tone==='ramp') tail = ' Watch your recovery this week.';
@@ -10482,18 +10516,24 @@
         '<p class="load-sentence">Log about three weeks and your load read shows here.</p>'+
         '<p class="load-detail">'+read.weeksLogged+' week'+(read.weeksLogged===1?'':'s')+' logged so far</p>';
     }
-    const scaleMax = Math.max(read.thisWeek, read.usual, 1) * 1.4;
+    // Mid-week the marker is "how much of a usual week you'd have done by now",
+    // so the bar and the marker are measuring the same span of days. On Sunday
+    // the two are the same thing and it reads as a straight week-vs-week compare.
+    const mark = read.partial ? read.usualByNow : read.usual;
+    const scaleMax = Math.max(read.thisWeek, mark, 1) * 1.4;
     const fillPct = Math.min(100, read.thisWeek/scaleMax*100);
-    const markPct = Math.min(100, read.usual/scaleMax*100);
+    const markPct = Math.min(100, mark/scaleMax*100);
+    const markLabel = read.partial ? 'usual by now' : 'usual';
     const cls = read.band==='ramp' ? 'ramp' : 'healthy';
-    const tag = read.tone==='ramp'   ? '<span class="load-tag warn">ease up</span>'
+    const tag = read.early          ? ''
+              : read.tone==='ramp'   ? '<span class="load-tag warn">ease up</span>'
               : read.tone==='easing' ? '<span class="load-tag ok">recovering</span>'
               :                        '<span class="load-tag ok">on track</span>';
     return '<div class="load-verdict-row"><span class="load-verdict '+cls+'">'+esc(read.verdict)+'</span>'+tag+'</div>'+
       '<div class="load-usual">'+
         '<div class="load-usual-track">'+
           '<div class="load-usual-fill '+cls+'" style="width:'+fillPct.toFixed(1)+'%"></div>'+
-          '<div class="load-usual-marker" style="left:'+markPct.toFixed(1)+'%" title="your usual week"><span class="load-usual-tick-label">usual</span></div>'+
+          '<div class="load-usual-marker" style="left:'+markPct.toFixed(1)+'%" title="'+markLabel+'"><span class="load-usual-tick-label">'+markLabel+'</span></div>'+
         '</div>'+
       '</div>'+
       '<p class="load-sentence">'+esc(loadSentence(read, phase))+'</p>';
@@ -10504,8 +10544,11 @@
     const read = loadRead();
     const phase = (currentPhaseInfo()||{}).phase || '';
     // Coach-view detail: the raw numbers, kept for the teacher, out of the student's way.
+    const dayBit = read.partial ? ' (day '+read.days+' of 7, on pace ~'+read.pace+' au)' : '';
     const coachDetail = read.enough
-      ? ('This week ~'+read.thisWeek+' au · usual ~'+read.usual+' au · ACWR '+(read.acwr!=null?read.acwr.toFixed(2):'—'))
+      ? ('This week ~'+read.thisWeek+' au'+dayBit+' · usual ~'+read.usual+' au'+
+         (read.partial ? ' (~'+read.usualByNow+' au by now)' : '')+
+         ' · ACWR '+(read.acwr!=null?read.acwr.toFixed(2):'—'))
       : ((read.thisWeek||0)+' au this week · '+read.weeksLogged+' week'+(read.weeksLogged===1?'':'s')+' logged');
     view.innerHTML =
       '<div class="card-stack">'+
