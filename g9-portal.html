@@ -156,6 +156,18 @@
   .rules li b{display:block}
   .rules li span{color:var(--ink-2);font-size:13px}
 
+  /* quiz */
+  .q{background:var(--sheet);border:1px solid var(--rule);padding:14px 16px;margin-bottom:10px}
+  .q .qn{font-weight:600;margin-bottom:8px}
+  .q .opts{display:grid;gap:6px}
+  .q .opt{text-align:left;background:var(--paper);border:1px solid var(--rule-2);padding:9px 12px;font-size:14px;cursor:pointer;color:var(--ink)}
+  .q .opt:hover{border-color:var(--ink)}
+  .q.done .opt{cursor:default}
+  .q .opt.right{border-color:var(--green);background:var(--green-soft);font-weight:600}
+  .q .opt.wrong{border-color:var(--accent);background:var(--accent-soft)}
+  .q .why{margin-top:8px;font-size:13px;color:var(--ink-2)}
+  .score{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:28px;line-height:1}
+  .locked{opacity:.6}
   /* reflection */
   .pick{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
   .pick button{background:var(--sheet);border:1px solid var(--rule-2);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink-2)}
@@ -195,6 +207,7 @@
       <button class="tab on" data-tab="today" onclick="go('today')">Today</button>
       <button class="tab" data-tab="passport" onclick="go('passport')">Passport</button>
       <button class="tab" data-tab="patterns" onclick="go('patterns')">The six</button>
+      <button class="tab" data-tab="quiz" onclick="go('quiz')">Test yourself</button>
       <button class="tab" data-tab="program" onclick="go('program')">My program</button>
       <button class="tab" data-tab="rules" onclick="go('rules')">Rules</button>
     </div>
@@ -203,6 +216,7 @@
     <section class="view on" id="view-today"></section>
     <section class="view" id="view-passport"></section>
     <section class="view" id="view-patterns"></section>
+    <section class="view" id="view-quiz"></section>
     <section class="view" id="view-program"></section>
     <section class="view" id="view-rules"></section>
   </main>
@@ -258,6 +272,20 @@ const UNIT_NEXT = [
   ['Gym 9','Push','Choose your own weight'],
   ['Gym 10','Pull','Run it yourself, no cues'],
   ['Classroom C','Classroom','Log a session. Preview Foundations']
+];
+
+// Ten quick questions on the six criteria and the rules. First option is the right one; shuffled on render.
+const QUIZ = [
+  ['In the squat, how low should the hip crease go?', ['Below the top of the knee', 'Level with the hip', 'As low as feels comfortable'], 'Depth is one of the six squat criteria. Hip crease below the top of the knee.'],
+  ['What moves first in a hinge?', ['The hips go back', 'The knees bend', 'The chest drops'], 'Hips back first. If the knees bend first it has turned into a squat.'],
+  ['In the lunge, what does the front heel do?', ['Stays down', 'Lifts as you go down', 'It does not matter'], 'Front heel down, weight through the whole foot.'],
+  ['In a push-up, where do the elbows go?', ['About 45° from the body', 'Flared straight out at 90°', 'Locked tight to the ribs'], 'About 45°. Flared elbows load the shoulder badly.'],
+  ['In the banded row, where is the squeeze?', ['Shoulder blades, at the top', 'The hands', 'The lower back'], 'Shoulder blades squeeze together at the top. Elbows drive back, not just the arms.'],
+  ['In the overhead press, which way does the band go?', ['Straight up, the head moves back', 'Out in front of the face', 'Behind the neck'], 'Straight bar path. The head moves back out of the way, then comes through.'],
+  ['In Train, how long do you rest between sets and exercises?', ['60 seconds max', 'About 3 minutes', 'As long as you like'], 'Rest 60 seconds max. It is written on the Board every session.'],
+  ['"Last two reps hard, every rep clean." If either fails, you...', ['Go lighter', 'Keep going anyway', 'Add weight'], 'Go lighter. Perfect technique is more impressive than a heavy bar with bad form.'],
+  ['What is a stamp?', ['Mr Bain has watched you do the movement well against the six criteria', 'You watched the video', 'A partner said it looked fine'], 'Three ticks get you there, but only the last one is the stamp: Mr Bain watching you do it.'],
+  ['Sore or pain?', ['Sore is fine. Pain is a stop', 'Both are fine, push through', 'Both mean stop training for the week'], 'Sore is normal after training. Pain is a stop, every time. Tell Mr Bain.']
 ];
 
 const RULES = {
@@ -403,9 +431,10 @@ function go(tab){
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + tab));
   if (tab === 'rules' && !state.progress.checklist.rules) { state.progress.checklist.rules = true; save(); renderToday(); }
+  if (tab === 'quiz') renderQuiz();
   window.scrollTo({ top: 0 });
 }
-function renderAll(){ renderToday(); renderPassport(); renderPatterns(); renderProgram(); renderRules(); }
+function renderAll(){ renderToday(); renderPassport(); renderPatterns(); renderQuiz(); renderProgram(); renderRules(); }
 
 function renderToday(){
   const p = state.progress;
@@ -415,9 +444,8 @@ function renderToday(){
     ['Self-check each one', `${checkedCount()} of 6 started. Tick the criteria you are sure of, leave the rest blank`, checkedCount() === 6],
     ['Get stamped', `${stampCount()} of 6 stamped${readyCount() ? `, ${readyCount()} ready for a look` : ''}. A partner ticks your six first, then Mr Bain watches a line of five and stamps. <a onclick="go('passport')">See your passport</a>`, stampCount() > 0],
     ['Read the gym rules', 'Three things: look after your body, look after the space, train the way we train. <a onclick="go(\'rules\')">Open the rules</a>', !!p.checklist.rules],
-    ['Reflection', 'Which pattern feels least controlled? Answer below', !!p.least]
+    ['Finished? Test yourself', watchedCount() === 6 ? `Ten quick questions on the six and the rules.${p.quiz && p.quiz.best != null ? ` Best so far ${p.quiz.best} of 10.` : ''} <a onclick="go('quiz')">Open the test</a>` : 'Opens once all six videos are watched', !!(p.quiz && p.quiz.best === 10)]
   ];
-  const least = p.least || '';
   document.getElementById('view-today').innerHTML = `
     <span class="eb">Block 1 · Learn the shape</span>
     <h1>Classroom <span class="t">A</span></h1>
@@ -425,23 +453,52 @@ function renderToday(){
     <div class="card acc"><h2>Today</h2>
       <ol class="steps">${steps.map(([t, d, ok], i) => `<li class="${ok ? 'done' : ''}"><div class="n">${ok ? '✓' : i + 1}</div><div class="txt"><b>${t}</b><span>${d}</span></div></li>`).join('')}</ol>
     </div>
-    <div class="card"><h2>Reflection</h2>
-      <p>Which of the six patterns feels least controlled right now?</p>
-      <div class="pick">${PATTERNS.map(x => `<button class="${least === x.key ? 'on' : ''}" onclick="setLeast('${x.key}')">${x.key}</button>`).join('')}</div>
-      <p>Which criterion is the reason? One line is enough.</p>
-      <textarea id="leastWhy" placeholder="e.g. My heels come up at the bottom of the squat">${esc(p.leastWhy || '')}</textarea>
-      <div style="margin-top:10px"><button class="btn" onclick="saveWhy()">Save</button><span class="saved" id="whySaved">${p.leastWhy ? 'Saved' : ''}</span></div>
-    </div>
     <div class="card"><h2>What a stamp means</h2>
       <p>A stamp is Mr Bain saying he has watched you do the movement well against the six criteria. It is level 1 of 5. It can land in any session, whenever you are ready.</p>
       <p>Three ticks get you there. You check yourself against the six. A partner watches five reps and ticks the six. Then you join the stamp line, Mr Bain watches five reps, and stamps or tells you the one thing to fix.</p>
       <p>A stamped pattern unlocks the loaded version of that exercise on the Board. Unstamped patterns stay at bodyweight until they are stamped. Both are proper training.</p>
     </div>`;
 }
-function setLeast(k){ state.progress.least = k; save(); renderToday(); }
-function saveWhy(){
-  state.progress.leastWhy = document.getElementById('leastWhy').value.trim();
-  save(); document.getElementById('whySaved').textContent = 'Saved'; renderToday();
+
+// ---- Test yourself: an extension for anyone who has watched all six ----
+let quizOrder = [], quizAnswered = 0, quizRight = 0;
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function renderQuiz(){
+  const el = document.getElementById('view-quiz');
+  const q = state.progress.quiz || {};
+  quizAnswered = 0; quizRight = 0;
+  if (watchedCount() < 6) {
+    el.innerHTML = `<span class="eb">Extension</span><h1>Test <span class="t">yourself</span></h1>
+      <p class="lede">Ten quick questions on the six movements and the rules. It opens once you have watched all six videos.</p>
+      <div class="card locked"><h2>${watchedCount()} of 6 watched</h2><p><a class="btn small" onclick="go('patterns')">Back to the six</a></p></div>`;
+    return;
+  }
+  quizOrder = QUIZ.map((item, i) => ({ i, opts: shuffle(item[1].map((t, k) => ({ t, ok: k === 0 }))) }));
+  el.innerHTML = `<span class="eb">Extension</span><h1>Test <span class="t">yourself</span></h1>
+    <p class="lede">Tap an answer. You get the reason straight away. It is for you, not for a grade.${q.best != null ? ` Best so far: ${q.best} of 10.` : ''}</p>
+    <div id="quizList">${quizOrder.map((o, n) => `<div class="q" id="q-${n}"><div class="qn">${n + 1}. ${QUIZ[o.i][0]}</div><div class="opts">${o.opts.map((x, k) => `<button class="opt" onclick="answerQ(${n},${k})">${x.t}</button>`).join('')}</div><div class="why"></div></div>`).join('')}</div>
+    <div class="card" id="quizEnd" style="display:none"><h2>Done</h2><p><span class="score" id="quizScore"></span></p><p id="quizMsg"></p><button class="btn" onclick="renderQuiz()">Try again</button></div>`;
+  window.scrollTo({ top: 0 });
+}
+function answerQ(n, k){
+  const box = document.getElementById('q-' + n);
+  if (box.classList.contains('done')) return;
+  const o = quizOrder[n];
+  box.classList.add('done');
+  box.querySelectorAll('.opt').forEach((b, i) => { if (o.opts[i].ok) b.classList.add('right'); else if (i === k) b.classList.add('wrong'); });
+  box.querySelector('.why').textContent = QUIZ[o.i][2];
+  quizAnswered++; if (o.opts[k].ok) quizRight++;
+  if (quizAnswered === QUIZ.length) {
+    const q = state.progress.quiz || { best: null, attempts: 0 };
+    q.attempts = (q.attempts || 0) + 1;
+    if (q.best == null || quizRight > q.best) q.best = quizRight;
+    state.progress.quiz = q; save();
+    document.getElementById('quizScore').textContent = `${quizRight} of 10`;
+    document.getElementById('quizMsg').textContent = quizRight === 10 ? 'All ten. You know the six.' : (quizRight >= 7 ? 'Good. Read the reasons on the ones you missed, then go again.' : 'Watch the videos again with the criteria open, then go again.');
+    document.getElementById('quizEnd').style.display = '';
+    document.getElementById('quizEnd').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    renderToday();
+  }
 }
 
 function renderPassport(){
@@ -517,7 +574,7 @@ function markWatched(k){
   const el = document.getElementById('pat-' + k);
   el.outerHTML = patHTML(PAT[k]);
   const n = document.getElementById('pat-' + k); n.classList.add('open'); loadVideo(n);
-  renderToday();
+  renderToday(); renderQuiz();
 }
 function markPartner(k){
   state.progress.partner[k] = isoToday(); save();
