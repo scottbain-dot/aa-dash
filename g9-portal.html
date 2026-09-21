@@ -98,6 +98,26 @@
   .partner .ok{color:var(--mark);font-weight:600}
   .partner small{color:var(--mute);font-size:13px}
 
+  /* ladder: the five movements per pattern */
+  .tile .pips{display:flex;gap:4px;margin-top:8px}
+  .tile .pips i{flex:1;height:6px;background:var(--rule);border-radius:1px}
+  .tile .pips i.got{background:var(--mark)}
+  .tile .pips i.nxt{background:transparent;border:1px dashed var(--mark)}
+  .tile.hi .pips i.got{background:var(--green)}
+  .ladder .lrow{display:grid;grid-template-columns:96px repeat(5,minmax(0,1fr));gap:6px;align-items:stretch;padding:10px 0;border-bottom:1px solid var(--rule)}
+  .ladder .lrow:last-child{border-bottom:none}
+  .ladder .lpn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;text-transform:uppercase;line-height:1;padding-top:6px}
+  .rung{border:1px solid var(--rule);padding:8px 8px 6px;min-height:58px;display:flex;flex-direction:column;gap:3px;background:var(--paper);color:var(--mute);min-width:0;overflow-wrap:anywhere}
+  .rung .lv{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em}
+  .rung .nm{font-size:12px;line-height:1.2}
+  .rung.got{background:var(--mark-soft);border-color:var(--mark);color:var(--ink)}
+  .rung.got .lv{color:var(--mark)}
+  .rung.hi{background:var(--green-soft);border-color:var(--green);color:var(--ink)}
+  .rung.hi .lv{color:var(--green)}
+  .rung.nxt{background:var(--sheet);border:1px dashed var(--accent);color:var(--ink)}
+  .rung.nxt .lv{color:var(--accent)}
+  @media (max-width:720px){.ladder .lrow{grid-template-columns:minmax(0,1fr);gap:4px}.ladder .lpn{padding-top:0}.ladder .rungs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.rung{padding:6px 5px;min-height:52px}.rung .nm{font-size:11px}}
+  @media (min-width:721px){.ladder .rungs{display:contents}}
   /* patterns */
   .pat{background:var(--sheet);border:1px solid var(--rule);margin-bottom:12px}
   .pat-h{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
@@ -229,32 +249,32 @@
 // Videos and criteria match strength-portal.html; prescriptions match the Board.
 // ============================================================
 const PATTERNS = [
-  { key:'Squat', sub:'Double leg, lower push',
+  { key:'Squat', ladder:['Bodyweight squat','Goblet squat','Back squat','Front squat','Pistol squat'], sub:'Double leg, lower push',
     l1:{ name:'Bodyweight squat', video:'https://www.youtube.com/embed/iiKn5FiVUjI' },
     l2:{ name:'Goblet squat', video:'https://www.youtube.com/embed/pEGfGwp6IEA' },
     now:['Bodyweight squat','3 × 10 · 6/7'], stamped:['Goblet squat','3 × 8 · 7'],
     criteria:[ ['Feet flat throughout','No heel rise at any point'], ['Knees track over toes','No collapsing inward'], ['Hip crease below the top of the knee','At the bottom of the squat'], ['Neutral spine','No rounding or over-arching'], ['Controlled descent','Two seconds or more down'], ['No excessive forward lean','Chest stays up'] ] },
-  { key:'Hinge', sub:'Double leg, lower pull',
+  { key:'Hinge', ladder:['Bodyweight hinge','Kettlebell deadlift','Hex bar deadlift','Barbell deadlift','Single-leg RDL'], sub:'Double leg, lower pull',
     l1:{ name:'Bodyweight hinge', video:'https://www.youtube.com/embed/3Cb3Zvglx1U' },
     l2:{ name:'Kettlebell deadlift', video:'https://www.youtube.com/embed/PXJpKhdN9PM' },
     now:['Bodyweight hinge, dowel on the back','3 × 10 · 6/7'], stamped:['Kettlebell deadlift','3 × 8 · 7'],
     criteria:[ ['Spine neutral throughout','No rounding of the lower back'], ['Hips go back first','It is not a squat'], ['Knees soft, not bent a lot','A small bend only'], ['Weight in the mid-foot and heels','Not on the toes'], ['Shoulders over the bar','At the start position'], ['Full hip extension at the top','Squeeze the glutes, stand tall'] ] },
-  { key:'Lunge', sub:'Single leg, lower push',
+  { key:'Lunge', ladder:['Bodyweight lunge','Dumbbell lunge','Barbell lunge','Rear-foot elevated split squat','Lateral lunge'], sub:'Single leg, lower push',
     l1:{ name:'Bodyweight lunge', video:'https://www.youtube.com/embed/krxGoIpg9XQ' },
     l2:{ name:'Dumbbell lunge', video:'https://www.youtube.com/embed/9gglI77Kzq8' },
     now:['Bodyweight lunge','2 × 8 each side · 6/7'], stamped:['Dumbbell lunge','3 × 8 each side · 7'],
     criteria:[ ['Front knee tracks over the toes','No collapsing inward'], ['Back knee gets near the floor','Full depth, controlled'], ['Torso upright','No leaning forward'], ['Both knees near 90°','At the bottom'], ['Front heel stays down','Weight through the whole foot'], ['Controlled throughout','No wobble, no loss of balance'] ] },
-  { key:'Push', sub:'Horizontal, upper push',
+  { key:'Push', ladder:['Floor push-up','Dumbbell bench press','Barbell bench press','Single-arm dumbbell press','Plyo push-up'], sub:'Horizontal, upper push',
     l1:{ name:'Floor push-up', video:'https://www.youtube.com/embed/Ql8PKKsDE70' },
     l2:{ name:'Dumbbell bench press', video:'https://www.youtube.com/embed/ZaDlbm8E8Tg' },
     now:['Push-up, floor or box','3 × 8 · 6/7'], stamped:['Dumbbell floor press','3 × 8 · 7'],
     criteria:[ ['Full range of motion','Chest to the floor, arms locked out at the top'], ['Elbows at about 45°','Not flared out wide'], ['Shoulder blades pulled back','Held together throughout'], ['Core tight, no sagging','Straight line from head to heel'], ['Controlled descent','No bouncing'], ['Feet stable','No leg drive'] ] },
-  { key:'Pull', sub:'Horizontal, upper pull',
+  { key:'Pull', ladder:['Banded row','Horizontal bar pull','Dumbbell row','Pull-up','Weighted pull-up'], sub:'Horizontal, upper pull',
     l1:{ name:'Banded row', video:'https://www.youtube.com/embed/j7ABJGauUEk' },
     l2:{ name:'Horizontal bar pull', video:'https://www.youtube.com/embed/vZy_Eu_Z0WA' },
     now:['Banded row','3 × 8 · 6/7'], stamped:['Horizontal bar pull','3 × 8 · 7'],
     criteria:[ ['Full range of motion','Arms straight to fully pulled in'], ['Shoulder blades squeeze at the top','Squeeze the back'], ['No body swing','The movement is controlled'], ['Elbows drive back','Not just the arms pulling'], ['Chest up, shoulders down','No shrugging'], ['Core tight throughout','Stable torso'] ] },
-  { key:'Press', sub:'Vertical, upper push',
+  { key:'Press', ladder:['Band overhead press','Dumbbell press','Barbell press','Push press','Single-arm overhead press'], sub:'Vertical, upper push',
     l1:{ name:'Band overhead press', video:'https://www.youtube.com/embed/1-VfJqjYquQ' },
     l2:{ name:'Dumbbell press', video:'https://www.youtube.com/embed/OM23fjJB3-0' },
     now:['Band overhead press','3 × 8 · 6/7'], stamped:['Dumbbell press','3 × 8 · 7'],
@@ -304,7 +324,6 @@ const SESSION_KEY = 'aaG9PortalUser';
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 const BLOCK_ID = 'intro';
 const PROGRAM_LIVE = false;   // My program stays a blurred teaser until stamps start landing
-const STAMPS_LIVE = false;    // Off until the Athlete_ID re-key is done: the Strength tab still holds last year's rows under reused IDs
 let currentUser = null;
 let state = { athlete:null, athleteId:'', levels:{}, progress:{}, stamps:{ notyet:{}, stamped:{} } };
 
@@ -375,13 +394,13 @@ function hydrate(data){
   state.athlete = data.athlete;
   state.athleteId = String(data.athlete.Athlete_ID || '').trim();
   state.levels = {};
-  if (STAMPS_LIVE) (data.strengthLevels || []).forEach(l => { state.levels[l.pattern] = l.tech || 0; });
+  (data.strengthLevels || []).forEach(l => { state.levels[l.pattern] = l.tech || 0; });
   const blk = data.learn && data.learn.blocks && data.learn.blocks[BLOCK_ID];
   state.progress = (blk && blk.progress) || {};
   ['watched','self','checklist','partner'].forEach(k => { if (!state.progress[k]) state.progress[k] = {}; });
   // Written by admin only: not-yet feedback and stamp dates. Students never save this block.
   const sb = data.learn && data.learn.blocks && data.learn.blocks.stamps;
-  state.stamps = STAMPS_LIVE ? { notyet: (sb && sb.progress && sb.progress.notyet) || {}, stamped: (sb && sb.progress && sb.progress.stamped) || {} } : { notyet: {}, stamped: {} };
+  state.stamps = { notyet: (sb && sb.progress && sb.progress.notyet) || {}, stamped: (sb && sb.progress && sb.progress.stamped) || {} };
   state.progress.checklist.signin = true;
   const first = state.athlete.First_Name || String(state.athlete.Name || '').split(' ')[0] || '';
   document.getElementById('whoName').innerHTML = `<b>${esc(first)}</b>`;
@@ -510,9 +529,14 @@ function renderPassport(){
       return `<div class="tile ${st.cls}" onclick="go('patterns');openPat('${x.key}')">
         <div class="stamp">${st.short}</div>
         <div class="pn">${x.key}</div>
-        <div class="ex">${lvl > 0 ? x.l2.name + ' unlocked' : (st.cls === 'ny' && ny ? 'Fix: ' + esc(ny.why) : x.l1.name)}</div>
+        <div class="ex">${st.cls === 'ny' && ny ? 'Fix: ' + esc(ny.why) : (lvl >= 5 ? 'Top of the ladder' : (lvl > 0 ? 'Next: ' + x.ladder[lvl] : 'Now: ' + x.ladder[0]))}</div>
+        <div class="pips">${[1,2,3,4,5].map(n => `<i class="${n <= lvl ? 'got' : (n === lvl + 1 ? 'nxt' : '')}"></i>`).join('')}</div>
         <div class="st">${st.label}</div>
       </div>`; }).join('')}</div>
+    <div class="card ladder" style="margin-top:14px"><h2>The ladder</h2>
+      <p>Five levels per pattern. A stamp is level 1. Each level is a new movement, and you only move up when the one below is stamped.</p>
+      ${PATTERNS.map(x => { const lvl = state.levels[x.key] || 0; return `<div class="lrow"><div class="lpn">${x.key}</div><div class="rungs">${x.ladder.map((nm, i) => { const n = i + 1; const cls = n <= lvl ? (lvl >= 2 && n <= lvl ? 'hi' : 'got') : (n === lvl + 1 ? 'nxt' : ''); return `<div class="rung ${cls}"><span class="lv">${n <= lvl ? '✓ L' + n : (n === lvl + 1 ? 'NEXT · L' + n : 'L' + n)}</span><span class="nm">${nm}</span></div>`; }).join('')}</div></div>`; }).join('')}
+    </div>
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <button class="btn ghost small" onclick="refreshStamps(this)">Refresh my stamps</button>
       <span style="font-size:13px;color:var(--mute)">Just been stamped in class? Refresh to see it.</span>
