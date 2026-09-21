@@ -453,11 +453,7 @@ function renderToday(){
     <div class="card acc"><h2>Today</h2>
       <ol class="steps">${steps.map(([t, d, ok], i) => `<li class="${ok ? 'done' : ''}"><div class="n">${ok ? '✓' : i + 1}</div><div class="txt"><b>${t}</b><span>${d}</span></div></li>`).join('')}</ol>
     </div>
-    <div class="card"><h2>What a stamp means</h2>
-      <p>A stamp is Mr Bain saying he has watched you do the movement well against the six criteria. It is level 1 of 5. It can land in any session, whenever you are ready.</p>
-      <p>Three ticks get you there. You check yourself against the six. A partner watches five reps and ticks the six. Then you join the stamp line, Mr Bain watches five reps, and stamps or tells you the one thing to fix.</p>
-      <p>A stamped pattern unlocks the loaded version of that exercise on the Board. Unstamped patterns stay at bodyweight until they are stamped. Both are proper training.</p>
-    </div>`;
+`;
 }
 
 // ---- Test yourself: an extension for anyone who has watched all six ----
