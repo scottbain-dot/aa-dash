@@ -10,21 +10,23 @@ let fail = 0;
 const err = m => { console.error('  ✗ ' + m); fail++; };
 const ok  = m => console.log('  ✓ ' + m);
 
-// ---- Client: portal-lab.html ----
-if (fs.existsSync('portal-lab.html')) {
-  const lines = fs.readFileSync('portal-lab.html', 'utf8').split('\n');
+// ---- Clients: every student portal keyed by Athlete_ID ----
+['portal-lab.html', 'g9-portal.html'].forEach(file => {
+  if (!fs.existsSync(file)) return;
+  const before = fail;
+  const lines = fs.readFileSync(file, 'utf8').split('\n');
   // (A) email may appear in an API call ONLY in the bootstrap login
   const emailCalls = lines.map((l, i) => ({ l, i })).filter(o => /email:\s*currentUser\.email/.test(o.l));
   if (!emailCalls.length) err('expected the bootstrap call to send email, found none');
   emailCalls.filter(o => !/getPortalBootstrap/.test(o.l))
-    .forEach(o => err(`portal-lab.html:${o.i + 1} sends email to a non-bootstrap endpoint — use apiData()/apiDataGet() (athleteId)`));
+    .forEach(o => err(`${file}:${o.i + 1} sends email to a non-bootstrap endpoint — use apiData()/apiDataGet() (athleteId)`));
   // (B) no raw apiPost/apiGet for data calls (bootstrap apiGet excepted)
   lines.forEach((l, i) => {
-    if (/apiPost\(\{\s*action:/.test(l)) err(`portal-lab.html:${i + 1} uses apiPost for a data call — use apiData()`);
-    if (/apiGet\(\{\s*action:/.test(l) && !/getPortalBootstrap/.test(l)) err(`portal-lab.html:${i + 1} uses apiGet for a data call — use apiDataGet()`);
+    if (/apiPost\(\{\s*action:/.test(l)) err(`${file}:${i + 1} uses apiPost for a data call — use apiData()`);
+    if (/apiGet\(\{\s*action:/.test(l) && !/getPortalBootstrap/.test(l)) err(`${file}:${i + 1} uses apiGet for a data call — use apiDataGet()`);
   });
-  if (!fail) ok('portal-lab.html: email only in bootstrap; all data calls use apiData()/apiDataGet()');
-}
+  if (fail === before) ok(`${file}: email only in bootstrap; all data calls use apiData()/apiDataGet()`);
+});
 
 // ---- Server: COMPLETE-APPS-SCRIPT.gs ----
 if (fs.existsSync('COMPLETE-APPS-SCRIPT.gs')) {
