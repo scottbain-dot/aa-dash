@@ -1008,6 +1008,43 @@
         .stamp.hi { border:2px solid var(--accent-green); background: rgba(34,197,94,0.15); color: var(--accent-green); cursor:default; transform:none; }
         .stamp.busy { opacity:.45; pointer-events:none; }
         .stamp-count { color: var(--text-muted); font-size:0.78rem; margin-top:10px; }
+        .stamp.rdy { border:2px solid var(--accent-amber); border-style:dashed; color: var(--accent-amber); }
+        .stamp.ny { border:2px solid var(--accent-red); background: rgba(239,68,68,0.12); color: var(--accent-red); font-size:0.75rem; }
+        .stamp-table th .colbtn { display:block; margin:6px auto 0; background: rgba(245,158,11,0.15); border:1px solid var(--accent-amber); color: var(--accent-amber); border-radius:8px; padding:3px 8px; font-size:0.68rem; font-family:inherit; font-weight:700; cursor:pointer; letter-spacing:0; text-transform:none; }
+        .stamp-legend { display:flex; gap:16px; flex-wrap:wrap; color: var(--text-muted); font-size:0.78rem; margin-top:10px; }
+        .stamp-legend span { display:inline-flex; align-items:center; gap:6px; }
+        .stamp-legend i { display:inline-block; width:14px; height:14px; border-radius:50%; border:2px dashed var(--border-light); }
+        .stamp-legend i.rdy { border-color: var(--accent-amber); }
+        .stamp-legend i.on { border-style:solid; border-color: var(--accent-amber); background: rgba(245,158,11,0.18); }
+        .stamp-legend i.ny { border-style:solid; border-color: var(--accent-red); background: rgba(239,68,68,0.12); }
+        .stamp-sheet { position:fixed; left:50%; bottom:0; transform:translateX(-50%); width:min(520px, 100%); background: var(--bg-card); border:1px solid var(--border-light); border-bottom:none; border-radius:16px 16px 0 0; padding:18px 20px 24px; z-index:200; box-shadow:0 -10px 40px rgba(0,0,0,0.5); display:none; }
+        .stamp-sheet.open { display:block; }
+        .stamp-sheet h3 { margin:0 0 4px; font-size:1.05rem; }
+        .stamp-sheet .sub { color: var(--text-muted); font-size:0.8rem; margin-bottom:14px; }
+        .stamp-sheet .row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+        .stamp-sheet .b { flex:1; min-width:120px; border-radius:10px; padding:11px 12px; font-family:inherit; font-weight:700; font-size:0.9rem; cursor:pointer; border:1px solid var(--border-light); background: var(--bg-secondary); color: var(--text-primary); }
+        .stamp-sheet .b.go { background: var(--accent-amber); border-color: var(--accent-amber); color:#000; }
+        .stamp-sheet .b.ny { border-color: var(--accent-red); color: var(--accent-red); }
+        .stamp-sheet .b.x { background:transparent; }
+        .stamp-sheet .chips { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
+        .stamp-sheet .chip { border:1px solid var(--border-light); background:transparent; color: var(--text-secondary); border-radius:999px; padding:6px 10px; font-size:0.78rem; font-family:inherit; cursor:pointer; }
+        .stamp-sheet .chip.on { background: rgba(239,68,68,0.15); border-color: var(--accent-red); color: var(--text-primary); }
+        .stamp-sheet textarea { width:100%; background: var(--bg-secondary); border:1px solid var(--border-light); color: var(--text-primary); border-radius:10px; padding:9px 11px; font-family:inherit; font-size:0.85rem; min-height:54px; resize:vertical; }
+        .stamp-sheet .nyform { display:none; }
+        .stamp-sheet.ny-open .nyform { display:block; }
+        .stamp-veil { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:199; display:none; }
+        .stamp-veil.open { display:block; }
+        .ny-card { margin-top:18px; background: var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:14px 16px; }
+        .ny-card h3 { margin:0 0 4px; font-size:0.95rem; }
+        .ny-card .hint { color: var(--text-muted); font-size:0.78rem; margin-bottom:10px; }
+        .ny-row { display:flex; gap:12px; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color); font-size:0.85rem; flex-wrap:wrap; }
+        .ny-row:last-child { border-bottom:none; }
+        .ny-row .who { font-weight:600; min-width:150px; }
+        .ny-row .pat { color: var(--accent-red); font-weight:700; min-width:60px; }
+        .ny-row .why { color: var(--text-secondary); flex:1; min-width:160px; }
+        .ny-row .when { color: var(--text-muted); font-size:0.75rem; }
+        .ny-row button { background:transparent; border:1px solid var(--border-light); color: var(--text-primary); border-radius:8px; padding:5px 10px; font-size:0.75rem; font-family:inherit; cursor:pointer; }
+
 
         /* ── Grit Section ── */
         .grit-card {
@@ -1949,21 +1986,38 @@
         </div>
 
         <!-- Grit Challenge Panel -->
-        <!-- Stamps Panel: level 1 sign-off per pattern, tap to stamp -->
+        <!-- Stamps Panel: level 1 sign-off per pattern. Ready = partner-checked in the portal. Not yet = sent back, with the reason -->
         <div class="view-panel" id="panelStamps">
             <div class="stamp-toolbar">
                 <input type="text" id="stampSearch" placeholder="Find a student..." oninput="renderStamps()">
                 <select id="stampGrade" onchange="renderStamps()"></select>
-                <span class="stamp-help">Tap a circle to stamp level 1. Tap again to take it back. Levels 2+ are set in the Strength tab.</span>
+                <select id="stampFilter" onchange="renderStamps()">
+                    <option value="">Everyone</option>
+                    <option value="ready">Ready to stamp</option>
+                    <option value="notyet">Not yet</option>
+                    <option value="none">Nothing stamped</option>
+                </select>
+                <button class="filter-btn" onclick="loadStampMeta(true)" id="stampReload">↻ Readiness</button>
+                <span class="stamp-help" id="stampHelp">Tap a circle: stamp, or send back with a reason.</span>
             </div>
             <div class="stamp-wrap">
                 <table class="stamp-table">
-                    <thead><tr><th>Student</th><th>Squat</th><th>Hinge</th><th>Lunge</th><th>Push</th><th>Pull</th><th>Press</th></tr></thead>
+                    <thead><tr id="stampHead"></tr></thead>
                     <tbody id="stampBody"></tbody>
                 </table>
             </div>
+            <div class="stamp-legend">
+                <span><i></i> Nothing yet</span><span><i class="rdy"></i> R · partner-checked, ready for your look</span><span><i class="on"></i> ✓ Stamped level 1</span><span><i class="ny"></i> Not yet · sent back</span>
+            </div>
             <div class="stamp-count" id="stampCount"></div>
+            <div class="ny-card" id="nyCard" style="display:none">
+                <h3>Not yet — to look at again</h3>
+                <div class="hint">Everyone you sent back, and why. Stamp from here once they have fixed it.</div>
+                <div id="nyList"></div>
+            </div>
         </div>
+        <div class="stamp-veil" id="stampVeil" onclick="closeStampSheet()"></div>
+        <div class="stamp-sheet" id="stampSheet"></div>
 
         <div class="view-panel" id="panelGrit">
             <!-- Session Check-in Panel -->
@@ -2779,66 +2833,216 @@
         let gritDataLoaded = false;
 
         // ============================================
-        // STAMPS — level 1 sign-off grid (writes {Pattern}_Tech via updateStudent)
+        // STAMPS — level 1 sign-off grid
+        // Stamp = {Pattern}_Tech via updateStudent (Strength sheet).
+        // Readiness (partner check) is read from the student's private 'intro' learn block.
+        // "Not yet" + stamp dates live in a separate 'stamps' learn block that only admin writes,
+        // so a student's own autosave can never overwrite it. No Apps Script change needed.
         // ============================================
         const STAMP_PATTERNS = ['Squat', 'Hinge', 'Lunge', 'Push', 'Pull', 'Press'];
+        const STAMP_CRITERIA = {
+            Squat: ['Feet flat', 'Knees over toes', 'Hip below knee', 'Neutral spine', 'Controlled descent', 'Forward lean'],
+            Hinge: ['Spine neutral', 'Hips back first', 'Knees soft', 'Weight mid-foot', 'Shoulders over bar', 'Full hip extension'],
+            Lunge: ['Front knee tracks', 'Back knee near floor', 'Torso upright', '90° at both knees', 'Front heel down', 'Balance'],
+            Push:  ['Full range', 'Elbows 45°', 'Shoulder blades back', 'No sagging', 'Controlled descent', 'Feet stable'],
+            Pull:  ['Full range', 'Blades squeeze', 'No body swing', 'Elbows drive back', 'Chest up', 'Core tight'],
+            Press: ['Full lockout', 'Straight bar path', 'Core braced', 'Elbows in front', 'Controlled descent', 'Feet planted']
+        };
         const stampBusy = {};
+        const stampMeta = {};      // athleteId -> { ready:{}, notyet:{}, stamped:{}, loaded:true }
+        let stampMetaLoading = false;
+        let stampSheetCtx = null;
+
+        function metaFor(id) { return stampMeta[id] || { ready: {}, notyet: {}, stamped: {} }; }
+        function isoToday() { return new Date().toISOString().slice(0, 10); }
+        function shortDate(iso) { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
 
         function stampGradeOptions() {
             const sel = document.getElementById('stampGrade');
             if (!sel || sel.options.length) return;
             const grades = [...new Set(allStudents.map(s => String(s.Grade || '').trim()).filter(Boolean))].sort();
             sel.innerHTML = '<option value="">All grades</option>' + grades.map(g => `<option value="${g}">Grade ${g}</option>`).join('');
-            // Stamps are a G9 thing first: default to grade 9 when the roster has one
             if (grades.includes('9')) sel.value = '9';
+        }
+
+        function stampRows() {
+            const q = (document.getElementById('stampSearch').value || '').trim().toLowerCase();
+            const grade = document.getElementById('stampGrade').value;
+            const f = document.getElementById('stampFilter').value;
+            return allStudents
+                .filter(s => !grade || String(s.Grade || '').trim() === grade)
+                .filter(s => !q || (s.Name || '').toLowerCase().includes(q))
+                .filter(s => {
+                    if (!f) return true;
+                    const m = metaFor(s.Athlete_ID);
+                    if (f === 'ready') return STAMP_PATTERNS.some(p => m.ready[p] && !(parseInt(s[p + '_Tech']) || 0));
+                    if (f === 'notyet') return STAMP_PATTERNS.some(p => m.notyet[p] && !(parseInt(s[p + '_Tech']) || 0));
+                    if (f === 'none') return !STAMP_PATTERNS.some(p => parseInt(s[p + '_Tech']) || 0);
+                    return true;
+                })
+                .sort((a, b) => (a.Name || '').localeCompare(b.Name || ''));
+        }
+
+        // Pull each student's learn blocks (intro = readiness, stamps = not-yet). Six at a time.
+        async function loadStampMeta(force) {
+            if (stampMetaLoading) return;
+            const todo = allStudents.filter(s => force || !stampMeta[s.Athlete_ID]).map(s => s.Athlete_ID);
+            if (!todo.length) return;
+            stampMetaLoading = true;
+            const help = document.getElementById('stampHelp');
+            help.textContent = 'Loading readiness…';
+            let i = 0;
+            async function worker() {
+                while (i < todo.length) {
+                    const id = todo[i++];
+                    try {
+                        const r = await fetch(`${APPS_SCRIPT_URL}?action=getLearnProgress&athleteId=${encodeURIComponent(id)}&_t=${Date.now()}`);
+                        const d = await r.json();
+                        const blocks = (d && d.learn && d.learn.blocks) || {};
+                        const intro = (blocks.intro && blocks.intro.progress) || {};
+                        const st = (blocks.stamps && blocks.stamps.progress) || {};
+                        stampMeta[id] = { ready: intro.partner || {}, notyet: st.notyet || {}, stamped: st.stamped || {}, loaded: true };
+                    } catch (e) { stampMeta[id] = stampMeta[id] || { ready: {}, notyet: {}, stamped: {} }; }
+                }
+            }
+            await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
+            stampMetaLoading = false;
+            help.textContent = 'Tap a circle: stamp, or send back with a reason.';
+            renderStamps();
         }
 
         function renderStamps() {
             const body = document.getElementById('stampBody');
             if (!body) return;
             stampGradeOptions();
-            const q = (document.getElementById('stampSearch').value || '').trim().toLowerCase();
-            const grade = document.getElementById('stampGrade').value;
-            const rows = allStudents
-                .filter(s => !grade || String(s.Grade || '').trim() === grade)
-                .filter(s => !q || (s.Name || '').toLowerCase().includes(q))
-                .sort((a, b) => (a.Name || '').localeCompare(b.Name || ''));
+            const rows = stampRows();
+            // Header: pattern name plus a batch button when anyone in view is ready and unstamped
+            document.getElementById('stampHead').innerHTML = '<th>Student</th>' + STAMP_PATTERNS.map(p => {
+                const n = rows.filter(s => metaFor(s.Athlete_ID).ready[p] && !(parseInt(s[p + '_Tech']) || 0)).length;
+                return `<th>${p}${n ? `<button class="colbtn" onclick="stampAllReady('${p}')">Stamp ${n} ready</button>` : ''}</th>`;
+            }).join('');
             let stamped = 0, possible = rows.length * STAMP_PATTERNS.length;
             body.innerHTML = rows.map(s => {
+                const m = metaFor(s.Athlete_ID);
                 const cells = STAMP_PATTERNS.map(p => {
                     const lvl = parseInt(s[p + '_Tech']) || 0;
                     if (lvl > 0) stamped++;
                     const key = s.Athlete_ID + ':' + p;
-                    const cls = lvl >= 2 ? 'stamp hi' : (lvl === 1 ? 'stamp on' : 'stamp');
-                    const label = lvl >= 2 ? 'L' + lvl : (lvl === 1 ? '✓' : '');
-                    const title = lvl >= 2 ? `${p} level ${lvl} — change in the Strength tab` : (lvl === 1 ? `Take back the ${p} stamp` : `Stamp ${p} level 1`);
-                    return `<td><button class="${cls}${stampBusy[key] ? ' busy' : ''}" title="${title}" ${lvl >= 2 ? 'disabled' : ''} onclick="toggleStamp('${s.Athlete_ID}','${p}')">${label}</button></td>`;
+                    let cls = 'stamp', label = '', title = `Stamp ${p} level 1`;
+                    if (lvl >= 2) { cls = 'stamp hi'; label = 'L' + lvl; title = `${p} level ${lvl} — change in the Strength tab`; }
+                    else if (lvl === 1) { cls = 'stamp on'; label = '✓'; title = `${p} stamped${m.stamped[p] ? ' ' + shortDate(m.stamped[p]) : ''}`; }
+                    else if (m.notyet[p]) { cls = 'stamp ny'; label = 'NY'; title = `Not yet: ${m.notyet[p].why || ''}`; }
+                    else if (m.ready[p]) { cls = 'stamp rdy'; label = 'R'; title = `${p}: partner-checked, ready for your look`; }
+                    return `<td><button class="${cls}${stampBusy[key] ? ' busy' : ''}" title="${title.replace(/"/g, '&quot;')}" ${lvl >= 2 ? 'disabled' : ''} onclick="openStampSheet('${s.Athlete_ID}','${p}')">${label}</button></td>`;
                 }).join('');
                 return `<tr><td><div class="stamp-name">${s.Name || s.Athlete_ID}<small>${s.Grade ? 'Grade ' + s.Grade : ''}</small></div></td>${cells}</tr>`;
             }).join('') || '<tr><td colspan="7" style="padding:24px;color:var(--text-muted)">No students match</td></tr>';
             document.getElementById('stampCount').textContent = rows.length ? `${stamped} of ${possible} level 1 stamps given` : '';
+            renderNotYet(rows);
+            if (!stampMetaLoading && allStudents.some(s => !stampMeta[s.Athlete_ID])) loadStampMeta(false);
         }
 
-        async function toggleStamp(athleteId, pattern) {
+        function renderNotYet(rows) {
+            const items = [];
+            rows.forEach(s => {
+                const m = metaFor(s.Athlete_ID);
+                STAMP_PATTERNS.forEach(p => {
+                    if (m.notyet[p] && !(parseInt(s[p + '_Tech']) || 0)) items.push({ s, p, ny: m.notyet[p] });
+                });
+            });
+            const card = document.getElementById('nyCard');
+            card.style.display = items.length ? '' : 'none';
+            items.sort((a, b) => (a.ny.date || '').localeCompare(b.ny.date || ''));
+            document.getElementById('nyList').innerHTML = items.map(({ s, p, ny }) =>
+                `<div class="ny-row"><span class="who">${s.Name}</span><span class="pat">${p}</span><span class="why">${(ny.why || '').replace(/</g, '&lt;')}</span><span class="when">${shortDate(ny.date)}</span><button onclick="setStamp('${s.Athlete_ID}','${p}',1)">Stamp now</button><button onclick="clearNotYet('${s.Athlete_ID}','${p}')">Clear</button></div>`
+            ).join('');
+        }
+
+        // ---- the tap sheet ----
+        function openStampSheet(athleteId, pattern) {
             const s = allStudents.find(x => x.Athlete_ID === athleteId);
             if (!s) return;
+            const lvl = parseInt(s[pattern + '_Tech']) || 0;
+            const m = metaFor(athleteId);
+            stampSheetCtx = { athleteId, pattern, reasons: [] };
+            const sheet = document.getElementById('stampSheet');
+            const status = lvl === 1 ? `Stamped${m.stamped[pattern] ? ' ' + shortDate(m.stamped[pattern]) : ''}` : (m.notyet[pattern] ? `Not yet (${shortDate(m.notyet[pattern].date)}): ${m.notyet[pattern].why || ''}` : (m.ready[pattern] ? 'Partner-checked, ready for your look' : 'Not partner-checked yet'));
+            sheet.className = 'stamp-sheet open';
+            sheet.innerHTML = `
+                <h3>${s.Name} · ${pattern}</h3>
+                <div class="sub">${status}</div>
+                <div class="row">
+                    ${lvl === 1 ? `<button class="b" onclick="setStamp('${athleteId}','${pattern}',0)">Remove stamp</button>` : `<button class="b go" onclick="setStamp('${athleteId}','${pattern}',1)">Stamp level 1</button><button class="b ny" onclick="document.getElementById('stampSheet').classList.toggle('ny-open')">Not yet…</button>`}
+                    <button class="b x" onclick="closeStampSheet()">Cancel</button>
+                </div>
+                <div class="nyform">
+                    <div class="sub" style="margin-bottom:4px">What needs fixing? Tap any, add a note if you want.</div>
+                    <div class="chips">${STAMP_CRITERIA[pattern].map((c, i) => `<button class="chip" onclick="this.classList.toggle('on')" data-c="${c}">${c}</button>`).join('')}</div>
+                    <textarea id="nyNote" placeholder="e.g. heels lift at the bottom"></textarea>
+                    <div class="row" style="margin-top:10px"><button class="b ny" onclick="saveNotYet()">Save not yet</button></div>
+                </div>`;
+            document.getElementById('stampVeil').classList.add('open');
+        }
+        function closeStampSheet() {
+            document.getElementById('stampSheet').className = 'stamp-sheet';
+            document.getElementById('stampVeil').classList.remove('open');
+            stampSheetCtx = null;
+        }
+
+        // Admin-only 'stamps' learn block: { notyet:{Pattern:{why,date}}, stamped:{Pattern:date} }
+        async function writeStampsBlock(athleteId, mutate) {
+            const m = stampMeta[athleteId] || (stampMeta[athleteId] = { ready: {}, notyet: {}, stamped: {} });
+            mutate(m);
+            const resp = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST', headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: 'saveLearnProgress', athleteId, blockId: 'stamps', progress: { notyet: m.notyet, stamped: m.stamped }, meta: {} })
+            });
+            const d = await resp.json();
+            if (!d.success) throw new Error(d.error || 'Could not save');
+        }
+
+        async function saveNotYet() {
+            if (!stampSheetCtx) return;
+            const { athleteId, pattern } = stampSheetCtx;
+            const s = allStudents.find(x => x.Athlete_ID === athleteId);
+            const chips = [...document.querySelectorAll('#stampSheet .chip.on')].map(c => c.dataset.c);
+            const note = (document.getElementById('nyNote').value || '').trim();
+            const why = [...chips, note].filter(Boolean).join(' · ') || 'Not yet';
+            closeStampSheet();
+            try {
+                await writeStampsBlock(athleteId, m => { m.notyet[pattern] = { why, date: isoToday() }; });
+                showToast(`${s.Name}: ${pattern} marked not yet`);
+            } catch (e) { showToast(`Could not save not-yet for ${s.Name}`, 'error'); }
+            renderStamps();
+        }
+        async function clearNotYet(athleteId, pattern) {
+            const s = allStudents.find(x => x.Athlete_ID === athleteId);
+            try { await writeStampsBlock(athleteId, m => { delete m.notyet[pattern]; }); showToast(`${s.Name}: ${pattern} not-yet cleared`); }
+            catch (e) { showToast('Could not save', 'error'); }
+            renderStamps();
+        }
+
+        async function setStamp(athleteId, pattern, next) {
+            const s = allStudents.find(x => x.Athlete_ID === athleteId);
+            if (!s) return;
+            closeStampSheet();
             const key = athleteId + ':' + pattern;
             const current = parseInt(s[pattern + '_Tech']) || 0;
-            if (current >= 2) return;
-            const next = current === 1 ? 0 : 1;
-            if (next === 0 && !confirm(`Take back the ${pattern} stamp for ${s.Name}?`)) return;
+            if (current >= 2 || current === next) return;
             stampBusy[key] = true;
-            s[pattern + '_Tech'] = next;   // optimistic: the grid updates before the server answers
+            s[pattern + '_Tech'] = next;   // optimistic
             renderStamps();
             try {
                 const updates = {}; updates[pattern + '_Tech'] = next;
                 const resp = await fetch(APPS_SCRIPT_URL, {
                     method: 'POST', headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({ action: 'updateStudent', athleteId: athleteId, updates: updates })
+                    body: JSON.stringify({ action: 'updateStudent', athleteId, updates })
                 });
                 const data = await resp.json();
                 if (!data.success) throw new Error(data.error || 'Save failed');
                 showToast(next === 1 ? `${s.Name}: ${pattern} stamped` : `${s.Name}: ${pattern} stamp removed`);
+                // Date and not-yet bookkeeping in the admin block. Best effort: the stamp itself is already saved.
+                try { await writeStampsBlock(athleteId, m => { if (next === 1) { m.stamped[pattern] = isoToday(); delete m.notyet[pattern]; } else { delete m.stamped[pattern]; } }); } catch (e) {}
             } catch (err) {
                 s[pattern + '_Tech'] = current;
                 showToast(`Could not save ${pattern} for ${s.Name} — try again`, 'error');
@@ -2847,6 +3051,15 @@
                 renderStamps();
                 if (typeof renderTable === 'function') renderTable();
             }
+        }
+
+        // After a line check: stamp everyone in view who is ready and unstamped on this pattern.
+        // Send anyone back first (Not yet) and they drop out of the batch.
+        async function stampAllReady(pattern) {
+            const list = stampRows().filter(s => metaFor(s.Athlete_ID).ready[pattern] && !metaFor(s.Athlete_ID).notyet[pattern] && !(parseInt(s[pattern + '_Tech']) || 0));
+            if (!list.length) return;
+            if (!confirm(`Stamp ${pattern} level 1 for ${list.length} student${list.length === 1 ? '' : 's'}?\n\n${list.map(s => s.Name).join(', ')}\n\nAnyone you sent back should be marked Not yet first.`)) return;
+            for (const s of list) await setStamp(s.Athlete_ID, pattern, 1);
         }
 
         function switchView(view) {

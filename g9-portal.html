@@ -78,7 +78,7 @@
   @media (max-width:640px){.tiles{grid-template-columns:repeat(2,1fr)}}
   .tile{background:var(--sheet);border:1px solid var(--rule);padding:14px;min-height:140px;display:flex;flex-direction:column;position:relative;cursor:pointer}
   .tile .pn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;text-transform:uppercase;line-height:1}
-  .tile .ex{color:var(--ink-2);font-size:13px;margin-top:4px}
+  .tile .ex{color:var(--ink-2);font-size:13px;margin-top:4px;padding-right:52px}
   .tile .st{margin-top:auto;padding-top:10px;font-size:12px;color:var(--mute);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
   .tile.on{border-color:var(--mark);background:var(--mark-soft)}
   .tile.on .st{color:var(--mark)}
@@ -87,6 +87,16 @@
   .tile.hi .stamp{border-style:solid;border-color:var(--green);color:var(--green);background:#fff;transform:rotate(-10deg)}
   .tile.hi{border-color:var(--green);background:var(--green-soft)}
   .tile.hi .st{color:var(--green)}
+  .tile.rdy{border:1px dashed var(--mark)}
+  .tile.rdy .st{color:var(--mark)}
+  .tile.rdy .stamp{border-color:var(--mark);color:var(--mark)}
+  .tile.ny{border-color:var(--accent)}
+  .tile.ny .st{color:var(--accent)}
+  .notyet{margin:12px 0;padding:10px 12px;background:var(--accent-soft);border-left:3px solid var(--accent);font-size:14px}
+  .notyet b{color:var(--accent)}
+  .partner{margin-top:14px;padding:12px;border:1px dashed var(--rule-2);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .partner .ok{color:var(--mark);font-weight:600}
+  .partner small{color:var(--mute);font-size:13px}
 
   /* patterns */
   .pat{background:var(--sheet);border:1px solid var(--rule);margin-bottom:12px}
@@ -96,6 +106,8 @@
   .pat-h .pill{margin-left:auto;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;padding:4px 8px;border-radius:999px;border:1px solid var(--rule-2);color:var(--mute);white-space:nowrap}
   .pat-h .pill.on{border-color:var(--mark);color:var(--mark);background:var(--mark-soft)}
   .pat-h .pill.hi{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+  .pat-h .pill.rdy{border-color:var(--mark);border-style:dashed;color:var(--mark)}
+  .pat-h .pill.ny{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
   .pat-h .chev{color:var(--mute);font-size:18px;transition:transform .2s}
   .pat.open .pat-h .chev{transform:rotate(90deg)}
   .pat-b{display:none;padding:0 16px 16px;border-top:1px solid var(--rule)}
@@ -260,7 +272,7 @@ const SESSION_KEY = 'aaG9PortalUser';
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 const BLOCK_ID = 'intro';
 let currentUser = null;
-let state = { athlete:null, athleteId:'', levels:{}, progress:{} };
+let state = { athlete:null, athleteId:'', levels:{}, progress:{}, stamps:{ notyet:{}, stamped:{} } };
 
 async function apiFetch(url, opts){
   const ctrl = new AbortController();
@@ -332,7 +344,10 @@ function hydrate(data){
   (data.strengthLevels || []).forEach(l => { state.levels[l.pattern] = l.tech || 0; });
   const blk = data.learn && data.learn.blocks && data.learn.blocks[BLOCK_ID];
   state.progress = (blk && blk.progress) || {};
-  ['watched','self','checklist'].forEach(k => { if (!state.progress[k]) state.progress[k] = {}; });
+  ['watched','self','checklist','partner'].forEach(k => { if (!state.progress[k]) state.progress[k] = {}; });
+  // Written by admin only: not-yet feedback and stamp dates. Students never save this block.
+  const sb = data.learn && data.learn.blocks && data.learn.blocks.stamps;
+  state.stamps = { notyet: (sb && sb.progress && sb.progress.notyet) || {}, stamped: (sb && sb.progress && sb.progress.stamped) || {} };
   state.progress.checklist.signin = true;
   const first = state.athlete.First_Name || String(state.athlete.Name || '').split(' ')[0] || '';
   document.getElementById('whoName').innerHTML = `<b>${esc(first)}</b>`;
@@ -363,6 +378,18 @@ function save(){
 // RENDER
 // ============================================================
 const stampCount = () => PATTERNS.filter(p => (state.levels[p.key] || 0) > 0).length;
+const readyCount = () => PATTERNS.filter(p => !(state.levels[p.key] || 0) && state.progress.partner[p.key]).length;
+const isoToday = () => new Date().toISOString().slice(0, 10);
+const shortDate = iso => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); };
+// One status per pattern: level 2+, stamped, not yet (sent back), ready (partner-checked), practising
+function patStatus(k){
+  const lvl = state.levels[k] || 0;
+  if (lvl >= 2) return { cls:'hi', label:'Level ' + lvl, short:'L' + lvl };
+  if (lvl === 1) return { cls:'on', label:'Stamped' + (state.stamps.stamped[k] ? ' ' + shortDate(state.stamps.stamped[k]) : ''), short:'L1' };
+  if (state.stamps.notyet[k]) return { cls:'ny', label:'Not yet', short:'' };
+  if (state.progress.partner[k]) return { cls:'rdy', label:'Ready for stamp', short:'R' };
+  return { cls:'', label:'Practising', short:'' };
+}
 const watchedCount = () => PATTERNS.filter(p => state.progress.watched[p.key]).length;
 const checkedCount = () => PATTERNS.filter(p => (state.progress.self[p.key] || []).some(Boolean)).length;
 
@@ -380,7 +407,7 @@ function renderToday(){
     ['Sign in', 'Done. This is your portal. Your name is in the top corner.', true],
     ['Watch the six movement videos', `${watchedCount()} of 6 watched. <a onclick="go('patterns')">Open the six</a>`, watchedCount() === 6],
     ['Self-check each one', `${checkedCount()} of 6 started. Tick the criteria you are sure of, leave the rest blank`, checkedCount() === 6],
-    ['Get stamped', `${stampCount()} of 6 stamped. Mr Bain stamps level 1 when he has seen you do it well. <a onclick="go('passport')">See your passport</a>`, stampCount() > 0],
+    ['Get stamped', `${stampCount()} of 6 stamped${readyCount() ? `, ${readyCount()} ready for a look` : ''}. A partner ticks your six first, then Mr Bain watches a line of five and stamps. <a onclick="go('passport')">See your passport</a>`, stampCount() > 0],
     ['See your program', 'What you do now, and what a stamp unlocks. <a onclick="go(\'program\')">Open my program</a>', !!p.checklist.program],
     ['Reflection', 'Which pattern feels least controlled? Answer below', !!p.least]
   ];
@@ -401,6 +428,7 @@ function renderToday(){
     </div>
     <div class="card"><h2>What a stamp means</h2>
       <p>A stamp is Mr Bain saying he has watched you do the movement well against the six criteria. It is level 1 of 5. It can land in any session, whenever you are ready.</p>
+      <p>Three ticks get you there. You check yourself against the six. A partner watches five reps and ticks the six. Then you join the stamp line, Mr Bain watches five reps, and stamps or tells you the one thing to fix.</p>
       <p>A stamped pattern unlocks the loaded version of that exercise on the Board. Unstamped patterns stay at bodyweight until they are stamped. Both are proper training.</p>
     </div>`;
 }
@@ -418,12 +446,13 @@ function renderPassport(){
     <p class="lede">${n === 0 ? 'No stamps yet. That is normal after four sessions. Stamps come when Mr Bain has seen you do the movement well.' : (n === 6 ? 'All six. Every loaded option on the Board is open to you now.' : 'Each stamp unlocks the loaded version of that pattern on the Board.')}</p>
     <div class="tiles">${PATTERNS.map(x => {
       const lvl = state.levels[x.key] || 0;
-      const cls = lvl >= 2 ? 'hi' : (lvl === 1 ? 'on' : '');
-      return `<div class="tile ${cls}" onclick="go('patterns');openPat('${x.key}')">
-        <div class="stamp">${lvl >= 2 ? 'L' + lvl : (lvl === 1 ? 'L1' : '')}</div>
+      const st = patStatus(x.key);
+      const ny = state.stamps.notyet[x.key];
+      return `<div class="tile ${st.cls}" onclick="go('patterns');openPat('${x.key}')">
+        <div class="stamp">${st.short}</div>
         <div class="pn">${x.key}</div>
-        <div class="ex">${lvl > 0 ? x.l2.name + ' unlocked' : x.l1.name}</div>
-        <div class="st">${lvl >= 2 ? 'Level ' + lvl : (lvl === 1 ? 'Stamped' : 'Practising')}</div>
+        <div class="ex">${lvl > 0 ? x.l2.name + ' unlocked' : (st.cls === 'ny' && ny ? 'Fix: ' + esc(ny.why) : x.l1.name)}</div>
+        <div class="st">${st.label}</div>
       </div>`; }).join('')}</div>
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <button class="btn ghost small" onclick="refreshStamps(this)">Refresh my stamps</button>
@@ -442,14 +471,21 @@ function patHTML(x){
   const lvl = state.levels[x.key] || 0;
   const watched = !!state.progress.watched[x.key];
   const self = state.progress.self[x.key] || [];
-  const pill = lvl >= 2 ? `<span class="pill hi">Level ${lvl}</span>` : (lvl === 1 ? '<span class="pill on">Stamped</span>' : '<span class="pill">Practising</span>');
+  const st = patStatus(x.key);
+  const pill = `<span class="pill ${st.cls}">${st.label}</span>`;
+  const ny = !lvl && state.stamps.notyet[x.key];
+  const partner = lvl ? '' : (state.progress.partner[x.key]
+    ? `<div class="partner"><span class="ok">✓ Partner-checked ${shortDate(state.progress.partner[x.key])}</span><small>You are on the stamp line. Mr Bain watches five reps in the gym.</small></div>`
+    : `<div class="partner"><button class="btn small" ${watched ? '' : 'disabled'} onclick="markPartner('${x.key}')">A partner watched me and ticked all six</button><small>${watched ? 'Five reps, side on, against the criteria card. Then you are ready for Mr Bain to look.' : 'Watch the video first.'}</small></div>`);
   return `<div class="pat" id="pat-${x.key}">
     <div class="pat-h" onclick="togglePat('${x.key}')"><div><div class="pn">${x.key}</div><div class="sub">${x.sub} · ${x.l1.name}</div></div>${pill}<span class="chev">›</span></div>
     <div class="pat-b">
       <div class="vid" data-src="${x.l1.video}"></div>
       <div class="vrow">${watched ? '<span class="ok">✓ Watched</span>' : `<button class="btn small" onclick="markWatched('${x.key}')">I have watched this</button><span style="font-size:13px;color:var(--mute)">Watch it through once, then the self-check opens</span>`}</div>
       <span class="eb">Self-check · ${x.l1.name}</span>
+      ${ny ? `<div class="notyet"><b>Not yet · ${shortDate(ny.date)}.</b> ${esc(ny.why)}. Fix this, then ask for another look.</div>` : ''}
       <ul class="crit ${watched ? '' : 'locked'}">${x.criteria.map(([t, n], i) => `<li><input type="checkbox" ${self[i] ? 'checked' : ''} ${watched ? '' : 'disabled'} onchange="tickSelf('${x.key}',${i},this.checked)"><div><b>${t}</b><span>${n}</span></div></li>`).join('')}</ul>
+      ${partner}
       <div class="next"><b>Next level:</b> ${x.l2.name}. ${lvl > 0 ? 'Unlocked. It is your option on the Board from Gym 5.' : 'Opens when this pattern is stamped.'}</div>
     </div>
   </div>`;
@@ -476,6 +512,14 @@ function markWatched(k){
   el.outerHTML = patHTML(PAT[k]);
   const n = document.getElementById('pat-' + k); n.classList.add('open'); loadVideo(n);
   renderToday();
+}
+function markPartner(k){
+  state.progress.partner[k] = isoToday(); save();
+  const el = document.getElementById('pat-' + k);
+  el.outerHTML = patHTML(PAT[k]);
+  const n = document.getElementById('pat-' + k); n.classList.add('open'); loadVideo(n);
+  renderToday(); renderPassport();
+  toast('Ready for stamp. Join the line next gym session.');
 }
 function tickSelf(k, i, on){
   const arr = state.progress.self[k] || [false, false, false, false, false, false];
