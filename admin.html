@@ -987,6 +987,28 @@
         .view-panel { display: none; }
         .view-panel.active { display: block; }
 
+
+        /* ── Stamps (class grid) ── */
+        .stamp-toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+        .stamp-toolbar input { background: var(--bg-card); border:1px solid var(--border-light); color: var(--text-primary); padding:9px 12px; border-radius:10px; font-family:inherit; font-size:0.9rem; min-width:220px; }
+        .stamp-toolbar select { background: var(--bg-card); border:1px solid var(--border-light); color: var(--text-primary); padding:9px 12px; border-radius:10px; font-family:inherit; font-size:0.9rem; }
+        .stamp-help { color: var(--text-muted); font-size:0.8rem; margin-left:auto; }
+        .stamp-wrap { overflow-x:auto; border:1px solid var(--border-color); border-radius:12px; background: var(--bg-card); }
+        .stamp-table { border-collapse:collapse; width:100%; min-width:640px; }
+        .stamp-table th { position:sticky; top:0; background: var(--bg-secondary); color: var(--text-secondary); font-size:0.72rem; letter-spacing:.08em; text-transform:uppercase; padding:10px 8px; text-align:center; border-bottom:1px solid var(--border-light); z-index:1; }
+        .stamp-table th:first-child, .stamp-table td:first-child { text-align:left; padding-left:14px; position:sticky; left:0; background: var(--bg-card); }
+        .stamp-table th:first-child { background: var(--bg-secondary); }
+        .stamp-table td { padding:6px 8px; border-bottom:1px solid var(--border-color); text-align:center; }
+        .stamp-table tr:hover td { background: var(--bg-hover); }
+        .stamp-name { font-weight:600; font-size:0.9rem; white-space:nowrap; }
+        .stamp-name small { display:block; color: var(--text-muted); font-weight:400; font-size:0.72rem; }
+        .stamp { width:44px; height:44px; border-radius:50%; border:2px dashed var(--border-light); background:transparent; color: var(--text-muted); font-family:inherit; font-weight:700; font-size:0.95rem; cursor:pointer; transition:all .15s; touch-action:manipulation; }
+        .stamp:hover { border-color: var(--accent-amber); color: var(--text-primary); }
+        .stamp.on { border:2px solid var(--accent-amber); background: rgba(245,158,11,0.18); color: var(--accent-amber); transform:rotate(-8deg); }
+        .stamp.hi { border:2px solid var(--accent-green); background: rgba(34,197,94,0.15); color: var(--accent-green); cursor:default; transform:none; }
+        .stamp.busy { opacity:.45; pointer-events:none; }
+        .stamp-count { color: var(--text-muted); font-size:0.78rem; margin-top:10px; }
+
         /* ── Grit Section ── */
         .grit-card {
             background: var(--bg-card);
@@ -1884,6 +1906,7 @@
         <div class="view-tabs">
             <button class="view-tab active" onclick="switchView('strength')" id="tabStrength">🏋️ Strength</button>
             <button class="view-tab" onclick="switchView('grit')" id="tabGrit">🧠 Grit Challenge</button>
+            <button class="view-tab" onclick="switchView('stamps')" id="tabStamps">🎫 Stamps</button>
         </div>
 
         <!-- Strength Panel (existing) -->
@@ -1926,6 +1949,22 @@
         </div>
 
         <!-- Grit Challenge Panel -->
+        <!-- Stamps Panel: level 1 sign-off per pattern, tap to stamp -->
+        <div class="view-panel" id="panelStamps">
+            <div class="stamp-toolbar">
+                <input type="text" id="stampSearch" placeholder="Find a student..." oninput="renderStamps()">
+                <select id="stampGrade" onchange="renderStamps()"></select>
+                <span class="stamp-help">Tap a circle to stamp level 1. Tap again to take it back. Levels 2+ are set in the Strength tab.</span>
+            </div>
+            <div class="stamp-wrap">
+                <table class="stamp-table">
+                    <thead><tr><th>Student</th><th>Squat</th><th>Hinge</th><th>Lunge</th><th>Push</th><th>Pull</th><th>Press</th></tr></thead>
+                    <tbody id="stampBody"></tbody>
+                </table>
+            </div>
+            <div class="stamp-count" id="stampCount"></div>
+        </div>
+
         <div class="view-panel" id="panelGrit">
             <!-- Session Check-in Panel -->
             <button class="checkin-toggle-btn" id="checkinToggleBtn" onclick="toggleCheckinPanel()">
@@ -2739,11 +2778,84 @@
         // ============================================
         let gritDataLoaded = false;
 
+        // ============================================
+        // STAMPS — level 1 sign-off grid (writes {Pattern}_Tech via updateStudent)
+        // ============================================
+        const STAMP_PATTERNS = ['Squat', 'Hinge', 'Lunge', 'Push', 'Pull', 'Press'];
+        const stampBusy = {};
+
+        function stampGradeOptions() {
+            const sel = document.getElementById('stampGrade');
+            if (!sel || sel.options.length) return;
+            const grades = [...new Set(allStudents.map(s => String(s.Grade || '').trim()).filter(Boolean))].sort();
+            sel.innerHTML = '<option value="">All grades</option>' + grades.map(g => `<option value="${g}">Grade ${g}</option>`).join('');
+            // Stamps are a G9 thing first: default to grade 9 when the roster has one
+            if (grades.includes('9')) sel.value = '9';
+        }
+
+        function renderStamps() {
+            const body = document.getElementById('stampBody');
+            if (!body) return;
+            stampGradeOptions();
+            const q = (document.getElementById('stampSearch').value || '').trim().toLowerCase();
+            const grade = document.getElementById('stampGrade').value;
+            const rows = allStudents
+                .filter(s => !grade || String(s.Grade || '').trim() === grade)
+                .filter(s => !q || (s.Name || '').toLowerCase().includes(q))
+                .sort((a, b) => (a.Name || '').localeCompare(b.Name || ''));
+            let stamped = 0, possible = rows.length * STAMP_PATTERNS.length;
+            body.innerHTML = rows.map(s => {
+                const cells = STAMP_PATTERNS.map(p => {
+                    const lvl = parseInt(s[p + '_Tech']) || 0;
+                    if (lvl > 0) stamped++;
+                    const key = s.Athlete_ID + ':' + p;
+                    const cls = lvl >= 2 ? 'stamp hi' : (lvl === 1 ? 'stamp on' : 'stamp');
+                    const label = lvl >= 2 ? 'L' + lvl : (lvl === 1 ? '✓' : '');
+                    const title = lvl >= 2 ? `${p} level ${lvl} — change in the Strength tab` : (lvl === 1 ? `Take back the ${p} stamp` : `Stamp ${p} level 1`);
+                    return `<td><button class="${cls}${stampBusy[key] ? ' busy' : ''}" title="${title}" ${lvl >= 2 ? 'disabled' : ''} onclick="toggleStamp('${s.Athlete_ID}','${p}')">${label}</button></td>`;
+                }).join('');
+                return `<tr><td><div class="stamp-name">${s.Name || s.Athlete_ID}<small>${s.Grade ? 'Grade ' + s.Grade : ''}</small></div></td>${cells}</tr>`;
+            }).join('') || '<tr><td colspan="7" style="padding:24px;color:var(--text-muted)">No students match</td></tr>';
+            document.getElementById('stampCount').textContent = rows.length ? `${stamped} of ${possible} level 1 stamps given` : '';
+        }
+
+        async function toggleStamp(athleteId, pattern) {
+            const s = allStudents.find(x => x.Athlete_ID === athleteId);
+            if (!s) return;
+            const key = athleteId + ':' + pattern;
+            const current = parseInt(s[pattern + '_Tech']) || 0;
+            if (current >= 2) return;
+            const next = current === 1 ? 0 : 1;
+            if (next === 0 && !confirm(`Take back the ${pattern} stamp for ${s.Name}?`)) return;
+            stampBusy[key] = true;
+            s[pattern + '_Tech'] = next;   // optimistic: the grid updates before the server answers
+            renderStamps();
+            try {
+                const updates = {}; updates[pattern + '_Tech'] = next;
+                const resp = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ action: 'updateStudent', athleteId: athleteId, updates: updates })
+                });
+                const data = await resp.json();
+                if (!data.success) throw new Error(data.error || 'Save failed');
+                showToast(next === 1 ? `${s.Name}: ${pattern} stamped` : `${s.Name}: ${pattern} stamp removed`);
+            } catch (err) {
+                s[pattern + '_Tech'] = current;
+                showToast(`Could not save ${pattern} for ${s.Name} — try again`, 'error');
+            } finally {
+                delete stampBusy[key];
+                renderStamps();
+                if (typeof renderTable === 'function') renderTable();
+            }
+        }
+
         function switchView(view) {
             document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
             document.getElementById('tab' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
             document.getElementById('panel' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
+
+            if (view === 'stamps') renderStamps();
 
             if (view === 'grit' && !gritDataLoaded) {
                 loadGritData();

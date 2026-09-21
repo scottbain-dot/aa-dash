@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f7f5f1">
+<title>Athlete Academy · G9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --paper:#f7f5f1; --sheet:#ffffff; --ink:#18161a; --ink-2:#4b4750; --mute:#8a8590; --rule:#e4e0da; --rule-2:#c9c3bb;
+    --accent:#874B46; --accent-soft:#f4ebe9; --mark:#b8922a; --mark-soft:#f7f0dc; --green:#2f7d4f; --green-soft:#e6f3ea;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--paper);margin:0}
+  body{color:var(--ink);font-family:Inter,'Segoe UI',system-ui,sans-serif;line-height:1.4;-webkit-font-smoothing:antialiased;min-height:100vh}
+  button{font-family:inherit}
+  .cond{font-family:'Barlow Condensed',sans-serif}
+  .eb{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:600}
+
+  /* ---------- sign in ---------- */
+  .welcome{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;text-align:center;gap:14px}
+  .welcome .mark{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:34px;letter-spacing:.06em;text-transform:uppercase;margin:0}
+  .welcome .mark em{font-style:normal;color:var(--accent)}
+  .welcome p{margin:0;color:var(--ink-2);max-width:34ch}
+  .welcome .foot{font-size:12px;color:var(--mute);margin-top:18px}
+  .embedded-warn{display:none;background:var(--mark-soft);border:1px solid var(--mark);border-radius:8px;padding:12px 14px;font-size:14px;max-width:40ch;text-align:left}
+  .veil{position:fixed;inset:0;background:var(--paper);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:50;color:var(--ink-2)}
+  .veil.on{display:flex}
+  .spin{width:28px;height:28px;border:3px solid var(--rule-2);border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* ---------- app ---------- */
+  #app{display:none}
+  .top{background:var(--sheet);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:10}
+  .top-in{max-width:980px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .wordmark{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+  .wordmark span{color:var(--accent)}
+  .who{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+  .who b{color:var(--ink)}
+  .who button{background:none;border:1px solid var(--rule-2);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--ink-2)}
+  .tabs{max-width:980px;margin:0 auto;padding:0 16px;display:flex;gap:2px;overflow-x:auto}
+  .tab{background:none;border:none;border-bottom:3px solid transparent;padding:10px 12px;font-weight:600;font-size:14px;color:var(--mute);cursor:pointer;white-space:nowrap}
+  .tab.on{color:var(--ink);border-bottom-color:var(--accent)}
+  main{max-width:980px;margin:0 auto;padding:18px 16px 60px}
+  .view{display:none}.view.on{display:block}
+  h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:38px;line-height:.95;margin:6px 0 4px;text-transform:uppercase}
+  h1 .t{color:var(--accent)}
+  .lede{color:var(--ink-2);margin:0 0 18px;max-width:64ch}
+  .card{background:var(--sheet);border:1px solid var(--rule);border-top:3px solid var(--ink);padding:16px 18px;margin-bottom:14px}
+  .card.acc{border-top-color:var(--accent)}
+  .card h2{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.02em;margin:0 0 8px;line-height:1}
+  .card p{margin:0 0 8px;color:var(--ink-2)}
+  .btn{background:var(--ink);color:#fff;border:1px solid var(--ink);border-radius:4px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer}
+  .btn.ghost{background:none;color:var(--ink);border-color:var(--rule-2)}
+  .btn.small{padding:6px 10px;font-size:13px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:6px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
+  .toast.on{opacity:1}
+  .toast.err{background:#8a2e2e}
+
+  /* checklist */
+  .steps{list-style:none;margin:0;padding:0}
+  .steps li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--rule)}
+  .steps li:last-child{border-bottom:none}
+  .steps .n{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid var(--rule-2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:var(--mute)}
+  .steps li.done .n{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+  .steps .txt b{display:block}
+  .steps .txt span{color:var(--ink-2);font-size:14px}
+  .steps .txt a{color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline}
+
+  /* passport */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:640px){.tiles{grid-template-columns:repeat(2,1fr)}}
+  .tile{background:var(--sheet);border:1px solid var(--rule);padding:14px;min-height:140px;display:flex;flex-direction:column;position:relative;cursor:pointer}
+  .tile .pn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;text-transform:uppercase;line-height:1}
+  .tile .ex{color:var(--ink-2);font-size:13px;margin-top:4px}
+  .tile .st{margin-top:auto;padding-top:10px;font-size:12px;color:var(--mute);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  .tile.on{border-color:var(--mark);background:var(--mark-soft)}
+  .tile.on .st{color:var(--mark)}
+  .stamp{position:absolute;top:10px;right:10px;width:46px;height:46px;border-radius:50%;border:2px dashed var(--rule-2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;color:var(--rule-2)}
+  .tile.on .stamp{border:2px solid var(--mark);color:var(--mark);transform:rotate(-10deg);background:#fff}
+  .tile.hi .stamp{border-style:solid;border-color:var(--green);color:var(--green);background:#fff;transform:rotate(-10deg)}
+  .tile.hi{border-color:var(--green);background:var(--green-soft)}
+  .tile.hi .st{color:var(--green)}
+
+  /* patterns */
+  .pat{background:var(--sheet);border:1px solid var(--rule);margin-bottom:12px}
+  .pat-h{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+  .pat-h .pn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;text-transform:uppercase;line-height:1}
+  .pat-h .sub{color:var(--ink-2);font-size:13px}
+  .pat-h .pill{margin-left:auto;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;padding:4px 8px;border-radius:999px;border:1px solid var(--rule-2);color:var(--mute);white-space:nowrap}
+  .pat-h .pill.on{border-color:var(--mark);color:var(--mark);background:var(--mark-soft)}
+  .pat-h .pill.hi{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+  .pat-h .chev{color:var(--mute);font-size:18px;transition:transform .2s}
+  .pat.open .pat-h .chev{transform:rotate(90deg)}
+  .pat-b{display:none;padding:0 16px 16px;border-top:1px solid var(--rule)}
+  .pat.open .pat-b{display:block}
+  .vid{position:relative;width:100%;aspect-ratio:16/9;background:#000;margin:14px 0 10px}
+  .vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .vrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .vrow .ok{color:var(--green);font-weight:600;font-size:14px}
+  .crit{list-style:none;margin:0;padding:0}
+  .crit li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--rule)}
+  .crit li:last-child{border-bottom:none}
+  .crit input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent);flex:none}
+  .crit b{display:block;font-weight:600}
+  .crit span{color:var(--ink-2);font-size:13px}
+  .crit.locked{opacity:.55}
+  .next{margin-top:12px;padding:10px 12px;background:var(--paper);border-left:3px solid var(--rule-2);font-size:14px;color:var(--ink-2)}
+  .next b{color:var(--ink)}
+
+  /* program */
+  .prog{display:grid;grid-template-columns:1fr;gap:10px}
+  .prow{background:var(--sheet);border:1px solid var(--rule);padding:12px 14px;display:grid;grid-template-columns:110px 1fr 1fr;gap:10px;align-items:center}
+  @media (max-width:640px){.prow{grid-template-columns:1fr;gap:6px}}
+  .prow .pn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;text-transform:uppercase;line-height:1}
+  .prow .cell .eb{display:block;margin-bottom:2px}
+  .prow .cell .ex{font-weight:500}
+  .prow .cell .rx{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:17px;color:var(--ink-2)}
+  .prow .cell.lock{opacity:.5}
+  .prow .cell.go .ex{color:var(--mark);font-weight:600}
+  .unit{list-style:none;margin:0;padding:0}
+  .unit li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:14px}
+  .unit li:last-child{border-bottom:none}
+  .unit .d{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;min-width:96px;text-transform:uppercase}
+  .unit .d.push{color:var(--accent)}
+  .unit .d.cls{color:var(--mute)}
+
+  /* rules */
+  .rules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:720px){.rules{grid-template-columns:1fr}}
+  .rules ul{margin:0;padding:0;list-style:none}
+  .rules li{padding:7px 0;border-bottom:1px solid var(--rule);font-size:14px}
+  .rules li:last-child{border-bottom:none}
+  .rules li b{display:block}
+  .rules li span{color:var(--ink-2);font-size:13px}
+
+  /* reflection */
+  .pick{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+  .pick button{background:var(--sheet);border:1px solid var(--rule-2);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink-2)}
+  .pick button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  textarea{width:100%;border:1px solid var(--rule-2);border-radius:4px;padding:10px;font-family:inherit;font-size:14px;min-height:70px;resize:vertical}
+  .saved{font-size:13px;color:var(--green);font-weight:600;margin-left:10px}
+</style>
+</head>
+<body>
+
+<!-- SIGN-IN -->
+<div class="welcome" id="welcome">
+  <p class="mark">Athlete <em>Academy</em></p>
+  <p>Your passport, the six movements, and your program. Sign in with your school Google account.</p>
+  <div class="embedded-warn" id="embeddedWarn"><b>Open this in Safari or Chrome to sign in.</b> Google sign-in does not work inside an app's built-in browser.</div>
+  <div>
+    <div id="g_id_onload"
+         data-client_id="701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com"
+         data-context="signin" data-ux_mode="popup"
+         data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
+    <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
+  </div>
+  <p class="foot">FIS Warriors · Grade 9 · Intro to Training</p>
+</div>
+
+<div class="veil" id="veil"><div class="spin"></div><div id="veilText">Loading your passport…</div></div>
+
+<!-- APP -->
+<div id="app">
+  <div class="top">
+    <div class="top-in">
+      <div class="wordmark">Athlete <span>Academy</span></div>
+      <span class="eb">Intro to Training · G9</span>
+      <div class="who"><span id="whoName"></span><button onclick="logout()">Sign out</button></div>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-tab="today" onclick="go('today')">Today</button>
+      <button class="tab" data-tab="passport" onclick="go('passport')">Passport</button>
+      <button class="tab" data-tab="patterns" onclick="go('patterns')">The six</button>
+      <button class="tab" data-tab="program" onclick="go('program')">My program</button>
+      <button class="tab" data-tab="rules" onclick="go('rules')">Rules</button>
+    </div>
+  </div>
+  <main>
+    <section class="view on" id="view-today"></section>
+    <section class="view" id="view-passport"></section>
+    <section class="view" id="view-patterns"></section>
+    <section class="view" id="view-program"></section>
+    <section class="view" id="view-rules"></section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONTENT — the six patterns, what they do now, what a stamp unlocks
+// Videos and criteria match strength-portal.html; prescriptions match the Board.
+// ============================================================
+const PATTERNS = [
+  { key:'Squat', sub:'Double leg, lower push',
+    l1:{ name:'Bodyweight squat', video:'https://www.youtube.com/embed/iiKn5FiVUjI' },
+    l2:{ name:'Goblet squat', video:'https://www.youtube.com/embed/pEGfGwp6IEA' },
+    now:['Bodyweight squat','3 × 10 · 6/7'], stamped:['Goblet squat','3 × 8 · 7'],
+    criteria:[ ['Feet flat throughout','No heel rise at any point'], ['Knees track over toes','No collapsing inward'], ['Hip crease below the top of the knee','At the bottom of the squat'], ['Neutral spine','No rounding or over-arching'], ['Controlled descent','Two seconds or more down'], ['No excessive forward lean','Chest stays up'] ] },
+  { key:'Hinge', sub:'Double leg, lower pull',
+    l1:{ name:'Bodyweight hinge', video:'https://www.youtube.com/embed/3Cb3Zvglx1U' },
+    l2:{ name:'Kettlebell deadlift', video:'https://www.youtube.com/embed/PXJpKhdN9PM' },
+    now:['Bodyweight hinge, dowel on the back','3 × 10 · 6/7'], stamped:['Kettlebell deadlift','3 × 8 · 7'],
+    criteria:[ ['Spine neutral throughout','No rounding of the lower back'], ['Hips go back first','It is not a squat'], ['Knees soft, not bent a lot','A small bend only'], ['Weight in the mid-foot and heels','Not on the toes'], ['Shoulders over the bar','At the start position'], ['Full hip extension at the top','Squeeze the glutes, stand tall'] ] },
+  { key:'Lunge', sub:'Single leg, lower push',
+    l1:{ name:'Bodyweight lunge', video:'https://www.youtube.com/embed/krxGoIpg9XQ' },
+    l2:{ name:'Dumbbell lunge', video:'https://www.youtube.com/embed/9gglI77Kzq8' },
+    now:['Bodyweight lunge','2 × 8 each side · 6/7'], stamped:['Dumbbell lunge','3 × 8 each side · 7'],
+    criteria:[ ['Front knee tracks over the toes','No collapsing inward'], ['Back knee gets near the floor','Full depth, controlled'], ['Torso upright','No leaning forward'], ['Both knees near 90°','At the bottom'], ['Front heel stays down','Weight through the whole foot'], ['Controlled throughout','No wobble, no loss of balance'] ] },
+  { key:'Push', sub:'Horizontal, upper push',
+    l1:{ name:'Floor push-up', video:'https://www.youtube.com/embed/Ql8PKKsDE70' },
+    l2:{ name:'Dumbbell bench press', video:'https://www.youtube.com/embed/ZaDlbm8E8Tg' },
+    now:['Push-up, floor or box','3 × 8 · 6/7'], stamped:['Dumbbell floor press','3 × 8 · 7'],
+    criteria:[ ['Full range of motion','Chest to the floor, arms locked out at the top'], ['Elbows at about 45°','Not flared out wide'], ['Shoulder blades pulled back','Held together throughout'], ['Core tight, no sagging','Straight line from head to heel'], ['Controlled descent','No bouncing'], ['Feet stable','No leg drive'] ] },
+  { key:'Pull', sub:'Horizontal, upper pull',
+    l1:{ name:'Banded row', video:'https://www.youtube.com/embed/j7ABJGauUEk' },
+    l2:{ name:'Horizontal bar pull', video:'https://www.youtube.com/embed/vZy_Eu_Z0WA' },
+    now:['Banded row','3 × 8 · 6/7'], stamped:['Horizontal bar pull','3 × 8 · 7'],
+    criteria:[ ['Full range of motion','Arms straight to fully pulled in'], ['Shoulder blades squeeze at the top','Squeeze the back'], ['No body swing','The movement is controlled'], ['Elbows drive back','Not just the arms pulling'], ['Chest up, shoulders down','No shrugging'], ['Core tight throughout','Stable torso'] ] },
+  { key:'Press', sub:'Vertical, upper push',
+    l1:{ name:'Band overhead press', video:'https://www.youtube.com/embed/1-VfJqjYquQ' },
+    l2:{ name:'Dumbbell press', video:'https://www.youtube.com/embed/OM23fjJB3-0' },
+    now:['Band overhead press','3 × 8 · 6/7'], stamped:['Dumbbell press','3 × 8 · 7'],
+    criteria:[ ['Full lockout overhead','Arms straight at the top'], ['Straight bar path','Head moves back, the bar goes straight up'], ['Core braced','No big arch in the back'], ['Elbows in front of the bar','At the start'], ['Controlled descent','Back to the shoulders with control'], ['Feet stay planted','No stepping'] ] }
+];
+const PAT = Object.fromEntries(PATTERNS.map(p => [p.key, p]));
+
+// The rest of the unit, in order. The Board carries the full session; this is the map.
+const UNIT_NEXT = [
+  ['Gym 5','Pull','Horizontal and vertical. Tempo: three seconds down, one up'],
+  ['Gym 6','Push','Single leg and double leg'],
+  ['Gym 7','Pull','Upper and lower. Second partner check'],
+  ['Classroom B','Classroom','Reading a prescription, choosing a weight, what a 7 feels like'],
+  ['Gym 8','Pull','First real load for stamped patterns'],
+  ['Gym 9','Push','Choose your own weight'],
+  ['Gym 10','Pull','Run it yourself, no cues'],
+  ['Classroom C','Classroom','Log a session. Preview Foundations']
+];
+
+const RULES = {
+  'Safety':[ ['Collars on every bar',''], ['Clear the bar path','Nobody stands where a bar or a body could land'], ['Ask before a new weight','A jump you have not done before gets a check first'], ['Always use a spotter for movements that need it',''], ['Stop if it hurts','Sore is fine. Pain is a stop'], ['Shoes on, laces done',''] ],
+  'Respect':[ ['Re-rack everything','Plates, bells, bands, mats. Where you found them'], ['Wipe down what you used',''], ['Share the kit','Work in, swap sets, ask'], ['Control the drop','Bars and bells go down under control'], ['Leave it better','Than you found it'] ],
+  'How we train':[ ['Be coachable','Walk in ready to learn. Listen, try it, ask'], ['Don\'t be a hero','Perfect technique is more impressive than a heavy bar with bad form'], ['Last two reps hard, every rep clean','If either fails, go lighter'], ['Control','Every rep, both directions'], ['Intention and effort','You do not get better by just showing up. Follow the reps, sets and effort as written'], ['Consistency is king',''], ['You vs you','Your only comparison is last time'] ]
+};
+
+// ============================================================
+// TRANSPORT + IDENTITY
+// Email is used once, in getPortalBootstrap, to resolve the Athlete_ID.
+// Every other call goes through apiData()/apiDataGet(), which attach athleteId.
+// ============================================================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
+const SESSION_KEY = 'aaG9PortalUser';
+const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+const BLOCK_ID = 'intro';
+let currentUser = null;
+let state = { athlete:null, athleteId:'', levels:{}, progress:{} };
+
+async function apiFetch(url, opts){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 20000);
+  try { const r = await fetch(url, Object.assign({ signal: ctrl.signal }, opts || {})); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+function apiGet(params){ const q = new URLSearchParams(Object.assign({ _t: Date.now() }, params)); return apiFetch(`${APPS_SCRIPT_URL}?${q}`); }
+function apiPost(body){ return apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{ 'Content-Type':'text/plain' }, body: JSON.stringify(body) }); }
+function apiData(payload){ return apiPost(Object.assign({ athleteId: state.athleteId }, payload)); }
+function apiDataGet(params){ return apiGet(Object.assign({ athleteId: state.athleteId }, params)); }
+
+function b64urlDecode(seg){
+  let s = String(seg || '').replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  try { return decodeURIComponent(bin.split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); } catch (e) { return bin; }
+}
+function handleCredentialResponse(resp){
+  try {
+    const payload = JSON.parse(b64urlDecode(resp.credential.split('.')[1]));
+    currentUser = { email: payload.email, name: payload.name, loginTime: Date.now() };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+    start();
+  } catch (e) { toast('Sign-in failed. Try again.', true); }
+}
+window.handleCredentialResponse = handleCredentialResponse;
+function isEmbeddedBrowser(){
+  const ua = navigator.userAgent || '';
+  if (/FBAN|FBAV|Instagram|Line\/|WhatsApp|Snapchat|Twitter|MicroMessenger|; wv\)|WebView/i.test(ua)) return true;
+  if (/iPhone|iPad|iPod/.test(ua) && !/Safari|CriOS|FxiOS|EdgiOS/i.test(ua)) return true;
+  return false;
+}
+function checkExistingSession(){
+  try {
+    const u = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    if (!u || !u.loginTime || Date.now() - u.loginTime > SESSION_MAX_AGE) { localStorage.removeItem(SESSION_KEY); return false; }
+    currentUser = u; return true;
+  } catch (e) { return false; }
+}
+function logout(){ localStorage.removeItem(SESSION_KEY); location.reload(); }
+
+// ============================================================
+// BOOTSTRAP — one call, retried, because a whole class opens this at once
+// ============================================================
+async function start(){
+  document.getElementById('welcome').style.display = 'none';
+  veil(true, 'Loading your passport…');
+  let data = null, lastErr = null;
+  for (let i = 0; i < 3; i++) {
+    try { data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email }); if (data && data.success) break; }
+    catch (e) { lastErr = e; }
+    await new Promise(r => setTimeout(r, i === 0 ? 1500 : 3000));
+  }
+  veil(false);
+  if (!data || !data.success || !data.athlete) {
+    document.getElementById('welcome').style.display = '';
+    toast(!data || !data.success ? 'Could not load. Check your connection and try again.' : 'That account is not on the Academy list yet. Tell Mr Bain.', true);
+    return;
+  }
+  hydrate(data);
+  document.getElementById('app').style.display = 'block';
+  renderAll();
+}
+function hydrate(data){
+  state.athlete = data.athlete;
+  state.athleteId = String(data.athlete.Athlete_ID || '').trim();
+  state.levels = {};
+  (data.strengthLevels || []).forEach(l => { state.levels[l.pattern] = l.tech || 0; });
+  const blk = data.learn && data.learn.blocks && data.learn.blocks[BLOCK_ID];
+  state.progress = (blk && blk.progress) || {};
+  ['watched','self','checklist'].forEach(k => { if (!state.progress[k]) state.progress[k] = {}; });
+  state.progress.checklist.signin = true;
+  const first = state.athlete.First_Name || String(state.athlete.Name || '').split(' ')[0] || '';
+  document.getElementById('whoName').innerHTML = `<b>${esc(first)}</b>`;
+}
+async function refreshStamps(btn){
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+  try {
+    const data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
+    if (data && data.success && data.athlete) { const p = state.progress; hydrate(data); state.progress = p; renderAll(); toast('Passport updated'); }
+    else toast('Could not refresh. Try again.', true);
+  } catch (e) { toast('Could not refresh. Try again.', true); }
+  if (btn) { btn.disabled = false; btn.textContent = 'Refresh my stamps'; }
+}
+
+// Progress is private to the student. It lives in Learn_Progress, keyed by Athlete_ID.
+let saveTimer = null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      const r = await apiData({ action:'saveLearnProgress', blockId: BLOCK_ID, progress: state.progress, meta: {} });
+      if (!r || !r.success) throw new Error();
+    } catch (e) { toast('Saved on this device only. It will retry.', true); setTimeout(save, 8000); }
+  }, 600);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+const stampCount = () => PATTERNS.filter(p => (state.levels[p.key] || 0) > 0).length;
+const watchedCount = () => PATTERNS.filter(p => state.progress.watched[p.key]).length;
+const checkedCount = () => PATTERNS.filter(p => (state.progress.self[p.key] || []).some(Boolean)).length;
+
+function go(tab){
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + tab));
+  if (tab === 'program' && !state.progress.checklist.program) { state.progress.checklist.program = true; save(); renderToday(); }
+  window.scrollTo({ top: 0 });
+}
+function renderAll(){ renderToday(); renderPassport(); renderPatterns(); renderProgram(); renderRules(); }
+
+function renderToday(){
+  const p = state.progress;
+  const steps = [
+    ['Sign in', 'Done. This is your portal. Your name is in the top corner.', true],
+    ['Watch the six movement videos', `${watchedCount()} of 6 watched. <a onclick="go('patterns')">Open the six</a>`, watchedCount() === 6],
+    ['Self-check each one', `${checkedCount()} of 6 started. Tick the criteria you are sure of, leave the rest blank`, checkedCount() === 6],
+    ['Get stamped', `${stampCount()} of 6 stamped. Mr Bain stamps level 1 when he has seen you do it well. <a onclick="go('passport')">See your passport</a>`, stampCount() > 0],
+    ['See your program', 'What you do now, and what a stamp unlocks. <a onclick="go(\'program\')">Open my program</a>', !!p.checklist.program],
+    ['Reflection', 'Which pattern feels least controlled? Answer below', !!p.least]
+  ];
+  const least = p.least || '';
+  document.getElementById('view-today').innerHTML = `
+    <span class="eb">Block 1 · Learn the shape</span>
+    <h1>Classroom <span class="t">A</span></h1>
+    <p class="lede">Four gym sessions in. Today you meet the portal and the passport, watch the six movements, check yourself against the criteria, and see what your program looks like.</p>
+    <div class="card acc"><h2>Today</h2>
+      <ol class="steps">${steps.map(([t, d, ok], i) => `<li class="${ok ? 'done' : ''}"><div class="n">${ok ? '✓' : i + 1}</div><div class="txt"><b>${t}</b><span>${d}</span></div></li>`).join('')}</ol>
+    </div>
+    <div class="card"><h2>Reflection</h2>
+      <p>Which of the six patterns feels least controlled right now?</p>
+      <div class="pick">${PATTERNS.map(x => `<button class="${least === x.key ? 'on' : ''}" onclick="setLeast('${x.key}')">${x.key}</button>`).join('')}</div>
+      <p>Which criterion is the reason? One line is enough.</p>
+      <textarea id="leastWhy" placeholder="e.g. My heels come up at the bottom of the squat">${esc(p.leastWhy || '')}</textarea>
+      <div style="margin-top:10px"><button class="btn" onclick="saveWhy()">Save</button><span class="saved" id="whySaved">${p.leastWhy ? 'Saved' : ''}</span></div>
+    </div>
+    <div class="card"><h2>What a stamp means</h2>
+      <p>A stamp is Mr Bain saying he has watched you do the movement well against the six criteria. It is level 1 of 5. It can land in any session, whenever you are ready.</p>
+      <p>A stamped pattern unlocks the loaded version of that exercise on the Board. Unstamped patterns stay at bodyweight until they are stamped. Both are proper training.</p>
+    </div>`;
+}
+function setLeast(k){ state.progress.least = k; save(); renderToday(); }
+function saveWhy(){
+  state.progress.leastWhy = document.getElementById('leastWhy').value.trim();
+  save(); document.getElementById('whySaved').textContent = 'Saved'; renderToday();
+}
+
+function renderPassport(){
+  const n = stampCount();
+  document.getElementById('view-passport').innerHTML = `
+    <span class="eb">Your passport</span>
+    <h1>${n} of 6 <span class="t">stamped</span></h1>
+    <p class="lede">${n === 0 ? 'No stamps yet. That is normal after four sessions. Stamps come when Mr Bain has seen you do the movement well.' : (n === 6 ? 'All six. Every loaded option on the Board is open to you now.' : 'Each stamp unlocks the loaded version of that pattern on the Board.')}</p>
+    <div class="tiles">${PATTERNS.map(x => {
+      const lvl = state.levels[x.key] || 0;
+      const cls = lvl >= 2 ? 'hi' : (lvl === 1 ? 'on' : '');
+      return `<div class="tile ${cls}" onclick="go('patterns');openPat('${x.key}')">
+        <div class="stamp">${lvl >= 2 ? 'L' + lvl : (lvl === 1 ? 'L1' : '')}</div>
+        <div class="pn">${x.key}</div>
+        <div class="ex">${lvl > 0 ? x.l2.name + ' unlocked' : x.l1.name}</div>
+        <div class="st">${lvl >= 2 ? 'Level ' + lvl : (lvl === 1 ? 'Stamped' : 'Practising')}</div>
+      </div>`; }).join('')}</div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn ghost small" onclick="refreshStamps(this)">Refresh my stamps</button>
+      <span style="font-size:13px;color:var(--mute)">Just been stamped in class? Refresh to see it.</span>
+    </div>`;
+}
+
+function renderPatterns(){
+  document.getElementById('view-patterns').innerHTML = `
+    <span class="eb">The six foundation movements</span>
+    <h1>Watch, then <span class="t">check yourself</span></h1>
+    <p class="lede">One video each. Then tick the criteria you are sure you can do. Leave the rest blank. This is for you, not for a grade.</p>
+    <div id="patList">${PATTERNS.map(patHTML).join('')}</div>`;
+}
+function patHTML(x){
+  const lvl = state.levels[x.key] || 0;
+  const watched = !!state.progress.watched[x.key];
+  const self = state.progress.self[x.key] || [];
+  const pill = lvl >= 2 ? `<span class="pill hi">Level ${lvl}</span>` : (lvl === 1 ? '<span class="pill on">Stamped</span>' : '<span class="pill">Practising</span>');
+  return `<div class="pat" id="pat-${x.key}">
+    <div class="pat-h" onclick="togglePat('${x.key}')"><div><div class="pn">${x.key}</div><div class="sub">${x.sub} · ${x.l1.name}</div></div>${pill}<span class="chev">›</span></div>
+    <div class="pat-b">
+      <div class="vid" data-src="${x.l1.video}"></div>
+      <div class="vrow">${watched ? '<span class="ok">✓ Watched</span>' : `<button class="btn small" onclick="markWatched('${x.key}')">I have watched this</button><span style="font-size:13px;color:var(--mute)">Watch it through once, then the self-check opens</span>`}</div>
+      <span class="eb">Self-check · ${x.l1.name}</span>
+      <ul class="crit ${watched ? '' : 'locked'}">${x.criteria.map(([t, n], i) => `<li><input type="checkbox" ${self[i] ? 'checked' : ''} ${watched ? '' : 'disabled'} onchange="tickSelf('${x.key}',${i},this.checked)"><div><b>${t}</b><span>${n}</span></div></li>`).join('')}</ul>
+      <div class="next"><b>Next level:</b> ${x.l2.name}. ${lvl > 0 ? 'Unlocked. It is your option on the Board from Gym 5.' : 'Opens when this pattern is stamped.'}</div>
+    </div>
+  </div>`;
+}
+function togglePat(k){
+  const el = document.getElementById('pat-' + k);
+  const open = !el.classList.contains('open');
+  el.classList.toggle('open', open);
+  if (open) loadVideo(el);
+}
+function openPat(k){
+  const el = document.getElementById('pat-' + k);
+  if (!el) return;
+  el.classList.add('open'); loadVideo(el);
+  setTimeout(() => el.scrollIntoView({ behavior:'smooth', block:'start' }), 50);
+}
+function loadVideo(el){
+  const v = el.querySelector('.vid');
+  if (v && !v.querySelector('iframe')) v.innerHTML = `<iframe src="${v.dataset.src}" title="Technique video" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+}
+function markWatched(k){
+  state.progress.watched[k] = true; save();
+  const el = document.getElementById('pat-' + k);
+  el.outerHTML = patHTML(PAT[k]);
+  const n = document.getElementById('pat-' + k); n.classList.add('open'); loadVideo(n);
+  renderToday();
+}
+function tickSelf(k, i, on){
+  const arr = state.progress.self[k] || [false, false, false, false, false, false];
+  arr[i] = !!on; state.progress.self[k] = arr; save(); renderToday();
+}
+
+function renderProgram(){
+  const n = stampCount();
+  document.getElementById('view-program').innerHTML = `
+    <span class="eb">My program · Intro to Training</span>
+    <h1>What you <span class="t">do now</span></h1>
+    <p class="lede">Every gym session has the same shape: Prep, Move, Finish. In Move, each pattern has a bodyweight version and a loaded version. Your stamps decide which one is yours.</p>
+    <div class="prog">${PATTERNS.map(x => {
+      const lvl = state.levels[x.key] || 0;
+      return `<div class="prow">
+        <div class="pn">${x.key}</div>
+        <div class="cell ${lvl > 0 ? 'lock' : ''}"><span class="eb">Now · bodyweight</span><div class="ex">${x.now[0]}</div><div class="rx">${x.now[1]}</div></div>
+        <div class="cell ${lvl > 0 ? 'go' : 'lock'}"><span class="eb">${lvl > 0 ? 'Unlocked · your option' : 'When stamped'}</span><div class="ex">${x.stamped[0]}</div><div class="rx">${x.stamped[1]}</div></div>
+      </div>`; }).join('')}</div>
+    <p style="font-size:13px;color:var(--mute);margin:10px 0 18px">${n === 0 ? 'Everything is bodyweight for now. Loaded versions appear here as you are stamped.' : 'Loaded only for stamped patterns. The Board shows the same rule: "or X if stamped".'}</p>
+    <div class="card"><h2>The rest of the unit</h2>
+      <ul class="unit">${UNIT_NEXT.map(([d, t, i]) => `<li><span class="d ${t === 'Push' ? 'push' : (t === 'Classroom' ? 'cls' : '')}">${d}${t !== 'Classroom' ? ' · ' + t : ''}</span><span>${i}</span></li>`).join('')}</ul>
+    </div>
+    <div class="card"><h2>After this unit</h2>
+      <p>Foundations. The same session shape with its full names, your own sessions to log, and weights that are yours. Everyone gets there. What it looks like depends on your stamps.</p>
+    </div>`;
+}
+
+function renderRules(){
+  document.getElementById('view-rules').innerHTML = `
+    <span class="eb">Gym rules</span>
+    <h1>Three <span class="t">things</span></h1>
+    <p class="lede">Look after your body, look after the space, and train the way we train.</p>
+    <div class="rules">${Object.entries(RULES).map(([h, items]) => `<div class="card"><h2>${h}</h2><ul>${items.map(([t, n]) => `<li><b>${t}</b>${n ? `<span>${n}</span>` : ''}</li>`).join('')}</ul></div>`).join('')}</div>`;
+}
+
+// ============================================================
+// UTIL
+// ============================================================
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
+function veil(on, text){ const v = document.getElementById('veil'); v.classList.toggle('on', !!on); if (text) document.getElementById('veilText').textContent = text; }
+let toastTimer = null;
+function toast(msg, err){ const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast on' + (err ? ' err' : ''); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 3200); }
+
+if (isEmbeddedBrowser()) document.getElementById('embeddedWarn').style.display = 'block';
+if (checkExistingSession()) start();
+</script>
+</body>
+</html>
