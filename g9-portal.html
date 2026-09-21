@@ -323,8 +323,8 @@ function stampSVG(k, lvl){
     <defs><path id="${id}" d="M32,32 m-22.5,0 a22.5,22.5 0 1,1 45,0 a22.5,22.5 0 1,1 -45,0"/></defs>
     <circle cx="32" cy="32" r="30.5" fill="none" stroke="${t}" stroke-width="2.4"/>
     <circle cx="32" cy="32" r="16.5" fill="none" stroke="${t}" stroke-width="1.4"/>
-    <text font-family="Inter,'Segoe UI',sans-serif" font-size="6.6" font-weight="700" letter-spacing="1.1" fill="${t}"><textPath href="#${id}">${words}${words}${words}</textPath></text>
-    <g transform="translate(21,21) scale(0.6875)" color="${t}">${icon(k)}</g>
+    <text font-family="Inter,'Segoe UI',sans-serif" font-size="6.2" font-weight="700" letter-spacing="0.9" fill="${t}"><textPath href="#${id}" textLength="141" lengthAdjust="spacingAndGlyphs">${words}${words}</textPath></text>
+    <g transform="translate(19,19) scale(0.8125)" fill="none" stroke="${t}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</g>
   </svg>`;
 }
 
