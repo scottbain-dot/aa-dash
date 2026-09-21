@@ -104,20 +104,34 @@
   .tile .pips i.got{background:var(--mark)}
   .tile .pips i.nxt{background:transparent;border:1px dashed var(--mark)}
   .tile.hi .pips i.got{background:var(--green)}
-  .ladder .lrow{display:grid;grid-template-columns:96px repeat(5,minmax(0,1fr));gap:6px;align-items:stretch;padding:10px 0;border-bottom:1px solid var(--rule)}
-  .ladder .lrow:last-child{border-bottom:none}
-  .ladder .lpn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;text-transform:uppercase;line-height:1;padding-top:6px}
-  .rung{border:1px solid var(--rule);padding:8px 8px 6px;min-height:58px;display:flex;flex-direction:column;gap:3px;background:var(--paper);color:var(--mute);min-width:0;overflow-wrap:anywhere}
-  .rung .lv{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em}
-  .rung .nm{font-size:12px;line-height:1.2}
-  .rung.got{background:var(--mark-soft);border-color:var(--mark);color:var(--ink)}
-  .rung.got .lv{color:var(--mark)}
-  .rung.hi{background:var(--green-soft);border-color:var(--green);color:var(--ink)}
-  .rung.hi .lv{color:var(--green)}
-  .rung.nxt{background:var(--sheet);border:1px dashed var(--accent);color:var(--ink)}
-  .rung.nxt .lv{color:var(--accent)}
-  @media (max-width:720px){.ladder .lrow{grid-template-columns:minmax(0,1fr);gap:4px}.ladder .lpn{padding-top:0}.ladder .rungs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.rung{padding:6px 5px;min-height:52px}.rung .nm{font-size:11px}}
-  @media (min-width:721px){.ladder .rungs{display:contents}}
+  /* trophy room: a shelf per pattern, five medals on it */
+  .room .shelf{display:grid;grid-template-columns:104px repeat(5,minmax(0,1fr));gap:8px;align-items:start;padding:16px 0 12px;border-bottom:5px solid #d9d3ca;box-shadow:0 8px 10px -9px rgba(0,0,0,.28);margin-bottom:6px}
+  .room .plaque{align-self:center;background:var(--ink);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;text-align:center;border-radius:2px}
+  .room .plaque small{display:block;font-family:Inter,sans-serif;font-weight:500;font-size:10px;letter-spacing:.08em;color:#cfc9c1;margin-top:2px}
+  .slot{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;min-width:0}
+  .slot .nm{font-size:12px;line-height:1.15;color:var(--mute);overflow-wrap:anywhere}
+  .slot.got .nm{color:var(--ink);font-weight:600}
+  .slot.nxt .nm{color:var(--accent);font-weight:600}
+  .medal{position:relative;isolation:isolate;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;margin-top:14px;border:3px solid var(--rule-2);background:var(--paper);color:var(--rule-2)}
+  .medal::before,.medal::after{content:"";position:absolute;top:-16px;width:12px;height:22px;background:var(--rule);z-index:-1}
+  .medal::before{left:15px;transform:rotate(18deg)} .medal::after{right:15px;transform:rotate(-18deg)}
+  .medal.got{color:#fff;border-color:transparent;box-shadow:inset 0 0 0 3px rgba(255,255,255,.55),0 3px 6px rgba(0,0,0,.18);text-shadow:0 1px 1px rgba(0,0,0,.25)}
+  .medal.got::before,.medal.got::after{background:var(--accent)}
+  .medal.m1.got{background:radial-gradient(circle at 35% 30%,#e8b98a 0,#b87333 55%,#8a5322 100%)}
+  .medal.m2.got{background:radial-gradient(circle at 35% 30%,#f2f2f2 0,#a8a9ad 55%,#6f7075 100%)}
+  .medal.m3.got{background:radial-gradient(circle at 35% 30%,#fbe9a6 0,#d4af37 55%,#9a7a1c 100%)}
+  .medal.m4.got{background:radial-gradient(circle at 35% 30%,#c98f8a 0,#874B46 55%,#5a2f2b 100%)}
+  .medal.m5.got{background:radial-gradient(circle at 35% 30%,#5a565c 0,#18161a 60%,#000 100%);box-shadow:inset 0 0 0 3px #d4af37,0 3px 6px rgba(0,0,0,.25)}
+  .medal.nxt{border:3px dashed var(--accent);color:var(--accent);background:#fff;animation:pulse 2.2s ease-in-out infinite}
+  .medal.nxt::before,.medal.nxt::after{background:var(--accent-soft)}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(135,75,70,.0)}50%{box-shadow:0 0 0 6px rgba(135,75,70,.12)}}
+  .medal .lv{font-size:11px;letter-spacing:.08em;position:absolute;bottom:-18px;left:-20px;right:-20px;text-align:center;color:var(--mute);font-family:Inter,sans-serif;font-weight:600;white-space:nowrap}
+  .slot.got .medal .lv{color:var(--ink)} .slot.nxt .medal .lv{color:var(--accent)}
+  .slot .nm{margin-top:14px;min-height:2.4em}
+  .room-count{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+  .room-count .big{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:40px;line-height:1;color:var(--mark)}
+  @media (max-width:720px){.room .shelf{grid-template-columns:minmax(0,1fr);gap:4px}.room .plaque{justify-self:start;margin-bottom:10px}.room .slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.medal{width:46px;height:46px;font-size:16px}.medal::before,.medal::after{top:-13px;width:10px;height:18px}.medal::before{left:11px}.medal::after{right:11px}.slot .nm{font-size:10.5px}.medal .lv .long{display:none}}
+  @media (min-width:721px){.room .slots{display:contents}}
   /* patterns */
   .pat{background:var(--sheet);border:1px solid var(--rule);margin-bottom:12px}
   .pat-h{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
@@ -533,9 +547,11 @@ function renderPassport(){
         <div class="pips">${[1,2,3,4,5].map(n => `<i class="${n <= lvl ? 'got' : (n === lvl + 1 ? 'nxt' : '')}"></i>`).join('')}</div>
         <div class="st">${st.label}</div>
       </div>`; }).join('')}</div>
-    <div class="card ladder" style="margin-top:14px"><h2>The ladder</h2>
-      <p>Five levels per pattern. A stamp is level 1. Each level is a new movement, and you only move up when the one below is stamped.</p>
-      ${PATTERNS.map(x => { const lvl = state.levels[x.key] || 0; return `<div class="lrow"><div class="lpn">${x.key}</div><div class="rungs">${x.ladder.map((nm, i) => { const n = i + 1; const cls = n <= lvl ? (lvl >= 2 && n <= lvl ? 'hi' : 'got') : (n === lvl + 1 ? 'nxt' : ''); return `<div class="rung ${cls}"><span class="lv">${n <= lvl ? '✓ L' + n : (n === lvl + 1 ? 'NEXT · L' + n : 'L' + n)}</span><span class="nm">${nm}</span></div>`; }).join('')}</div></div>`; }).join('')}
+    <div class="card room" style="margin-top:14px">
+      <div class="room-count"><span class="big">${PATTERNS.reduce((t, x) => t + (state.levels[x.key] || 0), 0)}</span><span class="eb">of 30 medals</span></div>
+      <h2>Trophy room</h2>
+      <p>Five medals per pattern, one per level. A stamp is the first medal. Each one is a new movement, and you only take the next when the one before it is yours.</p>
+      ${PATTERNS.map(x => { const lvl = state.levels[x.key] || 0; return `<div class="shelf"><div class="plaque">${x.key}<small>${lvl} of 5</small></div><div class="slots">${x.ladder.map((nm, i) => { const n = i + 1; const st = n <= lvl ? 'got' : (n === lvl + 1 ? 'nxt' : ''); return `<div class="slot ${st}"><div class="medal m${n} ${st}">${n <= lvl ? n : (st === 'nxt' ? '?' : '')}<span class="lv">${st === 'nxt' ? 'Next' : '<span class="long">Level </span>' + n}</span></div><div class="nm">${nm}</div></div>`; }).join('')}</div></div>`; }).join('')}
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <button class="btn ghost small" onclick="refreshStamps(this)">Refresh my stamps</button>
