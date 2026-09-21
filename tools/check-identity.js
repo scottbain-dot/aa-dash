@@ -28,6 +28,17 @@ const ok  = m => console.log('  ✓ ' + m);
   if (fail === before) ok(`${file}: email only in bootstrap; all data calls use apiData()/apiDataGet()`);
 });
 
+// ---- Admin: admin.html must key every API call by Athlete_ID, never email ----
+if (fs.existsSync('admin.html')) {
+  const before = fail;
+  const lines = fs.readFileSync('admin.html', 'utf8').split('\n');
+  lines.forEach((l, i) => {
+    if (/[?&]email=/.test(l)) err(`admin.html:${i + 1} sends email in a query string — key by athleteId`);
+    if (/^\s*email:\s/.test(l) || /\{\s*email:/.test(l)) err(`admin.html:${i + 1} sends email in a request body — key by athleteId`);
+  });
+  if (fail === before) ok('admin.html: no API call keyed by email');
+}
+
 // ---- Server: COMPLETE-APPS-SCRIPT.gs ----
 if (fs.existsSync('COMPLETE-APPS-SCRIPT.gs')) {
   const gs = fs.readFileSync('COMPLETE-APPS-SCRIPT.gs', 'utf8');

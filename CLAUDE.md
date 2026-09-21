@@ -48,7 +48,7 @@ The **Athlete Academy** is a comprehensive student athletic development system w
 |------|---------|--------|
 | `index.html` | Student Dashboard — Training Age radar, all scores, AI hero/coaching insights | ✅ Live |
 | `strength-portal.html` | Strength workouts — technique levels (1–5), level-specific load tiers, Canvas video submission | ✅ Live |
-| `admin.html` | Teacher admin panel — view all students, edit scores, current-session control, session check-ins, Grit coach feedback | ✅ Live |
+| `admin.html` | Teacher admin panel — Stamps grid (level 1 sign-off, readiness, not-yet notes) and Levels table/modal for levels 2–5 with notes. Admin writes carry the teacher's Google ID token, verified server-side. Grit tools were removed Sept 2026 (in git history) | ✅ Live |
 | `grit-portal.html` | Grit Challenge — 8-session psychology assignment with planning, ideas, evidence reminders | ✅ Live |
 | `apply.html` | Student application form — Google sign-in + form, writes to `Student_Applications` | ✅ Live |
 | `nominate.html` | Coach nomination form — coach-facing, writes to `Nominations` | ✅ Live |
@@ -214,7 +214,7 @@ Always divide by 6 — unassessed patterns count as zero and pull the score down
 
 ### Timeline (Spring 2026)
 
-The grit-portal display strings show day + date only ("Wed 25 Mar"); the year is hard-coded in `admin.html`'s session-checkin date list as 2026.
+The grit-portal display strings show day + date only ("Wed 25 Mar"). The admin session-checkin tools were removed in Sept 2026; rebuild them keyed by Athlete_ID with dates read from the sheet when the next Grit unit is planned.
 
 | Date | Session |
 |------|---------|
@@ -346,6 +346,8 @@ Content is category-specific based on the student's chosen challenge type. See f
 ## Apps Script Actions Reference (`COMPLETE-APPS-SCRIPT.gs`)
 
 `doGet` dispatches on `?action=…` (or returns student data when `?email=` is supplied with no action; `?admin=true` returns every athlete). `doPost` reads `data.action` from the JSON body.
+
+**Admin-only actions need a token.** `setConfig`, `updateStudent`, `getGritAdminData`, `getSessionPlanning`, `getObservations`, `updatePsychScores`, `saveObservation`, and `saveLearnProgress` for block `stamps` pass the teacher's Google ID token (`token` query param on GET, `token` field on POST). `apAdminGate_` verifies it with Google and checks `AA_TEACHERS`; a failure returns `{ success:false, authRequired:true }` and admin re-shows the sign-in. `getAllStudents` is still open because `clash.html` and `strength-portal.html` call it.
 
 ### GET actions
 | Action | Purpose | Caller |

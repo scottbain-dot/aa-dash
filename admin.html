@@ -71,60 +71,12 @@
             color: var(--accent-amber);
         }
 
-        .session-control {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: var(--bg-card);
-            padding: 8px 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
 
-        .session-label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
 
-        .session-display {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
 
-        .session-number {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-green);
-            min-width: 40px;
-            text-align: center;
-        }
 
-        .session-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            border: 1px solid var(--border-light);
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            font-size: 1.25rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
 
-        .session-btn:hover {
-            background: var(--accent-blue);
-            border-color: var(--accent-blue);
-            transform: scale(1.05);
-        }
 
-        .session-btn:active {
-            transform: scale(0.95);
-        }
 
         .user-info {
             display: flex;
@@ -876,11 +828,6 @@
                 gap: 12px;
             }
 
-            .session-control {
-                order: 3;
-                width: 100%;
-                justify-content: center;
-            }
 
             .stats-row {
                 grid-template-columns: 1fr 1fr;
@@ -1046,801 +993,6 @@
         .ny-row button { background:transparent; border:1px solid var(--border-light); color: var(--text-primary); border-radius:8px; padding:5px 10px; font-size:0.75rem; font-family:inherit; cursor:pointer; }
 
 
-        /* ── Grit Section ── */
-        .grit-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 12px;
-            overflow: hidden;
-            transition: border-color 0.2s;
-        }
-        .grit-card:hover { border-color: var(--border-light); }
-        .grit-card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 20px;
-            cursor: pointer;
-            transition: background 0.15s;
-            gap: 16px;
-        }
-        .grit-card-header:hover { background: var(--bg-hover); }
-        .grit-card-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex: 1;
-            min-width: 0;
-        }
-        .grit-card-arrow {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            transition: transform 0.2s;
-            flex-shrink: 0;
-        }
-        .grit-card.open .grit-card-arrow { transform: rotate(90deg); }
-        .grit-card-name {
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .grit-card-meta {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-shrink: 0;
-        }
-        .grit-tag {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 6px;
-            white-space: nowrap;
-        }
-        .grit-tag.fitness { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
-        .grit-tag.personal { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
-        .grit-tag.sessions { background: rgba(34,197,94,0.15); color: var(--accent-green); }
-        .grit-tag.scores { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
-        .grit-card-body {
-            display: none;
-            padding: 0 20px 20px;
-            border-top: 1px solid var(--border-color);
-        }
-        .grit-card.open .grit-card-body { display: block; }
-
-        .grit-detail-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-top: 16px;
-        }
-        .grit-detail-card {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid var(--border-color);
-        }
-        .grit-detail-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-        }
-        .grit-detail-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            padding: 4px 0;
-            font-size: 0.85rem;
-        }
-        .grit-detail-label { color: var(--text-secondary); }
-        .grit-detail-value { color: var(--text-primary); font-weight: 500; text-align: right; max-width: 60%; }
-        .grit-detail-text {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin-bottom: 8px;
-        }
-        .grit-detail-text:last-child { margin-bottom: 0; }
-        .grit-detail-text strong { color: var(--text-primary); font-weight: 600; }
-
-        /* Session cards within grit detail */
-        .grit-session {
-            background: var(--bg-card);
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 8px;
-            overflow: hidden;
-        }
-        .grit-session-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 14px;
-            cursor: pointer;
-            transition: background 0.15s;
-            font-size: 0.85rem;
-        }
-        .grit-session-header:hover { background: var(--bg-hover); }
-        .grit-session-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .grit-session-num {
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 700;
-            font-size: 0.8rem;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-        }
-        .grit-session-num.done {
-            background: rgba(34,197,94,0.15);
-            border-color: var(--accent-green);
-            color: var(--accent-green);
-        }
-        .grit-session-num.pending-s {
-            color: var(--text-muted);
-        }
-        .grit-session-body {
-            display: none;
-            padding: 0 14px 14px;
-            border-top: 1px solid var(--border-color);
-        }
-        .grit-session.open .grit-session-body { display: block; }
-        .grit-session.open .grit-session-arrow { transform: rotate(90deg); }
-        .grit-session-arrow {
-            font-size: 0.6rem;
-            color: var(--text-muted);
-            transition: transform 0.2s;
-        }
-        .grit-session-field {
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.85rem;
-        }
-        .grit-session-field:last-child { border-bottom: none; }
-        .grit-session-field-label {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            margin-bottom: 4px;
-        }
-        .grit-session-field-value {
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-
-        /* Self-assessment subsection */
-        .grit-sa-section {
-            margin-top: 8px;
-            padding-top: 12px;
-            border-top: 1px dashed var(--border-color);
-        }
-        .grit-sa-header {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-        .grit-sa-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 6px 0;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-        .grit-sa-name {
-            color: var(--text-primary);
-            font-weight: 600;
-            min-width: 130px;
-        }
-        .grit-sa-values {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .grit-sa-student { color: var(--text-secondary); }
-        .grit-sa-coach { color: var(--accent-amber); font-weight: 600; }
-        .grit-sa-coach small { color: var(--text-muted); font-weight: 400; margin-left: 4px; }
-        .grit-sa-edit-btn {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            border-radius: 6px;
-            padding: 3px 8px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .grit-sa-edit-btn:hover {
-            background: var(--bg-hover);
-            color: var(--text-primary);
-        }
-        .grit-sa-edit-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .grit-sa-level-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-        .grit-sa-level-pill {
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 9999px;
-            padding: 4px 10px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .grit-sa-level-pill:hover { background: var(--bg-hover); color: var(--text-primary); }
-        .grit-sa-level-pill.selected {
-            background: var(--accent-amber);
-            color: white;
-            border-color: var(--accent-amber);
-        }
-        .grit-sa-save {
-            background: var(--accent-green);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 5px 10px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .grit-sa-cancel {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            border-radius: 6px;
-            padding: 4px 9px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .grit-sa-saving { color: var(--text-muted); font-size: 0.8rem; }
-
-        /* Self-assessment chip in checkin row */
-        .checkin-self-rating {
-            flex-basis: 100%;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        /* Score entry */
-        .grit-scores-section {
-            grid-column: 1 / -1;
-        }
-        .grit-score-inputs {
-            display: flex;
-            gap: 16px;
-            align-items: flex-end;
-            flex-wrap: wrap;
-        }
-        .grit-score-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .grit-score-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-        .grit-score-input {
-            width: 70px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 700;
-            text-align: center;
-        }
-        .grit-score-input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
-        }
-        .grit-save-btn {
-            padding: 10px 24px;
-            border-radius: 10px;
-            border: none;
-            background: linear-gradient(135deg, var(--accent-green), #16a34a);
-            color: white;
-            font-size: 0.9rem;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .grit-save-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(34,197,94,0.3);
-        }
-        .grit-save-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .grit-toolbar {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-        .grit-search-box {
-            flex: 1;
-            min-width: 200px;
-            position: relative;
-        }
-        .grit-search-box input {
-            width: 100%;
-            padding: 12px 16px 12px 44px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-card);
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            font-family: inherit;
-        }
-        .grit-search-box input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
-        }
-        .grit-search-box::before {
-            content: '🔍';
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1rem;
-        }
-        .grit-stats {
-            display: flex;
-            gap: 12px;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-        .grit-stats span { color: var(--text-primary); font-weight: 600; }
-        /* AI Analysis */
-        .ai-analyse-btn {
-            background: #874b46;
-            color: #fff;
-            font-weight: 700;
-            border: none;
-            border-radius: 0.5rem;
-            padding: 10px 20px;
-            font-size: 0.9rem;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .ai-analyse-btn:hover { background: #6a3a36; transform: translateY(-1px); }
-        .ai-analyse-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-        .ai-analyse-btn.loading { animation: aiPulse 1.5s ease-in-out infinite; }
-        @keyframes aiPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
-
-        .ai-panel {
-            background: #fef8f6;
-            border-left: 4px solid #874b46;
-            border-radius: 10px;
-            padding: 16px 20px;
-            margin-top: 12px;
-        }
-        .ai-panel-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #874b46;
-            margin-bottom: 14px;
-        }
-        .ai-criteria {
-            margin-bottom: 14px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid rgba(135,75,70,0.12);
-        }
-        .ai-criteria:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .ai-criteria-name {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #874b46;
-            margin-bottom: 4px;
-        }
-        .ai-criteria-score {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #874b46;
-            margin-bottom: 4px;
-        }
-        .ai-criteria-reasoning {
-            font-size: 0.8rem;
-            color: #777;
-            font-style: italic;
-            margin-bottom: 6px;
-        }
-        .ai-criteria-feedback {
-            font-size: 0.85rem;
-            color: #333;
-            background: rgba(135,75,70,0.06);
-            border-radius: 8px;
-            padding: 10px 12px;
-            line-height: 1.5;
-            border-left: 3px solid rgba(135,75,70,0.25);
-        }
-        .ai-summary-card {
-            background: rgba(135,75,70,0.06);
-            border-radius: 10px;
-            padding: 14px 16px;
-            margin-top: 14px;
-            color: #333;
-            font-size: 0.9rem;
-            line-height: 1.6;
-        }
-        .ai-regenerate {
-            display: inline-block;
-            margin-top: 10px;
-            font-size: 0.8rem;
-            color: #874b46;
-            cursor: pointer;
-            text-decoration: underline;
-            background: none;
-            border: none;
-            font-family: inherit;
-        }
-        .ai-regenerate:hover { color: #6a3a36; }
-        .ai-error {
-            font-size: 0.85rem;
-            color: #777;
-            font-style: italic;
-            margin-top: 10px;
-        }
-
-        /* Session Check-in Panel */
-        .checkin-toggle-btn {
-            background: #874b46;
-            color: #fff;
-            font-weight: 700;
-            border: none;
-            border-radius: 0.75rem;
-            padding: 12px 20px;
-            font-size: 0.95rem;
-            font-family: inherit;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-            transition: background 0.2s;
-        }
-        .checkin-toggle-btn:hover { background: #6a3a36; }
-        .checkin-toggle-btn .arrow {
-            display: inline-block;
-            font-size: 0.7rem;
-            transition: transform 0.2s;
-        }
-        .checkin-toggle-btn.open .arrow { transform: rotate(90deg); }
-        .checkin-panel {
-            display: none;
-            background: #f8f2f1;
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            margin-bottom: 16px;
-            color: #524342;
-        }
-        .checkin-panel.open { display: block; }
-        .checkin-panel-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-        }
-        .checkin-session-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #524342;
-        }
-        .checkin-session-select {
-            background: #fff;
-            color: #524342;
-            border: 1px solid #e5d7d5;
-            border-radius: 8px;
-            padding: 6px 10px;
-            font-family: inherit;
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-        .checkin-session-select:focus { outline: none; border-color: #874b46; }
-        .checkin-rows { margin-top: 0.5rem; }
-        .checkin-row {
-            background: #ffffff;
-            border-radius: 1rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            flex-wrap: wrap;
-            transition: background 0.3s;
-        }
-        .checkin-row.rated { background: #f0fdf4; }
-        .checkin-row.saved { animation: checkinFlash 1s ease-out; }
-        @keyframes checkinFlash {
-            0% { background: #bbf7d0; }
-            100% { background: var(--_endBg, #ffffff); }
-        }
-        .checkin-row.rated.saved { --_endBg: #f0fdf4; }
-        .checkin-row-info { min-width: 180px; }
-        .checkin-row-name {
-            font-weight: 600;
-            color: #1a1a1a;
-            font-size: 0.95rem;
-        }
-        .checkin-row-focus {
-            font-size: 0.75rem;
-            color: #777;
-            margin-top: 2px;
-        }
-        .checkin-rating {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .checkin-pill {
-            background: #f8f2f1;
-            color: #524342;
-            border: none;
-            border-radius: 9999px;
-            padding: 4px 12px;
-            font-size: 0.75rem;
-            font-family: inherit;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background 0.15s, color 0.15s, font-weight 0.15s;
-        }
-        .checkin-pill:hover { background: #eadcda; }
-        .checkin-pill.selected {
-            background: #874b46;
-            color: #ffffff;
-            font-weight: 700;
-        }
-        .checkin-tick {
-            display: inline-block;
-            margin-left: 6px;
-            color: #16a34a;
-            font-weight: 700;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .checkin-tick.show { opacity: 1; }
-        .checkin-summary {
-            margin-top: 1rem;
-            font-size: 0.85rem;
-            color: #524342;
-            text-align: right;
-        }
-        .checkin-summary span { font-weight: 700; color: #874b46; }
-        .checkin-empty {
-            padding: 1rem;
-            color: #777;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-
-        /* Session Analysis Bar */
-        .session-analysis-bar {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .session-analysis-bar select {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-family: inherit;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-        .session-analysis-bar select:focus { outline: none; border-color: var(--accent-blue); }
-        .session-analyse-btn {
-            background: #874b46;
-            color: #fff;
-            font-weight: 700;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 20px;
-            font-size: 0.9rem;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .session-analyse-btn:hover { background: #6a3a36; }
-        .session-analyse-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .session-status-line {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-left: auto;
-        }
-        .session-status-line span { color: var(--text-primary); font-weight: 600; }
-
-        /* Session Analysis Results */
-        .session-results { margin-top: 16px; }
-        .session-results-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-        .session-results-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        .save-all-btn {
-            background: #874b46;
-            color: #fff;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 0.85rem;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .save-all-btn:hover { background: #6a3a36; }
-        .save-all-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        .sa-row {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 10px;
-        }
-        .sa-row-top {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-        .sa-name {
-            font-weight: 600;
-            font-size: 0.95rem;
-            min-width: 140px;
-        }
-        .sa-no-plan-badge {
-            background: rgba(245,158,11,0.2);
-            color: var(--accent-amber);
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 6px;
-        }
-        .sa-score-input {
-            width: 60px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-light);
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1rem;
-            font-weight: 700;
-            text-align: center;
-            padding: 6px;
-        }
-        .sa-score-input:focus { outline: none; border-color: var(--accent-blue); }
-        .sa-feedback-textarea {
-            width: 100%;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 0.9rem;
-            padding: 10px 12px;
-            min-height: 60px;
-            resize: vertical;
-            margin-bottom: 8px;
-        }
-        .sa-feedback-textarea:focus { outline: none; border-color: var(--accent-blue); }
-        .sa-no-plan-msg {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-style: italic;
-            margin-bottom: 8px;
-        }
-        .sa-row-btn {
-            padding: 6px 16px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-        .sa-row-btn.save { background: #874b46; color: #fff; }
-        .sa-row-btn.save:hover { background: #6a3a36; }
-        .sa-row-btn.send { background: var(--accent-amber); color: #1a1a1a; }
-        .sa-row-btn.send:hover { opacity: 0.85; }
-        .sa-row-btn.saved { background: var(--accent-green); color: #fff; cursor: default; }
-        .sa-reasoning-toggle {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            cursor: pointer;
-            font-family: inherit;
-            margin-top: 4px;
-        }
-        .sa-reasoning-toggle:hover { color: var(--text-secondary); }
-        .sa-reasoning-text {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-style: italic;
-            margin-top: 4px;
-            display: none;
-        }
-        .sa-reasoning-text.show { display: block; }
-
-        @media (max-width: 768px) {
-            .grit-detail-grid { grid-template-columns: 1fr; }
-            .grit-score-inputs { flex-direction: column; align-items: stretch; }
-            .grit-score-input { width: 100%; }
-            .grit-card-meta { flex-wrap: wrap; }
-        }
-
         /* ===== Auth Gate ===== */
         #authGate {
             position: fixed; inset: 0; z-index: 99999;
@@ -1891,15 +1043,6 @@
             <div>Athlete Academy <span>Admin</span></div>
         </div>
 
-        <div class="session-control">
-            <span class="session-label">Session Unlocked:</span>
-            <div class="session-display">
-                <button class="session-btn" onclick="adjustSession(-1)">−</button>
-                <div class="session-number" id="currentSession">1</div>
-                <button class="session-btn" onclick="adjustSession(1)">+</button>
-            </div>
-        </div>
-
         <div class="user-info">
             <span class="user-name" id="userName">Teacher</span>
             <button class="logout-btn" onclick="logout()">Logout</button>
@@ -1941,13 +1084,12 @@
 
         <!-- View Tabs -->
         <div class="view-tabs">
-            <button class="view-tab active" onclick="switchView('strength')" id="tabStrength">🏋️ Strength</button>
-            <button class="view-tab" onclick="switchView('grit')" id="tabGrit">🧠 Grit Challenge</button>
-            <button class="view-tab" onclick="switchView('stamps')" id="tabStamps">🎫 Stamps</button>
+            <button class="view-tab active" onclick="switchView('stamps')" id="tabStamps">🎫 Stamps</button>
+            <button class="view-tab" onclick="switchView('strength')" id="tabStrength">🏋️ Levels</button>
         </div>
 
         <!-- Strength Panel (existing) -->
-        <div class="view-panel active" id="panelStrength">
+        <div class="view-panel" id="panelStrength">
             <div class="toolbar">
                 <div class="search-box">
                     <input type="text" placeholder="Search by name or email..." id="searchInput" oninput="filterStudents()">
@@ -1985,9 +1127,8 @@
             </div>
         </div>
 
-        <!-- Grit Challenge Panel -->
         <!-- Stamps Panel: level 1 sign-off per pattern. Ready = partner-checked in the portal. Not yet = sent back, with the reason -->
-        <div class="view-panel" id="panelStamps">
+        <div class="view-panel active" id="panelStamps">
             <div class="stamp-toolbar">
                 <input type="text" id="stampSearch" placeholder="Find a student..." oninput="renderStamps()">
                 <select id="stampGrade" onchange="renderStamps()"></select>
@@ -2019,61 +1160,6 @@
         <div class="stamp-veil" id="stampVeil" onclick="closeStampSheet()"></div>
         <div class="stamp-sheet" id="stampSheet"></div>
 
-        <div class="view-panel" id="panelGrit">
-            <!-- Session Check-in Panel -->
-            <button class="checkin-toggle-btn" id="checkinToggleBtn" onclick="toggleCheckinPanel()">
-                <span class="arrow">▶</span> 📋 Session Check-in
-            </button>
-            <div class="checkin-panel" id="checkinPanel">
-                <div class="checkin-panel-head">
-                    <div class="checkin-session-label" id="checkinSessionLabel">SESSION — </div>
-                    <select class="checkin-session-select" id="checkinSessionSelect" onchange="onCheckinSessionChange()">
-                        <option value="1">Session 1</option>
-                        <option value="2">Session 2</option>
-                        <option value="3">Session 3</option>
-                        <option value="4">Session 4</option>
-                        <option value="5">Session 5</option>
-                        <option value="6">Session 6</option>
-                        <option value="7">Session 7</option>
-                        <option value="8">Session 8</option>
-                    </select>
-                </div>
-                <div class="checkin-rows" id="checkinRows">
-                    <div class="checkin-empty">Loading students...</div>
-                </div>
-                <div class="checkin-summary" id="checkinSummary"></div>
-            </div>
-
-            <!-- Session Analysis Bar -->
-            <div class="session-analysis-bar">
-                <select id="sessionAnalysisSelect" onchange="onSessionSelectChange()">
-                    <option value="1">Session 1</option>
-                    <option value="2">Session 2</option>
-                    <option value="3">Session 3</option>
-                    <option value="4">Session 4</option>
-                    <option value="5">Session 5</option>
-                    <option value="6">Session 6</option>
-                    <option value="7">Session 7</option>
-                    <option value="8">Session 8</option>
-                </select>
-                <button class="session-analyse-btn" id="sessionAnalyseBtn" onclick="analyseSessionWithAI()" disabled>Analyse Session with AI</button>
-                <div class="session-status-line" id="sessionStatusLine">Select a session to check planning status</div>
-            </div>
-            <div id="sessionAnalysisResults"></div>
-
-            <div class="grit-toolbar">
-                <div class="grit-search-box">
-                    <input type="text" placeholder="Search students..." id="gritSearchInput" oninput="filterGritStudents()">
-                </div>
-                <div class="grit-stats" id="gritStats"></div>
-            </div>
-            <div id="gritContainer">
-                <div class="empty-state" id="gritLoading">
-                    <div class="loading-spinner" style="margin: 0 auto 16px;"></div>
-                    <div>Loading Grit challenges...</div>
-                </div>
-            </div>
-        </div>
     </main>
 
     <!-- Student Detail Modal -->
@@ -2093,7 +1179,7 @@
                         <!-- Populated by JS -->
                     </div>
                     <div class="info-row">
-                        <div class="info-item">📅 Sessions: <span id="modalSessions">0/10</span></div>
+                        <div class="info-item">📅 Sessions logged: <span id="modalSessions">0</span></div>
                         <div class="info-item">🏋️ Last Active: <span id="modalLastActive">--</span></div>
                     </div>
                 </div>
@@ -2171,7 +1257,6 @@
         let allStudents = [];
         let filteredStudents = [];
         let currentFilter = 'all';
-        let currentSession = 1;
         let selectedStudent = null;
         let pendingUpdates = {};
 
@@ -2201,6 +1286,28 @@
             return true;
         }
 
+        // Admin writes carry the Google ID token; the Apps Script verifies it with Google
+        // and checks the teacher allowlist before touching the sheet.
+        function adminToken() { return sessionStorage.getItem('aa_admin_token') || ''; }
+        function adminPost(body) {
+            return fetch(APPS_SCRIPT_URL, {
+                method: 'POST', headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(Object.assign({ token: adminToken() }, body))
+            }).then(async r => {
+                const text = await r.text();
+                let data; try { data = JSON.parse(text); } catch (e) { throw new Error('Server returned invalid response'); }
+                if (data && data.authRequired) { authExpired(); throw new Error('Sign in again'); }
+                return data;
+            });
+        }
+        function authExpired() {
+            sessionStorage.removeItem('aa_admin_token');
+            const gate = document.getElementById('authGate');
+            gate.classList.remove('hidden');
+            showAuthError('Your sign-in has expired. Sign in again to keep working.');
+            initAuthGate();
+        }
+
         function showAuthError(msg) {
             const el = document.getElementById('authError');
             if (msg) el.textContent = msg;
@@ -2211,7 +1318,6 @@
             document.getElementById('authGate').classList.add('hidden');
             const userEl = document.getElementById('userName');
             if (userEl && payload.name) userEl.textContent = payload.name;
-            loadSession();
             loadStudents();
         }
 
@@ -2223,6 +1329,8 @@
                 return;
             }
             sessionStorage.setItem('aa_admin_token', response.credential);
+            const el = document.getElementById('authError'); if (el) el.classList.remove('visible');
+            if (allStudents.length) { document.getElementById('authGate').classList.add('hidden'); return; }   // re-sign-in mid-session
             unlockApp(payload);
         }
 
@@ -2248,6 +1356,7 @@
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleCredentialResponse,
             });
+            document.getElementById('gsiButton').innerHTML = '';
             google.accounts.id.renderButton(
                 document.getElementById('gsiButton'),
                 { theme: 'filled_black', size: 'large', shape: 'rectangular', text: 'signin_with' }
@@ -2273,6 +1382,7 @@
                     renderTable();
                     updateStats();
                     renderInsights();
+                    renderStamps();
                 } else {
                     showToast('Error loading students', 'error');
                 }
@@ -2281,38 +1391,6 @@
                 showToast('Failed to load students', 'error');
             } finally {
                 document.getElementById('loadingOverlay').classList.add('hidden');
-            }
-        }
-
-        async function loadSession() {
-            try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=getConfig&key=CurrentSession`);
-                const data = await response.json();
-                if (data.success && data.value) {
-                    currentSession = parseInt(data.value) || 1;
-                    document.getElementById('currentSession').textContent = currentSession;
-                }
-            } catch (error) {
-                console.error('Error loading session:', error);
-            }
-        }
-
-        // ============================================
-        // SESSION CONTROL
-        // ============================================
-        async function adjustSession(delta) {
-            const newSession = Math.max(1, Math.min(20, currentSession + delta));
-            if (newSession === currentSession) return;
-
-            currentSession = newSession;
-            document.getElementById('currentSession').textContent = currentSession;
-
-            try {
-                await fetch(`${APPS_SCRIPT_URL}?action=setConfig&key=CurrentSession&value=${currentSession}`);
-                showToast(`Session ${currentSession} unlocked!`, 'success');
-            } catch (error) {
-                console.error('Error saving session:', error);
-                showToast('Failed to save session', 'error');
             }
         }
 
@@ -2367,7 +1445,7 @@
                 }
             });
 
-            if (readyToTest >= 2) {
+            if (readyToTest >= 1) {
                 return { class: 'testing', icon: '🎯', text: 'Ready to Test' };
             } else if (totalTech < 6) {
                 return { class: 'behind', icon: '⚠️', text: 'Needs Help' };
@@ -2392,7 +1470,7 @@
                 if (status.class === 'testing') readyCount++;
                 if (status.class === 'behind') behindCount++;
 
-                // Calculate progress: tech levels (0-5 each, 6 patterns = 30 max) + strength tiers (0-6 each, 6 patterns = 36 max)
+                // Progress: tech level (0-5) + strength tier (0-5) per pattern, six patterns = 60 max
                 let studentProgress = 0;
                 PATTERNS.forEach(p => {
                     studentProgress += (parseInt(student[p + '_Tech']) || 0);
@@ -2401,7 +1479,7 @@
                 totalProgress += studentProgress;
             });
 
-            const maxProgress = total * (30 + 36); // 30 for tech, 36 for strength
+            const maxProgress = total * 60;
             const avgProgress = total > 0 ? Math.round((totalProgress / maxProgress) * 100) : 0;
 
             document.getElementById('statTotal').textContent = total;
@@ -2463,7 +1541,7 @@
             renderProgressGrid();
             
             // Update info
-            document.getElementById('modalSessions').textContent = `${selectedStudent.Total_Sessions || 0}/10`;
+            document.getElementById('modalSessions').textContent = `${selectedStudent.Total_Sessions || 0}`;
             document.getElementById('modalLastActive').textContent = selectedStudent.Last_Session_Date || '--';
             
             // Render notes
@@ -2572,28 +1650,11 @@
             const updatesToSend = { ...pendingUpdates };
 
             try {
-                const response = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'updateStudent',
-                        athleteId: selectedStudent.Athlete_ID,
-                        updates: updatesToSend
-                    })
+                const data = await adminPost({
+                    action: 'updateStudent',
+                    athleteId: selectedStudent.Athlete_ID,
+                    updates: updatesToSend
                 });
-
-                if (!response.ok) {
-                    throw new Error('Server returned ' + response.status);
-                }
-
-                const text = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch (parseErr) {
-                    console.error('Invalid JSON response:', text.substring(0, 200));
-                    throw new Error('Server returned invalid response');
-                }
 
                 if (data.success) {
                     // Verify save: check server returned the values we sent
@@ -2661,16 +1722,11 @@
             notes.splice(index, 1);
 
             try {
-                const response = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'updateStudent',
-                        athleteId: selectedStudent.Athlete_ID,
-                        updates: { Notes: JSON.stringify(notes) }
-                    })
+                const data = await adminPost({
+                    action: 'updateStudent',
+                    athleteId: selectedStudent.Athlete_ID,
+                    updates: { Notes: JSON.stringify(notes) }
                 });
-                const data = await response.json();
 
                 if (data.success) {
                     selectedStudent.Notes = JSON.stringify(notes);
@@ -2701,16 +1757,11 @@
             });
 
             try {
-                const response = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'updateStudent',
-                        athleteId: selectedStudent.Athlete_ID,
-                        updates: { Notes: JSON.stringify(notes) }
-                    })
+                const data = await adminPost({
+                    action: 'updateStudent',
+                    athleteId: selectedStudent.Athlete_ID,
+                    updates: { Notes: JSON.stringify(notes) }
                 });
-                const data = await response.json();
 
                 if (data.success) {
                     selectedStudent.Notes = JSON.stringify(notes);
@@ -2756,11 +1807,6 @@
             });
             noLevels.sort((a, b) => b.patterns.length - a.patterns.length);
 
-            // 3. Low sessions
-            const lowSessions = allStudents
-                .filter(s => (parseInt(s.Total_Sessions) || 0) < Math.max(1, currentSession - 2))
-                .sort((a, b) => (parseInt(a.Total_Sessions) || 0) - (parseInt(b.Total_Sessions) || 0));
-
             // 4. All tested
             const stars = allStudents.filter(s => PATTERNS.every(p => (parseInt(s[p + '_Str']) || 0) > 0));
 
@@ -2784,14 +1830,6 @@
                         <div class="insight-row" onclick="openStudentModal('${r.student.Athlete_ID}')">
                             <div><div class="insight-name">${r.student.Name || 'Unknown'}</div><div class="insight-detail">${r.patterns.length}/6 at zero</div></div>
                             <div class="insight-tags">${r.patterns.map(p => `<span class="insight-tag red">${p}</span>`).join('')}</div>
-                        </div>`).join('')}
-                </div>
-                <div class="insight-card">
-                    <div class="insight-title blue">📉 Low Sessions <span class="count">${lowSessions.length}</span></div>
-                    ${lowSessions.length === 0 ? '<div class="insight-empty">All students keeping up</div>' : lowSessions.map(s => `
-                        <div class="insight-row" onclick="openStudentModal('${s.Athlete_ID}')">
-                            <div class="insight-name">${s.Name || 'Unknown'}</div>
-                            <div class="insight-tags"><span class="insight-tag red">${s.Total_Sessions || 0} sessions</span></div>
                         </div>`).join('')}
                 </div>
                 <div class="insight-card">
@@ -2830,7 +1868,6 @@
         // ============================================
         // VIEW TABS
         // ============================================
-        let gritDataLoaded = false;
 
         // ============================================
         // STAMPS — level 1 sign-off grid
@@ -2993,11 +2030,7 @@
         async function writeStampsBlock(athleteId, mutate) {
             const m = stampMeta[athleteId] || (stampMeta[athleteId] = { ready: {}, notyet: {}, stamped: {} });
             mutate(m);
-            const resp = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST', headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action: 'saveLearnProgress', athleteId, blockId: 'stamps', progress: { notyet: m.notyet, stamped: m.stamped }, meta: {} })
-            });
-            const d = await resp.json();
+            const d = await adminPost({ action: 'saveLearnProgress', athleteId, blockId: 'stamps', progress: { notyet: m.notyet, stamped: m.stamped }, meta: {} });
             if (!d.success) throw new Error(d.error || 'Could not save');
         }
 
@@ -3034,11 +2067,7 @@
             renderStamps();
             try {
                 const updates = {}; updates[pattern + '_Tech'] = next;
-                const resp = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({ action: 'updateStudent', athleteId, updates })
-                });
-                const data = await resp.json();
+                const data = await adminPost({ action: 'updateStudent', athleteId, updates });
                 if (!data.success) throw new Error(data.error || 'Save failed');
                 showToast(next === 1 ? `${s.Name}: ${pattern} stamped` : `${s.Name}: ${pattern} stamp removed`);
                 // Date and not-yet bookkeeping in the admin block. Best effort: the stamp itself is already saved.
@@ -3049,7 +2078,7 @@
             } finally {
                 delete stampBusy[key];
                 renderStamps();
-                if (typeof renderTable === 'function') renderTable();
+                renderTable(); updateStats(); renderInsights();
             }
         }
 
@@ -3069,1377 +2098,8 @@
             document.getElementById('panel' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
 
             if (view === 'stamps') renderStamps();
-
-            if (view === 'grit' && !gritDataLoaded) {
-                loadGritData();
-                onSessionSelectChange();
-            }
         }
 
-        // ============================================
-        // GRIT CHALLENGE ADMIN
-        // ============================================
-        let allGritStudents = [];
-        let filteredGritStudents = [];
-
-        async function loadGritData() {
-            console.log('[Grit Debug] loadGritData() called. allStudents count:', allStudents.length);
-            try {
-                // If allStudents hasn't loaded yet, wait for it
-                if (allStudents.length === 0) {
-                    console.log('[Grit Debug] allStudents is empty, waiting for student data...');
-                    await new Promise(resolve => {
-                        const check = setInterval(() => {
-                            if (allStudents.length > 0) { clearInterval(check); resolve(); }
-                        }, 200);
-                        // Timeout after 10s to avoid infinite wait
-                        setTimeout(() => { clearInterval(check); resolve(); }, 10000);
-                    });
-                    console.log('[Grit Debug] allStudents now has', allStudents.length, 'students');
-                }
-
-                const studentEmails = allStudents.map(s => s.Email).filter(Boolean);
-                console.log('[Grit Debug] Fetching grit data for', studentEmails.length, 'students');
-
-                if (studentEmails.length === 0) {
-                    console.warn('[Grit Debug] No student emails found — cannot load grit data');
-                    document.getElementById('gritContainer').innerHTML =
-                        '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>No students loaded — try refreshing the page</div></div>';
-                    return;
-                }
-
-                const gritPromises = studentEmails.map(email =>
-                    fetch(`${APPS_SCRIPT_URL}?action=getGritChallenge&email=${encodeURIComponent(email)}`)
-                        .then(r => r.json())
-                        .catch(err => { console.error('[Grit Debug] Fetch failed for', email, err); return null; })
-                );
-
-                const results = await Promise.all(gritPromises);
-                allGritStudents = [];
-
-                results.forEach((result, i) => {
-                    console.log(`[Grit Debug] Student ${studentEmails[i]} raw API response:`, JSON.stringify(result));
-                    if (!result || !result.success) return;
-                    let challenge = null;
-                    try {
-                        const json = result.challenge || result.challengeJson || result.challenge_json || result.Challenge_JSON;
-                        if (typeof json === 'string' && json.trim()) {
-                            challenge = JSON.parse(json);
-                        } else if (typeof json === 'object' && json) {
-                            challenge = json;
-                        }
-                    } catch (e) { console.error('[Grit Debug] JSON parse error for', studentEmails[i], e); }
-                    if (!challenge) return;
-
-                    const student = allStudents.find(s => s.Email === studentEmails[i]);
-                    allGritStudents.push({
-                        email: studentEmails[i],
-                        name: student ? student.Name : studentEmails[i],
-                        athleteId: student ? student.Athlete_ID : null,
-                        challenge: challenge,
-                        // Existing psych scores from result
-                        mindset: result.Mindset || result.mindset || '',
-                        mentalToughness: result.Mental_Toughness || result.mentalToughness || '',
-                        grit: result.Grit || result.grit || ''
-                    });
-                });
-
-                console.log('[Grit Debug] Loaded', allGritStudents.length, 'students with grit challenges');
-                filteredGritStudents = [...allGritStudents];
-                gritDataLoaded = true;
-                renderGritPanel();
-                renderCheckinRows();
-            } catch (error) {
-                console.error('Error loading grit data:', error);
-                document.getElementById('gritContainer').innerHTML =
-                    '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>Failed to load Grit challenges</div></div>';
-            }
-        }
-
-        // ============================================
-        // SESSION CHECK-IN PANEL
-        // ============================================
-        const CHECKIN_SESSION_DATES = [
-            { n: 1, date: '2026-03-25', label: 'Wed 25 Mar' },
-            { n: 2, date: '2026-04-15', label: 'Wed 15 Apr' },
-            { n: 3, date: '2026-04-20', label: 'Mon 20 Apr' },
-            { n: 4, date: '2026-04-22', label: 'Wed 22 Apr' },
-            { n: 5, date: '2026-04-27', label: 'Mon 27 Apr' },
-            { n: 6, date: '2026-05-05', label: 'Tue 5 May' },
-            { n: 7, date: '2026-05-13', label: 'Wed 13 May' },
-            { n: 8, date: '2026-05-19', label: 'Tue 19 May' }
-        ];
-        const CHECKIN_RATING_LABELS = ['Not Yet', 'Almost', 'Meeting', 'Exceeding', 'Leading'];
-        let currentCheckinSession = null;
-        let checkinObservations = {}; // { "email|session": { rating, ratingLabel } }
-
-        function detectCurrentSession() {
-            const todayStr = new Date().toISOString().slice(0, 10);
-            let match = CHECKIN_SESSION_DATES.find(s => s.date === todayStr);
-            if (match) return match;
-            // Otherwise pick the most recent session on or before today, falling back to S1
-            const past = CHECKIN_SESSION_DATES.filter(s => s.date <= todayStr);
-            if (past.length > 0) return past[past.length - 1];
-            return CHECKIN_SESSION_DATES[0];
-        }
-
-        function toggleCheckinPanel() {
-            const btn = document.getElementById('checkinToggleBtn');
-            const panel = document.getElementById('checkinPanel');
-            const open = panel.classList.toggle('open');
-            btn.classList.toggle('open', open);
-            if (open) {
-                if (!currentCheckinSession) {
-                    currentCheckinSession = detectCurrentSession();
-                    document.getElementById('checkinSessionSelect').value = currentCheckinSession.n;
-                }
-                refreshCheckinLabel();
-                if (!gritDataLoaded) {
-                    loadGritData();
-                } else {
-                    renderCheckinRows();
-                }
-                loadCheckinObservations();
-            }
-        }
-
-        function refreshCheckinLabel() {
-            if (!currentCheckinSession) return;
-            document.getElementById('checkinSessionLabel').textContent =
-                `SESSION ${currentCheckinSession.n} — ${currentCheckinSession.label}`;
-        }
-
-        function onCheckinSessionChange() {
-            const n = parseInt(document.getElementById('checkinSessionSelect').value, 10);
-            currentCheckinSession = CHECKIN_SESSION_DATES.find(s => s.n === n) || CHECKIN_SESSION_DATES[0];
-            refreshCheckinLabel();
-            renderCheckinRows();
-            loadCheckinObservations();
-        }
-
-        async function loadCheckinObservations() {
-            if (!currentCheckinSession) return;
-            try {
-                const url = `${APPS_SCRIPT_URL}?action=getObservations&session=${currentCheckinSession.n}`;
-                const resp = await fetch(url);
-                const data = await resp.json();
-                if (!data || !data.success || !Array.isArray(data.observations)) return;
-                checkinObservations = {};
-                data.observations.forEach(o => {
-                    const email = (o.Athlete_Email || o.email || '').toLowerCase();
-                    const sessNum = parseInt(o.Session_Number || o.sessionNumber, 10);
-                    if (!email || !sessNum) return;
-                    checkinObservations[`${email}|${sessNum}`] = {
-                        rating: parseInt(o.Rating || o.rating, 10) || null,
-                        ratingLabel: o.Rating_Label || o.ratingLabel || ''
-                    };
-                });
-                renderCheckinRows();
-            } catch (e) {
-                console.warn('[Checkin] getObservations failed (non-fatal):', e.message);
-            }
-        }
-
-        function renderCheckinRows() {
-            const rowsEl = document.getElementById('checkinRows');
-            const summaryEl = document.getElementById('checkinSummary');
-            if (!rowsEl) return;
-
-            if (!gritDataLoaded) {
-                rowsEl.innerHTML = '<div class="checkin-empty">Loading students...</div>';
-                summaryEl.textContent = '';
-                return;
-            }
-            if (!allGritStudents || allGritStudents.length === 0) {
-                rowsEl.innerHTML = '<div class="checkin-empty">No students have an active Grit Challenge yet</div>';
-                summaryEl.textContent = '';
-                return;
-            }
-
-            const sessNum = currentCheckinSession ? currentCheckinSession.n : 1;
-            const sortedStudents = [...allGritStudents].sort((a, b) => a.name.localeCompare(b.name));
-
-            rowsEl.innerHTML = sortedStudents.map((s, i) => {
-                const c = s.challenge || {};
-                const typeLabel = c.type === 'fitness' ? 'Fitness' : 'Personal Challenge';
-                const focus = c.focus || c.category || '—';
-                const key = `${(s.email || '').toLowerCase()}|${sessNum}`;
-                const obs = checkinObservations[key];
-                const currentRating = obs ? obs.rating : null;
-                const ratedClass = currentRating ? 'rated' : '';
-                const pills = [1, 2, 3, 4, 5].map(r => {
-                    const sel = r === currentRating ? 'selected' : '';
-                    return `<button class="checkin-pill ${sel}" data-email="${encodeURIComponent(s.email)}" data-rating="${r}" onclick="onCheckinRatingClick(this)">${r} ${CHECKIN_RATING_LABELS[r - 1]}</button>`;
-                }).join('');
-                const selfRatingNote = renderCheckinSelfRating(c, sessNum);
-                return `
-                    <div class="checkin-row ${ratedClass}" data-email="${encodeURIComponent(s.email)}">
-                        <div class="checkin-row-info">
-                            <div class="checkin-row-name">${escapeHtmlC(s.name)}<span class="checkin-tick" id="checkinTick-${i}">✓</span></div>
-                            <div class="checkin-row-focus">${escapeHtmlC(focus)} — ${typeLabel}</div>
-                        </div>
-                        <div class="checkin-rating">
-                            ${pills}
-                            ${selfRatingNote}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            updateCheckinSummary();
-        }
-
-        function updateCheckinSummary() {
-            const summaryEl = document.getElementById('checkinSummary');
-            const sessNum = currentCheckinSession ? currentCheckinSession.n : 1;
-            const total = allGritStudents.length;
-            const rated = allGritStudents.filter(s => {
-                const key = `${(s.email || '').toLowerCase()}|${sessNum}`;
-                return !!checkinObservations[key];
-            }).length;
-            summaryEl.innerHTML = `<span>${rated}</span> of <span>${total}</span> students rated`;
-        }
-
-        function escapeHtmlC(str) {
-            if (str == null) return '';
-            return String(str).replace(/[&<>"']/g, ch => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-            })[ch]);
-        }
-
-        // Compact "Self-rated: G·Meeting M·Almost MT·Leading" line for the check-in panel.
-        // Returns '' when the student hasn't rated this session yet.
-        function renderCheckinSelfRating(challenge, sessNum) {
-            const session = challenge && challenge.sessions && challenge.sessions[sessNum - 1];
-            if (!session) return '';
-            const g = typeof session.selfRatingGrit === 'number' ? session.selfRatingGrit : null;
-            const m = typeof session.selfRatingMindset === 'number' ? session.selfRatingMindset : null;
-            const mt = typeof session.selfRatingMentalToughness === 'number' ? session.selfRatingMentalToughness : null;
-            if (g === null && m === null && mt === null) return '';
-            const parts = [];
-            if (g !== null) parts.push('G·' + (gritSaLabelFor(g) || g));
-            if (m !== null) parts.push('M·' + (gritSaLabelFor(m) || m));
-            if (mt !== null) parts.push('MT·' + (gritSaLabelFor(mt) || mt));
-            return `<div class="checkin-self-rating">Self-rated: ${parts.join('  ')}</div>`;
-        }
-
-        async function onCheckinRatingClick(btn) {
-            const email = decodeURIComponent(btn.getAttribute('data-email') || '');
-            const rating = parseInt(btn.getAttribute('data-rating'), 10);
-            if (!email || !rating || !currentCheckinSession) return;
-
-            const row = btn.closest('.checkin-row');
-            const student = allGritStudents.find(s => s.email === email);
-            const athleteId = student ? student.athleteId : null;
-
-            // Optimistic UI update
-            row.querySelectorAll('.checkin-pill').forEach(p => p.classList.remove('selected'));
-            btn.classList.add('selected');
-            row.classList.add('rated');
-
-            const payload = {
-                action: 'saveObservation',
-                athleteId: athleteId,
-                athleteEmail: email,
-                sessionNumber: currentCheckinSession.n,
-                date: currentCheckinSession.date,
-                rating: rating,
-                ratingLabel: CHECKIN_RATING_LABELS[rating - 1]
-            };
-
-            try {
-                const resp = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const data = await resp.json();
-                if (!data || !data.success) throw new Error(data && data.error || 'Save failed');
-
-                // Record in local cache and flash green
-                const key = `${email.toLowerCase()}|${currentCheckinSession.n}`;
-                checkinObservations[key] = { rating: rating, ratingLabel: payload.ratingLabel };
-
-                row.classList.remove('saved');
-                void row.offsetWidth; // restart animation
-                row.classList.add('saved');
-                const tick = row.querySelector('.checkin-tick');
-                if (tick) {
-                    tick.classList.add('show');
-                    setTimeout(() => tick.classList.remove('show'), 1000);
-                }
-                setTimeout(() => row.classList.remove('saved'), 1100);
-
-                updateCheckinSummary();
-            } catch (err) {
-                console.error('[Checkin] save failed:', err);
-                showToast('Could not save rating — ' + err.message, 'error');
-            }
-        }
-
-        function filterGritStudents() {
-            const search = document.getElementById('gritSearchInput').value.toLowerCase();
-            filteredGritStudents = allGritStudents.filter(s =>
-                !search || s.name.toLowerCase().includes(search) || s.email.toLowerCase().includes(search)
-            );
-            renderGritPanel();
-        }
-
-        function renderGritPanel() {
-            const container = document.getElementById('gritContainer');
-            const stats = document.getElementById('gritStats');
-
-            if (allGritStudents.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧠</div><div>No students have started a Grit challenge yet</div></div>';
-                stats.innerHTML = '';
-                return;
-            }
-
-            const totalSessions = allGritStudents.reduce((sum, s) => sum + countCompletedSessions(s.challenge), 0);
-            const avgSessions = (totalSessions / allGritStudents.length).toFixed(1);
-            stats.innerHTML = `<span>${allGritStudents.length}</span> students | Avg <span>${avgSessions}</span> sessions`;
-
-            if (filteredGritStudents.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div>No students match your search</div></div>';
-                return;
-            }
-
-            container.innerHTML = filteredGritStudents.map((s, idx) => renderGritCard(s, idx)).join('');
-        }
-
-        function countCompletedSessions(challenge) {
-            if (!challenge || !challenge.sessions) return 0;
-            return challenge.sessions.filter(s => s && s.completed).length;
-        }
-
-        function renderGritCard(student, idx) {
-            const c = student.challenge;
-            const completed = countCompletedSessions(c);
-            const type = c.type === 'fitness' ? 'Fitness' : 'Personal Challenge';
-            const typeClass = c.type === 'fitness' ? 'fitness' : 'personal';
-            const focus = c.focus || c.category || '—';
-            const scores = [student.mindset, student.mentalToughness, student.grit].filter(Boolean);
-            const scoreText = scores.length > 0 ? `M:${student.mindset || '—'} T:${student.mentalToughness || '—'} G:${student.grit || '—'}` : 'No scores';
-
-            return `
-            <div class="grit-card" id="gritCard${idx}">
-                <div class="grit-card-header" onclick="toggleGritCard(${idx})">
-                    <div class="grit-card-left">
-                        <span class="grit-card-arrow">▶</span>
-                        <span class="grit-card-name">${student.name}</span>
-                    </div>
-                    <div class="grit-card-meta">
-                        <span class="grit-tag ${typeClass}">${focus}</span>
-                        <span class="grit-tag sessions">${completed} / 8</span>
-                        <span class="grit-tag scores">${scoreText}</span>
-                    </div>
-                </div>
-                <div class="grit-card-body">
-                    ${renderGritDetail(student, idx)}
-                </div>
-            </div>`;
-        }
-
-        function toggleGritCard(idx) {
-            document.getElementById('gritCard' + idx).classList.toggle('open');
-        }
-
-        function renderGritDetail(student, idx) {
-            const c = student.challenge;
-            const type = c.type === 'fitness' ? 'Fitness' : 'Personal Challenge';
-            const focus = c.focus || c.category || '—';
-            const difficulty = c.difficulty || c.challengeLevel || '—';
-            const why = c.why || '—';
-            const excuses = c.excuses || c.barriers || '—';
-            const baseline = c.baseline || '—';
-            const target = c.target || c.goal || '—';
-            const measure = c.measureMethod || c.measure || '—';
-
-            // Strength-specific fields
-            let goalExtra = '';
-            if (c.type === 'fitness' && (c.focus === 'Strength' || c.category === 'Strength')) {
-                const ex = c.exercise || c.exercises || '';
-                const cw = c.currentWeight || c.startWeight || '';
-                const reps = c.reps || '';
-                const gw = c.goalWeight || '';
-                if (ex || cw) {
-                    goalExtra = `<div class="grit-detail-row"><div class="grit-detail-label">Exercise</div><div class="grit-detail-value">${ex || '—'}</div></div>
-                    <div class="grit-detail-row"><div class="grit-detail-label">Weight/Reps</div><div class="grit-detail-value">${cw ? cw + 'kg' : '—'} x ${reps || '—'} → ${gw ? gw + 'kg' : '—'}</div></div>`;
-                }
-            }
-
-            // Sessions
-            let sessionsHtml = '';
-            for (let i = 0; i < 8; i++) {
-                const session = (c.sessions && c.sessions[i]) || null;
-                const done = session && session.completed;
-                const numClass = done ? 'done' : 'pending-s';
-                const statusText = done ? 'Completed' : 'Not completed';
-
-                let fieldsHtml = '';
-                if (done) {
-                    if (i === 7) {
-                        // Session 8 — final reflection
-                        fieldsHtml = renderSessionField('Final Result', session.finalRemeasure || session.finalMeasure || '—')
-                            + renderSessionField('What Changed', session.changed || session.reached || '—')
-                            + renderSessionField('Biggest Difference', session.difference || session.almostQuit || '—')
-                            + renderSessionField('Do Differently', session.differently || session.lesson || '—')
-                            + renderSessionField('Most Proud Of', session.proud || session.learned || '—');
-                    } else {
-                        // Sessions 1–7
-                        if (i === 0) {
-                            fieldsHtml += renderSessionField('Baseline', session.baseline || session.what || '—');
-                        }
-                        fieldsHtml += renderSessionField('Goal', session.goal || session.what || '—')
-                            + renderSessionField('Plan', session.plan || '—')
-                            + renderSessionField('How to Measure', session.measure || '—')
-                            + renderSessionField('Obstacle', session.obstacle || session.excuse || '—')
-                            + renderSessionField('How to Beat It', session.counter || session.overcome || '—')
-                            + renderSelfAssessmentSection(student, idx, i, session);
-                    }
-                } else {
-                    fieldsHtml = '<div class="grit-session-field"><div class="grit-session-field-value" style="color: var(--text-muted); font-style: italic;">No data yet</div></div>';
-                }
-
-                sessionsHtml += `
-                <div class="grit-session" id="gritSession${idx}_${i}">
-                    <div class="grit-session-header" onclick="document.getElementById('gritSession${idx}_${i}').classList.toggle('open')">
-                        <div class="grit-session-left">
-                            <div class="grit-session-num ${numClass}">${i + 1}</div>
-                            <span>Session ${i + 1}${i === 0 ? ' — Baseline' : i === 7 ? ' — Final' : ''}</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span style="font-size:0.8rem;color:${done ? 'var(--accent-green)' : 'var(--text-muted)'}">${statusText}</span>
-                            <span class="grit-session-arrow">▶</span>
-                        </div>
-                    </div>
-                    <div class="grit-session-body">
-                        ${fieldsHtml}
-                    </div>
-                </div>`;
-            }
-
-            return `
-            <div class="grit-detail-grid">
-                <div class="grit-detail-card">
-                    <div class="grit-detail-title">Challenge Summary</div>
-                    <div class="grit-detail-row"><div class="grit-detail-label">Type</div><div class="grit-detail-value">${type}</div></div>
-                    <div class="grit-detail-row"><div class="grit-detail-label">Focus</div><div class="grit-detail-value">${focus}</div></div>
-                    <div class="grit-detail-row"><div class="grit-detail-label">Difficulty</div><div class="grit-detail-value">${difficulty} / 5</div></div>
-                    <div class="grit-detail-row"><div class="grit-detail-label">Why</div><div class="grit-detail-value">${why}</div></div>
-                    <div class="grit-detail-row"><div class="grit-detail-label">Excuses</div><div class="grit-detail-value">${excuses}</div></div>
-                </div>
-                <div class="grit-detail-card">
-                    <div class="grit-detail-title">Goal</div>
-                    <div class="grit-detail-row"><div class="grit-detail-label">Baseline</div><div class="grit-detail-value">${baseline}</div></div>
-                    <div class="grit-detail-row"><div class="grit-detail-label">Target</div><div class="grit-detail-value">${target}</div></div>
-                    <div class="grit-detail-row"><div class="grit-detail-label">Measure</div><div class="grit-detail-value">${measure}</div></div>
-                    ${goalExtra}
-                </div>
-                <div class="grit-detail-card" style="grid-column: 1 / -1;">
-                    <div class="grit-detail-title">Sessions (${countCompletedSessions(c)} / 8 completed)</div>
-                    ${sessionsHtml}
-                </div>
-                <div class="grit-scores-section">
-                    <div class="grit-detail-card">
-                        ${countCompletedSessions(c) >= 1 ? `<button class="ai-analyse-btn" id="aiBtn${idx}" onclick="analyseWithAI(${idx})">Analyse with AI</button>` : ''}
-                        <div id="aiPanel${idx}"></div>
-                        <div class="grit-detail-title" style="margin-top:16px;">Psychology Scores</div>
-                        <div class="grit-score-inputs">
-                            <div class="grit-score-group">
-                                <div class="grit-score-label">Mindset</div>
-                                <input type="number" min="1" max="5" class="grit-score-input" id="gritMindset${idx}" value="${student.mindset || ''}" placeholder="—">
-                            </div>
-                            <div class="grit-score-group">
-                                <div class="grit-score-label">Mental Toughness</div>
-                                <input type="number" min="1" max="5" class="grit-score-input" id="gritToughness${idx}" value="${student.mentalToughness || ''}" placeholder="—">
-                            </div>
-                            <div class="grit-score-group">
-                                <div class="grit-score-label">Grit</div>
-                                <input type="number" min="1" max="5" class="grit-score-input" id="gritGrit${idx}" value="${student.grit || ''}" placeholder="—">
-                            </div>
-                            <button class="grit-save-btn" onclick="saveGritScores(${idx})" id="gritSaveBtn${idx}">Save Scores</button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        }
-
-        function renderSessionField(label, value) {
-            return `<div class="grit-session-field">
-                <div class="grit-session-field-label">${label}</div>
-                <div class="grit-session-field-value">${value}</div>
-            </div>`;
-        }
-
-        // Self-assessment criteria shown on each completed Sessions 1–7 row.
-        // Student values are stored on the session as selfRating{Grit,Mindset,MentalToughness}.
-        // Coach overrides are stored as coachRating{Grit,Mindset,MentalToughness}.
-        // Values are on the school 1-7 scale but only 5 levels are exposed.
-        const GRIT_SA_LEVELS = [
-            { label: 'Not Yet', value: 2 },
-            { label: 'Almost', value: 4 },
-            { label: 'Meeting', value: 5 },
-            { label: 'Exceeding', value: 6 },
-            { label: 'Leading', value: 7 }
-        ];
-        const GRIT_SA_VALID_VALUES = GRIT_SA_LEVELS.map(l => l.value);
-        function gritSaLabelFor(value) {
-            const lvl = GRIT_SA_LEVELS.find(l => l.value === value);
-            return lvl ? lvl.label : null;
-        }
-        function gritSaFormat(value) {
-            const lbl = gritSaLabelFor(value);
-            return lbl ? `${lbl} (${value})` : `${value}`;
-        }
-        const GRIT_SA_CRITERIA = [
-            { name: 'Grit', selfKey: 'selfRatingGrit', coachKey: 'coachRatingGrit' },
-            { name: 'Mindset', selfKey: 'selfRatingMindset', coachKey: 'coachRatingMindset' },
-            { name: 'Mental Toughness', selfKey: 'selfRatingMentalToughness', coachKey: 'coachRatingMentalToughness' }
-        ];
-
-        function renderSelfAssessmentSection(student, idx, sessionIdx, session) {
-            const rowsHtml = GRIT_SA_CRITERIA.map(crit => {
-                const studentVal = typeof session[crit.selfKey] === 'number' ? session[crit.selfKey] : null;
-                const coachVal = typeof session[crit.coachKey] === 'number' ? session[crit.coachKey] : null;
-                const rowId = `gritSaRow_${idx}_${sessionIdx}_${crit.coachKey}`;
-
-                let valuesHtml;
-                if (coachVal !== null) {
-                    valuesHtml = `
-                        <span class="grit-sa-student">Student: ${studentVal !== null ? gritSaFormat(studentVal) : '—'}</span>
-                        <span class="grit-sa-coach">Coach: ${gritSaFormat(coachVal)} <small>(edited)</small></span>`;
-                } else if (studentVal !== null) {
-                    valuesHtml = `<span class="grit-sa-student">${gritSaFormat(studentVal)}</span>`;
-                } else {
-                    valuesHtml = `<span class="grit-sa-student" style="color: var(--text-muted); font-style: italic;">Not rated</span>`;
-                }
-
-                const editStartVal = coachVal !== null ? coachVal : (studentVal !== null ? studentVal : '');
-
-                return `
-                    <div class="grit-sa-row" id="${rowId}">
-                        <div class="grit-sa-name">${crit.name}</div>
-                        <div class="grit-sa-values" id="${rowId}_view">
-                            ${valuesHtml}
-                            <button class="grit-sa-edit-btn" title="Override rating" onclick="openSaEdit(${idx}, ${sessionIdx}, '${crit.coachKey}', ${editStartVal === '' ? "''" : editStartVal})">✏️</button>
-                        </div>
-                    </div>`;
-            }).join('');
-
-            return `<div class="grit-sa-section">
-                <div class="grit-sa-header">Self Assessment</div>
-                ${rowsHtml}
-            </div>`;
-        }
-
-        function openSaEdit(studentIdx, sessionIdx, coachKey, currentVal) {
-            const rowId = `gritSaRow_${studentIdx}_${sessionIdx}_${coachKey}`;
-            const view = document.getElementById(rowId + '_view');
-            if (!view) return;
-            const pills = GRIT_SA_LEVELS.map(level => {
-                const sel = currentVal === level.value ? ' selected' : '';
-                return `<button type="button" class="grit-sa-level-pill${sel}" data-rating="${level.value}" onclick="selectSaLevel(this)">${level.label}</button>`;
-            }).join('');
-            view.innerHTML = `
-                <div class="grit-sa-edit-row">
-                    <div class="grit-sa-level-row">${pills}</div>
-                    <button class="grit-sa-save" onclick="saveSaEdit(${studentIdx}, ${sessionIdx}, '${coachKey}')">Save</button>
-                    <button class="grit-sa-cancel" onclick="cancelSaEdit(${studentIdx}, ${sessionIdx})">Cancel</button>
-                </div>`;
-        }
-
-        function selectSaLevel(btn) {
-            const row = btn.parentElement;
-            row.querySelectorAll('.grit-sa-level-pill').forEach(p => p.classList.remove('selected'));
-            btn.classList.add('selected');
-        }
-
-        function cancelSaEdit(studentIdx, sessionIdx) {
-            // Re-render this student's grit detail to restore the read-only views.
-            const card = document.getElementById('gritCard' + studentIdx);
-            if (!card) return;
-            const wasOpen = card.classList.contains('open');
-            const sessionEls = [];
-            for (let i = 0; i < 8; i++) {
-                const sEl = document.getElementById(`gritSession${studentIdx}_${i}`);
-                if (sEl && sEl.classList.contains('open')) sessionEls.push(i);
-            }
-            const detailContainer = card.querySelector('.grit-card-body');
-            if (detailContainer) {
-                detailContainer.innerHTML = renderGritDetail(filteredGritStudents[studentIdx], studentIdx);
-                if (wasOpen) card.classList.add('open');
-                sessionEls.forEach(i => {
-                    const re = document.getElementById(`gritSession${studentIdx}_${i}`);
-                    if (re) re.classList.add('open');
-                });
-            }
-        }
-
-        async function saveSaEdit(studentIdx, sessionIdx, coachKey) {
-            const rowId = `gritSaRow_${studentIdx}_${sessionIdx}_${coachKey}`;
-            const view = document.getElementById(rowId + '_view');
-            if (!view) return;
-            const selectedPill = view.querySelector('.grit-sa-level-pill.selected');
-            const val = selectedPill ? parseInt(selectedPill.dataset.rating, 10) : null;
-            if (val !== null && !GRIT_SA_VALID_VALUES.includes(val)) {
-                showToast('Pick a level', 'error');
-                return;
-            }
-
-            view.innerHTML = `<span class="grit-sa-saving">Saving…</span>`;
-
-            const student = filteredGritStudents[studentIdx];
-            const sessionNum = sessionIdx + 1;
-
-            try {
-                await saveCoachRating(student.email, sessionNum, coachKey, val);
-                // Mirror the change locally so the next render reflects the edit.
-                if (!student.challenge.sessions) student.challenge.sessions = [];
-                while (student.challenge.sessions.length <= sessionIdx) student.challenge.sessions.push(null);
-                if (!student.challenge.sessions[sessionIdx]) student.challenge.sessions[sessionIdx] = {};
-                if (val === null) {
-                    delete student.challenge.sessions[sessionIdx][coachKey];
-                } else {
-                    student.challenge.sessions[sessionIdx][coachKey] = val;
-                }
-                cancelSaEdit(studentIdx, sessionIdx);
-                showToast('Rating updated');
-            } catch (err) {
-                console.error('Save coach rating failed:', err);
-                showToast('Failed to save rating', 'error');
-                cancelSaEdit(studentIdx, sessionIdx);
-            }
-        }
-
-        // Persists a coach rating override to the challenge JSON.
-        // Always writes the full challenge via saveGritChallenge — the existing
-        // saveCoachFeedback Apps Script handler ignores fields it doesn't know
-        // about, which would silently drop coachRating* fields.
-        async function saveCoachRating(email, sessionNum, coachKey, value) {
-            // Read the existing challenge so we don't clobber other fields.
-            const gritResp = await fetch(`${APPS_SCRIPT_URL}?action=getGritChallenge&email=${encodeURIComponent(email)}`);
-            const gritData = await gritResp.json();
-            if (!gritData.success) throw new Error(gritData.error || 'Failed to load challenge');
-
-            let challenge = null;
-            const json = gritData.challenge || gritData.challengeJson || gritData.challenge_json || gritData.Challenge_JSON;
-            if (typeof json === 'string' && json.trim()) {
-                challenge = JSON.parse(json);
-            } else if (typeof json === 'object' && json) {
-                challenge = json;
-            }
-            if (!challenge) throw new Error('No challenge data found');
-
-            if (!challenge.sessions) challenge.sessions = [];
-            const idx = sessionNum - 1;
-            while (challenge.sessions.length <= idx) challenge.sessions.push(null);
-            if (!challenge.sessions[idx] || typeof challenge.sessions[idx] !== 'object') {
-                challenge.sessions[idx] = {};
-            }
-            const sessionObj = challenge.sessions[idx];
-            if (value === null) {
-                delete sessionObj[coachKey];
-            } else {
-                sessionObj[coachKey] = value;
-            }
-
-            const saveResp = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action: 'saveGritChallenge', email: email, challenge: challenge })
-            });
-            const saveData = await saveResp.json();
-            if (!saveData.success) throw new Error(saveData.error || 'Save failed');
-            return saveData;
-        }
-
-        function getAnthropicKey() {
-            if (window.ANTHROPIC_API_KEY) return window.ANTHROPIC_API_KEY;
-            let key = localStorage.getItem('anthropic_api_key');
-            if (key) return key;
-            key = prompt('Enter your Anthropic API key to enable AI analysis.\nThis will be stored in your browser for future use.');
-            if (key && key.trim()) {
-                key = key.trim();
-                localStorage.setItem('anthropic_api_key', key);
-                return key;
-            }
-            return null;
-        }
-
-        async function analyseWithAI(idx) {
-            const apiKey = getAnthropicKey();
-            if (!apiKey) return;
-
-            const student = filteredGritStudents[idx];
-            const c = student.challenge;
-            const btn = document.getElementById('aiBtn' + idx);
-            const panel = document.getElementById('aiPanel' + idx);
-
-            // Loading state
-            btn.textContent = 'Analysing...';
-            btn.disabled = true;
-            btn.classList.add('loading');
-            panel.innerHTML = '';
-
-            // Collect student data
-            const type = c.type === 'fitness' ? 'Fitness' : 'Personal Challenge';
-            const focus = c.focus || c.category || '—';
-            const difficulty = c.difficulty || c.challengeLevel || '—';
-            const why = c.why || '—';
-            const excuses = c.excuses || c.barriers || '—';
-            const baseline = c.baseline || '—';
-            const target = c.target || c.goal || '—';
-            const completed = countCompletedSessions(c);
-
-            let sessionSummaries = [];
-            for (let i = 0; i < 8; i++) {
-                const s = (c.sessions && c.sessions[i]) || null;
-                if (!s || !s.completed) continue;
-                if (i === 7) {
-                    sessionSummaries.push(`Session 8 (Final): Result: ${s.finalRemeasure || s.finalMeasure || '—'}, Changed: ${s.changed || s.reached || '—'}, Biggest difference: ${s.difference || s.almostQuit || '—'}, Do differently: ${s.differently || s.lesson || '—'}, Most proud: ${s.proud || s.learned || '—'}`);
-                } else {
-                    let entry = `Session ${i + 1}: Goal: ${s.goal || s.what || '—'}, Plan: ${s.plan || '—'}, Measure: ${s.measure || '—'}, Obstacle: ${s.obstacle || s.excuse || '—'}, Counter: ${s.counter || s.overcome || '—'}`;
-                    if (i === 0 && (s.baseline || s.what)) entry = `Session 1 (Baseline): Baseline: ${s.baseline || s.what || '—'}, ` + entry.substring(entry.indexOf('Goal:'));
-                    sessionSummaries.push(entry);
-                }
-            }
-
-            const userMessage = `Challenge type: ${type}
-Focus: ${focus}
-Difficulty rating: ${difficulty}/5
-Goal baseline: ${baseline}
-Goal target: ${target}
-Why: ${why}
-Excuses named: ${excuses}
-Sessions completed: ${completed}/8
-
-${sessionSummaries.join('\n')}`;
-
-            const systemPrompt = `You are an athletic development coach reviewing a student's Grit Challenge submissions. Assess the student's work against three criteria and provide suggested scores plus student-facing feedback. Be encouraging but honest. Use plain language appropriate for a 14-year-old athlete.
-
-Scoring scale is 1–5: 1 = Not yet meeting expectations, 2 = Approaching, 3 = Meeting, 4 = Exceeding, 5 = Outstanding
-
-Mindset: Based on goal ambition, difficulty rating chosen, quality of "why", and reflection depth in later sessions. Did they choose something genuinely hard and show understanding of why challenge drives growth?
-
-Mental Toughness: Based on obstacle/counter planning across all sessions and evidence of following through. Did they plan for excuses and actually beat them? Were session goals consistently challenging?
-
-Grit: Based on sessions completed, consistency of effort across planning responses, and overall commitment to the long-term goal. Did they show up and keep going?
-
-Respond in JSON only. No preamble, no markdown, no code blocks. Format:
-{"mindset":{"score":X,"reasoning":"one sentence teacher note","feedback":"2-3 sentences for student"},"mentalToughness":{"score":X,"reasoning":"one sentence teacher note","feedback":"2-3 sentences for student"},"grit":{"score":X,"reasoning":"one sentence teacher note","feedback":"2-3 sentences for student"},"summary":"2-3 sentence overall summary written directly to the student, warm and specific"}`;
-
-            try {
-                const response = await fetch('https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-api-key': apiKey,
-                        'anthropic-version': '2023-06-01',
-                        'anthropic-dangerous-direct-browser-access': 'true'
-                    },
-                    body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
-                        max_tokens: 1000,
-                        system: systemPrompt,
-                        messages: [{ role: 'user', content: userMessage }]
-                    })
-                });
-
-                if (!response.ok) {
-                    if (response.status === 401 || response.status === 403) localStorage.removeItem('anthropic_api_key');
-                    throw new Error(`API error: ${response.status}`);
-                }
-                const data = await response.json();
-                const text = data.content[0].text;
-                const result = JSON.parse(text);
-
-                // Render AI panel
-                panel.innerHTML = `
-                    <div class="ai-panel">
-                        <div class="ai-panel-label">✦ AI Analysis</div>
-                        <div class="ai-criteria">
-                            <div class="ai-criteria-name">Mindset</div>
-                            <div class="ai-criteria-score">${result.mindset.score} / 5</div>
-                            <div class="ai-criteria-reasoning">${result.mindset.reasoning}</div>
-                            <div class="ai-criteria-feedback">${result.mindset.feedback}</div>
-                        </div>
-                        <div class="ai-criteria">
-                            <div class="ai-criteria-name">Mental Toughness</div>
-                            <div class="ai-criteria-score">${result.mentalToughness.score} / 5</div>
-                            <div class="ai-criteria-reasoning">${result.mentalToughness.reasoning}</div>
-                            <div class="ai-criteria-feedback">${result.mentalToughness.feedback}</div>
-                        </div>
-                        <div class="ai-criteria">
-                            <div class="ai-criteria-name">Grit</div>
-                            <div class="ai-criteria-score">${result.grit.score} / 5</div>
-                            <div class="ai-criteria-reasoning">${result.grit.reasoning}</div>
-                            <div class="ai-criteria-feedback">${result.grit.feedback}</div>
-                        </div>
-                        <div class="ai-summary-card">${result.summary}</div>
-                        <button class="ai-regenerate" onclick="analyseWithAI(${idx})">Regenerate</button>
-                    </div>`;
-
-                // Pre-fill score inputs
-                document.getElementById('gritMindset' + idx).value = result.mindset.score;
-                document.getElementById('gritToughness' + idx).value = result.mentalToughness.score;
-                document.getElementById('gritGrit' + idx).value = result.grit.score;
-
-            } catch (error) {
-                console.error('AI analysis failed:', error);
-                panel.innerHTML = '<div class="ai-error">Analysis unavailable — please score manually.</div>';
-            } finally {
-                btn.textContent = 'Analyse with AI';
-                btn.disabled = false;
-                btn.classList.remove('loading');
-            }
-        }
-
-        async function saveGritScores(idx) {
-            const student = filteredGritStudents[idx];
-            if (!student || !student.athleteId) {
-                showToast('Cannot save — student not found', 'error');
-                return;
-            }
-
-            const mindset = document.getElementById('gritMindset' + idx).value;
-            const toughness = document.getElementById('gritToughness' + idx).value;
-            const grit = document.getElementById('gritGrit' + idx).value;
-
-            // Validate 1–5
-            for (const [name, val] of [['Mindset', mindset], ['Mental Toughness', toughness], ['Grit', grit]]) {
-                if (val && (parseInt(val) < 1 || parseInt(val) > 5)) {
-                    showToast(`${name} must be between 1 and 5`, 'error');
-                    return;
-                }
-            }
-
-            const btn = document.getElementById('gritSaveBtn' + idx);
-            btn.disabled = true;
-            btn.textContent = 'Saving...';
-
-            try {
-                if (!mindset && !toughness && !grit) {
-                    showToast('No scores to save', 'error');
-                    return;
-                }
-
-                const response = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'updatePsychScores',
-                        email: student.email || student.athleteId,
-                        mindset: mindset ? parseInt(mindset) : undefined,
-                        mentalToughness: toughness ? parseInt(toughness) : undefined,
-                        grit: grit ? parseInt(grit) : undefined
-                    })
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    student.mindset = mindset;
-                    student.mentalToughness = toughness;
-                    student.grit = grit;
-                    showToast(`Scores saved for ${student.name}`, 'success');
-                } else {
-                    showToast('Failed to save: ' + (data.error || 'Unknown error'), 'error');
-                }
-            } catch (error) {
-                console.error('Error saving grit scores:', error);
-                showToast('Failed to save scores', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Save Scores';
-            }
-        }
-
-        // ============================================
-        // SESSION-LEVEL AI ANALYSIS
-        // ============================================
-        let sessionPlanningData = null;
-
-        async function onSessionSelectChange() {
-            const sessionNum = document.getElementById('sessionAnalysisSelect').value;
-            const statusLine = document.getElementById('sessionStatusLine');
-            const btn = document.getElementById('sessionAnalyseBtn');
-            statusLine.textContent = 'Loading...';
-            btn.disabled = true;
-            sessionPlanningData = null;
-            document.getElementById('sessionAnalysisResults').innerHTML = '';
-
-            try {
-                // Try dedicated endpoint first
-                let students = null;
-                try {
-                    const url = `${APPS_SCRIPT_URL}?action=getSessionPlanning&session=${sessionNum}`;
-                    console.log('[Session Analysis] Fetching:', url);
-                    const resp = await fetch(url);
-                    const text = await resp.text();
-                    console.log('[Session Analysis] Raw response:', text.substring(0, 500));
-                    const data = JSON.parse(text);
-                    if (data.success && data.students) {
-                        students = data.students;
-                    }
-                } catch (e) {
-                    console.warn('[Session Analysis] getSessionPlanning failed, trying fallback:', e.message);
-                }
-
-                // Fallback: use allStudents + individual getGritChallenge calls
-                if (!students) {
-                    console.log('[Session Analysis] Using per-student getGritChallenge fallback');
-                    if (!allStudents || allStudents.length === 0) {
-                        throw new Error('No students loaded — try refreshing the page');
-                    }
-                    const studentEmails = allStudents.map(s => s.Email).filter(Boolean);
-                    const idx = parseInt(sessionNum) - 1;
-                    const gritPromises = studentEmails.map(email =>
-                        fetch(`${APPS_SCRIPT_URL}?action=getGritChallenge&email=${encodeURIComponent(email)}`)
-                            .then(r => r.json())
-                            .catch(() => null)
-                    );
-                    const results = await Promise.all(gritPromises);
-                    students = [];
-                    results.forEach((result, i) => {
-                        if (!result || !result.success) return;
-                        let challenge = null;
-                        try {
-                            const json = result.challenge || result.challengeJson || result.challenge_json || result.Challenge_JSON;
-                            if (typeof json === 'string' && json.trim()) {
-                                challenge = JSON.parse(json);
-                            } else if (typeof json === 'object' && json) {
-                                challenge = json;
-                            }
-                        } catch (e) { /* skip malformed */ }
-                        if (!challenge) return;
-
-                        let sessionData = null;
-                        let hasPlanned = false;
-                        if (challenge.sessions && challenge.sessions.length > idx && challenge.sessions[idx]) {
-                            sessionData = challenge.sessions[idx];
-                            hasPlanned = !!(sessionData.plan && String(sessionData.plan).trim() !== '');
-                        }
-                        const student = allStudents[i];
-                        students.push({
-                            name: student ? student.Name : studentEmails[i],
-                            email: studentEmails[i],
-                            challengeType: challenge.type || challenge.challengeType || '',
-                            challengeFocus: challenge.focus || challenge.challengeFocus || '',
-                            session: sessionData,
-                            hasPlanned: hasPlanned
-                        });
-                    });
-                }
-
-                sessionPlanningData = students;
-                const planned = sessionPlanningData.filter(s => s.hasPlanned).length;
-                const total = sessionPlanningData.length;
-                statusLine.innerHTML = `<span>${planned}</span> of <span>${total}</span> students have planned Session ${sessionNum}`;
-                btn.disabled = total === 0;
-            } catch (err) {
-                console.error('Session planning fetch error:', err);
-                statusLine.textContent = 'Failed to load planning data — ' + err.message;
-            }
-        }
-
-        // Build user message for a single student's session data
-        function buildStudentMsg(student, sessionNum) {
-            const s = student.session || {};
-            let msg = `Challenge type: ${student.challengeType || '—'}\nFocus: ${student.challengeFocus || '—'}\nSession ${sessionNum} planning:\n`;
-            if (s.baseline) msg += `Baseline: ${s.baseline}\n`;
-            if (s.goal || s.what) msg += `Goal: ${s.goal || s.what}\n`;
-            if (s.plan) msg += `Plan: ${s.plan}\n`;
-            if (s.measure) msg += `Measure: ${s.measure}\n`;
-            if (s.obstacle || s.excuse) msg += `Obstacle: ${s.obstacle || s.excuse}\n`;
-            if (s.counter || s.overcome) msg += `Counter: ${s.counter || s.overcome}\n`;
-            return msg;
-        }
-
-        // Single system prompt used everywhere
-        const SA_SYSTEM_PROMPT = `You are an athletic development coach reviewing students' session planning for their Grit Challenge. Assess each student's planning quality and provide a suggested score plus student-facing feedback. Be encouraging but honest. Use plain language appropriate for a 14-year-old athlete. Only assess what has been submitted — do not penalise for fields left blank if others show quality thinking.
-
-Scoring scale 1–5: 1 = Not yet meeting expectations, 2 = Approaching, 3 = Meeting, 4 = Exceeding, 5 = Outstanding.
-
-Assess: did they set a clear goal, make a specific plan, think about how to measure success, and genuinely engage with the obstacle/counter exercise?
-
-You will receive one or more students. Respond with a JSON array — one object per student, in the same order. No preamble, no markdown, no code blocks. Each object: { "id": "student_id_from_input", "score": X, "reasoning": "one sentence teacher-only note", "feedback": "2-3 sentences written directly to the student, warm and specific to what they wrote" }`;
-
-        // Call the API for a batch of student indices, with retries
-        async function analyseBatch(indices, sessionNum, apiKey, results, onProgress) {
-            // Build the multi-student prompt
-            let userMsg = '';
-            indices.forEach(i => {
-                const student = sessionPlanningData[i];
-                userMsg += `--- Student ID: ${i} (${student.name}) ---\n`;
-                userMsg += buildStudentMsg(student, sessionNum) + '\n';
-            });
-
-            const MAX_RETRIES = 4;
-            let lastErr = null;
-            for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-                if (attempt > 0) {
-                    await new Promise(r => setTimeout(r, 2000 * Math.pow(2, attempt - 1)));
-                }
-                try {
-                    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-api-key': apiKey,
-                            'anthropic-version': '2023-06-01',
-                            'anthropic-dangerous-direct-browser-access': 'true'
-                        },
-                        body: JSON.stringify({
-                            model: 'claude-haiku-4-5-20251001',
-                            max_tokens: 4096,
-                            system: SA_SYSTEM_PROMPT,
-                            messages: [{ role: 'user', content: userMsg }]
-                        })
-                    });
-
-                    if (resp.status === 429 || resp.status === 529 || resp.status === 500) {
-                        lastErr = `API ${resp.status}`;
-                        if (attempt < MAX_RETRIES) continue;
-                    }
-
-                    if (!resp.ok) {
-                        if (resp.status === 401 || resp.status === 403) localStorage.removeItem('anthropic_api_key');
-                        throw new Error(`API error: ${resp.status}`);
-                    }
-
-                    const data = await resp.json();
-                    let rawText = data.content[0].text.trim();
-                    if (rawText.startsWith('```')) {
-                        rawText = rawText.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
-                    }
-                    const parsed = JSON.parse(rawText);
-                    // parsed is an array of results
-                    const arr = Array.isArray(parsed) ? parsed : [parsed];
-
-                    // Map results back by id or by position
-                    arr.forEach((item, pos) => {
-                        const idx = item.id !== undefined ? Number(item.id) : indices[pos];
-                        if (indices.includes(idx)) {
-                            results[idx] = {
-                                student: sessionPlanningData[idx],
-                                score: item.score,
-                                feedback: item.feedback,
-                                reasoning: item.reasoning,
-                                blocking: false
-                            };
-                        }
-                    });
-
-                    // Mark any students not in the response as needing retry
-                    indices.forEach(i => {
-                        if (!results[i] || results[i].error) {
-                            // Check if we got a result for this student
-                            const found = arr.find(item => Number(item.id) === i);
-                            if (!found) {
-                                results[i] = {
-                                    student: sessionPlanningData[i],
-                                    score: null,
-                                    feedback: 'Analysis unavailable — please review manually.',
-                                    reasoning: 'Student not included in batch response',
-                                    blocking: false,
-                                    error: true
-                                };
-                            }
-                        }
-                    });
-
-                    if (onProgress) onProgress(indices.length);
-                    return;
-                } catch (err) {
-                    lastErr = err.message || err;
-                    if (attempt === MAX_RETRIES) {
-                        console.error(`Batch analysis failed after ${MAX_RETRIES + 1} attempts:`, lastErr);
-                        indices.forEach(i => {
-                            if (!results[i] || results[i].error !== false) {
-                                results[i] = {
-                                    student: sessionPlanningData[i],
-                                    score: null,
-                                    feedback: 'Analysis unavailable — please review manually.',
-                                    reasoning: 'Error: ' + lastErr,
-                                    blocking: false,
-                                    error: true
-                                };
-                            }
-                        });
-                        if (onProgress) onProgress(indices.length);
-                    }
-                }
-            }
-        }
-
-        function renderSessionResults(results, sessionNum) {
-            const NO_PLAN_MSG = "You haven't completed your session plan yet. Plan your session and check in with your teacher before completing this session.";
-            const failedCount = results.filter(r => r && r.error).length;
-
-            let html = `<div class="session-results">
-                <div class="session-results-header">
-                    <div class="session-results-title">Session ${sessionNum} Analysis — ${results.length} students${failedCount ? ` (${failedCount} failed)` : ''}</div>
-                    <div style="display:flex;gap:8px;">
-                        ${failedCount ? `<button class="save-all-btn" style="background:var(--amber);color:#000;" onclick="retryFailedAnalyses(${sessionNum})">Retry Failed</button>` : ''}
-                        <button class="save-all-btn" id="saveAllBtn" onclick="saveAllSessionFeedback(${sessionNum})">Save All</button>
-                    </div>
-                </div>`;
-
-            results.forEach((r, i) => {
-                if (r.blocking) {
-                    html += `<div class="sa-row" id="saRow${i}">
-                        <div class="sa-row-top">
-                            <div class="sa-name">${r.student.name}</div>
-                            <span class="sa-no-plan-badge">No plan submitted</span>
-                        </div>
-                        <div class="sa-no-plan-msg">${NO_PLAN_MSG}</div>
-                        <button class="sa-row-btn send" id="saBtn${i}" onclick="sendBlockingMessage(${i}, ${sessionNum})">Send Message</button>
-                    </div>`;
-                } else {
-                    html += `<div class="sa-row" id="saRow${i}">
-                        <div class="sa-row-top">
-                            <div class="sa-name">${r.student.name}</div>
-                            <label style="font-size:0.8rem;color:var(--text-secondary);margin-left:auto;">Score</label>
-                            <input type="number" min="1" max="5" class="sa-score-input" id="saScore${i}" value="${r.score || ''}">
-                        </div>
-                        <textarea class="sa-feedback-textarea" id="saFeedback${i}">${r.feedback || ''}</textarea>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <button class="sa-row-btn save" id="saBtn${i}" onclick="saveSessionFeedback(${i}, ${sessionNum})">Save</button>
-                            <button class="sa-reasoning-toggle" onclick="toggleSaReasoning(${i})">AI reasoning ▸</button>
-                        </div>
-                        <div class="sa-reasoning-text" id="saReasoning${i}">${r.reasoning || '—'}</div>
-                    </div>`;
-                }
-            });
-
-            html += '</div>';
-            return html;
-        }
-
-        async function analyseSessionWithAI() {
-            const apiKey = getAnthropicKey();
-            if (!apiKey) return;
-            if (!sessionPlanningData || sessionPlanningData.length === 0) return;
-
-            const sessionNum = document.getElementById('sessionAnalysisSelect').value;
-            const btn = document.getElementById('sessionAnalyseBtn');
-            btn.disabled = true;
-            btn.textContent = `Analysing ${sessionPlanningData.length} students...`;
-
-            const resultsContainer = document.getElementById('sessionAnalysisResults');
-            const results = [];
-
-            // Separate planned vs unplanned
-            const toAnalyse = [];
-            sessionPlanningData.forEach((student, i) => {
-                if (!student.hasPlanned) {
-                    results[i] = { student, score: null, feedback: null, reasoning: null, blocking: true };
-                } else {
-                    toAnalyse.push(i);
-                }
-            });
-
-            // Batch students into groups of 8 per API call
-            const BATCH_SIZE = 8;
-            let completed = 0;
-
-            for (let b = 0; b < toAnalyse.length; b += BATCH_SIZE) {
-                const batch = toAnalyse.slice(b, b + BATCH_SIZE);
-                await analyseBatch(batch, sessionNum, apiKey, results, (count) => {
-                    completed += count;
-                    btn.textContent = `Analysing... ${completed}/${toAnalyse.length}`;
-                });
-            }
-
-            // Auto-retry any failures individually (fallback safety net)
-            const stillFailed = [];
-            results.forEach((r, i) => { if (r && r.error) stillFailed.push(i); });
-            if (stillFailed.length > 0) {
-                btn.textContent = `Retrying ${stillFailed.length} individually...`;
-                for (const i of stillFailed) {
-                    await analyseBatch([i], sessionNum, apiKey, results, () => {});
-                    // Small delay between individual retries
-                    await new Promise(r => setTimeout(r, 500));
-                }
-            }
-
-            resultsContainer.innerHTML = renderSessionResults(results, sessionNum);
-            window._sessionAnalysisResults = results;
-
-            btn.textContent = 'Analyse Session with AI';
-            btn.disabled = false;
-        }
-
-        async function retryFailedAnalyses(sessionNum) {
-            const apiKey = getAnthropicKey();
-            if (!apiKey) return;
-            const results = window._sessionAnalysisResults;
-            if (!results) return;
-
-            const failed = [];
-            results.forEach((r, i) => { if (r && r.error) failed.push(i); });
-            if (failed.length === 0) return;
-
-            const btn = document.getElementById('sessionAnalyseBtn');
-            btn.disabled = true;
-            btn.textContent = `Retrying ${failed.length} failed...`;
-
-            // Retry all failed in a single batch
-            await analyseBatch(failed, sessionNum, apiKey, results, () => {});
-
-            // Re-render
-            document.getElementById('sessionAnalysisResults').innerHTML = renderSessionResults(results, sessionNum);
-            window._sessionAnalysisResults = results;
-
-            btn.textContent = 'Analyse Session with AI';
-            btn.disabled = false;
-        }
-
-        function toggleSaReasoning(i) {
-            document.getElementById('saReasoning' + i).classList.toggle('show');
-        }
-
-        // Helper: save feedback by modifying challenge JSON directly via saveGritChallenge
-        async function saveFeedbackViaChallenge(email, sessionNum, feedback, blockingMessage) {
-            // First, fetch the student's current challenge
-            const gritResp = await fetch(`${APPS_SCRIPT_URL}?action=getGritChallenge&email=${encodeURIComponent(email)}`);
-            const gritData = await gritResp.json();
-            if (!gritData.success) throw new Error(gritData.error || 'Failed to load challenge');
-
-            let challenge = null;
-            const json = gritData.challenge || gritData.challengeJson || gritData.challenge_json || gritData.Challenge_JSON;
-            if (typeof json === 'string' && json.trim()) {
-                challenge = JSON.parse(json);
-            } else if (typeof json === 'object' && json) {
-                challenge = json;
-            }
-            if (!challenge) throw new Error('No challenge data found');
-
-            // Ensure sessions array
-            if (!challenge.sessions) challenge.sessions = [];
-            const idx = parseInt(sessionNum) - 1;
-            while (challenge.sessions.length <= idx) challenge.sessions.push(null);
-            if (!challenge.sessions[idx] || typeof challenge.sessions[idx] !== 'object') {
-                challenge.sessions[idx] = {};
-            }
-            challenge.sessions[idx].coachFeedback = feedback;
-            challenge.sessions[idx].requiresPlanningFirst = !!blockingMessage;
-
-            // Save back via saveGritChallenge
-            const saveResp = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({
-                    action: 'saveGritChallenge',
-                    email: email,
-                    challenge: challenge
-                })
-            });
-            const saveData = await saveResp.json();
-            if (!saveData.success) throw new Error(saveData.error || 'Save failed');
-            return saveData;
-        }
-
-        async function saveSessionFeedback(i, sessionNum) {
-            const r = window._sessionAnalysisResults[i];
-            const feedback = document.getElementById('saFeedback' + i).value;
-            const btn = document.getElementById('saBtn' + i);
-            btn.textContent = 'Saving...';
-            btn.disabled = true;
-
-            try {
-                // Try saveCoachFeedback first
-                let success = false;
-                try {
-                    const resp = await fetch(APPS_SCRIPT_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify({
-                            action: 'saveCoachFeedback',
-                            email: r.student.email,
-                            sessionNumber: parseInt(sessionNum),
-                            feedback: feedback,
-                            blockingMessage: false
-                        })
-                    });
-                    const data = await resp.json();
-                    if (data.success) success = true;
-                } catch (e) { /* fall through to fallback */ }
-
-                // Fallback: modify challenge directly
-                if (!success) {
-                    await saveFeedbackViaChallenge(r.student.email, sessionNum, feedback, false);
-                }
-
-                btn.textContent = 'Saved ✓';
-                btn.classList.remove('save');
-                btn.classList.add('saved');
-            } catch (err) {
-                console.error('Save feedback error:', err);
-                btn.textContent = 'Save';
-                btn.disabled = false;
-                showToast('Failed to save feedback for ' + r.student.name, 'error');
-            }
-        }
-
-        async function sendBlockingMessage(i, sessionNum) {
-            const r = window._sessionAnalysisResults[i];
-            const msg = "You haven't completed your session plan yet. Plan your session and check in with your teacher before completing this session.";
-            const btn = document.getElementById('saBtn' + i);
-            btn.textContent = 'Sending...';
-            btn.disabled = true;
-
-            try {
-                // Try saveCoachFeedback first
-                let success = false;
-                try {
-                    const resp = await fetch(APPS_SCRIPT_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify({
-                            action: 'saveCoachFeedback',
-                            email: r.student.email,
-                            sessionNumber: parseInt(sessionNum),
-                            feedback: msg,
-                            blockingMessage: true
-                        })
-                    });
-                    const data = await resp.json();
-                    if (data.success) success = true;
-                } catch (e) { /* fall through to fallback */ }
-
-                // Fallback: modify challenge directly
-                if (!success) {
-                    await saveFeedbackViaChallenge(r.student.email, sessionNum, msg, true);
-                }
-
-                btn.textContent = 'Sent ✓';
-                btn.classList.remove('send');
-                btn.classList.add('saved');
-            } catch (err) {
-                console.error('Send blocking message error:', err);
-                btn.textContent = 'Send Message';
-                btn.disabled = false;
-                showToast('Failed to send message for ' + r.student.name, 'error');
-            }
-        }
-
-        async function saveAllSessionFeedback(sessionNum) {
-            const results = window._sessionAnalysisResults;
-            if (!results) return;
-            const saveAllBtn = document.getElementById('saveAllBtn');
-            saveAllBtn.disabled = true;
-            saveAllBtn.textContent = 'Saving all...';
-
-            const promises = results.map((r, i) => {
-                const btn = document.getElementById('saBtn' + i);
-                if (btn.classList.contains('saved')) return Promise.resolve(); // already saved
-                if (r.blocking) return sendBlockingMessage(i, sessionNum);
-                return saveSessionFeedback(i, sessionNum);
-            });
-
-            await Promise.all(promises);
-            saveAllBtn.textContent = 'All Saved ✓';
-        }
     </script>
 </body>
 </html>
