@@ -136,6 +136,10 @@
   .prow .cell .rx{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:17px;color:var(--ink-2)}
   .prow .cell.lock{opacity:.5}
   .prow .cell.go .ex{color:var(--mark);font-weight:600}
+  .soon{position:relative}
+  .soon .blur{filter:blur(5px);pointer-events:none;user-select:none;opacity:.7}
+  .soon .over{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding-top:60px}
+  .soon .over .card{max-width:420px;border-top-color:var(--accent);box-shadow:0 10px 30px rgba(0,0,0,.08)}
   .unit{list-style:none;margin:0;padding:0}
   .unit li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:14px}
   .unit li:last-child{border-bottom:none}
@@ -271,6 +275,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0Ly
 const SESSION_KEY = 'aaG9PortalUser';
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 const BLOCK_ID = 'intro';
+const PROGRAM_LIVE = false;   // My program stays a blurred teaser until stamps start landing
 let currentUser = null;
 let state = { athlete:null, athleteId:'', levels:{}, progress:{}, stamps:{ notyet:{}, stamped:{} } };
 
@@ -396,7 +401,7 @@ const checkedCount = () => PATTERNS.filter(p => (state.progress.self[p.key] || [
 function go(tab){
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + tab));
-  if (tab === 'program' && !state.progress.checklist.program) { state.progress.checklist.program = true; save(); renderToday(); }
+  if (tab === 'rules' && !state.progress.checklist.rules) { state.progress.checklist.rules = true; save(); renderToday(); }
   window.scrollTo({ top: 0 });
 }
 function renderAll(){ renderToday(); renderPassport(); renderPatterns(); renderProgram(); renderRules(); }
@@ -408,14 +413,14 @@ function renderToday(){
     ['Watch the six movement videos', `${watchedCount()} of 6 watched. <a onclick="go('patterns')">Open the six</a>`, watchedCount() === 6],
     ['Self-check each one', `${checkedCount()} of 6 started. Tick the criteria you are sure of, leave the rest blank`, checkedCount() === 6],
     ['Get stamped', `${stampCount()} of 6 stamped${readyCount() ? `, ${readyCount()} ready for a look` : ''}. A partner ticks your six first, then Mr Bain watches a line of five and stamps. <a onclick="go('passport')">See your passport</a>`, stampCount() > 0],
-    ['See your program', 'What you do now, and what a stamp unlocks. <a onclick="go(\'program\')">Open my program</a>', !!p.checklist.program],
+    ['Read the gym rules', 'Three things: look after your body, look after the space, train the way we train. <a onclick="go(\'rules\')">Open the rules</a>', !!p.checklist.rules],
     ['Reflection', 'Which pattern feels least controlled? Answer below', !!p.least]
   ];
   const least = p.least || '';
   document.getElementById('view-today').innerHTML = `
     <span class="eb">Block 1 · Learn the shape</span>
     <h1>Classroom <span class="t">A</span></h1>
-    <p class="lede">Four gym sessions in. Today you meet the portal and the passport, watch the six movements, check yourself against the criteria, and see what your program looks like.</p>
+    <p class="lede">Four gym sessions in. Today you meet the portal and the passport, watch the six movements, and check yourself against the criteria.</p>
     <div class="card acc"><h2>Today</h2>
       <ol class="steps">${steps.map(([t, d, ok], i) => `<li class="${ok ? 'done' : ''}"><div class="n">${ok ? '✓' : i + 1}</div><div class="txt"><b>${t}</b><span>${d}</span></div></li>`).join('')}</ol>
     </div>
@@ -528,7 +533,9 @@ function tickSelf(k, i, on){
 
 function renderProgram(){
   const n = stampCount();
-  document.getElementById('view-program').innerHTML = `
+  const open = PROGRAM_LIVE ? '' : '<div class="soon"><div class="blur">';
+  const close = PROGRAM_LIVE ? '' : `</div><div class="over"><div class="card"><h2>Coming soon</h2><p>Your program appears here once stamps start landing. Each stamp unlocks the loaded version of that pattern, and this page will show what is yours.</p><p style="margin:0"><span class="eb">For now</span><br>Everything is bodyweight. The Board has your session.</p></div></div></div>`;
+  document.getElementById('view-program').innerHTML = open + `
     <span class="eb">My program · Intro to Training</span>
     <h1>What you <span class="t">do now</span></h1>
     <p class="lede">Every gym session has the same shape: Prep, Move, Finish. In Move, each pattern has a bodyweight version and a loaded version. Your stamps decide which one is yours.</p>
@@ -545,7 +552,7 @@ function renderProgram(){
     </div>
     <div class="card"><h2>After this unit</h2>
       <p>Foundations. The same session shape with its full names, your own sessions to log, and weights that are yours. Everyone gets there. What it looks like depends on your stamps.</p>
-    </div>`;
+    </div>` + close;
 }
 
 function renderRules(){
