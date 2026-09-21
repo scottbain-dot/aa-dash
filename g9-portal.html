@@ -534,13 +534,13 @@ function patHTML(x){
   const pill = `<span class="pill ${st.cls}">${st.label}</span>`;
   const ny = !lvl && state.stamps.notyet[x.key];
   const partner = lvl ? '' : (state.progress.partner[x.key]
-    ? `<div class="partner"><span class="ok">✓ Partner-checked ${shortDate(state.progress.partner[x.key])}</span><small>You are on the stamp line. Mr Bain watches five reps in the gym.</small></div>`
+    ? `<div class="partner"><span class="ok">✓ Partner-checked ${shortDate(state.progress.partner[x.key])}</span><small>You are on the stamp line. Mr Bain watches five reps in the gym.</small><button class="btn ghost small" onclick="undoPartner('${x.key}')">Undo</button></div>`
     : `<div class="partner"><button class="btn small" ${watched ? '' : 'disabled'} onclick="markPartner('${x.key}')">A partner watched me and ticked all six</button><small>${watched ? 'Five reps, side on, against the criteria card. Then you are ready for Mr Bain to look.' : 'Watch the video first.'}</small></div>`);
   return `<div class="pat" id="pat-${x.key}">
     <div class="pat-h" onclick="togglePat('${x.key}')"><div><div class="pn">${x.key}</div><div class="sub">${x.sub} · ${x.l1.name}</div></div>${pill}<span class="chev">›</span></div>
     <div class="pat-b">
       <div class="vid" data-src="${x.l1.video}"></div>
-      <div class="vrow">${watched ? '<span class="ok">✓ Watched</span>' : `<button class="btn small" onclick="markWatched('${x.key}')">I have watched this</button><span style="font-size:13px;color:var(--mute)">Watch it through once, then the self-check opens</span>`}</div>
+      <div class="vrow">${watched ? `<span class="ok">✓ Watched</span><button class="btn ghost small" onclick="undoWatched('${x.key}')">Undo</button>` : `<button class="btn small" onclick="markWatched('${x.key}')">I have watched this</button><span style="font-size:13px;color:var(--mute)">Watch it through once, then the self-check opens</span>`}</div>
       <span class="eb">Self-check · ${x.l1.name}</span>
       ${ny ? `<div class="notyet"><b>Not yet · ${shortDate(ny.date)}.</b> ${esc(ny.why)}. Fix this, then ask for another look.</div>` : ''}
       <ul class="crit ${watched ? '' : 'locked'}">${x.criteria.map(([t, n], i) => `<li><input type="checkbox" ${self[i] ? 'checked' : ''} ${watched ? '' : 'disabled'} onchange="tickSelf('${x.key}',${i},this.checked)"><div><b>${t}</b><span>${n}</span></div></li>`).join('')}</ul>
@@ -572,6 +572,14 @@ function markWatched(k){
   const n = document.getElementById('pat-' + k); n.classList.add('open'); loadVideo(n);
   renderToday(); renderQuiz();
 }
+function repaint(k){
+  const el = document.getElementById('pat-' + k);
+  el.outerHTML = patHTML(PAT[k]);
+  const n = document.getElementById('pat-' + k); n.classList.add('open'); loadVideo(n);
+  renderToday(); renderPassport(); renderQuiz();
+}
+function undoPartner(k){ delete state.progress.partner[k]; save(); repaint(k); toast('Partner check removed'); }
+function undoWatched(k){ delete state.progress.watched[k]; save(); repaint(k); toast('Marked as not watched'); }
 function markPartner(k){
   state.progress.partner[k] = isoToday(); save();
   const el = document.getElementById('pat-' + k);
