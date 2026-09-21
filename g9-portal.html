@@ -87,6 +87,13 @@
   .tile.hi .stamp{border-style:solid;border-color:var(--green);color:var(--green);background:#fff;transform:rotate(-10deg)}
   .tile.hi{border-color:var(--green);background:var(--green-soft)}
   .tile.hi .st{color:var(--green)}
+  .tile .stamp.has{border:none;background:transparent;width:62px;height:62px;top:6px;right:6px;transform:none}
+  .stampsvg{width:100%;height:100%;transform:rotate(-12deg);filter:drop-shadow(0 1px 0 rgba(0,0,0,.08))}
+  .tile.on .stamp.has,.tile.hi .stamp.has{background:transparent;border:none}
+  .medal svg{width:30px;height:30px}
+  .medal .num{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--sheet);border:2px solid var(--rule-2);color:var(--mute);font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-shadow:none}
+  .slot.got .medal .num{border-color:currentColor;color:var(--ink);border-color:var(--ink)}
+  .slot.nxt .medal .num{border-color:var(--accent);color:var(--accent)}
   .tile.rdy{border:1px dashed var(--mark)}
   .tile.rdy .st{color:var(--mark)}
   .tile.rdy .stamp{border-color:var(--mark);color:var(--mark)}
@@ -125,12 +132,12 @@
   .medal.nxt{border:3px dashed var(--accent);color:var(--accent);background:#fff;animation:pulse 2.2s ease-in-out infinite}
   .medal.nxt::before,.medal.nxt::after{background:var(--accent-soft)}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(135,75,70,.0)}50%{box-shadow:0 0 0 6px rgba(135,75,70,.12)}}
-  .medal .lv{font-size:11px;letter-spacing:.08em;position:absolute;bottom:-18px;left:-20px;right:-20px;text-align:center;color:var(--mute);font-family:Inter,sans-serif;font-weight:600;white-space:nowrap}
+  .medal .lv{font-size:11px;letter-spacing:.08em;position:absolute;bottom:-24px;left:-20px;right:-20px;text-align:center;color:var(--mute);font-family:Inter,sans-serif;font-weight:600;white-space:nowrap}
   .slot.got .medal .lv{color:var(--ink)} .slot.nxt .medal .lv{color:var(--accent)}
-  .slot .nm{margin-top:14px;min-height:2.4em}
+  .slot .nm{margin-top:20px;min-height:2.4em}
   .room-count{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
   .room-count .big{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:40px;line-height:1;color:var(--mark)}
-  @media (max-width:720px){.room .shelf{grid-template-columns:minmax(0,1fr);gap:4px}.room .plaque{justify-self:start;margin-bottom:10px}.room .slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.medal{width:46px;height:46px;font-size:16px}.medal::before,.medal::after{top:-13px;width:10px;height:18px}.medal::before{left:11px}.medal::after{right:11px}.slot .nm{font-size:10.5px}.medal .lv .long{display:none}}
+  @media (max-width:720px){.room .shelf{grid-template-columns:minmax(0,1fr);gap:4px}.room .plaque{justify-self:start;margin-bottom:10px}.room .slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.medal{width:46px;height:46px;font-size:16px}.medal svg{width:24px;height:24px}.tile .stamp.has{width:54px;height:54px}.medal::before,.medal::after{top:-13px;width:10px;height:18px}.medal::before{left:11px}.medal::after{right:11px}.slot .nm{font-size:10.5px}.medal .lv .long{display:none}}
   @media (min-width:721px){.room .slots{display:contents}}
   /* patterns */
   .pat{background:var(--sheet);border:1px solid var(--rule);margin-bottom:12px}
@@ -295,6 +302,31 @@ const PATTERNS = [
     criteria:[ ['Full lockout overhead','Arms straight at the top'], ['Straight bar path','Head moves back, the bar goes straight up'], ['Core braced','No big arch in the back'], ['Elbows in front of the bar','At the start'], ['Controlled descent','Back to the shoulders with control'], ['Feet stay planted','No stepping'] ] }
 ];
 const PAT = Object.fromEntries(PATTERNS.map(p => [p.key, p]));
+
+// One pictogram per movement (side view, 32 x 32, single stroke) and one metal per level.
+const ICON = {
+  Squat: '<circle cx="14" cy="5" r="2.6"/><path d="M13,8 L10,16 L20,17 L19,27 M16,27 L23,27 M13,10 L21,11"/>',
+  Hinge: '<circle cx="20" cy="7" r="2.6"/><path d="M19,10 L9,17 L11,22 L10,27 M7,27 L14,27 M17,11 L19,22"/><circle cx="19.5" cy="24.5" r="2.2"/>',
+  Lunge: '<circle cx="14" cy="5" r="2.6"/><path d="M14,8 L14,16 L21,17 L21,27 M18,27 L25,27 M14,16 L9,25 L3,26 M14,10 L14,10"/>',
+  Push:  '<circle cx="27" cy="10" r="2.6"/><path d="M24,12 L5,19 L3,25 M23,13 L22,20 L27,22 M2,27 L30,27"/>',
+  Pull:  '<path d="M4,6 L28,6"/><circle cx="26" cy="14" r="2.6"/><path d="M23,15 L7,18 L4,26 M21,15 L17,9 L15,6"/>',
+  Press: '<path d="M6,4 L26,4"/><circle cx="16" cy="9" r="2.6"/><path d="M16,12 L16,21 L12,29 M16,21 L20,29 M13,13 L10,4 M19,13 L22,4"/>'
+};
+const TONE = { 1:'#b87333', 2:'#8e8f94', 3:'#b8922a', 4:'#874B46', 5:'#18161a' };
+const TONE_NAME = { 1:'Bronze', 2:'Silver', 3:'Gold', 4:'Burgundy', 5:'Black' };
+function icon(k){ return `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`; }
+// A rubber stamp: outer ring, the movement and level written around it, the pictogram in the middle. Unique per movement and level.
+function stampSVG(k, lvl){
+  const t = TONE[lvl] || TONE[1]; const id = 'ring-' + k + lvl + Math.floor(Math.random() * 1e6);
+  const words = `${k} · Level ${lvl} · `.toUpperCase();
+  return `<svg class="stampsvg" viewBox="0 0 64 64" aria-label="${k} level ${lvl} stamp">
+    <defs><path id="${id}" d="M32,32 m-22.5,0 a22.5,22.5 0 1,1 45,0 a22.5,22.5 0 1,1 -45,0"/></defs>
+    <circle cx="32" cy="32" r="30.5" fill="none" stroke="${t}" stroke-width="2.4"/>
+    <circle cx="32" cy="32" r="16.5" fill="none" stroke="${t}" stroke-width="1.4"/>
+    <text font-family="Inter,'Segoe UI',sans-serif" font-size="6.6" font-weight="700" letter-spacing="1.1" fill="${t}"><textPath href="#${id}">${words}${words}${words}</textPath></text>
+    <g transform="translate(21,21) scale(0.6875)" color="${t}">${icon(k)}</g>
+  </svg>`;
+}
 
 // The rest of the unit, in order. The Board carries the full session; this is the map.
 const UNIT_NEXT = [
@@ -541,7 +573,7 @@ function renderPassport(){
       const st = patStatus(x.key);
       const ny = state.stamps.notyet[x.key];
       return `<div class="tile ${st.cls}" onclick="go('patterns');openPat('${x.key}')">
-        <div class="stamp">${st.short}</div>
+        <div class="stamp ${lvl > 0 ? 'has' : ''}">${lvl > 0 ? stampSVG(x.key, lvl) : st.short}</div>
         <div class="pn">${x.key}</div>
         <div class="ex">${st.cls === 'ny' && ny ? 'Fix: ' + esc(ny.why) : (lvl >= 5 ? 'Top of the ladder' : (lvl > 0 ? 'Next: ' + x.ladder[lvl] : 'Now: ' + x.ladder[0]))}</div>
         <div class="pips">${[1,2,3,4,5].map(n => `<i class="${n <= lvl ? 'got' : (n === lvl + 1 ? 'nxt' : '')}"></i>`).join('')}</div>
@@ -551,7 +583,7 @@ function renderPassport(){
       <div class="room-count"><span class="big">${PATTERNS.reduce((t, x) => t + (state.levels[x.key] || 0), 0)}</span><span class="eb">of 30 medals</span></div>
       <h2>Trophy room</h2>
       <p>Five medals per pattern, one per level. A stamp is the first medal. Each one is a new movement, and you only take the next when the one before it is yours.</p>
-      ${PATTERNS.map(x => { const lvl = state.levels[x.key] || 0; return `<div class="shelf"><div class="plaque">${x.key}<small>${lvl} of 5</small></div><div class="slots">${x.ladder.map((nm, i) => { const n = i + 1; const st = n <= lvl ? 'got' : (n === lvl + 1 ? 'nxt' : ''); return `<div class="slot ${st}"><div class="medal m${n} ${st}">${n <= lvl ? n : (st === 'nxt' ? '?' : '')}<span class="lv">${st === 'nxt' ? 'Next' : '<span class="long">Level </span>' + n}</span></div><div class="nm">${nm}</div></div>`; }).join('')}</div></div>`; }).join('')}
+      ${PATTERNS.map(x => { const lvl = state.levels[x.key] || 0; return `<div class="shelf"><div class="plaque">${x.key}<small>${lvl} of 5</small></div><div class="slots">${x.ladder.map((nm, i) => { const n = i + 1; const st = n <= lvl ? 'got' : (n === lvl + 1 ? 'nxt' : ''); return `<div class="slot ${st}"><div class="medal m${n} ${st}" title="${x.key} level ${n} · ${TONE_NAME[n]}">${icon(x.key)}<b class="num">${n}</b><span class="lv">${st === 'nxt' ? 'Next' : '<span class="long">Level </span>' + n}</span></div><div class="nm">${nm}</div></div>`; }).join('')}</div></div>`; }).join('')}
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <button class="btn ghost small" onclick="refreshStamps(this)">Refresh my stamps</button>
