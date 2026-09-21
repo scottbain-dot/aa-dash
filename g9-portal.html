@@ -276,6 +276,7 @@ const SESSION_KEY = 'aaG9PortalUser';
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 const BLOCK_ID = 'intro';
 const PROGRAM_LIVE = false;   // My program stays a blurred teaser until stamps start landing
+const STAMPS_LIVE = false;    // Off until the Athlete_ID re-key is done: the Strength tab still holds last year's rows under reused IDs
 let currentUser = null;
 let state = { athlete:null, athleteId:'', levels:{}, progress:{}, stamps:{ notyet:{}, stamped:{} } };
 
@@ -346,13 +347,13 @@ function hydrate(data){
   state.athlete = data.athlete;
   state.athleteId = String(data.athlete.Athlete_ID || '').trim();
   state.levels = {};
-  (data.strengthLevels || []).forEach(l => { state.levels[l.pattern] = l.tech || 0; });
+  if (STAMPS_LIVE) (data.strengthLevels || []).forEach(l => { state.levels[l.pattern] = l.tech || 0; });
   const blk = data.learn && data.learn.blocks && data.learn.blocks[BLOCK_ID];
   state.progress = (blk && blk.progress) || {};
   ['watched','self','checklist','partner'].forEach(k => { if (!state.progress[k]) state.progress[k] = {}; });
   // Written by admin only: not-yet feedback and stamp dates. Students never save this block.
   const sb = data.learn && data.learn.blocks && data.learn.blocks.stamps;
-  state.stamps = { notyet: (sb && sb.progress && sb.progress.notyet) || {}, stamped: (sb && sb.progress && sb.progress.stamped) || {} };
+  state.stamps = STAMPS_LIVE ? { notyet: (sb && sb.progress && sb.progress.notyet) || {}, stamped: (sb && sb.progress && sb.progress.stamped) || {} } : { notyet: {}, stamped: {} };
   state.progress.checklist.signin = true;
   const first = state.athlete.First_Name || String(state.athlete.Name || '').split(' ')[0] || '';
   document.getElementById('whoName').innerHTML = `<b>${esc(first)}</b>`;
