@@ -122,10 +122,12 @@ function doGet(e) {
     }
 
     if (action === 'setConfig') {
+      var gateSet = apAdminGate_(e.parameter.token); if (gateSet) return gateSet;
       return setConfig(ss, e.parameter.key, e.parameter.value);
     }
 
     if (action === 'updateStudent') {
+      var gateUpd = apAdminGate_(e.parameter.token); if (gateUpd) return gateUpd;
       const athleteId = e.parameter.athleteId;
       const updates = JSON.parse(e.parameter.updates || '{}');
       return updateStudent(athleteId, updates);
@@ -190,12 +192,14 @@ function doGet(e) {
     }
 
     if (action === 'getGritAdminData') {
+      var gateGA = apAdminGate_(e.parameter.token); if (gateGA) return gateGA;
       var gritAdminResult = handleGetGritAdminData(ss);
       return ContentService.createTextOutput(JSON.stringify(gritAdminResult))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
     if (action === 'getSessionPlanning') {
+      var gateSP = apAdminGate_(e.parameter.token); if (gateSP) return gateSP;
       var sessionNum = parseInt(e.parameter.session) || 1;
       var planningResult = handleGetSessionPlanning(ss, sessionNum);
       return ContentService.createTextOutput(JSON.stringify(planningResult))
@@ -203,6 +207,7 @@ function doGet(e) {
     }
 
     if (action === 'getObservations') {
+      var gateObs = apAdminGate_(e.parameter.token); if (gateObs) return gateObs;
       var obsSession = e.parameter.session ? parseInt(e.parameter.session) : null;
       var obsResult = handleGetObservations(ss, obsSession);
       return ContentService.createTextOutput(JSON.stringify(obsResult))
@@ -332,6 +337,7 @@ function doPost(e) {
     }
 
     if (data.action === 'updateStudent') {
+      var gateUpdP = apAdminGate_(data.token); if (gateUpdP) return gateUpdP;
       return updateStudent(data.athleteId, data.updates);
     }
 
@@ -353,6 +359,7 @@ function doPost(e) {
 
     // ===== PSYCH SCORES UPDATE =====
     if (data.action === 'updatePsychScores') {
+      var gatePsy = apAdminGate_(data.token); if (gatePsy) return gatePsy;
       var ss = SpreadsheetApp.getActiveSpreadsheet();
       var psychResult = handleUpdatePsychScores(ss, data.email, data.mindset, data.mentalToughness, data.grit);
       return ContentService.createTextOutput(JSON.stringify(psychResult))
@@ -404,6 +411,7 @@ function doPost(e) {
 
     // ===== SAVE SESSION OBSERVATION =====
     if (data.action === 'saveObservation') {
+      var gateSO = apAdminGate_(data.token); if (gateSO) return gateSO;
       var ssObs = SpreadsheetApp.getActiveSpreadsheet();
       var obsSaveResult = handleSaveObservation(ssObs, data);
       return ContentService.createTextOutput(JSON.stringify(obsSaveResult))
@@ -459,6 +467,8 @@ function doPost(e) {
       return apJson(handleSavePB(ssAp4, data.athleteId, data.pb));
     }
     if (data.action === 'saveLearnProgress') {
+      // The 'stamps' block is written by admin only (not-yet notes, stamp dates).
+      if (String(data.blockId || '') === 'stamps') { var gateStamps = apAdminGate_(data.token); if (gateStamps) return gateStamps; }
       var ssLearn = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSaveLearnProgress(ssLearn, data.athleteId, data.blockId, data.progress, data.meta));
     }
@@ -2665,6 +2675,21 @@ function apVerifyTeacher(idToken) {
   } catch (err) {
     return { ok: false, error: 'Sign in required' };
   }
+}
+
+// Admin-only actions: the caller must present a verified teacher ID token.
+// Returns null when allowed, or a JSON error response to send back. Verified
+// tokens are cached by hash for 15 minutes so a busy admin session does not
+// call Google on every tap.
+function apAdminGate_(idToken) {
+  if (!idToken) return apJson({ success: false, error: 'Admin sign-in required', authRequired: true });
+  var cache = CacheService.getScriptCache();
+  var key = 'adm:' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, idToken));
+  if (cache.get(key) === 'ok') return null;
+  var auth = apVerifyTeacher(idToken);
+  if (!auth.ok) return apJson({ success: false, error: auth.error, authRequired: true });
+  cache.put(key, 'ok', 900);
+  return null;
 }
 
 function handleGetFuelLabQuizStats(ss, idToken) {

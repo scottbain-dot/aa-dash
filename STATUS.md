@@ -1,7 +1,7 @@
 # Status — aa-dash
 
 - Last worked: 2026-09-18 — Add STATUS.md and post-commit hook that keeps 'Last worked' current
-- Next step: Classroom A ships with g9-portal.html (passport, six patterns, program) and the admin Stamps tab. Next: Classroom B content, then Workout Mode for Classroom C
+- Next step: Admin overhaul PR 1 done (server-side auth, Grit tab removed, Stamps default). Next: gate getAllStudents once clash/strength-portal stop using it; Classroom B content; Workout Mode for Classroom C
 - Blocked on: nothing
 
 ## Hook
