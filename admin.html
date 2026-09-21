@@ -1288,20 +1288,23 @@
 
         // Admin writes carry the Google ID token; the Apps Script verifies it with Google
         // and checks the teacher allowlist before touching the sheet.
-        function adminToken() { return sessionStorage.getItem('aa_admin_token') || ''; }
+        let adminIdToken = '';   // in memory first; sessionStorage is the fallback (it can be blocked in private windows)
+        function adminToken() { try { return adminIdToken || sessionStorage.getItem('aa_admin_token') || ''; } catch (e) { return adminIdToken; } }
         function adminPost(body) {
             return fetch(APPS_SCRIPT_URL, {
                 method: 'POST', headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(Object.assign({ token: adminToken() }, body))
             }).then(async r => {
                 const text = await r.text();
-                let data; try { data = JSON.parse(text); } catch (e) { throw new Error('Server returned invalid response'); }
+                let data; try { data = JSON.parse(text); } catch (e) { console.error('Non-JSON reply from Apps Script:', text.slice(0, 300)); throw new Error('The server did not answer properly. Check the deployment and try again.'); }
+                if (!r.ok && !(data && data.success)) throw new Error('Server returned ' + r.status);
                 if (data && data.authRequired) { authExpired(); throw new Error('Sign in again'); }
                 return data;
             });
         }
         function authExpired() {
-            sessionStorage.removeItem('aa_admin_token');
+            adminIdToken = '';
+            try { sessionStorage.removeItem('aa_admin_token'); } catch (e) {}
             const gate = document.getElementById('authGate');
             gate.classList.remove('hidden');
             showAuthError('Your sign-in has expired. Sign in again to keep working.');
@@ -1328,7 +1331,8 @@
                 sessionStorage.removeItem('aa_admin_token');
                 return;
             }
-            sessionStorage.setItem('aa_admin_token', response.credential);
+            adminIdToken = response.credential;
+            try { sessionStorage.setItem('aa_admin_token', response.credential); } catch (e) {}
             const el = document.getElementById('authError'); if (el) el.classList.remove('visible');
             if (allStudents.length) { document.getElementById('authGate').classList.add('hidden'); return; }   // re-sign-in mid-session
             unlockApp(payload);
@@ -1336,10 +1340,11 @@
 
         function initAuthGate() {
             // Try cached token first
-            const cached = sessionStorage.getItem('aa_admin_token');
+            let cached = null; try { cached = sessionStorage.getItem('aa_admin_token'); } catch (e) {}
             if (cached) {
                 const payload = decodeJwt(cached);
                 if (isTokenValid(payload)) {
+                    adminIdToken = cached;
                     unlockApp(payload);
                     return;
                 }
@@ -1377,7 +1382,8 @@
                 const data = await response.json();
                 
                 if (data.success && data.students) {
-                    allStudents = data.students;
+                    // Sheet IDs arrive as numbers; the grid passes them around as strings. Normalise once.
+                    allStudents = data.students.map(s => Object.assign(s, { Athlete_ID: String(s.Athlete_ID == null ? '' : s.Athlete_ID).trim() }));
                     filteredStudents = [...allStudents];
                     renderTable();
                     updateStats();
@@ -1529,7 +1535,7 @@
         // STUDENT MODAL
         // ============================================
         function openStudentModal(athleteId) {
-            selectedStudent = allStudents.find(s => s.Athlete_ID == athleteId);
+            selectedStudent = allStudents.find(s => String(s.Athlete_ID) === String(athleteId));
             if (!selectedStudent) return;
 
             pendingUpdates = {};
@@ -1997,7 +2003,7 @@
 
         // ---- the tap sheet ----
         function openStampSheet(athleteId, pattern) {
-            const s = allStudents.find(x => x.Athlete_ID === athleteId);
+            const s = allStudents.find(x => String(x.Athlete_ID) === String(athleteId));
             if (!s) return;
             const lvl = parseInt(s[pattern + '_Tech']) || 0;
             const m = metaFor(athleteId);
@@ -2037,7 +2043,7 @@
         async function saveNotYet() {
             if (!stampSheetCtx) return;
             const { athleteId, pattern } = stampSheetCtx;
-            const s = allStudents.find(x => x.Athlete_ID === athleteId);
+            const s = allStudents.find(x => String(x.Athlete_ID) === String(athleteId));
             const chips = [...document.querySelectorAll('#stampSheet .chip.on')].map(c => c.dataset.c);
             const note = (document.getElementById('nyNote').value || '').trim();
             const why = [...chips, note].filter(Boolean).join(' · ') || 'Not yet';
@@ -2049,14 +2055,14 @@
             renderStamps();
         }
         async function clearNotYet(athleteId, pattern) {
-            const s = allStudents.find(x => x.Athlete_ID === athleteId);
+            const s = allStudents.find(x => String(x.Athlete_ID) === String(athleteId));
             try { await writeStampsBlock(athleteId, m => { delete m.notyet[pattern]; }); showToast(`${s.Name}: ${pattern} not-yet cleared`); }
             catch (e) { showToast('Could not save', 'error'); }
             renderStamps();
         }
 
         async function setStamp(athleteId, pattern, next) {
-            const s = allStudents.find(x => x.Athlete_ID === athleteId);
+            const s = allStudents.find(x => String(x.Athlete_ID) === String(athleteId));
             if (!s) return;
             closeStampSheet();
             const key = athleteId + ':' + pattern;
