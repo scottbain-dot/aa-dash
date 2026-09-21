@@ -1044,6 +1044,7 @@
         </div>
 
         <div class="user-info">
+            <button class="logout-btn" onclick="reloadStudents(this)" title="Reload the roster from the sheet">↻ Reload</button>
             <span class="user-name" id="userName">Teacher</span>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
@@ -1092,8 +1093,9 @@
         <div class="view-panel" id="panelStrength">
             <div class="toolbar">
                 <div class="search-box">
-                    <input type="text" placeholder="Search by name or email..." id="searchInput" oninput="filterStudents()">
+                    <input type="text" placeholder="Search by name..." id="searchInput" oninput="filterStudents()">
                 </div>
+                <select id="levelsGrade" onchange="filterStudents()" style="background: var(--bg-card); border:1px solid var(--border-light); color: var(--text-primary); padding:9px 12px; border-radius:10px; font-family:inherit; font-size:0.9rem;"></select>
                 <div class="filter-group">
                     <button class="filter-btn active" onclick="setFilter('all')" id="filterAll">All</button>
                     <button class="filter-btn ready" onclick="setFilter('ready')" id="filterReady">🎯 Ready to Test</button>
@@ -1383,11 +1385,11 @@
                 
                 if (data.success && data.students) {
                     // Sheet IDs arrive as numbers; the grid passes them around as strings. Normalise once.
-                    allStudents = data.students.map(s => Object.assign(s, { Athlete_ID: String(s.Athlete_ID == null ? '' : s.Athlete_ID).trim() }));
-                    filteredStudents = [...allStudents];
-                    renderTable();
-                    updateStats();
-                    renderInsights();
+                    allStudents = data.students
+                        .map(s => Object.assign(s, { Athlete_ID: String(s.Athlete_ID == null ? '' : s.Athlete_ID).trim(), Grade: String(s.Grade == null ? '' : s.Grade).trim() }))
+                        .sort((a, b) => (a.Name || '').localeCompare(b.Name || ''));
+                    levelsGradeOptions();
+                    filterStudents();
                     renderStamps();
                 } else {
                     showToast('Error loading students', 'error');
@@ -1403,6 +1405,14 @@
         // ============================================
         // TABLE RENDERING
         // ============================================
+        async function reloadStudents(btn) {
+            if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            await loadStudents();
+            if (btn) { btn.disabled = false; btn.textContent = '↻ Reload'; }
+            showToast('Roster reloaded');
+        }
+
         function renderTable() {
             const tbody = document.getElementById('studentTableBody');
             const emptyState = document.getElementById('emptyState');
@@ -1419,8 +1429,8 @@
                 return `
                     <tr onclick="openStudentModal('${student.Athlete_ID}')">
                         <td>
-                            <div class="student-name">${student.Name || 'Unknown'}</div>
-                            <div class="student-email">${student.Email || ''}</div>
+                            <div class="student-name">${esc(student.Name || 'Unknown')}</div>
+                            <div class="student-email">${student.Grade ? 'Grade ' + student.Grade : ''}</div>
                         </td>
                         ${PATTERNS.map(p => `
                             <td class="pattern-cell">
@@ -1466,12 +1476,13 @@
         // STATS
         // ============================================
         function updateStats() {
-            const total = allStudents.length;
+            const roster = gradeRoster();
+            const total = roster.length;
             let readyCount = 0;
             let behindCount = 0;
             let totalProgress = 0;
 
-            allStudents.forEach(student => {
+            roster.forEach(student => {
                 const status = getStudentStatus(student);
                 if (status.class === 'testing') readyCount++;
                 if (status.class === 'behind') behindCount++;
@@ -1497,16 +1508,24 @@
         // ============================================
         // SEARCH & FILTER
         // ============================================
+        function levelsGradeOptions() {
+            const sel = document.getElementById('levelsGrade');
+            if (!sel || sel.options.length) return;
+            const grades = [...new Set(allStudents.map(s => s.Grade).filter(Boolean))].sort();
+            sel.innerHTML = '<option value="">All grades</option>' + grades.map(g => `<option value="${g}">Grade ${g}</option>`).join('');
+        }
+        // The roster the Levels tab, the stat cards and the insights all work from: grade filter applied, search not.
+        function gradeRoster() {
+            const g = (document.getElementById('levelsGrade') || {}).value || '';
+            return allStudents.filter(s => !g || s.Grade === g);
+        }
+        function esc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
         function filterStudents() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             
-            filteredStudents = allStudents.filter(student => {
-                // Search filter
-                const matchesSearch = !search || 
-                    (student.Name && student.Name.toLowerCase().includes(search)) ||
-                    (student.Email && student.Email.toLowerCase().includes(search));
-
-                // Status filter
+            filteredStudents = gradeRoster().filter(student => {
+                const matchesSearch = !search || (student.Name && student.Name.toLowerCase().includes(search));
                 if (!matchesSearch) return false;
                 
                 if (currentFilter === 'all') return true;
@@ -1519,6 +1538,8 @@
             });
 
             renderTable();
+            updateStats();
+            renderInsights();
         }
 
         function setFilter(filter) {
@@ -1541,7 +1562,7 @@
             pendingUpdates = {};
             
             // Update modal title
-            document.getElementById('modalTitle').innerHTML = `${selectedStudent.Name || 'Unknown'} <span>${selectedStudent.Grade || ''}</span>`;
+            document.getElementById('modalTitle').innerHTML = `${esc(selectedStudent.Name || 'Unknown')} <span>${selectedStudent.Grade ? 'Grade ' + selectedStudent.Grade : ''}</span>`;
             
             // Render progress grid
             renderProgressGrid();
@@ -1603,9 +1624,12 @@
                 btn.classList.toggle('active', i === tech);
             });
 
-            // Update strength buttons
+            // Update strength buttons. A load tier only means something at technique level 2 or more.
+            const tierOk = tech >= 2;
             document.querySelectorAll('#strButtons .level-btn').forEach((btn, i) => {
                 btn.classList.toggle('active', i === str);
+                btn.disabled = !tierOk && i > 0;
+                btn.title = tierOk ? '' : 'Set technique level 2 or more first';
             });
         }
 
@@ -1617,13 +1641,14 @@
             document.querySelectorAll('#techButtons .level-btn').forEach((btn, i) => {
                 btn.classList.toggle('active', i === level);
             });
-            
+            updatePatternSelection();
             renderProgressGrid();
         }
 
         function setStr(tier) {
             const pattern = document.getElementById('updatePattern').value;
             const techLevel = parseInt(selectedStudent[pattern + '_Tech']) || 0;
+            if (tier > 0 && techLevel < 2) { showToast('Set technique level 2 or more before a load tier', 'error'); return; }
 
             // Write to level-specific Str column based on current Tech level
             if (techLevel >= 2 && techLevel <= 5) {
@@ -1713,10 +1738,10 @@
             notesList.innerHTML = notes.map((note, index) => `
                 <div class="note-item">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div class="note-date">${note.date}</div>
+                        <div class="note-date">${esc(note.date)}</div>
                         <button onclick="deleteNote(${index})" style="background: none; border: none; color: var(--accent-red); cursor: pointer; font-size: 1rem; padding: 0; opacity: 0.7;" title="Delete note">✕</button>
                     </div>
-                    <div class="note-text">${note.text}</div>
+                    <div class="note-text">${esc(note.text)}</div>
                 </div>
             `).join('');
         }
@@ -1796,10 +1821,11 @@
         function renderInsights() {
             const grid = document.getElementById('insightsGrid');
             const badge = document.getElementById('insightsBadge');
+            const roster = gradeRoster();
 
             // 1. Ready to test — tech >= 2 but no strength tier
             const readyToTest = [];
-            allStudents.forEach(s => {
+            roster.forEach(s => {
                 const pats = PATTERNS.filter(p => (parseInt(s[p + '_Tech']) || 0) >= 2 && !(parseInt(s[p + '_Str']) || 0));
                 if (pats.length > 0) readyToTest.push({ student: s, patterns: pats });
             });
@@ -1807,14 +1833,14 @@
 
             // 2. Behind — no levels on 4+ patterns
             const noLevels = [];
-            allStudents.forEach(s => {
+            roster.forEach(s => {
                 const pats = PATTERNS.filter(p => (parseInt(s[p + '_Tech']) || 0) === 0);
                 if (pats.length >= 4) noLevels.push({ student: s, patterns: pats });
             });
             noLevels.sort((a, b) => b.patterns.length - a.patterns.length);
 
             // 4. All tested
-            const stars = allStudents.filter(s => PATTERNS.every(p => (parseInt(s[p + '_Str']) || 0) > 0));
+            const stars = roster.filter(s => PATTERNS.every(p => (parseInt(s[p + '_Str']) || 0) > 0));
 
             // Badge
             const actionCount = readyToTest.length + noLevels.length;
@@ -1826,7 +1852,7 @@
                     <div class="insight-title amber">⚡ Ready to Test <span class="count">${readyToTest.length}</span></div>
                     ${readyToTest.length === 0 ? '<div class="insight-empty">No students ready to test</div>' : readyToTest.map(r => `
                         <div class="insight-row" onclick="openStudentModal('${r.student.Athlete_ID}')">
-                            <div class="insight-name">${r.student.Name || 'Unknown'}</div>
+                            <div class="insight-name">${esc(r.student.Name || 'Unknown')}</div>
                             <div class="insight-tags">${r.patterns.map(p => `<span class="insight-tag amber">${p}</span>`).join('')}</div>
                         </div>`).join('')}
                 </div>
@@ -1864,7 +1890,8 @@
         }
 
         function logout() {
-            sessionStorage.removeItem('aa_admin_token');
+            adminIdToken = '';
+            try { sessionStorage.removeItem('aa_admin_token'); } catch (e) {}
             if (window.google && google.accounts && google.accounts.id) {
                 google.accounts.id.disableAutoSelect();
             }
@@ -1903,7 +1930,7 @@
         function stampGradeOptions() {
             const sel = document.getElementById('stampGrade');
             if (!sel || sel.options.length) return;
-            const grades = [...new Set(allStudents.map(s => String(s.Grade || '').trim()).filter(Boolean))].sort();
+            const grades = [...new Set(allStudents.map(s => s.Grade).filter(Boolean))].sort();
             sel.innerHTML = '<option value="">All grades</option>' + grades.map(g => `<option value="${g}">Grade ${g}</option>`).join('');
             if (grades.includes('9')) sel.value = '9';
         }
@@ -1929,7 +1956,7 @@
         // Pull each student's learn blocks (intro = readiness, stamps = not-yet). Six at a time.
         async function loadStampMeta(force) {
             if (stampMetaLoading) return;
-            const todo = allStudents.filter(s => force || !stampMeta[s.Athlete_ID]).map(s => s.Athlete_ID);
+            const todo = stampRows().filter(s => force || !stampMeta[s.Athlete_ID]).map(s => s.Athlete_ID);
             if (!todo.length) return;
             stampMetaLoading = true;
             const help = document.getElementById('stampHelp');
@@ -1978,11 +2005,11 @@
                     else if (m.ready[p]) { cls = 'stamp rdy'; label = 'R'; title = `${p}: partner-checked, ready for your look`; }
                     return `<td><button class="${cls}${stampBusy[key] ? ' busy' : ''}" title="${title.replace(/"/g, '&quot;')}" ${lvl >= 2 ? 'disabled' : ''} onclick="openStampSheet('${s.Athlete_ID}','${p}')">${label}</button></td>`;
                 }).join('');
-                return `<tr><td><div class="stamp-name">${s.Name || s.Athlete_ID}<small>${s.Grade ? 'Grade ' + s.Grade : ''}</small></div></td>${cells}</tr>`;
+                return `<tr><td><div class="stamp-name">${esc(s.Name || s.Athlete_ID)}<small>${s.Grade ? 'Grade ' + s.Grade : ''}</small></div></td>${cells}</tr>`;
             }).join('') || '<tr><td colspan="7" style="padding:24px;color:var(--text-muted)">No students match</td></tr>';
             document.getElementById('stampCount').textContent = rows.length ? `${stamped} of ${possible} level 1 stamps given` : '';
             renderNotYet(rows);
-            if (!stampMetaLoading && allStudents.some(s => !stampMeta[s.Athlete_ID])) loadStampMeta(false);
+            if (!stampMetaLoading && rows.some(s => !stampMeta[s.Athlete_ID])) loadStampMeta(false);
         }
 
         function renderNotYet(rows) {
