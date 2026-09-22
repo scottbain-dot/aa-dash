@@ -427,6 +427,7 @@ async function start(){
   hydrate(data);
   document.getElementById('app').style.display = 'block';
   renderAll();
+  schedulePoll();
 }
 function hydrate(data){
   state.athlete = data.athlete;
@@ -443,13 +444,49 @@ function hydrate(data){
   const first = state.athlete.First_Name || String(state.athlete.Name || '').split(' ')[0] || '';
   document.getElementById('whoName').innerHTML = `<b>${esc(first)}</b>`;
 }
+// ---- Live passport ----
+// The page checks for new stamps every few seconds while it is open, and straight away
+// when it comes back into view. A stamp given in admin shows here within seconds, with a toast.
+// Uses the light getPassport read; if the deployment does not have it yet, falls back to the
+// full bootstrap at a slower cadence.
+const POLL_MS = 6000, POLL_SLOW_MS = 20000;
+let pollBusy = false, pollLight = true, pollTimer = null;
+function applyPassport(levels, stamps){
+  const next = {}; (levels || []).forEach(l => { next[l.pattern] = l.tech || 0; });
+  const gained = PATTERNS.filter(x => (next[x.key] || 0) > (state.levels[x.key] || 0));
+  const changed = JSON.stringify(next) !== JSON.stringify(state.levels) || (stamps && JSON.stringify(stamps) !== JSON.stringify(state.stamps));
+  state.levels = next;
+  if (stamps) state.stamps = { notyet: stamps.notyet || {}, stamped: stamps.stamped || {} };
+  if (changed) { renderToday(); renderPassport(); renderPatterns(); renderProgram(); }
+  gained.forEach(x => toast(`Stamped: ${x.key} level ${next[x.key]}`));
+  return changed;
+}
+async function pollPassport(){
+  if (pollBusy || document.hidden || !state.athleteId) return false;
+  pollBusy = true;
+  try {
+    if (pollLight) {
+      const d = await apiDataGet({ action:'getPassport' });
+      if (d && d.success && d.strengthLevels) return applyPassport(d.strengthLevels, d.stamps);
+      pollLight = false; schedulePoll();   // old deployment: use the bootstrap instead
+    }
+    const data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
+    if (data && data.success && data.athlete) {
+      const sb = data.learn && data.learn.blocks && data.learn.blocks.stamps;
+      return applyPassport(data.strengthLevels, sb && sb.progress ? sb.progress : { notyet: {}, stamped: {} });
+    }
+  } catch (e) { /* try again next tick */ }
+  finally { pollBusy = false; }
+  return false;
+}
+function schedulePoll(){ clearInterval(pollTimer); pollTimer = setInterval(pollPassport, pollLight ? POLL_MS : POLL_SLOW_MS); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) pollPassport(); });
+window.addEventListener('focus', () => pollPassport());
+
 async function refreshStamps(btn){
   if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
-  try {
-    const data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
-    if (data && data.success && data.athlete) { const p = state.progress; hydrate(data); state.progress = p; renderAll(); toast('Passport updated'); }
-    else toast('Could not refresh. Try again.', true);
-  } catch (e) { toast('Could not refresh. Try again.', true); }
+  const changed = await pollPassport();
+  toast(changed ? 'Passport updated' : 'Up to date');
   if (btn) { btn.disabled = false; btn.textContent = 'Refresh my stamps'; }
 }
 
@@ -579,7 +616,7 @@ function renderPassport(){
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <button class="btn ghost small" onclick="refreshStamps(this)">Refresh my stamps</button>
-      <span style="font-size:13px;color:var(--mute)">Just been stamped in class? Refresh to see it.</span>
+      <span style="font-size:13px;color:var(--mute)">Stamps appear here by themselves within a few seconds. This button just checks now.</span>
     </div>`;
 }
 

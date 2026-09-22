@@ -255,6 +255,9 @@ function doGet(e) {
     if (action === 'getLearnProgress') {
       return apJson(handleGetLearnProgress(ss, e.parameter.athleteId));
     }
+    if (action === 'getPassport') {
+      return apJson(handleGetPassport(ss, e.parameter.athleteId));
+    }
     if (action === 'getGrit') {
       return apJson(handleGetGrit(ss, e.parameter.athleteId));
     }
@@ -4051,6 +4054,24 @@ function apLoadLearn(ss, athleteId) {
     };
   }
   return blocks;
+}
+
+// Light read for the G9 passport, polled every few seconds by every open portal:
+// technique levels from Strength plus the admin-written 'stamps' block. Nothing else.
+function handleGetPassport(ss, athleteId) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
+    var blocks = apLoadLearn(ss, athleteId);
+    var st = (blocks.stamps && blocks.stamps.progress) || {};
+    return {
+      success: true,
+      strengthLevels: apLoadStrengthLevels(ss, athleteId),
+      stamps: { notyet: st.notyet || {}, stamped: st.stamped || {} }
+    };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
 }
 
 function handleGetLearnProgress(ss, athleteId) {
