@@ -2,18 +2,28 @@
 
 ## 🔒 IDENTITY RULE (GDPR) — non-negotiable
 
-**All portal data reads/writes are keyed by `Athlete_ID`. Never by email.**
+**Who a request is for comes from the Google ID token the server verifies. Never from an email or athleteId the browser typed in. All portal data reads/writes are keyed by `Athlete_ID`.**
 
-Names/emails are personal data; keeping training data pseudonymous (ID-only) is how we protect student identity. Email is used in **exactly one place**: the `getPortalBootstrap` login call, which resolves the `Athlete_ID`. After that, the client holds the ID and every other call uses it.
+Names/emails are personal data; keeping training data pseudonymous (ID-only) is how we protect student identity. The browser never decides who the student is:
 
-Concretely, in `portal-lab.html` (the live student portal):
-- Every data call goes through **`apiData()` / `apiDataGet()`**, which attach `athleteId`. Do **not** call `apiPost`/`apiGet` directly for data, and never pass `email:` to a data endpoint.
-- The only allowed `email:` in an API call is the `getPortalBootstrap` line.
+1. Google Identity Services hands the page a signed ID token (`response.credential`). The page keeps the **raw token** and sends it as **`token`** with every API call (query param on GET, field on POST). Anything the page decodes from the token (name, picture) is display only.
+2. The Apps Script verifies the token with Google (`apVerifyIdToken_`: `aud` must be our OAuth client, `email_verified`, not expired), checks the account is a school account (`hd` / `@fis.edu`, or a teacher in `AA_TEACHERS`), and takes the email from the **verified** token. `apStudentGate_` then resolves the `Athlete_ID` from that email via the `Athletes` sheet.
+3. Every student handler runs on the gate's `athleteId` / `email`. Any `email` or `athleteId` the client sent is ignored — except that a **teacher** token may name an `athleteId` so admin views can act on a student's record.
+4. A token lasts about an hour. The ID-keyed portals refresh it silently through GIS `auto_select` (`refreshToken()`), and fall back to the sign-in screen when the server answers `authRequired:true`.
+
+Concretely, in `portal-lab.html` and `g9-portal.html` (the live student portals):
+- `apiGet()` / `apiPost()` attach the token (`withToken`) and handle `authRequired`. The login call is `apiGet({ action:'getPortalBootstrap' })` — **no email**.
+- Every data call goes through **`apiData()` / `apiDataGet()`**, which also attach `athleteId` (ignored for students; it lets a teacher open a student's view). Do **not** call `apiPost`/`apiGet` directly for data, and never pass `email:` to any endpoint.
+
+The older student pages (`index.html`, `strength-portal.html`, `grit-portal.html`, `fuel-lab.html`, `academy-portal.html`, `clash.html`) send `token=` instead of `email=` on every call and send the user back to sign-in on `authRequired`.
 
 In `COMPLETE-APPS-SCRIPT.gs`:
-- The portal data handlers (`handleGetYearMap`, `handleSaveYearMap`, `handleSaveBlock`, `handleSaveSession`, `handleSavePB`, `handleGetWeek`, `handleGetPBs`, `handleSaveWeeklyTemplate`, `handleGetWeeklyTemplate`, `handleGetYearLoad`, `handleDeleteSession`) take **`athleteId`** and reject a blank one. Only `getPortalBootstrap` (and the legacy admin/other-portal handlers) may look up by email.
+- `doGet` / `doPost` run `apStudentGate_` for every action in `AP_STUDENT_GET_ACTIONS` / `AP_STUDENT_POST_ACTIONS` and pass **`who.athleteId`** / **`who.email`** to the handlers. The portal data handlers (`handleGetYearMap`, `handleSaveYearMap`, `handleSaveBlock`, `handleSaveSession`, `handleSavePB`, `handleGetWeek`, `handleGetPBs`, `handleSaveWeeklyTemplate`, `handleGetWeeklyTemplate`, `handleGetYearLoad`, `handleDeleteSession`, the grit handlers, …) take **`athleteId`** and reject a blank one. Only `getPortalBootstrap` / `getAthleteData` look up by email, and only by the verified one.
+- `getAllStudents`, `?admin=true`, the Clash scoring writes and the legacy action-less strength update sit behind `apAdminGate_`. The Clash scoreboard uses `getClashRoster` (ID + name + gender + grade, no emails, no scores).
 
-**Enforcement:** run `node tools/check-identity.js` before committing any portal change — it fails the moment a data call reintroduces email. This rule existed to stop a recurring regression where changes quietly reverted to email lookups and broke things; the guard makes the ID path the only path.
+**Enforcement:** run `node tools/check-identity.js` before committing any portal change — it fails the moment a page sends an email, drops the token, or the dispatcher hands a client-supplied id to a handler. This rule existed to stop a recurring regression where changes quietly reverted to email lookups and broke things; the guard makes the token→ID path the only path.
+
+**Deploying a server change:** GitHub Pages serves the HTML on merge, but the Apps Script only changes when it is **redeployed** (Deploy → Manage deployments → edit → new version). Redeploy the script and merge the pages together: old pages against the new script get `authRequired` until reloaded; new pages against the old script fail the bootstrap (no email sent). The web app stays deployed as "Anyone" — the token check is what protects the data now.
 
 ---
 
@@ -347,13 +357,16 @@ Content is category-specific based on the student's chosen challenge type. See f
 
 `doGet` dispatches on `?action=…` (or returns student data when `?email=` is supplied with no action; `?admin=true` returns every athlete). `doPost` reads `data.action` from the JSON body.
 
-**Admin-only actions need a token.** `setConfig`, `updateStudent`, `getGritAdminData`, `getSessionPlanning`, `getObservations`, `updatePsychScores`, `saveObservation`, and `saveLearnProgress` for block `stamps` pass the teacher's Google ID token (`token` query param on GET, `token` field on POST). `apAdminGate_` verifies it with Google and checks `AA_TEACHERS`; a failure returns `{ success:false, authRequired:true }` and admin re-shows the sign-in. `getAllStudents` is still open because `clash.html` and `strength-portal.html` call it.
+**Every student action needs a token.** All student reads and writes (the lists `AP_STUDENT_GET_ACTIONS` / `AP_STUDENT_POST_ACTIONS` in the script) pass the signed-in student's Google ID token (`token` query param on GET, `token` field on POST). `apStudentGate_` verifies it with Google, requires a school account (or a teacher), and resolves the `Athlete_ID` from the verified email; the handlers never see the client's `email` / `athleteId`. A failure returns `{ success:false, authRequired:true }` (plus `wrongAccount:true` for a non-school account) and the page re-shows the sign-in.
+
+**Admin-only actions need a teacher token.** `getAllStudents`, `?admin=true`, `setConfig`, `updateStudent`, `getGritAdminData`, `getSessionPlanning`, `getObservations`, `updatePsychScores`, `saveObservation`, `saveLearnProgress` for block `stamps`, the Clash scoring writes (`saveClashTeam`, `saveClashResult`, `saveClashFitnessRetest`, `setClashConfig`, `deleteClashTeam`) and the legacy action-less strength update pass the teacher's token. `apAdminGate_` verifies it with Google and checks `AA_TEACHERS`. `getClashRoster` (ID + name + gender + grade) is the only open roster, for the public scoreboard.
 
 ### GET actions
 | Action | Purpose | Caller |
 |--------|---------|--------|
 | `getAthleteData` | Build full athlete object (psych, strength, performance, mobility, recovery + history) | index, strength, grit |
-| `getAllStudents` | All athletes + strength + Workout_Logs session counts | admin |
+| `getAllStudents` | All athletes + strength + Workout_Logs session counts (teacher token) | admin |
+| `getClashRoster` | Athlete_ID + name + gender + grade only — public scoreboard roster | clash |
 | `getConfig` / `setConfig` | Read/write `Config` sheet (e.g. `CurrentSession`) | admin, strength |
 | `updateStudent` | Write Tech / Str_Lx / Notes to `Strength` (also exposed via POST) | admin |
 | `saveWorkout` | Append a row to `Workout_Logs` (also exposed via POST) | strength |

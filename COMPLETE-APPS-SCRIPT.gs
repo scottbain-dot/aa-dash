@@ -112,9 +112,26 @@ function doGet(e) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const action = e.parameter.action;
 
+    // ===== WHO IS CALLING? =====
+    // Student actions take their identity from the verified token (see
+    // apStudentGate_). `who.email` / `who.athleteId` are the ONLY identity
+    // used below — never e.parameter.email / e.parameter.athleteId.
+    var who = null;
+    if (AP_STUDENT_GET_ACTIONS.indexOf(action) !== -1 || (!action && e.parameter.admin !== 'true')) {
+      who = apStudentGate_(ss, e.parameter.token, e.parameter.athleteId);
+      if (!who.ok) return who.response;
+    }
+
     // ===== ADMIN PANEL ACTIONS =====
     if (action === 'getAllStudents') {
+      // Every athlete's name, email and scores — staff only.
+      var gateAll = apAdminGate_(e.parameter.token); if (gateAll) return gateAll;
       return getAllStudents(ss);
+    }
+
+    if (action === 'getClashRoster') {
+      // Public scoreboard roster: Athlete_ID + display name only (no emails, no scores).
+      return apJson(handleGetClashRoster(ss));
     }
 
     if (action === 'getConfig') {
@@ -135,27 +152,31 @@ function doGet(e) {
 
     // ===== WORKOUT SYSTEM ACTIONS =====
     if (action === 'saveWorkout') {
-      const email = e.parameter.email;
+      if (!who.athleteId) return apJson({ success: false, error: 'No athlete found for this account' });
       const sessionType = e.parameter.sessionType;
       const exercisesCompleted = e.parameter.exercisesCompleted;
       const notes = e.parameter.notes || '';
       const durationMinutes = parseInt(e.parameter.durationMinutes) || 45;
-      const result = saveWorkout(email, sessionType, exercisesCompleted, notes, durationMinutes);
+      const result = saveWorkout(who.athleteId, sessionType, exercisesCompleted, notes, durationMinutes);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // The workout helpers match rows on Athlete_ID; an account with no
+    // Athletes row must not be matched against blank cells.
+    if (['getLastSession', 'getLastSessionByType', 'getWorkoutHistory', 'getNextWeights'].indexOf(action) !== -1 && !who.athleteId) {
+      return apJson({ success: false, error: 'No athlete found for this account' });
+    }
+
     if (action === 'getLastSession') {
-      const athleteId = e.parameter.athleteId || e.parameter.email;
-      const lastSession = getLastSession(athleteId);
+      const lastSession = getLastSession(who.athleteId);
       return ContentService.createTextOutput(JSON.stringify(lastSession))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
     if (action === 'getLastSessionByType') {
-      const athleteId = e.parameter.athleteId || e.parameter.email;
       const sessionType = e.parameter.sessionType;
-      const lastSession = getLastSessionByType(athleteId, sessionType);
+      const lastSession = getLastSessionByType(who.athleteId, sessionType);
       return ContentService.createTextOutput(JSON.stringify({
         success: true,
         lastSession: lastSession
@@ -163,9 +184,8 @@ function doGet(e) {
     }
 
     if (action === 'getWorkoutHistory') {
-      const athleteId = e.parameter.athleteId || e.parameter.email;
       const limit = parseInt(e.parameter.limit) || 10;
-      const history = getWorkoutHistory(athleteId, limit);
+      const history = getWorkoutHistory(who.athleteId, limit);
       return ContentService.createTextOutput(JSON.stringify({
         success: true,
         history: history
@@ -173,20 +193,18 @@ function doGet(e) {
     }
 
     if (action === 'getNextWeights') {
-      const athleteId = e.parameter.athleteId || e.parameter.email;
-      const weights = getNextWeights(athleteId);
+      const weights = getNextWeights(who.athleteId);
       return ContentService.createTextOutput(JSON.stringify(weights))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
     if (action === 'getAthleteData') {
-      const email = e.parameter.email;
-      return handleStudentRequest(ss, email, e.parameter.portal);
+      return handleStudentRequest(ss, who.email, e.parameter.portal);
     }
 
     // ===== GRIT CHALLENGE ACTIONS =====
     if (action === 'getGritChallenge') {
-      var gritResult = handleGetGritChallenge(ss, e.parameter.email);
+      var gritResult = handleGetGritChallenge(ss, who.athleteId);
       return ContentService.createTextOutput(JSON.stringify(gritResult))
         .setMimeType(ContentService.MimeType.JSON);
     }
@@ -216,53 +234,54 @@ function doGet(e) {
 
     // ===== FUEL LAB QUIZ STATS (teacher view) =====
     if (action === 'getFuelLabQuizStats') {
-      var fuelStatsResult = handleGetFuelLabQuizStats(ss, e.parameter.idToken);
+      var fuelStatsResult = handleGetFuelLabQuizStats(ss, e.parameter.token || e.parameter.idToken);
       return ContentService.createTextOutput(JSON.stringify(fuelStatsResult))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    // ===== ATHLETE PORTAL (G10-12) ACTIONS =====
-    // getPortalBootstrap is the ONLY portal endpoint that takes an email — it is
-    // the login lookup that resolves the Athlete_ID. Every other portal data
-    // endpoint below is keyed by athleteId only (see IDENTITY RULE in CLAUDE.md).
+    // ===== ATHLETE PORTAL (G10-12 / G9) ACTIONS =====
+    // getPortalBootstrap is the login call: it resolves the athlete from the
+    // VERIFIED token email. Every other portal endpoint is keyed by the
+    // athleteId the gate resolved — never by anything the client sent (see
+    // IDENTITY RULE in CLAUDE.md).
     if (action === 'getPortalBootstrap') {
-      return apJson(handleGetPortalBootstrap(ss, e.parameter.email));
+      return apJson(handleGetPortalBootstrap(ss, who.email, who.isTeacher ? who.athleteId : ''));
     }
     if (action === 'getYearMap') {
-      return apJson(handleGetYearMap(ss, e.parameter.athleteId));
+      return apJson(handleGetYearMap(ss, who.athleteId));
     }
     if (action === 'getWeeklyTemplate') {
-      return apJson(handleGetWeeklyTemplate(ss, e.parameter.athleteId));
+      return apJson(handleGetWeeklyTemplate(ss, who.athleteId));
     }
     if (action === 'getWeek') {
-      return apJson(handleGetWeek(ss, e.parameter.athleteId, e.parameter.weekStart));
+      return apJson(handleGetWeek(ss, who.athleteId, e.parameter.weekStart));
     }
     if (action === 'getGames') {
-      return apJson(handleGetGames(ss, e.parameter.athleteId));
+      return apJson(handleGetGames(ss, who.athleteId));
     }
     if (action === 'getBookingData') {
-      return apJson(handleGetBookingData(ss, e.parameter.athleteId));
+      return apJson(handleGetBookingData(ss, who.athleteId));
     }
     if (action === 'getYearLoad') {
-      return apJson(handleGetYearLoad(ss, e.parameter.athleteId));
+      return apJson(handleGetYearLoad(ss, who.athleteId));
     }
     if (action === 'getPBs') {
-      return apJson(handleGetPBs(ss, e.parameter.athleteId));
+      return apJson(handleGetPBs(ss, who.athleteId));
     }
     if (action === 'getExerciseHistory') {
-      return apJson(handleGetExerciseHistory(ss, e.parameter.athleteId, e.parameter.name, e.parameter.todayISO));
+      return apJson(handleGetExerciseHistory(ss, who.athleteId, e.parameter.name, e.parameter.todayISO));
     }
     if (action === 'getLearnProgress') {
-      return apJson(handleGetLearnProgress(ss, e.parameter.athleteId));
+      return apJson(handleGetLearnProgress(ss, who.athleteId));
     }
     if (action === 'getPassport') {
-      return apJson(handleGetPassport(ss, e.parameter.athleteId));
+      return apJson(handleGetPassport(ss, who.athleteId));
     }
     if (action === 'getGrit') {
-      return apJson(handleGetGrit(ss, e.parameter.athleteId));
+      return apJson(handleGetGrit(ss, who.athleteId));
     }
     if (action === 'getAvailability') {
-      return apJson(handleGetAvailability(ss, e.parameter.athleteId));
+      return apJson(handleGetAvailability(ss, who.athleteId));
     }
 
     // ===== CLASH OF THE CODES ACTIONS =====
@@ -296,7 +315,7 @@ function doGet(e) {
     }
 
     if (action === 'getClashLunchPlan') {
-      return apJson(handleGetClashLunchPlan(ss, e.parameter.email, e.parameter.athleteId));
+      return apJson(handleGetClashLunchPlan(ss, who.athleteId));
     }
     if (action === 'getHelpers') {
       return apJson(handleGetHelpers(ss));
@@ -304,10 +323,12 @@ function doGet(e) {
 
     // ===== EXISTING DASHBOARD LOGIC =====
     if (e.parameter.admin === 'true') {
+      var gateAdm = apAdminGate_(e.parameter.token); if (gateAdm) return gateAdm;
       return handleAdminRequest(ss);
     }
 
-    return handleStudentRequest(ss, e.parameter.email, e.parameter.portal);
+    if (action) return apJson({ success: false, error: 'Unknown action' });
+    return handleStudentRequest(ss, who.email, e.parameter.portal);
 
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({
@@ -326,9 +347,20 @@ function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
 
+    // ===== WHO IS CALLING? =====
+    // Student writes take their identity from the verified token (see
+    // apStudentGate_). `who.email` / `who.athleteId` are the ONLY identity
+    // used below — never data.email / data.athleteId.
+    var who = null;
+    if (AP_STUDENT_POST_ACTIONS.indexOf(data.action) !== -1) {
+      who = apStudentGate_(SpreadsheetApp.getActiveSpreadsheet(), data.token, data.athleteId);
+      if (!who.ok) return who.response;
+    }
+
     if (data.action === 'saveWorkout') {
+      if (!who.athleteId) return apJson({ success: false, error: 'No athlete found for this account' });
       var result = saveWorkout(
-        data.email,
+        who.athleteId,
         data.sessionType,
         data.exercisesCompleted,
         data.notes || '',
@@ -347,7 +379,7 @@ function doPost(e) {
     // ===== GRIT CHALLENGE SAVE =====
     if (data.action === 'saveGritChallenge') {
       var ss = SpreadsheetApp.getActiveSpreadsheet();
-      var gritResult = handleSaveGritChallenge(ss, data.email, data.challenge);
+      var gritResult = handleSaveGritChallenge(ss, who.athleteId, data.challenge);
       return ContentService.createTextOutput(JSON.stringify(gritResult))
         .setMimeType(ContentService.MimeType.JSON);
     }
@@ -355,7 +387,7 @@ function doPost(e) {
     // ===== COACH FEEDBACK SAVE =====
     if (data.action === 'saveCoachFeedback') {
       var ss = SpreadsheetApp.getActiveSpreadsheet();
-      var feedbackResult = handleSaveCoachFeedback(ss, data.email, data.sessionNumber, data.feedback, data.blockingMessage);
+      var feedbackResult = handleSaveCoachFeedback(ss, who.athleteId, data.sessionNumber, data.feedback, data.blockingMessage);
       return ContentService.createTextOutput(JSON.stringify(feedbackResult))
         .setMimeType(ContentService.MimeType.JSON);
     }
@@ -385,12 +417,12 @@ function doPost(e) {
 
     // ===== AI QUICK-LOG PARSER (freeform text -> draft sessions; writes nothing) =====
     if (data.action === 'parseSessions') {
-      return apJson(handleParseSessions(data.email, data.text, data.todayISO));
+      return apJson(handleParseSessions(who.email, data.text, data.todayISO));
     }
 
     // ===== AI PROGRAM BUILDER (freeform text / pasted program -> weekly program; writes nothing) =====
     if (data.action === 'parseProgram') {
-      return apJson(handleParseProgram(data.email, data.text));
+      return apJson(handleParseProgram(who.email, data.text));
     }
 
     // ===== AI PROGRAM GENERATOR (structured choices -> weekly program; writes nothing) =====
@@ -424,6 +456,7 @@ function doPost(e) {
     // ===== FUEL LAB QUIZ SUBMISSION =====
     if (data.action === 'submitFuelLabQuiz') {
       var ssFuel = SpreadsheetApp.getActiveSpreadsheet();
+      data.email = who.email;   // identity from the verified token, not the form
       var fuelResult = handleSubmitFuelLabQuiz(ssFuel, data);
       return ContentService.createTextOutput(JSON.stringify(fuelResult))
         .setMimeType(ContentService.MimeType.JSON);
@@ -432,54 +465,59 @@ function doPost(e) {
     // ===== FUEL LAB PLAN BUILDER =====
     if (data.action === 'saveFuelLabPlan') {
       var ssPlan = SpreadsheetApp.getActiveSpreadsheet();
+      data.email = who.email;   // identity from the verified token, not the form
       var planResult = handleSaveFuelLabPlan(ssPlan, data);
       return ContentService.createTextOutput(JSON.stringify(planResult))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    // ===== ATHLETE PORTAL (G10-12) WRITES =====
-    // Portal data writes are keyed by athleteId only — never email (IDENTITY RULE).
+    // ===== ATHLETE PORTAL (G10-12 / G9) WRITES =====
+    // Portal data writes are keyed by the athleteId the gate resolved from the
+    // verified token — never by email or by an id the client sent (IDENTITY RULE).
     if (data.action === 'saveYearMap') {
       var ssAp = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSaveYearMap(ssAp, data.athleteId, data.yearMap));
+      return apJson(handleSaveYearMap(ssAp, who.athleteId, data.yearMap));
     }
     if (data.action === 'saveBlock') {
       var ssAp2 = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSaveBlock(ssAp2, data.athleteId, data.sport, data.month, data.block));
+      return apJson(handleSaveBlock(ssAp2, who.athleteId, data.sport, data.month, data.block));
     }
     if (data.action === 'saveWeeklyTemplate') {
       var ssApT = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSaveWeeklyTemplate(ssApT, data.athleteId, data.template, data.library));
+      return apJson(handleSaveWeeklyTemplate(ssApT, who.athleteId, data.template, data.library));
     }
     if (data.action === 'saveSession') {
       var ssAp3 = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSaveSession(ssAp3, data.athleteId, data.session));
+      return apJson(handleSaveSession(ssAp3, who.athleteId, data.session));
     }
     if (data.action === 'deleteSession') {
       var ssAp3d = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleDeleteSession(ssAp3d, data.athleteId, data.id));
+      return apJson(handleDeleteSession(ssAp3d, who.athleteId, data.id));
     }
     if (data.action === 'bookCheckIn') {
-      return apJson(handleBookCheckIn(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.checkInId));
+      return apJson(handleBookCheckIn(SpreadsheetApp.getActiveSpreadsheet(), who.athleteId, data.checkInId));
     }
     if (data.action === 'cancelBooking') {
-      return apJson(handleCancelBooking(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.bookingId));
+      return apJson(handleCancelBooking(SpreadsheetApp.getActiveSpreadsheet(), who.athleteId, data.bookingId));
     }
     if (data.action === 'savePB') {
       var ssAp4 = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSavePB(ssAp4, data.athleteId, data.pb));
+      return apJson(handleSavePB(ssAp4, who.athleteId, data.pb));
     }
     if (data.action === 'saveLearnProgress') {
       // The 'stamps' block is written by admin only (not-yet notes, stamp dates).
-      if (String(data.blockId || '') === 'stamps') { var gateStamps = apAdminGate_(data.token); if (gateStamps) return gateStamps; }
+      // A teacher's token lets the gate honour the athleteId named in the request.
+      if (String(data.blockId || '') === 'stamps' && !who.isTeacher) {
+        return apJson({ success: false, error: 'Not authorised', authRequired: true });
+      }
       var ssLearn = SpreadsheetApp.getActiveSpreadsheet();
-      return apJson(handleSaveLearnProgress(ssLearn, data.athleteId, data.blockId, data.progress, data.meta));
+      return apJson(handleSaveLearnProgress(ssLearn, who.athleteId, data.blockId, data.progress, data.meta));
     }
     if (data.action === 'saveAvailability') {
-      return apJson(handleSaveAvailability(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.entry));
+      return apJson(handleSaveAvailability(SpreadsheetApp.getActiveSpreadsheet(), who.athleteId, data.entry));
     }
     if (data.action === 'clearAvailability') {
-      return apJson(handleClearAvailability(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.from));
+      return apJson(handleClearAvailability(SpreadsheetApp.getActiveSpreadsheet(), who.athleteId, data.from));
     }
     if (data.action === 'gradeLearnAnswers') {
       // Deliberately given no athleteId — nothing identifying goes to the model.
@@ -487,6 +525,20 @@ function doPost(e) {
     }
 
     // ===== CLASH OF THE CODES WRITES =====
+    // Scoring/teams/config are staff only. Student actions (nominations, roles,
+    // volunteering, lunch plans) take the requester from the verified token —
+    // only a teacher may act without naming themselves (the captain-check bypass).
+    if (AP_CLASH_ADMIN_ACTIONS.indexOf(data.action) !== -1) {
+      var gateClash = apAdminGate_(data.token); if (gateClash) return gateClash;
+    }
+    if (AP_CLASH_STUDENT_ACTIONS.indexOf(data.action) !== -1) {
+      var whoClash = apStudentGate_(SpreadsheetApp.getActiveSpreadsheet(), data.token, data.athleteId);
+      if (!whoClash.ok) return whoClash.response;
+      if (!whoClash.isTeacher) {
+        data.email = whoClash.email;
+        if (data.action === 'saveClashLunchPlan') data.athleteId = whoClash.athleteId;
+      }
+    }
     if (data.action === 'saveClashTeam') {
       var ssClashT = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSaveClashTeam(ssClashT, data));
@@ -534,7 +586,9 @@ function doPost(e) {
       return apJson(handleUnclaimHelperRole(SpreadsheetApp.getActiveSpreadsheet(), data));
     }
 
+    // Legacy action-less strength update — a Strength-sheet write, so staff only.
     if (data.athleteId && data.updates) {
+      var gateLegacy = apAdminGate_(data.token); if (gateLegacy) return gateLegacy;
       return updateStudent(data.athleteId, data.updates);
     }
 
@@ -602,10 +656,10 @@ function ensureGritChallengeColumns(ss) {
 }
 
 // GET: Load a student's Grit Challenge
-// Called via: ?action=getGritChallenge&email=student@fis.edu
-function handleGetGritChallenge(ss, email) {
+// Called via: ?action=getGritChallenge&token=<Google ID token>
+// athleteId is resolved by apStudentGate_ from the verified token.
+function handleGetGritChallenge(ss, athleteId) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
     if (!athleteId) {
       return { success: true, challenge: null };
     }
@@ -645,12 +699,12 @@ function handleGetGritChallenge(ss, email) {
 
 // POST: Save/Update a student's Grit Challenge
 // Called via POST with body:
-// { action: 'saveGritChallenge', email: 'student@fis.edu', challenge: {...} }
-function handleSaveGritChallenge(ss, email, challenge) {
+// { action: 'saveGritChallenge', token: <Google ID token>, challenge: {...} }
+// athleteId is resolved by apStudentGate_ from the verified token.
+function handleSaveGritChallenge(ss, athleteId, challenge) {
   try {
-    var athleteId = lookupAthleteIdByEmail(ss, email);
     if (!athleteId) {
-      return { success: false, error: 'No athlete found for email: ' + email };
+      return { success: false, error: 'No athlete found for this account' };
     }
 
     var sheet = ensureGritChallengeColumns(ss);
@@ -790,21 +844,18 @@ function handleGetGritAdminData(ss) {
 // Saves coach feedback into the session object within Challenge_JSON
 // ========================================
 
-function handleSaveCoachFeedback(ss, email, sessionNumber, feedback, blockingMessage) {
+// athleteId is resolved by apStudentGate_ from the verified token (a teacher
+// may name the athleteId explicitly).
+function handleSaveCoachFeedback(ss, athleteId, sessionNumber, feedback, blockingMessage) {
   try {
-    if (!email) {
-      return { success: false, error: 'No email provided' };
+    if (!athleteId) {
+      return { success: false, error: 'No athlete found for this account' };
     }
     if (!sessionNumber || sessionNumber < 1 || sessionNumber > 8) {
       return { success: false, error: 'Session number must be 1–8' };
     }
     if (feedback === undefined || feedback === null) {
       return { success: false, error: 'No feedback provided' };
-    }
-
-    var athleteId = lookupAthleteIdByEmail(ss, email);
-    if (!athleteId) {
-      return { success: false, error: 'No athlete found for email: ' + email };
     }
 
     var sheet = ensureGritChallengeColumns(ss);
@@ -2653,16 +2704,35 @@ function handleSubmitFuelLabQuiz(ss, data) {
   }
 }
 
-// ---- Teacher authorisation ----
-// Verifies a Google ID token with Google before trusting anything in it, then
-// checks the email against the staff allowlist. The token is signed by Google,
-// so unlike a client-supplied email this cannot simply be typed in.
+// ============================================================
+// WHO IS CALLING? — identity comes from a verified Google ID token, never
+// from an email or athleteId the browser typed into the request.
+//
+// Every student page sends the raw Google Identity Services credential as
+// `token` (query param on GET, field on POST). The server asks Google to
+// verify it, checks it was minted for THIS app and for a school account, and
+// takes the email from the verified token. The Athlete_ID is then resolved
+// server-side from that email. Anything the client sends as `email` or
+// `athleteId` is ignored for students — a teacher may pass an explicit
+// athleteId so admin views can act on a student's record.
+// ============================================================
 var AA_OAUTH_CLIENT_ID = '701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com';
 var AA_TEACHERS = ['scott_bain@fis.edu', 'scottybain@gmail.com'];
+var AA_STUDENT_DOMAINS = ['fis.edu'];   // Google Workspace domains students sign in with
+var AA_TOKEN_CACHE_SECS = 900;          // re-verify with Google at most every 15 min
 
-function apVerifyTeacher(idToken) {
+// Verifies a Google ID token with Google before trusting anything in it. The
+// token is signed by Google, so unlike a client-supplied email this cannot
+// simply be typed in. Verified tokens are cached by hash (never beyond their
+// own expiry) so a busy class does not call Google on every tap.
+// Returns { ok:true, email, hd } or { ok:false, error }.
+function apVerifyIdToken_(idToken) {
   try {
-    if (!idToken) return { ok: false, error: 'Sign in required' };
+    if (!idToken || typeof idToken !== 'string' || idToken.length > 4096) return { ok: false, error: 'Sign in required' };
+    var cache = CacheService.getScriptCache();
+    var key = 'tok:' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, idToken));
+    var hit = cache.get(key);
+    if (hit) { try { var c = JSON.parse(hit); if (c && c.email) return { ok: true, email: c.email, hd: c.hd || '' }; } catch (e0) {} }
     var res = UrlFetchApp.fetch(
       'https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken),
       { muteHttpExceptions: true });
@@ -2672,28 +2742,87 @@ function apVerifyTeacher(idToken) {
     // Google token minted for some other site.
     if (p.aud !== AA_OAUTH_CLIENT_ID) return { ok: false, error: 'Sign in required' };
     if (String(p.email_verified) !== 'true') return { ok: false, error: 'Sign in required' };
-    var email = String(p.email || '').toLowerCase();
-    if (AA_TEACHERS.indexOf(email) === -1) return { ok: false, error: 'Not authorised' };
-    return { ok: true, email: email };
+    var email = String(p.email || '').trim().toLowerCase();
+    if (!email) return { ok: false, error: 'Sign in required' };
+    var exp = parseInt(p.exp, 10) || 0;
+    var ttl = Math.min(AA_TOKEN_CACHE_SECS, exp - Math.floor(Date.now() / 1000));
+    if (ttl <= 0) return { ok: false, error: 'Sign in required' };
+    var hd = String(p.hd || '').toLowerCase();
+    cache.put(key, JSON.stringify({ email: email, hd: hd }), ttl);
+    return { ok: true, email: email, hd: hd };
   } catch (err) {
     return { ok: false, error: 'Sign in required' };
   }
 }
 
+function apIsTeacherEmail_(email) {
+  return AA_TEACHERS.indexOf(String(email || '').toLowerCase()) !== -1;
+}
+
+function apIsSchoolAccount_(email, hd) {
+  var e = String(email || '').toLowerCase();
+  for (var i = 0; i < AA_STUDENT_DOMAINS.length; i++) {
+    var d = AA_STUDENT_DOMAINS[i];
+    if (hd === d || e.slice(-(d.length + 1)) === '@' + d) return true;
+  }
+  return false;
+}
+
+function apVerifyTeacher(idToken) {
+  var v = apVerifyIdToken_(idToken);
+  if (!v.ok) return v;
+  if (!apIsTeacherEmail_(v.email)) return { ok: false, error: 'Not authorised' };
+  return { ok: true, email: v.email };
+}
+
 // Admin-only actions: the caller must present a verified teacher ID token.
-// Returns null when allowed, or a JSON error response to send back. Verified
-// tokens are cached by hash for 15 minutes so a busy admin session does not
-// call Google on every tap.
+// Returns null when allowed, or a JSON error response to send back.
 function apAdminGate_(idToken) {
   if (!idToken) return apJson({ success: false, error: 'Admin sign-in required', authRequired: true });
-  var cache = CacheService.getScriptCache();
-  var key = 'adm:' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, idToken));
-  if (cache.get(key) === 'ok') return null;
   var auth = apVerifyTeacher(idToken);
   if (!auth.ok) return apJson({ success: false, error: auth.error, authRequired: true });
-  cache.put(key, 'ok', 900);
   return null;
 }
+
+// Student actions: the caller must present a verified ID token for a school
+// account (or a teacher). Identity is taken from the token — the email and
+// athleteId the browser sent are ignored, except that a TEACHER may name an
+// athleteId to act on that student's record (admin views).
+// Returns { ok:true, email, athleteId, isTeacher } or { ok:false, response }.
+function apStudentGate_(ss, idToken, requestedAthleteId) {
+  if (!idToken) return { ok: false, response: apJson({ success: false, error: 'Sign in required', authRequired: true }) };
+  var v = apVerifyIdToken_(idToken);
+  if (!v.ok) return { ok: false, response: apJson({ success: false, error: v.error, authRequired: true }) };
+  var isTeacher = apIsTeacherEmail_(v.email);
+  if (!isTeacher && !apIsSchoolAccount_(v.email, v.hd)) {
+    return { ok: false, response: apJson({ success: false, error: 'Please sign in with your FIS school account', authRequired: true, wrongAccount: true }) };
+  }
+  var athleteId = '';
+  if (isTeacher && requestedAthleteId !== undefined && requestedAthleteId !== null && String(requestedAthleteId).trim() !== '') {
+    athleteId = String(requestedAthleteId).trim();
+  } else {
+    var found = lookupAthleteIdByEmail(ss, v.email);
+    athleteId = (found === null || found === undefined) ? '' : String(found).trim();
+  }
+  return { ok: true, email: v.email, athleteId: athleteId, isTeacher: isTeacher };
+}
+
+// GET actions served to signed-in students. Each of these goes through
+// apStudentGate_ in doGet before its handler runs.
+var AP_STUDENT_GET_ACTIONS = ['saveWorkout', 'getLastSession', 'getLastSessionByType', 'getWorkoutHistory',
+  'getNextWeights', 'getAthleteData', 'getGritChallenge', 'getPortalBootstrap', 'getYearMap', 'getWeeklyTemplate',
+  'getWeek', 'getGames', 'getBookingData', 'getYearLoad', 'getPBs', 'getExerciseHistory', 'getLearnProgress',
+  'getPassport', 'getGrit', 'getAvailability', 'getClashLunchPlan'];
+// Clash of the Codes writes: staff-only scoring, and student actions whose
+// requester comes from the verified token (see doPost).
+var AP_CLASH_ADMIN_ACTIONS = ['saveClashTeam', 'saveClashResult', 'saveClashFitnessRetest', 'setClashConfig', 'deleteClashTeam'];
+var AP_CLASH_STUDENT_ACTIONS = ['saveClashNomination', 'claimRole', 'setPlanDocUrl', 'addVolunteer', 'removeVolunteer',
+  'saveClashLunchPlan', 'claimHelperRole', 'unclaimHelperRole'];
+// POST actions served to signed-in students (same gate, in doPost).
+var AP_STUDENT_POST_ACTIONS = ['saveWorkout', 'saveGritChallenge', 'saveCoachFeedback', 'getAICoachingInsights',
+  'getHeroInsight', 'parseSessions', 'parseProgram', 'generateProgram', 'submitFuelLabQuiz', 'saveFuelLabPlan',
+  'saveYearMap', 'saveBlock', 'saveWeeklyTemplate', 'saveSession', 'deleteSession', 'bookCheckIn', 'cancelBooking',
+  'savePB', 'saveLearnProgress', 'saveAvailability', 'clearAvailability', 'gradeLearnAnswers'];
 
 function handleGetFuelLabQuizStats(ss, idToken) {
   try {
@@ -3531,9 +3660,11 @@ function handleSavePB(ss, athleteId, pb) {
 }
 
 // ----- Bootstrap: one round-trip for portal open -----
-function handleGetPortalBootstrap(ss, email) {
+// `email` is the VERIFIED token email (never the client's). A teacher may
+// pass an athleteId to open a student's portal view.
+function handleGetPortalBootstrap(ss, email, teacherAthleteId) {
   try {
-    var athlete = apGetAthlete(ss, email);
+    var athlete = teacherAthleteId ? apGetAthleteById(ss, teacherAthleteId) : apGetAthlete(ss, email);
     if (!athlete) return { success: true, athlete: null, firstTime: true };
     var athleteId = athlete.Athlete_ID;
     var map = apLoadYearMap(ss, athleteId);
@@ -5460,10 +5591,10 @@ function ensureClashLunchPlansSheet(ss) {
   return sheet;
 }
 
-function handleGetClashLunchPlan(ss, email, athleteId) {
+// athleteId is resolved by apStudentGate_ from the verified token.
+function handleGetClashLunchPlan(ss, athleteId) {
   try {
-    if (!email && !athleteId) return { success: false, error: 'Provide email or athleteId' };
-    var aid = athleteId || lookupAthleteIdByEmail(ss, email);
+    var aid = athleteId;
     if (!aid) return { success: true, plan: null };
     var sheet = ensureClashLunchPlansSheet(ss);
     var ro = clashReadObjects(sheet);
@@ -5722,6 +5853,36 @@ var AP_TZ = 'Europe/Berlin';
 var AP_CHECKIN_LOCATION = 'PE Office';
 function apParseDateTime(iso, hhmm) {
   return Utilities.parseDate(String(iso) + ' ' + String(hhmm || '00:00'), AP_TZ, 'yyyy-MM-dd HH:mm');
+}
+
+// Public roster for the Clash scoreboard/display: Athlete_ID, display name,
+// gender and grade only. Replaces the old open getAllStudents call, which
+// exposed every athlete's email and scores to anyone with the URL.
+function handleGetClashRoster(ss) {
+  try {
+    var sheet = ss.getSheetByName('Athletes');
+    if (!sheet) return { success: false, error: 'Athletes sheet not found' };
+    var data = sheet.getDataRange().getValues();
+    var H = data[0];
+    var idc = H.indexOf('Athlete_ID'), nc = H.indexOf('Name'), fc = H.indexOf('First_Name'), lc = H.indexOf('Last_Name');
+    var gc = H.indexOf('Gender'), grc = H.indexOf('Grade'); if (grc < 0) grc = H.indexOf('Year_Group');
+    var out = [];
+    for (var i = 1; i < data.length; i++) {
+      var id = idc < 0 ? '' : String(data[i][idc] == null ? '' : data[i][idc]).trim();
+      if (!id) continue;
+      var name = nc >= 0 ? String(data[i][nc] || '').trim() : '';
+      if (!name && (fc >= 0 || lc >= 0)) name = (String(fc >= 0 ? data[i][fc] || '' : '') + ' ' + String(lc >= 0 ? data[i][lc] || '' : '')).trim();
+      out.push({
+        Athlete_ID: id,
+        Name: name,
+        Gender: gc >= 0 ? String(data[i][gc] || '') : '',
+        Grade: grc >= 0 ? String(data[i][grc] || '') : ''
+      });
+    }
+    return { success: true, students: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
 }
 
 function apGetAthleteById(ss, athleteId) {

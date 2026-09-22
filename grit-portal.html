@@ -908,18 +908,28 @@ function initGoogleSignIn() {
     }
 }
 
+// The raw Google ID token is the identity: it goes with every API call and the
+// SERVER verifies it with Google. email/name here are display only.
 function handleCredential(response) {
     const payload = JSON.parse(atob(response.credential.split('.')[1]));
-    currentUser = { email: payload.email, name: payload.name };
+    currentUser = { token: response.credential, email: payload.email, name: payload.name };
     showScreen('loadingScreen');
     loadAthleteData();
+}
+function authToken() { return (currentUser && currentUser.token) || ''; }
+// Server said the token is no longer good (about an hour): back to sign-in.
+function sessionExpired(data) {
+    currentUser = null;
+    showScreen('welcomeScreen');
+    alert(data && data.wrongAccount ? (data.error || 'Please sign in with your FIS school account.') : 'Your sign-in has expired. Please sign in again.');
 }
 
 async function loadAthleteData() {
     try {
-        const url = `${ATHLETE_API}?action=getAthleteData&email=${encodeURIComponent(currentUser.email)}`;
+        const url = `${ATHLETE_API}?action=getAthleteData&token=${encodeURIComponent(authToken())}`;
         const response = await fetch(url);
         const data = await response.json();
+        if (data && data.authRequired) { sessionExpired(data); return; }
         
         if ((data.authenticated || data.success) && data.athlete) {
             athleteData = data.athlete;
@@ -996,9 +1006,10 @@ async function loadGritChallenge() {
     showScreen('appScreen');
     
     try {
-        const url = `${GRIT_API}?action=getGritChallenge&email=${encodeURIComponent(currentUser.email)}`;
+        const url = `${GRIT_API}?action=getGritChallenge&token=${encodeURIComponent(authToken())}`;
         const response = await fetch(url);
         const data = await response.json();
+        if (data && data.authRequired) { sessionExpired(data); return; }
         
         if (data.success && data.challenge) {
             currentChallenge = data.challenge;
@@ -1296,7 +1307,7 @@ async function submitChallenge() {
 
     if (!hasAnySessionContent(existingSessions)) {
         try {
-            const url = `${GRIT_API}?action=getGritChallenge&email=${encodeURIComponent(currentUser.email)}`;
+            const url = `${GRIT_API}?action=getGritChallenge&token=${encodeURIComponent(authToken())}`;
             const resp = await fetch(url);
             const remoteData = await resp.json();
             if (remoteData && remoteData.success && remoteData.challenge) {
@@ -1373,7 +1384,7 @@ function hasAnySessionContent(sessions) {
 
 async function pullCoachFieldsFromServer() {
     if (!currentChallenge || !currentUser) return;
-    const url = `${GRIT_API}?action=getGritChallenge&email=${encodeURIComponent(currentUser.email)}`;
+    const url = `${GRIT_API}?action=getGritChallenge&token=${encodeURIComponent(authToken())}`;
     const resp = await fetch(url);
     const data = await resp.json();
     if (!data || !data.success) return;
@@ -1413,11 +1424,12 @@ async function persistChallenge() {
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
                 action: 'saveGritChallenge',
-                email: currentUser.email,
+                token: authToken(),
                 challenge: currentChallenge
             })
         });
         const data = await response.json();
+        if (data && data.authRequired) { sessionExpired(data); return; }
         if (!data.success) {
             console.error('Save failed:', data.error);
         }
@@ -1459,7 +1471,7 @@ async function clearPlanningBlock(sessionNum) {
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
                 action: 'saveCoachFeedback',
-                email: currentUser.email,
+                token: authToken(),
                 sessionNumber: sessionNum,
                 feedback: session.coachFeedback || '',
                 blockingMessage: false

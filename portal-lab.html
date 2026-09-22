@@ -1385,6 +1385,7 @@
          data-context="signin"
          data-ux_mode="popup"
          data-callback="handleCredentialResponse"
+         data-auto_select="true"
          data-auto_prompt="false"></div>
     <div class="g_id_signin"
          data-type="standard" data-shape="pill"
@@ -4250,7 +4251,13 @@
   function fmt12(t){ if(!t || !/^\d{1,2}:\d{2}$/.test(t)) return ''; let [h,m]=t.split(':').map(Number); const ap=h<12?'AM':'PM'; h=h%12||12; return h+':'+String(m).padStart(2,'0')+' '+ap; }
 
   // ============================================================
-  // AUTH
+  // AUTH — the Google ID token IS the identity.
+  // The raw credential from Google Identity Services is kept and sent as
+  // `token` with every API call. The SERVER verifies it with Google and takes
+  // the email (and so the Athlete_ID) from the verified token; nothing decoded
+  // here is trusted for identity — name/picture are display only. A token
+  // lasts about an hour, so an expired one is refreshed silently through GIS
+  // (auto_select) and, failing that, the sign-in screen comes back.
   // ============================================================
   // JWT payloads are base64URL (not standard base64) and UTF-8 (names at FIS have
   // umlauts/accents) — a plain atob() can throw or mangle them. Decode safely.
@@ -4262,15 +4269,90 @@
       return decodeURIComponent(bin.split('').map(c => '%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
     } catch(e){ return bin; }   // fall back to raw if it isn't valid UTF-8
   }
+  function tokenPayload(token){ try { return JSON.parse(b64urlDecode(String(token||'').split('.')[1])) || {}; } catch(e){ return {}; } }
+  function tokenExpired(u){ return !u || !u.token || !u.exp || (Date.now()/1000) > (u.exp - 30); }
+  function saveSession(){ try { localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser)); } catch(e){} }
+  let _pendingSignIn = null;   // resolver for a silent token refresh in flight
+  let _refreshPromise = null;
+  let _authLost = false;       // sent back to sign-in: background calls must not keep prompting
   function handleCredentialResponse(resp){
     try {
-      const payload = JSON.parse(b64urlDecode(resp.credential.split('.')[1]));
-      currentUser = { email: payload.email, name: payload.name, picture: payload.picture, loginTime: Date.now() };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+      const token = resp && resp.credential;
+      if(!token) throw new Error('no credential');
+      const payload = tokenPayload(token);   // display fields only — the server decides who this is
+      const prev = currentUser || {};
+      const sameAccount = !prev.email || !payload.email || String(prev.email).toLowerCase() === String(payload.email).toLowerCase();
+      currentUser = {
+        token: token, exp: payload.exp || 0,
+        email: payload.email || '', name: payload.name || '', picture: payload.picture || '',
+        athleteId: sameAccount ? (prev.athleteId || '') : '',
+        loginTime: sameAccount && prev.loginTime ? prev.loginTime : Date.now()
+      };
+      saveSession();
+      _authLost = false;
+      if(_pendingSignIn && sameAccount){ const r = _pendingSignIn; _pendingSignIn = null; r(true); return; }
+      if(!sameAccount){ location.reload(); return; }   // a different account: start clean
       startPortal();
     } catch(e){ showToast('Sign-in failed. Try again.', 'error'); }
   }
   window.handleCredentialResponse = handleCredentialResponse;
+
+  // Wait (briefly) for the GIS library — it loads async and may not be there yet.
+  function waitForGis(){
+    return new Promise(resolve => {
+      const t0 = Date.now();
+      (function tick(){
+        const g = window.google && google.accounts && google.accounts.id;
+        if(g) return resolve(g);
+        if(Date.now() - t0 > 6000) return resolve(null);
+        setTimeout(tick, 100);
+      })();
+    });
+  }
+  // Ask Google for a fresh token without a click (auto_select). Resolves true
+  // once handleCredentialResponse has stored a new token, false otherwise.
+  function refreshToken(){
+    if(DEMO_MODE) return Promise.resolve(false);
+    if(_refreshPromise) return _refreshPromise;
+    _refreshPromise = new Promise(async resolve => {
+      const g = await waitForGis();
+      if(!g){ resolve(false); return; }
+      let done = false, timer = null;
+      const finish = ok => { if(done) return; done = true; _pendingSignIn = null; clearTimeout(timer); resolve(!!ok); };
+      timer = setTimeout(() => finish(false), 12000);
+      _pendingSignIn = finish;
+      try {
+        g.prompt(n => {
+          // Under FedCM most moment reasons are not reported; the ones that are
+          // (skipped / dismissed without a credential) mean "no token coming".
+          try {
+            if(n && n.isSkippedMoment && n.isSkippedMoment()) finish(false);
+            else if(n && n.isNotDisplayed && n.isNotDisplayed()) finish(false);
+            else if(n && n.isDismissedMoment && n.isDismissedMoment() && n.getDismissedReason && n.getDismissedReason() !== 'credential_returned') finish(false);
+          } catch(e){}
+        });
+      } catch(e){ finish(false); }
+    });
+    _refreshPromise.finally(() => { _refreshPromise = null; });
+    return _refreshPromise;
+  }
+  // Back to the sign-in screen (token gone, name kept for the welcome line).
+  function signInAgain(msg){
+    _authLost = true;
+    if(currentUser){ currentUser.token = ''; currentUser.exp = 0; saveSession(); }
+    setLoading(false);
+    document.body.classList.remove('signed-in');
+    showToast(msg || 'Please sign in again.', 'error');
+  }
+  // Make sure we hold a live token before a call; refresh silently if not.
+  async function ensureToken(){
+    if(DEMO_MODE) return true;
+    if(_authLost) throw new Error('Sign in required');
+    if(!tokenExpired(currentUser)) return true;
+    const ok = await refreshToken();
+    if(!ok){ signInAgain('Your sign-in has expired. Please sign in again.'); throw new Error('Sign in required'); }
+    return true;
+  }
 
   // Google blocks OAuth inside embedded/in-app browsers (Canvas, Teams, Gmail,
   // WhatsApp…). Detect that so we can tell students to open in Safari/Chrome.
@@ -4287,16 +4369,22 @@
     if(el) el.style.display = '';
   }
 
+  // A remembered device: the last token plus display fields. The token itself
+  // is short-lived — startPortal() refreshes it silently through ensureToken().
   function checkExistingSession(){
     try {
       const raw = localStorage.getItem(SESSION_KEY);
       if(!raw) return false;
       const u = JSON.parse(raw);
-      if(!u.loginTime || (Date.now() - u.loginTime) > SESSION_MAX_AGE){ localStorage.removeItem(SESSION_KEY); return false; }
+      if(!u.token || !u.loginTime || (Date.now() - u.loginTime) > SESSION_MAX_AGE){ localStorage.removeItem(SESSION_KEY); return false; }
       currentUser = u; return true;
     } catch(e){ return false; }
   }
-  function logout(){ localStorage.removeItem(SESSION_KEY); location.reload(); }
+  function logout(){
+    localStorage.removeItem(SESSION_KEY);
+    try { google.accounts.id.disableAutoSelect(); } catch(e){}
+    location.reload();
+  }
   window.logout = logout;
 
   // ============================================================
@@ -4317,22 +4405,41 @@
       throw e;
     } finally { clearTimeout(timer); }
   }
+  // Every call carries the Google ID token (read at send time, so a refreshed
+  // token is picked up). The token is the identity — see AUTH above.
+  function withToken(obj){ return Object.assign({}, obj, { token: (currentUser && currentUser.token) || '' }); }
+  async function apiAuthed(send){
+    await ensureToken();
+    let res = await send();
+    if(res && res.authRequired){
+      if(res.wrongAccount){ signInAgain(res.error || 'Please sign in with your FIS school account.'); throw new Error(res.error || 'Sign in required'); }
+      const ok = await refreshToken();          // token may have just expired — one silent retry
+      if(ok) res = await send();
+      if(res && res.authRequired){ signInAgain('Your sign-in has expired. Please sign in again.'); throw new Error(res.error || 'Sign in required'); }
+    }
+    return res;
+  }
   async function apiGet(params){
     if(DEMO_MODE) return demoApi(params);
-    const qs = Object.keys(params).map(k => k+'='+encodeURIComponent(params[k])).join('&');
-    return apiFetch(APPS_SCRIPT_URL + '?' + qs);
+    return apiAuthed(() => {
+      const p = withToken(params);
+      const qs = Object.keys(p).map(k => k+'='+encodeURIComponent(p[k])).join('&');
+      return apiFetch(APPS_SCRIPT_URL + '?' + qs);
+    });
   }
   async function apiPost(body, timeoutMs){
     if(DEMO_MODE) return demoApi(body);
-    return apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body) }, timeoutMs);
+    return apiAuthed(() => apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(withToken(body)) }, timeoutMs));
   }
 
   // ============================================================
   // IDENTITY RULE (see CLAUDE.md): every portal data read/write is keyed by
-  // Athlete_ID — never email. Email is used exactly once, in the getPortalBootstrap
-  // login call, to resolve the Athlete_ID. All data calls MUST go through
-  // apiData()/apiDataGet(), which attach the athleteId. Never pass `email:` to a
-  // data endpoint. `node tools/check-identity.js` enforces this.
+  // Athlete_ID — never email. The client never sends an email at all: the
+  // getPortalBootstrap login call carries only the token, and the server
+  // resolves the Athlete_ID from the verified token email. All data calls MUST
+  // go through apiData()/apiDataGet(), which attach the athleteId (the server
+  // ignores it for students and uses the token's — it is here so a teacher
+  // can open a student's view). `node tools/check-identity.js` enforces this.
   // ============================================================
   function currentAthleteId(){ return (currentUser && currentUser.athleteId) || state.athleteId || ''; }
   function apiData(payload, timeoutMs){ return apiPost(Object.assign({ athleteId: currentAthleteId() }, payload), timeoutMs); }
@@ -4433,10 +4540,13 @@
       let data = null, lastErr = null;
       for(let attempt = 0; attempt < 3; attempt++){
         try {
-          data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
+          data = await apiGet({ action:'getPortalBootstrap' });   // identity = the token, nothing else
           if(data && data.success) break;
           lastErr = new Error(data && data.error || 'load failed'); data = null;
-        } catch(err){ lastErr = err; data = null; }
+        } catch(err){
+          lastErr = err; data = null;
+          if(!document.body.classList.contains('signed-in')) return;   // sent back to sign-in — stop retrying
+        }
         if(attempt < 2){ setLoading(true, 'Reconnecting…'); await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); }
       }
       if(!data){ throw lastErr || new Error('load failed'); }
@@ -4445,7 +4555,7 @@
       // Resolve the Athlete_ID once, here — every later call is keyed by it, not
       // by email (IDENTITY RULE). Persist it so saves work even before a re-fetch.
       state.athleteId = String((athlete && athlete.Athlete_ID) || '').trim();
-      if(currentUser){ currentUser.athleteId = state.athleteId; try { localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser)); } catch(e){} }
+      if(currentUser){ currentUser.athleteId = state.athleteId; saveSession(); }
       // Server is source of truth; localStorage is the safety net if a save
       // didn't reach the server (so a student's year survives a refresh).
       state.yearMap = data.yearMap || loadYearLocal() || null;
@@ -4498,7 +4608,7 @@
   function startDemo(){
     DEMO_MODE = true;
     const demo = buildDemoState();
-    currentUser = { email: 'demo@athlete.academy', name: demo.athlete.Name, athleteId: 'demo', loginTime: Date.now() };
+    currentUser = { token: '', exp: 0, email: 'demo@athlete.academy', name: demo.athlete.Name, athleteId: 'demo', loginTime: Date.now() };
     state.athleteId = 'demo';
     athlete = demo.athlete;
     state.yearMap = demo.yearMap;

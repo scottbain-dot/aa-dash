@@ -1665,7 +1665,10 @@
         function handleCredentialResponse(response) {
             const payload = JSON.parse(atob(response.credential.split('.')[1]));
             
+            // The raw Google ID token is the identity: it goes with every API call and
+            // the SERVER verifies it with Google. email/name here are display only.
             currentUser = {
+                token: response.credential,
                 email: payload.email,
                 name: payload.name,
                 picture: payload.picture
@@ -1686,7 +1689,7 @@
         // ========== DATA LOADING ==========
         async function loadAthleteData() {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&email=${encodeURIComponent(currentUser.email)}&portal=g9`;
+                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&token=${encodeURIComponent(currentUser.token)}&portal=g9`;
                 console.log('Fetching:', url);
                 
                 const response = await fetch(url);
@@ -1694,6 +1697,10 @@
                 
                 console.log('Received data:', data);
                 
+                if (data.authRequired) {
+                    showError(data.wrongAccount ? (data.error || 'Please sign in with your FIS school account.') : 'Your sign-in has expired. Refresh the page and sign in again.');
+                    return;
+                }
                 if (data.authenticated && data.athlete) {
                     currentAthlete = data.athlete;
                     document.getElementById('loadingState').style.display = 'none';
@@ -2114,7 +2121,7 @@
             // Fetch workout history using Athlete_ID (matches Workout_Logs first column)
             let workoutHistory = [];
             try {
-                const res = await fetch(`${APPS_SCRIPT_URL}?action=getWorkoutHistory&athleteId=${encodeURIComponent(athleteId)}&limit=50`);
+                const res = await fetch(`${APPS_SCRIPT_URL}?action=getWorkoutHistory&athleteId=${encodeURIComponent(athleteId)}&token=${encodeURIComponent(currentUser.token)}&limit=50`);
                 const data = await res.json();
                 console.log('Workout history response:', data);
                 if (data.success && data.history) workoutHistory = data.history;
@@ -2768,6 +2775,7 @@
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'getHeroInsight',
+                        token: currentUser.token,
                         data: dataSummary
                     }),
                     signal: controller.signal
@@ -2873,6 +2881,7 @@
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'getAICoachingInsights',
+                        token: currentUser.token,
                         data: dataSummary
                     }),
                     signal: controller.signal

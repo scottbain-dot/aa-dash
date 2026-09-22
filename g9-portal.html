@@ -228,7 +228,7 @@
     <div id="g_id_onload"
          data-client_id="701639243214-ud6m1qtmc6ma0pq6v24tk39afbuhcblv.apps.googleusercontent.com"
          data-context="signin" data-ux_mode="popup"
-         data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
+         data-callback="handleCredentialResponse" data-auto_select="true" data-auto_prompt="false"></div>
     <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
   </div>
   <p class="foot">FIS Warriors · Grade 9 · Intro to Training</p>
@@ -354,8 +354,11 @@ const RULES = {
 
 // ============================================================
 // TRANSPORT + IDENTITY
-// Email is used once, in getPortalBootstrap, to resolve the Athlete_ID.
-// Every other call goes through apiData()/apiDataGet(), which attach athleteId.
+// The Google ID token IS the identity: every call sends it as `token`, the
+// server verifies it with Google and resolves the Athlete_ID from the verified
+// email. The client never sends an email. Data calls go through
+// apiData()/apiDataGet(), which also attach athleteId (ignored for students —
+// it lets a teacher open a student's view).
 // ============================================================
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
 const SESSION_KEY = 'aaG9PortalUser';
@@ -371,8 +374,20 @@ async function apiFetch(url, opts){
   try { const r = await fetch(url, Object.assign({ signal: ctrl.signal }, opts || {})); return await r.json(); }
   finally { clearTimeout(t); }
 }
-function apiGet(params){ const q = new URLSearchParams(Object.assign({ _t: Date.now() }, params)); return apiFetch(`${APPS_SCRIPT_URL}?${q}`); }
-function apiPost(body){ return apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{ 'Content-Type':'text/plain' }, body: JSON.stringify(body) }); }
+function withToken(obj){ return Object.assign({}, obj, { token: (currentUser && currentUser.token) || '' }); }
+async function apiAuthed(send){
+  await ensureToken();
+  let res = await send();
+  if (res && res.authRequired) {
+    if (res.wrongAccount) { signInAgain(res.error || 'Please sign in with your FIS school account.'); throw new Error('Sign in required'); }
+    const ok = await refreshToken();          // token may have just expired — one silent retry
+    if (ok) res = await send();
+    if (res && res.authRequired) { signInAgain('Your sign-in has expired. Please sign in again.'); throw new Error('Sign in required'); }
+  }
+  return res;
+}
+function apiGet(params){ return apiAuthed(() => { const q = new URLSearchParams(Object.assign({ _t: Date.now() }, withToken(params))); return apiFetch(`${APPS_SCRIPT_URL}?${q}`); }); }
+function apiPost(body){ return apiAuthed(() => apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{ 'Content-Type':'text/plain' }, body: JSON.stringify(withToken(body)) })); }
 function apiData(payload){ return apiPost(Object.assign({ athleteId: state.athleteId }, payload)); }
 function apiDataGet(params){ return apiGet(Object.assign({ athleteId: state.athleteId }, params)); }
 
@@ -382,15 +397,78 @@ function b64urlDecode(seg){
   const bin = atob(s);
   try { return decodeURIComponent(bin.split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); } catch (e) { return bin; }
 }
+// ---- Token handling ----
+// The raw credential is kept and sent with every call; name is display only.
+// A token lasts about an hour: an expired one is refreshed silently through
+// GIS (auto_select) and, failing that, the sign-in screen comes back.
+function tokenPayload(token){ try { return JSON.parse(b64urlDecode(String(token || '').split('.')[1])) || {}; } catch (e) { return {}; } }
+function tokenExpired(u){ return !u || !u.token || !u.exp || (Date.now() / 1000) > (u.exp - 30); }
+function saveSession(){ try { localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser)); } catch (e) {} }
+let _pendingSignIn = null, _refreshPromise = null, _authLost = false;
 function handleCredentialResponse(resp){
   try {
-    const payload = JSON.parse(b64urlDecode(resp.credential.split('.')[1]));
-    currentUser = { email: payload.email, name: payload.name, loginTime: Date.now() };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+    const token = resp && resp.credential;
+    if (!token) throw new Error('no credential');
+    const payload = tokenPayload(token);
+    const prev = currentUser || {};
+    const sameAccount = !prev.email || !payload.email || String(prev.email).toLowerCase() === String(payload.email).toLowerCase();
+    currentUser = { token: token, exp: payload.exp || 0, email: payload.email || '', name: payload.name || '', loginTime: sameAccount && prev.loginTime ? prev.loginTime : Date.now() };
+    saveSession();
+    _authLost = false;
+    if (_pendingSignIn && sameAccount) { const r = _pendingSignIn; _pendingSignIn = null; r(true); return; }
+    if (!sameAccount) { location.reload(); return; }
     start();
   } catch (e) { toast('Sign-in failed. Try again.', true); }
 }
 window.handleCredentialResponse = handleCredentialResponse;
+function waitForGis(){
+  return new Promise(resolve => {
+    const t0 = Date.now();
+    (function tick(){
+      const g = window.google && google.accounts && google.accounts.id;
+      if (g) return resolve(g);
+      if (Date.now() - t0 > 6000) return resolve(null);
+      setTimeout(tick, 100);
+    })();
+  });
+}
+function refreshToken(){
+  if (_refreshPromise) return _refreshPromise;
+  _refreshPromise = new Promise(async resolve => {
+    const g = await waitForGis();
+    if (!g) { resolve(false); return; }
+    let done = false, timer = null;
+    const finish = ok => { if (done) return; done = true; _pendingSignIn = null; clearTimeout(timer); resolve(!!ok); };
+    timer = setTimeout(() => finish(false), 12000);
+    _pendingSignIn = finish;
+    try {
+      g.prompt(n => {
+        try {
+          if (n && n.isSkippedMoment && n.isSkippedMoment()) finish(false);
+          else if (n && n.isNotDisplayed && n.isNotDisplayed()) finish(false);
+          else if (n && n.isDismissedMoment && n.isDismissedMoment() && n.getDismissedReason && n.getDismissedReason() !== 'credential_returned') finish(false);
+        } catch (e) {}
+      });
+    } catch (e) { finish(false); }
+  });
+  _refreshPromise.finally(() => { _refreshPromise = null; });
+  return _refreshPromise;
+}
+function signInAgain(msg){
+  _authLost = true;   // the passport poll keeps ticking; it must not keep prompting
+  if (currentUser) { currentUser.token = ''; currentUser.exp = 0; saveSession(); }
+  veil(false);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('welcome').style.display = '';
+  toast(msg || 'Please sign in again.', true);
+}
+async function ensureToken(){
+  if (_authLost) throw new Error('Sign in required');
+  if (!tokenExpired(currentUser)) return true;
+  const ok = await refreshToken();
+  if (!ok) { signInAgain('Your sign-in has expired. Please sign in again.'); throw new Error('Sign in required'); }
+  return true;
+}
 function isEmbeddedBrowser(){
   const ua = navigator.userAgent || '';
   if (/FBAN|FBAV|Instagram|Line\/|WhatsApp|Snapchat|Twitter|MicroMessenger|; wv\)|WebView/i.test(ua)) return true;
@@ -400,11 +478,11 @@ function isEmbeddedBrowser(){
 function checkExistingSession(){
   try {
     const u = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-    if (!u || !u.loginTime || Date.now() - u.loginTime > SESSION_MAX_AGE) { localStorage.removeItem(SESSION_KEY); return false; }
+    if (!u || !u.token || !u.loginTime || Date.now() - u.loginTime > SESSION_MAX_AGE) { localStorage.removeItem(SESSION_KEY); return false; }
     currentUser = u; return true;
   } catch (e) { return false; }
 }
-function logout(){ localStorage.removeItem(SESSION_KEY); location.reload(); }
+function logout(){ localStorage.removeItem(SESSION_KEY); try { google.accounts.id.disableAutoSelect(); } catch (e) {} location.reload(); }
 
 // ============================================================
 // BOOTSTRAP — one call, retried, because a whole class opens this at once
@@ -414,8 +492,8 @@ async function start(){
   veil(true, 'Loading your passport…');
   let data = null, lastErr = null;
   for (let i = 0; i < 3; i++) {
-    try { data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email }); if (data && data.success) break; }
-    catch (e) { lastErr = e; }
+    try { data = await apiGet({ action:'getPortalBootstrap' }); if (data && data.success) break; }   // identity = the token
+    catch (e) { lastErr = e; if (document.getElementById('welcome').style.display === '') return; }   // sent back to sign-in
     await new Promise(r => setTimeout(r, i === 0 ? 1500 : 3000));
   }
   veil(false);
@@ -470,7 +548,7 @@ async function pollPassport(){
       if (d && d.success && d.strengthLevels) return applyPassport(d.strengthLevels, d.stamps);
       pollLight = false; schedulePoll();   // old deployment: use the bootstrap instead
     }
-    const data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
+    const data = await apiGet({ action:'getPortalBootstrap' });
     if (data && data.success && data.athlete) {
       const sb = data.learn && data.learn.blocks && data.learn.blocks.stamps;
       return applyPassport(data.strengthLevels, sb && sb.progress ? sb.progress : { notyet: {}, stamped: {} });

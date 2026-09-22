@@ -1380,9 +1380,11 @@
         // ============================================
         async function loadStudents() {
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=getAllStudents&_t=${Date.now()}`);
+                // Staff only on the server: the roster carries every athlete's email and scores.
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getAllStudents&token=${encodeURIComponent(adminToken())}&_t=${Date.now()}`);
                 const data = await response.json();
-                
+                if (data && data.authRequired) { authExpired(); return; }
+
                 if (data.success && data.students) {
                     // Sheet IDs arrive as numbers; the grid passes them around as strings. Normalise once.
                     allStudents = data.students
@@ -1966,8 +1968,10 @@
                 while (i < todo.length) {
                     const id = todo[i++];
                     try {
-                        const r = await fetch(`${APPS_SCRIPT_URL}?action=getLearnProgress&athleteId=${encodeURIComponent(id)}&_t=${Date.now()}`);
+                        // A student read: the teacher token lets the server honour the athleteId named here.
+                        const r = await fetch(`${APPS_SCRIPT_URL}?action=getLearnProgress&athleteId=${encodeURIComponent(id)}&token=${encodeURIComponent(adminToken())}&_t=${Date.now()}`);
                         const d = await r.json();
+                        if (d && d.authRequired) { authExpired(); i = todo.length; throw new Error('Sign in again'); }
                         const blocks = (d && d.learn && d.learn.blocks) || {};
                         const intro = (blocks.intro && blocks.intro.progress) || {};
                         const st = (blocks.stamps && blocks.stamps.progress) || {};

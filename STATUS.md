@@ -1,7 +1,7 @@
 # Status — aa-dash
 
-- Last worked: 2026-09-18 — Add STATUS.md and post-commit hook that keeps 'Last worked' current
-- Next step: Admin overhaul PR 1 done (server-side auth, Grit tab removed, Stamps default). Next: gate getAllStudents once clash/strength-portal stop using it; Classroom B content; Workout Mode for Classroom C
+- Last worked: 2026-09-22 — Identity from the verified Google token on every student call; getAllStudents gated
+- Next step: Redeploy the Apps Script together with merging the token PR (old pages get authRequired until reloaded). Then: Classroom B content; Workout Mode for Classroom C
 - Blocked on: nothing
 
 ## Hook

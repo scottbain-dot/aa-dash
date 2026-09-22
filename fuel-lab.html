@@ -2570,6 +2570,13 @@
   // ============================================
   // GOOGLE AUTH (matches index.html / grit-portal.html / strength-portal.html)
   // ============================================
+  // Server said the token is no longer good (about an hour): show the sign-in
+  // gate again; a fresh sign-in just closes it.
+  function sessionExpired(data) {
+    currentUser = null;
+    document.getElementById('authGate').classList.remove('hidden');
+    showToast(data && data.wrongAccount ? (data.error || 'Please sign in with your FIS school account.') : 'Your sign-in has expired. Please sign in again.', true);
+  }
   function handleCredentialResponse(response) {
     const payload = JSON.parse(atob(response.credential.split('.')[1]));
     currentUser = {
@@ -2676,7 +2683,7 @@
     try {
       const payload = {
         action: 'submitFuelLabQuiz',
-        email: currentUser.email,
+        token: currentUser.credential,   // who this is comes from the verified token, not the form
         name: currentUser.name,
         score: score,
         total: total,
@@ -2690,6 +2697,7 @@
         body: JSON.stringify(payload)
       });
       const data = await res.json();
+      if (data && data.authRequired) sessionExpired(data);
       return { ok: !!data.success, data };
     } catch (err) {
       console.error('Save failed:', err);
@@ -2710,7 +2718,7 @@
     }
     try {
       const url = APPS_SCRIPT_URL + '?action=getFuelLabQuizStats'
-        + '&idToken=' + encodeURIComponent(currentUser.credential)
+        + '&token=' + encodeURIComponent(currentUser.credential)
         + '&_t=' + Date.now();
       const res = await fetch(url);
       const data = await res.json();
@@ -3631,7 +3639,7 @@
       const label = builder.scenarioLabel || builder.scenario.label;
       const payload = {
         action: 'saveFuelLabPlan',
-        email: currentUser.email,
+        token: currentUser.credential,
         name: currentUser.name,
         scenario: label,
         event: builder.cfg.getEvent ? builder.cfg.getEvent() : '',
@@ -3646,7 +3654,8 @@
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (data.success) showToast('Plan saved — ' + label + ' ✓');
+      if (data && data.authRequired) sessionExpired(data);
+      else if (data.success) showToast('Plan saved — ' + label + ' ✓');
       else showToast('Could not save: ' + (data.error || 'try again'), true);
     } catch (err) {
       showToast('Could not save: ' + err.message, true);
@@ -3691,7 +3700,7 @@
     try {
       const payload = {
         action: 'saveFuelLabPlan',
-        email: currentUser.email,
+        token: currentUser.credential,
         name: currentUser.name,
         scenario: label,
         event: event,
@@ -3706,7 +3715,8 @@
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (data.success) showToast('Plan saved — ' + label + ' ✓');
+      if (data && data.authRequired) sessionExpired(data);
+      else if (data.success) showToast('Plan saved — ' + label + ' ✓');
       else showToast('Could not save: ' + (data.error || 'try again'), true);
     } catch (err) {
       showToast('Could not save: ' + err.message, true);

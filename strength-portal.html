@@ -2208,6 +2208,7 @@
              data-context="signin"
              data-ux_mode="popup"
              data-callback="handleCredentialResponse"
+             data-auto_select="true"
              data-auto_prompt="false">
         </div>
         <div class="g_id_signin"
@@ -2763,10 +2764,23 @@
         // GOOGLE SIGN-IN
         // ============================================
         
+        // The raw Google ID token is the identity: it goes with every API call and
+        // the SERVER verifies it with Google. email/name here are display only.
+        function authToken() { return (currentUser && currentUser.token) || ''; }
+        function tokenExpired(u) { return !u || !u.token || !u.exp || (Date.now() / 1000) > (u.exp - 30); }
+        // Server said the token is no longer good: drop the remembered session and
+        // go back to the sign-in screen (auto_select makes that a one-tap return).
+        function sessionExpired(msg) {
+            localStorage.removeItem('athleteUser');
+            showToast(msg || 'Your sign-in has expired. Please sign in again.', 'error');
+            setTimeout(() => location.reload(), 1800);
+        }
         function handleCredentialResponse(response) {
             const payload = JSON.parse(atob(response.credential.split('.')[1]));
             
             currentUser = {
+                token: response.credential,
+                exp: payload.exp || 0,
                 email: payload.email,
                 name: payload.name,
                 picture: payload.picture,
@@ -2801,6 +2815,14 @@
                         currentUser = null;
                         return false;
                     }
+                    if (tokenExpired(currentUser)) {
+                        // Remembered device, but the Google token has lapsed (about an
+                        // hour). Ask Google for a fresh one without a click; the sign-in
+                        // button is there if that does not happen.
+                        currentUser = null;
+                        trySilentSignIn();
+                        return false;
+                    }
                     
                     console.log('Restored session for:', currentUser.email);
                     document.getElementById('loadingContainer').classList.add('active');
@@ -2815,9 +2837,19 @@
             return false;
         }
 
+        function trySilentSignIn() {
+            const t0 = Date.now();
+            (function tick() {
+                const g = window.google && google.accounts && google.accounts.id;
+                if (g) { try { g.prompt(); } catch (e) {} return; }
+                if (Date.now() - t0 < 6000) setTimeout(tick, 150);
+            })();
+        }
+
         // Logout function
         function logout() {
             localStorage.removeItem('athleteUser');
+            try { google.accounts.id.disableAutoSelect(); } catch (e) {}
             athleteDataCache = null;
             currentUser = null;
             location.reload();
@@ -2842,14 +2874,18 @@
             }
 
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&email=${encodeURIComponent(email)}`;
-                console.log('Fetching from:', url);
+                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&token=${encodeURIComponent(authToken())}`;
+                console.log('Fetching from:', url.replace(/token=[^&]*/, 'token=…'));
                 
                 const response = await fetch(url);
                 const data = await response.json();
                 
                 console.log('Received data:', data);
                 
+                if (data.authRequired) {
+                    sessionExpired(data.wrongAccount ? data.error : null);
+                    return null;
+                }
                 if (data.authenticated || data.success) {
                     athleteDataCache = data;
                     cacheTimestamp = Date.now();
@@ -2866,7 +2902,7 @@
 
         async function fetchLastSession(email) {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getLastSession&email=${encodeURIComponent(email)}`;
+                const url = `${APPS_SCRIPT_URL}?action=getLastSession&token=${encodeURIComponent(authToken())}`;
                 const response = await fetch(url);
                 const data = await response.json();
                 return data.success ? data.lastSession : null;
@@ -2878,7 +2914,7 @@
 
         async function fetchLastSessionByType(email, sessionType) {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getLastSessionByType&email=${encodeURIComponent(email)}&sessionType=${sessionType}`;
+                const url = `${APPS_SCRIPT_URL}?action=getLastSessionByType&token=${encodeURIComponent(authToken())}&sessionType=${sessionType}`;
                 const response = await fetch(url);
                 const data = await response.json();
                 return data.success ? data.lastSession : null;
@@ -2890,8 +2926,8 @@
 
         async function fetchWorkoutHistory(email, limit = 10) {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getWorkoutHistory&email=${encodeURIComponent(email)}&limit=${limit}`;
-                console.log('📋 History fetch URL:', url);
+                const url = `${APPS_SCRIPT_URL}?action=getWorkoutHistory&token=${encodeURIComponent(authToken())}&limit=${limit}`;
+                console.log('📋 History fetch URL:', url.replace(/token=[^&]*/, 'token=…'));
                 const response = await fetch(url);
                 console.log('📋 History response status:', response.status);
                 const text = await response.text();
@@ -4694,7 +4730,7 @@
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'saveWorkout',
-                        email: currentUser.athleteId,
+                        token: authToken(),
                         sessionType: currentSessionType,
                         sessionNumber: Math.floor(currentSessionNumber / 2) + 1,
                         exercisesCompleted: JSON.stringify(exercisesCompleted),
@@ -4706,6 +4742,7 @@
                 });
 
                 const result = await response.json();
+                if (result.authRequired) { sessionExpired(); return; }
                 
                 if (result.success) {
                     // Stop timer
@@ -4950,7 +4987,7 @@
             btn.disabled = true;
             
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&email=${encodeURIComponent(currentUser.email)}`;
+                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&token=${encodeURIComponent(authToken())}`;
                 const response = await fetch(url);
                 const data = await response.json();
                 

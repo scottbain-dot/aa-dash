@@ -678,7 +678,10 @@
         function handleCredentialResponse(response) {
             try {
                 const payload = JSON.parse(atob(response.credential.split('.')[1]));
+                // The raw Google ID token is the identity: it goes with the API call and
+                // the SERVER verifies it with Google. email/name here are display only.
                 currentUser = {
+                    token: response.credential,
                     email: payload.email,
                     name: payload.name,
                     picture: payload.picture
@@ -695,10 +698,14 @@
         // ───────── Athlete lookup + grade gate ─────────
         async function loadAthleteData() {
             try {
-                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&email=${encodeURIComponent(currentUser.email)}&portal=g10`;
+                const url = `${APPS_SCRIPT_URL}?action=getAthleteData&token=${encodeURIComponent(currentUser.token)}&portal=g10`;
                 const res = await fetch(url);
                 const data = await res.json();
 
+                if (data.authRequired) {
+                    showError(data.wrongAccount ? (data.error || 'Please sign in with your FIS school account.') : 'Your sign-in has expired. Refresh the page and sign in again.');
+                    return;
+                }
                 if (!data.authenticated || !data.athlete) {
                     showScreen('notEnrolledScreen');
                     return;

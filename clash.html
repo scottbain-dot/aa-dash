@@ -3089,6 +3089,7 @@
   }
 
   function unlockApp(payload) {
+    appUnlocked = true;
     document.getElementById('authGate').classList.add('hidden');
     document.getElementById('appShell').classList.add('visible');
     const nameEl = document.getElementById('userName');
@@ -3112,8 +3113,11 @@
       return;
     }
     sessionStorage.setItem('aa_clash_token', response.credential);
+    const authErr = document.getElementById('authError'); if (authErr) authErr.classList.remove('visible');
+    if (appUnlocked) { document.getElementById('authGate').classList.add('hidden'); return; }   // re-sign-in after the token expired
     unlockApp(payload);
   }
+  let appUnlocked = false;
 
   function initAuthGate() {
     if (isDisplayMode) return;
@@ -3168,10 +3172,14 @@
       return;
     }
     sessionStorage.setItem('aa_clash_student_token', response.credential);
+    const sErr = document.getElementById('studentAuthError'); if (sErr) sErr.classList.remove('visible');
+    if (studentUnlocked) { document.getElementById('studentAuthGate').classList.add('hidden'); return; }   // re-sign-in after the token expired
     unlockStudentApp(payload);
   }
+  let studentUnlocked = false;
 
   function unlockStudentApp(payload) {
+    studentUnlocked = true;
     document.getElementById('studentAuthGate').classList.add('hidden');
     document.getElementById('studentApp').classList.add('visible');
     bootstrapStudent(payload);
@@ -3264,15 +3272,44 @@
       .finally(() => clearTimeout(t));
   }
 
+  // Identity is the Google ID token (admin/score mode: the staff token; student
+  // mode: the student's). The server verifies it and takes the email from it —
+  // nothing typed into the request is trusted. Display mode is read-only and
+  // carries no token.
+  function clashToken() {
+    try { return sessionStorage.getItem('aa_clash_token') || sessionStorage.getItem('aa_clash_student_token') || ''; } catch (e) { return ''; }
+  }
+  // The token lasts about an hour. When the server says it has expired, show the
+  // sign-in gate again; the app state stays, and signing in just closes the gate.
+  function authExpired() {
+    if (isAdminMode || isScoreMode) {
+      sessionStorage.removeItem('aa_clash_token');
+      document.getElementById('authGate').classList.remove('hidden');
+      showAuthError('Your sign-in has expired. Sign in again to keep saving.');
+      if (!document.getElementById('gsiButton').childElementCount) initAdminAuthGate();
+    } else if (!isDisplayMode) {
+      sessionStorage.removeItem('aa_clash_student_token');
+      document.getElementById('studentAuthGate').classList.remove('hidden');
+      const el = document.getElementById('studentAuthError');
+      if (el) { el.textContent = 'Your sign-in has expired. Sign in again to keep going.'; el.classList.add('visible'); }
+      if (!document.getElementById('studentGsiButton').childElementCount) initStudentAuthGate();
+    }
+  }
+  function checkAuth(data) {
+    if (data && data.authRequired) { authExpired(); throw new Error(data.error || 'Sign in required'); }
+    return data;
+  }
+
   async function apiGet(action, params) {
     const url = new URL(APPS_SCRIPT_URL);
     url.searchParams.set('action', action);
     if (params) Object.keys(params).forEach(k => {
       if (params[k] != null && params[k] !== '') url.searchParams.set(k, params[k]);
     });
+    const tok = clashToken(); if (tok) url.searchParams.set('token', tok);
     url.searchParams.set('_t', Date.now());
     const r = await fetchWithTimeout(url.toString());
-    return r.json();
+    return checkAuth(await r.json());
   }
 
   async function apiPost(payload) {
@@ -3280,9 +3317,9 @@
     const r = await fetchWithTimeout(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(Object.assign({ token: clashToken() }, payload))
     });
-    return r.json();
+    return checkAuth(await r.json());
   }
 
   // ============================================
@@ -3528,7 +3565,7 @@
         apiGet('getClashConfig').catch(() => ({ success: false })),
         apiGet('getClashEvents'),
         apiGet('getClashTeams'),
-        apiGet('getAllStudents'),
+        apiGet('getClashRoster'),
         apiGet('getClashLeaderboard').catch(() => ({ success: false }))
       ]);
 
@@ -5028,7 +5065,7 @@
   async function loadDisplayStatic() {
     const [tms, students] = await Promise.all([
       apiGet('getClashTeams'),
-      apiGet('getAllStudents').catch(() => ({ students: [] }))
+      apiGet('getClashRoster').catch(() => ({ students: [] }))
     ]);
     displayState.teams = (tms && tms.teams) || [];
     displayState.athletesById = {};
@@ -5623,12 +5660,12 @@
 
     try {
       const [me, teams, events, cfg, students, lunch] = await Promise.all([
-        apiGet('getAthleteData', { email: studentState.email }),
+        apiGet('getAthleteData'),          // who I am comes from the token
         apiGet('getClashTeams'),
         apiGet('getClashEvents'),
         apiGet('getClashConfig').catch(() => ({ success: false })),
-        apiGet('getAllStudents'),
-        apiGet('getClashLunchPlan', { email: studentState.email }).catch(() => ({ success: false }))
+        apiGet('getClashRoster'),
+        apiGet('getClashLunchPlan').catch(() => ({ success: false }))
       ]);
 
       if (cfg && cfg.success) {
@@ -5939,7 +5976,6 @@
     try {
       const res = await apiPost({
         action: 'claimRole',
-        email: studentState.email,
         team: studentState.team.team,
         role: role
       });
@@ -6002,7 +6038,6 @@
     try {
       const res = await apiPost({
         action: 'setPlanDocUrl',
-        email: studentState.email,
         team: studentState.team.team,
         url: url
       });
@@ -6349,16 +6384,16 @@
     `;
   }
 
-  async function onVolunteerForNom(slot, btn) { return runNomAction(btn, { action: 'addVolunteer', email: studentState.email, team: studentState.team.team, slot: slot }, 'You volunteered'); }
-  async function onWithdrawVolunteer(slot, btn) { return runNomAction(btn, { action: 'removeVolunteer', email: studentState.email, team: studentState.team.team, slot: slot }, 'Withdrawn'); }
+  async function onVolunteerForNom(slot, btn) { return runNomAction(btn, { action: 'addVolunteer', team: studentState.team.team, slot: slot }, 'You volunteered'); }
+  async function onWithdrawVolunteer(slot, btn) { return runNomAction(btn, { action: 'removeVolunteer', team: studentState.team.team, slot: slot }, 'Withdrawn'); }
   async function onConfirmNomination(slot, btn) {
     const sel = document.getElementById('confirm-' + slot);
     const aid = sel && sel.value;
     if (!aid) { toast('Pick a volunteer to confirm', 'error'); return; }
-    return runNomAction(btn, { action: 'saveClashNomination', email: studentState.email, team: studentState.team.team, slot: slot, athleteId: aid }, 'Nomination confirmed');
+    return runNomAction(btn, { action: 'saveClashNomination', team: studentState.team.team, slot: slot, athleteId: aid }, 'Nomination confirmed');
   }
   async function onChangeNomination(slot, btn) {
-    return runNomAction(btn, { action: 'saveClashNomination', email: studentState.email, team: studentState.team.team, slot: slot, athleteId: '' }, 'Reopened — pick again');
+    return runNomAction(btn, { action: 'saveClashNomination', team: studentState.team.team, slot: slot, athleteId: '' }, 'Reopened — pick again');
   }
   window.onVolunteerForNom = onVolunteerForNom;
   window.onWithdrawVolunteer = onWithdrawVolunteer;
@@ -6429,7 +6464,6 @@
     try {
       const res = await apiPost({
         action: 'saveClashLunchPlan',
-        email: studentState.email,
         athleteId: studentState.athleteId,
         bringing: bringing,
         why: why
