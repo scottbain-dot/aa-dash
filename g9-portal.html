@@ -322,14 +322,15 @@ function stampSVG(k, lvl){
 
 // The rest of the unit, in order. The Board carries the full session; this is the map.
 const UNIT_NEXT = [
-  ['Gym 5','Stamps','Stamp day. Groups of five, five reps of each pattern, Mr Bain watching'],
-  ['Gym 6','Pull','Horizontal and vertical. Tempo: three seconds down, one up'],
-  ['Gym 7','Push','Single leg and double leg'],
-  ['Gym 8','Pull','Upper and lower. Second partner check'],
+  ['Gym 5','Stamps','Stamp day, pull. Hinge and Pull in groups of five, then the pull workout'],
+  ['Gym 6','Stamps','Stamp day, push. Squat, Lunge, Push and Press, then the push workout'],
+  ['Gym 7','Pull','Horizontal and vertical. Tempo: three seconds down, one up'],
+  ['Gym 8','Push','Single leg and double leg'],
+  ['Gym 9','Pull','Upper and lower. Second partner check'],
   ['Classroom B','Classroom','Reading a prescription, choosing a weight, what a 7 feels like'],
-  ['Gym 9','Pull','First real load for stamped patterns'],
-  ['Gym 10','Push','Choose your own weight'],
-  ['Gym 11','Pull','Run it yourself, no cues'],
+  ['Gym 10','Pull','First real load for stamped patterns'],
+  ['Gym 11','Push','Choose your own weight'],
+  ['Gym 12','Pull','Run it yourself, no cues'],
   ['Classroom C','Classroom','Log a session. Preview Foundations']
 ];
 
@@ -647,7 +648,7 @@ function patHTML(x){
       ${ny ? `<div class="notyet"><b>Not yet · ${shortDate(ny.date)}.</b> ${esc(ny.why)}. Fix this, then ask for another look.</div>` : ''}
       <ul class="crit ${watched ? '' : 'locked'}">${x.criteria.map(([t, n], i) => `<li><input type="checkbox" ${self[i] ? 'checked' : ''} ${watched ? '' : 'disabled'} onchange="tickSelf('${x.key}',${i},this.checked)"><div><b>${t}</b><span>${n}</span></div></li>`).join('')}</ul>
       ${partner}
-      <div class="next"><b>Next level:</b> ${x.l2.name}. ${lvl > 0 ? 'Unlocked. It is your option on the Board from Gym 6.' : 'Opens when this pattern is stamped.'}</div>
+      <div class="next"><b>Next level:</b> ${x.l2.name}. ${lvl > 0 ? 'Unlocked. It is your option on the Board from Gym 7.' : 'Opens when this pattern is stamped.'}</div>
     </div>
   </div>`;
 }
