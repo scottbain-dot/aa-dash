@@ -14,20 +14,21 @@
         }
 
         :root {
-            --bg-primary: #0a0e17;
-            --bg-secondary: #111827;
-            --bg-card: #1a2234;
-            --bg-hover: #243049;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --accent-blue: #3b82f6;
-            --accent-green: #22c55e;
-            --accent-amber: #f59e0b;
-            --accent-red: #ef4444;
-            --accent-purple: #8b5cf6;
-            --border-color: rgba(255,255,255,0.08);
-            --border-light: rgba(255,255,255,0.12);
+            /* Light, paper palette shared with the Board and the student portal */
+            --bg-primary: #f7f5f1;
+            --bg-secondary: #efece6;
+            --bg-card: #ffffff;
+            --bg-hover: #f4ebe9;
+            --text-primary: #18161a;
+            --text-secondary: #4b4750;
+            --text-muted: #8a8590;
+            --accent-blue: #874B46;
+            --accent-green: #2f7d4f;
+            --accent-amber: #b8922a;
+            --accent-red: #b23a3a;
+            --accent-purple: #6b8268;
+            --border-color: #e4e0da;
+            --border-light: #c9c3bb;
         }
 
         body {
@@ -45,7 +46,7 @@
             left: 0;
             right: 0;
             height: 64px;
-            background: linear-gradient(180deg, rgba(17, 24, 39, 0.98) 0%, rgba(17, 24, 39, 0.95) 100%);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.96) 100%);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -183,7 +184,7 @@
         .search-box input:focus {
             outline: none;
             border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 0 3px rgba(135, 75, 70, 0.2);
         }
 
         .search-box::before {
@@ -224,7 +225,7 @@
         }
 
         .filter-btn.ready {
-            background: rgba(34, 197, 94, 0.1);
+            background: rgba(47, 125, 79, 0.1);
             border-color: var(--accent-green);
             color: var(--accent-green);
         }
@@ -235,7 +236,7 @@
         }
 
         .filter-btn.behind {
-            background: rgba(239, 68, 68, 0.1);
+            background: rgba(178, 58, 58, 0.1);
             border-color: var(--accent-red);
             color: var(--accent-red);
         }
@@ -327,22 +328,22 @@
         }
 
         .status-badge.ready {
-            background: rgba(34, 197, 94, 0.15);
+            background: rgba(47, 125, 79, 0.15);
             color: var(--accent-green);
         }
 
         .status-badge.testing {
-            background: rgba(245, 158, 11, 0.15);
+            background: rgba(184, 146, 42, 0.15);
             color: var(--accent-amber);
         }
 
         .status-badge.behind {
-            background: rgba(239, 68, 68, 0.15);
+            background: rgba(178, 58, 58, 0.15);
             color: var(--accent-red);
         }
 
         .status-badge.good {
-            background: rgba(59, 130, 246, 0.15);
+            background: rgba(135, 75, 70, 0.15);
             color: var(--accent-blue);
         }
 
@@ -368,7 +369,7 @@
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(24, 22, 26, 0.45);
             backdrop-filter: blur(4px);
             display: none;
             align-items: center;
@@ -601,7 +602,7 @@
             padding: 14px;
             border-radius: 12px;
             border: none;
-            background: linear-gradient(135deg, var(--accent-green), #16a34a);
+            background: linear-gradient(135deg, var(--accent-green), #256a42);
             color: white;
             font-size: 1rem;
             font-weight: 600;
@@ -613,7 +614,7 @@
 
         .save-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+            box-shadow: 0 8px 20px rgba(47, 125, 79, 0.3);
         }
 
         .save-btn:active {
@@ -690,7 +691,7 @@
             padding: 10px 20px;
             border-radius: 10px;
             border: 1px solid var(--accent-purple);
-            background: rgba(139, 92, 246, 0.1);
+            background: rgba(107, 130, 104, 0.1);
             color: var(--accent-purple);
             font-size: 0.9rem;
             font-family: inherit;
@@ -783,12 +784,12 @@
 
         .toast.success {
             border-color: var(--accent-green);
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), var(--bg-card));
+            background: linear-gradient(135deg, rgba(47, 125, 79, 0.2), var(--bg-card));
         }
 
         .toast.error {
             border-color: var(--accent-red);
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), var(--bg-card));
+            background: linear-gradient(135deg, rgba(178, 58, 58, 0.2), var(--bg-card));
         }
 
         /* Empty State */
@@ -897,9 +898,9 @@
         .insight-detail { font-size: 0.7rem; color: var(--text-muted); }
         .insight-tags { display: flex; gap: 4px; flex-wrap: wrap; }
         .insight-tag { font-size: 0.6rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
-        .insight-tag.amber { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
-        .insight-tag.red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
-        .insight-tag.green { background: rgba(34,197,94,0.15); color: var(--accent-green); }
+        .insight-tag.amber { background: rgba(184,146,42,0.15); color: var(--accent-amber); }
+        .insight-tag.red { background: rgba(178,58,58,0.15); color: var(--accent-red); }
+        .insight-tag.green { background: rgba(47,125,79,0.15); color: var(--accent-green); }
         .insight-empty { font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 8px 0; }
         @media (max-width: 768px) { .insights-grid { grid-template-columns: 1fr; } }
 
@@ -951,20 +952,20 @@
         .stamp-name small { display:block; color: var(--text-muted); font-weight:400; font-size:0.72rem; }
         .stamp { width:44px; height:44px; border-radius:50%; border:2px dashed var(--border-light); background:transparent; color: var(--text-muted); font-family:inherit; font-weight:700; font-size:0.95rem; cursor:pointer; transition:all .15s; touch-action:manipulation; }
         .stamp:hover { border-color: var(--accent-amber); color: var(--text-primary); }
-        .stamp.on { border:2px solid var(--accent-amber); background: rgba(245,158,11,0.18); color: var(--accent-amber); transform:rotate(-8deg); }
-        .stamp.hi { border:2px solid var(--accent-green); background: rgba(34,197,94,0.15); color: var(--accent-green); cursor:default; transform:none; }
+        .stamp.on { border:2px solid var(--accent-amber); background: rgba(184,146,42,0.18); color: var(--accent-amber); transform:rotate(-8deg); }
+        .stamp.hi { border:2px solid var(--accent-green); background: rgba(47,125,79,0.15); color: var(--accent-green); cursor:default; transform:none; }
         .stamp.busy { opacity:.45; pointer-events:none; }
         .stamp-count { color: var(--text-muted); font-size:0.78rem; margin-top:10px; }
         .stamp.rdy { border:2px solid var(--accent-amber); border-style:dashed; color: var(--accent-amber); }
-        .stamp.ny { border:2px solid var(--accent-red); background: rgba(239,68,68,0.12); color: var(--accent-red); font-size:0.75rem; }
-        .stamp-table th .colbtn { display:block; margin:6px auto 0; background: rgba(245,158,11,0.15); border:1px solid var(--accent-amber); color: var(--accent-amber); border-radius:8px; padding:3px 8px; font-size:0.68rem; font-family:inherit; font-weight:700; cursor:pointer; letter-spacing:0; text-transform:none; }
+        .stamp.ny { border:2px solid var(--accent-red); background: rgba(178,58,58,0.12); color: var(--accent-red); font-size:0.75rem; }
+        .stamp-table th .colbtn { display:block; margin:6px auto 0; background: rgba(184,146,42,0.15); border:1px solid var(--accent-amber); color: var(--accent-amber); border-radius:8px; padding:3px 8px; font-size:0.68rem; font-family:inherit; font-weight:700; cursor:pointer; letter-spacing:0; text-transform:none; }
         .stamp-legend { display:flex; gap:16px; flex-wrap:wrap; color: var(--text-muted); font-size:0.78rem; margin-top:10px; }
         .stamp-legend span { display:inline-flex; align-items:center; gap:6px; }
         .stamp-legend i { display:inline-block; width:14px; height:14px; border-radius:50%; border:2px dashed var(--border-light); }
         .stamp-legend i.rdy { border-color: var(--accent-amber); }
-        .stamp-legend i.on { border-style:solid; border-color: var(--accent-amber); background: rgba(245,158,11,0.18); }
-        .stamp-legend i.ny { border-style:solid; border-color: var(--accent-red); background: rgba(239,68,68,0.12); }
-        .stamp-sheet { position:fixed; left:50%; bottom:0; transform:translateX(-50%); width:min(520px, 100%); background: var(--bg-card); border:1px solid var(--border-light); border-bottom:none; border-radius:16px 16px 0 0; padding:18px 20px 24px; z-index:200; box-shadow:0 -10px 40px rgba(0,0,0,0.5); display:none; }
+        .stamp-legend i.on { border-style:solid; border-color: var(--accent-amber); background: rgba(184,146,42,0.18); }
+        .stamp-legend i.ny { border-style:solid; border-color: var(--accent-red); background: rgba(178,58,58,0.12); }
+        .stamp-sheet { position:fixed; left:50%; bottom:0; transform:translateX(-50%); width:min(520px, 100%); background: var(--bg-card); border:1px solid var(--border-light); border-bottom:none; border-radius:16px 16px 0 0; padding:18px 20px 24px; z-index:200; box-shadow:0 -10px 40px rgba(0,0,0,0.18); display:none; }
         .stamp-sheet.open { display:block; }
         .stamp-sheet h3 { margin:0 0 4px; font-size:1.05rem; }
         .stamp-sheet .sub { color: var(--text-muted); font-size:0.8rem; margin-bottom:14px; }
@@ -975,11 +976,11 @@
         .stamp-sheet .b.x { background:transparent; }
         .stamp-sheet .chips { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
         .stamp-sheet .chip { border:1px solid var(--border-light); background:transparent; color: var(--text-secondary); border-radius:999px; padding:6px 10px; font-size:0.78rem; font-family:inherit; cursor:pointer; }
-        .stamp-sheet .chip.on { background: rgba(239,68,68,0.15); border-color: var(--accent-red); color: var(--text-primary); }
+        .stamp-sheet .chip.on { background: rgba(178,58,58,0.15); border-color: var(--accent-red); color: var(--text-primary); }
         .stamp-sheet textarea { width:100%; background: var(--bg-secondary); border:1px solid var(--border-light); color: var(--text-primary); border-radius:10px; padding:9px 11px; font-family:inherit; font-size:0.85rem; min-height:54px; resize:vertical; }
         .stamp-sheet .nyform { display:none; }
         .stamp-sheet.ny-open .nyform { display:block; }
-        .stamp-veil { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:199; display:none; }
+        .stamp-veil { position:fixed; inset:0; background:rgba(24,22,26,0.35); z-index:199; display:none; }
         .stamp-veil.open { display:block; }
         /* Stamp line: one class, groups of five, one pattern at a time */
         .line-card { background: var(--bg-card); border:1px solid var(--accent-amber); border-radius:12px; padding:14px 16px; margin-bottom:16px; }
@@ -990,19 +991,19 @@
         .groups { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
         .grp { background: var(--bg-secondary); border:1px solid var(--border-light); color: var(--text-secondary); border-radius:10px; padding:7px 10px; font-family:inherit; font-size:0.8rem; cursor:pointer; text-align:left; }
         .grp b { display:block; color: var(--text-primary); font-size:0.85rem; }
-        .grp.on { border-color: var(--accent-amber); background: rgba(245,158,11,0.14); }
+        .grp.on { border-color: var(--accent-amber); background: rgba(184,146,42,0.14); }
         .grp.done { opacity:.55; }
         .pats { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
         .pat { flex:1; min-width:90px; background: var(--bg-secondary); border:1px solid var(--border-light); color: var(--text-secondary); border-radius:10px; padding:9px 8px; font-family:inherit; font-weight:700; font-size:0.85rem; cursor:pointer; }
         .pat small { display:block; font-weight:500; color: var(--text-muted); font-size:0.7rem; margin-top:2px; }
-        .pat.on { border-color: var(--accent-amber); background: rgba(245,158,11,0.14); color: var(--text-primary); }
+        .pat.on { border-color: var(--accent-amber); background: rgba(184,146,42,0.14); color: var(--text-primary); }
         .line-rows { display:grid; gap:8px; }
         .line-row { display:grid; grid-template-columns: 1fr auto auto; gap:8px; align-items:center; background: var(--bg-secondary); border:1px solid var(--border-color); border-radius:12px; padding:10px 12px; }
         .line-row .who { font-weight:700; font-size:1.05rem; }
         .line-row .who small { display:block; font-weight:500; font-size:0.75rem; color: var(--text-muted); }
         .line-row .st { font-size:0.78rem; color: var(--text-muted); }
-        .line-row.got { border-color: var(--accent-amber); background: rgba(245,158,11,0.10); }
-        .line-row.ny { border-color: var(--accent-red); background: rgba(239,68,68,0.08); }
+        .line-row.got { border-color: var(--accent-amber); background: rgba(184,146,42,0.10); }
+        .line-row.ny { border-color: var(--accent-red); background: rgba(178,58,58,0.08); }
         .lb { border-radius:10px; padding:12px 16px; font-family:inherit; font-weight:700; font-size:0.95rem; cursor:pointer; border:1px solid var(--border-light); background: var(--bg-card); color: var(--text-primary); min-width:104px; touch-action:manipulation; }
         .lb.go { background: var(--accent-amber); border-color: var(--accent-amber); color:#000; }
         .lb.ny { border-color: var(--accent-red); color: var(--accent-red); }
@@ -1041,8 +1042,8 @@
         #authGate p { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 24px; }
         #authGate .auth-error {
             color: var(--accent-red); font-size: 0.9rem; margin-top: 16px;
-            padding: 12px; background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.3); border-radius: 8px;
+            padding: 12px; background: rgba(178,58,58,0.1);
+            border: 1px solid rgba(178,58,58,0.3); border-radius: 8px;
             display: none;
         }
         #authGate .auth-error.visible { display: block; }
