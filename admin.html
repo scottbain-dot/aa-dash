@@ -981,6 +981,36 @@
         .stamp-sheet.ny-open .nyform { display:block; }
         .stamp-veil { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:199; display:none; }
         .stamp-veil.open { display:block; }
+        /* Stamp line: one class, groups of five, one pattern at a time */
+        .line-card { background: var(--bg-card); border:1px solid var(--accent-amber); border-radius:12px; padding:14px 16px; margin-bottom:16px; }
+        .line-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+        .line-head h3 { margin:0; font-size:1rem; }
+        .line-head .hint { color: var(--text-muted); font-size:0.78rem; }
+        .line-head .close { margin-left:auto; background:transparent; border:1px solid var(--border-light); color: var(--text-secondary); border-radius:8px; padding:5px 10px; font-family:inherit; font-size:0.78rem; cursor:pointer; }
+        .groups { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+        .grp { background: var(--bg-secondary); border:1px solid var(--border-light); color: var(--text-secondary); border-radius:10px; padding:7px 10px; font-family:inherit; font-size:0.8rem; cursor:pointer; text-align:left; }
+        .grp b { display:block; color: var(--text-primary); font-size:0.85rem; }
+        .grp.on { border-color: var(--accent-amber); background: rgba(245,158,11,0.14); }
+        .grp.done { opacity:.55; }
+        .pats { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+        .pat { flex:1; min-width:90px; background: var(--bg-secondary); border:1px solid var(--border-light); color: var(--text-secondary); border-radius:10px; padding:9px 8px; font-family:inherit; font-weight:700; font-size:0.85rem; cursor:pointer; }
+        .pat small { display:block; font-weight:500; color: var(--text-muted); font-size:0.7rem; margin-top:2px; }
+        .pat.on { border-color: var(--accent-amber); background: rgba(245,158,11,0.14); color: var(--text-primary); }
+        .line-rows { display:grid; gap:8px; }
+        .line-row { display:grid; grid-template-columns: 1fr auto auto; gap:8px; align-items:center; background: var(--bg-secondary); border:1px solid var(--border-color); border-radius:12px; padding:10px 12px; }
+        .line-row .who { font-weight:700; font-size:1.05rem; }
+        .line-row .who small { display:block; font-weight:500; font-size:0.75rem; color: var(--text-muted); }
+        .line-row .st { font-size:0.78rem; color: var(--text-muted); }
+        .line-row.got { border-color: var(--accent-amber); background: rgba(245,158,11,0.10); }
+        .line-row.ny { border-color: var(--accent-red); background: rgba(239,68,68,0.08); }
+        .lb { border-radius:10px; padding:12px 16px; font-family:inherit; font-weight:700; font-size:0.95rem; cursor:pointer; border:1px solid var(--border-light); background: var(--bg-card); color: var(--text-primary); min-width:104px; touch-action:manipulation; }
+        .lb.go { background: var(--accent-amber); border-color: var(--accent-amber); color:#000; }
+        .lb.ny { border-color: var(--accent-red); color: var(--accent-red); }
+        .lb.undo { background:transparent; color: var(--text-secondary); }
+        .lb:disabled { opacity:.45; cursor:default; }
+        .line-nav { display:flex; gap:8px; margin-top:12px; align-items:center; }
+        .line-nav .spacer { flex:1; color: var(--text-muted); font-size:0.8rem; text-align:center; }
+        @media (max-width: 640px) { .line-row { grid-template-columns: 1fr; } .lb { width:100%; } }
         .ny-card { margin-top:18px; background: var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:14px 16px; }
         .ny-card h3 { margin:0 0 4px; font-size:0.95rem; }
         .ny-card .hint { color: var(--text-muted); font-size:0.78rem; margin-bottom:10px; }
@@ -1134,6 +1164,8 @@
             <div class="stamp-toolbar">
                 <input type="text" id="stampSearch" placeholder="Find a student..." oninput="renderStamps()">
                 <select id="stampGrade" onchange="renderStamps()"></select>
+                <select id="stampClass" onchange="renderStamps()" style="display:none"></select>
+                <button class="filter-btn" onclick="toggleLine()" id="lineBtn" title="Stamp one class in groups of five, one pattern at a time">🧍 Stamp line</button>
                 <select id="stampFilter" onchange="renderStamps()">
                     <option value="">Everyone</option>
                     <option value="ready">Ready to stamp</option>
@@ -1143,6 +1175,7 @@
                 <button class="filter-btn" onclick="loadStampMeta(true)" id="stampReload">↻ Readiness</button>
                 <span class="stamp-help" id="stampHelp">Tap a circle: stamp, or send back with a reason.</span>
             </div>
+            <div class="line-card" id="lineCard" style="display:none"></div>
             <div class="stamp-wrap">
                 <table class="stamp-table">
                     <thead><tr id="stampHead"></tr></thead>
@@ -1933,14 +1966,23 @@
             const grades = [...new Set(allStudents.map(s => s.Grade).filter(Boolean))].sort();
             sel.innerHTML = '<option value="">All grades</option>' + grades.map(g => `<option value="${g}">Grade ${g}</option>`).join('');
             if (grades.includes('9')) sel.value = '9';
+            // Class (section) select, only when the roster carries one
+            const cs = document.getElementById('stampClass');
+            const classes = [...new Set(allStudents.map(s => String(s.Class || '').trim()).filter(Boolean))].sort();
+            if (classes.length) {
+                cs.style.display = '';
+                cs.innerHTML = '<option value="">All classes</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+            }
         }
 
         function stampRows() {
             const q = (document.getElementById('stampSearch').value || '').trim().toLowerCase();
             const grade = document.getElementById('stampGrade').value;
+            const cls = document.getElementById('stampClass').value;
             const f = document.getElementById('stampFilter').value;
             return allStudents
                 .filter(s => !grade || String(s.Grade || '').trim() === grade)
+                .filter(s => !cls || String(s.Class || '').trim() === cls)
                 .filter(s => !q || (s.Name || '').toLowerCase().includes(q))
                 .filter(s => {
                     if (!f) return true;
@@ -1981,10 +2023,62 @@
             renderStamps();
         }
 
+        // ---- Stamp line: the class in groups of five, alphabetical, one pattern at a time ----
+        const LINE_SIZE = 5;
+        let lineOn = false, lineGroup = 0, linePattern = 'Squat';
+        function toggleLine() { lineOn = !lineOn; document.getElementById('lineBtn').classList.toggle('active', lineOn); renderStamps(); }
+        function lineRoster() {
+            const grade = document.getElementById('stampGrade').value;
+            const cls = document.getElementById('stampClass').value;
+            return allStudents
+                .filter(s => !grade || String(s.Grade || '').trim() === grade)
+                .filter(s => !cls || String(s.Class || '').trim() === cls)
+                .sort((a, b) => (a.Name || '').localeCompare(b.Name || ''));
+        }
+        function lineGroups() { const r = lineRoster(); const g = []; for (let i = 0; i < r.length; i += LINE_SIZE) g.push(r.slice(i, i + LINE_SIZE)); return g; }
+        function firstName(n) { n = String(n || ''); return n.includes(',') ? n.split(',')[1].trim() : n.split(' ')[0]; }
+        function setLineGroup(i) { lineGroup = i; renderStamps(); }
+        function setLinePattern(p) { linePattern = p; renderStamps(); }
+        function renderLine() {
+            const card = document.getElementById('lineCard');
+            if (!lineOn) { card.style.display = 'none'; return; }
+            card.style.display = '';
+            const groups = lineGroups();
+            if (!groups.length) { card.innerHTML = '<div class="line-head"><h3>Stamp line</h3><span class="hint">No students in this grade or class</span><button class="close" onclick="toggleLine()">Close</button></div>'; return; }
+            if (lineGroup >= groups.length) lineGroup = 0;
+            const grp = groups[lineGroup];
+            const lvlOf = (s, p) => parseInt(s[p + '_Tech']) || 0;
+            const groupDone = g => g.every(s => STAMP_PATTERNS.every(p => lvlOf(s, p) > 0 || metaFor(s.Athlete_ID).notyet[p]));
+            const chips = groups.map((g, i) => `<button class="grp ${i === lineGroup ? 'on' : ''} ${groupDone(g) ? 'done' : ''}" onclick="setLineGroup(${i})"><b>Group ${i + 1}</b>${g.map(s => firstName(s.Name)).join(', ')}</button>`).join('');
+            const pats = STAMP_PATTERNS.map(p => { const n = grp.filter(s => lvlOf(s, p) > 0).length; return `<button class="pat ${p === linePattern ? 'on' : ''}" onclick="setLinePattern('${p}')">${p}<small>${n} of ${grp.length} stamped</small></button>`; }).join('');
+            const rows = grp.map(s => {
+                const lvl = lvlOf(s, linePattern); const m = metaFor(s.Athlete_ID); const ny = m.notyet[linePattern];
+                const cls = lvl > 0 ? 'got' : (ny ? 'ny' : '');
+                const st = lvl >= 2 ? `Level ${lvl}` : (lvl === 1 ? 'Stamped ✓' : (ny ? 'Not yet · ' + (ny.why || '') : (m.ready[linePattern] ? 'Partner-checked' : '')));
+                const busy = stampBusy[s.Athlete_ID + ':' + linePattern] ? 'disabled' : '';
+                const btns = lvl >= 2 ? '' : (lvl === 1
+                    ? `<button class="lb undo" ${busy} onclick="setStamp('${s.Athlete_ID}','${linePattern}',0)">Undo</button><span></span>`
+                    : `<button class="lb go" ${busy} onclick="setStamp('${s.Athlete_ID}','${linePattern}',1)">Stamp</button><button class="lb ny" ${busy} onclick="openStampSheet('${s.Athlete_ID}','${linePattern}');document.getElementById('stampSheet').classList.add('ny-open')">Not yet</button>`);
+                return `<div class="line-row ${cls}"><div class="who">${esc(s.Name)}<small>${st}</small></div>${btns}</div>`;
+            }).join('');
+            const stampedAll = grp.filter(s => lvlOf(s, linePattern) > 0).length;
+            card.innerHTML = `
+                <div class="line-head"><h3>Stamp line · ${linePattern}</h3><span class="hint">Groups of ${LINE_SIZE}, alphabetical. Five reps together, tap Stamp or Not yet for each.</span><button class="close" onclick="toggleLine()">Close</button></div>
+                <div class="groups">${chips}</div>
+                <div class="pats">${pats}</div>
+                <div class="line-rows">${rows}</div>
+                <div class="line-nav">
+                    <button class="lb" ${lineGroup === 0 ? 'disabled' : ''} onclick="setLineGroup(${lineGroup - 1})">‹ Group ${lineGroup}</button>
+                    <span class="spacer">Group ${lineGroup + 1} of ${groups.length} · ${stampedAll} of ${grp.length} stamped on ${linePattern}</span>
+                    <button class="lb" ${lineGroup >= groups.length - 1 ? 'disabled' : ''} onclick="setLineGroup(${lineGroup + 1})">Group ${lineGroup + 2} ›</button>
+                </div>`;
+        }
+
         function renderStamps() {
             const body = document.getElementById('stampBody');
             if (!body) return;
             stampGradeOptions();
+            renderLine();
             const rows = stampRows();
             // Header: pattern name plus a batch button when anyone in view is ready and unstamped
             document.getElementById('stampHead').innerHTML = '<th>Student</th>' + STAMP_PATTERNS.map(p => {

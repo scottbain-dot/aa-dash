@@ -1191,6 +1191,7 @@ function getAllStudents(ss) {
         Name: name.trim(),
         Email: row[athletesHeaders.indexOf('Email')] || '',
         Grade: row[athletesHeaders.indexOf('Grade')] || row[athletesHeaders.indexOf('Year_Group')] || '',
+        Class: athletesHeaders.indexOf('Class') >= 0 ? (row[athletesHeaders.indexOf('Class')] || '') : '',
         Gender: row[athletesHeaders.indexOf('Gender')] || ''
       };
 
