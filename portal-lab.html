@@ -4795,15 +4795,68 @@
     return ms ? Object.assign({ sport: sport.name }, ms) : null;
   }
 
-  // The single shared phase (priority sport, this month) used to tie Week/Year/Load together.
+  // How far up the ladder a phase sits, for deciding which sport is driving the
+  // training right now. Peak beats build beats ticking over.
+  const PHASE_RANK = { peak:4, build:3, maintain:2, recover:1, off:0 };
+
+  // The state a sport has EXPLICITLY been given for a month ('' when none).
+  // currentSportPhase() falls back to a guess from the A-priority, which is right
+  // for showing something but wrong for picking a lead — a sport with no plan at
+  // all would win on a guessed state.
+  function plannedSportPhase(sport, curMonth){
+    const ms = ((sport && sport.monthlyStates) || []).find(x => x.month===curMonth);
+    if(!ms || !ms.state) return '';
+    return (ms.state2 && new Date().getDate() >= 16) ? ms.state2 : ms.state;
+  }
+
+  // A sport row carried over from the sign-up form ("XC, Track, Karate") rather
+  // than a real sport. Several athletes have one of these flagged as the priority
+  // sport, and the phase read used to follow exactly that row — so a three-sport
+  // athlete saw a phase off a nearly empty entry while the real per-sport plan
+  // sitting beside it was ignored.
+  function isCombinedSportEntry(s){ return /,/.test((s && s.name) || ''); }
+
+  // Sports whose plan we should actually read. Combined rows are dropped only
+  // when there is a real per-sport plan to use instead, so an athlete who only
+  // ever filled in the combined row still gets a read.
+  function plannedSports(){
+    const all = (state.yearMap && state.yearMap.sports) || [];
+    const real = all.filter(s => !isCombinedSportEntry(s) && ((s.monthlyStates||[]).some(m => m.state)));
+    return real.length ? real : all.filter(s => (s.monthlyStates||[]).length);
+  }
+
+  // Every sport with a plan this month, the one driving training first. Ties go
+  // to the sport flagged as the priority.
+  function rankedSportsFor(month){
+    return plannedSports()
+      .map(s => ({ sport: s, phase: plannedSportPhase(s, month) }))
+      .filter(o => o.phase)
+      .sort((a, b) => ((PHASE_RANK[b.phase]||0) - (PHASE_RANK[a.phase]||0))
+                   || ((b.sport.isPriority?1:0) - (a.sport.isPriority?1:0)));
+  }
+
+  // The single shared phase (the sport leading this month) used to tie
+  // Week/Year/Load together. `others` carries the sports training underneath it.
   function currentPhaseInfo(){
     if(!state.yearMap || !state.yearMap.sports || !state.yearMap.sports.length) return null;
     const month = MONTHS[new Date().getMonth()];
-    const sport = state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
-    const phase = currentSportPhase(sport, month);
+    const ranked = rankedSportsFor(month);
+    let sport, phase;
+    if(ranked.length){
+      sport = ranked[0].sport; phase = ranked[0].phase;
+    } else {
+      // Nothing planned this month — keep the old read so the suggestion drawn
+      // from the A-priority still shows rather than the strip going blank. Pick
+      // from the real sports, or a combined row would creep back in here.
+      const pool = plannedSports();
+      sport = pool.find(s=>s.isPriority) || pool[0]
+            || state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
+      phase = currentSportPhase(sport, month);
+    }
     if(!phase) return null;
-    const ms = (sport.monthlyStates||[]).find(m=>m.month===month) || {};
-    return { sport: sport.name, month: month, phase: phase, focus: ms.focus||'', loadTarget: ms.loadTarget||null };
+    const ms = ((sport.monthlyStates)||[]).find(m=>m.month===month) || {};
+    return { sport: sport.name, month: month, phase: phase, focus: ms.focus||'', loadTarget: ms.loadTarget||null,
+             others: ranked.slice(1).map(o => ({ name: o.sport.name, phase: o.phase })) };
   }
 
   // Phase context woven into a tab's hero (eyebrow row): a coloured phase chip,
