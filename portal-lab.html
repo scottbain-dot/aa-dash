@@ -3863,6 +3863,39 @@
     background: rgba(255,255,255,0.26); box-shadow: inset 0 1px 1px rgba(255,255,255,0.35); }
   .done-flag .ti { font-size: 10px; font-weight: 900; }
   @keyframes done-pop { 0% { transform: scale(0.5); opacity: 0; } 55% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+  /* What the current block says about this sport. Quiet by design — only sports
+     that deviate from "train it normally" carry a chip at all. */
+  .sport-level {
+    display: inline-flex; align-items: center; flex-shrink: 0; white-space: nowrap;
+    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
+  .sport-level-lead  { background: var(--gold-light, #f5e6b3); color: #6a3a36; }
+  .sport-level-light { background: #efe7e2; color: #8a7a72; }
+  .sport-level-off   { background: transparent; color: #a3948c; border: 1px solid #e2d6cf; }
+  .plan-row .sport-level-off ~ *, .plan-row:has(.sport-level-off) .plan-detail { opacity: 0.75; }
+  /* Block card — what this stretch of the year is, and what it means per sport. */
+  .blk-card { padding: 16px 18px; }
+  .blk-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .blk-name { font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 700; color: var(--ink, #1a1a1a); }
+  .blk-when { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--ink-mute, #7a6a60); }
+  .blk-goal { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 14px;
+    color: var(--ink-soft, #4a3f39); margin: 8px 0 0; line-height: 1.45; }
+  .blk-sports { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .blk-sport { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 6px 0; border-top: 1px solid var(--line, #eee3dd); }
+  .blk-sport:first-child { border-top: none; }
+  .blk-sport-name { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink, #1a1a1a); }
+  .blk-sport-lv { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; border-radius: 999px; padding: 3px 9px; }
+  .blk-lv-lead  { background: var(--gold-light, #f5e6b3); color: #6a3a36; }
+  .blk-lv-full  { background: #e7efe4; color: #4c6b49; }
+  .blk-lv-light { background: #efe7e2; color: #8a7a72; }
+  .blk-lv-off   { background: transparent; color: #a3948c; border: 1px solid #e2d6cf; }
+  .blk-note { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60);
+    margin: 10px 0 0; line-height: 1.5; }
+  .blk-link { margin-top: 10px; background: none; border: none; padding: 0; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--burgundy, #874B46); }
   .plan-info { min-width: 0; }
   .plan-name {
     font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink);
@@ -4944,6 +4977,67 @@
     if(!b) return null;
     const week = Math.min(b.weeks, Math.max(1, Math.round((parseISO(fmtISO(mondayOf(new Date()))) - parseISO(b.startISO)) / (7*86400000)) + 1));
     return Object.assign({ week: week }, b);
+  }
+
+  // ---- What the current block says about each sport --------------------------
+  // The block never changes a session. It labels one, and the athlete decides.
+  //
+  // Only sports NAMED IN THE YEAR MAP are ever labelled. A session whose sport
+  // is "Strength", "Flexibility", "Bike" — or a sport the athlete never added to
+  // their year, like Ballet — is left completely alone. That keeps us from
+  // greying out somebody's running because it did not match a row in a grid.
+  // Only deviations get a chip on a session row. The lead sport is named once on
+  // the block card and again in the eyebrow — repeating "Main focus" on every one
+  // of its sessions is the noise that teaches people to stop reading labels.
+  const SPORT_LEVEL_CHIP = {
+    light: { cls:'light', text:'Ticking over' },
+    off:   { cls:'off',   text:'Not this block' }
+  };
+  function yearMapSportNames(){
+    return plannedSports().map(s => String(s.name||'').trim().toLowerCase()).filter(Boolean);
+  }
+  // 'lead' | 'full' | 'light' | 'off' | null (null = not ours to label)
+  function sportLevel(sportName){
+    const key = String(sportName||'').trim().toLowerCase();
+    if(!key || yearMapSportNames().indexOf(key) < 0) return null;
+    const b = currentBlock();
+    if(!b) return null;
+    const month = MONTHS[new Date().getMonth()];
+    const sp = plannedSports().find(s => String(s.name||'').trim().toLowerCase() === key);
+    const phase = sp ? plannedSportPhase(sp, month) : '';
+    if(String(b.sport||'').trim().toLowerCase() === key) return 'lead';
+    if(!phase) return 'off';
+    if(phase === 'peak') return 'lead';
+    if(phase === 'build') return 'full';
+    if(phase === 'maintain') return 'light';
+    return 'off';   // recover / off
+  }
+  function sportLevelChip(sportName){
+    const lv = sportLevel(sportName);
+    const c = lv && SPORT_LEVEL_CHIP[lv];
+    return c ? ' <span class="sport-level sport-level-'+c.cls+'">'+c.text+'</span>' : '';
+  }
+  // Skipping a session is not the same as labelling one. A label is cheap and
+  // reversible; not adding a session takes something out of someone's week. So
+  // auto-fill only stands down for a sport the athlete has EXPLICITLY marked
+  // recover or off this month. A month they simply never filled in means we do
+  // not know — and "we don't know" must never delete their Monday swim.
+  function sportExplicitlyResting(sportName){
+    const key = String(sportName||'').trim().toLowerCase();
+    if(!key) return false;
+    const sp = plannedSports().find(s => String(s.name||'').trim().toLowerCase() === key);
+    if(!sp) return false;
+    const phase = plannedSportPhase(sp, MONTHS[new Date().getMonth()]);
+    return phase === 'recover' || phase === 'off';
+  }
+
+  // Sports this block is resting, that the athlete's program still carries.
+  function sportsOffThisBlock(){
+    const inProgram = {};
+    (templateSessions()||[]).forEach(t => { if(t.sport) inProgram[t.sport] = true; });
+    ((state.library && activeProgram() && activeProgram().weeks) || []).forEach(w =>
+      (w||[]).forEach(t => { if(t.sport) inProgram[t.sport] = true; }));
+    return Object.keys(inProgram).filter(n => sportExplicitlyResting(n));
   }
 
   function monthRangeLabel(b){
@@ -6144,6 +6238,7 @@
 
     document.getElementById('weekStack').innerHTML =
       weekTodayCard(todays, today) +
+      weekBlockCard() +
       weekBuildCard() +
       weekThisWeekCard(ws, curMon, byDay, today) +
       weekLoadCard() +
@@ -6151,6 +6246,39 @@
 
     initSwipe();   // LAB: bind swipe-to-delete (delegated on #weekGrid)
     initWeekDrag();   // grip-drag a session onto another day
+  }
+
+  // What this block is, and what it means for each of the athlete's sports.
+  // The one place the year plan actually explains the week. Nothing here changes
+  // a session — it says what the plan expects, and the athlete decides.
+  function weekBlockCard(){
+    const b = currentBlock();
+    if(!b) return '';
+    const month = MONTHS[new Date().getMonth()];
+    const rows = plannedSports().map(function(sp){
+      const lv = sportLevel(sp.name);
+      if(!lv) return '';
+      const say = lv==='lead'  ? 'leading'
+                : lv==='full'  ? 'building'
+                : lv==='light' ? 'ticking over'
+                :                'not this block';
+      return '<div class="blk-sport"><span class="blk-sport-name">'+esc(sp.name)+'</span>'+
+             '<span class="blk-sport-lv blk-lv-'+lv+'">'+say+'</span></div>';
+    }).join('');
+    const off = sportsOffThisBlock();
+    const offNote = off.length
+      ? '<p class="blk-note">'+esc(off.join(' and '))+' session'+(off.length>1?'s aren’t':' isn’t')+
+        ' being added this block — add one any time.</p>'
+      : '';
+    const ms = ((plannedSports().find(s=>String(s.name||'').trim().toLowerCase()===String(b.sport||'').trim().toLowerCase())||{}).monthlyStates||[])
+                 .find(m=>m.month===month) || {};
+    const goal = ms.focus ? '<p class="blk-goal">'+esc(ms.focus)+'</p>' : '';
+    return '<div class="card blk-card">'+
+      '<div class="blk-head"><span class="blk-name">'+esc(b.label)+'</span>'+
+        '<span class="blk-when">week '+b.week+' of '+b.weeks+' · '+esc(monthRangeLabel(b))+'</span></div>'+
+      goal + (rows ? '<div class="blk-sports">'+rows+'</div>' : '') + offNote +
+      '<button class="blk-link" onclick="switchTab(\'year\')">See your year →</button>'+
+    '</div>';
   }
 
   // Prominent "Build my program" entry — top of My Program, opens the build hub
@@ -6693,7 +6821,7 @@
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+(isLogged(s)?' done':'')+'" aria-hidden="true">'+(isLogged(s)?'<i class="ti ti-check"></i>':'')+'</span>'+
-        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+doneFlag+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+doneFlag+(isLogged(s)?'':sportLevelChip(s.sport))+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
         '<span class="plan-grip" aria-label="Drag to move to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
       '</div>'+
@@ -9276,6 +9404,11 @@
     programSessionsForWeek(ws).forEach((t, idx) => {          // cycle-aware: rotate through the program's weeks
       const date = addDays(ws, t.dow);
       if(busy[date]) return;                              // day already has a session — leave it
+      // A sport the block is resting isn't auto-added — otherwise a cross-country
+      // athlete gets XC rows every week from December to May that they will never
+      // do, and stops reading the labels. The block card says this out loud, and
+      // adding one back is a tap. Nothing is deleted; this only skips creation.
+      if(sportExplicitlyResting(t.sport)) return;
       created.push(buildWeekSession(t, ws, stamp, idx));
     });
     markWeekAutoFilled(ws);
