@@ -4544,9 +4544,9 @@
 
     // Full academic-year block map (Aug→Jul) for the priority sport.
     const yearMap = {
-      year: '2025–26',
+      year: '2026–27',
       vision: 'Final at Regionals — sub-58 in the 100 free.',
-      aPriority: { sport: 'Swimming', event: 'Regional Championships', date: '2026-04-18', month: 'April' },
+      aPriority: { sport: 'Swimming', event: 'Regional Championships', date: '2027-04-17', month: 'April' },
       sports: [
         { name: 'Swimming', isPriority: true, monthlyStates: [
           { month:'August',   state:'build',    focus:'Aerobic base — rebuild after summer.', loadTarget:1100, note:'' },
@@ -4786,14 +4786,6 @@
   }
   window.renderTeaser = renderTeaser;
 
-  function currentBlock(){
-    if(!state.yearMap || !state.yearMap.sports || !state.yearMap.sports.length) return null;
-    const month = MONTHS[new Date().getMonth()];
-    const sport = state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
-    if(!sport || !sport.monthlyStates) return null;
-    const ms = sport.monthlyStates.find(m=>m.month===month);
-    return ms ? Object.assign({ sport: sport.name }, ms) : null;
-  }
 
   // How far up the ladder a phase sits, for deciding which sport is driving the
   // training right now. Peak beats build beats ticking over.
@@ -4803,11 +4795,17 @@
   // currentSportPhase() falls back to a guess from the A-priority, which is right
   // for showing something but wrong for picking a lead — a sport with no plan at
   // all would win on a guessed state.
-  function plannedSportPhase(sport, curMonth){
+  // half 0 = 1st–15th, half 1 = 16th onwards. state2 exists so a month can hold
+  // two different goals; when it is set the month really is two segments, so
+  // anything walking the year has to ask for a half rather than infer one from
+  // today's date.
+  function plannedSportPhaseAt(sport, curMonth, half){
     const ms = ((sport && sport.monthlyStates) || []).find(x => x.month===curMonth);
     if(!ms || !ms.state) return '';
-    return (ms.state2 && new Date().getDate() >= 16) ? ms.state2 : ms.state;
+    return (ms.state2 && half === 1) ? ms.state2 : ms.state;
   }
+  function todayHalf(){ return new Date().getDate() >= 16 ? 1 : 0; }
+  function plannedSportPhase(sport, curMonth){ return plannedSportPhaseAt(sport, curMonth, todayHalf()); }
 
   // A sport row carried over from the sign-up form ("XC, Track, Karate") rather
   // than a real sport. Several athletes have one of these flagged as the priority
@@ -4827,13 +4825,14 @@
 
   // Every sport with a plan this month, the one driving training first. Ties go
   // to the sport flagged as the priority.
-  function rankedSportsFor(month){
+  function rankedSportsAt(month, half){
     return plannedSports()
-      .map(s => ({ sport: s, phase: plannedSportPhase(s, month) }))
+      .map(s => ({ sport: s, phase: plannedSportPhaseAt(s, month, half) }))
       .filter(o => o.phase)
       .sort((a, b) => ((PHASE_RANK[b.phase]||0) - (PHASE_RANK[a.phase]||0))
                    || ((b.sport.isPriority?1:0) - (a.sport.isPriority?1:0)));
   }
+  function rankedSportsFor(month){ return rankedSportsAt(month, todayHalf()); }
 
   // The single shared phase (the sport leading this month) used to tie
   // Week/Year/Load together. `others` carries the sports training underneath it.
@@ -4859,14 +4858,108 @@
              others: ranked.slice(1).map(o => ({ name: o.sport.name, phase: o.phase })) };
   }
 
+  // ---- Blocks: the athlete-facing chapters of the training year ------------
+  // The month grid stays exactly as it is — this is a reading layer over it.
+  // Three tiers, because that is what an athlete can actually tell apart:
+  //   competing (peak) · resting (recover/off) · training (build/maintain)
+  // A block runs while the LEAD SPORT and the TIER both hold. Cutting on every
+  // state change instead shatters a concurrent-sport year into one block per
+  // month, which is the month grid with extra words.
+  const PHASE_TIER = { peak:'compete', recover:'rest', off:'rest', build:'train', maintain:'train' };
+  const TIER_LABEL = { compete:'season', rest:'recovery', train:'build' };
+
+  // The academic year as ordered {month, year} pairs, starting each August.
+  function academicYear(){
+    const m = String((state.yearMap && state.yearMap.year) || '').match(/(\d{4})/);
+    const now = new Date();
+    const startYear = m ? +m[1] : (now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear()-1);
+    return ACADEMIC_MONTHS.map((month, i) => ({ month: month, year: startYear + (i < 5 ? 0 : 1) }));
+  }
+
+  // Within a run of training months, the block is named for the most ambitious
+  // thing in it — a run holding any build month is a build, not a maintain.
+  function dominantPhase(phases){
+    return phases.slice().sort((a,b) => (PHASE_RANK[b]||0)-(PHASE_RANK[a]||0))[0] || '';
+  }
+
+  // Every half-month of the academic year, with the sport leading it. A month
+  // is one segment unless state2 splits it, in which case it is two.
+  function yearSegments(){
+    const segs = [];
+    academicYear().forEach(function(cell){
+      const mi = MONTHS.indexOf(cell.month);
+      const split = plannedSports().some(function(s){
+        const ms = (s.monthlyStates||[]).find(x => x.month===cell.month);
+        return !!(ms && ms.state2);
+      });
+      [0, 1].forEach(function(half){
+        if(half === 1 && !split) return;
+        const ranked = rankedSportsAt(cell.month, half);
+        let sport, phase;
+        if(ranked.length){ sport = ranked[0].sport.name; phase = ranked[0].phase; }
+        else {
+          const pool = plannedSports();
+          const s = pool.find(x=>x.isPriority) || pool[0];
+          if(!s) return;
+          sport = s.name; phase = currentSportPhase(s, cell.month);
+        }
+        if(!phase) return;
+        segs.push({
+          month: cell.month, year: cell.year, half: half, sport: sport, phase: phase,
+          tier: PHASE_TIER[phase] || 'train',
+          from: fmtISO(new Date(cell.year, mi, split && half===1 ? 16 : 1)),
+          to:   fmtISO(split && half===0 ? new Date(cell.year, mi, 15) : new Date(cell.year, mi+1, 0))
+        });
+      });
+    });
+    return segs;
+  }
+
+  function yearBlocks(){
+    if(!state.yearMap || !(state.yearMap.sports||[]).length) return [];
+    const out = [];
+    yearSegments().forEach(function(sg){
+      const last = out[out.length-1];
+      if(last && last.sport===sg.sport && last.tier===sg.tier && addDays(last.to, 1) === sg.from){
+        last.segs.push(sg); last.phases.push(sg.phase); last.to = sg.to;
+      } else {
+        out.push({ sport:sg.sport, tier:sg.tier, phases:[sg.phase], segs:[sg], from:sg.from, to:sg.to });
+      }
+    });
+    out.forEach(function(b){
+      b.phase = dominantPhase(b.phases);
+      b.startISO = b.from; b.endISO = b.to;
+      b.weeks = Math.max(1, Math.round((parseISO(b.endISO) - parseISO(b.startISO)) / (7*86400000)));
+      b.months = b.segs.map(s=>s.month).filter((m,i,a)=>a.indexOf(m)===i);
+      b.label = b.sport + ' ' + (TIER_LABEL[b.tier] || 'build');
+    });
+    return out;
+  }
+
+  // The block today falls in, with how far through it we are.
+  function currentBlock(){
+    const today = fmtISO(new Date());
+    const blocks = yearBlocks();
+    const b = blocks.find(x => today >= x.startISO && today <= x.endISO) || null;
+    if(!b) return null;
+    const week = Math.min(b.weeks, Math.max(1, Math.round((parseISO(fmtISO(mondayOf(new Date()))) - parseISO(b.startISO)) / (7*86400000)) + 1));
+    return Object.assign({ week: week }, b);
+  }
+
+  function monthRangeLabel(b){
+    const a = b.months[0].slice(0,3), z = b.months[b.months.length-1].slice(0,3);
+    return a===z ? a : a+'–'+z;
+  }
+
   // Phase context woven into a tab's hero (eyebrow row): a coloured phase chip,
   // the month, and a quiet link across to the Year plan it comes from.
   function phaseEyebrowRow(){
     const info = currentPhaseInfo();
     if(!info) return '<p class="block-eyebrow">This week</p>';
+    const b = currentBlock();
     return '<div class="block-eyebrow-row">'+
-      '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+PHASE_FRIENDLY[info.phase]+'</span>'+
-      '<span class="block-phase-month">'+esc(info.month)+'</span>'+
+      '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+esc(b ? b.label : PHASE_FRIENDLY[info.phase])+'</span>'+
+      '<span class="block-phase-month">'+esc(b ? ('week '+b.week+' of '+b.weeks) : info.month)+'</span>'+
       '<button class="block-phase-link" onclick="switchTab(\'year\')">Your year →</button>'+
     '</div>';
   }
@@ -4879,12 +4972,17 @@
     if(activeTab!=='week' && activeTab!=='load'){ bar.innerHTML = ''; return; }
     const info = currentPhaseInfo();
     if(info){
-      // Quiet strip: state chip + focus only (matches the approved mock). The
-      // tab bar already handles navigation to Year.
+      // Quiet strip: state chip + where you are in the block. "week 3 of 8" is
+      // the bit that was missing — a month name never told anyone how far in
+      // they were, or that the block was nearly over.
+      const b = currentBlock();
+      const where = b ? ('week '+b.week+' of '+b.weeks)
+                      : (info.focus || info.month);
       bar.innerHTML =
         '<div class="context-strip">'+
-          '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+PHASE_FRIENDLY[info.phase]+'</span>'+
-          (info.focus? '<span class="context-strip-focus">'+esc(info.focus)+'</span>' : '<span class="context-strip-month">'+esc(info.month)+'</span>')+
+          '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+esc(b ? b.label : PHASE_FRIENDLY[info.phase])+'</span>'+
+          '<span class="context-strip-month">'+esc(where)+'</span>'+
+          (b && info.focus ? '<span class="context-strip-focus">'+esc(info.focus)+'</span>' : '')+
         '</div>';
     } else {
       bar.innerHTML =
