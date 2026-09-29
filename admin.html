@@ -1972,7 +1972,8 @@
             const classes = [...new Set(allStudents.map(s => String(s.Class || '').trim()).filter(Boolean))].sort();
             if (classes.length) {
                 cs.style.display = '';
-                cs.innerHTML = '<option value="">All classes</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+                const blank = allStudents.filter(s => String(s.Grade || '').trim() === '9' && !String(s.Class || '').trim()).length;
+                cs.innerHTML = '<option value="">All classes</option>' + classes.map(c => `<option value="${c}">${c}${blank ? ' (+' + blank + ' with no class)' : ''}</option>`).join('');
             }
         }
 
@@ -1983,7 +1984,7 @@
             const f = document.getElementById('stampFilter').value;
             return allStudents
                 .filter(s => !grade || String(s.Grade || '').trim() === grade)
-                .filter(s => !cls || String(s.Class || '').trim() === cls)
+                .filter(s => !cls || !String(s.Class || '').trim() || String(s.Class || '').trim() === cls)
                 .filter(s => !q || (s.Name || '').toLowerCase().includes(q))
                 .filter(s => {
                     if (!f) return true;
@@ -2033,7 +2034,7 @@
             const cls = document.getElementById('stampClass').value;
             return allStudents
                 .filter(s => !grade || String(s.Grade || '').trim() === grade)
-                .filter(s => !cls || String(s.Class || '').trim() === cls)
+                .filter(s => !cls || !String(s.Class || '').trim() || String(s.Class || '').trim() === cls)
                 .sort((a, b) => (a.Name || '').localeCompare(b.Name || ''));
         }
         function lineGroups() { const r = lineRoster(); const g = []; for (let i = 0; i < r.length; i += LINE_SIZE) g.push(r.slice(i, i + LINE_SIZE)); return g; }
@@ -2100,7 +2101,8 @@
                     else if (m.ready[p]) { cls = 'stamp rdy'; label = 'R'; title = `${p}: partner-checked, ready for your look`; }
                     return `<td><button class="${cls}${stampBusy[key] ? ' busy' : ''}" title="${title.replace(/"/g, '&quot;')}" ${lvl >= 2 ? 'disabled' : ''} onclick="openStampSheet('${s.Athlete_ID}','${p}')">${label}</button></td>`;
                 }).join('');
-                return `<tr><td><div class="stamp-name">${esc(s.Name || s.Athlete_ID)}<small>${s.Grade ? 'Grade ' + s.Grade : ''}</small></div></td>${cells}</tr>`;
+                const noClass = document.getElementById('stampClass').style.display !== 'none' && !String(s.Class || '').trim();
+                return `<tr><td><div class="stamp-name">${esc(s.Name || s.Athlete_ID)}<small>${s.Grade ? 'Grade ' + s.Grade : ''}${noClass ? ' · <span style="color:var(--accent-red)">no class in the sheet</span>' : ''}</small></div></td>${cells}</tr>`;
             }).join('') || '<tr><td colspan="7" style="padding:24px;color:var(--text-muted)">No students match</td></tr>';
             document.getElementById('stampCount').textContent = rows.length ? `${stamped} of ${possible} level 1 stamps given` : '';
             renderNotYet(rows);
