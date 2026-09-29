@@ -3400,19 +3400,29 @@ function apComputeLoad(ss, athleteId) {
     var d = apDateStr(rows[i].Date);
     if (d && (st === 'done' || st === 'modified' || l > 0)) loggedSet[d] = 1;
   }
-  var weeks = Object.keys(byWeek).sort();
+  // A week gets a key here as soon as ANY session lands in it — a fixture weeks
+  // out, a planned rest day — and those rows carry no load. Future weeks must not
+  // be part of the load picture at all: taking the last key as "this week" once
+  // reported a fully logged week as 0 au because a game sat in the week after.
+  var curWeek = apWeekStart(new Date());
+  var allWeeks = Object.keys(byWeek).sort();
+  var weeks = [];
+  for (var q = 0; q < allWeeks.length; q++) if (allWeeks[q] <= curWeek) weeks.push(allWeeks[q]);
   var series = [];
+  var weeksLogged = 0;
   for (var w = 0; w < weeks.length; w++) {
     var acute = byWeek[weeks[w]];
+    if (acute > 0) weeksLogged++;
+    // Chronic = the weeks BEFORE this one, so a part-finished week never dilutes
+    // the baseline it is being measured against.
     var sum = 0, n = 0;
-    for (var k = Math.max(0, w - 3); k <= w; k++) { sum += byWeek[weeks[k]]; n++; }
+    for (var k = Math.max(0, w - 4); k < w; k++) { if (byWeek[weeks[k]] > 0) { sum += byWeek[weeks[k]]; n++; } }
     var chronic = n ? sum / n : 0;
-    var acwr = chronic > 0 ? acute / chronic : null;
+    var acwr = (n >= 3 && chronic > 0) ? acute / chronic : null;
     series.push({ weekStart: weeks[w], load: acute, acwr: acwr });
   }
-  var weeksLogged = weeks.length;
-  var thisWeekLoad = weeksLogged ? byWeek[weeks[weeksLogged - 1]] : 0;
-  var latestAcwr = weeksLogged >= 4 ? series[series.length - 1].acwr : null;
+  var thisWeekLoad = byWeek[curWeek] || 0;
+  var latestAcwr = (weeks.length && weeks[weeks.length - 1] === curWeek) ? series[series.length - 1].acwr : null;
   var loggedDates = Object.keys(loggedSet).sort();
   return { weeks: series, summary: { thisWeekLoad: thisWeekLoad, acwr: latestAcwr, weeksLogged: weeksLogged, loggedDates: loggedDates } };
 }
@@ -3659,7 +3669,16 @@ function apLoadStrengthLevels(ss, athleteId) {
       var pat = CV_PATTERNS[p];
       var tech = latest ? (parseInt(latest[pat + '_Tech'], 10) || 0) : 0;
       var load = 0;
-      if (latest && tech >= 2 && tech <= 5) load = parseInt(latest[pat + '_Str_L' + tech], 10) || 0;
+      if (latest && tech >= 2 && tech <= 5) {
+        load = parseInt(latest[pat + '_Str_L' + tech], 10) || 0;
+        // TEMPORARY FALLBACK (see CLAUDE.md) — the live Strength sheet still
+        // carries only the flat legacy {Pattern}_Str column; the _Str_L2..L5
+        // columns do not exist on it yet. Without this the level-specific read
+        // finds nothing and EVERY athlete's load level shows as 0 on the CV,
+        // even where the sheet has a value. Remove alongside the other _Str
+        // fallbacks once the data is migrated.
+        if (!load) load = parseInt(latest[pat + '_Str'], 10) || 0;
+      }
       out.push({ pattern: pat, tech: tech, load: load, done: tech > 0 });
     }
   } catch (e) { /* no strength assessment yet */ }

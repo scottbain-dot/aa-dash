@@ -3863,6 +3863,39 @@
     background: rgba(255,255,255,0.26); box-shadow: inset 0 1px 1px rgba(255,255,255,0.35); }
   .done-flag .ti { font-size: 10px; font-weight: 900; }
   @keyframes done-pop { 0% { transform: scale(0.5); opacity: 0; } 55% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+  /* What the current block says about this sport. Quiet by design — only sports
+     that deviate from "train it normally" carry a chip at all. */
+  .sport-level {
+    display: inline-flex; align-items: center; flex-shrink: 0; white-space: nowrap;
+    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
+  .sport-level-lead  { background: var(--gold-light, #f5e6b3); color: #6a3a36; }
+  .sport-level-light { background: #efe7e2; color: #8a7a72; }
+  .sport-level-off   { background: transparent; color: #a3948c; border: 1px solid #e2d6cf; }
+  .plan-row .sport-level-off ~ *, .plan-row:has(.sport-level-off) .plan-detail { opacity: 0.75; }
+  /* Block card — what this stretch of the year is, and what it means per sport. */
+  .blk-card { padding: 16px 18px; }
+  .blk-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .blk-name { font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 700; color: var(--ink, #1a1a1a); }
+  .blk-when { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--ink-mute, #7a6a60); }
+  .blk-goal { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 14px;
+    color: var(--ink-soft, #4a3f39); margin: 8px 0 0; line-height: 1.45; }
+  .blk-sports { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .blk-sport { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 6px 0; border-top: 1px solid var(--line, #eee3dd); }
+  .blk-sport:first-child { border-top: none; }
+  .blk-sport-name { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink, #1a1a1a); }
+  .blk-sport-lv { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; border-radius: 999px; padding: 3px 9px; }
+  .blk-lv-lead  { background: var(--gold-light, #f5e6b3); color: #6a3a36; }
+  .blk-lv-full  { background: #e7efe4; color: #4c6b49; }
+  .blk-lv-light { background: #efe7e2; color: #8a7a72; }
+  .blk-lv-off   { background: transparent; color: #a3948c; border: 1px solid #e2d6cf; }
+  .blk-note { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60);
+    margin: 10px 0 0; line-height: 1.5; }
+  .blk-link { margin-top: 10px; background: none; border: none; padding: 0; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--burgundy, #874B46); }
   .plan-info { min-width: 0; }
   .plan-name {
     font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink);
@@ -4544,9 +4577,9 @@
 
     // Full academic-year block map (Aug→Jul) for the priority sport.
     const yearMap = {
-      year: '2025–26',
+      year: '2026–27',
       vision: 'Final at Regionals — sub-58 in the 100 free.',
-      aPriority: { sport: 'Swimming', event: 'Regional Championships', date: '2026-04-18', month: 'April' },
+      aPriority: { sport: 'Swimming', event: 'Regional Championships', date: '2027-04-17', month: 'April' },
       sports: [
         { name: 'Swimming', isPriority: true, monthlyStates: [
           { month:'August',   state:'build',    focus:'Aerobic base — rebuild after summer.', loadTarget:1100, note:'' },
@@ -4786,24 +4819,230 @@
   }
   window.renderTeaser = renderTeaser;
 
-  function currentBlock(){
-    if(!state.yearMap || !state.yearMap.sports || !state.yearMap.sports.length) return null;
-    const month = MONTHS[new Date().getMonth()];
-    const sport = state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
-    if(!sport || !sport.monthlyStates) return null;
-    const ms = sport.monthlyStates.find(m=>m.month===month);
-    return ms ? Object.assign({ sport: sport.name }, ms) : null;
+
+  // How far up the ladder a phase sits, for deciding which sport is driving the
+  // training right now. Peak beats build beats ticking over.
+  const PHASE_RANK = { peak:4, build:3, maintain:2, recover:1, off:0 };
+
+  // The state a sport has EXPLICITLY been given for a month ('' when none).
+  // currentSportPhase() falls back to a guess from the A-priority, which is right
+  // for showing something but wrong for picking a lead — a sport with no plan at
+  // all would win on a guessed state.
+  // half 0 = 1st–15th, half 1 = 16th onwards. state2 exists so a month can hold
+  // two different goals; when it is set the month really is two segments, so
+  // anything walking the year has to ask for a half rather than infer one from
+  // today's date.
+  function plannedSportPhaseAt(sport, curMonth, half){
+    const ms = ((sport && sport.monthlyStates) || []).find(x => x.month===curMonth);
+    if(!ms || !ms.state) return '';
+    return (ms.state2 && half === 1) ? ms.state2 : ms.state;
+  }
+  function todayHalf(){ return new Date().getDate() >= 16 ? 1 : 0; }
+  function plannedSportPhase(sport, curMonth){ return plannedSportPhaseAt(sport, curMonth, todayHalf()); }
+
+  // A sport row carried over from the sign-up form ("XC, Track, Karate") rather
+  // than a real sport. Several athletes have one of these flagged as the priority
+  // sport, and the phase read used to follow exactly that row — so a three-sport
+  // athlete saw a phase off a nearly empty entry while the real per-sport plan
+  // sitting beside it was ignored.
+  function isCombinedSportEntry(s){ return /,/.test((s && s.name) || ''); }
+
+  // Sports whose plan we should actually read. Combined rows are dropped only
+  // when there is a real per-sport plan to use instead, so an athlete who only
+  // ever filled in the combined row still gets a read.
+  function plannedSports(){
+    const all = (state.yearMap && state.yearMap.sports) || [];
+    const real = all.filter(s => !isCombinedSportEntry(s) && ((s.monthlyStates||[]).some(m => m.state)));
+    return real.length ? real : all.filter(s => (s.monthlyStates||[]).length);
   }
 
-  // The single shared phase (priority sport, this month) used to tie Week/Year/Load together.
+  // Every sport with a plan this month, the one driving training first. Ties go
+  // to the sport flagged as the priority.
+  function rankedSportsAt(month, half){
+    return plannedSports()
+      .map(s => ({ sport: s, phase: plannedSportPhaseAt(s, month, half) }))
+      .filter(o => o.phase)
+      .sort((a, b) => ((PHASE_RANK[b.phase]||0) - (PHASE_RANK[a.phase]||0))
+                   || ((b.sport.isPriority?1:0) - (a.sport.isPriority?1:0)));
+  }
+  function rankedSportsFor(month){ return rankedSportsAt(month, todayHalf()); }
+
+  // The single shared phase (the sport leading this month) used to tie
+  // Week/Year/Load together. `others` carries the sports training underneath it.
   function currentPhaseInfo(){
     if(!state.yearMap || !state.yearMap.sports || !state.yearMap.sports.length) return null;
     const month = MONTHS[new Date().getMonth()];
-    const sport = state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
-    const phase = currentSportPhase(sport, month);
+    const ranked = rankedSportsFor(month);
+    let sport, phase;
+    if(ranked.length){
+      sport = ranked[0].sport; phase = ranked[0].phase;
+    } else {
+      // Nothing planned this month — keep the old read so the suggestion drawn
+      // from the A-priority still shows rather than the strip going blank. Pick
+      // from the real sports, or a combined row would creep back in here.
+      const pool = plannedSports();
+      sport = pool.find(s=>s.isPriority) || pool[0]
+            || state.yearMap.sports.find(s=>s.isPriority) || state.yearMap.sports[0];
+      phase = currentSportPhase(sport, month);
+    }
     if(!phase) return null;
-    const ms = (sport.monthlyStates||[]).find(m=>m.month===month) || {};
-    return { sport: sport.name, month: month, phase: phase, focus: ms.focus||'', loadTarget: ms.loadTarget||null };
+    const ms = ((sport.monthlyStates)||[]).find(m=>m.month===month) || {};
+    return { sport: sport.name, month: month, phase: phase, focus: ms.focus||'', loadTarget: ms.loadTarget||null,
+             others: ranked.slice(1).map(o => ({ name: o.sport.name, phase: o.phase })) };
+  }
+
+  // ---- Blocks: the athlete-facing chapters of the training year ------------
+  // The month grid stays exactly as it is — this is a reading layer over it.
+  // Three tiers, because that is what an athlete can actually tell apart:
+  //   competing (peak) · resting (recover/off) · training (build/maintain)
+  // A block runs while the LEAD SPORT and the TIER both hold. Cutting on every
+  // state change instead shatters a concurrent-sport year into one block per
+  // month, which is the month grid with extra words.
+  const PHASE_TIER = { peak:'compete', recover:'rest', off:'rest', build:'train', maintain:'train' };
+  const TIER_LABEL = { compete:'season', rest:'recovery', train:'build' };
+
+  // The academic year as ordered {month, year} pairs, starting each August.
+  function academicYear(){
+    const m = String((state.yearMap && state.yearMap.year) || '').match(/(\d{4})/);
+    const now = new Date();
+    const startYear = m ? +m[1] : (now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear()-1);
+    return ACADEMIC_MONTHS.map((month, i) => ({ month: month, year: startYear + (i < 5 ? 0 : 1) }));
+  }
+
+  // Within a run of training months, the block is named for the most ambitious
+  // thing in it — a run holding any build month is a build, not a maintain.
+  function dominantPhase(phases){
+    return phases.slice().sort((a,b) => (PHASE_RANK[b]||0)-(PHASE_RANK[a]||0))[0] || '';
+  }
+
+  // Every half-month of the academic year, with the sport leading it. A month
+  // is one segment unless state2 splits it, in which case it is two.
+  function yearSegments(){
+    const segs = [];
+    academicYear().forEach(function(cell){
+      const mi = MONTHS.indexOf(cell.month);
+      const split = plannedSports().some(function(s){
+        const ms = (s.monthlyStates||[]).find(x => x.month===cell.month);
+        return !!(ms && ms.state2);
+      });
+      [0, 1].forEach(function(half){
+        if(half === 1 && !split) return;
+        const ranked = rankedSportsAt(cell.month, half);
+        let sport, phase;
+        if(ranked.length){ sport = ranked[0].sport.name; phase = ranked[0].phase; }
+        else {
+          const pool = plannedSports();
+          const s = pool.find(x=>x.isPriority) || pool[0];
+          if(!s) return;
+          sport = s.name; phase = currentSportPhase(s, cell.month);
+        }
+        if(!phase) return;
+        segs.push({
+          month: cell.month, year: cell.year, half: half, sport: sport, phase: phase,
+          tier: PHASE_TIER[phase] || 'train',
+          from: fmtISO(new Date(cell.year, mi, split && half===1 ? 16 : 1)),
+          to:   fmtISO(split && half===0 ? new Date(cell.year, mi, 15) : new Date(cell.year, mi+1, 0))
+        });
+      });
+    });
+    return segs;
+  }
+
+  function yearBlocks(){
+    if(!state.yearMap || !(state.yearMap.sports||[]).length) return [];
+    const out = [];
+    yearSegments().forEach(function(sg){
+      const last = out[out.length-1];
+      if(last && last.sport===sg.sport && last.tier===sg.tier && addDays(last.to, 1) === sg.from){
+        last.segs.push(sg); last.phases.push(sg.phase); last.to = sg.to;
+      } else {
+        out.push({ sport:sg.sport, tier:sg.tier, phases:[sg.phase], segs:[sg], from:sg.from, to:sg.to });
+      }
+    });
+    out.forEach(function(b){
+      b.phase = dominantPhase(b.phases);
+      b.startISO = b.from; b.endISO = b.to;
+      b.weeks = Math.max(1, Math.round((parseISO(b.endISO) - parseISO(b.startISO)) / (7*86400000)));
+      b.months = b.segs.map(s=>s.month).filter((m,i,a)=>a.indexOf(m)===i);
+      b.label = b.sport + ' ' + (TIER_LABEL[b.tier] || 'build');
+    });
+    return out;
+  }
+
+  // The block today falls in, with how far through it we are.
+  function currentBlock(){
+    const today = fmtISO(new Date());
+    const blocks = yearBlocks();
+    const b = blocks.find(x => today >= x.startISO && today <= x.endISO) || null;
+    if(!b) return null;
+    const week = Math.min(b.weeks, Math.max(1, Math.round((parseISO(fmtISO(mondayOf(new Date()))) - parseISO(b.startISO)) / (7*86400000)) + 1));
+    return Object.assign({ week: week }, b);
+  }
+
+  // ---- What the current block says about each sport --------------------------
+  // The block never changes a session. It labels one, and the athlete decides.
+  //
+  // Only sports NAMED IN THE YEAR MAP are ever labelled. A session whose sport
+  // is "Strength", "Flexibility", "Bike" — or a sport the athlete never added to
+  // their year, like Ballet — is left completely alone. That keeps us from
+  // greying out somebody's running because it did not match a row in a grid.
+  // Only deviations get a chip on a session row. The lead sport is named once on
+  // the block card and again in the eyebrow — repeating "Main focus" on every one
+  // of its sessions is the noise that teaches people to stop reading labels.
+  const SPORT_LEVEL_CHIP = {
+    light: { cls:'light', text:'Ticking over' },
+    off:   { cls:'off',   text:'Not this block' }
+  };
+  function yearMapSportNames(){
+    return plannedSports().map(s => String(s.name||'').trim().toLowerCase()).filter(Boolean);
+  }
+  // 'lead' | 'full' | 'light' | 'off' | null (null = not ours to label)
+  function sportLevel(sportName){
+    const key = String(sportName||'').trim().toLowerCase();
+    if(!key || yearMapSportNames().indexOf(key) < 0) return null;
+    const b = currentBlock();
+    if(!b) return null;
+    const month = MONTHS[new Date().getMonth()];
+    const sp = plannedSports().find(s => String(s.name||'').trim().toLowerCase() === key);
+    const phase = sp ? plannedSportPhase(sp, month) : '';
+    if(String(b.sport||'').trim().toLowerCase() === key) return 'lead';
+    if(!phase) return 'off';
+    if(phase === 'peak') return 'lead';
+    if(phase === 'build') return 'full';
+    if(phase === 'maintain') return 'light';
+    return 'off';   // recover / off
+  }
+  function sportLevelChip(sportName){
+    const lv = sportLevel(sportName);
+    const c = lv && SPORT_LEVEL_CHIP[lv];
+    return c ? ' <span class="sport-level sport-level-'+c.cls+'">'+c.text+'</span>' : '';
+  }
+  // Skipping a session is not the same as labelling one. A label is cheap and
+  // reversible; not adding a session takes something out of someone's week. So
+  // auto-fill only stands down for a sport the athlete has EXPLICITLY marked
+  // recover or off this month. A month they simply never filled in means we do
+  // not know — and "we don't know" must never delete their Monday swim.
+  function sportExplicitlyResting(sportName){
+    const key = String(sportName||'').trim().toLowerCase();
+    if(!key) return false;
+    const sp = plannedSports().find(s => String(s.name||'').trim().toLowerCase() === key);
+    if(!sp) return false;
+    const phase = plannedSportPhase(sp, MONTHS[new Date().getMonth()]);
+    return phase === 'recover' || phase === 'off';
+  }
+
+  // Sports this block is resting, that the athlete's program still carries.
+  function sportsOffThisBlock(){
+    const inProgram = {};
+    (templateSessions()||[]).forEach(t => { if(t.sport) inProgram[t.sport] = true; });
+    ((state.library && activeProgram() && activeProgram().weeks) || []).forEach(w =>
+      (w||[]).forEach(t => { if(t.sport) inProgram[t.sport] = true; }));
+    return Object.keys(inProgram).filter(n => sportExplicitlyResting(n));
+  }
+
+  function monthRangeLabel(b){
+    const a = b.months[0].slice(0,3), z = b.months[b.months.length-1].slice(0,3);
+    return a===z ? a : a+'–'+z;
   }
 
   // Phase context woven into a tab's hero (eyebrow row): a coloured phase chip,
@@ -4811,9 +5050,10 @@
   function phaseEyebrowRow(){
     const info = currentPhaseInfo();
     if(!info) return '<p class="block-eyebrow">This week</p>';
+    const b = currentBlock();
     return '<div class="block-eyebrow-row">'+
-      '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+PHASE_FRIENDLY[info.phase]+'</span>'+
-      '<span class="block-phase-month">'+esc(info.month)+'</span>'+
+      '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+esc(b ? b.label : PHASE_FRIENDLY[info.phase])+'</span>'+
+      '<span class="block-phase-month">'+esc(b ? ('week '+b.week+' of '+b.weeks) : info.month)+'</span>'+
       '<button class="block-phase-link" onclick="switchTab(\'year\')">Your year →</button>'+
     '</div>';
   }
@@ -4826,12 +5066,17 @@
     if(activeTab!=='week' && activeTab!=='load'){ bar.innerHTML = ''; return; }
     const info = currentPhaseInfo();
     if(info){
-      // Quiet strip: state chip + focus only (matches the approved mock). The
-      // tab bar already handles navigation to Year.
+      // Quiet strip: state chip + where you are in the block. "week 3 of 8" is
+      // the bit that was missing — a month name never told anyone how far in
+      // they were, or that the block was nearly over.
+      const b = currentBlock();
+      const where = b ? ('week '+b.week+' of '+b.weeks)
+                      : (info.focus || info.month);
       bar.innerHTML =
         '<div class="context-strip">'+
-          '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+PHASE_FRIENDLY[info.phase]+'</span>'+
-          (info.focus? '<span class="context-strip-focus">'+esc(info.focus)+'</span>' : '<span class="context-strip-month">'+esc(info.month)+'</span>')+
+          '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+esc(b ? b.label : PHASE_FRIENDLY[info.phase])+'</span>'+
+          '<span class="context-strip-month">'+esc(where)+'</span>'+
+          (b && info.focus ? '<span class="context-strip-focus">'+esc(info.focus)+'</span>' : '')+
         '</div>';
     } else {
       bar.innerHTML =
@@ -5993,6 +6238,7 @@
 
     document.getElementById('weekStack').innerHTML =
       weekTodayCard(todays, today) +
+      weekBlockCard() +
       weekBuildCard() +
       weekThisWeekCard(ws, curMon, byDay, today) +
       weekLoadCard() +
@@ -6000,6 +6246,39 @@
 
     initSwipe();   // LAB: bind swipe-to-delete (delegated on #weekGrid)
     initWeekDrag();   // grip-drag a session onto another day
+  }
+
+  // What this block is, and what it means for each of the athlete's sports.
+  // The one place the year plan actually explains the week. Nothing here changes
+  // a session — it says what the plan expects, and the athlete decides.
+  function weekBlockCard(){
+    const b = currentBlock();
+    if(!b) return '';
+    const month = MONTHS[new Date().getMonth()];
+    const rows = plannedSports().map(function(sp){
+      const lv = sportLevel(sp.name);
+      if(!lv) return '';
+      const say = lv==='lead'  ? 'leading'
+                : lv==='full'  ? 'building'
+                : lv==='light' ? 'ticking over'
+                :                'not this block';
+      return '<div class="blk-sport"><span class="blk-sport-name">'+esc(sp.name)+'</span>'+
+             '<span class="blk-sport-lv blk-lv-'+lv+'">'+say+'</span></div>';
+    }).join('');
+    const off = sportsOffThisBlock();
+    const offNote = off.length
+      ? '<p class="blk-note">'+esc(off.join(' and '))+' session'+(off.length>1?'s aren’t':' isn’t')+
+        ' being added this block — add one any time.</p>'
+      : '';
+    const ms = ((plannedSports().find(s=>String(s.name||'').trim().toLowerCase()===String(b.sport||'').trim().toLowerCase())||{}).monthlyStates||[])
+                 .find(m=>m.month===month) || {};
+    const goal = ms.focus ? '<p class="blk-goal">'+esc(ms.focus)+'</p>' : '';
+    return '<div class="card blk-card">'+
+      '<div class="blk-head"><span class="blk-name">'+esc(b.label)+'</span>'+
+        '<span class="blk-when">week '+b.week+' of '+b.weeks+' · '+esc(monthRangeLabel(b))+'</span></div>'+
+      goal + (rows ? '<div class="blk-sports">'+rows+'</div>' : '') + offNote +
+      '<button class="blk-link" onclick="switchTab(\'year\')">See your year →</button>'+
+    '</div>';
   }
 
   // Prominent "Build my program" entry — top of My Program, opens the build hub
@@ -6542,7 +6821,7 @@
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+(isLogged(s)?' done':'')+'" aria-hidden="true">'+(isLogged(s)?'<i class="ti ti-check"></i>':'')+'</span>'+
-        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+doneFlag+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+doneFlag+(isLogged(s)?'':sportLevelChip(s.sport))+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
         '<span class="plan-grip" aria-label="Drag to move to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
       '</div>'+
@@ -9125,6 +9404,11 @@
     programSessionsForWeek(ws).forEach((t, idx) => {          // cycle-aware: rotate through the program's weeks
       const date = addDays(ws, t.dow);
       if(busy[date]) return;                              // day already has a session — leave it
+      // A sport the block is resting isn't auto-added — otherwise a cross-country
+      // athlete gets XC rows every week from December to May that they will never
+      // do, and stops reading the labels. The block card says this out loud, and
+      // adding one back is a tap. Nothing is deleted; this only skips creation.
+      if(sportExplicitlyResting(t.sport)) return;
       created.push(buildWeekSession(t, ws, stamp, idx));
     });
     markWeekAutoFilled(ws);
@@ -10422,31 +10706,58 @@
     return { build:'var(--gold)', maintain:'var(--sage)', peak:'var(--burgundy)', recover:'var(--cream)', off:'var(--line)' }[ms.state] || null;
   }
 
-  // ----- Legible, client-side load read (from acwr + weekly series only) -----
-  // No backend work: everything here is derived from state.load.summary.acwr and
-  // the state.load.weeks series the client already received.
+  // ----- Legible, client-side load read (from the weekly series only) -----
+  // Derived entirely from the state.load.weeks series the client already has, so
+  // it stays right regardless of what the summary block says.
+  //
+  // Two things this has to get right, and used to get wrong:
+  //  1. A week gets a row the moment ANY session lands in it — a fixture three
+  //     weeks out, a planned rest day. Those rows carry no load. Taking "the last
+  //     week with rows" as this week meant one future fixture reported the current
+  //     week as 0 au and called a hard week "easing off". This week is the week
+  //     that contains today, full stop.
+  //  2. A part-finished week is not a week. Comparing Wednesday's total against
+  //     finished weeks tells everyone they are slacking until Saturday. So the
+  //     comparison is made against how much of a usual week you'd have done BY NOW.
   function loadRead(){
-    const sum = (state.load && state.load.summary) || {};
     const series = (state.load && state.load.weeks) || [];
-    const logged = series.filter(w => w && w.load > 0);
-    const thisWeek = sum.thisWeekLoad || 0;
-    // "usual" = mean of the last ~4 logged weeks (the athlete's recent normal).
-    const recent = logged.slice(-4);
-    const usual = recent.length ? Math.round(recent.reduce((a,w)=>a+w.load,0)/recent.length) : 0;
-    const acwr = sum.acwr;
-    const weeksLogged = (sum.weeksLogged != null) ? sum.weeksLogged : logged.length;
+    const todayIso = fmtISO(new Date());
+    const curMon = fmtISO(mondayOf(new Date()));
+    // Past weeks that actually contain training — the athlete's recent normal.
+    const past = series.filter(w => w && w.weekStart < curMon && w.load > 0);
+    const cur = series.find(w => w && w.weekStart === curMon);
+    const thisWeek = (cur && cur.load) || 0;
 
-    // Need ~3 logged weeks before an acute:chronic read means anything.
-    if(weeksLogged < 3 || acwr == null){
-      return { enough:false, thisWeek, usual, weeksLogged, acwr:null, band:'building', tone:'building',
-               verdict:'Still building your baseline' };
+    // Day 1 = Monday, day 7 = Sunday. Sunday is a complete week.
+    const days = Math.min(7, Math.max(1, Math.round((parseISO(todayIso) - parseISO(curMon)) / 86400000) + 1));
+    const partial = days < 7;
+    const pace = partial ? Math.round(thisWeek * 7 / days) : thisWeek;
+
+    const recent = past.slice(-4);
+    const usual = recent.length ? Math.round(recent.reduce((a,w)=>a+w.load,0)/recent.length) : 0;
+    // What a usual week looks like by this point in it — the fair comparison.
+    const usualByNow = partial ? Math.round(usual * days / 7) : usual;
+    const weeksLogged = past.length + (thisWeek > 0 ? 1 : 0);
+    const base = { thisWeek, usual, usualByNow, pace, days, partial, weeksLogged };
+
+    // Need ~3 finished weeks behind you before a comparison means anything.
+    if(past.length < 3 || !usual){
+      return Object.assign(base, { enough:false, acwr:null, band:'building', tone:'building',
+               verdict:'Still building your baseline' });
     }
+    // Monday and Tuesday are too thin to project a week from — one session either
+    // way swings it from "easing off" to "ramping fast". Say nothing instead.
+    if(days <= 2){
+      return Object.assign(base, { enough:true, early:true, acwr:null, band:'healthy', tone:'steady',
+               verdict:'Early in the week' });
+    }
+    const acwr = pace / usual;
     let verdict, band, tone;
     if(acwr < 0.8){ verdict = 'Easing off'; band = 'healthy'; tone = 'easing'; }
     else if(acwr <= 1.3){ verdict = 'Building steadily'; band = 'healthy'; tone = 'steady'; }
     else if(acwr <= 1.5){ verdict = 'Pushing up'; band = 'healthy'; tone = 'push'; }
     else { verdict = 'Ramping fast — watch recovery'; band = 'ramp'; tone = 'ramp'; }
-    return { enough:true, thisWeek, usual, weeksLogged, acwr, verdict, band, tone };
+    return Object.assign(base, { enough:true, acwr, verdict, band, tone });
   }
 
   function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
@@ -10454,14 +10765,21 @@
   // A short, state-aware sentence: how this week compares to usual, tied to the
   // athlete's current training state (from the year map).
   function loadSentence(read, phase){
-    const thisWeek = read.thisWeek, usual = read.usual;
+    const usual = read.usual;
+    // Mid-week, judge the pace, not the running total — and say so, so nobody
+    // reads "down on your recent weeks" on a Wednesday as a verdict on the week.
+    const val = read.partial ? read.pace : read.thisWeek;
     let dir, rel;
+    if(read.early){
+      return 'Only ' + read.days + ' day' + (read.days===1?'':'s') +
+             ' in — your read shows once the week has more in it.';
+    }
     if(!usual){ dir='same'; rel='about the same as your recent weeks'; }
-    else if(thisWeek >= usual*1.35){ dir='above'; rel='well above your recent weeks'; }
-    else if(thisWeek >= usual*1.1){ dir='above'; rel='a little above your recent weeks'; }
-    else if(thisWeek <= usual*0.65){ dir='below'; rel='well below your recent weeks'; }
-    else if(thisWeek <= usual*0.9){ dir='below'; rel='a little below your recent weeks'; }
-    else { dir='same'; rel='about the same as your recent weeks'; }
+    else if(val >= usual*1.35){ dir='above'; rel = read.partial ? 'on pace for a big week' : 'well above your recent weeks'; }
+    else if(val >= usual*1.1){  dir='above'; rel = read.partial ? 'on pace to be up on your recent weeks' : 'a little above your recent weeks'; }
+    else if(val <= usual*0.65){ dir='below'; rel = read.partial ? 'well down on your recent weeks so far' : 'well below your recent weeks'; }
+    else if(val <= usual*0.9){  dir='below'; rel = read.partial ? 'a little down on your recent weeks so far' : 'a little below your recent weeks'; }
+    else { dir='same'; rel = read.partial ? 'on pace for a normal week' : 'about the same as your recent weeks'; }
     // A gentle, data-informed coaching tail keyed to the load tone / direction.
     let tail = '';
     if(read.tone==='ramp') tail = ' Watch your recovery this week.';
@@ -10482,18 +10800,24 @@
         '<p class="load-sentence">Log about three weeks and your load read shows here.</p>'+
         '<p class="load-detail">'+read.weeksLogged+' week'+(read.weeksLogged===1?'':'s')+' logged so far</p>';
     }
-    const scaleMax = Math.max(read.thisWeek, read.usual, 1) * 1.4;
+    // Mid-week the marker is "how much of a usual week you'd have done by now",
+    // so the bar and the marker are measuring the same span of days. On Sunday
+    // the two are the same thing and it reads as a straight week-vs-week compare.
+    const mark = read.partial ? read.usualByNow : read.usual;
+    const scaleMax = Math.max(read.thisWeek, mark, 1) * 1.4;
     const fillPct = Math.min(100, read.thisWeek/scaleMax*100);
-    const markPct = Math.min(100, read.usual/scaleMax*100);
+    const markPct = Math.min(100, mark/scaleMax*100);
+    const markLabel = read.partial ? 'usual by now' : 'usual';
     const cls = read.band==='ramp' ? 'ramp' : 'healthy';
-    const tag = read.tone==='ramp'   ? '<span class="load-tag warn">ease up</span>'
+    const tag = read.early          ? ''
+              : read.tone==='ramp'   ? '<span class="load-tag warn">ease up</span>'
               : read.tone==='easing' ? '<span class="load-tag ok">recovering</span>'
               :                        '<span class="load-tag ok">on track</span>';
     return '<div class="load-verdict-row"><span class="load-verdict '+cls+'">'+esc(read.verdict)+'</span>'+tag+'</div>'+
       '<div class="load-usual">'+
         '<div class="load-usual-track">'+
           '<div class="load-usual-fill '+cls+'" style="width:'+fillPct.toFixed(1)+'%"></div>'+
-          '<div class="load-usual-marker" style="left:'+markPct.toFixed(1)+'%" title="your usual week"><span class="load-usual-tick-label">usual</span></div>'+
+          '<div class="load-usual-marker" style="left:'+markPct.toFixed(1)+'%" title="'+markLabel+'"><span class="load-usual-tick-label">'+markLabel+'</span></div>'+
         '</div>'+
       '</div>'+
       '<p class="load-sentence">'+esc(loadSentence(read, phase))+'</p>';
@@ -10504,8 +10828,11 @@
     const read = loadRead();
     const phase = (currentPhaseInfo()||{}).phase || '';
     // Coach-view detail: the raw numbers, kept for the teacher, out of the student's way.
+    const dayBit = read.partial ? ' (day '+read.days+' of 7, on pace ~'+read.pace+' au)' : '';
     const coachDetail = read.enough
-      ? ('This week ~'+read.thisWeek+' au · usual ~'+read.usual+' au · ACWR '+(read.acwr!=null?read.acwr.toFixed(2):'—'))
+      ? ('This week ~'+read.thisWeek+' au'+dayBit+' · usual ~'+read.usual+' au'+
+         (read.partial ? ' (~'+read.usualByNow+' au by now)' : '')+
+         ' · ACWR '+(read.acwr!=null?read.acwr.toFixed(2):'—'))
       : ((read.thisWeek||0)+' au this week · '+read.weeksLogged+' week'+(read.weeksLogged===1?'':'s')+' logged');
     view.innerHTML =
       '<div class="card-stack">'+
