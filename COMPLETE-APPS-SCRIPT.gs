@@ -3669,7 +3669,16 @@ function apLoadStrengthLevels(ss, athleteId) {
       var pat = CV_PATTERNS[p];
       var tech = latest ? (parseInt(latest[pat + '_Tech'], 10) || 0) : 0;
       var load = 0;
-      if (latest && tech >= 2 && tech <= 5) load = parseInt(latest[pat + '_Str_L' + tech], 10) || 0;
+      if (latest && tech >= 2 && tech <= 5) {
+        load = parseInt(latest[pat + '_Str_L' + tech], 10) || 0;
+        // TEMPORARY FALLBACK (see CLAUDE.md) — the live Strength sheet still
+        // carries only the flat legacy {Pattern}_Str column; the _Str_L2..L5
+        // columns do not exist on it yet. Without this the level-specific read
+        // finds nothing and EVERY athlete's load level shows as 0 on the CV,
+        // even where the sheet has a value. Remove alongside the other _Str
+        // fallbacks once the data is migrated.
+        if (!load) load = parseInt(latest[pat + '_Str'], 10) || 0;
+      }
       out.push({ pattern: pat, tech: tech, load: load, done: tech > 0 });
     }
   } catch (e) { /* no strength assessment yet */ }
