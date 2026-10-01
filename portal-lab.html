@@ -3896,6 +3896,56 @@
     margin: 10px 0 0; line-height: 1.5; }
   .blk-link { margin-top: 10px; background: none; border: none; padding: 0; cursor: pointer;
     font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--burgundy, #874B46); }
+  /* Your season — the year as blocks, current one marked. */
+  .sb-intro { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 13.5px;
+    color: var(--ink-soft, #4a3f39); margin: 0 0 12px; line-height: 1.5; }
+  .sb-list { display: flex; flex-direction: column; }
+  .sb-row { display: flex; gap: 14px; padding: 11px 0; border-top: 1px solid var(--line, #eee3dd); }
+  .sb-row:first-child { border-top: none; }
+  .sb-row.is-now { background: var(--cream, #fdf6f2); margin: 0 -18px; padding: 13px 18px;
+    border-radius: 10px; border-top-color: transparent; }
+  .sb-when { flex: 0 0 72px; display: flex; flex-direction: column; gap: 2px; }
+  .sb-months { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.03em; text-transform: uppercase; color: var(--burgundy, #874B46); }
+  .sb-weeks { font-family: 'Inter', sans-serif; font-size: 10.5px; color: var(--ink-mute, #7a6a60); }
+  .sb-body { min-width: 0; flex: 1; }
+  .sb-name { font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 600;
+    color: var(--ink, #1a1a1a); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .sb-now { font-family: 'Inter', sans-serif; font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase; background: var(--gold-light, #f5e6b3); color: #6a3a36;
+    border-radius: 999px; padding: 2px 8px; }
+  .sb-prog { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px;
+    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60); }
+  .sb-long { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-mute, #7a6a60);
+    margin: 5px 0 0; line-height: 1.45; font-style: italic; }
+  .sb-build { margin-top: 7px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12.5px;
+    font-weight: 700; color: var(--burgundy, #874B46); background: #fff;
+    border: 1.5px solid var(--line, #eee3dd); border-radius: 999px; padding: 7px 14px; }
+  /* Week grid, before there is a week to show. */
+  .week-blank { padding: 26px 18px 22px; text-align: center; }
+  .week-blank-line { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 14.5px;
+    color: var(--ink-mute, #7a6a60); margin: 0 0 14px; line-height: 1.5; }
+  .week-blank-btn { display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; color: var(--burgundy, #874B46);
+    background: var(--cream, #fdf6f2); border: 1.5px solid var(--line, #eee3dd);
+    border-radius: 999px; padding: 10px 18px; }
+  /* One-tap logging — three buttons, one press, session logged. */
+  .qtap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 12px 0 2px; }
+  .qtap-lead { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+    color: var(--ink-mute, #7a6a60); margin-right: 2px; }
+  .qtap-btn {
+    flex: 1 1 auto; min-width: 74px; min-height: 40px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+    border-radius: 999px; padding: 9px 14px; border: 1.5px solid transparent;
+    transition: transform 0.08s ease, filter 0.15s ease; }
+  .qtap-btn:active { transform: scale(0.96); }
+  .qtap-easy { background: #e7efe4; color: #3f5d3c; border-color: #cfe0ca; }
+  .qtap-ok   { background: #fbf0d6; color: #6a5420; border-color: #f0e0b8; }
+  .qtap-hard { background: #f6e0dc; color: #7c3b33; border-color: #ecc9c2; }
+  /* Inline on a day row: quieter, smaller, never wider than the row. */
+  .qtap-compact { margin: 8px 0 2px; gap: 5px; }
+  .qtap-compact .qtap-lead { font-size: 11px; }
+  .qtap-compact .qtap-btn { flex: 0 1 auto; min-width: 0; min-height: 32px; font-size: 11.5px; padding: 6px 11px; }
   .plan-info { min-width: 0; }
   .plan-name {
     font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink);
@@ -4081,7 +4131,7 @@
   .slot-booked-note { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line);
     font-family: 'Inter', sans-serif; font-size: 12px; color: var(--burgundy); line-height: 1.5; }
   .slot-booked-note strong { font-weight: 700; }
-  .slot-card.locked { opacity: 0.72; }
+  .slot-card.locked, .slot-card.ineligible { opacity: 0.72; }
   .slot-status.locked-label { color: var(--ink-mute); }
   .slot-locked-note { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line);
     font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); line-height: 1.5; }
@@ -4543,7 +4593,8 @@
     state.learn = demo.learn || { blocks: {} };
     state.availability = [];
     state.grit = { score: 78, band: 'Consistent', enough: true,
-      parts: { adherence:{pct:80,sessions:19,weeks:8,weeksFull:5,target:3}, checkins:{pct:100,attended:2,processed:2,unmarked:0} } };
+      parts: { adherence:{pct:80,sessions:19,weeks:8,weeksFull:5,target:3},
+               checkins:{pct:100,made:2,missed:0,counted:2,unknown:0,attended:2,processed:2,unmarked:0} } };
     // Demo CV data: some tested, some not, so the blurred locks are visible.
     state.testing = [
       { key:'broad_jump', label:'Broad jump', unit:'cm', done:true, value:212, date:'2026-09-02', tests:2, first:198, delta:{ raw:14, improved:true } },
@@ -6236,13 +6287,19 @@
     Object.keys(byDay).forEach(k => byDay[k].sort((a,b) => { const ta=timeSortKey(a), tb=timeSortKey(b); return ta<tb?-1:ta>tb?1:0; }));
     const todays = byDay[today] || [];
 
-    document.getElementById('weekStack').innerHTML =
-      weekTodayCard(todays, today) +
-      weekBlockCard() +
-      weekBuildCard() +
-      weekThisWeekCard(ws, curMon, byDay, today) +
-      weekLoadCard() +
-      weekMixCard();
+    // Day one: one card, one action. The week grid, the build button and the
+    // load read all need something to work with, and showing them empty reads
+    // as a broken portal rather than a new one.
+    const fresh = !startedAnything();
+    document.getElementById('weekStack').innerHTML = fresh
+      ? ( weekStartCard() + weekThisWeekCard(ws, curMon, byDay, today) )
+      : ( weekTodayCard(todays, today) +
+          weekBlockCard() +
+          weekBuildCard() +
+          weekThisWeekCard(ws, curMon, byDay, today) +
+          // No point telling someone with nothing logged that their load read
+          // needs three weeks of data.
+          (loggedDaySet().length ? weekLoadCard() + weekMixCard() : '') );
 
     initSwipe();   // LAB: bind swipe-to-delete (delegated on #weekGrid)
     initWeekDrag();   // grip-drag a session onto another day
@@ -6616,6 +6673,87 @@
   window.closeBadgeCelebration = closeBadgeCelebration;
 
   // (a) TODAY hero — date, big session name, primary CTA, slim progress line (no load number).
+  // ---- One-tap logging ------------------------------------------------------
+  // Logging used to mean opening a sheet and filling in duration and effort.
+  // Measured across the roster, half the athletes who built a program never
+  // logged a single session — and everything downstream (load, grit, streaks,
+  // badges, the CV) is dark until they do. So the cheapest possible version:
+  // three buttons, one tap, done. Duration comes from the plan, effort from
+  // which button they press. The full sheet is still there for anyone who wants
+  // to add detail, and editing afterwards works exactly as before.
+  const QUICK_EFFORT = [
+    { key:'easy', label:'Easy',     rpe:4 },
+    { key:'ok',   label:'Moderate', rpe:6 },
+    { key:'hard', label:'Hard',     rpe:8 }
+  ];
+  function quickLogRowHTML(s, compact){
+    if(!s || isLogged(s)) return '';
+    return '<div class="qtap'+(compact?' qtap-compact':'')+'">'+
+      '<span class="qtap-lead">Did it —</span>'+
+      QUICK_EFFORT.map(e =>
+        '<button class="qtap-btn qtap-'+e.key+'" onclick="event.stopPropagation(); quickLogDone(\''+s.id+'\','+e.rpe+')">'+e.label+'</button>'
+      ).join('')+
+    '</div>';
+  }
+  // A tap is a complete log: planned duration, the effort they chose, done.
+  let quickLogBusy = false;
+  async function quickLogDone(id, rpe){
+    if(quickLogBusy) return;
+    const s = (state.week.sessions||[]).find(x => String(x.id) === String(id));
+    if(!s || isLogged(s)) return;
+    quickLogBusy = true;
+    // Fall back to 45 min only when there is no planned duration at all —
+    // a logged session with no duration would carry no load, which is the
+    // thing this is trying to fix.
+    const duration = s.duration || s.plannedDuration || 45;
+    const before = { rpe:s.rpe, duration:s.duration, load:s.load, status:s.status };
+    s.rpe = rpe; s.duration = duration; s.load = rpe * duration; s.status = 'done';
+    renderWeek(); renderBlockBar();
+    try {
+      const res = await apiData({ action:'saveSession', session: s });
+      if(!res || !res.success) throw new Error((res && res.error) || 'save failed');
+      if(res.id) s.id = res.id;
+      showToast('Logged · '+duration+' min · '+rpe+'/10', 'success');
+      if(!maybeCelebrateStreak()) maybeCelebrateBadges();
+    } catch(e){
+      Object.assign(s, before);
+      renderWeek(); renderBlockBar();
+      showToast('Couldn’t save that — try again.', 'error');
+    } finally { quickLogBusy = false; }
+  }
+  window.quickLogDone = quickLogDone;
+
+  // ---- First run -------------------------------------------------------------
+  // An athlete with nothing used to be told "A rest day · nothing planned —
+  // recovery counts too", under seven empty rows and above a load card asking
+  // them to come back in three weeks. None of that is true on day one and none
+  // of it says what to do. Nine athletes on the roster are in exactly this state.
+  // One card, one obvious action, and the honest reason for doing it.
+  function startedAnything(){
+    return !!(programHasAnySessions() || loggedDaySet().length || (state.week.sessions||[]).length);
+  }
+  function weekStartCard(){
+    const hasProgram = programHasAnySessions();
+    const everLogged = loggedDaySet().length > 0;
+    let title, body, cta;
+    if(!hasProgram && !everLogged){
+      title = 'Let’s get you started.';
+      body  = 'Build your week once and it repeats itself. Takes about two minutes, and you can change it any time.';
+      cta   = '<button class="card-cta card-cta-gold" onclick="openMoreActions()"><i class="ti ti-tools" aria-hidden="true"></i> Build my program</button>'+
+              '<button class="card-cta card-cta-ghost" onclick="newSession(\''+isoToday()+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Or log a session you’ve done</button>';
+    } else {
+      title = 'Your program is ready.';
+      body  = 'Log one session and the rest switches on — your load, your streak, your badges and your CV all build from what you record.';
+      cta   = '<button class="card-cta card-cta-gold" onclick="newSession(\''+isoToday()+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Log today’s session</button>';
+    }
+    return '<div class="card card-hero">'+
+      '<p class="card-hero-eyebrow">Welcome</p>'+
+      '<h2 class="card-hero-title">'+title+'</h2>'+
+      '<p class="card-hero-sub">'+body+'</p>'+
+      '<div class="week-today-cta">'+cta+'</div>'+
+    '</div>';
+  }
+
   function weekTodayCard(todays, today){
     const eyebrow = dowShort(today)+' '+dayNum(today)+' '+monShort(today)+' · Today';
     const done = state.week.sessions.filter(isLogged).length;
@@ -6633,12 +6771,16 @@
       const noun = s.type==='game' ? 'game' : (s.type==='practice' ? 'practice' : 'session');
       subHTML = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+extra;
       const hasWorkout = (s.type==='training' || !s.type) && (s.workout||[]).length;
-      if(hasWorkout){
-        // A real workout today → lead with Start workout; keep a quiet "just log it".
+      if(isLogged(s)){
+        cta = (hasWorkout ? '<button class="card-cta card-cta-ghost" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> Open workout</button>' : '')+
+              '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Edit today’s '+noun+'</button>';
+      } else if(hasWorkout){
+        // A real workout today → lead with Start workout, with the one-tap log
+        // underneath for the days they trained but won't walk through it.
         cta = '<button class="card-cta card-cta-gold" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> Start workout</button>'+
-              '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?'Edit log':'Just log it')+'</button>';
+              '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Add detail</button>';
       } else {
-        cta = '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?('Edit today’s '+noun):('Log today’s '+noun))+'</button>';
+        cta = '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Add detail</button>';
       }
     } else {
       titleHTML = 'A <em>rest</em> day.';
@@ -6649,6 +6791,7 @@
       '<div class="hero-eyebrow-row"><p class="card-hero-eyebrow">'+eyebrow+'</p>'+streakChipHTML()+'</div>'+
       '<h2 class="card-hero-title">'+titleHTML+'</h2>'+
       '<p class="card-hero-sub">'+subHTML+'</p>'+
+      (todays.length ? quickLogRowHTML(todays[0]) : '')+
       '<div class="week-today-cta">'+cta+'</div>'+
       '<p class="week-progress"><span class="week-progress-track"><span style="width:'+pct+'%"></span></span>'+esc(progress)+'</p>'+
       heroRankHTML()+
@@ -6660,16 +6803,27 @@
     // Default an "Add session" to today when it's in view, else the week's Monday.
     const addDay = (today >= ws && today <= addDays(ws,6)) ? today : ws;
     let rows = '';
-    for(let i=0;i<7;i++){
-      const iso = addDays(ws, i);
-      const isToday = iso===today;
-      const ds = byDay[iso] || [];
-      const dayLabel = '<span class="plan-dow">'+dowShort(iso)+'</span><span class="plan-date">'+dayNum(iso)+'</span>'+
-        (isToday? '<span class="plan-today-tag">today</span>' : '');
-      if(ds.length){
-        ds.forEach((s, idx) => { rows += planRow(s, idx===0 ? dayLabel : '', iso, isToday); });
-      } else {
-        rows += planRestRow(dayLabel, iso, isToday, iso<today);
+    // A week with nothing in it, for someone who has never had anything, is
+    // seven identical "Nothing logged" rows — a wall of absence where the
+    // content should be. One line and a way in reads better and says more.
+    const blankStart = !(state.week.sessions||[]).length && !programHasAnySessions() && !loggedDaySet().length;
+    if(blankStart){
+      rows = '<div class="week-blank">'+
+        '<p class="week-blank-line">Nothing here yet — this is where your week will live.</p>'+
+        '<button class="week-blank-btn" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add a session</button>'+
+      '</div>';
+    } else {
+      for(let i=0;i<7;i++){
+        const iso = addDays(ws, i);
+        const isToday = iso===today;
+        const ds = byDay[iso] || [];
+        const dayLabel = '<span class="plan-dow">'+dowShort(iso)+'</span><span class="plan-date">'+dayNum(iso)+'</span>'+
+          (isToday? '<span class="plan-today-tag">today</span>' : '');
+        if(ds.length){
+          ds.forEach((s, idx) => { rows += planRow(s, idx===0 ? dayLabel : '', iso, isToday); });
+        } else {
+          rows += planRestRow(dayLabel, iso, isToday, iso<today);
+        }
       }
     }
     // Empty week + a set-up program → offer a one-tap fill.
@@ -6692,11 +6846,15 @@
       fillPrompt+
       '<div class="plan-list" id="weekGrid">'+rows+'</div>'+
       ((state.week.sessions||[]).length ? '<button class="week-saveorder" onclick="saveWeekAsProgram()"><i class="ti ti-device-floppy" aria-hidden="true"></i> Save this order to my program</button>' : '')+
-      '<div class="week-actions">'+
-        '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
-        '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add game</button>'+
-      '</div>'+
-      outWeekHTML(ws)+
+      // On a first run the blank-week panel already offers "Add a session";
+      // repeating it here alongside "Add game" and an injury flag is three more
+      // decisions for someone who has not made the first one yet.
+      (blankStart ? '' :
+        '<div class="week-actions">'+
+          '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add session</button>'+
+          '<button class="card-cta card-cta-ghost" style="flex:1;" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add game</button>'+
+        '</div>'+
+        outWeekHTML(ws))+
     '</div>';
   }
 
@@ -6821,7 +6979,11 @@
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+(isLogged(s)?' done':'')+'" aria-hidden="true">'+(isLogged(s)?'<i class="ti ti-check"></i>':'')+'</span>'+
-        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+doneFlag+(isLogged(s)?'':sportLevelChip(s.sport))+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+doneFlag+(isLogged(s)?'':sportLevelChip(s.sport))+'</div><div class="plan-detail">'+meta+'</div>'+
+          // Past and present days get the one-tap log inline; a future session
+          // has nothing to report yet.
+          ((!isLogged(s) && s.status!=='missed' && iso <= isoToday()) ? quickLogRowHTML(s, true) : '')+
+          (dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
         '<span class="plan-grip" aria-label="Drag to move to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
       '</div>'+
@@ -10131,6 +10293,43 @@
     '</div>';
   }
 
+  // ---- Your season: the year read back as blocks, with the program on each ----
+  // Eight athletes on the roster set a year map and never built a program. The
+  // Year tab ended with a filled-in grid and no next step. This turns the grid
+  // into the chapters it implies, marks the one you're in, and puts the way into
+  // a program on the block that needs it.
+  function seasonBlocksCard(){
+    const blocks = yearBlocks();
+    if(!blocks.length) return '';
+    const cur = currentBlock();
+    const hasProgram = programHasAnySessions();
+    const progName = (state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || 'My program';
+    const rows = blocks.map(function(b){
+      const isNow = !!(cur && cur.startISO === b.startISO && cur.sport === b.sport);
+      const weeks = b.weeks + ' week' + (b.weeks===1?'':'s');
+      const prog = !isNow ? ''
+        : (hasProgram
+            ? '<span class="sb-prog"><i class="ti ti-repeat" aria-hidden="true"></i> '+esc(progName)+'</span>'
+            : '<button class="sb-build" onclick="switchTab(\'week\'); openMoreActions();">Build a program for this block →</button>');
+      // A block only gets this long when months were left on one setting. Nobody
+      // trains the same way for half a year, so say so where it can be fixed.
+      const longRun = b.weeks > 16
+        ? '<p class="sb-long">That’s a long stretch on one setting. Splitting it gives each part a job.</p>'
+        : '';
+      return '<div class="sb-row'+(isNow?' is-now':'')+'">'+
+        '<div class="sb-when"><span class="sb-months">'+esc(monthRangeLabel(b))+'</span>'+
+          '<span class="sb-weeks">'+weeks+'</span></div>'+
+        '<div class="sb-body"><div class="sb-name">'+esc(b.label)+
+          (isNow?'<span class="sb-now">now · week '+cur.week+'</span>':'')+'</div>'+ prog + longRun +'</div>'+
+      '</div>';
+    }).join('');
+    return '<div class="card">'+
+      '<p class="card-eyebrow">Your season</p>'+
+      '<p class="sb-intro">Your year, in the blocks your plan adds up to. Each one has a job.</p>'+
+      '<div class="sb-list">'+rows+'</div>'+
+    '</div>';
+  }
+
   function renderYear(){
     const view = document.getElementById('view-year');
     if(!hasYear()){ view.innerHTML = onboardHTML(); return; }
@@ -10142,6 +10341,7 @@
     const gridMode = (multi || yearForceGrid) && yearFocus === null;
     let html = '<div class="card-stack">';
     html += yearHeroHTML(ym, ap);
+    html += seasonBlocksCard();
 
     if(gridMode){
       html += overviewGridHTML(ym, curMonth, ap);
@@ -11410,6 +11610,16 @@
   }
   // Per-check-in framing shown above each group's slots.
   function checkinMeta(seq){
+    if(String(seq)==='4') return {
+      blurb: 'A strength masterclass on the six foundation movements — squat, hinge, push, pull, lunge and press. Get them checked, get them stamped, and leave knowing exactly what to load next. <strong>Pick one time</strong> that suits you.',
+      duration: 'About an hour',
+      who: 'Small group — your times depend on the movements you’ve already passed'
+    };
+    if(String(seq)==='3') return {
+      blurb: 'The whole group! Some fun, some training, some learning.',
+      duration: 'An hour, 07:15 to 08:15',
+      who: 'Everyone. Bring kit and your phone'
+    };
     if(String(seq)==='2') return {
       blurb: 'A quick one to one with Mr Bain, just you. We’ll look at your personal program: what you need, and how to move forward with your plans and goals.',
       duration: 'About 15 minutes',
@@ -11454,6 +11664,7 @@
     let foot;
     if(s.status==='booked') foot = '<span class="slot-status booked-label"><i class="ti ti-check" aria-hidden="true"></i> Booked</span>';
     else if(s.status==='full') foot = '<span class="slot-status full-label">Full</span>';
+    else if(s.status==='ineligible') foot = '<span class="slot-status locked-label">Other group</span>';
     else if(s.status==='locked') foot = '<span class="slot-status locked-label">Unavailable</span>';
     else foot = '<button class="book-btn" onclick="event.stopPropagation(); bookSlot('+i+')">Book</button>';
     let sub = '';
@@ -11461,6 +11672,8 @@
       sub = '<div class="slot-booked-note"><i class="ti ti-check" aria-hidden="true"></i> <strong>Booked</strong> · Mr Bain · '+esc(s.location||'PE Office')+'. It’s on your Google Calendar — accept the email invite. <strong>Tap here to cancel</strong> — removing it from your own calendar won’t cancel it.</div>';
     } else if(s.status==='locked' && s.lockedDate){
       sub = '<div class="slot-locked-note">You’re booked for this check-in on <strong>'+esc(dowShort(s.lockedDate)+' '+dayNum(s.lockedDate)+' '+monShort(s.lockedDate))+'</strong>. Cancel that to switch time.</div>';
+    } else if(s.status==='ineligible'){
+      sub = '<div class="slot-locked-note">'+esc(s.blockedReason||'This group isn’t the one for you — book one of the others.')+'</div>';
     } else if(s.status==='available' && spots!=null){
       sub = '<div class="slot-spots-row"><span class="slot-spots">'+spots+' of '+s.capacity+' spots left</span></div>';
     }

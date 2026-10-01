@@ -932,6 +932,28 @@
             background: var(--accent-blue);
             color: white;
         }
+        /* Needs attention */
+        .attn-intro { color: var(--text-muted); font-size: 0.86rem; line-height: 1.55;
+            max-width: 62ch; margin: 4px 0 18px; }
+        .attn-group { margin-bottom: 22px; border-left: 3px solid var(--border-light);
+            padding-left: 14px; }
+        .attn-group h3 { display: flex; align-items: center; gap: 9px; margin: 0 0 2px;
+            font-size: 0.98rem; color: var(--text-primary); }
+        .attn-count { font-size: 0.72rem; font-weight: 700; background: var(--bg-card);
+            border: 1px solid var(--border-light); border-radius: 999px; padding: 1px 8px;
+            color: var(--text-muted); }
+        .attn-note { color: var(--text-muted); font-size: 0.78rem; margin: 0 0 10px; }
+        .attn-care   { border-left-color: #d08770; }
+        .attn-engage { border-left-color: #c0a24a; }
+        .attn-plan   { border-left-color: #8aa0b5; }
+        .attn-row { display: flex; gap: 12px; align-items: baseline; padding: 7px 0;
+            border-top: 1px solid var(--border-light); flex-wrap: wrap; }
+        .attn-row:first-of-type { border-top: none; }
+        .attn-who { flex: 0 0 150px; font-weight: 600; font-size: 0.88rem; color: var(--text-primary); }
+        .attn-flags { display: flex; flex-direction: column; gap: 3px; }
+        .attn-flag { font-size: 0.82rem; color: var(--text-muted); line-height: 1.45; }
+        .attn-empty, .attn-stamp { color: var(--text-muted); font-size: 0.8rem; }
+        .attn-stamp { margin-top: 16px; }
         .view-panel { display: none; }
         .view-panel.active { display: block; }
 
@@ -1118,6 +1140,17 @@
         <div class="view-tabs">
             <button class="view-tab active" onclick="switchView('stamps')" id="tabStamps">🎫 Stamps</button>
             <button class="view-tab" onclick="switchView('strength')" id="tabStrength">🏋️ Levels</button>
+            <button class="view-tab" onclick="switchView('attention')" id="tabAttention">👀 Attention</button>
+        </div>
+
+        <!-- Needs attention — what the data already knows but never says. -->
+        <div class="view-panel" id="panelAttention">
+            <p class="attn-intro">
+                Read from what's already logged. Nothing here is shown to students —
+                a portal telling a teenager it thinks they're overtraining is a
+                conversation that needs you, not a notification.
+            </p>
+            <div id="attnBody" class="attn-body">Loading…</div>
         </div>
 
         <!-- Strength Panel (existing) -->
@@ -2228,6 +2261,58 @@
             document.getElementById('panel' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
 
             if (view === 'stamps') renderStamps();
+            if (view === 'attention') loadAttention();
+        }
+
+        // ---- Needs attention ------------------------------------------------
+        // Three groups, most urgent first: welfare, then people who've gone
+        // quiet, then plans with nothing behind them.
+        const ATTN_GROUPS = [
+            { level: 'care',   title: 'Worth a look',   note: 'Training patterns worth a conversation — not a diagnosis.' },
+            { level: 'engage', title: 'Gone quiet',     note: 'Nothing logged recently, or nothing ever.' },
+            { level: 'plan',   title: 'Plan is thin',   note: 'A goal set with little behind it.' }
+        ];
+        let attnLoaded = false;
+        async function loadAttention(force) {
+            if (attnLoaded && !force) return;
+            const host = document.getElementById('attnBody');
+            host.innerHTML = 'Loading…';
+            try {
+                const r = await fetch(`${APPS_SCRIPT_URL}?action=getAttention&token=${encodeURIComponent(adminToken())}&_t=${Date.now()}`);
+                const d = await r.json();
+                if (d && d.authRequired) { showAuthError(d.error || 'Sign in again'); host.innerHTML = ''; return; }
+                if (!d || !d.success) throw new Error((d && d.error) || 'failed');
+                renderAttention(d);
+                attnLoaded = true;
+            } catch (e) {
+                host.innerHTML = '<p class="attn-empty">Couldn\'t load that — try again.</p>';
+            }
+        }
+        function attnName(id) {
+            const s = (allStudents || []).find(x => String(x.Athlete_ID).trim() === String(id).trim());
+            return s ? (s.Name || ('Athlete ' + id)) : ('Athlete ' + id);
+        }
+        function renderAttention(d) {
+            const host = document.getElementById('attnBody');
+            const rows = d.athletes || [];
+            if (!rows.length) { host.innerHTML = '<p class="attn-empty">Nothing flagged. Everyone\'s ticking along.</p>'; return; }
+            let html = '';
+            ATTN_GROUPS.forEach(g => {
+                const hits = [];
+                rows.forEach(a => {
+                    const f = (a.flags || []).filter(x => x.level === g.level);
+                    if (f.length) hits.push({ id: a.athleteId, flags: f });
+                });
+                if (!hits.length) return;
+                html += `<div class="attn-group attn-${g.level}">
+                    <h3>${g.title} <span class="attn-count">${hits.length}</span></h3>
+                    <p class="attn-note">${g.note}</p>` +
+                    hits.map(h => `<div class="attn-row">
+                        <span class="attn-who">${attnName(h.id)}</span>
+                        <span class="attn-flags">${h.flags.map(f => `<span class="attn-flag">${f.text}</span>`).join('')}</span>
+                    </div>`).join('') + '</div>';
+            });
+            host.innerHTML = html + `<p class="attn-stamp">As at ${d.today}</p>`;
         }
 
     </script>

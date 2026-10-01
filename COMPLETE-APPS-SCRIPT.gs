@@ -206,6 +206,12 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (action === 'getAttention') {
+      var gateAtt = apAdminGate_(e.parameter.token); if (gateAtt) return gateAtt;
+      return ContentService.createTextOutput(JSON.stringify(handleGetAttention(ss)))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (action === 'getObservations') {
       var gateObs = apAdminGate_(e.parameter.token); if (gateObs) return gateObs;
       var obsSession = e.parameter.session ? parseInt(e.parameter.session) : null;
@@ -3879,14 +3885,16 @@ function apComputeGrit(ss, athleteId) {
       var ciSheet = ss.getSheetByName('Check_Ins');
       if (ciSheet) {
         var att = apCheckInAttendance_(ss, athleteId, fromIso, todayIso);
-        if (att.processed > 0) {
+        if (att.counted > 0) {
           out.parts.checkins = {
-            pct: Math.round(att.attended / att.processed * 100),
-            attended: att.attended, processed: att.processed, unmarked: att.unmarked
+            pct: Math.round(att.made / att.counted * 100),
+            made: att.made, missed: att.missed, counted: att.counted, unknown: att.unknown,
+            attended: att.made, processed: att.counted, unmarked: att.unknown
           };
-        } else if (att.unmarked > 0) {
-          // Nothing marked yet — report it so the teacher view can nudge.
-          out.parts.checkinsPending = att.unmarked;
+        } else if (att.unknown > 0) {
+          // Booked, but nothing marked off yet — report it so the teacher view
+          // can nudge rather than the student being scored on the coach's admin.
+          out.parts.checkinsPending = att.unknown;
         }
       }
     } catch (ciErr) { /* check-ins are optional — leave the component out */ }
@@ -3963,14 +3971,23 @@ function apEventMarkedDone_(title) {
 // processed = events the teacher has ticked; attended = ticked events where
 // this athlete is still on the guest list. Unticked events are counted as
 // unmarked and excluded from the score entirely.
+// How many of the check-ins that have HAPPENED did this athlete make?
+//
+// Counted per check-in (Seq), not per time-slot: a check-in offering six times
+// is one check-in, and the question is whether they came to it. Never booking
+// is a miss — turning up is the thing being measured, and the old version
+// scored attendance only among check-ins they had already chosen to book, so
+// an athlete who ignored every one of them paid no price at all.
+//
+// A check-in they booked but which has not been marked off on the calendar is
+// unknown rather than missed, so a gap in the coach's marking never counts
+// against a student. A check-in they were not eligible for is skipped entirely.
 function apCheckInAttendance_(ss, athleteId, fromIso, toIso) {
-  var out = { attended: 0, processed: 0, unmarked: 0 };
+  var out = { made: 0, missed: 0, counted: 0, unknown: 0, attended: 0, processed: 0, unmarked: 0 };
   var ciSheet = ss.getSheetByName('Check_Ins');
   var bkSheet = ss.getSheetByName('Bookings');
   if (!ciSheet || !bkSheet) return out;
 
-  // Which check-ins did this athlete book? Only those can count either way —
-  // a check-in they never booked isn't a no-show.
   var bks = apReadObjects(bkSheet);
   var booked = {};
   var myEmail = '';
@@ -3981,33 +3998,55 @@ function apCheckInAttendance_(ss, athleteId, fromIso, toIso) {
     booked[cid] = String(bks[b].Status || '').toLowerCase();
     if (bks[b].Athlete_Email) myEmail = String(bks[b].Athlete_Email).toLowerCase().trim();
   }
-  if (!myEmail) return out;
+  if (!myEmail) {
+    try { var a = apGetAthleteById(ss, athleteId); myEmail = a ? String(a.Email || '').toLowerCase().trim() : ''; } catch (e) {}
+  }
 
   var cal = null;
-  try { cal = apCheckinCalendar(); } catch (e) { return out; }
-  if (!cal) return out;
+  try { cal = apCheckinCalendar(); } catch (e) { cal = null; }
 
+  var tier = apAthleteMovementTier_(ss, athleteId);
   var cis = apReadObjects(ciSheet);
+
+  // Group the slots into the check-ins they belong to.
+  var bySeq = {};
   for (var c = 0; c < cis.length; c++) {
-    var id = String(cis[c].CheckIn_ID || '').trim();
     var date = cis[c].Date ? String(apIsoDate_(cis[c].Date)) : '';
-    if (!id || !date || date < fromIso || date > toIso) continue;
-    if (booked[id] !== 'booked') continue;            // they didn't book it
-    var evId = String(cis[c].Event_ID || '').trim();
-    if (!evId) { out.unmarked++; continue; }
-    var ev = null;
-    try { ev = cal.getEventById(evId); } catch (evErr) { ev = null; }
-    if (!ev) { out.unmarked++; continue; }
-    if (!apEventMarkedDone_(ev.getTitle())) { out.unmarked++; continue; }
-    out.processed++;
-    // Still on the guest list => they were there.
-    try {
-      var guests = ev.getGuestList() || [];
-      for (var g = 0; g < guests.length; g++) {
-        if (String(guests[g].getEmail() || '').toLowerCase().trim() === myEmail) { out.attended++; break; }
-      }
-    } catch (gErr) { /* can't read guests — counts as processed, not attended */ }
+    if (!date || date < fromIso || date > toIso) continue;
+    if (apSlotBlockedReason_(cis[c], tier)) continue;   // not theirs to attend
+    var seq = String(cis[c].Seq || '').trim() || date;
+    (bySeq[seq] = bySeq[seq] || []).push(cis[c]);
   }
+
+  Object.keys(bySeq).forEach(function (seq) {
+    var slots = bySeq[seq];
+    var anyBooked = false, present = false, marked = false;
+    for (var i = 0; i < slots.length; i++) {
+      var id = String(slots[i].CheckIn_ID || '').trim();
+      if (booked[id] !== 'booked') continue;
+      anyBooked = true;
+      var evId = String(slots[i].Event_ID || '').trim();
+      if (!cal || !evId) continue;
+      var ev = null;
+      try { ev = cal.getEventById(evId); } catch (evErr) { ev = null; }
+      if (!ev || !apEventMarkedDone_(ev.getTitle())) continue;
+      marked = true;
+      try {
+        var guests = ev.getGuestList() || [];
+        for (var g = 0; g < guests.length; g++) {
+          if (String(guests[g].getEmail() || '').toLowerCase().trim() === myEmail) { present = true; break; }
+        }
+      } catch (gErr) { /* can't read the guest list — leave it unknown */ }
+      if (present) break;
+    }
+    if (!anyBooked) { out.counted++; out.missed++; return; }      // never booked = missed
+    if (!marked) { out.unknown++; return; }                        // not marked off yet
+    out.counted++;
+    if (present) out.made++; else out.missed++;
+  });
+
+  // Legacy field names, kept so anything still reading them keeps working.
+  out.attended = out.made; out.processed = out.counted; out.unmarked = out.unknown;
   return out;
 }
 
@@ -4015,6 +4054,102 @@ function apCheckInAttendance_(ss, athleteId, fromIso, toIso) {
 function apIsoDate_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   return String(v).trim().substring(0, 10);
+}
+
+// ---- Needs attention: the things the data already knows but never says -----
+// Everything here is read from data the system already holds. It is a note to
+// the coach, never a message to the student — a portal telling a fifteen year
+// old it thinks they are overtraining is a conversation that needs a person.
+// Returns Athlete_IDs only; admin joins them to names it already has.
+var ATTN_QUIET_DAYS = 14;        // no logged session for this long
+var ATTN_SPIKE_RATIO = 1.5;      // a week this far above their own recent normal
+var ATTN_STREAK_DAYS = 7;        // consecutive days trained with no rest
+
+function apAttentionFor_(ss, athleteId, rows, todayIso) {
+  var flags = [];
+  var mine = [], dates = {};
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Athlete_ID).trim() !== String(athleteId).trim()) continue;
+    mine.push(rows[i]);
+    var st = String(rows[i].Status || '').toLowerCase();
+    var d = rows[i].Date ? String(apIsoDate_(rows[i].Date)) : '';
+    if (d && (st === 'done' || st === 'modified')) dates[d] = true;
+  }
+  var logged = Object.keys(dates).sort();
+  var planned = mine.length;
+
+  // --- engagement ---
+  if (!logged.length) {
+    flags.push(planned
+      ? { key: 'never_logged', level: 'engage', text: 'Has ' + planned + ' session' + (planned === 1 ? '' : 's') + ' planned but has never logged one' }
+      : { key: 'nothing', level: 'engage', text: 'Nothing in the portal at all' });
+  } else {
+    var last = logged[logged.length - 1];
+    var gap = Math.round((new Date(todayIso) - new Date(last)) / 86400000);
+    if (gap >= ATTN_QUIET_DAYS) flags.push({ key: 'quiet', level: 'engage', text: 'Last logged ' + gap + ' days ago (' + last + ')' });
+  }
+
+  // --- load spike: a week well above their own recent normal ---
+  var byWeek = {};
+  for (var j = 0; j < mine.length; j++) {
+    var ws = mine[j].Week_Start ? String(apIsoDate_(mine[j].Week_Start)) : '';
+    if (!ws) continue;
+    byWeek[ws] = (byWeek[ws] || 0) + (Number(mine[j].Load_au) || 0);
+  }
+  var weeks = Object.keys(byWeek).sort().filter(function (w) { return w <= todayIso; });
+  var loads = weeks.map(function (w) { return byWeek[w]; }).filter(function (v) { return v > 0; });
+  if (loads.length >= 3) {
+    var recent = loads.slice(-4), peak = loads[loads.length - 1];
+    var prior = loads.slice(0, -1).slice(-3);
+    var avg = prior.length ? prior.reduce(function (a, b) { return a + b; }, 0) / prior.length : 0;
+    if (avg > 0 && peak >= avg * ATTN_SPIKE_RATIO) {
+      flags.push({ key: 'spike', level: 'care',
+        text: 'Load spike — ' + Math.round(peak) + ' au against a recent average of ' + Math.round(avg) + ' au' });
+    }
+  }
+
+  // --- no rest: a run of consecutive days trained ---
+  var run = 1, longest = 1;
+  for (var k = 1; k < logged.length; k++) {
+    var diff = Math.round((new Date(logged[k]) - new Date(logged[k - 1])) / 86400000);
+    if (diff === 1) { run++; if (run > longest) longest = run; } else run = 1;
+  }
+  if (logged.length && longest >= ATTN_STREAK_DAYS) {
+    flags.push({ key: 'norest', level: 'care', text: longest + ' days in a row trained with no rest day' });
+  }
+
+  // --- a goal with nothing behind it ---
+  try {
+    var map = apLoadYearMap(ss, athleteId);
+    if (map && map.aPriority && map.aPriority.event) {
+      var months = 0;
+      (map.sports || []).forEach(function (s) { months += ((s.monthlyStates || []).length); });
+      if (months < 4) {
+        flags.push({ key: 'thin_plan', level: 'plan',
+          text: 'Goal set (' + map.aPriority.event + ') with only ' + months + ' month' + (months === 1 ? '' : 's') + ' planned' });
+      }
+    }
+  } catch (e) {}
+
+  return flags;
+}
+
+// Teacher-gated in the dispatch, like the other admin reads.
+function handleGetAttention(ss) {
+  try {
+    var todayIso = apIsoDate_(new Date());
+    var rows = apReadObjects(apEnsureTrainingSessions(ss));
+    var athletes = apReadObjects(ss.getSheetByName('Athletes'));
+    var out = [];
+    for (var i = 0; i < athletes.length; i++) {
+      var id = String(athletes[i].Athlete_ID || '').trim();
+      if (!id || !/^\d+$/.test(id)) continue;          // skip archived / malformed ids
+      var flags = apAttentionFor_(ss, id, rows, todayIso);
+      if (!flags.length) continue;
+      out.push({ athleteId: id, flags: flags });
+    }
+    return { success: true, today: todayIso, athletes: out };
+  } catch (error) { return { success: false, error: error.toString() }; }
 }
 
 function handleGetGrit(ss, athleteId) {
@@ -5774,8 +5909,32 @@ function apEnsureCheckIns(ss) {
   }
   // Group-event model: one shared booking event (students as guests) + a hold
   // event that reserves the time while the slot is empty.
-  apEnsureColumns(sheet, ['Event_ID', 'Hold_Event_ID']);
+  // Eligible: '' = anyone, 'stamped' = already through the foundation movements,
+  // 'new' = not yet. Lets one check-in run two streams on different days.
+  apEnsureColumns(sheet, ['Event_ID', 'Hold_Event_ID', 'Eligible']);
   return sheet;
+}
+
+// Which movement stream an athlete belongs to, for check-ins that run streamed.
+// 'stamped' once any pattern has reached technique level 2 — the point at which
+// they have passed a foundation movement and are loading it.
+function apAthleteMovementTier_(ss, athleteId) {
+  try {
+    var levels = apLoadStrengthLevels(ss, athleteId);
+    for (var i = 0; i < levels.length; i++) if (Number(levels[i].tech) >= 2) return 'stamped';
+  } catch (e) {}
+  return 'new';
+}
+
+// Can this athlete book this slot? Returns '' when they can, or the reason why
+// not. A blank Eligible column means the slot is open to everyone.
+function apSlotBlockedReason_(ci, tier) {
+  var want = String((ci && ci.Eligible) || '').trim().toLowerCase();
+  if (!want) return '';
+  if (want === tier) return '';
+  return want === 'stamped'
+    ? 'This group is for athletes who have already passed their foundation movements.'
+    : 'You have already passed your foundation movements — book the next-level group instead.';
 }
 // Check-in 1 — six group onboarding sessions across the first two weeks (Sep 2026).
 function apSeedCheckInOne(sheet) {
@@ -5850,6 +6009,60 @@ function seedCheckInTwo() {
   var n = apSeedCheckInTwo(sheet);
   if (ui) ui.alert('Check-in 2', 'Added ' + n + ' one-to-one slots (15 min). Now run "Reserve my check-in times" to put the holds on your calendar.', ui.ButtonSet.OK);
 }
+// Check-in 3 — one whole-squad session, first morning back after the October
+// break. Everyone, one time, no streaming.
+function apSeedCheckInThree(sheet) {
+  var rows = [
+    ['ci3_tue1013', 3, 'Check-in 3 · The whole group', '2026-10-13', '07:15', '08:15', 'group', 40, 'open', 'Before school', '', '', '']
+  ];
+  var startRow = sheet.getLastRow() + 1;
+  sheet.getRange(startRow, 4, rows.length, 3).setNumberFormat('@');   // Date/Start/End as text
+  sheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows);
+  return rows.length;
+}
+
+// Check-in 4 — strength masterclass on the foundation movements, streamed.
+// 'new' = has not passed a movement yet (currently ~24 athletes, mostly G11/G12);
+// 'stamped' = already at level 2+ (currently 10, last year's G9 cohort).
+// Capacity is deliberately small so these stay coachable.
+function apSeedCheckInFour(sheet) {
+  var T_NEW = 'Check-in 4 · Movement masterclass';
+  var T_UP  = 'Check-in 4 · Movement masterclass — next level';
+  var rows = [
+    // id,                 seq, title, date,         start,   end,     format, cap, status, notes,          Event_ID, Hold_Event_ID, Eligible
+    ['ci4_mon1019_lunch',  4, T_NEW, '2026-10-19', '11:40', '12:30', 'group', 8, 'open', 'Lunch',         '', '', 'new'],
+    ['ci4_tue1020_pm',     4, T_NEW, '2026-10-20', '15:30', '16:30', 'group', 8, 'open', 'After school',  '', '', 'new'],
+    ['ci4_thu1022_am',     4, T_NEW, '2026-10-22', '07:15', '08:15', 'group', 8, 'open', 'Before school', '', '', 'new'],
+    ['ci4_mon1026_lunch',  4, T_UP,  '2026-10-26', '11:40', '12:30', 'group', 8, 'open', 'Lunch',         '', '', 'stamped'],
+    ['ci4_tue1027_lunch',  4, T_NEW, '2026-10-27', '11:40', '12:30', 'group', 8, 'open', 'Lunch',         '', '', 'new'],
+    ['ci4_tue1027_pm',     4, T_NEW, '2026-10-27', '15:30', '16:30', 'group', 8, 'open', 'After school',  '', '', 'new'],
+    ['ci4_thu1029_am',     4, T_UP,  '2026-10-29', '07:15', '08:15', 'group', 8, 'open', 'Before school', '', '', 'stamped']
+  ];
+  var startRow = sheet.getLastRow() + 1;
+  sheet.getRange(startRow, 4, rows.length, 3).setNumberFormat('@');
+  sheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows);
+  return rows.length;
+}
+
+// Shared menu helper: refuses if that Seq already exists, so it is safe to run
+// twice. Delete the rows first if you want to re-seed.
+function apSeedCheckInSeq_(seq, label, fn) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; }
+  var sheet = apEnsureCheckIns(ss);
+  var rows = apReadObjects(sheet);
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Seq) === String(seq)) {
+      if (ui) ui.alert(label, label + ' slots already exist. Delete those rows first if you want to re-seed.', ui.ButtonSet.OK);
+      return;
+    }
+  }
+  var n = fn(sheet);
+  if (ui) ui.alert(label, 'Added ' + n + ' slot' + (n === 1 ? '' : 's') + '. Now run "Reserve my check-in times" to put the holds on your calendar.', ui.ButtonSet.OK);
+}
+function seedCheckInThree() { apSeedCheckInSeq_(3, 'Check-in 3', apSeedCheckInThree); }
+function seedCheckInFour()  { apSeedCheckInSeq_(4, 'Check-in 4', apSeedCheckInFour); }
+
 function apEnsureBookings(ss) {
   var sheet = ss.getSheetByName('Bookings');
   if (!sheet) {
@@ -5906,6 +6119,8 @@ function handleGetBookingData(ss, athleteId) {
         if (sr) mineBySeq[String(sr.Seq)] = apDateStr(sr.Date);   // one booking per check-in (Seq)
       }
     }
+    // Worked out once, not per slot — it reads the whole Strength sheet.
+    var tier = athleteId ? apAthleteMovementTier_(ss, athleteId) : '';
     var slots = [];
     for (var i = 0; i < checkins.length; i++) {
       var c = checkins[i];
@@ -5916,13 +6131,18 @@ function handleGetBookingData(ss, athleteId) {
       var myB = mineByCi[id] || '';
       var dateStr = apDateStr(c.Date);
       var lockedDate = (!myB && mineBySeq[String(c.Seq)]) ? mineBySeq[String(c.Seq)] : '';
+      // Shown but not bookable, rather than hidden: a student comparing with a
+      // friend should see why their times differ, not think the page is broken.
+      var blocked = (athleteId && !myB) ? apSlotBlockedReason_(c, tier) : '';
       slots.push({
         id: id, seq: c.Seq, title: c.Title, date: dateStr,
         start: apTimeStr(c.Start), end: apTimeStr(c.End),
         format: c.Format || 'group', capacity: cap, booked: booked,
         note: c.Notes || '', letter: apLetterForDate(dateStr), location: AP_CHECKIN_LOCATION,
-        myBookingId: myB, lockedDate: lockedDate,
-        status: myB ? 'booked' : (lockedDate ? 'locked' : (cap && booked >= cap ? 'full' : 'available'))
+        myBookingId: myB, lockedDate: lockedDate, blockedReason: blocked,
+        status: myB ? 'booked'
+              : blocked ? 'ineligible'
+              : (lockedDate ? 'locked' : (cap && booked >= cap ? 'full' : 'available'))
       });
     }
     slots.sort(function (a, b2) { var ka = a.date + a.start, kb = b2.date + b2.start; return ka < kb ? -1 : ka > kb ? 1 : 0; });
@@ -6101,6 +6321,10 @@ function handleBookCheckIn(ss, athleteId, checkInId) {
     for (var i = 0; i < checkins.length; i++) { if (String(checkins[i].CheckIn_ID).trim() === String(checkInId).trim()) { ci = checkins[i]; break; } }
     if (!ci) return { success: false, error: 'Check-in not found' };
     if (String(ci.Status || 'open') !== 'open') return { success: false, error: 'That check-in is closed.' };
+    // Enforced here as well as in the client — the client greys the card out,
+    // but a rule that only exists in the client is not a rule.
+    var blockedWhy = apSlotBlockedReason_(ci, apAthleteMovementTier_(ss, athleteId));
+    if (blockedWhy) return { success: false, error: blockedWhy };
     var bookingsSheet = apEnsureBookings(ss);
     var bookings = apReadObjects(bookingsSheet);
     var existing = null, count = 0;
@@ -6582,6 +6806,8 @@ function onOpen() {
     .addItem('Build check-in register', 'buildCheckinRegister')
     .addItem('Check-in report (seen / no-show / not booked)', 'checkinReport')
     .addItem('Add Check-in 2 slots (1:1)', 'seedCheckInTwo')
+    .addItem('Add Check-in 3 slot (whole squad)', 'seedCheckInThree')
+    .addItem('Add Check-in 4 slots (masterclass, streamed)', 'seedCheckInFour')
     .addItem('Reserve my check-in times (calendar holds)', 'reserveCheckinTimes')
     .addItem('Sync check-in cancellations now', 'syncCheckinCancellations')
     .addItem('Debug booking sync (log)', 'debugBookingSync')
