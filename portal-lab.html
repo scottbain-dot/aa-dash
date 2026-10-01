@@ -3912,6 +3912,8 @@
   .blk-line-txt { flex: 1 1 auto; min-width: 0; font-family: 'Inter', sans-serif; font-size: 12.5px;
     color: var(--ink-soft, #4a3f39); line-height: 1.45; }
   .blk-line-txt strong { color: var(--ink, #1a1a1a); font-weight: 700; }
+  /* Nothing picked yet — the line is a prompt, so it gets the gold tint. */
+  .blk-line-ask { background: #fdf7e8; border-left-color: var(--burgundy, #874B46); }
   .blk-line-txt em { font-style: normal; color: var(--burgundy, #874B46); font-weight: 600; }
   .blk-line-go { flex: 0 0 auto; color: var(--ink-mute, #7a6a60); font-size: 15px; }
   /* Month sheet: what a phase means, and what the month is building. */
@@ -6399,12 +6401,23 @@
   // needs from the year plan — how often to train the lead sport, and which
   // sports are being treated differently — and renders nothing when it has
   // neither. Still a label, never a change: no session is touched here.
-  const LEAD_FREQ = {
-    build:    'Aim for <strong>2–3 sessions a week</strong>',
-    maintain: 'Aim for <strong>about 1 session a week</strong>',
-    peak:     '<strong>Keep it sharp</strong> — high intensity, less volume',
-    recover:  '<strong>Deliberate rest</strong> — light movement only',
-    off:      '<strong>A proper break</strong> — nothing planned'
+  // A session count against the SPORT is advice nobody can take. A swimmer's
+  // squad sessions, a footballer's training nights — the club sets those, the
+  // athlete turns up. "Aim for 2–3 sessions a week on Swimming" reads as either
+  // obvious or impossible.
+  //
+  // The frequency belongs to the work they actually control: the strength,
+  // speed, conditioning and mobility they add around the sport. So the phase
+  // describes what the SPORT is doing (which is mostly handed to them by a
+  // fixture list), and the number attaches to their OWN sessions. That is also
+  // what makes the month's components earn their place — they are the list of
+  // things an athlete can decide to do.
+  const OWN_WORK = {
+    build:    { n:'<strong>2–3 sessions a week</strong>', tail:'' },
+    maintain: { n:'<strong>1 session a week</strong>',    tail:' — enough to hold what you’ve got' },
+    peak:     { line:'Your sport comes first this block. Keep your own sessions <strong>short and sharp</strong> — fewer of them.' },
+    recover:  { line:'A recovery block. <strong>Light movement only</strong> — nothing hard.' },
+    off:      { line:'<strong>A proper break.</strong> Nothing planned.' }
   };
   function weekBlockCard(){
     const b = currentBlock();
@@ -6412,19 +6425,27 @@
     const month = MONTHS[new Date().getMonth()];
     const lead = String(b.sport||'').trim();
     const leadKey = lead.toLowerCase();
+    const w = OWN_WORK[b.phase];
 
-    const parts = [];
-    // 1. The frequency. "Build" and "maintain" never said this on their own, and
-    //    it is the question students actually ask.
-    if(LEAD_FREQ[b.phase]) parts.push(LEAD_FREQ[b.phase] + (lead ? ' on ' + esc(lead) : ''));
-    // 2. What they said they're building this month, if they picked anything.
+    // What they said they're building this month — the self-planned half of it.
     const ms = ((plannedSports().find(s=>String(s.name||'').trim().toLowerCase()===leadKey)||{}).monthlyStates||[])
                  .find(m=>m.month===month) || {};
     const comps = componentLabels(ms.components);
-    if(comps.length) parts.push('building <em>'+esc(comps.join(' and ').toLowerCase())+'</em>');
 
-    // 3. Only sports being treated DIFFERENTLY to the lead. A second sport also
-    //    in full build needs no mention; one ticking over or sitting out does.
+    let main = '', prompt = false;
+    if(w && w.line){
+      main = w.line;                                   // peak / recover / off say it in one go
+    } else if(w && w.n){
+      // "On top of your sport" is the whole point — it says exactly what the
+      // number counts, and it isn't the sessions somebody else timetabled.
+      main = 'On top of your sport: ' + w.n +
+             (comps.length ? ' of <em>' + esc(comps.join(' and ').toLowerCase()) + '</em>' : '') +
+             (w.tail||'') + '.';
+      prompt = !comps.length;
+    }
+
+    // Only sports being treated DIFFERENTLY to the lead. A second sport also in
+    // full build needs no mention; one ticking over or sitting out does.
     const named = {};
     const aside = [];
     plannedSports().forEach(function(sp){
@@ -6442,10 +6463,16 @@
       aside.push(esc(nm)+' sits out');
     });
 
-    const txt = parts.join(', ') + (aside.length ? '. ' + aside.join(', ') + ' this block' : '');
+    // Order: what the block asks, then what's sitting out, then the prompt last
+    // so it reads as the thing to do rather than running into the next sentence.
+    const txt = main + (aside.length ? ' ' + aside.join(', ') + ' this block.' : '') +
+                (prompt ? ' <em>Pick what you’re building →</em>' : '');
     if(!txt.trim()) return '';
-    return '<button class="blk-line" onclick="switchTab(\'year\')">'+
-      '<span class="blk-line-txt">'+txt+'.</span>'+
+    // With nothing picked the line IS the prompt, so send them to the picker
+    // rather than the top of the Year tab.
+    const go = prompt ? 'switchTab(\'year\'); openGoalComponents();' : 'switchTab(\'year\')';
+    return '<button class="blk-line'+(prompt?' blk-line-ask':'')+'" onclick="'+go+'">'+
+      '<span class="blk-line-txt">'+txt+'</span>'+
       '<i class="ti ti-chevron-right blk-line-go" aria-hidden="true"></i>'+
     '</button>';
   }
@@ -10617,17 +10644,22 @@
 
   // ---- What a phase actually means, in sessions a week --------------------
   // "Build" and "Maintain" are jargon until they're a number. The coach teaches
-  // them as a frequency — maintain is about once a week, build is two or three —
-  // so that's what the portal should say, rather than "get fitter".
+  // them as a frequency — maintain is about once a week, build is two or three.
+  //
+  // But the number is NOT a count of sport sessions. Club and school fixtures are
+  // set by somebody else; an athlete cannot decide to swim four times instead of
+  // three. The frequency only means anything for the training they add around the
+  // sport — strength, speed, conditioning, mobility. So the phase says what the
+  // sport is doing, and the number says what to add alongside it.
   const PHASE_HELP = {
-    build:    'About 2–3 sessions a week on this. Enough to actually improve.',
-    maintain: 'About 1 session a week. Enough to hold what you’ve got while something else leads.',
-    peak:     'Keep the intensity high and reduce the volume. Sharp and fresh for the event.',
+    build:    'Room to build. Add about 2–3 of your own sessions a week around your sport — strength, speed, conditioning.',
+    maintain: 'Your sport leads. About 1 of your own sessions a week is enough to hold what you’ve got.',
+    peak:     'Competition first. Keep your own sessions short and sharp — intensity up, volume down.',
     recover:  'Deliberate rest. Light movement, no hard sessions.',
     off:      'Nothing planned. A proper break.'
   };
-  const PHASE_SHORT = { build:'2–3× a week', maintain:'1× a week',
-                        peak:'intensity up, volume down', recover:'rest', off:'off' };
+  const PHASE_SHORT = { build:'add 2–3 of your own a week', maintain:'add 1 of your own a week',
+                        peak:'sport first, volume down', recover:'rest', off:'off' };
 
   // ---- What you're building: the components of fitness --------------------
   // A month tagged "build" doesn't say WHAT is being built, and for a footballer
