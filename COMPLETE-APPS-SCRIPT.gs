@@ -5774,8 +5774,32 @@ function apEnsureCheckIns(ss) {
   }
   // Group-event model: one shared booking event (students as guests) + a hold
   // event that reserves the time while the slot is empty.
-  apEnsureColumns(sheet, ['Event_ID', 'Hold_Event_ID']);
+  // Eligible: '' = anyone, 'stamped' = already through the foundation movements,
+  // 'new' = not yet. Lets one check-in run two streams on different days.
+  apEnsureColumns(sheet, ['Event_ID', 'Hold_Event_ID', 'Eligible']);
   return sheet;
+}
+
+// Which movement stream an athlete belongs to, for check-ins that run streamed.
+// 'stamped' once any pattern has reached technique level 2 — the point at which
+// they have passed a foundation movement and are loading it.
+function apAthleteMovementTier_(ss, athleteId) {
+  try {
+    var levels = apLoadStrengthLevels(ss, athleteId);
+    for (var i = 0; i < levels.length; i++) if (Number(levels[i].tech) >= 2) return 'stamped';
+  } catch (e) {}
+  return 'new';
+}
+
+// Can this athlete book this slot? Returns '' when they can, or the reason why
+// not. A blank Eligible column means the slot is open to everyone.
+function apSlotBlockedReason_(ci, tier) {
+  var want = String((ci && ci.Eligible) || '').trim().toLowerCase();
+  if (!want) return '';
+  if (want === tier) return '';
+  return want === 'stamped'
+    ? 'This group is for athletes who have already passed their foundation movements.'
+    : 'You have already passed your foundation movements — book the next-level group instead.';
 }
 // Check-in 1 — six group onboarding sessions across the first two weeks (Sep 2026).
 function apSeedCheckInOne(sheet) {
@@ -5850,6 +5874,60 @@ function seedCheckInTwo() {
   var n = apSeedCheckInTwo(sheet);
   if (ui) ui.alert('Check-in 2', 'Added ' + n + ' one-to-one slots (15 min). Now run "Reserve my check-in times" to put the holds on your calendar.', ui.ButtonSet.OK);
 }
+// Check-in 3 — one whole-squad session, first morning back after the October
+// break. Everyone, one time, no streaming.
+function apSeedCheckInThree(sheet) {
+  var rows = [
+    ['ci3_tue1013', 3, 'Check-in 3 · Whole squad', '2026-10-13', '07:15', '08:15', 'group', 40, 'open', 'Before school', '', '', '']
+  ];
+  var startRow = sheet.getLastRow() + 1;
+  sheet.getRange(startRow, 4, rows.length, 3).setNumberFormat('@');   // Date/Start/End as text
+  sheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows);
+  return rows.length;
+}
+
+// Check-in 4 — strength masterclass on the foundation movements, streamed.
+// 'new' = has not passed a movement yet (currently ~24 athletes, mostly G11/G12);
+// 'stamped' = already at level 2+ (currently 10, last year's G9 cohort).
+// Capacity is deliberately small so these stay coachable.
+function apSeedCheckInFour(sheet) {
+  var T_NEW = 'Check-in 4 · Movement masterclass';
+  var T_UP  = 'Check-in 4 · Movement masterclass — next level';
+  var rows = [
+    // id,                 seq, title, date,         start,   end,     format, cap, status, notes,          Event_ID, Hold_Event_ID, Eligible
+    ['ci4_mon1019_lunch',  4, T_NEW, '2026-10-19', '11:40', '12:30', 'group', 8, 'open', 'Lunch',         '', '', 'new'],
+    ['ci4_tue1020_pm',     4, T_NEW, '2026-10-20', '15:30', '16:30', 'group', 8, 'open', 'After school',  '', '', 'new'],
+    ['ci4_thu1022_am',     4, T_NEW, '2026-10-22', '07:15', '08:15', 'group', 8, 'open', 'Before school', '', '', 'new'],
+    ['ci4_mon1026_lunch',  4, T_UP,  '2026-10-26', '11:40', '12:30', 'group', 8, 'open', 'Lunch',         '', '', 'stamped'],
+    ['ci4_tue1027_lunch',  4, T_NEW, '2026-10-27', '11:40', '12:30', 'group', 8, 'open', 'Lunch',         '', '', 'new'],
+    ['ci4_tue1027_pm',     4, T_NEW, '2026-10-27', '15:30', '16:30', 'group', 8, 'open', 'After school',  '', '', 'new'],
+    ['ci4_thu1029_am',     4, T_UP,  '2026-10-29', '07:15', '08:15', 'group', 8, 'open', 'Before school', '', '', 'stamped']
+  ];
+  var startRow = sheet.getLastRow() + 1;
+  sheet.getRange(startRow, 4, rows.length, 3).setNumberFormat('@');
+  sheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows);
+  return rows.length;
+}
+
+// Shared menu helper: refuses if that Seq already exists, so it is safe to run
+// twice. Delete the rows first if you want to re-seed.
+function apSeedCheckInSeq_(seq, label, fn) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui; try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; }
+  var sheet = apEnsureCheckIns(ss);
+  var rows = apReadObjects(sheet);
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Seq) === String(seq)) {
+      if (ui) ui.alert(label, label + ' slots already exist. Delete those rows first if you want to re-seed.', ui.ButtonSet.OK);
+      return;
+    }
+  }
+  var n = fn(sheet);
+  if (ui) ui.alert(label, 'Added ' + n + ' slot' + (n === 1 ? '' : 's') + '. Now run "Reserve my check-in times" to put the holds on your calendar.', ui.ButtonSet.OK);
+}
+function seedCheckInThree() { apSeedCheckInSeq_(3, 'Check-in 3', apSeedCheckInThree); }
+function seedCheckInFour()  { apSeedCheckInSeq_(4, 'Check-in 4', apSeedCheckInFour); }
+
 function apEnsureBookings(ss) {
   var sheet = ss.getSheetByName('Bookings');
   if (!sheet) {
@@ -5906,6 +5984,8 @@ function handleGetBookingData(ss, athleteId) {
         if (sr) mineBySeq[String(sr.Seq)] = apDateStr(sr.Date);   // one booking per check-in (Seq)
       }
     }
+    // Worked out once, not per slot — it reads the whole Strength sheet.
+    var tier = athleteId ? apAthleteMovementTier_(ss, athleteId) : '';
     var slots = [];
     for (var i = 0; i < checkins.length; i++) {
       var c = checkins[i];
@@ -5916,13 +5996,18 @@ function handleGetBookingData(ss, athleteId) {
       var myB = mineByCi[id] || '';
       var dateStr = apDateStr(c.Date);
       var lockedDate = (!myB && mineBySeq[String(c.Seq)]) ? mineBySeq[String(c.Seq)] : '';
+      // Shown but not bookable, rather than hidden: a student comparing with a
+      // friend should see why their times differ, not think the page is broken.
+      var blocked = (athleteId && !myB) ? apSlotBlockedReason_(c, tier) : '';
       slots.push({
         id: id, seq: c.Seq, title: c.Title, date: dateStr,
         start: apTimeStr(c.Start), end: apTimeStr(c.End),
         format: c.Format || 'group', capacity: cap, booked: booked,
         note: c.Notes || '', letter: apLetterForDate(dateStr), location: AP_CHECKIN_LOCATION,
-        myBookingId: myB, lockedDate: lockedDate,
-        status: myB ? 'booked' : (lockedDate ? 'locked' : (cap && booked >= cap ? 'full' : 'available'))
+        myBookingId: myB, lockedDate: lockedDate, blockedReason: blocked,
+        status: myB ? 'booked'
+              : blocked ? 'ineligible'
+              : (lockedDate ? 'locked' : (cap && booked >= cap ? 'full' : 'available'))
       });
     }
     slots.sort(function (a, b2) { var ka = a.date + a.start, kb = b2.date + b2.start; return ka < kb ? -1 : ka > kb ? 1 : 0; });
@@ -6101,6 +6186,10 @@ function handleBookCheckIn(ss, athleteId, checkInId) {
     for (var i = 0; i < checkins.length; i++) { if (String(checkins[i].CheckIn_ID).trim() === String(checkInId).trim()) { ci = checkins[i]; break; } }
     if (!ci) return { success: false, error: 'Check-in not found' };
     if (String(ci.Status || 'open') !== 'open') return { success: false, error: 'That check-in is closed.' };
+    // Enforced here as well as in the client — the client greys the card out,
+    // but a rule that only exists in the client is not a rule.
+    var blockedWhy = apSlotBlockedReason_(ci, apAthleteMovementTier_(ss, athleteId));
+    if (blockedWhy) return { success: false, error: blockedWhy };
     var bookingsSheet = apEnsureBookings(ss);
     var bookings = apReadObjects(bookingsSheet);
     var existing = null, count = 0;
@@ -6582,6 +6671,8 @@ function onOpen() {
     .addItem('Build check-in register', 'buildCheckinRegister')
     .addItem('Check-in report (seen / no-show / not booked)', 'checkinReport')
     .addItem('Add Check-in 2 slots (1:1)', 'seedCheckInTwo')
+    .addItem('Add Check-in 3 slot (whole squad)', 'seedCheckInThree')
+    .addItem('Add Check-in 4 slots (masterclass, streamed)', 'seedCheckInFour')
     .addItem('Reserve my check-in times (calendar holds)', 'reserveCheckinTimes')
     .addItem('Sync check-in cancellations now', 'syncCheckinCancellations')
     .addItem('Debug booking sync (log)', 'debugBookingSync')

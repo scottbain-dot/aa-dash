@@ -4081,7 +4081,7 @@
   .slot-booked-note { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line);
     font-family: 'Inter', sans-serif; font-size: 12px; color: var(--burgundy); line-height: 1.5; }
   .slot-booked-note strong { font-weight: 700; }
-  .slot-card.locked { opacity: 0.72; }
+  .slot-card.locked, .slot-card.ineligible { opacity: 0.72; }
   .slot-status.locked-label { color: var(--ink-mute); }
   .slot-locked-note { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line);
     font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); line-height: 1.5; }
@@ -11410,6 +11410,16 @@
   }
   // Per-check-in framing shown above each group's slots.
   function checkinMeta(seq){
+    if(String(seq)==='4') return {
+      blurb: 'A strength masterclass on the six foundation movements — squat, hinge, push, pull, lunge and press. Get them checked, get them stamped, and leave knowing exactly what to load next. <strong>Pick one time</strong> that suits you.',
+      duration: 'About an hour',
+      who: 'Small group — your times depend on the movements you’ve already passed'
+    };
+    if(String(seq)==='3') return {
+      blurb: 'Everyone, one session, first morning back. Hard work, a bit of competition, and we’ll get your training logged and your year set up for the term ahead. Come as you are — no prep needed.',
+      duration: 'An hour, 07:15 to 08:15',
+      who: 'The whole squad. Bring kit and your phone'
+    };
     if(String(seq)==='2') return {
       blurb: 'A quick one to one with Mr Bain, just you. We’ll look at your personal program: what you need, and how to move forward with your plans and goals.',
       duration: 'About 15 minutes',
@@ -11454,6 +11464,7 @@
     let foot;
     if(s.status==='booked') foot = '<span class="slot-status booked-label"><i class="ti ti-check" aria-hidden="true"></i> Booked</span>';
     else if(s.status==='full') foot = '<span class="slot-status full-label">Full</span>';
+    else if(s.status==='ineligible') foot = '<span class="slot-status locked-label">Other group</span>';
     else if(s.status==='locked') foot = '<span class="slot-status locked-label">Unavailable</span>';
     else foot = '<button class="book-btn" onclick="event.stopPropagation(); bookSlot('+i+')">Book</button>';
     let sub = '';
@@ -11461,6 +11472,8 @@
       sub = '<div class="slot-booked-note"><i class="ti ti-check" aria-hidden="true"></i> <strong>Booked</strong> · Mr Bain · '+esc(s.location||'PE Office')+'. It’s on your Google Calendar — accept the email invite. <strong>Tap here to cancel</strong> — removing it from your own calendar won’t cancel it.</div>';
     } else if(s.status==='locked' && s.lockedDate){
       sub = '<div class="slot-locked-note">You’re booked for this check-in on <strong>'+esc(dowShort(s.lockedDate)+' '+dayNum(s.lockedDate)+' '+monShort(s.lockedDate))+'</strong>. Cancel that to switch time.</div>';
+    } else if(s.status==='ineligible'){
+      sub = '<div class="slot-locked-note">'+esc(s.blockedReason||'This group isn’t the one for you — book one of the others.')+'</div>';
     } else if(s.status==='available' && spots!=null){
       sub = '<div class="slot-spots-row"><span class="slot-spots">'+spots+' of '+s.capacity+' spots left</span></div>';
     }
