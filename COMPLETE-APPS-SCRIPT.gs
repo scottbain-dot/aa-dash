@@ -5878,7 +5878,7 @@ function seedCheckInTwo() {
 // break. Everyone, one time, no streaming.
 function apSeedCheckInThree(sheet) {
   var rows = [
-    ['ci3_tue1013', 3, 'Check-in 3 · Whole squad', '2026-10-13', '07:15', '08:15', 'group', 40, 'open', 'Before school', '', '', '']
+    ['ci3_tue1013', 3, 'Check-in 3 · The whole group', '2026-10-13', '07:15', '08:15', 'group', 40, 'open', 'Before school', '', '', '']
   ];
   var startRow = sheet.getLastRow() + 1;
   sheet.getRange(startRow, 4, rows.length, 3).setNumberFormat('@');   // Date/Start/End as text
