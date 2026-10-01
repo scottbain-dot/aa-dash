@@ -206,6 +206,12 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (action === 'getAttention') {
+      var gateAtt = apAdminGate_(e.parameter.token); if (gateAtt) return gateAtt;
+      return ContentService.createTextOutput(JSON.stringify(handleGetAttention(ss)))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (action === 'getObservations') {
       var gateObs = apAdminGate_(e.parameter.token); if (gateObs) return gateObs;
       var obsSession = e.parameter.session ? parseInt(e.parameter.session) : null;
@@ -4048,6 +4054,102 @@ function apCheckInAttendance_(ss, athleteId, fromIso, toIso) {
 function apIsoDate_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   return String(v).trim().substring(0, 10);
+}
+
+// ---- Needs attention: the things the data already knows but never says -----
+// Everything here is read from data the system already holds. It is a note to
+// the coach, never a message to the student — a portal telling a fifteen year
+// old it thinks they are overtraining is a conversation that needs a person.
+// Returns Athlete_IDs only; admin joins them to names it already has.
+var ATTN_QUIET_DAYS = 14;        // no logged session for this long
+var ATTN_SPIKE_RATIO = 1.5;      // a week this far above their own recent normal
+var ATTN_STREAK_DAYS = 7;        // consecutive days trained with no rest
+
+function apAttentionFor_(ss, athleteId, rows, todayIso) {
+  var flags = [];
+  var mine = [], dates = {};
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Athlete_ID).trim() !== String(athleteId).trim()) continue;
+    mine.push(rows[i]);
+    var st = String(rows[i].Status || '').toLowerCase();
+    var d = rows[i].Date ? String(apIsoDate_(rows[i].Date)) : '';
+    if (d && (st === 'done' || st === 'modified')) dates[d] = true;
+  }
+  var logged = Object.keys(dates).sort();
+  var planned = mine.length;
+
+  // --- engagement ---
+  if (!logged.length) {
+    flags.push(planned
+      ? { key: 'never_logged', level: 'engage', text: 'Has ' + planned + ' session' + (planned === 1 ? '' : 's') + ' planned but has never logged one' }
+      : { key: 'nothing', level: 'engage', text: 'Nothing in the portal at all' });
+  } else {
+    var last = logged[logged.length - 1];
+    var gap = Math.round((new Date(todayIso) - new Date(last)) / 86400000);
+    if (gap >= ATTN_QUIET_DAYS) flags.push({ key: 'quiet', level: 'engage', text: 'Last logged ' + gap + ' days ago (' + last + ')' });
+  }
+
+  // --- load spike: a week well above their own recent normal ---
+  var byWeek = {};
+  for (var j = 0; j < mine.length; j++) {
+    var ws = mine[j].Week_Start ? String(apIsoDate_(mine[j].Week_Start)) : '';
+    if (!ws) continue;
+    byWeek[ws] = (byWeek[ws] || 0) + (Number(mine[j].Load_au) || 0);
+  }
+  var weeks = Object.keys(byWeek).sort().filter(function (w) { return w <= todayIso; });
+  var loads = weeks.map(function (w) { return byWeek[w]; }).filter(function (v) { return v > 0; });
+  if (loads.length >= 3) {
+    var recent = loads.slice(-4), peak = loads[loads.length - 1];
+    var prior = loads.slice(0, -1).slice(-3);
+    var avg = prior.length ? prior.reduce(function (a, b) { return a + b; }, 0) / prior.length : 0;
+    if (avg > 0 && peak >= avg * ATTN_SPIKE_RATIO) {
+      flags.push({ key: 'spike', level: 'care',
+        text: 'Load spike — ' + Math.round(peak) + ' au against a recent average of ' + Math.round(avg) + ' au' });
+    }
+  }
+
+  // --- no rest: a run of consecutive days trained ---
+  var run = 1, longest = 1;
+  for (var k = 1; k < logged.length; k++) {
+    var diff = Math.round((new Date(logged[k]) - new Date(logged[k - 1])) / 86400000);
+    if (diff === 1) { run++; if (run > longest) longest = run; } else run = 1;
+  }
+  if (logged.length && longest >= ATTN_STREAK_DAYS) {
+    flags.push({ key: 'norest', level: 'care', text: longest + ' days in a row trained with no rest day' });
+  }
+
+  // --- a goal with nothing behind it ---
+  try {
+    var map = apLoadYearMap(ss, athleteId);
+    if (map && map.aPriority && map.aPriority.event) {
+      var months = 0;
+      (map.sports || []).forEach(function (s) { months += ((s.monthlyStates || []).length); });
+      if (months < 4) {
+        flags.push({ key: 'thin_plan', level: 'plan',
+          text: 'Goal set (' + map.aPriority.event + ') with only ' + months + ' month' + (months === 1 ? '' : 's') + ' planned' });
+      }
+    }
+  } catch (e) {}
+
+  return flags;
+}
+
+// Teacher-gated in the dispatch, like the other admin reads.
+function handleGetAttention(ss) {
+  try {
+    var todayIso = apIsoDate_(new Date());
+    var rows = apReadObjects(apEnsureTrainingSessions(ss));
+    var athletes = apReadObjects(ss.getSheetByName('Athletes'));
+    var out = [];
+    for (var i = 0; i < athletes.length; i++) {
+      var id = String(athletes[i].Athlete_ID || '').trim();
+      if (!id || !/^\d+$/.test(id)) continue;          // skip archived / malformed ids
+      var flags = apAttentionFor_(ss, id, rows, todayIso);
+      if (!flags.length) continue;
+      out.push({ athleteId: id, flags: flags });
+    }
+    return { success: true, today: todayIso, athletes: out };
+  } catch (error) { return { success: false, error: error.toString() }; }
 }
 
 function handleGetGrit(ss, athleteId) {
