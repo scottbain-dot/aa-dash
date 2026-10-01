@@ -7322,10 +7322,7 @@
     _sheetOpenSig = structuralSig(s);
     workoutEditing = false;
     if(!s._checked || s._checked.length !== (s.workout||[]).length){ s._checked = (s.workout||[]).map((_,i)=> (s._checked && s._checked[i]) || false); }
-    renderWorkout(s.workout || []);
-    // "Start workout" — only for a saved training session that actually has exercises.
-    const startBtn = document.getElementById('sheetStartWorkout');
-    if(startBtn) startBtn.style.display = (s.id && (s.workout||[]).length) ? '' : 'none';
+    renderWorkout(s.workout || []);   // also decides whether "Start workout" shows
     // RPE
     document.querySelectorAll('#rpe-row .rpe-pip').forEach(p => p.classList.toggle('selected', s.rpe!=null && +p.dataset.val===+s.rpe));
     // duration (actual)
@@ -7487,6 +7484,12 @@
     const ul = document.getElementById('sheetWorkout');
     const prog = document.getElementById('workoutProgress');
     if(prog) prog.textContent = '';
+    // The moment a session HAS steps it can be walked through — including the
+    // moment they finish typing them. Waiting for the sheet to be reopened hid
+    // the button from the one person who had just earned it.
+    const startBtn = document.getElementById('sheetStartWorkout');
+    if(startBtn) startBtn.style.display =
+      (!workoutEditing && editing && editing.id && (steps||[]).length) ? '' : 'none';
     if(workoutEditing){
       const text = (steps||[]).map(st => typeof st==='string'? st : (st.name||'')+(st.detail? ' — '+st.detail : '')).join('\n');
       ul.innerHTML = '<textarea class="note-input" id="workoutEditor" style="min-height:120px;" placeholder="One step per line, e.g.\nWarm up — 400m easy\nMain set — 8×200">'+esc(text)+'</textarea>';
