@@ -3006,6 +3006,10 @@ function apEnsureYearMaps(ss) {
     ]]);
     sheet.getRange('1:1').setFontWeight('bold');
   }
+  // The components of fitness the athlete has chosen for the year — the
+  // shortlist each month then picks from. Added by name so an existing sheet
+  // gains the column without being rebuilt.
+  apEnsureColumns(sheet, ['Components_JSON']);
   return sheet;
 }
 
@@ -3084,6 +3088,7 @@ function apLoadYearMap(ss, athleteId) {
         sports: apParse(rows[i].Sports_JSON, []),
         testingWindows: apParse(rows[i].Testing_Windows_JSON, []),
         otherCommitments: apParse(rows[i].Other_Commitments_JSON, []),
+        components: apParse(rows[i].Components_JSON, []),
         updated: rows[i].Updated || ''
       };
     }
@@ -3122,6 +3127,7 @@ function handleSaveYearMap(ss, athleteId, yearMap) {
       'Sports_JSON': JSON.stringify(yearMap.sports || []),
       'Testing_Windows_JSON': JSON.stringify(yearMap.testingWindows || []),
       'Other_Commitments_JSON': JSON.stringify(yearMap.otherCommitments || []),
+      'Components_JSON': JSON.stringify(yearMap.components || []),
       'Updated': new Date()
     };
     if (existing && existing.__row) apUpdateRow(sheet, existing.__row, fields);
