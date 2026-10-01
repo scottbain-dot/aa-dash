@@ -4020,6 +4020,10 @@ function apCheckInAttendance_(ss, athleteId, fromIso, toIso) {
     var date = cis[c].Date ? String(apIsoDate_(cis[c].Date)) : '';
     if (!date || date < fromIso || date > toIso) continue;
     if (apSlotBlockedReason_(cis[c], tier)) continue;   // not theirs to attend
+    // Turn-up sessions are not booked, so nobody joins a guest list and there is
+    // no honest way to tell who came. Counting them would mark the whole squad
+    // absent from a session most of them attended.
+    if (String(cis[c].Format || '').trim().toLowerCase() === 'open') continue;
     var seq = String(cis[c].Seq || '').trim() || date;
     (bySeq[seq] = bySeq[seq] || []).push(cis[c]);
   }
@@ -6019,7 +6023,7 @@ function seedCheckInTwo() {
 // break. Everyone, one time, no streaming.
 function apSeedCheckInThree(sheet) {
   var rows = [
-    ['ci3_tue1013', 3, 'Check-in 3 · The whole group', '2026-10-13', '07:15', '08:15', 'group', 40, 'open', 'Before school', '', '', '']
+    ['ci3_tue1013', 3, 'Check-in 3 · The whole group', '2026-10-13', '07:15', '08:15', 'open', 0, 'open', 'Before school', '', '', '']
   ];
   var startRow = sheet.getLastRow() + 1;
   sheet.getRange(startRow, 4, rows.length, 3).setNumberFormat('@');   // Date/Start/End as text
@@ -6327,6 +6331,10 @@ function handleBookCheckIn(ss, athleteId, checkInId) {
     for (var i = 0; i < checkins.length; i++) { if (String(checkins[i].CheckIn_ID).trim() === String(checkInId).trim()) { ci = checkins[i]; break; } }
     if (!ci) return { success: false, error: 'Check-in not found' };
     if (String(ci.Status || 'open') !== 'open') return { success: false, error: 'That check-in is closed.' };
+    // An open session is turn-up-and-go. There is nothing to reserve.
+    if (String(ci.Format || '').trim().toLowerCase() === 'open') {
+      return { success: false, error: 'No booking needed for this one — just turn up.' };
+    }
     // Enforced here as well as in the client — the client greys the card out,
     // but a rule that only exists in the client is not a rule.
     var blockedWhy = apSlotBlockedReason_(ci, apAthleteMovementTier_(ss, athleteId));

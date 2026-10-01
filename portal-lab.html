@@ -4203,6 +4203,19 @@
     font-family: 'Inter', sans-serif; font-size: 12px; color: var(--burgundy); line-height: 1.5; }
   .slot-booked-note strong { font-weight: 700; }
   .slot-card.locked, .slot-card.ineligible { opacity: 0.72; }
+  /* Open session: everyone's in, nothing to book. */
+  .slot-card.slot-open { border-color: var(--gold-light, #f5e6b3); background: var(--cream, #fdf6f2); }
+  /* Time and "no sign-up" fight for one row on a phone — give them their own. */
+  .slot-open .slot-card-foot { flex-direction: column; align-items: flex-start; gap: 3px; }
+  .slot-open-tag { font: 800 9.5px 'Inter', sans-serif; letter-spacing: 0.07em; text-transform: uppercase;
+    background: var(--gold-light, #f5e6b3); color: #6a3a36; border-radius: 999px; padding: 3px 9px; }
+  .slot-open-label { font-weight: 700; color: var(--burgundy, #874B46); }
+  .slot-open-note { font: 500 12px 'Inter', sans-serif; color: var(--ink-mute, #7a6a60);
+    margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line, #eee3dd); line-height: 1.5; }
+  .slot-open-btn { margin-top: 10px; width: 100%; cursor: pointer; display: inline-flex;
+    align-items: center; justify-content: center; gap: 7px; min-height: 42px;
+    font: 700 13px 'Inter', sans-serif; color: var(--burgundy, #874B46); background: #fff;
+    border: 1.5px solid var(--line, #eee3dd); border-radius: 999px; padding: 10px 16px; }
   .slot-status.locked-label { color: var(--ink-mute); }
   .slot-locked-note { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line);
     font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); line-height: 1.5; }
@@ -11904,7 +11917,7 @@
       who: 'Small group — your times depend on the movements you’ve already passed'
     };
     if(String(seq)==='3') return {
-      blurb: 'The whole group! Some fun, some training, some learning.',
+      blurb: 'The whole group! Some fun, some training, some learning. <strong>No sign-up needed</strong> — just turn up.',
       duration: 'An hour, 07:15 to 08:15',
       who: 'Everyone. Bring kit and your phone'
     };
@@ -11945,6 +11958,24 @@
   window.messageCoach = messageCoach;
 
   function slotCardHTML(s, i){
+    // An open session is an announcement, not an offer: everyone's expected,
+    // there's nothing to reserve, and the only action is to flag a problem.
+    if(String(s.format||'').toLowerCase() === 'open'){
+      return '<div class="slot-card slot-open">'+
+        '<div class="slot-card-head">'+
+          '<span class="slot-card-title">'+esc(dowShort(s.date)+' · '+dayNum(s.date)+' '+monShort(s.date))+'</span>'+
+          '<span class="slot-open-tag">Everyone</span>'+
+        '</div>'+
+        '<div class="slot-card-foot">'+
+          '<span class="slot-card-time"><strong>'+esc(s.start)+'–'+esc(s.end)+'</strong>'+(s.letter?' · '+esc(s.letter)+'-day':'')+'</span>'+
+          '<span class="slot-status slot-open-label">No sign-up — just turn up</span>'+
+        '</div>'+
+        '<div class="slot-open-note">Meet in the '+esc(s.location||'PE Office')+'. '+
+          'Can’t make it, or something in the way?</div>'+
+        '<button class="slot-open-btn" onclick="messageCoach()">'+
+          '<i class="ti ti-message-circle" aria-hidden="true"></i> Message Mr Bain</button>'+
+      '</div>';
+    }
     const cls = 'slot-card ' + (s.status||'available');
     const dayLabel = dowShort(s.date)+' · '+dayNum(s.date)+' '+monShort(s.date);
     const spots = (s.capacity ? Math.max(0, s.capacity - (s.booked||0)) : null);
