@@ -1552,7 +1552,7 @@
       <button class="wkt-rest-chip" onclick="wktRest(90)">90s</button>
       <button class="wkt-rest-chip" onclick="wktRest(120)">2 min</button>
     </div>
-    <button class="wkt-finish" onclick="wktFinishOpen()"><i class="ti ti-flag-checkered" aria-hidden="true"></i> Finish workout</button>
+    <button class="wkt-finish" id="wktFinishBtn" onclick="wktFinishOpen()"><i class="ti ti-flag-checkered" aria-hidden="true"></i> Finish workout</button>
   </div>
   <!-- Finish: log effort + time -->
   <div class="wkt-finish-panel" id="wktFinishPanel">
@@ -1567,7 +1567,7 @@
         <input type="text" inputmode="numeric" class="duration-input" id="wktDuration" placeholder="e.g. 45">
         <span class="duration-suffix">min</span>
       </div>
-      <button class="wkt-finish" style="margin-top:18px;" onclick="wktSaveFinish()"><i class="ti ti-check" aria-hidden="true"></i> Save workout</button>
+      <button class="wkt-finish" id="wktSaveBtn" style="margin-top:18px;" onclick="wktSaveFinish()"><i class="ti ti-check" aria-hidden="true"></i> Save workout</button>
       <button class="wkt-cancel-ex" style="width:100%; margin-top:10px; padding:11px; border-radius:11px; background:transparent; border:1px solid var(--line); color:var(--ink-mute); font-weight:600; cursor:pointer;" onclick="wktFinishClose()">Back to exercises</button>
     </div>
   </div>
@@ -1726,11 +1726,11 @@
     </div>
 
     <div class="sheet-section" id="workoutSection">
-      <p class="sheet-section-label">The workout · optional</p>
+      <p class="sheet-section-label" id="workoutSectionLabel">The workout · optional</p>
       <button class="card-cta card-cta-gold" id="sheetStartWorkout" style="width:100%; display:none; margin-bottom:14px;" onclick="startWorkoutFromSheet()"><i class="ti ti-barbell" aria-hidden="true"></i> Start workout</button>
       <ul class="workout-list" id="sheetWorkout"></ul>
       <p class="workout-progress" id="workoutProgress"></p>
-      <button class="workout-edit-btn" onclick="editWorkout()">
+      <button class="workout-edit-btn" id="workoutEditBtn" onclick="editWorkout()">
         <i class="ti ti-edit" aria-hidden="true"></i> Edit workout
       </button>
     </div>
@@ -4311,6 +4311,7 @@
   .wkt-ex-btn:hover { border-color: var(--gold); color: var(--gold); }
   .wkt-ex-editor { margin-top: 11px; padding-top: 11px; border-top: 1px solid rgba(250,243,237,0.12); }
   .wkt-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .wkt-fields-one { grid-template-columns: 1fr; }   /* one free-text target, not four boxes */
   .wkt-field label { display: block; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
     text-transform: uppercase; color: rgba(250,243,237,0.6); margin-bottom: 3px; }
   .wkt-field input { width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.25); border: 1px solid rgba(250,243,237,0.2);
@@ -6918,12 +6919,12 @@
       // a gym session; the old rule hid the screen from them on a technicality.
       const hasWorkout = (s.workout||[]).length;
       if(isLogged(s)){
-        cta = (hasWorkout ? '<button class="card-cta card-cta-ghost" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> Open workout</button>' : '')+
+        cta = (hasWorkout ? '<button class="card-cta card-cta-ghost" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> '+wktWords(s).open+'</button>' : '')+
               '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Edit today’s '+noun+'</button>';
       } else if(hasWorkout){
         // A real workout today → lead with Start workout, with the one-tap log
         // underneath for the days they trained but won't walk through it.
-        cta = '<button class="card-cta card-cta-gold" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> Start workout</button>'+
+        cta = '<button class="card-cta card-cta-gold" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> '+wktWords(s).start+'</button>'+
               '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Add detail</button>';
       } else {
         cta = '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Add detail</button>';
@@ -7487,16 +7488,23 @@
     // The moment a session HAS steps it can be walked through — including the
     // moment they finish typing them. Waiting for the sheet to be reopened hid
     // the button from the one person who had just earned it.
+    const words = wktWords(editing && Object.assign({}, editing, { workout: steps||[] }));
     const startBtn = document.getElementById('sheetStartWorkout');
-    if(startBtn) startBtn.style.display =
-      (!workoutEditing && editing && editing.id && (steps||[]).length) ? '' : 'none';
+    if(startBtn){
+      startBtn.style.display = (!workoutEditing && editing && editing.id && (steps||[]).length) ? '' : 'none';
+      startBtn.innerHTML = '<i class="ti ti-barbell" aria-hidden="true"></i> '+esc(words.start);
+    }
+    const lab = document.getElementById('workoutSectionLabel');
+    if(lab) lab.textContent = words.section;
+    const eb = document.getElementById('workoutEditBtn');
+    if(eb) eb.innerHTML = '<i class="ti ti-edit" aria-hidden="true"></i> '+esc(workoutEditing ? 'Done' : words.edit);
     if(workoutEditing){
       const text = (steps||[]).map(st => typeof st==='string'? st : (st.name||'')+(st.detail? ' — '+st.detail : '')).join('\n');
       ul.innerHTML = '<textarea class="note-input" id="workoutEditor" style="min-height:120px;" placeholder="One step per line, e.g.\nWarm up — 400m easy\nMain set — 8×200">'+esc(text)+'</textarea>';
       return;
     }
     if(!steps || !steps.length){
-      ul.innerHTML = '<li class="workout-step"><div class="workout-step-content"><p class="workout-step-detail">No workout steps yet. Tap “Edit workout” to add them.</p></div></li>';
+      ul.innerHTML = '<li class="workout-step"><div class="workout-step-content"><p class="workout-step-detail">'+esc(words.sheetEmpty)+'</p></div></li>';
       return;
     }
     const checked = (editing && editing._checked) || [];
@@ -8697,6 +8705,38 @@
   function loadWktProgress(id){ try { return JSON.parse(localStorage.getItem(wktKey(id))); } catch(e){ return null; } }
   function clearWktProgress(id){ try { localStorage.removeItem(wktKey(id)); } catch(e){} }
 
+  // ---- Does this read as a gym session, or as a list of sets? ---------------
+  // Workout mode was written for the weights room, and its words show it:
+  // "exercise", "weight / reps", "Finish workout". Put a swim squad set or a
+  // conditioning circuit through it and the labels stop matching what the
+  // athlete is doing, which is how a screen starts to feel like it isn't for you.
+  //
+  // The library tag is the strongest signal — a step matched to EXERCISE_LIBRARY
+  // is a lifted movement with a weight and a rep count. Failing that, the sport
+  // and the session name say it.
+  const STRENGTH_WORDS = /\b(strength|gym|weights?|lifting|lift|barbell|dumbbell|resistance)\b/i;
+  function sessionStyle(s){
+    if(!s) return 'strength';
+    if((s.workout||[]).some(w => w && w.exId)) return 'strength';
+    if(STRENGTH_WORDS.test(String(s.sport||'')+' '+String(s.name||''))) return 'strength';
+    return 'session';
+  }
+  const WKT_WORDS = {
+    strength: { start:'Start workout', open:'Open workout', finish:'Finish workout', save:'Save workout',
+                section:'The workout · optional', edit:'Edit workout',
+                item:'Exercise', target:'weight / reps', targetLabel:'Target',
+                logged:'Workout logged 💪', saved:'Workout saved',
+                empty:'No exercises in this session yet. Add some in the plan, then start again.',
+                sheetEmpty:'No workout steps yet. Tap “Edit workout” to add them.' },
+    session:  { start:'Start session', open:'Open session', finish:'Finish session', save:'Save session',
+                section:'The steps · optional', edit:'Edit steps',
+                item:'Step', target:'target', targetLabel:'Target',
+                logged:'Session logged 💪', saved:'Session saved',
+                empty:'No steps in this session yet. Add them in the plan, then start again.',
+                sheetEmpty:'No steps yet. Tap “Edit steps” to add them.' }
+  };
+  function wktWords(s){ return WKT_WORDS[sessionStyle(s)]; }
+
   // Structured sets/reps/weight/time → a readable target string ("4×5 · 40kg").
   function wktCompose(sx){
     if(!sx) return '';
@@ -8753,9 +8793,14 @@
   function renderWorkoutMode(){
     const list = document.getElementById('wktList');
     const w = wktSession.workout || [];
+    const words = wktWords(wktSession);
     list.innerHTML = w.length
       ? w.map((it,i) => wktCardHTML(it,i)).join('')
-      : '<p style="color:rgba(250,243,237,0.7); font-family:Inter,sans-serif; text-align:center; padding:34px 12px; line-height:1.5;">No exercises in this session yet. Add some in the plan, then start again.</p>';
+      : '<p style="color:rgba(250,243,237,0.7); font-family:Inter,sans-serif; text-align:center; padding:34px 12px; line-height:1.5;">'+esc(words.empty)+'</p>';
+    const fin = document.getElementById('wktFinishBtn');
+    if(fin) fin.innerHTML = '<i class="ti ti-flag-checkered" aria-hidden="true"></i> '+esc(words.finish);
+    const sav = document.getElementById('wktSaveBtn');
+    if(sav) sav.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> '+esc(words.save);
     wktUpdateProgress();
   }
   function wktUpdateProgress(){
@@ -8773,27 +8818,41 @@
     const cue = (lib && lib.cue) || it.cue || '';
     const caution = lib && lib.caution;
     const editing = (wktEditing === i);
+    const w = wktWords(wktSession);
     let editor = '';
     if(editing){
-      const sx = it.sx || wktParse(it.detail);
-      editor = '<div class="wkt-ex-editor"><div class="wkt-fields">'+
-        wktField('Sets','wktf_sets_'+i, sx.sets, '')+
-        wktField('Reps','wktf_reps_'+i, sx.reps, '')+
-        wktField('Weight','wktf_weight_'+i, sx.weight, 'e.g. 40kg')+
-        wktField('Time','wktf_time_'+i, sx.time, 'e.g. 30s')+
-      '</div><div class="wkt-editor-actions">'+
-        '<button class="wkt-cancel-ex" onclick="wktCancelEdit()">Cancel</button>'+
-        '<button class="wkt-save-ex" onclick="wktSaveEx('+i+')">Save</button>'+
-      '</div></div>';
+      // Sets/reps/weight/time is the right shape for a lift and the wrong shape
+      // for "8×100m off 1:40". Anything that isn't a gym movement gets one free
+      // text field instead of four boxes it doesn't fit into.
+      if(sessionStyle(wktSession) === 'session'){
+        editor = '<div class="wkt-ex-editor"><div class="wkt-fields wkt-fields-one">'+
+          wktField(w.targetLabel,'wktf_target_'+i, it.detail,
+            /swim|pool/i.test(String(wktSession.sport||'')) ? 'e.g. 8×100m off 1:40' : 'e.g. 6×400m, 90s jog')+
+        '</div><div class="wkt-editor-actions">'+
+          '<button class="wkt-cancel-ex" onclick="wktCancelEdit()">Cancel</button>'+
+          '<button class="wkt-save-ex" onclick="wktSaveEx('+i+')">Save</button>'+
+        '</div></div>';
+      } else {
+        const sx = it.sx || wktParse(it.detail);
+        editor = '<div class="wkt-ex-editor"><div class="wkt-fields">'+
+          wktField('Sets','wktf_sets_'+i, sx.sets, '')+
+          wktField('Reps','wktf_reps_'+i, sx.reps, '')+
+          wktField('Weight','wktf_weight_'+i, sx.weight, 'e.g. 40kg')+
+          wktField('Time','wktf_time_'+i, sx.time, 'e.g. 30s')+
+        '</div><div class="wkt-editor-actions">'+
+          '<button class="wkt-cancel-ex" onclick="wktCancelEdit()">Cancel</button>'+
+          '<button class="wkt-save-ex" onclick="wktSaveEx('+i+')">Save</button>'+
+        '</div></div>';
+      }
     }
     return '<div class="wkt-card'+(done?' done':'')+'">'+
       '<button class="wkt-check" onclick="wktToggle('+i+')" aria-label="Mark done"><i class="ti ti-check" aria-hidden="true"></i></button>'+
       '<div class="wkt-main">'+
-        '<p class="wkt-ex-name">'+esc(it.name||'Exercise')+'</p>'+
+        '<p class="wkt-ex-name">'+esc(it.name||w.item)+'</p>'+
         (rx? '<p class="wkt-ex-rx">'+esc(rx)+'</p>':'')+
         (cue? '<p class="wkt-ex-cue">'+esc(cue)+'</p>':'')+
         (caution? '<span class="wkt-ex-caution"><i class="ti ti-alert-triangle" aria-hidden="true"></i> '+esc(caution)+'</span>':'')+
-        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' weight / reps</button><button class="wkt-ex-btn" onclick="wktExHistory('+i+')"><i class="ti ti-history" aria-hidden="true"></i> History</button><button class="wkt-ex-btn" onclick="wktLogPB('+i+')"><i class="ti ti-trophy" aria-hidden="true"></i> PB</button></div>')+
+        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' '+w.target+'</button><button class="wkt-ex-btn" onclick="wktExHistory('+i+')"><i class="ti ti-history" aria-hidden="true"></i> History</button><button class="wkt-ex-btn" onclick="wktLogPB('+i+')"><i class="ti ti-trophy" aria-hidden="true"></i> PB</button></div>')+
         editor+
       '</div>'+
     '</div>';
@@ -8803,7 +8862,10 @@
     const now = !wktSession._checked[i];
     wktSession._checked[i] = now;
     saveWktProgress();
-    if(now) wktRest(90);   // auto-rest after finishing a set (fun + useful)
+    // No automatic countdown. Ticking a step used to start a 90-second clock
+    // whether or not resting was the next thing they were doing — wrong after a
+    // swim set, wrong mid-circuit, and a timer nobody started is just noise.
+    // The rest chips are right there when they want one.
     renderWorkoutMode();
   }
   // Log a PB for this exact exercise, prefilled with its current weight/reps.
@@ -8865,9 +8927,13 @@
   function wktCancelEdit(){ wktEditing = -1; renderWorkoutMode(); }
   function wktSaveEx(i){
     const g = id => { const e=document.getElementById(id); return e ? e.value.trim() : ''; };
-    const sx = { sets:g('wktf_sets_'+i), reps:g('wktf_reps_'+i), weight:g('wktf_weight_'+i), time:g('wktf_time_'+i) };
     const it = wktSession.workout[i];
-    it.sx = sx; const d = wktCompose(sx); if(d) it.detail = d;
+    if(sessionStyle(wktSession) === 'session'){
+      it.detail = g('wktf_target_'+i);   // one free-text target, written as typed
+    } else {
+      const sx = { sets:g('wktf_sets_'+i), reps:g('wktf_reps_'+i), weight:g('wktf_weight_'+i), time:g('wktf_time_'+i) };
+      it.sx = sx; const d = wktCompose(sx); if(d) it.detail = d;
+    }
     wktEditing = -1; saveWktProgress(); renderWorkoutMode();
     persistWktSession();   // carry the change to the day session now, not only on Finish
   }
@@ -8939,7 +9005,7 @@
     document.getElementById('workoutMode').classList.remove('open');
     document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
     if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
-    showToast(logged ? 'Workout logged 💪' : 'Workout saved', 'success');
+    showToast(logged ? wktWords(wktSession).logged : wktWords(wktSession).saved, 'success');
     if(logged){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
     try {
       const res = await apiData({ action:'saveSession', session: Object.assign({}, wktSession, { id: isNew ? null : wktSession.id }) });
