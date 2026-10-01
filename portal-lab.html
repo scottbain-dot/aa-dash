@@ -3902,30 +3902,18 @@
   .sport-level-light { background: #efe7e2; color: #8a7a72; }
   .sport-level-off   { background: transparent; color: #a3948c; border: 1px solid #e2d6cf; }
   .plan-row .sport-level-off ~ *, .plan-row:has(.sport-level-off) .plan-detail { opacity: 0.75; }
-  /* Block card — what this stretch of the year is, and what it means per sport. */
-  .blk-card { padding: 16px 18px; }
-  .blk-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  .blk-name { font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 700; color: var(--ink, #1a1a1a); }
-  .blk-when { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
-    text-transform: uppercase; color: var(--ink-mute, #7a6a60); }
-  .blk-goal { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 14px;
-    color: var(--ink-soft, #4a3f39); margin: 8px 0 0; line-height: 1.45; }
-  .blk-sports { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-  .blk-sport { display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    padding: 6px 0; border-top: 1px solid var(--line, #eee3dd); }
-  .blk-sport:first-child { border-top: none; }
-  .blk-sport-name { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink, #1a1a1a); }
-  .blk-sport-lv { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
-    text-transform: uppercase; border-radius: 999px; padding: 3px 9px; }
-  .blk-lv-lead  { background: var(--gold-light, #f5e6b3); color: #6a3a36; }
-  .blk-lv-full  { background: #e7efe4; color: #4c6b49; }
-  .blk-lv-light { background: #efe7e2; color: #8a7a72; }
-  .blk-lv-off   { background: transparent; color: #a3948c; border: 1px solid #e2d6cf; }
-  .blk-comps { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-soft, #4a3f39);
-    margin: 9px 0 0; }
-  .blk-comps strong { color: var(--burgundy, #874B46); }
-  .blk-freq { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60);
-    margin: 4px 0 0; line-height: 1.45; }
+  /* What this block asks of the week — one quiet tappable line, not a card.
+     The eyebrow strip above already names the block and the week number, and the
+     Year tab owns the season breakdown, so this only carries what neither says. */
+  .blk-line { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    cursor: pointer; background: var(--cream, #fdf6f2); border: 1px solid var(--line, #eee3dd);
+    border-left: 3px solid var(--gold, #D4AF37); border-radius: 12px; padding: 10px 13px;
+    margin: 0 0 10px; }
+  .blk-line-txt { flex: 1 1 auto; min-width: 0; font-family: 'Inter', sans-serif; font-size: 12.5px;
+    color: var(--ink-soft, #4a3f39); line-height: 1.45; }
+  .blk-line-txt strong { color: var(--ink, #1a1a1a); font-weight: 700; }
+  .blk-line-txt em { font-style: normal; color: var(--burgundy, #874B46); font-weight: 600; }
+  .blk-line-go { flex: 0 0 auto; color: var(--ink-mute, #7a6a60); font-size: 15px; }
   /* Month sheet: what a phase means, and what the month is building. */
   .state-help { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute, #7a6a60);
     margin: 10px 0 0; line-height: 1.5; min-height: 18px; }
@@ -3967,10 +3955,6 @@
     color: var(--ink, #1a1a1a); background: #fff; border: 1.5px solid var(--line, #eee3dd);
     border-radius: 999px; padding: 9px 15px; min-height: 40px; }
   .comp-pill.on { background: var(--burgundy, #874B46); border-color: var(--burgundy, #874B46); color: #fff; }
-  .blk-note { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60);
-    margin: 10px 0 0; line-height: 1.5; }
-  .blk-link { margin-top: 10px; background: none; border: none; padding: 0; cursor: pointer;
-    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--burgundy, #874B46); }
   /* Your season — the year as blocks, current one marked. */
   .sb-intro { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 13.5px;
     color: var(--ink-soft, #4a3f39); margin: 0 0 12px; line-height: 1.5; }
@@ -4023,10 +4007,15 @@
   .qtap-easy { background: #e7efe4; color: #3f5d3c; border-color: #cfe0ca; }
   .qtap-ok   { background: #fbf0d6; color: #6a5420; border-color: #f0e0b8; }
   .qtap-hard { background: #f6e0dc; color: #7c3b33; border-color: #ecc9c2; }
-  /* Inline on a day row: quieter, smaller, never wider than the row. */
-  .qtap-compact { margin: 8px 0 2px; gap: 5px; }
-  .qtap-compact .qtap-lead { font-size: 11px; }
-  .qtap-compact .qtap-btn { flex: 0 1 auto; min-width: 0; min-height: 32px; font-size: 11.5px; padding: 6px 11px; }
+  /* Inline on a day row the content column is narrow — on a phone the label and
+     three buttons ran past it and wrapped mid-row, which looked broken. So in
+     compact mode it's a deliberate two rows: the label, then three equal
+     buttons. Predictable at any width, and the buttons stay thumb-sized. */
+  .qtap-compact { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px; margin: 8px 0 2px; }
+  .qtap-compact .qtap-lead { grid-column: 1 / -1; font-size: 11px; margin: 0; }
+  .qtap-compact .qtap-btn { min-width: 0; min-height: 34px; font-size: 11.5px; padding: 6px 4px; }
+  @media (max-width: 360px) { .qtap-compact .qtap-btn { font-size: 10.5px; padding: 6px 2px; } }
   .plan-info { min-width: 0; }
   .plan-name {
     font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink);
@@ -6399,42 +6388,66 @@
     initWeekDrag();   // grip-drag a session onto another day
   }
 
-  // What this block is, and what it means for each of the athlete's sports.
-  // The one place the year plan actually explains the week. Nothing here changes
-  // a session — it says what the plan expects, and the athlete decides.
+  // What this block asks of THIS week — one line, and only when it has something
+  // to say that isn't already on screen.
+  //
+  // This was a card: block name, week N of M, a row per sport, a link to the
+  // Year tab. On a phone, for a single-sport athlete, every line of it was a
+  // repeat — the strip directly above already reads "Hyrox season · week 1 of 4",
+  // and the Year tab owns the season breakdown. It looked like a heading with
+  // nothing underneath. So it now carries only the two things the week genuinely
+  // needs from the year plan — how often to train the lead sport, and which
+  // sports are being treated differently — and renders nothing when it has
+  // neither. Still a label, never a change: no session is touched here.
+  const LEAD_FREQ = {
+    build:    'Aim for <strong>2–3 sessions a week</strong>',
+    maintain: 'Aim for <strong>about 1 session a week</strong>',
+    peak:     '<strong>Keep it sharp</strong> — high intensity, less volume',
+    recover:  '<strong>Deliberate rest</strong> — light movement only',
+    off:      '<strong>A proper break</strong> — nothing planned'
+  };
   function weekBlockCard(){
     const b = currentBlock();
     if(!b) return '';
     const month = MONTHS[new Date().getMonth()];
-    const rows = plannedSports().map(function(sp){
-      const lv = sportLevel(sp.name);
-      if(!lv) return '';
-      const say = lv==='lead'  ? 'leading'
-                : lv==='full'  ? 'building'
-                : lv==='light' ? 'ticking over'
-                :                'not this block';
-      return '<div class="blk-sport"><span class="blk-sport-name">'+esc(sp.name)+'</span>'+
-             '<span class="blk-sport-lv blk-lv-'+lv+'">'+say+'</span></div>';
-    }).join('');
-    const off = sportsOffThisBlock();
-    const offNote = off.length
-      ? '<p class="blk-note">'+esc(off.join(' and '))+' session'+(off.length>1?'s aren’t':' isn’t')+
-        ' being added this block — add one any time.</p>'
-      : '';
-    const ms = ((plannedSports().find(s=>String(s.name||'').trim().toLowerCase()===String(b.sport||'').trim().toLowerCase())||{}).monthlyStates||[])
+    const lead = String(b.sport||'').trim();
+    const leadKey = lead.toLowerCase();
+
+    const parts = [];
+    // 1. The frequency. "Build" and "maintain" never said this on their own, and
+    //    it is the question students actually ask.
+    if(LEAD_FREQ[b.phase]) parts.push(LEAD_FREQ[b.phase] + (lead ? ' on ' + esc(lead) : ''));
+    // 2. What they said they're building this month, if they picked anything.
+    const ms = ((plannedSports().find(s=>String(s.name||'').trim().toLowerCase()===leadKey)||{}).monthlyStates||[])
                  .find(m=>m.month===month) || {};
-    // What this block is actually building, and what that asks of them.
     const comps = componentLabels(ms.components);
-    const compLine = comps.length
-      ? '<p class="blk-comps">Building: <strong>'+esc(comps.join(' · '))+'</strong></p>' : '';
-    const freq = PHASE_HELP[b.phase] ? '<p class="blk-freq">'+esc(PHASE_HELP[b.phase])+'</p>' : '';
-    const goal = ms.focus ? '<p class="blk-goal">'+esc(ms.focus)+'</p>' : '';
-    return '<div class="card blk-card">'+
-      '<div class="blk-head"><span class="blk-name">'+esc(b.label)+'</span>'+
-        '<span class="blk-when">week '+b.week+' of '+b.weeks+' · '+esc(monthRangeLabel(b))+'</span></div>'+
-      compLine + freq + goal + (rows ? '<div class="blk-sports">'+rows+'</div>' : '') + offNote +
-      '<button class="blk-link" onclick="switchTab(\'year\')">See your year →</button>'+
-    '</div>';
+    if(comps.length) parts.push('building <em>'+esc(comps.join(' and ').toLowerCase())+'</em>');
+
+    // 3. Only sports being treated DIFFERENTLY to the lead. A second sport also
+    //    in full build needs no mention; one ticking over or sitting out does.
+    const named = {};
+    const aside = [];
+    plannedSports().forEach(function(sp){
+      const nm = String(sp.name||'').trim();
+      if(!nm || nm.toLowerCase() === leadKey) return;
+      const lv = sportLevel(nm);
+      if(lv === 'light'){ named[nm.toLowerCase()] = 1; aside.push(esc(nm)+' ticks over'); }
+      else if(lv === 'off'){ named[nm.toLowerCase()] = 1; aside.push(esc(nm)+' sits out'); }
+    });
+    // A sport their program still carries that the year map has resting — worth
+    // saying even when it never made the year map's sport list.
+    sportsOffThisBlock().forEach(function(nm){
+      if(String(nm).trim().toLowerCase() === leadKey) return;
+      if(named[String(nm).trim().toLowerCase()]) return;
+      aside.push(esc(nm)+' sits out');
+    });
+
+    const txt = parts.join(', ') + (aside.length ? '. ' + aside.join(', ') + ' this block' : '');
+    if(!txt.trim()) return '';
+    return '<button class="blk-line" onclick="switchTab(\'year\')">'+
+      '<span class="blk-line-txt">'+txt+'.</span>'+
+      '<i class="ti ti-chevron-right blk-line-go" aria-hidden="true"></i>'+
+    '</button>';
   }
 
   // Prominent "Build my program" entry — top of My Program, opens the build hub
@@ -6780,17 +6793,21 @@
   // three buttons, one tap, done. Duration comes from the plan, effort from
   // which button they press. The full sheet is still there for anyone who wants
   // to add detail, and editing afterwards works exactly as before.
+  // Inline on a day row there is about 50px per button, so "Moderate" ran over
+  // its own edge on a phone. Same three choices, a short word where it's tight.
   const QUICK_EFFORT = [
-    { key:'easy', label:'Easy',     rpe:4 },
-    { key:'ok',   label:'Moderate', rpe:6 },
-    { key:'hard', label:'Hard',     rpe:8 }
+    { key:'easy', label:'Easy',     short:'Easy', rpe:4 },
+    { key:'ok',   label:'Moderate', short:'OK',   rpe:6 },
+    { key:'hard', label:'Hard',     short:'Hard', rpe:8 }
   ];
   function quickLogRowHTML(s, compact){
     if(!s || isLogged(s)) return '';
     return '<div class="qtap'+(compact?' qtap-compact':'')+'">'+
       '<span class="qtap-lead">Did it —</span>'+
       QUICK_EFFORT.map(e =>
-        '<button class="qtap-btn qtap-'+e.key+'" onclick="event.stopPropagation(); quickLogDone(\''+s.id+'\','+e.rpe+')">'+e.label+'</button>'
+        '<button class="qtap-btn qtap-'+e.key+'" aria-label="Log as '+e.label.toLowerCase()+'"'+
+          ' onclick="event.stopPropagation(); quickLogDone(\''+s.id+'\','+e.rpe+')">'+
+          (compact ? e.short : e.label)+'</button>'
       ).join('')+
     '</div>';
   }
