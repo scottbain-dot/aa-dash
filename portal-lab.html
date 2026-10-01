@@ -3896,6 +3896,31 @@
     margin: 10px 0 0; line-height: 1.5; }
   .blk-link { margin-top: 10px; background: none; border: none; padding: 0; cursor: pointer;
     font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--burgundy, #874B46); }
+  /* Your season — the year as blocks, current one marked. */
+  .sb-intro { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 13.5px;
+    color: var(--ink-soft, #4a3f39); margin: 0 0 12px; line-height: 1.5; }
+  .sb-list { display: flex; flex-direction: column; }
+  .sb-row { display: flex; gap: 14px; padding: 11px 0; border-top: 1px solid var(--line, #eee3dd); }
+  .sb-row:first-child { border-top: none; }
+  .sb-row.is-now { background: var(--cream, #fdf6f2); margin: 0 -18px; padding: 13px 18px;
+    border-radius: 10px; border-top-color: transparent; }
+  .sb-when { flex: 0 0 72px; display: flex; flex-direction: column; gap: 2px; }
+  .sb-months { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.03em; text-transform: uppercase; color: var(--burgundy, #874B46); }
+  .sb-weeks { font-family: 'Inter', sans-serif; font-size: 10.5px; color: var(--ink-mute, #7a6a60); }
+  .sb-body { min-width: 0; flex: 1; }
+  .sb-name { font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 600;
+    color: var(--ink, #1a1a1a); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .sb-now { font-family: 'Inter', sans-serif; font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase; background: var(--gold-light, #f5e6b3); color: #6a3a36;
+    border-radius: 999px; padding: 2px 8px; }
+  .sb-prog { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px;
+    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60); }
+  .sb-long { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-mute, #7a6a60);
+    margin: 5px 0 0; line-height: 1.45; font-style: italic; }
+  .sb-build { margin-top: 7px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12.5px;
+    font-weight: 700; color: var(--burgundy, #874B46); background: #fff;
+    border: 1.5px solid var(--line, #eee3dd); border-radius: 999px; padding: 7px 14px; }
   /* Week grid, before there is a week to show. */
   .week-blank { padding: 26px 18px 22px; text-align: center; }
   .week-blank-line { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 14.5px;
@@ -10267,6 +10292,43 @@
     '</div>';
   }
 
+  // ---- Your season: the year read back as blocks, with the program on each ----
+  // Eight athletes on the roster set a year map and never built a program. The
+  // Year tab ended with a filled-in grid and no next step. This turns the grid
+  // into the chapters it implies, marks the one you're in, and puts the way into
+  // a program on the block that needs it.
+  function seasonBlocksCard(){
+    const blocks = yearBlocks();
+    if(!blocks.length) return '';
+    const cur = currentBlock();
+    const hasProgram = programHasAnySessions();
+    const progName = (state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || 'My program';
+    const rows = blocks.map(function(b){
+      const isNow = !!(cur && cur.startISO === b.startISO && cur.sport === b.sport);
+      const weeks = b.weeks + ' week' + (b.weeks===1?'':'s');
+      const prog = !isNow ? ''
+        : (hasProgram
+            ? '<span class="sb-prog"><i class="ti ti-repeat" aria-hidden="true"></i> '+esc(progName)+'</span>'
+            : '<button class="sb-build" onclick="switchTab(\'week\'); openMoreActions();">Build a program for this block →</button>');
+      // A block only gets this long when months were left on one setting. Nobody
+      // trains the same way for half a year, so say so where it can be fixed.
+      const longRun = b.weeks > 16
+        ? '<p class="sb-long">That’s a long stretch on one setting. Splitting it gives each part a job.</p>'
+        : '';
+      return '<div class="sb-row'+(isNow?' is-now':'')+'">'+
+        '<div class="sb-when"><span class="sb-months">'+esc(monthRangeLabel(b))+'</span>'+
+          '<span class="sb-weeks">'+weeks+'</span></div>'+
+        '<div class="sb-body"><div class="sb-name">'+esc(b.label)+
+          (isNow?'<span class="sb-now">now · week '+cur.week+'</span>':'')+'</div>'+ prog + longRun +'</div>'+
+      '</div>';
+    }).join('');
+    return '<div class="card">'+
+      '<p class="card-eyebrow">Your season</p>'+
+      '<p class="sb-intro">Your year, in the blocks your plan adds up to. Each one has a job.</p>'+
+      '<div class="sb-list">'+rows+'</div>'+
+    '</div>';
+  }
+
   function renderYear(){
     const view = document.getElementById('view-year');
     if(!hasYear()){ view.innerHTML = onboardHTML(); return; }
@@ -10278,6 +10340,7 @@
     const gridMode = (multi || yearForceGrid) && yearFocus === null;
     let html = '<div class="card-stack">';
     html += yearHeroHTML(ym, ap);
+    html += seasonBlocksCard();
 
     if(gridMode){
       html += overviewGridHTML(ym, curMonth, ap);
