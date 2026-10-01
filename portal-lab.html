@@ -4593,7 +4593,8 @@
     state.learn = demo.learn || { blocks: {} };
     state.availability = [];
     state.grit = { score: 78, band: 'Consistent', enough: true,
-      parts: { adherence:{pct:80,sessions:19,weeks:8,weeksFull:5,target:3}, checkins:{pct:100,attended:2,processed:2,unmarked:0} } };
+      parts: { adherence:{pct:80,sessions:19,weeks:8,weeksFull:5,target:3},
+               checkins:{pct:100,made:2,missed:0,counted:2,unknown:0,attended:2,processed:2,unmarked:0} } };
     // Demo CV data: some tested, some not, so the blurred locks are visible.
     state.testing = [
       { key:'broad_jump', label:'Broad jump', unit:'cm', done:true, value:212, date:'2026-09-02', tests:2, first:198, delta:{ raw:14, improved:true } },

@@ -3879,14 +3879,16 @@ function apComputeGrit(ss, athleteId) {
       var ciSheet = ss.getSheetByName('Check_Ins');
       if (ciSheet) {
         var att = apCheckInAttendance_(ss, athleteId, fromIso, todayIso);
-        if (att.processed > 0) {
+        if (att.counted > 0) {
           out.parts.checkins = {
-            pct: Math.round(att.attended / att.processed * 100),
-            attended: att.attended, processed: att.processed, unmarked: att.unmarked
+            pct: Math.round(att.made / att.counted * 100),
+            made: att.made, missed: att.missed, counted: att.counted, unknown: att.unknown,
+            attended: att.made, processed: att.counted, unmarked: att.unknown
           };
-        } else if (att.unmarked > 0) {
-          // Nothing marked yet — report it so the teacher view can nudge.
-          out.parts.checkinsPending = att.unmarked;
+        } else if (att.unknown > 0) {
+          // Booked, but nothing marked off yet — report it so the teacher view
+          // can nudge rather than the student being scored on the coach's admin.
+          out.parts.checkinsPending = att.unknown;
         }
       }
     } catch (ciErr) { /* check-ins are optional — leave the component out */ }
@@ -3963,14 +3965,23 @@ function apEventMarkedDone_(title) {
 // processed = events the teacher has ticked; attended = ticked events where
 // this athlete is still on the guest list. Unticked events are counted as
 // unmarked and excluded from the score entirely.
+// How many of the check-ins that have HAPPENED did this athlete make?
+//
+// Counted per check-in (Seq), not per time-slot: a check-in offering six times
+// is one check-in, and the question is whether they came to it. Never booking
+// is a miss — turning up is the thing being measured, and the old version
+// scored attendance only among check-ins they had already chosen to book, so
+// an athlete who ignored every one of them paid no price at all.
+//
+// A check-in they booked but which has not been marked off on the calendar is
+// unknown rather than missed, so a gap in the coach's marking never counts
+// against a student. A check-in they were not eligible for is skipped entirely.
 function apCheckInAttendance_(ss, athleteId, fromIso, toIso) {
-  var out = { attended: 0, processed: 0, unmarked: 0 };
+  var out = { made: 0, missed: 0, counted: 0, unknown: 0, attended: 0, processed: 0, unmarked: 0 };
   var ciSheet = ss.getSheetByName('Check_Ins');
   var bkSheet = ss.getSheetByName('Bookings');
   if (!ciSheet || !bkSheet) return out;
 
-  // Which check-ins did this athlete book? Only those can count either way —
-  // a check-in they never booked isn't a no-show.
   var bks = apReadObjects(bkSheet);
   var booked = {};
   var myEmail = '';
@@ -3981,33 +3992,55 @@ function apCheckInAttendance_(ss, athleteId, fromIso, toIso) {
     booked[cid] = String(bks[b].Status || '').toLowerCase();
     if (bks[b].Athlete_Email) myEmail = String(bks[b].Athlete_Email).toLowerCase().trim();
   }
-  if (!myEmail) return out;
+  if (!myEmail) {
+    try { var a = apGetAthleteById(ss, athleteId); myEmail = a ? String(a.Email || '').toLowerCase().trim() : ''; } catch (e) {}
+  }
 
   var cal = null;
-  try { cal = apCheckinCalendar(); } catch (e) { return out; }
-  if (!cal) return out;
+  try { cal = apCheckinCalendar(); } catch (e) { cal = null; }
 
+  var tier = apAthleteMovementTier_(ss, athleteId);
   var cis = apReadObjects(ciSheet);
+
+  // Group the slots into the check-ins they belong to.
+  var bySeq = {};
   for (var c = 0; c < cis.length; c++) {
-    var id = String(cis[c].CheckIn_ID || '').trim();
     var date = cis[c].Date ? String(apIsoDate_(cis[c].Date)) : '';
-    if (!id || !date || date < fromIso || date > toIso) continue;
-    if (booked[id] !== 'booked') continue;            // they didn't book it
-    var evId = String(cis[c].Event_ID || '').trim();
-    if (!evId) { out.unmarked++; continue; }
-    var ev = null;
-    try { ev = cal.getEventById(evId); } catch (evErr) { ev = null; }
-    if (!ev) { out.unmarked++; continue; }
-    if (!apEventMarkedDone_(ev.getTitle())) { out.unmarked++; continue; }
-    out.processed++;
-    // Still on the guest list => they were there.
-    try {
-      var guests = ev.getGuestList() || [];
-      for (var g = 0; g < guests.length; g++) {
-        if (String(guests[g].getEmail() || '').toLowerCase().trim() === myEmail) { out.attended++; break; }
-      }
-    } catch (gErr) { /* can't read guests — counts as processed, not attended */ }
+    if (!date || date < fromIso || date > toIso) continue;
+    if (apSlotBlockedReason_(cis[c], tier)) continue;   // not theirs to attend
+    var seq = String(cis[c].Seq || '').trim() || date;
+    (bySeq[seq] = bySeq[seq] || []).push(cis[c]);
   }
+
+  Object.keys(bySeq).forEach(function (seq) {
+    var slots = bySeq[seq];
+    var anyBooked = false, present = false, marked = false;
+    for (var i = 0; i < slots.length; i++) {
+      var id = String(slots[i].CheckIn_ID || '').trim();
+      if (booked[id] !== 'booked') continue;
+      anyBooked = true;
+      var evId = String(slots[i].Event_ID || '').trim();
+      if (!cal || !evId) continue;
+      var ev = null;
+      try { ev = cal.getEventById(evId); } catch (evErr) { ev = null; }
+      if (!ev || !apEventMarkedDone_(ev.getTitle())) continue;
+      marked = true;
+      try {
+        var guests = ev.getGuestList() || [];
+        for (var g = 0; g < guests.length; g++) {
+          if (String(guests[g].getEmail() || '').toLowerCase().trim() === myEmail) { present = true; break; }
+        }
+      } catch (gErr) { /* can't read the guest list — leave it unknown */ }
+      if (present) break;
+    }
+    if (!anyBooked) { out.counted++; out.missed++; return; }      // never booked = missed
+    if (!marked) { out.unknown++; return; }                        // not marked off yet
+    out.counted++;
+    if (present) out.made++; else out.missed++;
+  });
+
+  // Legacy field names, kept so anything still reading them keeps working.
+  out.attended = out.made; out.processed = out.counted; out.unmarked = out.unknown;
   return out;
 }
 
