@@ -1879,6 +1879,7 @@
         <button class="state-pill" data-state="recover" onclick="pickState('recover')">Recover</button>
         <button class="state-pill" data-state="off" onclick="pickState('off')">Off</button>
       </div>
+      <p class="state-help" id="stateHelp"></p>
       <div class="split-row" onclick="toggleSplit()">
         <div class="split-row-text"><strong>Split this month</strong><small>Give the first &amp; second half different phases</small></div>
         <div class="toggle-switch" id="splitToggle"></div>
@@ -1896,8 +1897,11 @@
     </div>
 
     <div class="sheet-section">
-      <p class="sheet-section-label">Focus this block</p>
-      <input class="duration-input plan-field" id="blockFocus" placeholder="e.g. Aerobic base. Hold technique under fatigue.">
+      <p class="sheet-section-label">What are you building this month?</p>
+      <p class="comp-help">Pick what this month is actually for. You can choose more than one — but two or three is usually plenty.</p>
+      <div class="comp-picker" id="compPicker"></div>
+      <p class="sheet-section-label" style="margin-top:14px;">Anything else · optional</p>
+      <input class="duration-input plan-field" id="blockFocus" placeholder="e.g. hold technique under fatigue">
     </div>
 
     <div class="sheet-section">
@@ -3907,6 +3911,21 @@
   .blk-lv-full  { background: #e7efe4; color: #4c6b49; }
   .blk-lv-light { background: #efe7e2; color: #8a7a72; }
   .blk-lv-off   { background: transparent; color: #a3948c; border: 1px solid #e2d6cf; }
+  .blk-comps { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-soft, #4a3f39);
+    margin: 9px 0 0; }
+  .blk-comps strong { color: var(--burgundy, #874B46); }
+  .blk-freq { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60);
+    margin: 4px 0 0; line-height: 1.45; }
+  /* Month sheet: what a phase means, and what the month is building. */
+  .state-help { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute, #7a6a60);
+    margin: 10px 0 0; line-height: 1.5; min-height: 18px; }
+  .comp-help { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60);
+    margin: 0 0 10px; line-height: 1.5; }
+  .comp-picker { display: flex; flex-wrap: wrap; gap: 7px; }
+  .comp-pill { cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--ink, #1a1a1a); background: #fff; border: 1.5px solid var(--line, #eee3dd);
+    border-radius: 999px; padding: 9px 15px; min-height: 40px; }
+  .comp-pill.on { background: var(--burgundy, #874B46); border-color: var(--burgundy, #874B46); color: #fff; }
   .blk-note { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60);
     margin: 10px 0 0; line-height: 1.5; }
   .blk-link { margin-top: 10px; background: none; border: none; padding: 0; cursor: pointer;
@@ -6350,11 +6369,16 @@
       : '';
     const ms = ((plannedSports().find(s=>String(s.name||'').trim().toLowerCase()===String(b.sport||'').trim().toLowerCase())||{}).monthlyStates||[])
                  .find(m=>m.month===month) || {};
+    // What this block is actually building, and what that asks of them.
+    const comps = componentLabels(ms.components);
+    const compLine = comps.length
+      ? '<p class="blk-comps">Building: <strong>'+esc(comps.join(' · '))+'</strong></p>' : '';
+    const freq = PHASE_HELP[b.phase] ? '<p class="blk-freq">'+esc(PHASE_HELP[b.phase])+'</p>' : '';
     const goal = ms.focus ? '<p class="blk-goal">'+esc(ms.focus)+'</p>' : '';
     return '<div class="card blk-card">'+
       '<div class="blk-head"><span class="blk-name">'+esc(b.label)+'</span>'+
         '<span class="blk-when">week '+b.week+' of '+b.weeks+' · '+esc(monthRangeLabel(b))+'</span></div>'+
-      goal + (rows ? '<div class="blk-sports">'+rows+'</div>' : '') + offNote +
+      compLine + freq + goal + (rows ? '<div class="blk-sports">'+rows+'</div>' : '') + offNote +
       '<button class="blk-link" onclick="switchTab(\'year\')">See your year →</button>'+
     '</div>';
   }
@@ -10310,7 +10334,7 @@
       '<p class="card-eyebrow">Plan your months'+toggle+'</p>'+
       '<p class="yog-lede"><strong>Tap any month</strong> to say what you’re doing in it. '+
         'Your season above is built from these.</p>'+
-      '<div class="yog-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+
+      '<div class="yog-legend">'+legendItem('build',PHASE_SHORT.build)+legendItem('maintain',PHASE_SHORT.maintain)+legendItem('peak','big event')+legendItem('recover','rest')+
         '<span class="year-legend-item"><span class="legend-emoji"><i class="ti ti-trophy" style="color:var(--gold);" aria-hidden="true"></i></span><strong>Comp</strong> · game / event</span>'+
       '</div>'+
       grid+
@@ -10427,6 +10451,40 @@
     return '<div class="card"><p class="card-eyebrow">Testing &amp; busy months'+
       '<span class="card-eyebrow-action"><button class="block-phase-link" onclick="editYearGoal()">Edit →</button></span>'+
     '</p>'+body+'</div>';
+  }
+
+  // ---- What a phase actually means, in sessions a week --------------------
+  // "Build" and "Maintain" are jargon until they're a number. The coach teaches
+  // them as a frequency — maintain is about once a week, build is two or three —
+  // so that's what the portal should say, rather than "get fitter".
+  const PHASE_HELP = {
+    build:    'About 2–3 sessions a week on this. Enough to actually improve.',
+    maintain: 'About 1 session a week. Enough to hold what you’ve got while something else leads.',
+    peak:     'Competing. Sharp and fresh — volume comes down, quality stays up.',
+    recover:  'Deliberate rest. Light movement, no hard sessions.',
+    off:      'Nothing planned. A proper break.'
+  };
+  const PHASE_SHORT = { build:'2–3× a week', maintain:'1× a week', peak:'competing', recover:'rest', off:'off' };
+
+  // ---- What you're building: the components of fitness --------------------
+  // A month tagged "build" doesn't say WHAT is being built, and for a footballer
+  // in September that could mean strength, speed or an aerobic base — completely
+  // different training. These are the qualities the academy already tests, so a
+  // month's focus can be evidenced later by the number that moved.
+  const FITNESS_COMPONENTS = [
+    { id:'strength',  label:'Strength',  blurb:'Get stronger — the six movements, heavier' },
+    { id:'power',     label:'Power',     blurb:'Jump and throw further — explosive' },
+    { id:'speed',     label:'Speed',     blurb:'Straight-line sprinting' },
+    { id:'mds',       label:'MDS',       blurb:'Multi-directional speed — cutting, turning' },
+    { id:'endurance', label:'Endurance', blurb:'Aerobic base, lasting longer' },
+    { id:'mobility',  label:'Mobility',  blurb:'Range of motion and control' },
+    { id:'skill',     label:'Skill',     blurb:'Sport-specific technique' }
+  ];
+  function componentLabels(ids){
+    return (ids || []).map(function(id){
+      const c = FITNESS_COMPONENTS.find(x => x.id === id);
+      return c ? c.label : '';
+    }).filter(Boolean);
   }
 
   function legendItem(stt, meaning){
@@ -10573,13 +10631,44 @@
     document.getElementById('blockFocus').value = existing.focus || '';
     document.getElementById('blockLoad').value = existing.loadTarget || '';
     document.getElementById('blockNote').value = existing.note || '';
+    blockComponents = (existing.components || []).slice();
+    renderCompPicker();
+    setStateHelp(preState);
     openBlockSheet();
   }
   window.openBlock = openBlock;
 
+  // Which components this month is building. Lives on the month inside
+  // Sports_JSON, so no sheet column was needed for it.
+  let blockComponents = [];
+  function renderCompPicker(){
+    const host = document.getElementById('compPicker');
+    if(!host) return;
+    host.innerHTML = FITNESS_COMPONENTS.map(function(c){
+      const on = blockComponents.indexOf(c.id) >= 0;
+      return '<button class="comp-pill'+(on?' on':'')+'" onclick="toggleComponent(\''+c.id+'\')" title="'+esc(c.blurb)+'">'+
+        esc(c.label)+'</button>';
+    }).join('');
+    const picked = componentLabels(blockComponents);
+    const note = document.getElementById('compPicked');
+    if(note) note.textContent = picked.length ? picked.join(' · ') : '';
+  }
+  function toggleComponent(id){
+    const i = blockComponents.indexOf(id);
+    if(i >= 0) blockComponents.splice(i, 1); else blockComponents.push(id);
+    renderCompPicker();
+  }
+  window.toggleComponent = toggleComponent;
+
+  function setStateHelp(s){
+    const el = document.getElementById('stateHelp');
+    if(el) el.textContent = PHASE_HELP[s] || '';
+  }
+
   function pickState(s){
     document.querySelectorAll('#statePicker .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===s));
     document.getElementById('blockTitle').innerHTML = '<em>'+(STATE_LABEL[s])+'</em>.';
+    setStateHelp(s);
   }
   window.pickState = pickState;
   function pickState2(s){
@@ -10607,6 +10696,7 @@
       state: sel ? sel.dataset.state : '',
       state2: (splitOn && sel2) ? sel2.dataset.state : '',
       focus: val('blockFocus').trim(),
+      components: blockComponents.slice(),
       loadTarget: numOrNull(val('blockLoad')),
       note: val('blockNote')
     };
