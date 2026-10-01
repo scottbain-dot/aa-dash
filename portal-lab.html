@@ -2568,6 +2568,16 @@
   .cv-band-building   { background: var(--line); color: var(--ink-soft); }
   .cv-band-none       { background: var(--line); color: var(--ink-mute); }
   .cv-grit-line { font: italic 400 13px 'Fraunces', serif; color: var(--ink-soft); margin: 10px 0 0; }
+  /* Grit on the Load tab — the band, then what's driving it, in counts. */
+  .grit-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .grit-line { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-soft); margin: 0; flex: 1 1 160px; }
+  .grit-parts { margin-top: 14px; }
+  .grit-part { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    padding: 8px 0; border-top: 1px solid var(--line); }
+  .grit-part:first-child { border-top: none; }
+  .grit-part-l { font: 600 13px 'Inter', sans-serif; color: var(--ink); }
+  .grit-part-v { font: 500 12.5px 'Inter', sans-serif; color: var(--ink-mute); text-align: right; }
+  .grit-pending { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-mute); margin: 4px 0 0; line-height: 1.5; }
   .cv-grit-bar { height: 7px; border-radius: 999px; background: var(--line-soft); overflow: hidden; margin: 10px auto 0; max-width: 260px; }
   .cv-grit-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #93b58d, #5a8757); }
   .cv-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -11324,6 +11334,69 @@
       '<p class="load-sentence">'+esc(loadSentence(read, phase))+'</p>';
   }
 
+  // ---- Grit, where the athlete can actually see it ---------------------------
+  // It was computed, returned on every bootstrap, and rendered in exactly one
+  // place: the CV, and only once the band had already reached Consistent. So
+  // the athletes who most needed to see what was holding them back saw nothing.
+  //
+  // The band is the headline — a student gets a word, not a mark out of a
+  // hundred. The parts are shown as counts rather than percentages, because
+  // "2 of 3 check-ins" tells you what to do and "67%" does not. The raw score
+  // sits in the coach view, same as the load numbers.
+  const GRIT_BAND_LINE = {
+    Building:   'You’re getting going. Consistency is the thing that moves this.',
+    Consistent: 'You turn up. That’s most of it.',
+    Relentless: 'You train when it would be easy not to.'
+  };
+  function gritCard(){
+    const g = state.grit;
+    if(!g) return '';
+    if(!g.enough){
+      return '<div class="card"><p class="card-eyebrow">Grit · how consistently you train</p>'+
+        '<p class="grit-pending">Not enough logged yet to read this. Keep logging and it appears here.</p>'+
+      '</div>';
+    }
+    const p = g.parts || {};
+    const lines = [];
+    if(p.adherence){
+      const a = p.adherence;
+      lines.push(['Training', (a.weeksFull != null && a.weeks != null)
+        ? a.weeksFull + ' of ' + a.weeks + ' weeks at full credit'
+        : a.pct + '% of target']);
+    }
+    if(p.checkins){
+      lines.push(['Check-ins', p.checkins.made + ' of ' + p.checkins.counted + ' made']);
+    } else if(p.checkinsPending){
+      lines.push(['Check-ins', 'waiting to be marked off']);
+    }
+    if(p.hard){
+      lines.push(['Quiet months', p.hard.weeksTrained + ' of ' + p.hard.weeksQuiet + ' weeks trained']);
+    }
+    const band = String(g.band || '');
+    return '<div class="card">'+
+      '<p class="card-eyebrow">Grit · how consistently you train</p>'+
+      '<div class="grit-head">'+
+        '<span class="cv-grit-band cv-band-'+esc(band.toLowerCase())+'">'+esc(band)+'</span>'+
+        '<p class="grit-line">'+esc(GRIT_BAND_LINE[band] || '')+'</p>'+
+      '</div>'+
+      (lines.length ? '<div class="grit-parts">'+lines.map(l =>
+        '<div class="grit-part"><span class="grit-part-l">'+esc(l[0])+'</span>'+
+        '<span class="grit-part-v">'+esc(l[1])+'</span></div>').join('')+'</div>' : '')+
+      '<details class="coach-load">'+
+        '<summary><span class="coach-load-title"><i class="ti ti-chart-histogram" aria-hidden="true"></i> Coach view · the number</span>'+
+          '<i class="ti ti-chevron-down coach-load-chev" aria-hidden="true"></i></summary>'+
+        '<div class="coach-load-body">'+
+          '<p class="coach-load-detail">Grit '+g.score+' / 100 · '+esc(band)+
+            ' · over the last '+(g.windowWeeks||8)+' weeks'+
+            ((g.weeksFlagged) ? ' · '+g.weeksFlagged+' week'+(g.weeksFlagged===1?'':'s')+' excluded (injured/ill)' : '')+'</p>'+
+          '<p class="coach-load-note">Weighted: training '+GRIT_W.adherence+'%, check-ins '+GRIT_W.checkins+
+            '%, training through quiet months '+GRIT_W.hard+'%. Any part with no data is left out and the rest re-weighted.</p>'+
+        '</div>'+
+      '</details>'+
+    '</div>';
+  }
+  const GRIT_W = { adherence: 60, checkins: 25, hard: 15 };   // mirrors GRIT_WEIGHTS in the script
+
   function renderLoad(){
     const view = document.getElementById('view-load');
     const read = loadRead();
@@ -11343,6 +11416,8 @@
         '</div>'+
         // This week's intensity balance — the other intuitive, actionable read.
         weekMixCard()+
+        // How consistently, next to how much.
+        gritCard()+
         // Coach view — the detailed season chart + workload numbers, collapsed by default.
         '<details class="coach-load">'+
           '<summary><span class="coach-load-title"><i class="ti ti-chart-histogram" aria-hidden="true"></i> Coach view · detailed load</span><i class="ti ti-chevron-down coach-load-chev" aria-hidden="true"></i></summary>'+
