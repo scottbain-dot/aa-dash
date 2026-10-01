@@ -3896,6 +3896,23 @@
     margin: 10px 0 0; line-height: 1.5; }
   .blk-link { margin-top: 10px; background: none; border: none; padding: 0; cursor: pointer;
     font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--burgundy, #874B46); }
+  /* One-tap logging — three buttons, one press, session logged. */
+  .qtap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 12px 0 2px; }
+  .qtap-lead { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+    color: var(--ink-mute, #7a6a60); margin-right: 2px; }
+  .qtap-btn {
+    flex: 1 1 auto; min-width: 74px; min-height: 40px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+    border-radius: 999px; padding: 9px 14px; border: 1.5px solid transparent;
+    transition: transform 0.08s ease, filter 0.15s ease; }
+  .qtap-btn:active { transform: scale(0.96); }
+  .qtap-easy { background: #e7efe4; color: #3f5d3c; border-color: #cfe0ca; }
+  .qtap-ok   { background: #fbf0d6; color: #6a5420; border-color: #f0e0b8; }
+  .qtap-hard { background: #f6e0dc; color: #7c3b33; border-color: #ecc9c2; }
+  /* Inline on a day row: quieter, smaller, never wider than the row. */
+  .qtap-compact { margin: 8px 0 2px; gap: 5px; }
+  .qtap-compact .qtap-lead { font-size: 11px; }
+  .qtap-compact .qtap-btn { flex: 0 1 auto; min-width: 0; min-height: 32px; font-size: 11.5px; padding: 6px 11px; }
   .plan-info { min-width: 0; }
   .plan-name {
     font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink);
@@ -6616,6 +6633,56 @@
   window.closeBadgeCelebration = closeBadgeCelebration;
 
   // (a) TODAY hero — date, big session name, primary CTA, slim progress line (no load number).
+  // ---- One-tap logging ------------------------------------------------------
+  // Logging used to mean opening a sheet and filling in duration and effort.
+  // Measured across the roster, half the athletes who built a program never
+  // logged a single session — and everything downstream (load, grit, streaks,
+  // badges, the CV) is dark until they do. So the cheapest possible version:
+  // three buttons, one tap, done. Duration comes from the plan, effort from
+  // which button they press. The full sheet is still there for anyone who wants
+  // to add detail, and editing afterwards works exactly as before.
+  const QUICK_EFFORT = [
+    { key:'easy', label:'Easy',     rpe:4 },
+    { key:'ok',   label:'Moderate', rpe:6 },
+    { key:'hard', label:'Hard',     rpe:8 }
+  ];
+  function quickLogRowHTML(s, compact){
+    if(!s || isLogged(s)) return '';
+    return '<div class="qtap'+(compact?' qtap-compact':'')+'">'+
+      '<span class="qtap-lead">Did it —</span>'+
+      QUICK_EFFORT.map(e =>
+        '<button class="qtap-btn qtap-'+e.key+'" onclick="event.stopPropagation(); quickLogDone(\''+s.id+'\','+e.rpe+')">'+e.label+'</button>'
+      ).join('')+
+    '</div>';
+  }
+  // A tap is a complete log: planned duration, the effort they chose, done.
+  let quickLogBusy = false;
+  async function quickLogDone(id, rpe){
+    if(quickLogBusy) return;
+    const s = (state.week.sessions||[]).find(x => String(x.id) === String(id));
+    if(!s || isLogged(s)) return;
+    quickLogBusy = true;
+    // Fall back to 45 min only when there is no planned duration at all —
+    // a logged session with no duration would carry no load, which is the
+    // thing this is trying to fix.
+    const duration = s.duration || s.plannedDuration || 45;
+    const before = { rpe:s.rpe, duration:s.duration, load:s.load, status:s.status };
+    s.rpe = rpe; s.duration = duration; s.load = rpe * duration; s.status = 'done';
+    renderWeek(); renderBlockBar();
+    try {
+      const res = await apiData({ action:'saveSession', session: s });
+      if(!res || !res.success) throw new Error((res && res.error) || 'save failed');
+      if(res.id) s.id = res.id;
+      showToast('Logged · '+duration+' min · '+rpe+'/10', 'success');
+      if(!maybeCelebrateStreak()) maybeCelebrateBadges();
+    } catch(e){
+      Object.assign(s, before);
+      renderWeek(); renderBlockBar();
+      showToast('Couldn’t save that — try again.', 'error');
+    } finally { quickLogBusy = false; }
+  }
+  window.quickLogDone = quickLogDone;
+
   function weekTodayCard(todays, today){
     const eyebrow = dowShort(today)+' '+dayNum(today)+' '+monShort(today)+' · Today';
     const done = state.week.sessions.filter(isLogged).length;
@@ -6633,12 +6700,16 @@
       const noun = s.type==='game' ? 'game' : (s.type==='practice' ? 'practice' : 'session');
       subHTML = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+extra;
       const hasWorkout = (s.type==='training' || !s.type) && (s.workout||[]).length;
-      if(hasWorkout){
-        // A real workout today → lead with Start workout; keep a quiet "just log it".
+      if(isLogged(s)){
+        cta = (hasWorkout ? '<button class="card-cta card-cta-ghost" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> Open workout</button>' : '')+
+              '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Edit today’s '+noun+'</button>';
+      } else if(hasWorkout){
+        // A real workout today → lead with Start workout, with the one-tap log
+        // underneath for the days they trained but won't walk through it.
         cta = '<button class="card-cta card-cta-gold" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> Start workout</button>'+
-              '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?'Edit log':'Just log it')+'</button>';
+              '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Add detail</button>';
       } else {
-        cta = '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> '+(isLogged(s)?('Edit today’s '+noun):('Log today’s '+noun))+'</button>';
+        cta = '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Add detail</button>';
       }
     } else {
       titleHTML = 'A <em>rest</em> day.';
@@ -6649,6 +6720,7 @@
       '<div class="hero-eyebrow-row"><p class="card-hero-eyebrow">'+eyebrow+'</p>'+streakChipHTML()+'</div>'+
       '<h2 class="card-hero-title">'+titleHTML+'</h2>'+
       '<p class="card-hero-sub">'+subHTML+'</p>'+
+      (todays.length ? quickLogRowHTML(todays[0]) : '')+
       '<div class="week-today-cta">'+cta+'</div>'+
       '<p class="week-progress"><span class="week-progress-track"><span style="width:'+pct+'%"></span></span>'+esc(progress)+'</p>'+
       heroRankHTML()+
@@ -6821,7 +6893,11 @@
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
         '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+(isLogged(s)?' done':'')+'" aria-hidden="true">'+(isLogged(s)?'<i class="ti ti-check"></i>':'')+'</span>'+
-        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+doneFlag+(isLogged(s)?'':sportLevelChip(s.sport))+'</div><div class="plan-detail">'+meta+'</div>'+(dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
+        '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+doneFlag+(isLogged(s)?'':sportLevelChip(s.sport))+'</div><div class="plan-detail">'+meta+'</div>'+
+          // Past and present days get the one-tap log inline; a future session
+          // has nothing to report yet.
+          ((!isLogged(s) && s.status!=='missed' && iso <= isoToday()) ? quickLogRowHTML(s, true) : '')+
+          (dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
         '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
         '<span class="plan-grip" aria-label="Drag to move to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
       '</div>'+
