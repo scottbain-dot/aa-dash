@@ -10278,7 +10278,7 @@
         '</p>'+
       '</div></div>'+
       (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
-      '<div class="year-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
+      '<div class="year-legend">'+legendItem('build',PHASE_SHORT.build)+legendItem('maintain',PHASE_SHORT.maintain)+legendItem('peak',PHASE_SHORT.peak)+legendItem('recover',PHASE_SHORT.recover)+'</div>'+
       renderMonths(sport, si, curMonth)+
       '<button class="year-addcomp" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a competition</button>'+
     '</div>';
@@ -10334,7 +10334,7 @@
       '<p class="card-eyebrow">Plan your months'+toggle+'</p>'+
       '<p class="yog-lede"><strong>Tap any month</strong> to say what you’re doing in it. '+
         'Your season above is built from these.</p>'+
-      '<div class="yog-legend">'+legendItem('build',PHASE_SHORT.build)+legendItem('maintain',PHASE_SHORT.maintain)+legendItem('peak','big event')+legendItem('recover','rest')+
+      '<div class="yog-legend">'+legendItem('build',PHASE_SHORT.build)+legendItem('maintain',PHASE_SHORT.maintain)+legendItem('peak',PHASE_SHORT.peak)+legendItem('recover',PHASE_SHORT.recover)+
         '<span class="year-legend-item"><span class="legend-emoji"><i class="ti ti-trophy" style="color:var(--gold);" aria-hidden="true"></i></span><strong>Comp</strong> · game / event</span>'+
       '</div>'+
       grid+
@@ -10460,11 +10460,12 @@
   const PHASE_HELP = {
     build:    'About 2–3 sessions a week on this. Enough to actually improve.',
     maintain: 'About 1 session a week. Enough to hold what you’ve got while something else leads.',
-    peak:     'Competing. Sharp and fresh — volume comes down, quality stays up.',
+    peak:     'Keep the intensity high and reduce the volume. Sharp and fresh for the event.',
     recover:  'Deliberate rest. Light movement, no hard sessions.',
     off:      'Nothing planned. A proper break.'
   };
-  const PHASE_SHORT = { build:'2–3× a week', maintain:'1× a week', peak:'competing', recover:'rest', off:'off' };
+  const PHASE_SHORT = { build:'2–3× a week', maintain:'1× a week',
+                        peak:'intensity up, volume down', recover:'rest', off:'off' };
 
   // ---- What you're building: the components of fitness --------------------
   // A month tagged "build" doesn't say WHAT is being built, and for a footballer
