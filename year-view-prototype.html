@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One year view — prototype</title>
+<!--
+  PROTOTYPE — not wired to anything. Nothing here saves.
+
+  The question: the Year tab plans a multi-sport year as a matrix — one row per
+  sport, twelve columns. Reading it means merging the rows in your head, and the
+  evidence says most of it never gets filled in (median 5 months of 12 per row,
+  across 44 rows on the real roster).
+
+  This shows the alternative: ONE timeline, months down the page, grouped into
+  the season blocks the system already derives. Tap a month and you set every
+  sport at once, so a year is twelve decisions however many sports you do,
+  instead of sports × twelve.
+
+  The five year maps below are REAL, pulled by Athlete_ID. No names, no emails.
+  Edits are in memory only.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --burgundy:#874B46; --burgundy-dark:#6a3a36; --gold:#D4AF37; --gold-light:#f5e6b3;
+    --ink:#1f1b19; --ink-soft:#4a3f39; --ink-mute:#7a6a60; --cream:#fdf6f2; --line:#eee3dd;
+    --st-build:#2b2521;   --st-build-ink:#f7f1ec;
+    --st-maintain:#8c857e; --st-maintain-ink:#ffffff;
+    --st-peak:#874b46;    --st-peak-ink:#faf3ed;
+    --st-recover:#ffffff; --st-recover-ink:#2b2521;
+    --st-off:#e9e3dd;     --st-off-ink:#8a7d73;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#fef8f6;color:var(--ink);font-family:'Inter',system-ui,sans-serif;padding-bottom:60px}
+  .wrap{max-width:720px;margin:0 auto;padding:16px}
+  h1{font-family:'Fraunces',Georgia,serif;font-size:22px;margin:0 0 4px}
+  .sub{font-size:13px;color:var(--ink-mute);margin:0 0 16px;line-height:1.5}
+
+  /* ---- prototype chrome (not part of the design) ---- */
+  .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+  .bar-lab{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);width:100%}
+  .chip{font:600 12.5px 'Inter';background:#fff;border:1.5px solid var(--line);border-radius:999px;
+        padding:7px 12px;cursor:pointer;color:var(--ink)}
+  .chip.on{background:var(--burgundy);border-color:var(--burgundy);color:#fff}
+  .note{background:#fdf7e8;border:1px solid var(--gold-light);border-left:3px solid var(--gold);
+        border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--ink-soft);line-height:1.5;margin:0 0 14px}
+  .note b{color:var(--burgundy-dark)}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;
+        box-shadow:0 1px 2px rgba(26,20,17,.04)}
+  .eyebrow{font:800 11px 'Inter';letter-spacing:.09em;text-transform:uppercase;color:var(--burgundy);margin:0 0 8px}
+  .goal{font-family:'Fraunces',Georgia,serif;font-size:17px;font-weight:700;line-height:1.3;margin:0 0 3px}
+  .goal-sub{font-size:12px;color:var(--ink-mute);margin:0}
+
+  /* ---- THE ONE YEAR VIEW ---- */
+  .bhead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+         padding:13px 0 7px;border-top:1px solid var(--line);margin-top:4px}
+  .bhead:first-child{border-top:none;margin-top:0;padding-top:2px}
+  .bhead-name{font-family:'Fraunces',Georgia,serif;font-size:16px;font-weight:700}
+  .bhead-when{font:800 10px 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--ink-mute)}
+  .bhead-now{font:800 9.5px 'Inter';letter-spacing:.06em;text-transform:uppercase;
+             background:var(--gold-light);color:var(--burgundy-dark);border-radius:999px;padding:3px 8px}
+  .bhead-gap .bhead-name{color:var(--ink-mute);font-style:italic;font-weight:400}
+
+  .mrow{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;cursor:pointer;
+        background:none;border:none;border-radius:10px;padding:8px 6px;font:inherit}
+  .mrow:hover{background:var(--cream)}
+  .mrow.is-now{background:#fdf7e8}
+  .mrow-m{flex:0 0 38px;font:800 10.5px 'Inter';letter-spacing:.06em;text-transform:uppercase;
+          color:var(--ink-mute);padding-top:3px}
+  .mrow.is-now .mrow-m{color:var(--burgundy)}
+  .mrow-body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .mrow-lead{font-size:13.5px;color:var(--ink);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .mrow-lead b{font-weight:700}
+  .mrow-lead .ph{font-size:13px}
+  .half{font-size:11px;color:var(--ink-mute);font-weight:600}
+  .mrow-others{display:flex;flex-wrap:wrap;gap:5px}
+  .oth{font:600 10.5px 'Inter';background:var(--cream);border:1px solid var(--line);
+       border-radius:999px;padding:2px 8px;color:var(--ink-mute);white-space:nowrap}
+  .mrow-comps{display:flex;flex-wrap:wrap;gap:4px}
+  .cmp{font:800 9.5px 'Inter';background:var(--burgundy);color:#fff;border-radius:4px;padding:1px 5px}
+  .mrow-empty{font-size:13px;color:var(--ink-mute);font-style:italic}
+  .mrow-evs{display:flex;flex-wrap:wrap;gap:5px}
+  .ev{font:700 10px 'Inter';background:var(--gold-light);color:var(--burgundy-dark);
+      border-radius:999px;padding:3px 7px;white-space:nowrap}
+
+  /* ---- today's grid, for comparison ---- */
+  .yog{display:grid;grid-template-columns:clamp(52px,17vw,96px) repeat(12,1fr);gap:3px;align-items:center}
+  .yog-mhead{font:700 8.5px 'Inter';text-transform:uppercase;text-align:center;color:var(--ink-mute)}
+  .yog-label{font:700 11.5px 'Fraunces',serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px}
+  .yog-cell{aspect-ratio:1/1;border-radius:5px;background:var(--cream);display:flex;align-items:center;
+            justify-content:center;font-size:clamp(9px,2vw,15px)}
+  .ym-build{background:var(--st-build)} .ym-maintain{background:var(--st-maintain)}
+  .ym-peak{background:var(--st-peak)}   .ym-recover{background:var(--st-recover);border:1px solid var(--line)}
+  .ym-off{background:var(--st-off)}
+  .ghost{background:#faf5f2;border:1px dashed #e3d8d2}
+  .junk{opacity:.5}
+  .junk-tag{font:700 8.5px 'Inter';background:#f6e0dc;color:#7c3b33;border-radius:4px;padding:1px 4px;margin-left:4px}
+
+  /* ---- month sheet ---- */
+  .backdrop{position:fixed;inset:0;background:rgba(31,27,25,.45);display:none;z-index:40}
+  .backdrop.open{display:block}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-height:88vh;overflow:auto;background:#fff;z-index:41;
+         border-radius:20px 20px 0 0;padding:18px 16px 28px;display:none;box-shadow:0 -8px 40px rgba(26,20,17,.18)}
+  .sheet.open{display:block}
+  .sheet-inner{max-width:720px;margin:0 auto}
+  .sheet h2{font-family:'Fraunces',Georgia,serif;font-size:21px;margin:2px 0 2px}
+  .sheet .lede{font-size:12.5px;color:var(--ink-mute);margin:0 0 14px;line-height:1.5}
+  .sp-row{border-top:1px solid var(--line);padding:11px 0}
+  .sp-row:first-of-type{border-top:none}
+  .sp-name{font:700 13.5px 'Inter';margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .sp-half{font:600 11px 'Inter';color:var(--burgundy);background:none;border:none;cursor:pointer;padding:0}
+  .pills{display:flex;flex-wrap:wrap;gap:5px}
+  .pill{font:600 12px 'Inter';background:#fff;border:1.5px solid var(--line);border-radius:999px;
+        padding:7px 11px;cursor:pointer;color:var(--ink);min-height:36px}
+  .pill.sel{background:var(--ink);border-color:var(--ink);color:#fff}
+  .pill.sel[data-s="peak"]{background:var(--st-peak);border-color:var(--st-peak)}
+  .pill.sel[data-s="maintain"]{background:var(--st-maintain);border-color:var(--st-maintain)}
+  .pill.sel[data-s="recover"],.pill.sel[data-s="off"]{background:var(--st-off);border-color:#d8cec7;color:var(--ink)}
+  .pills2{margin-top:6px;padding-left:10px;border-left:2px solid var(--line)}
+  .pills2 .lab{font:600 10.5px 'Inter';color:var(--ink-mute);display:block;margin-bottom:4px}
+  .sheet-sec{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+  .sheet-sec p{font:800 10.5px 'Inter';letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);margin:0 0 4px}
+  .sheet-sec .hint{font:400 12px 'Inter';letter-spacing:0;text-transform:none;color:var(--ink-mute);margin:0 0 9px;line-height:1.45}
+  .done{width:100%;margin-top:16px;background:var(--burgundy);color:#fff;border:none;border-radius:12px;
+        padding:14px;font:700 15px 'Inter';cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>One year view</h1>
+  <p class="sub">Prototype. Five <strong>real</strong> year maps, pulled by Athlete&nbsp;ID — no names, no emails.
+     Nothing saves; edits live in this page only.</p>
+
+  <div class="bar">
+    <span class="bar-lab">Athlete</span>
+    <span id="whoBar"></span>
+  </div>
+  <div class="bar" id="groupBar">
+    <span class="bar-lab">Blocks cut by</span>
+    <button class="chip on" id="gSport" onclick="setGrouping('sport')">Leading sport</button>
+    <button class="chip" id="gWork" onclick="setGrouping('work')">Kind of work</button>
+  </div>
+  <div class="bar">
+    <span class="bar-lab">View</span>
+    <button class="chip on" id="vNew" onclick="setView('new')">One year</button>
+    <button class="chip" id="vOld" onclick="setView('old')">Today’s grid</button>
+  </div>
+
+  <div id="dataNote"></div>
+  <div id="main"></div>
+</div>
+
+<div class="backdrop" id="bd" onclick="closeMonth()"></div>
+<div class="sheet" id="sheet"><div class="sheet-inner" id="sheetInner"></div></div>
+
+<script>
+/* ============================================================
+   REAL DATA — five year maps, keyed by Athlete_ID only.
+   ============================================================ */
+const MAPS = {"41":{"year":"2026–27","goal":"","aPriority":{"sport":"Hyrox","event":"Bilbao Hyrox","date":"2027-02-06","month":"February"},"sports":[{"name":"Hyrox","isPriority":true,"monthlyStates":[{"month":"August","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"September","state":"build","state2":"maintain","focus":"","loadTarget":null,"note":""},{"month":"October","state":"peak","state2":"","focus":"","loadTarget":null,"note":""},{"month":"November","state":"build","state2":"","focus":"","components":["strength"],"loadTarget":null,"note":""},{"month":"December","state":"recover","state2":"","focus":"","loadTarget":null,"note":""},{"month":"January","state":"build","focus":"","loadTarget":null,"note":""},{"month":"March","state":"recover","focus":"","loadTarget":null,"note":""},{"month":"April","state":"recover","focus":"","loadTarget":null,"note":""},{"month":"May","state":"build","focus":"","loadTarget":null,"note":""},{"month":"June","state":"build","focus":"","loadTarget":null,"note":""},{"month":"July","state":"build","focus":"","loadTarget":null,"note":""},{"month":"February","state":"peak","focus":"","loadTarget":null,"note":""}]},{"name":"Rugby","isPriority":false,"monthlyStates":[{"month":"September","state":"build","state2":"maintain","focus":"Strength, Speed","loadTarget":null,"note":""}]}]},"43":{"year":"2026–27","goal":"","aPriority":null,"sports":[{"name":"Tennis, Track, Basketball","isPriority":true,"monthlyStates":[{"month":"August","state":"build","focus":"","loadTarget":null,"note":""},{"month":"September","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"October","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"November","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""},{"month":"December","state":"recover","state2":"","focus":"","loadTarget":null,"note":""}]},{"name":"Football","isPriority":false,"monthlyStates":[]},{"name":"Basketball","isPriority":false,"monthlyStates":[]},{"name":"Track&Field","isPriority":false,"monthlyStates":[]},{"name":"Tennis","isPriority":false,"monthlyStates":[]}]},"57":{"year":"2026–27","goal":"","aPriority":{"sport":"Running, Volleyball, Softball","event":"ISSTS (international school competition)","date":"","month":""},"sports":[{"name":"Running, Volleyball, Softball","isPriority":true,"monthlyStates":[{"month":"September","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"October","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""},{"month":"November","state":"peak","state2":"","focus":"","loadTarget":null,"note":""},{"month":"December","state":"recover","state2":"","focus":"","loadTarget":null,"note":""},{"month":"January","state":"recover","state2":"","focus":"","loadTarget":null,"note":""},{"month":"February","state":"recover","state2":"","focus":"","loadTarget":null,"note":""},{"month":"March","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""},{"month":"April","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""},{"month":"May","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""},{"month":"June","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""},{"month":"July","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"August","state":"build","state2":"","focus":"","loadTarget":null,"note":""}]},{"name":"Running","isPriority":false,"monthlyStates":[{"month":"December","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"January","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"February","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"March","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"April","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""},{"month":"May","state":"peak","state2":"","focus":"","loadTarget":null,"note":""},{"month":"August","state":"off","state2":"","focus":"","loadTarget":null,"note":""},{"month":"June","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"July","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"November","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"October","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"September","state":"build","state2":"","focus":"","loadTarget":null,"note":""}]},{"name":"Softball","isPriority":false,"monthlyStates":[{"month":"May","state":"peak","state2":"","focus":"","loadTarget":null,"note":""},{"month":"September","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"October","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"November","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"April","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""},{"month":"March","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"February","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"July","state":"off","state2":"","focus":"","loadTarget":null,"note":""},{"month":"August","state":"off","state2":"","focus":"","loadTarget":null,"note":""},{"month":"December","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"January","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"June","state":"recover","state2":"","focus":"","loadTarget":null,"note":""}]}]},"59":{"year":"2026–27","goal":"","aPriority":{"sport":"Cross Country, Swimming, Track and Field, Ballet","event":"ISSTs x3, annual performance","date":"2027-05-27","month":"May"},"sports":[{"name":"Cross Country, Swimming, Track and Field, Ballet","isPriority":true,"monthlyStates":[{"month":"September","state":"build","focus":"","loadTarget":null,"note":""}]},{"name":"Cross Country","isPriority":false,"monthlyStates":[{"month":"September","state":"build","focus":"","loadTarget":null,"note":""},{"month":"November","state":"peak","state2":"","focus":"","loadTarget":null,"note":""},{"month":"October","state":"build","focus":"","loadTarget":null,"note":""}]},{"name":"Swimming","isPriority":false,"monthlyStates":[{"month":"November","state":"build","focus":"","loadTarget":null,"note":""},{"month":"December","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""},{"month":"January","state":"build","focus":"","loadTarget":null,"note":""},{"month":"February","state":"build","focus":"","loadTarget":null,"note":""},{"month":"March","state":"peak","state2":"","focus":"","loadTarget":null,"note":""},{"month":"October","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""}]},{"name":"Track and Field","isPriority":false,"monthlyStates":[{"month":"May","state":"peak","focus":"","loadTarget":null,"note":""},{"month":"February","state":"maintain","state2":"","focus":"","loadTarget":null,"note":""},{"month":"March","state":"build","focus":"","loadTarget":null,"note":""},{"month":"April","state":"build","focus":"","loadTarget":null,"note":""}]}]},"62":{"year":"2026–27","goal":"","aPriority":{"sport":"Football","event":"ISSTs","date":"2026-11-12","month":"November"},"sports":[{"name":"Football","isPriority":true,"monthlyStates":[{"month":"September","state":"build","state2":"","focus":"Maintaining Endurance, Slowly intro strength","loadTarget":null,"note":""},{"month":"October","state":"maintain","state2":"build","focus":"","loadTarget":null,"note":""},{"month":"November","state":"peak","focus":"","loadTarget":null,"note":""},{"month":"December","state":"recover","focus":"","loadTarget":null,"note":""},{"month":"February","state":"build","focus":"","loadTarget":null,"note":""},{"month":"March","state":"build","focus":"","loadTarget":null,"note":""},{"month":"April","state":"build","focus":"","loadTarget":null,"note":""},{"month":"May","state":"build","focus":"","loadTarget":null,"note":""},{"month":"June","state":"build","focus":"","loadTarget":null,"note":""},{"month":"July","state":"build","focus":"","loadTarget":null,"note":""}]},{"name":"Basketball","isPriority":false,"monthlyStates":[{"month":"November","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"October","state":"build","focus":"","loadTarget":null,"note":""},{"month":"September","state":"build","focus":"","loadTarget":null,"note":""},{"month":"February","state":"build","state2":"","focus":"","loadTarget":null,"note":""},{"month":"March","state":"peak","state2":"","focus":"","loadTarget":null,"note":""},{"month":"April","state":"recover","state2":"build","focus":"","loadTarget":null,"note":""},{"month":"January","state":"recover","state2":"build","focus":"","loadTarget":null,"note":""},{"month":"December","state":"recover","state2":"","focus":"","loadTarget":null,"note":""},{"month":"August","state":"off","state2":"","focus":"","loadTarget":null,"note":""}]},{"name":"Track&Field","isPriority":false,"monthlyStates":[{"month":"May","state":"peak","state2":"","focus":"","loadTarget":null,"note":""},{"month":"April","state":"build","focus":"","loadTarget":null,"note":""},{"month":"August","state":"off","state2":"","focus":"","loadTarget":null,"note":""}]}]}};
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const ACADEMIC = ['August','September','October','November','December','January','February','March','April','May','June','July'];
+const PHASE_EMOJI = { build:'💪', maintain:'⚡', peak:'🏆', recover:'🌙', off:'⏸️' };
+const PHASE_WORD  = { build:'build', maintain:'ticking over', peak:'peak', recover:'recovery', off:'off' };
+const PHASE_RANK  = { peak:4, build:3, maintain:2, recover:1, off:0 };
+const PHASE_TIER  = { peak:'compete', recover:'rest', off:'rest', build:'build', maintain:'build' };
+const TIER_LABEL  = { compete:'season', rest:'recovery', build:'build' };
+const STATES = ['build','maintain','peak','recover','off'];
+const STATE_LABEL = { build:'Build', maintain:'Maintain', peak:'Peak', recover:'Recover', off:'Off' };
+const COMPONENTS = [['strength','Str'],['power','Pwr'],['speed','Spd'],['mds','MDS'],
+                    ['endurance','End'],['mobility','Mob'],['skill','Skill']];
+
+let who = '41', view = 'new', grouping = 'sport', openMonthName = null;
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ym = () => MAPS[who];
+
+/* A comma in the name means this row came from the sign-up form, where the
+   student typed all their sports into one box. It is not a sport. */
+const isSignupRow = s => /,/.test(s.name || '');
+
+/* The sports whose plan the season actually reads — the same rule the portal
+   uses. A combined row is dropped ONLY when a real sport has been planned,
+   which is how an athlete can have twelve months of planning that counts for
+   nothing and never be told. */
+function plannedSports(){
+  const all = (ym().sports || []);
+  const real = all.filter(s => !isSignupRow(s) && (s.monthlyStates||[]).some(m => m.state));
+  return real.length ? real : all.filter(s => (s.monthlyStates||[]).length);
+}
+function stateOf(sp, month, half){
+  const m = (sp.monthlyStates||[]).find(x => x.month === month);
+  if(!m || !m.state) return '';
+  return (half === 1 && m.state2) ? m.state2 : m.state;
+}
+function monthRec(sp, month){ return (sp.monthlyStates||[]).find(x => x.month === month) || null; }
+function isSplit(month){ return plannedSports().some(sp => { const m = monthRec(sp, month); return !!(m && m.state2); }); }
+function rankedAt(month, half){
+  return plannedSports().map(sp => ({ sp, phase: stateOf(sp, month, half) })).filter(o => o.phase)
+    .sort((a,b) => (PHASE_RANK[b.phase]-PHASE_RANK[a.phase]) || ((b.sp.isPriority?1:0)-(a.sp.isPriority?1:0)));
+}
+function startYear(){ const m = String(ym().year||'').match(/(\d{4})/); return m ? +m[1] : 2026; }
+function academicCells(){ return ACADEMIC.map((month,i) => ({ month, year: startYear() + (i<5?0:1) })); }
+
+/* Months run together into a block while the leading sport and the KIND of
+   work stay the same. Unplanned months group into their own run, so a gap
+   reads as a gap instead of being quietly filled in with a guess. */
+function blocks(){
+  const out = [];
+  academicCells().forEach(cell => {
+    const halves = isSplit(cell.month) ? [0,1] : [0];
+    halves.forEach(half => {
+      const r = rankedAt(cell.month, half);
+      const lead = r[0] || null;
+      // Two ways to cut the year up, and they disagree for an athlete whose
+      // sports both build all year. BY SPORT keeps the leading sport in the key,
+      // so the block changes the moment the lead flips — honest, but it can give
+      // you thirteen blocks in twelve months. BY WORK keys on the KIND of work
+      // only, so a block is a stretch with one job and the sports are what is
+      // happening inside it.
+      const tier = lead ? (PHASE_TIER[lead.phase]||'build') : '';
+      const key = lead ? ((grouping === 'sport' ? lead.sp.name + '|' : '') + tier) : 'GAP';
+      const last = out[out.length-1];
+      const seg = { month: cell.month, year: cell.year, half, split: halves.length>1,
+                    lead, others: r.slice(1) };
+      if(last && last.key === key) last.segs.push(seg);
+      else out.push({ key, lead, segs:[seg] });
+    });
+  });
+  out.forEach(b => {
+    b.months = b.segs.map(s => s.month).filter((m,i,a) => a.indexOf(m)===i);
+    b.weeks = Math.round(b.segs.reduce((a,s) => a + (s.split ? 2.17 : 4.35), 0));
+    const tier = b.lead ? (TIER_LABEL[PHASE_TIER[b.lead.phase]] || 'build') : '';
+    // Name a block for its sport only when one sport leads the whole of it.
+    const leads = b.segs.map(sg => sg.lead && sg.lead.sp.name).filter(Boolean);
+    const oneSport = leads.length && leads.every(n => n === leads[0]);
+    b.label = !b.lead ? 'Not planned yet'
+            : (oneSport ? leads[0] + ' ' + tier : tier.charAt(0).toUpperCase() + tier.slice(1));
+    b.gap = !b.lead;
+  });
+  return out;
+}
+const mShort = m => m.slice(0,3);
+function rangeLabel(b){
+  const a = mShort(b.months[0]), z = mShort(b.months[b.months.length-1]);
+  return a === z ? a : a + '–' + z;
+}
+/* "Now" is pinned to October 2026 so the prototype reads the same whenever
+   it is opened, rather than drifting with the real clock. */
+const NOW_MONTH = 'October';
+
+function eventsIn(month){
+  const ap = ym().aPriority;
+  return (ap && ap.month === month) ? [ap.event || 'Big event'] : [];
+}
+function compsIn(month){
+  // Proposed: the focus belongs to the MONTH, not to each sport. Until that
+  // lands, read whatever any sport recorded for the month.
+  const set = [];
+  plannedSports().forEach(sp => { const m = monthRec(sp, month);
+    (m && m.components || []).forEach(c => { if(set.indexOf(c) < 0) set.push(c); }); });
+  if(ym()._monthComps && ym()._monthComps[month]) return ym()._monthComps[month];
+  return set;
+}
+const compLabel = id => (COMPONENTS.find(c => c[0] === id) || [,id])[1];
+
+/* ---------- the one year view ---------- */
+function monthRowHTML(seg){
+  const isNow = seg.month === NOW_MONTH && seg.half === 0;
+  const comps = compsIn(seg.month);
+  const evs = seg.half === 0 ? eventsIn(seg.month) : [];
+  let body;
+  if(seg.lead){
+    const half = seg.split ? '<span class="half">· '+(seg.half ? '2nd half' : '1st half')+'</span>' : '';
+    body = '<span class="mrow-lead"><span class="ph">'+PHASE_EMOJI[seg.lead.phase]+'</span> '+
+             '<b>'+esc(seg.lead.sp.name)+'</b> '+PHASE_WORD[seg.lead.phase]+' '+half+'</span>'+
+           (seg.others.length
+             ? '<span class="mrow-others">'+seg.others.map(o =>
+                 '<span class="oth">'+esc(o.sp.name)+' '+PHASE_EMOJI[o.phase]+' '+PHASE_WORD[o.phase]+'</span>').join('')+'</span>'
+             : '')+
+           (comps.length ? '<span class="mrow-comps">'+comps.map(c => '<span class="cmp">'+esc(compLabel(c))+'</span>').join('')+'</span>' : '')+
+           (evs.length ? '<span class="mrow-evs">'+evs.map(e => '<span class="ev">🏆 '+esc(e)+'</span>').join('')+'</span>' : '');
+  } else {
+    body = '<span class="mrow-empty">Nothing set — tap to plan this month</span>';
+  }
+  return '<button class="mrow'+(isNow?' is-now':'')+'" onclick="openMonth(\''+seg.month+'\')">'+
+    '<span class="mrow-m">'+mShort(seg.month)+'</span>'+
+    '<span class="mrow-body">'+body+'</span>'+
+  '</button>';
+}
+
+function newViewHTML(){
+  const m = ym();
+  const bs = blocks();
+  const nowBlock = bs.find(b => b.segs.some(s => s.month === NOW_MONTH));
+  let html = '<div class="card">'+
+    '<p class="eyebrow">Your year · '+esc(m.year||'')+'</p>'+
+    (m.goal ? '<p class="goal">'+esc(m.goal)+'</p>' : '<p class="goal">No goal set yet.</p>')+
+    (m.aPriority && m.aPriority.event ? '<p class="goal-sub">Big event · '+esc(m.aPriority.event)+
+      (m.aPriority.month? ' · '+esc(m.aPriority.month):'')+'</p>' : '')+
+  '</div>';
+
+  html += '<div class="card">';
+  bs.forEach(b => {
+    const isNow = b === nowBlock;
+    let weekIn = '';
+    if(isNow){
+      const i = b.segs.findIndex(s => s.month === NOW_MONTH);
+      weekIn = '<span class="bhead-now">Now · week '+(Math.round(i*4.35)+1)+' of '+b.weeks+'</span>';
+    }
+    html += '<div class="bhead'+(b.gap?' bhead-gap':'')+'">'+
+      '<span class="bhead-when">'+rangeLabel(b)+' · '+b.weeks+' wk</span>'+
+      '<span class="bhead-name">'+esc(b.label)+'</span>'+ weekIn +
+    '</div>';
+    html += b.segs.map(monthRowHTML).join('');
+  });
+  html += '</div>';
+  return html;
+}
+
+/* ---------- today's grid, for comparison ---------- */
+function oldViewHTML(){
+  const m = ym();
+  const planned = plannedSports().map(s => s.name);
+  let g = '<div class="yog"><div></div>'+
+    ACADEMIC.map(x => '<div class="yog-mhead">'+x.slice(0,1)+'</div>').join('');
+  (m.sports||[]).forEach(sp => {
+    const ignored = isSignupRow(sp) && planned.indexOf(sp.name) < 0;
+    g += '<div class="yog-label'+(ignored?' junk':'')+'" title="'+esc(sp.name)+'">'+esc(sp.name)+
+         (ignored?'<span class="junk-tag">ignored</span>':'')+'</div>';
+    g += ACADEMIC.map(month => {
+      const rec = monthRec(sp, month);
+      const st = rec && rec.state;
+      return '<div class="yog-cell '+(st?'ym-'+st:'ghost')+(ignored?' junk':'')+'">'+(st?PHASE_EMOJI[st]:'')+'</div>';
+    }).join('');
+  });
+  g += '</div>';
+  return '<div class="card"><p class="eyebrow">Plan your months — as it is today</p>'+g+'</div>';
+}
+
+/* ---------- the month sheet: every sport at once ---------- */
+function openMonth(month){
+  openMonthName = month;
+  renderSheet();
+  document.getElementById('bd').classList.add('open');
+  document.getElementById('sheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeMonth(){
+  openMonthName = null;
+  document.getElementById('bd').classList.remove('open');
+  document.getElementById('sheet').classList.remove('open');
+  document.body.style.overflow = '';
+  render();
+}
+function sheetSports(){
+  // Every row the athlete owns, sign-up rows included but marked — so the one
+  // place they can be fixed is the place they are visible.
+  return (ym().sports||[]);
+}
+function renderSheet(){
+  const month = openMonthName;
+  if(!month) return;
+  const comps = compsIn(month);
+  let html = '<h2>'+esc(month)+'</h2>'+
+    '<p class="lede">What is each sport doing this month? This is the whole month in one place — '+
+      'the season above rebuilds itself from it.</p>';
+  sheetSports().forEach((sp, i) => {
+    const rec = monthRec(sp, month);
+    const cur = rec && rec.state || '';
+    const cur2 = rec && rec.state2 || '';
+    const junk = isSignupRow(sp);
+    html += '<div class="sp-row">'+
+      '<div class="sp-name"><span>'+esc(sp.name)+(junk?'<span class="junk-tag">sign-up row</span>':'')+'</span>'+
+        (cur ? '<button class="sp-half" onclick="toggleHalf('+i+')">'+(cur2?'– one setting':'+ split the month')+'</button>' : '')+
+      '</div>'+
+      '<div class="pills">'+
+        STATES.map(s => '<button class="pill'+(cur===s?' sel':'')+'" data-s="'+s+'" onclick="setState('+i+',\''+s+'\')">'+
+          PHASE_EMOJI[s]+' '+STATE_LABEL[s]+'</button>').join('')+
+        (cur ? '<button class="pill" onclick="setState('+i+',\'\')">Clear</button>' : '')+
+      '</div>'+
+      (cur2 ? '<div class="pills2"><span class="lab">From the 16th</span><div class="pills">'+
+        STATES.map(s => '<button class="pill'+(cur2===s?' sel':'')+'" data-s="'+s+'" onclick="setState2('+i+',\''+s+'\')">'+
+          PHASE_EMOJI[s]+' '+STATE_LABEL[s]+'</button>').join('')+'</div></div>' : '')+
+    '</div>';
+  });
+  html += '<div class="sheet-sec"><p>What you’re building</p>'+
+    '<p class="hint">One answer for the month, not one per sport — this is the training you add '+
+      'around whatever your sports are doing.</p>'+
+    '<div class="pills">'+COMPONENTS.map(c =>
+      '<button class="pill'+(comps.indexOf(c[0])>=0?' sel':'')+'" onclick="toggleComp(\''+c[0]+'\')">'+esc(c[1])+'</button>').join('')+
+    '</div></div>';
+  html += '<button class="done" onclick="closeMonth()">Done</button>';
+  document.getElementById('sheetInner').innerHTML = html;
+}
+function ensureRec(i){
+  const sp = sheetSports()[i];
+  sp.monthlyStates = sp.monthlyStates || [];
+  let rec = sp.monthlyStates.find(x => x.month === openMonthName);
+  if(!rec){ rec = { month: openMonthName, state:'', state2:'', focus:'', note:'' }; sp.monthlyStates.push(rec); }
+  return rec;
+}
+function setState(i, s){ const r = ensureRec(i); r.state = s; if(!s) r.state2=''; renderSheet(); }
+function setState2(i, s){ const r = ensureRec(i); r.state2 = s; renderSheet(); }
+function toggleHalf(i){ const r = ensureRec(i); r.state2 = r.state2 ? '' : (r.state || 'maintain'); renderSheet(); }
+function toggleComp(id){
+  const m = ym(); m._monthComps = m._monthComps || {};
+  const cur = (m._monthComps[openMonthName] || compsIn(openMonthName)).slice();
+  const at = cur.indexOf(id);
+  if(at >= 0) cur.splice(at,1); else { if(cur.length >= 3) return; cur.push(id); }
+  m._monthComps[openMonthName] = cur;
+  renderSheet();
+}
+
+/* ---------- chrome ---------- */
+function setWho(id){ who = id; render(); }
+function setView(v){ view = v; render(); }
+function setGrouping(g){ grouping = g; render(); }
+function dataNoteHTML(){
+  const all = ym().sports || [];
+  const junk = all.filter(isSignupRow);
+  if(!junk.length) return '';
+  const planned = plannedSports().map(s => s.name);
+  const ignored = junk.filter(s => planned.indexOf(s.name) < 0);
+  const months = ignored.reduce((a,s) => a + (s.monthlyStates||[]).filter(m=>m.state).length, 0);
+  return '<div class="note"><b>Found in this athlete’s real data:</b> '+junk.length+
+    ' row'+(junk.length>1?'s':'')+' whose name is a list of sports — typed into one box on the sign-up form, '+
+    'then stored as if it were a sport.'+
+    (months ? ' <b>'+months+' months of planning sit in '+(ignored.length>1?'those rows':'that row')+
+      ' and the season ignores every one of them</b>, because real sports have been planned too.'
+            : ' It is the only row with any planning, so the season is read from it.')+
+    '</div>';
+}
+function render(){
+  document.getElementById('whoBar').innerHTML = Object.keys(MAPS).map(id =>
+    '<button class="chip'+(id===who?' on':'')+'" onclick="setWho(\''+id+'\')">'+id+
+      ' <span style="opacity:.65">· '+(MAPS[id].sports||[]).length+' rows</span></button>').join(' ');
+  document.getElementById('vNew').classList.toggle('on', view==='new');
+  document.getElementById('gSport').classList.toggle('on', grouping==='sport');
+  document.getElementById('gWork').classList.toggle('on', grouping==='work');
+  document.getElementById('groupBar').style.display = view==='new' ? '' : 'none';
+  document.getElementById('vOld').classList.toggle('on', view==='old');
+  document.getElementById('dataNote').innerHTML = dataNoteHTML();
+  document.getElementById('main').innerHTML = view === 'new' ? newViewHTML() : oldViewHTML();
+}
+render();
+</script>
+</body>
+</html>
