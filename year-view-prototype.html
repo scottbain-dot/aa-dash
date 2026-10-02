@@ -98,6 +98,52 @@
   .ev{font:700 10px 'Inter';background:var(--gold-light);color:var(--burgundy-dark);
       border-radius:999px;padding:3px 7px;white-space:nowrap}
 
+  /* ---- THE ATHLETE VIEW ---- */
+  .tgt{background:linear-gradient(160deg,#2b2521 0%,#3a312b 100%);color:#f7f1ec;border:none}
+  .tgt .eyebrow{color:var(--gold)}
+  .tgt-ev{font-family:'Fraunces',Georgia,serif;font-size:25px;font-weight:700;line-height:1.15;margin:0 0 5px}
+  .tgt-when{font:700 13px 'Inter';color:var(--gold);margin:0 0 11px}
+  .tgt-goal{font-size:13px;line-height:1.5;color:rgba(247,241,236,.8);margin:0}
+  .tgt-bar{height:5px;border-radius:3px;background:rgba(247,241,236,.2);margin:14px 0 5px;overflow:hidden}
+  .tgt-bar span{display:block;height:100%;background:var(--gold)}
+  .tgt-bar-lab{font:600 10.5px 'Inter';color:rgba(247,241,236,.6)}
+
+  .now-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 3px}
+  .now-name{font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:700}
+  .now-wk{font:800 10px 'Inter';letter-spacing:.06em;text-transform:uppercase;
+          background:var(--gold-light);color:var(--burgundy-dark);border-radius:999px;padding:3px 8px}
+  .now-ask{font-size:14px;color:var(--ink-soft);line-height:1.5;margin:7px 0 0}
+  .now-ask b{color:var(--ink)}
+  .now-sports{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .now-sp{font:600 12px 'Inter';border-radius:999px;padding:5px 11px;border:1px solid var(--line);background:var(--cream)}
+  .now-sp.lead{background:var(--st-build);color:#f7f1ec;border-color:var(--st-build)}
+  .now-sp.peak{background:var(--st-peak);color:#faf3ed;border-color:var(--st-peak)}
+  .now-stat{display:flex;gap:16px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .stat b{display:block;font-family:'Fraunces',Georgia,serif;font-size:21px;line-height:1.1}
+  .stat span{font:600 10.5px 'Inter';letter-spacing:.05em;text-transform:uppercase;color:var(--ink-mute)}
+  .now-next{font-size:12.5px;color:var(--ink-mute);margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line)}
+  .now-next b{color:var(--ink)}
+
+  .sea{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line)}
+  .sea:first-of-type{border-top:none}
+  .sea-dot{width:11px;height:11px;border-radius:50%;background:var(--st-peak);flex:0 0 auto}
+  .sea.past .sea-dot{background:var(--line)}
+  .sea.here .sea-dot{box-shadow:0 0 0 4px var(--gold-light)}
+  .sea-body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px}
+  .sea-name{font:700 14px 'Inter'}
+  .sea-sub{font-size:11.5px;color:var(--ink-mute)}
+  .sea-away{font:800 11px 'Inter';color:var(--burgundy);white-space:nowrap}
+  .sea-lede{font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:14.5px;
+            color:var(--ink-soft);margin:0 0 10px;line-height:1.45}
+
+  .todo{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--cream);
+        border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:7px;cursor:pointer;font:inherit}
+  .todo-i{flex:0 0 auto;font-size:15px}
+  .todo-t{flex:1 1 auto;font-size:13px;color:var(--ink-soft);line-height:1.4}
+  .todo-t b{color:var(--ink)}
+  .plan-link{width:100%;background:none;border:1.5px solid var(--line);border-radius:12px;padding:13px;
+             font:700 14px 'Inter';color:var(--burgundy);cursor:pointer;margin-top:4px}
+
   /* ---- today's grid, for comparison ---- */
   .yog{display:grid;grid-template-columns:clamp(52px,17vw,96px) repeat(12,1fr);gap:3px;align-items:center}
   .yog-mhead{font:700 8.5px 'Inter';text-transform:uppercase;text-align:center;color:var(--ink-mute)}
@@ -158,7 +204,8 @@
   </div>
   <div class="bar">
     <span class="bar-lab">View</span>
-    <button class="chip on" id="vNew" onclick="setView('new')">One year</button>
+    <button class="chip on" id="vAth" onclick="setView('ath')">What the athlete sees</button>
+    <button class="chip" id="vNew" onclick="setView('new')">Planner</button>
     <button class="chip" id="vOld" onclick="setView('old')">Today’s grid</button>
   </div>
 
@@ -190,7 +237,7 @@ const STATE_LABEL = { build:'Build', maintain:'Maintain', peak:'Peak', recover:'
 const COMPONENTS = [['strength','Str'],['power','Pwr'],['speed','Spd'],['mds','MDS'],
                     ['endurance','End'],['mobility','Mob'],['skill','Skill']];
 
-let who = '62', view = 'new', grouping = 'sport', openMonthName = null;
+let who = '62', view = 'ath', grouping = 'work', openMonthName = null;
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ym = () => MAPS[who];
 
@@ -340,6 +387,147 @@ function newViewHTML(){
   return html;
 }
 
+/* ============================================================
+   WHAT THE ATHLETE SEES
+   ------------------------------------------------------------
+   The planner view above is a transcript of what the athlete typed in, laid out
+   differently. "Football build / Basketball build / Football build" is not
+   information to a fifteen year old — it is their own input read back, and the
+   emotion it produces is confusion.
+   A periodisation chart is a coach's tool. The athlete does not need to see
+   twelve months of phase labels; they need the four things the year implies:
+   what am I aiming at, what is this stretch for, what is coming, and what needs
+   me now. The plan becomes an editor behind a button.
+   ============================================================ */
+const LOAD = {"41":{"weeksTrained":5,"lastWeeks":[{"w":"2026-08-24","load":780,"n":null},{"w":"2026-09-07","load":600,"n":null},{"w":"2026-09-14","load":1400,"n":null},{"w":"2026-09-21","load":960,"n":null},{"w":"2026-09-28","load":210,"n":null}],"summary":{"thisWeekLoad":210,"acwr":0.21283783783783786,"weeksLogged":5,"loggedDates":["2026-08-27","2026-08-28","2026-09-07","2026-09-09","2026-09-14","2026-09-15","2026-09-16","2026-09-20","2026-09-21","2026-09-22","2026-09-26","2026-10-01"]},"games":[{"name":"V 1880","date":"2026-09-11","sport":"Rugby"}]},"43":{"weeksTrained":4,"lastWeeks":[{"w":"2026-09-07","load":1020,"n":null},{"w":"2026-09-14","load":4700,"n":null},{"w":"2026-09-21","load":3190,"n":null},{"w":"2026-09-28","load":3485,"n":null}],"summary":{"thisWeekLoad":3485,"acwr":1.1734006734006734,"weeksLogged":4,"loggedDates":["2026-09-07","2026-09-08","2026-09-14","2026-09-15","2026-09-17","2026-09-18","2026-09-19","2026-09-20","2026-09-21","2026-09-22","2026-09-24","2026-09-26","2026-09-28","2026-09-29","2026-10-01"]},"games":[{"name":"Tournament","date":"2026-08-29","sport":"Tennis"},{"name":"Game vs middleschool","date":"2026-09-11","sport":"Football"},{"name":"multi team tournament","date":"2026-09-18","sport":"Football"},{"name":"Tournament","date":"2026-09-19","sport":"Football"},{"name":"ISB away game","date":"2026-10-16","sport":"Football"},{"name":"ISB away game","date":"2026-10-17","sport":"Football"},{"name":"Home ZIS game","date":"2026-10-23","sport":"Football"},{"name":"Home ZIS game","date":"2026-10-24","sport":"Football"},{"name":"ISB home game","date":"2026-11-06","sport":"Football"},{"name":"ISB home game","date":"2026-11-07","sport":"Football"},{"name":"ISST","date":"2026-11-12","sport":"Football"},{"name":"ISST","date":"2026-11-13","sport":"Football"},{"name":"ISST","date":"2026-11-14","sport":"Football"}]},"57":{"weeksTrained":3,"lastWeeks":[{"w":"2026-09-07","load":2000,"n":null},{"w":"2026-09-14","load":4180,"n":null},{"w":"2026-09-21","load":1980,"n":null}],"summary":{"thisWeekLoad":0,"acwr":0,"weeksLogged":3,"loggedDates":["2026-09-07","2026-09-08","2026-09-09","2026-09-14","2026-09-15","2026-09-16","2026-09-18","2026-09-19","2026-09-21","2026-09-22","2026-09-24"]},"games":[{"name":"Friendly game again local club","date":"2026-09-09","sport":"Volleyball"},{"name":"MID WEEK GAME","date":"2026-09-16","sport":"Volleyball"},{"name":"Early Bird Tournament","date":"2026-09-18","sport":"Volleyball"},{"name":"Early Bird Tournament","date":"2026-09-19","sport":"Volleyball"},{"name":"Home Game (against local team: ISD)","date":"2026-09-26","sport":"Volleyball"}]},"59":{"weeksTrained":2,"lastWeeks":[{"w":"2026-08-31","load":810,"n":null},{"w":"2026-09-07","load":690,"n":null}],"summary":{"thisWeekLoad":0,"acwr":null,"weeksLogged":2,"loggedDates":["2026-09-06","2026-09-12","2026-09-13"]},"games":[{"name":"Black Forest Academy XC Meet","date":"2026-09-12","sport":"Cross Country"},{"name":"Wiesbaden XC Meet","date":"2026-09-19","sport":"Cross Country"}]},"62":{"weeksTrained":5,"lastWeeks":[{"w":"2026-08-31","load":540,"n":null},{"w":"2026-09-07","load":1815,"n":null},{"w":"2026-09-14","load":3315,"n":null},{"w":"2026-09-21","load":450,"n":null},{"w":"2026-09-28","load":1635,"n":null}],"summary":{"thisWeekLoad":1635,"acwr":1.0686274509803921,"weeksLogged":5,"loggedDates":["2026-08-31","2026-09-07","2026-09-08","2026-09-09","2026-09-14","2026-09-15","2026-09-17","2026-09-18","2026-09-19","2026-09-21","2026-09-28","2026-09-29"]},"games":[{"name":"Game against the JV team","date":"2026-09-12","sport":"Football"},{"name":"Multiple teams","date":"2026-09-18","sport":"Football"},{"name":"Games against multiple teams","date":"2026-09-19","sport":"Football"},{"name":"Game against BIS","date":"2026-09-26","sport":"Football"},{"name":"Game against ISB","date":"2026-10-16","sport":"Football"},{"name":"Game against ISB","date":"2026-10-17","sport":"Football"},{"name":"Game against ZIS","date":"2026-10-23","sport":"Football"},{"name":"Game against ZIS","date":"2026-10-24","sport":"Football"}]}};
+const NOW_ISO = '2026-10-02';
+const dISO = d => d.toISOString().slice(0,10);
+const weeksBetween = (a,b) => Math.round((new Date(b) - new Date(a)) / (7*86400000));
+
+function blockRange(b){
+  const cells = academicCells();
+  const first = cells.find(c => c.month === b.months[0]);
+  const last  = cells.find(c => c.month === b.months[b.months.length-1]);
+  if(!first || !last) return null;
+  return { from: dISO(new Date(Date.UTC(first.year, MONTHS.indexOf(first.month), 1))),
+           to:   dISO(new Date(Date.UTC(last.year,  MONTHS.indexOf(last.month)+1, 0))) };
+}
+function nowBlockIn(bs){ return bs.find(b => b.segs.some(s => s.month === NOW_MONTH)) || null; }
+function trainingIn(range){
+  const L = LOAD[who]; if(!L || !range) return { weeks:0, load:0 };
+  const ws = (L.lastWeeks||[]).filter(w => w.w >= range.from && w.w <= range.to);
+  return { weeks: ws.length, load: ws.reduce((a,w) => a + (w.load||0), 0) };
+}
+const ASK = {
+  build:    'Room to build. <b>2–3 sessions a week of your own</b> on top of your sport.',
+  maintain: 'Your sport leads. <b>1 session a week of your own</b> holds what you have.',
+  peak:     'Competition time. <b>Keep it sharp</b> — hard but short, and arrive fresh.',
+  recover:  '<b>Deliberate rest.</b> Light movement, nothing hard.',
+  off:      '<b>A proper break.</b> Nothing planned.'
+};
+
+function seasonLede(seasons, cur){
+  const next = seasons.map(b => ({ b, away: (blockRange(b)||{}).from ? weeksBetween(NOW_ISO, blockRange(b).from) : null }))
+                      .filter(x => x.away != null && x.away > 0).sort((a,b) => a.away - b.away)[0];
+  const n = seasons.length;
+  if(seasons.indexOf(cur) >= 0) return 'You are in one now. ' + (n>1 ? 'There ' + (n-1===1?'is':'are') + ' ' + (n-1) + ' more this year.' : '');
+  if(next) return (n===1 ? 'One season to be ready for' : n + ' seasons this year') +
+    ' — the first is <strong>' + next.away + ' weeks away</strong>.';
+  return n === 1 ? 'One season to be ready for.' : n + ' seasons this year.';
+}
+
+function athleteViewHTML(){
+  const m = ym(), ap = m.aPriority, bs = blocks(), cur = nowBlockIn(bs);
+  const cells = academicCells();
+  const yearFrom = dISO(new Date(Date.UTC(cells[0].year, 7, 1)));
+  const yearTo   = dISO(new Date(Date.UTC(cells[11].year, 7, 0)));
+  const through  = Math.max(0, Math.min(100, Math.round(weeksBetween(yearFrom, NOW_ISO) / 52 * 100)));
+
+  /* 1. What am I aiming at. */
+  let html = '<div class="card tgt">';
+  if(ap && ap.event){
+    const away = ap.date ? weeksBetween(NOW_ISO, ap.date) : null;
+    html += '<p class="eyebrow">Your target</p>'+
+      '<p class="tgt-ev">'+esc(ap.event)+'</p>'+
+      '<p class="tgt-when">'+(ap.date ? new Date(ap.date).toDateString().slice(4) : esc(ap.month||''))+
+        (away!=null && away>0 ? ' · <strong>'+away+' weeks away</strong>' : '')+'</p>';
+  } else {
+    html += '<p class="eyebrow">Your target</p><p class="tgt-ev">No big event set.</p>';
+  }
+  if(m.goal) html += '<p class="tgt-goal">“'+esc(m.goal)+'”</p>';
+  html += '<div class="tgt-bar"><span style="width:'+through+'%"></span></div>'+
+          '<p class="tgt-bar-lab">'+through+'% through your year</p></div>';
+
+  /* 2. What this stretch is for, and what I have actually done in it. */
+  if(cur){
+    const r = blockRange(cur), t = trainingIn(r);
+    const i = cur.segs.findIndex(s => s.month === NOW_MONTH);
+    const wk = Math.round(i*4.35)+1;
+    const seg = cur.segs[i] || cur.segs[0];
+    const lead = seg && seg.lead;
+    const phase = lead ? lead.phase : '';
+    const idx = bs.indexOf(cur), nxt = bs[idx+1];
+    html += '<div class="card">'+
+      '<p class="eyebrow">Right now</p>'+
+      '<div class="now-h"><span class="now-name">'+esc(cur.label)+'</span>'+
+        '<span class="now-wk">Week '+wk+' of '+cur.weeks+'</span></div>'+
+      (ASK[phase] ? '<p class="now-ask">'+ASK[phase]+'</p>' : '')+
+      (seg ? '<div class="now-sports">'+
+        [].concat(lead?[{sp:lead.sp,phase:lead.phase,lead:true}]:[], (seg.others||[]).map(o=>({sp:o.sp,phase:o.phase})))
+        .map(o => '<span class="now-sp '+(o.phase==='peak'?'peak':(o.lead?'lead':''))+'">'+
+            PHASE_EMOJI[o.phase]+' '+esc(o.sp.name)+' · '+PHASE_WORD[o.phase]+'</span>').join('')+
+      '</div>' : '')+
+      '<div class="now-stat">'+
+        '<span class="stat"><b>'+t.weeks+' <span style="font-size:13px;color:var(--ink-mute)">of '+cur.weeks+'</span></b>'+
+          '<span>weeks trained<br>this block</span></span>'+
+        '<span class="stat"><b>'+(LOAD[who]?LOAD[who].weeksTrained:0)+'</b><span>weeks trained<br>this year</span></span>'+
+        '<span class="stat"><b>'+(cur.weeks - wk + 1)+'</b><span>weeks left<br>in this block</span></span>'+
+      '</div>'+
+      (nxt ? '<p class="now-next">Then: <b>'+esc(nxt.label)+'</b> · '+nxt.weeks+' weeks</p>' : '')+
+    '</div>';
+  }
+
+  /* 3. The year as the thing an athlete can hold in their head: the seasons. */
+  const seasons = bs.filter(b => b.lead && PHASE_TIER[b.lead.phase] === 'compete');
+  if(seasons.length){
+    html += '<div class="card"><p class="eyebrow">Your seasons this year</p>'+
+      '<p class="sea-lede">'+seasonLede(seasons, cur)+'</p>';
+    seasons.forEach(b => {
+      const r = blockRange(b);
+      const away = r ? weeksBetween(NOW_ISO, r.from) : null;
+      const here = b === cur, past = away != null && away < 0 && !here;
+      html += '<div class="sea'+(here?' here':'')+(past?' past':'')+'">'+
+        '<span class="sea-dot"></span>'+
+        '<span class="sea-body"><span class="sea-name">'+esc(b.label)+'</span>'+
+          '<span class="sea-sub">'+rangeLabel(b)+' · '+b.weeks+' weeks</span></span>'+
+        '<span class="sea-away">'+(here ? 'NOW' : past ? 'done' : (away>0? away+' wks':'soon'))+'</span>'+
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  /* 4. The gaps, as things to do rather than blanks to notice. */
+  const todos = [];
+  const unset = [];
+  academicCells().forEach(c => { if(!rankedAt(c.month,0).length) unset.push(c.month); });
+  const junkRows = (m.sports||[]).filter(isSignupRow);
+  if(junkRows.length) todos.push(['🏷️','<b>Your sports are stored as one line</b> — “'+esc(junkRows[0].name)+
+    '”. Split them and each one can have its own season.','']);
+  if(!m.goal) todos.push(['🎯','You have not written down <b>what you are chasing</b> this year.','']);
+  if(!ap || !ap.event) todos.push(['🏁','No big event set — <b>the thing the year points at</b>.','']);
+  if(unset.length) todos.push(['📅','<b>'+unset.length+' month'+(unset.length>1?'s':'')+' not planned</b> — '+
+    unset.slice(0,3).map(x=>x.slice(0,3)).join(', ')+(unset.length>3?'…':'')+'. Two taps each.', unset[0]]);
+  if(cur && !compsIn(NOW_MONTH).length) todos.push(['💪','<b>No focus set for this month.</b> What are you actually building?', NOW_MONTH]);
+  if(todos.length){
+    html += '<div class="card"><p class="eyebrow">Needs you</p>'+
+      todos.map(t => '<button class="todo"'+(t[2]?' onclick="openMonth(\''+t[2]+'\')"':'')+'>'+
+        '<span class="todo-i">'+t[0]+'</span><span class="todo-t">'+t[1]+'</span></button>').join('')+
+    '</div>';
+  }
+  html += '<button class="plan-link" onclick="setView(\'new\')">Plan my months →</button>';
+  return html;
+}
+
 /* ---------- today's grid, for comparison ---------- */
 function oldViewHTML(){
   const m = ym();
@@ -462,6 +650,7 @@ function render(){
     '<button class="chip'+(id===who?' on':'')+'" onclick="setWho(\''+id+'\')">'+id+
       ' <span style="opacity:.65">· '+(MAPS[id].sports||[]).length+' rows</span>'+
       (id==='62' ? ' <span class="flag">grouping differs</span>' : '')+'</button>').join(' ');
+  document.getElementById('vAth').classList.toggle('on', view==='ath');
   document.getElementById('vNew').classList.toggle('on', view==='new');
   document.getElementById('gSport').classList.toggle('on', grouping==='sport');
   document.getElementById('gWork').classList.toggle('on', grouping==='work');
@@ -474,7 +663,8 @@ function render(){
     : '<span class="diff">'+(nS-nW)+' fewer blocks →</span>';
   document.getElementById('vOld').classList.toggle('on', view==='old');
   document.getElementById('dataNote').innerHTML = dataNoteHTML();
-  document.getElementById('main').innerHTML = view === 'new' ? newViewHTML() : oldViewHTML();
+  document.getElementById('main').innerHTML =
+    view === 'ath' ? athleteViewHTML() : view === 'new' ? newViewHTML() : oldViewHTML();
 }
 render();
 </script>
