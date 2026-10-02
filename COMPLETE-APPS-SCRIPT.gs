@@ -6019,11 +6019,15 @@ function seedCheckInTwo() {
   var n = apSeedCheckInTwo(sheet);
   if (ui) ui.alert('Check-in 2', 'Added ' + n + ' one-to-one slots (15 min). Now run "Reserve my check-in times" to put the holds on your calendar.', ui.ButtonSet.OK);
 }
-// Check-in 3 — one whole-squad session, first morning back after the October
-// break. Everyone, one time, no streaming.
+// Check-in 3 — one whole-squad session. Everyone, one time, no streaming.
+//
+// Deliberately the SECOND week back after the October break (Tue 20th), not the
+// first. A 07:15 start on the first morning back asks a student to be organised
+// on the day they are least likely to be; a week's run-up is the difference
+// between turning up and meaning to.
 function apSeedCheckInThree(sheet) {
   var rows = [
-    ['ci3_tue1013', 3, 'Check-in 3 · The whole group', '2026-10-13', '07:15', '08:15', 'open', 0, 'open', 'Before school', '', '', '']
+    ['ci3_tue1020', 3, 'Check-in 3 · The whole group', '2026-10-20', '07:15', '08:15', 'open', 0, 'open', 'Before school', '', '', '']
   ];
   var startRow = sheet.getLastRow() + 1;
   sheet.getRange(startRow, 4, rows.length, 3).setNumberFormat('@');   // Date/Start/End as text
