@@ -6044,7 +6044,12 @@ function apSeedCheckInFour(sheet) {
   var T_UP  = 'Check-in 4 · Movement masterclass — next level';
   var rows = [
     // id,                 seq, title, date,         start,   end,     format, cap, status, notes,          Event_ID, Hold_Event_ID, Eligible
-    ['ci4_mon1019_lunch',  4, T_NEW, '2026-10-19', '11:40', '12:30', 'group', 8, 'open', 'Lunch',         '', '', 'new'],
+    // Was Mon 19 Oct. That is a D day, and D-day lunch is Physical Education 8
+    // (06B) in the Sports Hall, 11:45-12:30 — straight through the slot. Fri 23
+    // is an H day: the 10:45 class ends at 11:35 and nothing starts until 12:30.
+    // Wednesday was the obvious alternative and is also out (F day, PE 7 01C,
+    // 11:40-12:30). Moving it also puts every Check-in 4 slot after Check-in 3.
+    ['ci4_fri1023_lunch',  4, T_NEW, '2026-10-23', '11:40', '12:30', 'group', 8, 'open', 'Lunch',         '', '', 'new'],
     ['ci4_tue1020_pm',     4, T_NEW, '2026-10-20', '15:30', '16:30', 'group', 8, 'open', 'After school',  '', '', 'new'],
     ['ci4_thu1022_am',     4, T_NEW, '2026-10-22', '07:15', '08:15', 'group', 8, 'open', 'Before school', '', '', 'new'],
     ['ci4_mon1026_lunch',  4, T_UP,  '2026-10-26', '11:40', '12:30', 'group', 8, 'open', 'Lunch',         '', '', 'stamped'],
