@@ -1552,7 +1552,7 @@
       <button class="wkt-rest-chip" onclick="wktRest(90)">90s</button>
       <button class="wkt-rest-chip" onclick="wktRest(120)">2 min</button>
     </div>
-    <button class="wkt-finish" onclick="wktFinishOpen()"><i class="ti ti-flag-checkered" aria-hidden="true"></i> Finish workout</button>
+    <button class="wkt-finish" id="wktFinishBtn" onclick="wktFinishOpen()"><i class="ti ti-flag-checkered" aria-hidden="true"></i> Finish workout</button>
   </div>
   <!-- Finish: log effort + time -->
   <div class="wkt-finish-panel" id="wktFinishPanel">
@@ -1567,7 +1567,7 @@
         <input type="text" inputmode="numeric" class="duration-input" id="wktDuration" placeholder="e.g. 45">
         <span class="duration-suffix">min</span>
       </div>
-      <button class="wkt-finish" style="margin-top:18px;" onclick="wktSaveFinish()"><i class="ti ti-check" aria-hidden="true"></i> Save workout</button>
+      <button class="wkt-finish" id="wktSaveBtn" style="margin-top:18px;" onclick="wktSaveFinish()"><i class="ti ti-check" aria-hidden="true"></i> Save workout</button>
       <button class="wkt-cancel-ex" style="width:100%; margin-top:10px; padding:11px; border-radius:11px; background:transparent; border:1px solid var(--line); color:var(--ink-mute); font-weight:600; cursor:pointer;" onclick="wktFinishClose()">Back to exercises</button>
     </div>
   </div>
@@ -1726,11 +1726,11 @@
     </div>
 
     <div class="sheet-section" id="workoutSection">
-      <p class="sheet-section-label">The workout · optional</p>
+      <p class="sheet-section-label" id="workoutSectionLabel">The workout · optional</p>
       <button class="card-cta card-cta-gold" id="sheetStartWorkout" style="width:100%; display:none; margin-bottom:14px;" onclick="startWorkoutFromSheet()"><i class="ti ti-barbell" aria-hidden="true"></i> Start workout</button>
       <ul class="workout-list" id="sheetWorkout"></ul>
       <p class="workout-progress" id="workoutProgress"></p>
-      <button class="workout-edit-btn" onclick="editWorkout()">
+      <button class="workout-edit-btn" id="workoutEditBtn" onclick="editWorkout()">
         <i class="ti ti-edit" aria-hidden="true"></i> Edit workout
       </button>
     </div>
@@ -1879,6 +1879,7 @@
         <button class="state-pill" data-state="recover" onclick="pickState('recover')">Recover</button>
         <button class="state-pill" data-state="off" onclick="pickState('off')">Off</button>
       </div>
+      <p class="state-help" id="stateHelp"></p>
       <div class="split-row" onclick="toggleSplit()">
         <div class="split-row-text"><strong>Split this month</strong><small>Give the first &amp; second half different phases</small></div>
         <div class="toggle-switch" id="splitToggle"></div>
@@ -1896,8 +1897,11 @@
     </div>
 
     <div class="sheet-section">
-      <p class="sheet-section-label">Focus this block</p>
-      <input class="duration-input plan-field" id="blockFocus" placeholder="e.g. Aerobic base. Hold technique under fatigue.">
+      <p class="sheet-section-label">What are you building this month?</p>
+      <p class="comp-help">Pick what this month is actually for. You can choose more than one — but two or three is usually plenty.</p>
+      <div class="comp-picker" id="compPicker"></div>
+      <p class="sheet-section-label" style="margin-top:14px;">Anything else · optional</p>
+      <input class="duration-input plan-field" id="blockFocus" placeholder="e.g. hold technique under fatigue">
     </div>
 
     <div class="sheet-section">
@@ -2564,6 +2568,16 @@
   .cv-band-building   { background: var(--line); color: var(--ink-soft); }
   .cv-band-none       { background: var(--line); color: var(--ink-mute); }
   .cv-grit-line { font: italic 400 13px 'Fraunces', serif; color: var(--ink-soft); margin: 10px 0 0; }
+  /* Grit on the Load tab — the band, then what's driving it, in counts. */
+  .grit-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .grit-line { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-soft); margin: 0; flex: 1 1 160px; }
+  .grit-parts { margin-top: 14px; }
+  .grit-part { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    padding: 8px 0; border-top: 1px solid var(--line); }
+  .grit-part:first-child { border-top: none; }
+  .grit-part-l { font: 600 13px 'Inter', sans-serif; color: var(--ink); }
+  .grit-part-v { font: 500 12.5px 'Inter', sans-serif; color: var(--ink-mute); text-align: right; }
+  .grit-pending { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-mute); margin: 4px 0 0; line-height: 1.5; }
   .cv-grit-bar { height: 7px; border-radius: 999px; background: var(--line-soft); overflow: hidden; margin: 10px auto 0; max-width: 260px; }
   .cv-grit-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #93b58d, #5a8757); }
   .cv-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -3501,7 +3515,11 @@
 
   /* ---- Multi-sport overview heatmap (compare all sports down a column) ---- */
   .yog-legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 2px 0 14px; }
-  .yog { display: grid; grid-template-columns: 84px repeat(12, 1fr); gap: 3px; align-items: center; }
+  /* 84px of label plus twelve columns leaves ~22px a cell on a phone, which is
+     the same size as the badge that sits on top of it — so the badge covered
+     the month entirely. The label column now shrinks with the screen and the
+     badge scales with the cell rather than being a fixed 22px. */
+  .yog { display: grid; grid-template-columns: clamp(52px, 17vw, 84px) repeat(12, 1fr); gap: 3px; align-items: center; }
   .yog-corner { }
   .yog-mhead { font: 700 8.5px 'Inter', sans-serif; letter-spacing: 0.02em; text-transform: uppercase; text-align: center; color: var(--ink-mute); padding-bottom: 2px; }
   .yog-mhead.now { color: var(--burgundy); }
@@ -3519,15 +3537,26 @@
   .yog-cell.ym-recover, .yog-cell.ym-off { border: 1px solid var(--line); }
   .yog-cell.suggest { opacity: 0.42; }
   .yog-cell.now { outline: 2px solid var(--burgundy); outline-offset: -2px; }
+  /* A phone cell is about 18px across. An icon and a count cannot live on that
+     without burying the month underneath, so at this width the marker is just a
+     dot that says "something's on" — the detail is one tap away. */
   .yog-cell .yog-mark {
-    position: absolute; top: 3px; right: 3px; min-width: 22px; height: 22px; padding: 0 3px;
-    display: flex; align-items: center; justify-content: center; gap: 1px; border: none; cursor: pointer;
-    background: var(--gold); color: var(--burgundy-dark); border-radius: 999px; line-height: 1;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.32); transition: transform 0.12s;
+    position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; min-width: 0; padding: 0;
+    display: block; overflow: hidden; text-indent: -999px; border: 1.5px solid #fff; cursor: pointer;
+    background: var(--gold); border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    transition: transform 0.12s;
   }
-  .yog-cell .yog-mark:hover { transform: scale(1.18); }
-  .yog-cell .yog-mark .ti { font-size: 14px; }
-  .yog-cell .yog-mark b { font-size: 10px; font-weight: 800; margin-left: 1px; }
+  .yog-cell .yog-mark:hover { transform: scale(1.3); }
+  /* Once there's room, the full pill with its icon and count comes back. */
+  @media (min-width: 560px) {
+    .yog-cell .yog-mark {
+      top: 3px; right: 3px; width: auto; min-width: 20px; height: 20px; padding: 0 3px;
+      display: flex; align-items: center; justify-content: center; overflow: visible; text-indent: 0;
+      border: none; border-radius: 999px; color: var(--burgundy-dark); line-height: 1;
+    }
+    .yog-cell .yog-mark .ti { font-size: 12px; }
+    .yog-cell .yog-mark b { font-size: 9.5px; font-weight: 800; margin-left: 1px; }
+  }
   @keyframes yog-card-flash { 0%,100% { box-shadow: var(--card-shadow, 0 0 0 rgba(0,0,0,0)); } 30% { box-shadow: 0 0 0 3px var(--gold); } }
   .year-flash { animation: yog-card-flash 1.1s ease; }
   .yog-rowlabel { grid-column: 1 / -1; height: 2px; }
@@ -3873,29 +3902,61 @@
   .sport-level-light { background: #efe7e2; color: #8a7a72; }
   .sport-level-off   { background: transparent; color: #a3948c; border: 1px solid #e2d6cf; }
   .plan-row .sport-level-off ~ *, .plan-row:has(.sport-level-off) .plan-detail { opacity: 0.75; }
-  /* Block card — what this stretch of the year is, and what it means per sport. */
-  .blk-card { padding: 16px 18px; }
-  .blk-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  .blk-name { font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 700; color: var(--ink, #1a1a1a); }
-  .blk-when { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
-    text-transform: uppercase; color: var(--ink-mute, #7a6a60); }
-  .blk-goal { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 14px;
-    color: var(--ink-soft, #4a3f39); margin: 8px 0 0; line-height: 1.45; }
-  .blk-sports { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-  .blk-sport { display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    padding: 6px 0; border-top: 1px solid var(--line, #eee3dd); }
-  .blk-sport:first-child { border-top: none; }
-  .blk-sport-name { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink, #1a1a1a); }
-  .blk-sport-lv { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
-    text-transform: uppercase; border-radius: 999px; padding: 3px 9px; }
-  .blk-lv-lead  { background: var(--gold-light, #f5e6b3); color: #6a3a36; }
-  .blk-lv-full  { background: #e7efe4; color: #4c6b49; }
-  .blk-lv-light { background: #efe7e2; color: #8a7a72; }
-  .blk-lv-off   { background: transparent; color: #a3948c; border: 1px solid #e2d6cf; }
-  .blk-note { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60);
-    margin: 10px 0 0; line-height: 1.5; }
-  .blk-link { margin-top: 10px; background: none; border: none; padding: 0; cursor: pointer;
-    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--burgundy, #874B46); }
+  /* What this block asks of the week — one quiet tappable line, not a card.
+     The eyebrow strip above already names the block and the week number, and the
+     Year tab owns the season breakdown, so this only carries what neither says. */
+  .blk-line { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    cursor: pointer; background: var(--cream, #fdf6f2); border: 1px solid var(--line, #eee3dd);
+    border-left: 3px solid var(--gold, #D4AF37); border-radius: 12px; padding: 10px 13px;
+    margin: 0 0 10px; }
+  .blk-line-txt { flex: 1 1 auto; min-width: 0; font-family: 'Inter', sans-serif; font-size: 12.5px;
+    color: var(--ink-soft, #4a3f39); line-height: 1.45; }
+  .blk-line-txt strong { color: var(--ink, #1a1a1a); font-weight: 700; }
+  /* Nothing picked yet — the line is a prompt, so it gets the gold tint. */
+  .blk-line-ask { background: #fdf7e8; border-left-color: var(--burgundy, #874B46); }
+  .blk-line-txt em { font-style: normal; color: var(--burgundy, #874B46); font-weight: 600; }
+  .blk-line-go { flex: 0 0 auto; color: var(--ink-mute, #7a6a60); font-size: 15px; }
+  /* Month sheet: what a phase means, and what the month is building. */
+  .state-help { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-mute, #7a6a60);
+    margin: 10px 0 0; line-height: 1.5; min-height: 18px; }
+  /* Goal check — a card in the page, never a modal over it. */
+  .gcheck { border: 1.5px solid var(--gold-light, #f5e6b3); }
+  .gcheck-goal { font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 700;
+    color: var(--ink, #1a1a1a); margin: 2px 0 0; line-height: 1.3; }
+  .gcheck-date { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+    color: var(--ink-mute, #7a6a60); white-space: nowrap; }
+  .gcheck-ask { font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--ink-soft, #4a3f39);
+    margin: 9px 0 14px; line-height: 1.5; }
+  .gcheck-btns { display: flex; gap: 9px; flex-wrap: wrap; }
+  .gcheck-btns .card-cta { flex: 1 1 auto; }
+  .gcheck-link { margin-top: 12px; width: 100%; cursor: pointer; background: none; border: none;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; color: var(--burgundy, #874B46);
+    padding: 6px 0; text-align: left; }
+  /* The year shortlist: each quality with where they are now. */
+  .gc-intro { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-soft, #4a3f39);
+    margin: 0 0 13px; line-height: 1.5; }
+  .gc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 380px) { .gc-grid { grid-template-columns: 1fr; } }
+  .gc-pill { cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 2px;
+    background: #fff; border: 1.5px solid var(--line, #eee3dd); border-radius: 12px; padding: 11px 13px; }
+  .gc-pill.on { background: var(--cream, #fdf6f2); border-color: var(--burgundy, #874B46); }
+  .gc-name { font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 700; color: var(--ink, #1a1a1a); }
+  .gc-pill.on .gc-name { color: var(--burgundy, #874B46); }
+  .gc-blurb { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-mute, #7a6a60); line-height: 1.4; }
+  .gc-where { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    color: var(--burgundy, #874B46); margin-top: 3px; }
+  .gc-hint { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60); margin: 12px 0 0; }
+  .comp-from-goal { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-mute, #7a6a60);
+    margin: 10px 0 0; width: 100%; }
+  .comp-edit-link { background: none; border: none; padding: 0; cursor: pointer; font: inherit;
+    font-weight: 700; color: var(--burgundy, #874B46); text-decoration: underline; }
+  .comp-help { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60);
+    margin: 0 0 10px; line-height: 1.5; }
+  .comp-picker { display: flex; flex-wrap: wrap; gap: 7px; }
+  .comp-pill { cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--ink, #1a1a1a); background: #fff; border: 1.5px solid var(--line, #eee3dd);
+    border-radius: 999px; padding: 9px 15px; min-height: 40px; }
+  .comp-pill.on { background: var(--burgundy, #874B46); border-color: var(--burgundy, #874B46); color: #fff; }
   /* Your season — the year as blocks, current one marked. */
   .sb-intro { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 13.5px;
     color: var(--ink-soft, #4a3f39); margin: 0 0 12px; line-height: 1.5; }
@@ -3916,6 +3977,12 @@
     border-radius: 999px; padding: 2px 8px; }
   .sb-prog { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px;
     font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60); }
+  .sb-jump { margin-top: 14px; width: 100%; cursor: pointer; display: inline-flex; align-items: center;
+    justify-content: center; gap: 7px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--burgundy, #874B46); background: var(--cream, #fdf6f2);
+    border: 1.5px solid var(--line, #eee3dd); border-radius: 999px; padding: 11px 16px; }
+  .yog-lede { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-soft, #4a3f39);
+    margin: 0 0 12px; line-height: 1.5; }
   .sb-long { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-mute, #7a6a60);
     margin: 5px 0 0; line-height: 1.45; font-style: italic; }
   .sb-build { margin-top: 7px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12.5px;
@@ -3942,10 +4009,15 @@
   .qtap-easy { background: #e7efe4; color: #3f5d3c; border-color: #cfe0ca; }
   .qtap-ok   { background: #fbf0d6; color: #6a5420; border-color: #f0e0b8; }
   .qtap-hard { background: #f6e0dc; color: #7c3b33; border-color: #ecc9c2; }
-  /* Inline on a day row: quieter, smaller, never wider than the row. */
-  .qtap-compact { margin: 8px 0 2px; gap: 5px; }
-  .qtap-compact .qtap-lead { font-size: 11px; }
-  .qtap-compact .qtap-btn { flex: 0 1 auto; min-width: 0; min-height: 32px; font-size: 11.5px; padding: 6px 11px; }
+  /* Inline on a day row the content column is narrow — on a phone the label and
+     three buttons ran past it and wrapped mid-row, which looked broken. So in
+     compact mode it's a deliberate two rows: the label, then three equal
+     buttons. Predictable at any width, and the buttons stay thumb-sized. */
+  .qtap-compact { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px; margin: 8px 0 2px; }
+  .qtap-compact .qtap-lead { grid-column: 1 / -1; font-size: 11px; margin: 0; }
+  .qtap-compact .qtap-btn { min-width: 0; min-height: 34px; font-size: 11.5px; padding: 6px 4px; }
+  @media (max-width: 360px) { .qtap-compact .qtap-btn { font-size: 10.5px; padding: 6px 2px; } }
   .plan-info { min-width: 0; }
   .plan-name {
     font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--ink);
@@ -4132,6 +4204,19 @@
     font-family: 'Inter', sans-serif; font-size: 12px; color: var(--burgundy); line-height: 1.5; }
   .slot-booked-note strong { font-weight: 700; }
   .slot-card.locked, .slot-card.ineligible { opacity: 0.72; }
+  /* Open session: everyone's in, nothing to book. */
+  .slot-card.slot-open { border-color: var(--gold-light, #f5e6b3); background: var(--cream, #fdf6f2); }
+  /* Time and "no sign-up" fight for one row on a phone — give them their own. */
+  .slot-open .slot-card-foot { flex-direction: column; align-items: flex-start; gap: 3px; }
+  .slot-open-tag { font: 800 9.5px 'Inter', sans-serif; letter-spacing: 0.07em; text-transform: uppercase;
+    background: var(--gold-light, #f5e6b3); color: #6a3a36; border-radius: 999px; padding: 3px 9px; }
+  .slot-open-label { font-weight: 700; color: var(--burgundy, #874B46); }
+  .slot-open-note { font: 500 12px 'Inter', sans-serif; color: var(--ink-mute, #7a6a60);
+    margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line, #eee3dd); line-height: 1.5; }
+  .slot-open-btn { margin-top: 10px; width: 100%; cursor: pointer; display: inline-flex;
+    align-items: center; justify-content: center; gap: 7px; min-height: 42px;
+    font: 700 13px 'Inter', sans-serif; color: var(--burgundy, #874B46); background: #fff;
+    border: 1.5px solid var(--line, #eee3dd); border-radius: 999px; padding: 10px 16px; }
   .slot-status.locked-label { color: var(--ink-mute); }
   .slot-locked-note { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line);
     font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute); line-height: 1.5; }
@@ -4226,6 +4311,7 @@
   .wkt-ex-btn:hover { border-color: var(--gold); color: var(--gold); }
   .wkt-ex-editor { margin-top: 11px; padding-top: 11px; border-top: 1px solid rgba(250,243,237,0.12); }
   .wkt-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .wkt-fields-one { grid-template-columns: 1fr; }   /* one free-text target, not four boxes */
   .wkt-field label { display: block; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
     text-transform: uppercase; color: rgba(250,243,237,0.6); margin-bottom: 3px; }
   .wkt-field input { width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.25); border: 1px solid rgba(250,243,237,0.2);
@@ -6305,37 +6391,91 @@
     initWeekDrag();   // grip-drag a session onto another day
   }
 
-  // What this block is, and what it means for each of the athlete's sports.
-  // The one place the year plan actually explains the week. Nothing here changes
-  // a session — it says what the plan expects, and the athlete decides.
+  // What this block asks of THIS week — one line, and only when it has something
+  // to say that isn't already on screen.
+  //
+  // This was a card: block name, week N of M, a row per sport, a link to the
+  // Year tab. On a phone, for a single-sport athlete, every line of it was a
+  // repeat — the strip directly above already reads "Hyrox season · week 1 of 4",
+  // and the Year tab owns the season breakdown. It looked like a heading with
+  // nothing underneath. So it now carries only the two things the week genuinely
+  // needs from the year plan — how often to train the lead sport, and which
+  // sports are being treated differently — and renders nothing when it has
+  // neither. Still a label, never a change: no session is touched here.
+  // A session count against the SPORT is advice nobody can take. A swimmer's
+  // squad sessions, a footballer's training nights — the club sets those, the
+  // athlete turns up. "Aim for 2–3 sessions a week on Swimming" reads as either
+  // obvious or impossible.
+  //
+  // The frequency belongs to the work they actually control: the strength,
+  // speed, conditioning and mobility they add around the sport. So the phase
+  // describes what the SPORT is doing (which is mostly handed to them by a
+  // fixture list), and the number attaches to their OWN sessions. That is also
+  // what makes the month's components earn their place — they are the list of
+  // things an athlete can decide to do.
+  const OWN_WORK = {
+    build:    { n:'<strong>2–3 sessions a week</strong>', tail:'' },
+    maintain: { n:'<strong>1 session a week</strong>',    tail:' — enough to hold what you’ve got' },
+    peak:     { line:'Your sport comes first this block. Keep your own sessions <strong>short and sharp</strong> — fewer of them.' },
+    recover:  { line:'A recovery block. <strong>Light movement only</strong> — nothing hard.' },
+    off:      { line:'<strong>A proper break.</strong> Nothing planned.' }
+  };
   function weekBlockCard(){
     const b = currentBlock();
     if(!b) return '';
     const month = MONTHS[new Date().getMonth()];
-    const rows = plannedSports().map(function(sp){
-      const lv = sportLevel(sp.name);
-      if(!lv) return '';
-      const say = lv==='lead'  ? 'leading'
-                : lv==='full'  ? 'building'
-                : lv==='light' ? 'ticking over'
-                :                'not this block';
-      return '<div class="blk-sport"><span class="blk-sport-name">'+esc(sp.name)+'</span>'+
-             '<span class="blk-sport-lv blk-lv-'+lv+'">'+say+'</span></div>';
-    }).join('');
-    const off = sportsOffThisBlock();
-    const offNote = off.length
-      ? '<p class="blk-note">'+esc(off.join(' and '))+' session'+(off.length>1?'s aren’t':' isn’t')+
-        ' being added this block — add one any time.</p>'
-      : '';
-    const ms = ((plannedSports().find(s=>String(s.name||'').trim().toLowerCase()===String(b.sport||'').trim().toLowerCase())||{}).monthlyStates||[])
+    const lead = String(b.sport||'').trim();
+    const leadKey = lead.toLowerCase();
+    const w = OWN_WORK[b.phase];
+
+    // What they said they're building this month — the self-planned half of it.
+    const ms = ((plannedSports().find(s=>String(s.name||'').trim().toLowerCase()===leadKey)||{}).monthlyStates||[])
                  .find(m=>m.month===month) || {};
-    const goal = ms.focus ? '<p class="blk-goal">'+esc(ms.focus)+'</p>' : '';
-    return '<div class="card blk-card">'+
-      '<div class="blk-head"><span class="blk-name">'+esc(b.label)+'</span>'+
-        '<span class="blk-when">week '+b.week+' of '+b.weeks+' · '+esc(monthRangeLabel(b))+'</span></div>'+
-      goal + (rows ? '<div class="blk-sports">'+rows+'</div>' : '') + offNote +
-      '<button class="blk-link" onclick="switchTab(\'year\')">See your year →</button>'+
-    '</div>';
+    const comps = componentLabels(ms.components);
+
+    let main = '', prompt = false;
+    if(w && w.line){
+      main = w.line;                                   // peak / recover / off say it in one go
+    } else if(w && w.n){
+      // "On top of your sport" is the whole point — it says exactly what the
+      // number counts, and it isn't the sessions somebody else timetabled.
+      main = 'On top of your sport: ' + w.n +
+             (comps.length ? ' of <em>' + esc(comps.join(' and ').toLowerCase()) + '</em>' : '') +
+             (w.tail||'') + '.';
+      prompt = !comps.length;
+    }
+
+    // Only sports being treated DIFFERENTLY to the lead. A second sport also in
+    // full build needs no mention; one ticking over or sitting out does.
+    const named = {};
+    const aside = [];
+    plannedSports().forEach(function(sp){
+      const nm = String(sp.name||'').trim();
+      if(!nm || nm.toLowerCase() === leadKey) return;
+      const lv = sportLevel(nm);
+      if(lv === 'light'){ named[nm.toLowerCase()] = 1; aside.push(esc(nm)+' ticks over'); }
+      else if(lv === 'off'){ named[nm.toLowerCase()] = 1; aside.push(esc(nm)+' sits out'); }
+    });
+    // A sport their program still carries that the year map has resting — worth
+    // saying even when it never made the year map's sport list.
+    sportsOffThisBlock().forEach(function(nm){
+      if(String(nm).trim().toLowerCase() === leadKey) return;
+      if(named[String(nm).trim().toLowerCase()]) return;
+      aside.push(esc(nm)+' sits out');
+    });
+
+    // Order: what the block asks, then what's sitting out, then the prompt last
+    // so it reads as the thing to do rather than running into the next sentence.
+    const txt = main + (aside.length ? ' ' + aside.join(', ') + ' this block.' : '') +
+                (prompt ? ' <em>Pick what you’re building →</em>' : '');
+    if(!txt.trim()) return '';
+    // With nothing picked the line IS the prompt, so send them to the picker
+    // rather than the top of the Year tab.
+    const go = prompt ? 'switchTab(\'year\'); openGoalComponents();' : 'switchTab(\'year\')';
+    return '<button class="blk-line'+(prompt?' blk-line-ask':'')+'" onclick="'+go+'">'+
+      '<span class="blk-line-txt">'+txt+'</span>'+
+      '<i class="ti ti-chevron-right blk-line-go" aria-hidden="true"></i>'+
+    '</button>';
   }
 
   // Prominent "Build my program" entry — top of My Program, opens the build hub
@@ -6681,17 +6821,21 @@
   // three buttons, one tap, done. Duration comes from the plan, effort from
   // which button they press. The full sheet is still there for anyone who wants
   // to add detail, and editing afterwards works exactly as before.
+  // Inline on a day row there is about 50px per button, so "Moderate" ran over
+  // its own edge on a phone. Same three choices, a short word where it's tight.
   const QUICK_EFFORT = [
-    { key:'easy', label:'Easy',     rpe:4 },
-    { key:'ok',   label:'Moderate', rpe:6 },
-    { key:'hard', label:'Hard',     rpe:8 }
+    { key:'easy', label:'Easy',     short:'Easy', rpe:4 },
+    { key:'ok',   label:'Moderate', short:'OK',   rpe:6 },
+    { key:'hard', label:'Hard',     short:'Hard', rpe:8 }
   ];
   function quickLogRowHTML(s, compact){
     if(!s || isLogged(s)) return '';
     return '<div class="qtap'+(compact?' qtap-compact':'')+'">'+
       '<span class="qtap-lead">Did it —</span>'+
       QUICK_EFFORT.map(e =>
-        '<button class="qtap-btn qtap-'+e.key+'" onclick="event.stopPropagation(); quickLogDone(\''+s.id+'\','+e.rpe+')">'+e.label+'</button>'
+        '<button class="qtap-btn qtap-'+e.key+'" aria-label="Log as '+e.label.toLowerCase()+'"'+
+          ' onclick="event.stopPropagation(); quickLogDone(\''+s.id+'\','+e.rpe+')">'+
+          (compact ? e.short : e.label)+'</button>'
       ).join('')+
     '</div>';
   }
@@ -6770,14 +6914,17 @@
       titleHTML = esc(s.name)+typeTag(s);
       const noun = s.type==='game' ? 'game' : (s.type==='practice' ? 'practice' : 'session');
       subHTML = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||s.duration||0)+' min '+(isLogged(s)?'logged':'planned')+extra;
-      const hasWorkout = (s.type==='training' || !s.type) && (s.workout||[]).length;
+      // If it has parts to work through, it can be worked through — whatever it's
+      // tagged as. A swim squad set and a circuit at practice are the same job as
+      // a gym session; the old rule hid the screen from them on a technicality.
+      const hasWorkout = (s.workout||[]).length;
       if(isLogged(s)){
-        cta = (hasWorkout ? '<button class="card-cta card-cta-ghost" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> Open workout</button>' : '')+
+        cta = (hasWorkout ? '<button class="card-cta card-cta-ghost" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> '+wktWords(s).open+'</button>' : '')+
               '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Edit today’s '+noun+'</button>';
       } else if(hasWorkout){
         // A real workout today → lead with Start workout, with the one-tap log
         // underneath for the days they trained but won't walk through it.
-        cta = '<button class="card-cta card-cta-gold" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> Start workout</button>'+
+        cta = '<button class="card-cta card-cta-gold" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> '+wktWords(s).start+'</button>'+
               '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Add detail</button>';
       } else {
         cta = '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Add detail</button>';
@@ -7176,10 +7323,7 @@
     _sheetOpenSig = structuralSig(s);
     workoutEditing = false;
     if(!s._checked || s._checked.length !== (s.workout||[]).length){ s._checked = (s.workout||[]).map((_,i)=> (s._checked && s._checked[i]) || false); }
-    renderWorkout(s.workout || []);
-    // "Start workout" — only for a saved training session that actually has exercises.
-    const startBtn = document.getElementById('sheetStartWorkout');
-    if(startBtn) startBtn.style.display = (s.id && (s.type==='training'||!s.type) && (s.workout||[]).length) ? '' : 'none';
+    renderWorkout(s.workout || []);   // also decides whether "Start workout" shows
     // RPE
     document.querySelectorAll('#rpe-row .rpe-pip').forEach(p => p.classList.toggle('selected', s.rpe!=null && +p.dataset.val===+s.rpe));
     // duration (actual)
@@ -7236,9 +7380,13 @@
   function toggleRepeat(){ document.getElementById('repeatToggle').classList.toggle('on'); }
   window.toggleRepeat = toggleRepeat;
 
-  // Session type: Training (default) / Team practice / Game. Practices and games
-  // aren't a list of exercises — they just capture time + effort — so choosing one
-  // hides the workout builder. Games add a Result field and don't repeat weekly.
+  // Session type: Training (default) / Team practice / Game.
+  //
+  // A practice CAN be a list of parts — swim squad is sets, a team session often
+  // opens with a circuit — so it keeps the builder. The old rule hid it, which
+  // meant a swimmer who tagged their session honestly lost the ability to write
+  // their sets down at all. Only a game has nothing to list: it adds a Result
+  // field instead, and doesn't repeat weekly.
   function pickType(v){
     document.querySelectorAll('#typePills .type-pill').forEach(p => p.classList.toggle('sel', p.dataset.type===v));
     applyTypeUI(v);
@@ -7249,8 +7397,7 @@
     return p ? p.dataset.type : 'training';
   }
   function applyTypeUI(type){
-    const isTraining = (type === 'training');
-    const ws = document.getElementById('workoutSection'); if(ws) ws.style.display = isTraining ? '' : 'none';
+    const ws = document.getElementById('workoutSection'); if(ws) ws.style.display = (type === 'game') ? 'none' : '';
     const rs = document.getElementById('resultSection');  if(rs) rs.style.display = (type === 'game') ? '' : 'none';
     // A game is a one-off fixture, not a repeating weekly slot.
     const rep = document.getElementById('repeatSection');
@@ -7338,13 +7485,26 @@
     const ul = document.getElementById('sheetWorkout');
     const prog = document.getElementById('workoutProgress');
     if(prog) prog.textContent = '';
+    // The moment a session HAS steps it can be walked through — including the
+    // moment they finish typing them. Waiting for the sheet to be reopened hid
+    // the button from the one person who had just earned it.
+    const words = wktWords(editing && Object.assign({}, editing, { workout: steps||[] }));
+    const startBtn = document.getElementById('sheetStartWorkout');
+    if(startBtn){
+      startBtn.style.display = (!workoutEditing && editing && editing.id && (steps||[]).length) ? '' : 'none';
+      startBtn.innerHTML = '<i class="ti ti-barbell" aria-hidden="true"></i> '+esc(words.start);
+    }
+    const lab = document.getElementById('workoutSectionLabel');
+    if(lab) lab.textContent = words.section;
+    const eb = document.getElementById('workoutEditBtn');
+    if(eb) eb.innerHTML = '<i class="ti ti-edit" aria-hidden="true"></i> '+esc(workoutEditing ? 'Done' : words.edit);
     if(workoutEditing){
       const text = (steps||[]).map(st => typeof st==='string'? st : (st.name||'')+(st.detail? ' — '+st.detail : '')).join('\n');
       ul.innerHTML = '<textarea class="note-input" id="workoutEditor" style="min-height:120px;" placeholder="One step per line, e.g.\nWarm up — 400m easy\nMain set — 8×200">'+esc(text)+'</textarea>';
       return;
     }
     if(!steps || !steps.length){
-      ul.innerHTML = '<li class="workout-step"><div class="workout-step-content"><p class="workout-step-detail">No workout steps yet. Tap “Edit workout” to add them.</p></div></li>';
+      ul.innerHTML = '<li class="workout-step"><div class="workout-step-content"><p class="workout-step-detail">'+esc(words.sheetEmpty)+'</p></div></li>';
       return;
     }
     const checked = (editing && editing._checked) || [];
@@ -8545,6 +8705,38 @@
   function loadWktProgress(id){ try { return JSON.parse(localStorage.getItem(wktKey(id))); } catch(e){ return null; } }
   function clearWktProgress(id){ try { localStorage.removeItem(wktKey(id)); } catch(e){} }
 
+  // ---- Does this read as a gym session, or as a list of sets? ---------------
+  // Workout mode was written for the weights room, and its words show it:
+  // "exercise", "weight / reps", "Finish workout". Put a swim squad set or a
+  // conditioning circuit through it and the labels stop matching what the
+  // athlete is doing, which is how a screen starts to feel like it isn't for you.
+  //
+  // The library tag is the strongest signal — a step matched to EXERCISE_LIBRARY
+  // is a lifted movement with a weight and a rep count. Failing that, the sport
+  // and the session name say it.
+  const STRENGTH_WORDS = /\b(strength|gym|weights?|lifting|lift|barbell|dumbbell|resistance)\b/i;
+  function sessionStyle(s){
+    if(!s) return 'strength';
+    if((s.workout||[]).some(w => w && w.exId)) return 'strength';
+    if(STRENGTH_WORDS.test(String(s.sport||'')+' '+String(s.name||''))) return 'strength';
+    return 'session';
+  }
+  const WKT_WORDS = {
+    strength: { start:'Start workout', open:'Open workout', finish:'Finish workout', save:'Save workout',
+                section:'The workout · optional', edit:'Edit workout',
+                item:'Exercise', target:'weight / reps', targetLabel:'Target',
+                logged:'Workout logged 💪', saved:'Workout saved',
+                empty:'No exercises in this session yet. Add some in the plan, then start again.',
+                sheetEmpty:'No workout steps yet. Tap “Edit workout” to add them.' },
+    session:  { start:'Start session', open:'Open session', finish:'Finish session', save:'Save session',
+                section:'The steps · optional', edit:'Edit steps',
+                item:'Step', target:'target', targetLabel:'Target',
+                logged:'Session logged 💪', saved:'Session saved',
+                empty:'No steps in this session yet. Add them in the plan, then start again.',
+                sheetEmpty:'No steps yet. Tap “Edit steps” to add them.' }
+  };
+  function wktWords(s){ return WKT_WORDS[sessionStyle(s)]; }
+
   // Structured sets/reps/weight/time → a readable target string ("4×5 · 40kg").
   function wktCompose(sx){
     if(!sx) return '';
@@ -8601,9 +8793,14 @@
   function renderWorkoutMode(){
     const list = document.getElementById('wktList');
     const w = wktSession.workout || [];
+    const words = wktWords(wktSession);
     list.innerHTML = w.length
       ? w.map((it,i) => wktCardHTML(it,i)).join('')
-      : '<p style="color:rgba(250,243,237,0.7); font-family:Inter,sans-serif; text-align:center; padding:34px 12px; line-height:1.5;">No exercises in this session yet. Add some in the plan, then start again.</p>';
+      : '<p style="color:rgba(250,243,237,0.7); font-family:Inter,sans-serif; text-align:center; padding:34px 12px; line-height:1.5;">'+esc(words.empty)+'</p>';
+    const fin = document.getElementById('wktFinishBtn');
+    if(fin) fin.innerHTML = '<i class="ti ti-flag-checkered" aria-hidden="true"></i> '+esc(words.finish);
+    const sav = document.getElementById('wktSaveBtn');
+    if(sav) sav.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> '+esc(words.save);
     wktUpdateProgress();
   }
   function wktUpdateProgress(){
@@ -8621,27 +8818,41 @@
     const cue = (lib && lib.cue) || it.cue || '';
     const caution = lib && lib.caution;
     const editing = (wktEditing === i);
+    const w = wktWords(wktSession);
     let editor = '';
     if(editing){
-      const sx = it.sx || wktParse(it.detail);
-      editor = '<div class="wkt-ex-editor"><div class="wkt-fields">'+
-        wktField('Sets','wktf_sets_'+i, sx.sets, '')+
-        wktField('Reps','wktf_reps_'+i, sx.reps, '')+
-        wktField('Weight','wktf_weight_'+i, sx.weight, 'e.g. 40kg')+
-        wktField('Time','wktf_time_'+i, sx.time, 'e.g. 30s')+
-      '</div><div class="wkt-editor-actions">'+
-        '<button class="wkt-cancel-ex" onclick="wktCancelEdit()">Cancel</button>'+
-        '<button class="wkt-save-ex" onclick="wktSaveEx('+i+')">Save</button>'+
-      '</div></div>';
+      // Sets/reps/weight/time is the right shape for a lift and the wrong shape
+      // for "8×100m off 1:40". Anything that isn't a gym movement gets one free
+      // text field instead of four boxes it doesn't fit into.
+      if(sessionStyle(wktSession) === 'session'){
+        editor = '<div class="wkt-ex-editor"><div class="wkt-fields wkt-fields-one">'+
+          wktField(w.targetLabel,'wktf_target_'+i, it.detail,
+            /swim|pool/i.test(String(wktSession.sport||'')) ? 'e.g. 8×100m off 1:40' : 'e.g. 6×400m, 90s jog')+
+        '</div><div class="wkt-editor-actions">'+
+          '<button class="wkt-cancel-ex" onclick="wktCancelEdit()">Cancel</button>'+
+          '<button class="wkt-save-ex" onclick="wktSaveEx('+i+')">Save</button>'+
+        '</div></div>';
+      } else {
+        const sx = it.sx || wktParse(it.detail);
+        editor = '<div class="wkt-ex-editor"><div class="wkt-fields">'+
+          wktField('Sets','wktf_sets_'+i, sx.sets, '')+
+          wktField('Reps','wktf_reps_'+i, sx.reps, '')+
+          wktField('Weight','wktf_weight_'+i, sx.weight, 'e.g. 40kg')+
+          wktField('Time','wktf_time_'+i, sx.time, 'e.g. 30s')+
+        '</div><div class="wkt-editor-actions">'+
+          '<button class="wkt-cancel-ex" onclick="wktCancelEdit()">Cancel</button>'+
+          '<button class="wkt-save-ex" onclick="wktSaveEx('+i+')">Save</button>'+
+        '</div></div>';
+      }
     }
     return '<div class="wkt-card'+(done?' done':'')+'">'+
       '<button class="wkt-check" onclick="wktToggle('+i+')" aria-label="Mark done"><i class="ti ti-check" aria-hidden="true"></i></button>'+
       '<div class="wkt-main">'+
-        '<p class="wkt-ex-name">'+esc(it.name||'Exercise')+'</p>'+
+        '<p class="wkt-ex-name">'+esc(it.name||w.item)+'</p>'+
         (rx? '<p class="wkt-ex-rx">'+esc(rx)+'</p>':'')+
         (cue? '<p class="wkt-ex-cue">'+esc(cue)+'</p>':'')+
         (caution? '<span class="wkt-ex-caution"><i class="ti ti-alert-triangle" aria-hidden="true"></i> '+esc(caution)+'</span>':'')+
-        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' weight / reps</button><button class="wkt-ex-btn" onclick="wktExHistory('+i+')"><i class="ti ti-history" aria-hidden="true"></i> History</button><button class="wkt-ex-btn" onclick="wktLogPB('+i+')"><i class="ti ti-trophy" aria-hidden="true"></i> PB</button></div>')+
+        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' '+w.target+'</button><button class="wkt-ex-btn" onclick="wktExHistory('+i+')"><i class="ti ti-history" aria-hidden="true"></i> History</button><button class="wkt-ex-btn" onclick="wktLogPB('+i+')"><i class="ti ti-trophy" aria-hidden="true"></i> PB</button></div>')+
         editor+
       '</div>'+
     '</div>';
@@ -8651,7 +8862,10 @@
     const now = !wktSession._checked[i];
     wktSession._checked[i] = now;
     saveWktProgress();
-    if(now) wktRest(90);   // auto-rest after finishing a set (fun + useful)
+    // No automatic countdown. Ticking a step used to start a 90-second clock
+    // whether or not resting was the next thing they were doing — wrong after a
+    // swim set, wrong mid-circuit, and a timer nobody started is just noise.
+    // The rest chips are right there when they want one.
     renderWorkoutMode();
   }
   // Log a PB for this exact exercise, prefilled with its current weight/reps.
@@ -8713,9 +8927,13 @@
   function wktCancelEdit(){ wktEditing = -1; renderWorkoutMode(); }
   function wktSaveEx(i){
     const g = id => { const e=document.getElementById(id); return e ? e.value.trim() : ''; };
-    const sx = { sets:g('wktf_sets_'+i), reps:g('wktf_reps_'+i), weight:g('wktf_weight_'+i), time:g('wktf_time_'+i) };
     const it = wktSession.workout[i];
-    it.sx = sx; const d = wktCompose(sx); if(d) it.detail = d;
+    if(sessionStyle(wktSession) === 'session'){
+      it.detail = g('wktf_target_'+i);   // one free-text target, written as typed
+    } else {
+      const sx = { sets:g('wktf_sets_'+i), reps:g('wktf_reps_'+i), weight:g('wktf_weight_'+i), time:g('wktf_time_'+i) };
+      it.sx = sx; const d = wktCompose(sx); if(d) it.detail = d;
+    }
     wktEditing = -1; saveWktProgress(); renderWorkoutMode();
     persistWktSession();   // carry the change to the day session now, not only on Finish
   }
@@ -8787,7 +9005,7 @@
     document.getElementById('workoutMode').classList.remove('open');
     document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
     if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
-    showToast(logged ? 'Workout logged 💪' : 'Workout saved', 'success');
+    showToast(logged ? wktWords(wktSession).logged : wktWords(wktSession).saved, 'success');
     if(logged){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
     try {
       const res = await apiData({ action:'saveSession', session: Object.assign({}, wktSession, { id: isNew ? null : wktSession.id }) });
@@ -9390,7 +9608,7 @@
               '<span class="myprog-grip" aria-label="Drag to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
               '<span class="myprog-dot'+(o.t.intensity?' '+esc(o.t.intensity):'')+'" aria-hidden="true"></span>'+
               '<span class="myprog-item-main"><span class="myprog-item-name">'+esc(o.t.name)+typeTag(o.t)+'</span>'+
-                '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+((o.t.type==='training'||!o.t.type)&&n?' · '+n+' exercise'+(n===1?'':'s'):'')+'</span></span>'+
+                '<span class="myprog-item-sub">'+esc(o.t.sport||'')+(o.t.plannedDuration?' · '+o.t.plannedDuration+' min':'')+(n?' · '+n+' exercise'+(n===1?'':'s'):'')+'</span></span>'+
               '<i class="ti ti-chevron-right myprog-go" aria-hidden="true"></i>'+
               '<button class="myprog-remove" aria-label="Remove this day from your program" title="Remove this day" onclick="event.stopPropagation(); removeFromProgramAt('+o.i+')"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
             '</div>'; }).join('')
@@ -10233,7 +10451,7 @@
         '</p>'+
       '</div></div>'+
       (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
-      '<div class="year-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+'</div>'+
+      '<div class="year-legend">'+legendItem('build',PHASE_SHORT.build)+legendItem('maintain',PHASE_SHORT.maintain)+legendItem('peak',PHASE_SHORT.peak)+legendItem('recover',PHASE_SHORT.recover)+'</div>'+
       renderMonths(sport, si, curMonth)+
       '<button class="year-addcomp" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a competition</button>'+
     '</div>';
@@ -10283,13 +10501,17 @@
     const toggle = (ym.sports.length < 2)
       ? '<span class="card-eyebrow-action"><button class="year-view-toggle" onclick="toggleYearGrid()">Detailed view <i class="ti ti-chevron-right" aria-hidden="true"></i></button></span>'
       : '';
-    return '<div class="card">'+
-      '<p class="card-eyebrow">Your sports · compare across the year'+toggle+'</p>'+
-      '<div class="yog-legend">'+legendItem('build','get fitter')+legendItem('maintain','')+legendItem('peak','big event')+legendItem('recover','rest')+
+    // This is the editing surface — say so at the top, where it gets read,
+    // rather than in a hint underneath the thing it explains.
+    return '<div class="card" id="yearGridCard">'+
+      '<p class="card-eyebrow">Plan your months'+toggle+'</p>'+
+      '<p class="yog-lede"><strong>Tap any month</strong> to say what you’re doing in it. '+
+        'Your season above is built from these.</p>'+
+      '<div class="yog-legend">'+legendItem('build',PHASE_SHORT.build)+legendItem('maintain',PHASE_SHORT.maintain)+legendItem('peak',PHASE_SHORT.peak)+legendItem('recover',PHASE_SHORT.recover)+
         '<span class="year-legend-item"><span class="legend-emoji"><i class="ti ti-trophy" style="color:var(--gold);" aria-hidden="true"></i></span><strong>Comp</strong> · game / event</span>'+
       '</div>'+
       grid+
-      '<p class="yog-hint"><i class="ti ti-hand-finger" aria-hidden="true"></i> Tap a month to plan it, or a sport name to open its full year.</p>'+
+      '<p class="yog-hint">Tap a sport’s name to open its full year.</p>'+
     '</div>';
   }
 
@@ -10325,10 +10547,113 @@
     }).join('');
     return '<div class="card">'+
       '<p class="card-eyebrow">Your season</p>'+
-      '<p class="sb-intro">Your year, in the blocks your plan adds up to. Each one has a job.</p>'+
+      '<p class="sb-intro">This is what your plan adds up to — you don’t edit it here. '+
+        'It’s built from the months you set below, so change a month and this changes with it.</p>'+
       '<div class="sb-list">'+rows+'</div>'+
+      '<button class="sb-jump" onclick="jumpToYearGrid()">Change my months <i class="ti ti-arrow-down" aria-hidden="true"></i></button>'+
     '</div>';
   }
+
+  // ---- What's going to get me there -----------------------------------------
+  // The goal said where they want to end up and nothing said how. This is the
+  // shortlist: two or three qualities for the year, each with where they are
+  // now, so an intention starts from a number instead of a feeling.
+  let goalCompOpen = false;
+  function openGoalComponents(){ goalCompOpen = true; renderYear(); setTimeout(function(){
+    const el = document.getElementById('goalCompCard'); if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 60); }
+  window.openGoalComponents = openGoalComponents;
+
+  function toggleYearComponent(id){
+    if(!state.yearMap) return;
+    const list = yearComponents().slice();
+    const i = list.indexOf(id);
+    if(i >= 0) list.splice(i, 1);
+    else {
+      // Three is the honest ceiling. More than that is a wish list, not a plan.
+      if(list.length >= 3){ showToast('Three is plenty — drop one first.', ''); return; }
+      list.push(id);
+    }
+    state.yearMap.components = list;
+    markYearDirty();
+    renderYear();
+  }
+  window.toggleYearComponent = toggleYearComponent;
+
+  function goalComponentsCard(){
+    const picked = yearComponents();
+    if(!goalCompOpen && !picked.length) return '';      // only when asked, or already chosen
+    const pills = FITNESS_COMPONENTS.map(function(c){
+      const on = picked.indexOf(c.id) >= 0;
+      const where = componentStatus(c.id);
+      return '<button class="gc-pill'+(on?' on':'')+'" onclick="toggleYearComponent(\''+c.id+'\')">'+
+        '<span class="gc-name">'+esc(c.label)+'</span>'+
+        '<span class="gc-blurb">'+esc(c.blurb)+'</span>'+
+        (where ? '<span class="gc-where">'+esc(where)+'</span>' : '')+
+      '</button>';
+    }).join('');
+    return '<div class="card" id="goalCompCard">'+
+      '<p class="card-eyebrow">What’s going to get you there</p>'+
+      '<p class="gc-intro">Pick the two or three things you actually need to improve. '+
+        'Your months then choose from these, so every block has a job.</p>'+
+      '<div class="gc-grid">'+pills+'</div>'+
+      (picked.length ? '' : '<p class="gc-hint">Tap the ones that matter for your goal.</p>')+
+    '</div>';
+  }
+
+  // ---- Goal check -------------------------------------------------------------
+  // Not an interstitial. A card in the page, at a moment that means something —
+  // the start of a block — and only for someone who is actually training. A
+  // student who has never logged does not need their goal questioned; they need
+  // to start, which the first-run card already asks of them.
+  function goalCheckKey(){
+    const b = currentBlock();
+    return 'aaGoalCheck:' + ((currentUser && currentUser.email) || 'anon') + ':' + (b ? b.startISO : 'none');
+  }
+  function goalCheckDismissed(){ try { return !!localStorage.getItem(goalCheckKey()); } catch(e){ return false; } }
+  function dismissGoalCheck(){ try { localStorage.setItem(goalCheckKey(), '1'); } catch(e){} renderYear(); }
+  window.dismissGoalCheck = dismissGoalCheck;
+
+  function goalCheckCard(){
+    const ym = state.yearMap;
+    if(!ym || !ym.aPriority || !ym.aPriority.event) return '';
+    if(!loggedDaySet().length) return '';                 // not for someone yet to start
+    if(goalCheckDismissed()) return '';
+    const b = currentBlock();
+    if(!b) return '';
+    // Only in the opening fortnight of a block — a new chapter is a reason to
+    // ask; a random Tuesday in week nine is not.
+    if(b.week > 2) return '';
+    // And not if they've touched the plan recently.
+    const upd = ym.updated ? String(ym.updated).slice(0,10) : '';
+    if(upd){
+      const days = Math.round((parseISO(fmtISO(new Date())) - parseISO(upd)) / 86400000);
+      if(days < 60) return '';
+    }
+    const ev = ym.aPriority;
+    return '<div class="card gcheck">'+
+      '<p class="card-eyebrow">New block — quick check</p>'+
+      '<h2 class="gcheck-goal">'+esc(ev.event)+(ev.date? ' <span class="gcheck-date">'+esc(fmtNice(ev.date))+'</span>' : '')+'</h2>'+
+      '<p class="gcheck-ask">You’re starting <strong>'+esc(b.label)+'</strong>. Is this still what you’re chasing?</p>'+
+      '<div class="gcheck-btns">'+
+        '<button class="card-cta card-cta-gold" onclick="dismissGoalCheck()">Yes, still on it</button>'+
+        '<button class="card-cta card-cta-ghost" onclick="editYearGoal()">Change my goal</button>'+
+      '</div>'+
+      '<button class="gcheck-link" onclick="openGoalComponents()">What’s going to get me there? →</button>'+
+    '</div>';
+  }
+
+  // Season card → the grid that drives it. Flashes the grid so it's obvious
+  // what just answered the question.
+  function jumpToYearGrid(){
+    const el = document.getElementById('yearGridCard');
+    if(!el) return;
+    el.scrollIntoView({ behavior:'smooth', block:'start' });
+    el.classList.remove('year-flash');
+    void el.offsetWidth;            // restart the animation if it's already run
+    el.classList.add('year-flash');
+  }
+  window.jumpToYearGrid = jumpToYearGrid;
 
   function renderYear(){
     const view = document.getElementById('view-year');
@@ -10341,6 +10666,8 @@
     const gridMode = (multi || yearForceGrid) && yearFocus === null;
     let html = '<div class="card-stack">';
     html += yearHeroHTML(ym, ap);
+    html += goalCheckCard();
+    html += goalComponentsCard();
     html += seasonBlocksCard();
 
     if(gridMode){
@@ -10388,6 +10715,77 @@
     return '<div class="card"><p class="card-eyebrow">Testing &amp; busy months'+
       '<span class="card-eyebrow-action"><button class="block-phase-link" onclick="editYearGoal()">Edit →</button></span>'+
     '</p>'+body+'</div>';
+  }
+
+  // ---- What a phase actually means, in sessions a week --------------------
+  // "Build" and "Maintain" are jargon until they're a number. The coach teaches
+  // them as a frequency — maintain is about once a week, build is two or three.
+  //
+  // But the number is NOT a count of sport sessions. Club and school fixtures are
+  // set by somebody else; an athlete cannot decide to swim four times instead of
+  // three. The frequency only means anything for the training they add around the
+  // sport — strength, speed, conditioning, mobility. So the phase says what the
+  // sport is doing, and the number says what to add alongside it.
+  const PHASE_HELP = {
+    build:    'Room to build. Add about 2–3 of your own sessions a week around your sport — strength, speed, conditioning.',
+    maintain: 'Your sport leads. About 1 of your own sessions a week is enough to hold what you’ve got.',
+    peak:     'Competition first. Keep your own sessions short and sharp — intensity up, volume down.',
+    recover:  'Deliberate rest. Light movement, no hard sessions.',
+    off:      'Nothing planned. A proper break.'
+  };
+  const PHASE_SHORT = { build:'add 2–3 of your own a week', maintain:'add 1 of your own a week',
+                        peak:'sport first, volume down', recover:'rest', off:'off' };
+
+  // ---- What you're building: the components of fitness --------------------
+  // A month tagged "build" doesn't say WHAT is being built, and for a footballer
+  // in September that could mean strength, speed or an aerobic base — completely
+  // different training. These are the qualities the academy already tests, so a
+  // month's focus can be evidenced later by the number that moved.
+  const FITNESS_COMPONENTS = [
+    { id:'strength',  label:'Strength',  blurb:'Get stronger — the six movements, heavier' },
+    { id:'power',     label:'Power',     blurb:'Jump and throw further — explosive' },
+    { id:'speed',     label:'Speed',     blurb:'Straight-line sprinting' },
+    { id:'mds',       label:'MDS',       blurb:'Multi-directional speed — cutting, turning' },
+    { id:'endurance', label:'Endurance', blurb:'Aerobic base, lasting longer' },
+    { id:'mobility',  label:'Mobility',  blurb:'Range of motion and control' },
+    { id:'skill',     label:'Skill',     blurb:'Sport-specific technique' }
+  ];
+  // Where you are now, per component. Five of the seven already have a number
+  // in the testing battery, which turns "I want to get faster" into a baseline.
+  // The two that don't say so honestly rather than inventing one.
+  const COMPONENT_TEST = { power:'broad_jump', speed:'sprint_40m', mds:'agility', endurance:'cooper' };
+  function componentStatus(id){
+    if(id === 'strength'){
+      const lv = (state.strengthLevels || []).filter(x => x.done);
+      return lv.length ? lv.length + ' of 6 movements passed' : 'not assessed yet';
+    }
+    const key = COMPONENT_TEST[id];
+    if(!key) return '';                               // mobility, skill — nothing measured
+    const t = (state.testing || []).find(x => x.key === key);
+    if(!t) return '';
+    if(!t.done) return 'not tested yet';
+    return t.value + (t.unit || '') + (t.date ? ' · ' + fmtNice(t.date) : '');
+  }
+
+  // The shortlist for the year. Months pick from this rather than all seven —
+  // narrowing the choice is what makes it get used, and it carries the lesson
+  // that you cannot build everything at once.
+  function yearComponents(){
+    const c = (state.yearMap && state.yearMap.components) || [];
+    return Array.isArray(c) ? c : [];
+  }
+  function monthComponentChoices(){
+    const shortlist = yearComponents();
+    return shortlist.length
+      ? FITNESS_COMPONENTS.filter(c => shortlist.indexOf(c.id) >= 0)
+      : FITNESS_COMPONENTS;
+  }
+
+  function componentLabels(ids){
+    return (ids || []).map(function(id){
+      const c = FITNESS_COMPONENTS.find(x => x.id === id);
+      return c ? c.label : '';
+    }).filter(Boolean);
   }
 
   function legendItem(stt, meaning){
@@ -10534,13 +10932,49 @@
     document.getElementById('blockFocus').value = existing.focus || '';
     document.getElementById('blockLoad').value = existing.loadTarget || '';
     document.getElementById('blockNote').value = existing.note || '';
+    blockComponents = (existing.components || []).slice();
+    renderCompPicker();
+    setStateHelp(preState);
     openBlockSheet();
   }
   window.openBlock = openBlock;
 
+  // Which components this month is building. Lives on the month inside
+  // Sports_JSON, so no sheet column was needed for it.
+  let blockComponents = [];
+  function renderCompPicker(){
+    const host = document.getElementById('compPicker');
+    if(!host) return;
+    const choices = monthComponentChoices();
+    host.innerHTML = choices.map(function(c){
+      const on = blockComponents.indexOf(c.id) >= 0;
+      return '<button class="comp-pill'+(on?' on':'')+'" onclick="toggleComponent(\''+c.id+'\')" title="'+esc(c.blurb)+'">'+
+        esc(c.label)+'</button>';
+    }).join('') +
+    (yearComponents().length
+      ? '<p class="comp-from-goal">From the ' + choices.length + ' you picked for the year. ' +
+        '<button class="comp-edit-link" onclick="closeBlock(); switchTab(\'year\'); openGoalComponents();">Change those</button></p>'
+      : '');
+    const picked = componentLabels(blockComponents);
+    const note = document.getElementById('compPicked');
+    if(note) note.textContent = picked.length ? picked.join(' · ') : '';
+  }
+  function toggleComponent(id){
+    const i = blockComponents.indexOf(id);
+    if(i >= 0) blockComponents.splice(i, 1); else blockComponents.push(id);
+    renderCompPicker();
+  }
+  window.toggleComponent = toggleComponent;
+
+  function setStateHelp(s){
+    const el = document.getElementById('stateHelp');
+    if(el) el.textContent = PHASE_HELP[s] || '';
+  }
+
   function pickState(s){
     document.querySelectorAll('#statePicker .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===s));
     document.getElementById('blockTitle').innerHTML = '<em>'+(STATE_LABEL[s])+'</em>.';
+    setStateHelp(s);
   }
   window.pickState = pickState;
   function pickState2(s){
@@ -10568,6 +11002,7 @@
       state: sel ? sel.dataset.state : '',
       state2: (splitOn && sel2) ? sel2.dataset.state : '',
       focus: val('blockFocus').trim(),
+      components: blockComponents.slice(),
       loadTarget: numOrNull(val('blockLoad')),
       note: val('blockNote')
     };
@@ -11023,6 +11458,69 @@
       '<p class="load-sentence">'+esc(loadSentence(read, phase))+'</p>';
   }
 
+  // ---- Grit, where the athlete can actually see it ---------------------------
+  // It was computed, returned on every bootstrap, and rendered in exactly one
+  // place: the CV, and only once the band had already reached Consistent. So
+  // the athletes who most needed to see what was holding them back saw nothing.
+  //
+  // The band is the headline — a student gets a word, not a mark out of a
+  // hundred. The parts are shown as counts rather than percentages, because
+  // "2 of 3 check-ins" tells you what to do and "67%" does not. The raw score
+  // sits in the coach view, same as the load numbers.
+  const GRIT_BAND_LINE = {
+    Building:   'You’re getting going. Consistency is the thing that moves this.',
+    Consistent: 'You turn up. That’s most of it.',
+    Relentless: 'You train when it would be easy not to.'
+  };
+  function gritCard(){
+    const g = state.grit;
+    if(!g) return '';
+    if(!g.enough){
+      return '<div class="card"><p class="card-eyebrow">Grit · how consistently you train</p>'+
+        '<p class="grit-pending">Not enough logged yet to read this. Keep logging and it appears here.</p>'+
+      '</div>';
+    }
+    const p = g.parts || {};
+    const lines = [];
+    if(p.adherence){
+      const a = p.adherence;
+      lines.push(['Training', (a.weeksFull != null && a.weeks != null)
+        ? a.weeksFull + ' of ' + a.weeks + ' weeks at full credit'
+        : a.pct + '% of target']);
+    }
+    if(p.checkins){
+      lines.push(['Check-ins', p.checkins.made + ' of ' + p.checkins.counted + ' made']);
+    } else if(p.checkinsPending){
+      lines.push(['Check-ins', 'waiting to be marked off']);
+    }
+    if(p.hard){
+      lines.push(['Quiet months', p.hard.weeksTrained + ' of ' + p.hard.weeksQuiet + ' weeks trained']);
+    }
+    const band = String(g.band || '');
+    return '<div class="card">'+
+      '<p class="card-eyebrow">Grit · how consistently you train</p>'+
+      '<div class="grit-head">'+
+        '<span class="cv-grit-band cv-band-'+esc(band.toLowerCase())+'">'+esc(band)+'</span>'+
+        '<p class="grit-line">'+esc(GRIT_BAND_LINE[band] || '')+'</p>'+
+      '</div>'+
+      (lines.length ? '<div class="grit-parts">'+lines.map(l =>
+        '<div class="grit-part"><span class="grit-part-l">'+esc(l[0])+'</span>'+
+        '<span class="grit-part-v">'+esc(l[1])+'</span></div>').join('')+'</div>' : '')+
+      '<details class="coach-load">'+
+        '<summary><span class="coach-load-title"><i class="ti ti-chart-histogram" aria-hidden="true"></i> Coach view · the number</span>'+
+          '<i class="ti ti-chevron-down coach-load-chev" aria-hidden="true"></i></summary>'+
+        '<div class="coach-load-body">'+
+          '<p class="coach-load-detail">Grit '+g.score+' / 100 · '+esc(band)+
+            ' · over the last '+(g.windowWeeks||8)+' weeks'+
+            ((g.weeksFlagged) ? ' · '+g.weeksFlagged+' week'+(g.weeksFlagged===1?'':'s')+' excluded (injured/ill)' : '')+'</p>'+
+          '<p class="coach-load-note">Weighted: training '+GRIT_W.adherence+'%, check-ins '+GRIT_W.checkins+
+            '%, training through quiet months '+GRIT_W.hard+'%. Any part with no data is left out and the rest re-weighted.</p>'+
+        '</div>'+
+      '</details>'+
+    '</div>';
+  }
+  const GRIT_W = { adherence: 60, checkins: 25, hard: 15 };   // mirrors GRIT_WEIGHTS in the script
+
   function renderLoad(){
     const view = document.getElementById('view-load');
     const read = loadRead();
@@ -11042,6 +11540,8 @@
         '</div>'+
         // This week's intensity balance — the other intuitive, actionable read.
         weekMixCard()+
+        // How consistently, next to how much.
+        gritCard()+
         // Coach view — the detailed season chart + workload numbers, collapsed by default.
         '<details class="coach-load">'+
           '<summary><span class="coach-load-title"><i class="ti ti-chart-histogram" aria-hidden="true"></i> Coach view · detailed load</span><i class="ti ti-chevron-down coach-load-chev" aria-hidden="true"></i></summary>'+
@@ -11616,7 +12116,7 @@
       who: 'Small group — your times depend on the movements you’ve already passed'
     };
     if(String(seq)==='3') return {
-      blurb: 'The whole group! Some fun, some training, some learning.',
+      blurb: 'The whole group! Some fun, some training, some learning. <strong>No sign-up needed</strong> — just turn up.',
       duration: 'An hour, 07:15 to 08:15',
       who: 'Everyone. Bring kit and your phone'
     };
@@ -11657,6 +12157,24 @@
   window.messageCoach = messageCoach;
 
   function slotCardHTML(s, i){
+    // An open session is an announcement, not an offer: everyone's expected,
+    // there's nothing to reserve, and the only action is to flag a problem.
+    if(String(s.format||'').toLowerCase() === 'open'){
+      return '<div class="slot-card slot-open">'+
+        '<div class="slot-card-head">'+
+          '<span class="slot-card-title">'+esc(dowShort(s.date)+' · '+dayNum(s.date)+' '+monShort(s.date))+'</span>'+
+          '<span class="slot-open-tag">Everyone</span>'+
+        '</div>'+
+        '<div class="slot-card-foot">'+
+          '<span class="slot-card-time"><strong>'+esc(s.start)+'–'+esc(s.end)+'</strong>'+(s.letter?' · '+esc(s.letter)+'-day':'')+'</span>'+
+          '<span class="slot-status slot-open-label">No sign-up — just turn up</span>'+
+        '</div>'+
+        '<div class="slot-open-note">Meet in the '+esc(s.location||'PE Office')+'. '+
+          'Can’t make it, or something in the way?</div>'+
+        '<button class="slot-open-btn" onclick="messageCoach()">'+
+          '<i class="ti ti-message-circle" aria-hidden="true"></i> Message Mr Bain</button>'+
+      '</div>';
+    }
     const cls = 'slot-card ' + (s.status||'available');
     const dayLabel = dowShort(s.date)+' · '+dayNum(s.date)+' '+monShort(s.date);
     const spots = (s.capacity ? Math.max(0, s.capacity - (s.booked||0)) : null);
