@@ -3533,6 +3533,24 @@
     aspect-ratio: 1 / 1; border-radius: 5px; cursor: pointer; position: relative; background: var(--cream);
     transition: transform 0.1s;
   }
+  /* A grid of coloured squares made you learn a colour key to read your own year.
+     The emoji repeats the phase in a form that survives a greyscale print and a
+     colour-blind reader, and the chips say what the month is actually building —
+     the thing the grid knew and never showed. White chips with a hairline read on
+     every phase colour, including a split month's gradient. */
+  /* No overflow:hidden here — the competition badge deliberately overhangs the
+     top-right corner by 2px, and clipping it cuts the dot in half. */
+  .yog-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  .yog-emoji { font-size: clamp(10px, 2.3vw, 17px); line-height: 1; }
+  .yog-comps { display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 100%; }
+  .yog-comps b {
+    font: 800 9px 'Inter', sans-serif; letter-spacing: 0.02em; line-height: 1.4;
+    background: rgba(255,255,255,0.92); color: #2b2521; border-radius: 3px; padding: 0 4px;
+    box-shadow: 0 0 0 1px rgba(43,37,33,0.14); white-space: nowrap;
+  }
+  /* A phone cell is about 24px across. The emoji fits on that, three-letter
+     chips do not — and the focus is one tap away in the month sheet. */
+  @media (max-width: 559px) { .yog-comps { display: none; } }
   .yog-cell:hover { transform: scale(1.08); z-index: 1; }
   .yog-cell.ym-recover, .yog-cell.ym-off { border: 1px solid var(--line); }
   .yog-cell.suggest { opacity: 0.42; }
@@ -3598,6 +3616,9 @@
     text-transform: uppercase; font-weight: 600; color: var(--ink-mute); margin: 0;
   }
   .ym-emoji { font-size: 19px; line-height: 1; }
+  /* The detail tile has room to lay the chips out across rather than down. */
+  .year-month .yog-comps { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 3px; display: flex; }
+  .year-month .yog-comps b { font-size: 9.5px; }
   .ym-plus { font-family: 'Fraunces', serif; font-size: 18px; color: var(--ink-mute); line-height: 1; }
   /* whole-tile phase colours — Black / Grey / Maroon / White */
   .ym-build    { background: var(--st-build); }    .ym-build .ym-label    { color: var(--st-build-ink); }
@@ -10482,8 +10503,15 @@
     }
     const cls = 'yog-cell '+(stt?'ym-'+stt:'')+(suggest?' suggest':'')+(isNow?' now':'');
     const style = stt2 ? ' style="background:linear-gradient(90deg, var(--st-'+stt+') 0 50%, var(--st-'+stt2+') 50% 100%);"' : '';
-    const title = month + (stt? ' · '+PHASE_FRIENDLY[stt]+(stt2?' → '+PHASE_FRIENDLY[stt2]:'')+(suggest?' (suggested)':'') : '');
-    return '<div class="'+cls+'"'+style+' onclick="openBlock('+si+',\''+month+'\')" title="'+esc(title)+'">'+mark+'</div>';
+    // Say what the month is, not just what colour it is: the phase as an emoji,
+    // and underneath it what's being built. A suggested month is not theirs yet,
+    // so it shows the shape without the detail.
+    const emo = stt ? '<span class="yog-emoji">'+PHASE_EMOJI[stt]+(stt2?PHASE_EMOJI[stt2]:'')+'</span>' : '';
+    const chips = (committed && !suggest) ? componentChips(ms && ms.components, 2) : '';
+    const comps = componentLabels(ms && ms.components);
+    const title = month + (stt? ' · '+PHASE_FRIENDLY[stt]+(stt2?' → '+PHASE_FRIENDLY[stt2]:'')+(suggest?' (suggested)':'') : '')+
+                  (comps.length? ' · building '+comps.join(', ').toLowerCase() : '');
+    return '<div class="'+cls+'"'+style+' onclick="openBlock('+si+',\''+month+'\')" title="'+esc(title)+'">'+emo+chips+mark+'</div>';
   }
 
   // The compare-all-sports heatmap: shared month axis, one row per sport.
@@ -10781,6 +10809,19 @@
       : FITNESS_COMPONENTS;
   }
 
+  // Three letters, for the places a full word will not fit — a month cell in the
+  // year grid is about as wide as this sentence is tall.
+  const COMPONENT_SHORT = { strength:'Str', power:'Pwr', speed:'Spd', mds:'MDS',
+                            endurance:'End', mobility:'Mob', skill:'Skill' };
+  function componentChips(ids, max){
+    const list = (ids||[]).map(id => COMPONENT_SHORT[id]).filter(Boolean);
+    if(!list.length) return '';
+    const show = list.slice(0, max || 2);
+    const extra = list.length - show.length;
+    return '<span class="yog-comps">'+show.map(s => '<b>'+esc(s)+'</b>').join('')+
+           (extra ? '<b>+'+extra+'</b>' : '')+'</span>';
+  }
+
   function componentLabels(ids){
     return (ids || []).map(function(id){
       const c = FITNESS_COMPONENTS.find(x => x.id === id);
@@ -10883,6 +10924,8 @@
     const inner = stt
       ? (stt2 ? '<span class="ym-emoji ym-emoji-2">'+PHASE_EMOJI[stt]+PHASE_EMOJI[stt2]+'</span>' : '<span class="ym-emoji">'+PHASE_EMOJI[stt]+'</span>')
       : '<span class="ym-plus">+</span>';
+    // Same here: the phase says how hard, the chips say what on.
+    const chips = (!isSuggest && stt) ? componentChips(ms && ms.components, 3) : '';
     const editIcon = (isSuggest && stt)
       ? '<span class="ym-suggest-edit" onclick="event.stopPropagation(); openBlock('+si+',\''+month+'\')" title="Edit details" aria-label="Edit"><i class="ti ti-pencil" aria-hidden="true"></i></span>'
       : '';
@@ -10890,7 +10933,7 @@
       editIcon +
       (isNow ? '<span class="ym-now">Now</span>' : '') +
       '<span class="ym-label">'+mLabel+'</span>'+
-      inner +
+      inner + chips +
       '<span class="ym-markers">'+markers+'</span></div>';
   }
 
