@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your card — prototype</title>
+<!--
+  PROTOTYPE. Nothing saves, nothing is wired to a portal.
+
+  Everything built so far has been rows of numbers. Correct, and nobody aged
+  fifteen has ever screenshotted a table.
+
+  Teenagers already read one piece of sports data fluently: the player card.
+  Attributes round the outside, an overall in the corner, a tier you can climb.
+  They know it before you explain it. So: the same six qualities, drawn as a
+  shape they own.
+
+  The shape is doing real work, not decoration:
+    · its SIZE is training age
+    · its SHAPE is the coaching message — spiky means imbalanced, and which
+      spike tells you what to train
+    · a quality never tested is a visible DENT, which is a far better argument
+      for turning up to testing than the words "not tested yet"
+    · last year's outline sits underneath as a ghost, so growth is the shape
+      pushing outwards
+
+  Data: athlete 41's real record, and a worked example with a full battery.
+  By Athlete_ID. No names, no emails.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --burgundy:#874B46; --gold:#D4AF37; --gold-l:#f5e6b3;
+    --ink:#1f1b19; --mute:#7a6a60; --line:#eee3dd; --cream:#fdf6f2;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#fef8f6;font-family:'Inter',system-ui,sans-serif;color:var(--ink);padding-bottom:50px}
+  .wrap{max-width:460px;margin:0 auto;padding:16px}
+  h1{font-family:'Fraunces',Georgia,serif;font-size:21px;margin:0 0 4px}
+  .sub{font-size:12.5px;color:var(--mute);margin:0 0 14px;line-height:1.5}
+  .bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .chip{font:600 12.5px 'Inter';background:#fff;border:1.5px solid var(--line);border-radius:999px;
+        padding:7px 12px;cursor:pointer}
+  .chip.on{background:var(--burgundy);border-color:var(--burgundy);color:#fff}
+
+  /* ---------- THE CARD ---------- */
+  .card{position:relative;border-radius:22px;padding:18px 18px 16px;overflow:hidden;
+        background:radial-gradient(120% 90% at 50% 0%, #4a3f38 0%, #2b2521 55%, #1a1512 100%);
+        box-shadow:0 18px 50px rgba(26,20,17,.3), inset 0 0 0 1px rgba(212,175,55,.35)}
+  .card::after{content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.07) 46%,transparent 54%)}
+  .c-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;position:relative;z-index:1}
+  .c-ovr{text-align:center;line-height:1}
+  .c-ovr b{font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:800;color:var(--gold);display:block}
+  .c-ovr span{font:800 9px 'Inter';letter-spacing:.14em;color:rgba(247,241,236,.55)}
+  .c-id{text-align:right}
+  .c-tier{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;letter-spacing:.09em;
+          text-transform:uppercase}
+  .c-name{font-family:'Barlow Condensed',sans-serif;font-size:27px;font-weight:700;color:#f7f1ec;
+          letter-spacing:.02em;line-height:1}
+  .c-meta{font:600 10.5px 'Inter';color:rgba(247,241,236,.55);letter-spacing:.05em;text-transform:uppercase;margin-top:3px}
+  .c-radar{display:block;margin:2px auto 0;position:relative;z-index:1}
+  .c-foot{position:relative;z-index:1;margin-top:4px;border-top:1px solid rgba(247,241,236,.14);padding-top:11px}
+  .c-read{font-family:'Fraunces',Georgia,serif;font-size:14.5px;color:#f7f1ec;line-height:1.4;margin:0}
+  .c-read em{color:var(--gold);font-style:normal}
+  .c-sub{font:500 11.5px 'Inter';color:rgba(247,241,236,.6);margin:5px 0 0;line-height:1.5}
+  .c-prov{display:inline-block;font:700 9px 'Inter';letter-spacing:.07em;text-transform:uppercase;
+          background:rgba(212,175,55,.16);color:var(--gold);border-radius:999px;padding:3px 8px;margin-top:9px}
+
+  /* attribute strip under the card */
+  .attrs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+  .at{background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 10px;cursor:pointer;
+      text-align:left;font:inherit;width:100%}
+  .at.dent{border-style:dashed;background:#fbf7f5}
+  .at b{font-family:'Barlow Condensed',sans-serif;font-size:25px;font-weight:800;display:block;line-height:1}
+  .at.dent b{color:#c5b5ac}
+  .at span{font:700 9.5px 'Inter';letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+  .at i{display:block;font:600 10.5px 'Inter';font-style:normal;color:var(--burgundy);margin-top:3px}
+  .at.dent i{color:#a3938a}
+
+  .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:12px}
+  .panel h3{font-family:'Fraunces',Georgia,serif;font-size:16px;margin:0 0 3px}
+  .panel p{font-size:13px;color:#4a3f39;line-height:1.55;margin:0 0 9px}
+  .panel .next{font:700 12.5px 'Inter';color:var(--burgundy)}
+  .tiers{display:flex;gap:4px;margin-top:11px}
+  .tier{flex:1;text-align:center;border-radius:8px;padding:6px 2px;font:800 9px 'Inter';
+        letter-spacing:.05em;text-transform:uppercase;background:#f3ebe6;color:#b3a299}
+  .tier.on{color:#fff}
+  .note{background:#fdf7e8;border:1px solid var(--gold-l);border-radius:10px;padding:10px 12px;
+        font-size:12.5px;color:#4a3f39;line-height:1.5;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Your card</h1>
+  <p class="sub">Prototype. The six qualities as a shape you own. Tap an attribute.</p>
+  <div class="bar">
+    <button class="chip on" id="pMe" onclick="setWho('me')">Athlete 41 · real</button>
+    <button class="chip" id="pEx" onclick="setWho('ex')">Worked example</button>
+    <button class="chip" id="pGr" onclick="setWho('gr')">A year on</button>
+  </div>
+  <div id="card"></div>
+  <div id="attrs"></div>
+  <div id="panel"></div>
+  <div class="note"><strong>Why a shape.</strong> Its size is training age. Its shape is the coaching —
+    spiky means imbalanced, and which spike tells you what to train. A quality never tested is a
+    visible dent, which argues for turning up to testing far better than the words “not tested yet”.
+    The faint outline is where you started, so getting better is the shape pushing outwards.</div>
+</div>
+
+<script>
+/* ---------------- data ---------------- */
+const AXES = [
+  { id:'move',     label:'Movement', short:'MOV', what:'The six patterns, signed off by your coach. The only thing that has to come first — you do not load a movement that is not stamped.' },
+  { id:'strength', label:'Strength', short:'STR', what:'How much you can move across the six patterns. The slowest to build and the one that raises the ceiling on everything else.' },
+  { id:'power',    label:'Power',    short:'POW', what:'Strength, fast. Jumping, throwing, your first two steps. Measured by the broad jump.' },
+  { id:'speed',    label:'Speed',    short:'SPD', what:'Top-end running, measured over 40m. Sprinting is the best thing for sprinting — power underneath raises the ceiling.' },
+  { id:'mds',      label:'Agility',  short:'AGI', what:'Stopping, turning, going again. The 5-10-5. Built on strength and mobility as much as on speed.' },
+  { id:'engine',   label:'Engine',   short:'END', what:'How long you last. The Cooper 12-minute run measures your base — threshold and top end are not tested yet.' }
+];
+const PROFILES = {
+  // Athlete 41's real record: six patterns stamped at technique 2, nothing else tested.
+  me: { id:'41', sport:'Hyrox', year:'G—',
+        now:{ move:2.0, strength:1.8, power:0, speed:0, mds:0, engine:0 },
+        was:null,
+        next:{ move:'Technique 3 unlocks heavier load', strength:'Squat is your lowest — move that',
+               power:'Two minutes to measure', speed:'Get a 40m time', mds:'One run of the 5-10-5',
+               engine:'Cooper at the next testing week' } },
+  ex: { id:'EXAMPLE', sport:'Rugby', year:'G11',
+        now:{ move:3.0, strength:1.8, power:4, speed:3, mds:0, engine:4 },
+        was:{ move:2.0, strength:1.2, power:3, speed:2, mds:0, engine:3 },
+        next:{ move:'Hinge and Press still to stamp', strength:'Hinge is not stamped — it is holding this down',
+               power:'Reach 240cm for Level 5', speed:'Get under 5.5s for Level 4',
+               mds:'One run of the 5-10-5', engine:'Reach 3000m for Level 5' } },
+  gr: { id:'EXAMPLE', sport:'Rugby', year:'G12',
+        now:{ move:4.0, strength:3.4, power:4, speed:4, mds:3, engine:4 },
+        was:{ move:3.0, strength:1.8, power:4, speed:3, mds:0, engine:4 },
+        next:{ move:'Two patterns at technique 5', strength:'Push is your lowest now',
+               power:'Reach 240cm for Level 5', speed:'Get under 4.8s for Level 5',
+               mds:'Get under 4.5s for Level 4', engine:'Reach 3000m for Level 5' } }
+};
+const TIERS = [
+  { name:'Prospect',  min:0,  col:'#a0784a' },
+  { name:'Contender', min:40, col:'#b8b8bd' },
+  { name:'Competitor',min:58, col:'#D4AF37' },
+  { name:'Elite',     min:76, col:'#f0e0a8' }
+];
+let who = 'me';
+const P = () => PROFILES[who];
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const tested = v => (v.engine||v.power||v.speed||v.mds||v.strength||v.move) ?
+  AXES.filter(a => v[a.id] > 0).length : 0;
+// Overall out of 99, from the qualities that HAVE a number. An untested quality
+// does not drag the score down — it just leaves the card provisional, and a dent
+// in the shape. Scoring someone zero for a test they were never given would be
+// a lie the card tells about them.
+function overall(v){
+  const got = AXES.map(a => v[a.id]).filter(x => x > 0);
+  if(!got.length) return 0;
+  return Math.round(got.reduce((a,b)=>a+b,0) / got.length / 5 * 99);
+}
+const tierOf = o => TIERS.slice().reverse().find(t => o >= t.min) || TIERS[0];
+
+/* ---------------- the radar ---------------- */
+function radar(now, was){
+  // Room matters more than size here: the labels sit outside the web and the
+  // value sits under the label, so the ring needs a wide margin or the two
+  // collide on the diagonal axes.
+  const S = 300, C = S/2, R = 84, n = AXES.length;
+  const pt = (i, r) => {
+    const ang = (Math.PI*2*i/n) - Math.PI/2;
+    return [C + Math.cos(ang)*r, C + Math.sin(ang)*r];
+  };
+  const poly = vals => AXES.map((a,i) =>
+    pt(i, Math.max(0.06, (vals[a.id]||0)/5) * R).map(x=>x.toFixed(1)).join(',')).join(' ');
+  let g = '';
+  for(let k=1;k<=5;k++){
+    const rr = R*k/5;
+    g += '<polygon points="'+AXES.map((_,i)=>pt(i,rr).map(x=>x.toFixed(1)).join(',')).join(' ')+
+         '" fill="none" stroke="rgba(247,241,236,'+(k===5?0.22:0.09)+')" stroke-width="1"/>';
+  }
+  AXES.forEach((a,i)=>{
+    const [x,y] = pt(i,R);
+    g += '<line x1="'+C+'" y1="'+C+'" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="rgba(247,241,236,.1)"/>';
+    const [lx,ly] = pt(i, R+21);
+    // Anchor by which side of the web the label is on, so nothing leans back
+    // across the shape.
+    const anchor = lx < C - 6 ? 'end' : (lx > C + 6 ? 'start' : 'middle');
+    const val = now[a.id]||0;
+    const top = i === 0;                       // the top axis stacks upwards
+    const ly1 = top ? ly - 12 : ly;
+    g += '<text x="'+lx.toFixed(1)+'" y="'+ly1.toFixed(1)+'" text-anchor="'+anchor+'" '+
+         'font-family="Barlow Condensed" font-size="13.5" font-weight="700" letter-spacing=".07em" '+
+         'fill="'+(val?'rgba(247,241,236,.85)':'rgba(247,241,236,.3)')+'">'+a.short+'</text>'+
+         '<text x="'+lx.toFixed(1)+'" y="'+(ly1+16).toFixed(1)+'" text-anchor="'+anchor+'" '+
+         'font-family="Barlow Condensed" font-size="19" font-weight="800" '+
+         'fill="'+(val?'#D4AF37':'rgba(247,241,236,.22)')+'">'+(val?val.toFixed(1):'–')+'</text>';
+  });
+  if(was) g += '<polygon points="'+poly(was)+'" fill="none" stroke="rgba(247,241,236,.4)" '+
+               'stroke-width="1.5" stroke-dasharray="4 3"/>';
+  g += '<polygon class="shape" points="'+poly(now)+'" fill="url(#fill)" stroke="#D4AF37" stroke-width="2.5" '+
+       'stroke-linejoin="round"/>';
+  AXES.forEach((a,i)=>{
+    const v = now[a.id]||0; if(!v) return;
+    const [x,y] = pt(i, v/5*R);
+    g += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.5" fill="#D4AF37"/>';
+  });
+  return '<svg class="c-radar" width="'+S+'" height="'+S+'" viewBox="0 0 '+S+' '+S+'">'+
+    '<defs><radialGradient id="fill" cx="50%" cy="50%"><stop offset="0%" stop-color="rgba(212,175,55,.5)"/>'+
+    '<stop offset="100%" stop-color="rgba(135,75,70,.55)"/></radialGradient></defs>'+ g +'</svg>';
+}
+
+/* ---------------- what the shape says ----------------
+   The archetype is read off the shape, not invented. Teenagers will take a name
+   for what they are far more seriously than a list of numbers — so it has to be
+   earned by the data and never be an insult. */
+function readShape(v){
+  const got = AXES.filter(a => v[a.id] > 0);
+  const miss = AXES.filter(a => !v[a.id]);
+  // Four of six is the floor for calling someone anything. Two measurements that
+  // happen to sit close together is not an all-rounder, it is an empty card, and
+  // telling a student otherwise is a compliment with nothing behind it.
+  if(got.length < 4){
+    return { title: got.length ? 'Barely measured' : 'Not measured yet',
+             line: 'Only <em>'+got.length+' of 6</em> have a number. One testing session fills in most of this — '+
+                   'until then the shape is not really yours, it is just what we happen to know.' };
+  }
+  const vals = got.map(a => v[a.id]);
+  const hi = Math.max.apply(null, vals), lo = Math.min.apply(null, vals);
+  const mean = vals.reduce((a,b)=>a+b,0) / vals.length;
+  const top = got.filter(a => v[a.id] === hi)[0], bot = got.filter(a => v[a.id] === lo)[0];
+  const spread = hi - lo;
+  const g = id => v[id] || 0;
+  let title;
+  if(spread <= 1.0 && mean >= 3.5)      title = 'Complete athlete';
+  else if(spread <= 1.0)                title = 'All-rounder — no holes';
+  else if(top.id === 'engine' && (bot.id === 'strength' || bot.id === 'power'))
+                                        title = 'Big engine, light chassis';
+  else if((top.id === 'power' || top.id === 'speed') && bot.id === 'engine')
+                                        title = 'Explosive — built short and sharp';
+  else if(top.id === 'strength' && (bot.id === 'engine' || bot.id === 'speed'))
+                                        title = 'Strong — ' + bot.label.toLowerCase() + ' is the gap';
+  else if(top.id === 'speed' && bot.id === 'strength')
+                                        title = 'Fast already, and nothing underneath it yet';
+  else                                  title = top.label + ' carries you';
+  const line = 'Your strongest is <em>'+top.label+'</em>. Your lowest is <em>'+bot.label+'</em>'+
+    (miss.length ? ', and <em>'+miss.length+'</em> still ' + (miss.length===1?'has':'have') + ' no number at all.' : '.');
+  return { title: title, line: line };
+}
+
+/* ---------------- render ---------------- */
+let openAxis = null;
+function render(){
+  ['me','ex','gr'].forEach(k => document.getElementById('p'+k.charAt(0).toUpperCase()+k.slice(1,2)).classList.toggle('on', who===k));
+  const p = P(), v = p.now, o = overall(v), t = tierOf(o), nTested = AXES.filter(a=>v[a.id]>0).length;
+  const read = readShape(v);
+
+  document.getElementById('card').innerHTML =
+    '<div class="card">'+
+      '<div class="c-top">'+
+        '<div class="c-ovr"><b>'+(o||'–')+'</b><span>OVERALL</span></div>'+
+        '<div class="c-id">'+
+          '<div class="c-tier" style="color:'+t.col+'">'+t.name+'</div>'+
+          '<div class="c-name">'+(p.id==='EXAMPLE'?'EXAMPLE':'ATHLETE '+esc(p.id))+'</div>'+
+          '<div class="c-meta">'+esc(p.sport)+' · '+esc(p.year)+'</div>'+
+        '</div>'+
+      '</div>'+
+      radar(v, p.was)+
+      '<div class="c-foot">'+
+        '<p class="c-read">'+read.title+'</p>'+
+        '<p class="c-sub">'+read.line+'</p>'+
+        (nTested < 6 ? '<span class="c-prov">Provisional · '+nTested+' of 6 measured</span>' : '')+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('attrs').innerHTML = '<div class="attrs">'+
+    AXES.map(a => {
+      const val = v[a.id]||0;
+      return '<button class="at'+(val?'':' dent')+'" onclick="openA(\''+a.id+'\')">'+
+        '<b>'+(val?val.toFixed(1):'–')+'</b><span>'+a.label+'</span>'+
+        '<i>'+(val?'Level '+Math.round(val):'not tested')+'</i></button>';
+    }).join('')+'</div>';
+
+  const a = AXES.find(x => x.id === openAxis);
+  document.getElementById('panel').innerHTML = a
+    ? '<div class="panel"><h3>'+esc(a.label)+'</h3><p>'+esc(a.what)+'</p>'+
+      '<p class="next">Next: '+esc(p.next[a.id]||'')+'</p>'+
+      '<div class="tiers">'+TIERS.map(x=>'<span class="tier'+(x.name===t.name?' on':'')+'"'+
+        (x.name===t.name?' style="background:'+x.col+'"':'')+'>'+x.name+'</span>').join('')+'</div></div>'
+    : '<div class="panel"><h3>Tap an attribute</h3><p>Each one tells you what it is, where you are, and the next step.</p>'+
+      '<div class="tiers">'+TIERS.map(x=>'<span class="tier'+(x.name===t.name?' on':'')+'"'+
+        (x.name===t.name?' style="background:'+x.col+'"':'')+'>'+x.name+'</span>').join('')+'</div></div>';
+}
+function openA(id){ openAxis = (openAxis===id) ? null : id; render(); }
+function setWho(w){ who = w; openAxis = null; render(); }
+render();
+</script>
+</body>
+</html>
