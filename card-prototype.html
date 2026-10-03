@@ -85,8 +85,8 @@
   .rail-go b{color:var(--ink);font-weight:700}
 
   .grp{display:flex;align-items:center;gap:12px;margin:26px 0 10px}
-  .grp b{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.24em;
-         text-transform:uppercase;color:var(--ink-2)}
+  .grp b{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.16em;
+         text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
   .grp i{flex:1;height:1px;background:var(--hair-2)}
   .row{display:grid;grid-template-columns:1fr 60px;align-items:center;gap:12px;width:100%;
        background:none;border:none;border-bottom:1px solid var(--hair-2);padding:11px 2px;cursor:pointer;
@@ -456,8 +456,8 @@ function render(){
       (nGot<ATTRS.length?'<span class="prov">Provisional · '+nGot+' of '+ATTRS.length+' measured</span>':'')+
       railHTML(o,t)+'</div></div>'+
     '<div class="rise" style="animation-delay:.08s">'+
-      '<div class="grp"><b>Body</b><i></i></div>'+ATTRS.filter(x=>x.grp==='body').map(row).join('')+
-      '<div class="grp"><b>Athlete</b><i></i></div>'+ATTRS.filter(x=>x.grp==='athlete').map(row).join('')+
+      '<div class="grp"><b>What you can do</b><i></i></div>'+ATTRS.filter(x=>x.grp==='body').map(row).join('')+
+      '<div class="grp"><b>What it\'s built on</b><i></i></div>'+ATTRS.filter(x=>x.grp==='athlete').map(row).join('')+
     '</div>'+
     (a?detailHTML(a,s):'')+ treeHTML();
   countUp(document.getElementById('ovrN'),o);
