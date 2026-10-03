@@ -123,18 +123,18 @@ const ATTRS = [
   { id:'movement', short:'MOV', label:'Movement', grp:'athlete', wired:true,
     what:'The six patterns signed off by your coach. The one thing that has to come first — you do not load a movement that is not stamped.',
     src:'Technique levels 1–5, stamped at a check-in' },
-  { id:'mobility', short:'MOB', label:'Mobility', grp:'athlete', wired:false,
-    what:'Range of motion and control. Feeds agility and keeps you in one piece.',
-    src:'Mobility sheet — in the sheet, NOT sent to this portal yet' },
+  { id:'mobility', short:'MOB', label:'Mobility', grp:'athlete', wired:true, coach:true,
+    what:'Range of motion and control — ankles, trunk, shoulders. Feeds agility and keeps you in one piece.',
+    src:'Three screens, scored 0–3 each, at a check-in' },
   { id:'consistency', short:'CON', label:'Consistency', grp:'athlete', wired:true,
     what:'Turning up. The share of your planned sessions you actually did over the last eight weeks.',
     src:'Your logged sessions — the adherence part of your Grit score' },
   { id:'knowledge', short:'KNW', label:'Knowledge', grp:'athlete', wired:true,
-    what:'What you have learned and can use — Level Up blocks finished and passed.',
-    src:'Level Up — one block live so far, so this grows as the course does' },
-  { id:'mindset', short:'MIN', label:'Mindset', grp:'athlete', wired:false,
-    what:'Mindset, effort, coachability and mental toughness, scored by your coach.',
-    src:'Psych_Assessments — in the sheet, NOT sent to this portal yet' }
+    what:'What you have learned and can use. Ten blocks make up the academy — each one you pass is a point.',
+    src:'Level Up · 10 blocks across the academy' },
+  { id:'mindset', short:'MIN', label:'Mindset', grp:'athlete', wired:true, coach:true, slow:true,
+    what:'Mindset, effort, coachability and mental toughness. The one attribute no test can give you — your coach scores it from what they see over a term.',
+    src:'Scored by Mr Bain · the hardest one to measure, so it moves slowly' }
 ];
 
 /* thresholds: the same ones the dashboard uses, now interpolated 0–10 */
@@ -174,22 +174,23 @@ const PROFILES = {
         tech:{Squat:2,Hinge:2,Push:2,Pull:2,Lunge:2,Press:2},
         load:{Squat:1,Hinge:2,Push:1,Pull:2,Lunge:2,Press:2},
         tests:{}, mobility:null, psych:null,
-        adherence:47, learn:{passed:0,started:2,total:2}, was:null },
+        adherence:47, learn:{passed:0,started:2}, was:null },
   ex: { id:'EXAMPLE', sport:'Rugby', year:'G11', gender:'M',
         tech:{Squat:4,Hinge:0,Push:3,Pull:2,Lunge:3,Press:0},
         load:{Squat:3,Hinge:0,Push:2,Pull:0,Lunge:3,Press:0},
-        tests:{power:212, speed:5.82, engine:2480}, mobility:null, psych:null,
-        adherence:72, learn:{passed:1,started:1,total:2},
+        tests:{power:212, speed:5.82, engine:2480}, mobility:[2,2,1], psych:null,
+        adherence:72, learn:{passed:1,started:1},
         was:{ strength:2.4, power:5.2, speed:4.6, agility:0, engine:6.4, movement:4.0,
               mobility:0, consistency:5.5, knowledge:2.5, mindset:0 } },
   gr: { id:'EXAMPLE', sport:'Rugby', year:'G12', gender:'M',
         tech:{Squat:5,Hinge:3,Push:4,Pull:3,Lunge:4,Press:3},
         load:{Squat:4,Hinge:2,Push:3,Pull:2,Lunge:3,Press:2},
-        tests:{power:228, speed:5.42, agility:4.9, engine:2760}, mobility:null, psych:null,
-        adherence:86, learn:{passed:2,started:0,total:2},
+        tests:{power:228, speed:5.42, agility:4.9, engine:2760}, mobility:[3,2,2], psych:[4,4,3,4,4],
+        adherence:86, learn:{passed:4,started:1},
         was:{ strength:3.7, power:6.3, speed:5.4, agility:0, engine:6.4, movement:4.4,
               mobility:0, consistency:7.2, knowledge:7.5, mindset:0 } }
 };
+const ACADEMY_BLOCKS = 10;   // the course, when it is finished
 let who = 'me', openAttr = null;
 const P = () => PROFILES[who];
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -201,9 +202,11 @@ function scores(){
   s.strength = PAT.reduce((a,k)=>a + Math.min(10,(p.tech[k]||0)+(p.load[k]||0)), 0) / 6;
   s.movement = PAT.reduce((a,k)=>a + (p.tech[k]||0), 0) / 6 / 5 * 10;
   ['power','speed','agility','engine'].forEach(k => { s[k] = score10(k, p.tests[k], p.gender); });
-  s.mobility    = p.mobility ? p.mobility.reduce((a,b)=>a+b,0)/p.mobility.length/3*10 : 0;
+  s.mobility    = p.mobility ? p.mobility.reduce((a,b)=>a+b,0)/(p.mobility.length*3)*10 : 0;
   s.consistency = (p.adherence||0)/10;
-  s.knowledge   = p.learn.total ? Math.min(10,(p.learn.passed + p.learn.started*0.35)/p.learn.total*10) : 0;
+  // Each block passed is worth a point out of ten; a block in progress is worth
+  // a third of one, so starting something shows up without being a free pass.
+  s.knowledge   = Math.min(10, p.learn.passed + p.learn.started*0.35);
   s.mindset     = p.psych ? p.psych.reduce((a,b)=>a+b,0)/p.psych.length/5*10 : 0;
   return s;
 }
@@ -287,13 +290,16 @@ function readShape(s){
 /* ===================== render ===================== */
 function nextFor(a, s){
   const p = P(), v = s[a.id]||0;
-  if(!a.wired) return 'Not sent to the portal yet — it is in the sheet, it just is not wired through.';
+  if(a.coach && !v) return a.slow
+    ? 'Nothing scored yet. Your coach writes this one from what they see over a term.'
+    : 'Not scored yet — three screens at a check-in and this has a number.';
   if(a.id==='movement')    return v>=10 ? 'Every pattern at technique 5.' : 'Get the next pattern stamped at a check-in.';
   if(a.id==='strength')    { const w = PAT.slice().sort((x,y)=>((p.tech[x]||0)+(p.load[x]||0))-((p.tech[y]||0)+(p.load[y]||0)))[0];
                              return (p.tech[w]||0)<2 ? w+' is not stamped — that one is holding this down.'
                                                      : w+' is your lowest. Move that and the whole score moves.'; }
   if(a.id==='consistency') return 'You are at '+(p.adherence||0)+'% of your planned sessions. One more a week moves this.';
-  if(a.id==='knowledge')   return p.learn.passed+' of '+p.learn.total+' blocks passed. Finishing one moves this most.';
+  if(a.id==='knowledge')   return p.learn.passed+' of '+ACADEMY_BLOCKS+' blocks passed'+
+    (p.learn.started?', '+p.learn.started+' on the go':'')+'. Each one you finish is a whole point.';
   if(!p.tests[a.id])       return 'Not tested yet — one test and this stops being a blank.';
   const c = T[a.id], t = c[p.gender==='F'?'F':'M'];
   const i = Math.min(4, Math.max(0, Math.floor(v/2)));
