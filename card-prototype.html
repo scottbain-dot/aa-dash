@@ -74,6 +74,7 @@
   /* The climb. A tier name on its own says where you are; the rail says there
      is somewhere to get to and exactly how far it is. */
   .rail{margin-top:18px}
+  .rail-cap{font:700 8.5px 'Inter';letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin:0 0 7px}
   .rail-track{display:flex;gap:3px;height:5px}
   .rail-track i{flex:1;border-radius:3px;background:rgba(245,239,233,.09)}
   .rail-track i.on{background:linear-gradient(90deg,var(--burg-l),var(--gold))}
@@ -238,8 +239,8 @@ const PROFILES={
       adherence:86,learn:{passed:4,started:1},
       was:{strength:3.3,power:7.2,speed:4.7,agility:0,engine:6.4,movement:4.0,mobility:5.6,consistency:7.2,knowledge:1.4,mindset:0}}
 };
-const TIERS=[{name:'Prospect',min:0,col:'#b08758'},{name:'Contender',min:40,col:'#c9c7cc'},
-             {name:'Competitor',min:58,col:'#D4AF37'},{name:'Elite',min:76,col:'#f3e6b4'}];
+const STAGES=[{name:'Foundation',min:0,col:'#b08758'},{name:'Developing',min:40,col:'#c9c7cc'},
+              {name:'Established',min:58,col:'#D4AF37'},{name:'Advanced',min:76,col:'#f3e6b4'}];
 let who='me', openAttr=null;
 const P=()=>PROFILES[who];
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -261,7 +262,7 @@ function overall(s){
   const got=ATTRS.filter(a=>s[a.id]>0).map(a=>s[a.id]);
   return got.length?Math.round(got.reduce((a,b)=>a+b,0)/got.length/10*99):0;
 }
-const tierOf=o=>TIERS.slice().reverse().find(t=>o>=t.min)||TIERS[0];
+const stageOf=o=>STAGES.slice().reverse().find(t=>o>=t.min)||STAGES[0];
 
 /* ===================== radar ===================== */
 function radar(s,was){
@@ -414,20 +415,20 @@ function detailHTML(a,s){
 // How far through the tiers, and what the next one costs. Elite has no ceiling
 // above it, so it says so rather than inventing a target.
 function railHTML(o,t){
-  const i = TIERS.indexOf(t), next = TIERS[i+1];
-  const segs = TIERS.map(function(x,k){
+  const i = STAGES.indexOf(t), next = STAGES[i+1];
+  const segs = STAGES.map(function(x,k){
     if(k < i) return '<i class="on"></i>';
     if(k > i) return '<i></i>';
     const lo = x.min, hi = next ? next.min : 99;
     const pct = Math.max(6, Math.min(100, Math.round((o-lo)/(hi-lo)*100)));
     return '<i class="part" style="--p:'+pct+'%"></i>';
   }).join('');
-  return '<div class="rail"><div class="rail-track">'+segs+'</div>'+
-    '<div class="rail-l">'+TIERS.map(function(x,k){
+  return '<div class="rail"><p class="rail-cap">Development stage</p><div class="rail-track">'+segs+'</div>'+
+    '<div class="rail-l">'+STAGES.map(function(x,k){
       return k===i ? '<b>'+x.name+'</b>' : '<span>'+x.name+'</span>'; }).join('')+'</div>'+
     '<p class="rail-go">'+(next
       ? '<b>'+(next.min-o)+' points</b> to '+next.name+'.'
-      : 'Top tier. Nothing above this.')+'</p></div>';
+      : 'The last stage. Nothing above this one.')+'</p></div>';
 }
 
 function countUp(el,to){
@@ -437,7 +438,7 @@ function countUp(el,to){
 }
 function render(){
   [['me','pMe'],['ex','pEx'],['gr','pGr']].forEach(([k,id])=>document.getElementById(id).classList.toggle('on',who===k));
-  const p=P(), s=scores(), o=overall(s), t=tierOf(o);
+  const p=P(), s=scores(), o=overall(s), t=stageOf(o);
   const nGot=ATTRS.filter(a=>s[a.id]>0).length, read=readShape(s);
   const row=a=>{const v=s[a.id]||0;
     return '<button class="row'+(v?'':' dim')+(openAttr===a.id?' open':'')+'" onclick="openA(\''+a.id+'\')">'+
