@@ -57,7 +57,9 @@
   .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;
         box-shadow:0 1px 2px rgba(26,20,17,.04)}
   .eyebrow{font:800 11px 'Inter';letter-spacing:.09em;text-transform:uppercase;color:var(--burgundy);margin:0 0 8px}
-  .goal{font-family:'Fraunces',Georgia,serif;font-size:17px;font-weight:700;line-height:1.3;margin:0 0 3px}
+  .goal{font-family:'Fraunces',Georgia,serif;font-size:17px;font-weight:700;line-height:1.3;margin:0 0 3px;
+        display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+  .goal.open{-webkit-line-clamp:unset}
   .goal-sub{font-size:12px;color:var(--ink-mute);margin:0}
 
   /* ---- THE ONE YEAR VIEW ---- */
@@ -198,6 +200,52 @@
   .ystrip-legend{display:flex;flex-wrap:wrap;gap:8px 15px;margin:2px 0 2px}
   .ystrip-foot{font:500 11.5px 'Inter';color:var(--ink-mute);margin:10px 0 0;text-align:center}
 
+  /* ---- FOCUS FIRST ------------------------------------------------------
+     Which sport "leads" a month was a question we were asking ourselves, not a
+     question the athlete has. Their sports' seasons are a calendar handed to
+     them; what they are BUILDING is the part they choose. So the tile carries
+     the focus, and the sports drop to a ribbon underneath that says, simply,
+     in season or not.
+     It also dissolves the tiebreak: two sports tied for the lead are tied ON
+     PHASE, so the tile's colour and emoji were identical either way. The tie
+     only ever mattered because a name was printed. No name, no tie. */
+  .fstrip{display:grid;grid-template-columns:repeat(12,minmax(50px,1fr));gap:4px;padding:10px 0 2px}
+  @media (max-width:760px){ .fstrip{grid-template-columns:repeat(6,1fr);gap:5px;grid-auto-rows:1fr} }
+  .fst{min-height:92px;border-radius:13px;padding:8px 4px;cursor:pointer;position:relative;display:flex;
+       flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;text-align:center;
+       background:var(--cream);border:none;font:inherit}
+  .fst-m{font:700 9px 'Inter';letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+  .fst-focus{display:flex;flex-direction:column;gap:2px;align-items:center;width:100%}
+  .fst-focus b{font:800 10px 'Inter';letter-spacing:.01em;line-height:1.25;
+               background:rgba(255,255,255,.93);color:#2b2521;border-radius:4px;padding:1px 5px;
+               max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fst-none{font:600 10px 'Inter';opacity:.5}
+  .fst-how{font:600 9px 'Inter';letter-spacing:.02em;opacity:.8;display:flex;align-items:center;gap:3px}
+  .fst-mark{font-size:9px;color:var(--gold);min-height:11px}
+  .fst-now{position:absolute;top:-7px;left:50%;transform:translateX(-50%);z-index:2;font:800 7.5px 'Inter';
+           letter-spacing:.06em;background:var(--ink);color:#fff;border-radius:999px;padding:2px 7px}
+  .fst.is-now{outline:2px solid var(--gold);outline-offset:1px}
+  .fst.p-build{background:var(--st-build);color:var(--st-build-ink)}
+  .fst.p-maintain{background:var(--st-maintain);color:#fff}
+  .fst.p-peak{background:var(--st-peak);color:var(--st-peak-ink)}
+  .fst.p-recover{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+  .fst.p-off{background:var(--st-off);color:var(--st-off-ink)}
+  .fst.p-none{background:#faf5f2;color:var(--ink-mute);box-shadow:inset 0 0 0 1px #e8ddd7}
+
+  /* The sports, as the calendar they actually are. */
+  .ribbon{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .rib-head{font:800 10px 'Inter';letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);margin:0 0 9px}
+  .rib-row{display:grid;grid-template-columns:clamp(54px,20vw,96px) repeat(12,1fr);gap:2px;align-items:center;margin-bottom:5px}
+  .rib-name{font:700 11.5px 'Fraunces',serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px}
+  .rib-cell{height:17px;border-radius:3px;background:#f3ebe6}
+  .rib-cell.train{background:#cdbfb6}
+  .rib-cell.season{background:var(--st-peak)}
+  .rib-cell.rest{background:#f8f3f0;box-shadow:inset 0 0 0 1px #eee3dd}
+  .rib-months{display:grid;grid-template-columns:clamp(54px,20vw,96px) repeat(12,1fr);gap:2px;margin-bottom:4px}
+  .rib-months span{font:700 8px 'Inter';text-align:center;color:var(--ink-mute);text-transform:uppercase}
+  .rib-key{display:flex;gap:13px;flex-wrap:wrap;margin-top:9px;font:600 10.5px 'Inter';color:var(--ink-mute)}
+  .rib-key i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px;font-style:normal}
+
   /* ---- today's grid, for comparison ---- */
   .yog{display:grid;grid-template-columns:clamp(52px,17vw,96px) repeat(12,1fr);gap:3px;align-items:center}
   .yog-mhead{font:700 8.5px 'Inter';text-transform:uppercase;text-align:center;color:var(--ink-mute)}
@@ -258,7 +306,8 @@
   </div>
   <div class="bar">
     <span class="bar-lab">View</span>
-    <button class="chip on" id="vStrip" onclick="setView('strip')">Year strip</button>
+    <button class="chip on" id="vFocus" onclick="setView('focus')">Focus first</button>
+    <button class="chip" id="vStrip" onclick="setView('strip')">Year strip</button>
     <button class="chip" id="vAth" onclick="setView('ath')">What the athlete sees</button>
     <button class="chip" id="vNew" onclick="setView('new')">Planner</button>
     <button class="chip" id="vOld" onclick="setView('old')">Today’s grid</button>
@@ -292,7 +341,7 @@ const STATE_LABEL = { build:'Build', maintain:'Maintain', peak:'Peak', recover:'
 const COMPONENTS = [['strength','Str'],['power','Pwr'],['speed','Spd'],['mds','MDS'],
                     ['endurance','End'],['mobility','Mob'],['skill','Skill']];
 
-let who = '62', view = 'strip', grouping = 'work', openMonthName = null;
+let who = '62', view = 'focus', grouping = 'work', openMonthName = null;
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ym = () => MAPS[who];
 
@@ -703,6 +752,83 @@ function yearStripHTML(){
   '</div>';
 }
 
+/* ============================================================
+   FOCUS FIRST — what you are building, with the sports as a calendar
+   ============================================================ */
+const HOW = { build:'room to build', maintain:'hold it', peak:'sharpen',
+              recover:'rest', off:'off' };
+
+// The hardest thing any sport is doing that month. No tiebreak needed: sports
+// that tie, tie on phase, so this is the same answer whichever one you pick.
+function topPhaseAt(month, half){
+  const r = rankedAt(month, half);
+  return r.length ? r[0].phase : '';
+}
+
+function focusTile(month){
+  const split = isSplit(month);
+  const p0 = topPhaseAt(month, 0), p1 = split ? topPhaseAt(month, 1) : p0;
+  const isNow = month === NOW_MONTH;
+  let cls = 'fst p-' + (p0 || 'none'), style = '';
+  if(split && p1 && p1 !== p0){
+    style = ' style="background:linear-gradient(90deg,var(--st-'+(p0||'off')+') 0 50%,var(--st-'+p1+') 50% 100%)"';
+  }
+  const comps = compsIn(month);
+  const focus = comps.length
+    ? '<span class="fst-focus">'+comps.slice(0,3).map(c=>'<b>'+esc(compLabel(c))+'</b>').join('')+'</span>'
+    : '<span class="fst-none">'+(p0 ? 'not set' : '+')+'</span>';
+  const how = p0 ? '<span class="fst-how">'+PHASE_EMOJI[p0]+(split&&p1&&p1!==p0?PHASE_EMOJI[p1]:'')+
+                   ' '+esc(HOW[p0]||'')+'</span>' : '';
+  const marks = (eventsIn(month).length?'★':'') + (gamesIn(month).length?'●':'');
+  return '<button class="'+cls+(isNow?' is-now':'')+'"'+style+' onclick="openMonth(\''+month+'\')">'+
+    (isNow?'<span class="fst-now">NOW</span>':'')+
+    '<span class="fst-m">'+mShort(month)+'</span>'+ focus + how +
+    (marks?'<span class="fst-mark">'+marks+'</span>':'')+
+  '</button>';
+}
+
+// In season / training / resting — three states, no decisions. A sport's season
+// is handed to the athlete by a fixture list; it belongs on a calendar, not in
+// a competition for the headline.
+function ribbonRow(sp){
+  const cells = academicCells().map(function(c){
+    const st = ((sp.monthlyStates||[]).find(x => x.month===c.month)||{}).state || '';
+    const k = st==='peak' ? 'season' : (st==='build'||st==='maintain') ? 'train'
+            : (st==='recover'||st==='off') ? 'rest' : '';
+    const title = esc(sp.name)+' · '+c.month+(st?' · '+PHASE_WORD[st]:' · not set');
+    return '<span class="rib-cell '+k+'" title="'+title+'"></span>';
+  }).join('');
+  return '<div class="rib-row"><span class="rib-name" title="'+esc(sp.name)+'">'+esc(sp.name)+'</span>'+cells+'</div>';
+}
+
+function focusViewHTML(){
+  const m = ym(), ap = m.aPriority;
+  const tiles = academicCells().map(c => focusTile(c.month)).join('');
+  const sports = plannedSports();
+  const anyComps = academicCells().some(c => compsIn(c.month).length);
+  return '<div class="card">'+
+    '<p class="eyebrow">What you\'re building · '+esc(m.year||'')+'</p>'+
+    (m.goal ? '<p class="goal" onclick="this.classList.toggle(\'open\')" title="Tap for the whole goal">'+
+      esc(m.goal)+'</p>' : '')+
+    (ap && ap.event ? '<p class="goal-sub">Big event · <strong>'+esc(ap.event)+'</strong>'+
+      (ap.month? ' · '+esc(ap.month):'')+'</p>' : '')+
+    '<div class="fstrip">'+tiles+'</div>'+
+    (anyComps ? '' : '<p class="ystrip-foot" style="color:var(--burgundy);font-weight:600">'+
+      'Nothing set yet — tap any month to say what you\'re building in it.</p>')+
+    '<div class="ribbon">'+
+      '<p class="rib-head">Your sports</p>'+
+      '<div class="rib-months"><span></span>'+
+        academicCells().map(c=>'<span>'+c.month.slice(0,1)+'</span>').join('')+'</div>'+
+      sports.map(ribbonRow).join('')+
+      '<div class="rib-key">'+
+        '<span><i class="rib-cell season" style="background:var(--st-peak)"></i>In season</span>'+
+        '<span><i class="rib-cell train" style="background:#cdbfb6"></i>Training</span>'+
+        '<span><i class="rib-cell rest" style="background:#f8f3f0;box-shadow:inset 0 0 0 1px #eee3dd"></i>Off / resting</span>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
 /* ---------- today's grid, for comparison ---------- */
 function oldViewHTML(){
   const m = ym();
@@ -825,6 +951,7 @@ function render(){
     '<button class="chip'+(id===who?' on':'')+'" onclick="setWho(\''+id+'\')">'+id+
       ' <span style="opacity:.65">· '+(MAPS[id].sports||[]).length+' rows</span>'+
       (id==='62' ? ' <span class="flag">grouping differs</span>' : '')+'</button>').join(' ');
+  document.getElementById('vFocus').classList.toggle('on', view==='focus');
   document.getElementById('vStrip').classList.toggle('on', view==='strip');
   document.getElementById('vAth').classList.toggle('on', view==='ath');
   document.getElementById('vNew').classList.toggle('on', view==='new');
@@ -840,6 +967,7 @@ function render(){
   document.getElementById('vOld').classList.toggle('on', view==='old');
   document.getElementById('dataNote').innerHTML = dataNoteHTML();
   document.getElementById('main').innerHTML =
+    view === 'focus' ? focusViewHTML() :
     view === 'strip' ? yearStripHTML() :
     view === 'ath' ? athleteViewHTML() : view === 'new' ? newViewHTML() : oldViewHTML();
 }
