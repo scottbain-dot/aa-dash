@@ -75,10 +75,46 @@
   .panel h3{font-family:'Fraunces',Georgia,serif;font-size:16px;margin:0 0 3px}
   .panel p{font-size:13px;color:#4a3f39;line-height:1.55;margin:0 0 8px}
   .panel .next{font:700 12.5px 'Inter';color:var(--burgundy);margin:0}
-  .panel .src{font:600 11px 'Inter';color:var(--mute);margin:8px 0 0}
+  .panel .src{font:600 11px 'Inter';color:var(--mute);margin:10px 0 0}
+  .panel .lab{font:800 9.5px 'Inter';letter-spacing:.1em;text-transform:uppercase;color:var(--mute);
+              margin:12px 0 4px}
+  .dial{display:flex;align-items:center;gap:10px;margin:2px 0 10px}
+  .dial-bar{flex:1;height:8px;border-radius:4px;background:#ece2dc;overflow:hidden}
+  .dial-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--burgundy),var(--gold))}
+  .dial-n{font-family:'Barlow Condensed',sans-serif;font-size:27px;font-weight:800;line-height:1}
+  .dial-n small{font-size:12px;color:var(--mute);font-weight:600;font-family:'Inter'}
+  .rels{display:flex;flex-wrap:wrap;gap:6px}
+  .rel{font:600 12px 'Inter';background:#fff;border:1.5px solid var(--line);border-radius:999px;
+       padding:6px 11px;cursor:pointer;color:var(--ink)}
+  .rel b{color:var(--burgundy);font-family:'Barlow Condensed',sans-serif;font-size:15px}
   .tiers{display:flex;gap:4px;margin-top:11px}
   .tier{flex:1;text-align:center;border-radius:8px;padding:6px 2px;font:800 9px 'Inter';
         letter-spacing:.05em;text-transform:uppercase;background:#f3ebe6;color:#b3a299}
+  /* ---- the unlock tree ----
+     This is not a metaphor laid over the data. Technique level genuinely gates
+     the load tier a student may train at — the Strength sheet stores a separate
+     load score per technique level. So it already IS a tree; it has just never
+     been drawn as one. */
+  .tree{background:#241f1b;border-radius:16px;padding:15px 13px;margin-top:12px;color:#f7f1ec}
+  .tree h3{font-family:'Fraunces',Georgia,serif;font-size:16px;margin:0 0 3px;color:#f7f1ec}
+  .tree p.t-sub{font:500 11.5px 'Inter';color:rgba(247,241,236,.6);margin:0 0 13px;line-height:1.5}
+  .trow{display:grid;grid-template-columns:62px repeat(5,1fr);gap:5px;align-items:center;margin-bottom:6px}
+  .tname{font:700 11.5px 'Inter';color:rgba(247,241,236,.9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tnode{position:relative;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+         font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:.03em}
+  .tnode.done{background:var(--gold);color:#2b2521}
+  .tnode.next{background:rgba(212,175,55,.14);color:var(--gold);box-shadow:inset 0 0 0 1.5px var(--gold)}
+  .tnode.lock{background:rgba(247,241,236,.05);color:rgba(247,241,236,.22);
+              box-shadow:inset 0 0 0 1px rgba(247,241,236,.08)}
+  .tnode .ld{position:absolute;right:3px;bottom:1px;font:700 8px 'Inter';opacity:.75}
+  .thead{display:grid;grid-template-columns:62px repeat(5,1fr);gap:5px;margin-bottom:5px}
+  .thead span{font:800 8.5px 'Inter';letter-spacing:.07em;text-transform:uppercase;text-align:center;
+              color:rgba(247,241,236,.4)}
+  .tkey{display:flex;gap:13px;flex-wrap:wrap;margin-top:11px;font:600 10.5px 'Inter';color:rgba(247,241,236,.55)}
+  .tkey i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;font-style:normal}
+  .t-unlock{background:rgba(212,175,55,.12);border-radius:10px;padding:9px 11px;margin-top:11px;
+            font:600 12px 'Inter';color:var(--gold);line-height:1.5}
+
   .note{background:#fdf7e8;border:1px solid var(--gold-l);border-radius:10px;padding:10px 12px;
         font-size:12.5px;color:#4a3f39;line-height:1.5;margin-top:12px}
 </style>
@@ -95,6 +131,7 @@
   <div id="card"></div>
   <div id="attrs"></div>
   <div id="panel"></div>
+  <div id="tree"></div>
   <div class="note"><strong>Why out of ten.</strong> The 1–5 levels are bands, and a band is a poor
     motivator — you can add 15cm to your jump and watch the number refuse to move. These scores
     interpolate between the same thresholds, so every centimetre shows up. The level is still
@@ -136,6 +173,29 @@ const ATTRS = [
     what:'Mindset, effort, coachability and mental toughness. The one attribute no test can give you — your coach scores it from what they see over a term.',
     src:'Scored by Mr Bain · the hardest one to measure, so it moves slowly' }
 ];
+
+const SUPPORT = {
+  strength:    { under:['movement'], lifts:['power','speed','agility'],
+                 move:'Heavier work on the six patterns, two to three times a week. The slowest of the ten — give it six to eight weeks before you judge it.' },
+  power:       { under:['strength'], lifts:['speed','agility'],
+                 move:'Jumps and throws, fresh and few. Quality over volume — tired power training is just conditioning.' },
+  speed:       { under:['power','mobility'], lifts:[],
+                 move:'Short sprints with full recovery. Never add fatigue to make it harder; that trains something else.' },
+  agility:     { under:['strength','mobility'], lifts:[],
+                 move:'Cuts and turns against a reaction, not a cone you already know about. Strength is what lets you stop.' },
+  engine:      { under:[], lifts:[],
+                 move:'Mostly easy running, one harder session a week, built up about ten percent at a time.' },
+  movement:    { under:[], lifts:['strength'],
+                 move:'Film it, practise it, get it stamped at a check-in. This is the one thing that genuinely comes first — you do not load a pattern that is not stamped.' },
+  mobility:    { under:[], lifts:['speed','agility'],
+                 move:'Ten minutes on your worst screen, most days. Range you can control, not range you can flop into.' },
+  consistency: { under:[], lifts:['strength','power','speed','agility','engine'],
+                 move:'Turn up. One more session a week than last week is the whole method.' },
+  knowledge:   { under:[], lifts:[],
+                 move:'Finish a Level Up block. Each one is a whole point out of ten.' },
+  mindset:     { under:[], lifts:['consistency'],
+                 move:'No session moves this on its own. It is what your coach sees over a term — how you take feedback, and what you do on the bad days.' }
+};
 
 /* thresholds: the same ones the dashboard uses, now interpolated 0–10 */
 const T = {
@@ -330,14 +390,72 @@ function render(){
     '<p class="grp">Athlete</p><div class="attrs">'+ATTRS.filter(a=>a.grp==='athlete').map(cell).join('')+'</div>';
 
   const a = ATTRS.find(x=>x.id===openAttr);
-  document.getElementById('panel').innerHTML = '<div class="panel">'+
-    (a ? '<h3>'+esc(a.label)+' · '+((s[a.id]||0).toFixed(1))+' / 10</h3><p>'+esc(a.what)+'</p>'+
-         '<p class="next">Next: '+esc(nextFor(a,s))+'</p><p class="src">From: '+esc(a.src)+'</p>'
-       : '<h3>Tap an attribute</h3><p>Each one says what it is, where you are, and the next step.</p>')+
-    '<div class="tiers">'+TIERS.map(x=>'<span class="tier"'+(x.name===t.name?' style="background:'+x.col+';color:#fff"':'')+'>'+x.name+'</span>').join('')+'</div>'+
+  document.getElementById('tree').innerHTML = treeHTML();
+  document.getElementById('panel').innerHTML = a ? detailHTML(a, s) :
+    '<div class="panel"><h3>Tap an attribute</h3>'+
+    '<p>Each one says what it is, where you are, what moves it, and what it holds up.</p>'+
+    '<div class="tiers">'+TIERS.map(x=>'<span class="tier"'+(x.name===t.name?' style="background:'+x.col+';color:#fff"':'')+'>'+x.name+'</span>').join('')+'</div></div>';
+}
+// The ladder, delivered one rung at a time at the moment it was asked for —
+// rather than as its own screen nobody visits.
+function detailHTML(a, s){
+  const v = s[a.id]||0, sup = SUPPORT[a.id] || { under:[], lifts:[] };
+  const name = id => (ATTRS.find(x=>x.id===id)||{}).label || id;
+  const chip = id => '<button class="rel" onclick="openA(\''+id+'\')">'+esc(name(id))+
+                     ' <b>'+((s[id]||0)?(s[id]).toFixed(1):'–')+'</b></button>';
+  const dial = '<div class="dial"><div class="dial-bar"><i style="width:'+(v*10)+'%"></i></div>'+
+    '<div class="dial-n">'+(v?v.toFixed(1):'–')+'<small>/10</small></div></div>';
+  return '<div class="panel">'+
+    '<h3>'+esc(a.label)+'</h3>'+ dial +
+    '<p>'+esc(a.what)+'</p>'+
+    '<p class="lab">What moves it</p><p>'+esc(sup.move||'')+'</p>'+
+    '<p class="next">Next: '+esc(nextFor(a,s))+'</p>'+
+    (sup.under.length ? '<p class="lab">Raises the ceiling on this</p><div class="rels">'+sup.under.map(chip).join('')+'</div>' : '')+
+    (sup.lifts.length ? '<p class="lab">This raises the ceiling on</p><div class="rels">'+sup.lifts.map(chip).join('')+'</div>' : '')+
+    '<p class="src">From: '+esc(a.src)+'</p>'+
   '</div>';
 }
-function openA(id){ openAttr = (openAttr===id)?null:id; render(); }
+/* ============ the unlock tree ============
+   Six patterns across five technique levels. A node is DONE at or below the
+   stamped level, NEXT if it is the one immediately ahead, LOCKED beyond that.
+   The small number in the corner is the load tier being trained at that level —
+   which is the thing the stamp actually unlocks, and the reason this is a tree
+   rather than a progress bar. */
+function treeHTML(){
+  const p = P();
+  let rows = '';
+  PAT.forEach(function(k){
+    const tech = p.tech[k]||0, load = p.load[k]||0;
+    let nodes = '';
+    for(let L=1; L<=5; L++){
+      const state = L <= tech ? 'done' : (L === tech+1 ? 'next' : 'lock');
+      const tier = (L === tech && load) ? '<span class="ld">T'+load+'</span>' : '';
+      nodes += '<span class="tnode '+state+'" title="'+esc(k)+' · technique '+L+
+               (state==='done'?' · stamped':state==='next'?' · next up':' · locked')+'">'+L+tier+'</span>';
+    }
+    rows += '<div class="trow"><span class="tname">'+esc(k)+'</span>'+nodes+'</div>';
+  });
+  const nextUp = PAT.map(k=>({k, t:p.tech[k]||0})).sort((a,b)=>a.t-b.t)[0];
+  const stamped = PAT.filter(k=>(p.tech[k]||0)>=2).length;
+  return '<div class="tree"><h3>What you have unlocked</h3>'+
+    '<p class="t-sub">Six patterns, five technique levels. The level you are stamped at decides how heavy '+
+      'you are allowed to train that movement — so this is a real tree, not a progress bar.</p>'+
+    '<div class="thead"><span></span><span>L1</span><span>L2</span><span>L3</span><span>L4</span><span>L5</span></div>'+
+    rows +
+    '<div class="tkey"><span><i style="background:var(--gold)"></i>Stamped</span>'+
+      '<span><i style="background:rgba(212,175,55,.2);box-shadow:inset 0 0 0 1.5px #D4AF37"></i>Next up</span>'+
+      '<span><i style="background:rgba(247,241,236,.07)"></i>Locked</span>'+
+      '<span>T = load tier you train at</span></div>'+
+    '<div class="t-unlock">'+
+      (stamped < 6
+        ? (6-stamped)+' of 6 patterns still to reach level 2. <strong>'+esc(nextUp.k)+'</strong> is furthest behind — '+
+          'get that one stamped and your strength score moves most.'
+        : '<strong>'+esc(nextUp.k)+' at level '+(nextUp.t+1)+'</strong> is your next unlock. Book it at a check-in.')+
+    '</div></div>';
+}
+
+function openA(id){ openAttr = (openAttr===id)?null:id; render();
+  const el = document.getElementById('panel'); if(el) el.scrollIntoView({behavior:'smooth', block:'nearest'}); }
 function setWho(w){ who = w; openAttr = null; render(); }
 render();
 </script>

@@ -3582,11 +3582,78 @@ function handleGetPortalBootstrap(ss, email) {
       availability: apLoadAvailability(ss, athleteId),
       testing: apLoadTesting(ss, athleteId),
       strengthLevels: apLoadStrengthLevels(ss, athleteId),
+      // Two of the athlete's ten attributes lived in the sheets and fed the
+      // dashboard, but had never been sent to the portal — so the portal could
+      // not show mobility or mindset at all. Both readers already existed.
+      mobility: apLoadMobility(ss, athleteId),
+      psych: apLoadPsych(ss, athleteId),
       firstTime: !map
     };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
+}
+
+// ---- Mobility: three screens, 0-3 each ---------------------------------
+// FMS-style. Returned as the raw scores plus a 0-10 so the portal does not have
+// to know the scale. A screen that has never been done is left out rather than
+// counted as a zero — nobody scores zero for a test they were not given.
+var AP_MOBILITY_COLS = [
+  { col: 'ASL',                key: 'asl',      label: 'Active straight leg' },
+  { col: 'Trunk_Stability',    key: 'trunk',    label: 'Trunk stability' },
+  { col: 'Shoulder_Mobility',  key: 'shoulder', label: 'Shoulder mobility' }
+];
+function apLoadMobility(ss, athleteId) {
+  var out = { done: false, screens: [], score10: 0, date: '' };
+  try {
+    var latest = getLatestAssessment(ss, 'Mobility', athleteId);
+    if (!latest || !latest.scores) return out;
+    var s = latest.scores, got = 0, sum = 0;
+    for (var i = 0; i < AP_MOBILITY_COLS.length; i++) {
+      var spec = AP_MOBILITY_COLS[i];
+      var n = parseFloat(s[spec.col]);
+      var has = !(s[spec.col] === '' || s[spec.col] === null || s[spec.col] === undefined || isNaN(n));
+      out.screens.push({ key: spec.key, label: spec.label, value: has ? n : null, max: 3 });
+      if (has) { got++; sum += n; }
+    }
+    if (!got) return out;
+    out.done = true;
+    out.score10 = Math.round(sum / (got * 3) * 10 * 10) / 10;
+    out.date = apIsoDate_(s.Date || latest.date || '');
+    return out;
+  } catch (e) { return out; }
+}
+
+// ---- Mindset: the one a test cannot give you ---------------------------
+// Scored by the teacher over a term, so it moves slowly and is often absent.
+// Absent returns done:false, which the portal shows as "not scored yet" rather
+// than as a missing measurement.
+var AP_PSYCH_COLS = [
+  { col: 'Mindset',           key: 'mindset',  label: 'Mindset' },
+  { col: 'Focus_Engagement',  key: 'focus',    label: 'Focus & engagement' },
+  { col: 'Effort_Work_Ethic', key: 'effort',   label: 'Effort & work ethic' },
+  { col: 'Coachability',      key: 'coach',    label: 'Coachability' },
+  { col: 'Mental_Toughness',  key: 'tough',    label: 'Mental toughness' }
+];
+function apLoadPsych(ss, athleteId) {
+  var out = { done: false, parts: [], score10: 0, date: '' };
+  try {
+    var latest = getLatestAssessment(ss, 'Psych_Assessments', athleteId);
+    if (!latest || !latest.scores) return out;
+    var s = latest.scores, got = 0, sum = 0;
+    for (var i = 0; i < AP_PSYCH_COLS.length; i++) {
+      var spec = AP_PSYCH_COLS[i];
+      var n = parseFloat(s[spec.col]);
+      var has = !(s[spec.col] === '' || s[spec.col] === null || s[spec.col] === undefined || isNaN(n) || n <= 0);
+      out.parts.push({ key: spec.key, label: spec.label, value: has ? n : null, max: 5 });
+      if (has) { got++; sum += n; }
+    }
+    if (!got) return out;
+    out.done = true;
+    out.score10 = Math.round(sum / (got * 5) * 10 * 10) / 10;
+    out.date = apIsoDate_(s.Date || latest.date || '');
+    return out;
+  } catch (e) { return out; }
 }
 
 // ============================================================
