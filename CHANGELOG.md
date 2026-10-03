@@ -1,12 +1,38 @@
 # What changed
 
-Newest first. Every entry is already merged to `main` unless it says otherwise.
+Newest first.
+
+**How we work:** everything lands on `claude/genericise-portal-lab-r1l098` first and
+is shown as screenshots here before anything goes near `main`. Nothing merges
+until Scott says so. The two sections below are the two states — what students
+have, and what is waiting on a yes.
 
 ---
 
-## 2 Oct 2026
+## On the branch, waiting on a decision
 
-Eight pull requests (#387–#394). Four files touched.
+Not merged. Students see none of this. No portal file is touched by any of it —
+these are standalone pages plus this changelog.
+
+| | |
+|---|---|
+| **`ladder-prototype.html`** | **Where you are now.** Speed / Power / Strength / Move well as a stack, Change of direction and Engine alongside. Each rung says the same four things: what you can do, where that sits, which way it's going, what you're doing about it. The rungs *support* each other — they do not gate. Feeds Training Age directly. Runs on athlete 41's real record and a worked example. |
+| **`year-view-prototype.html`** · Focus first | The month tile carries **what you're building**; the sports drop to an in-season / training / off ribbon. Dissolves the "which sport leads" problem — sports tied for the lead are tied on phase, so the tile looked identical either way. |
+| **`year-view-prototype.html`** · Year strip | The 12-tile strip made multi-sport: tile = the leading sport, name shown only where the lead *changes*, other sports as lettered pips. Two rows of six on a phone so the whole year fits without scrolling. |
+| **`CHANGELOG.md`** | This file. |
+
+**Open questions before any of it merges**
+
+- The dashboard's level bands return `4` for two adjacent thresholds, so Level 4 is twice as wide as every other band and Level 5 only opens at the top threshold. The ladder leans entirely on these. Fix or confirm first.
+- Does the Year tab's block expand into the ladder, or do they stay separate?
+- Only the aerobic base is measured. Threshold and top end would each need a test adding.
+
+---
+
+## Merged and live — 2 Oct 2026
+
+Eight pull requests (#387–#394). Four files touched. This is what students
+actually have.
 
 ### Live for students now (`portal-lab.html`, front-end only, no deploy needed)
 
