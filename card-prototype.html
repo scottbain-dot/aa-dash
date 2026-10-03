@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your card — prototype</title>
+<!--
+  PROTOTYPE. Nothing saves, nothing is wired to a portal.
+
+  Ten attributes, each out of ten, in two groups of five:
+      BODY     strength · power · speed · agility · engine
+      ATHLETE  movement · mobility · consistency · knowledge · mindset
+
+  Out of TEN rather than out of five is not cosmetic. The 1-5 levels are bands,
+  and a band is a terrible motivator: a student can add 15cm to their jump and
+  watch the number refuse to move. These scores interpolate between the same
+  thresholds, so every centimetre and every tenth of a second shows up. The
+  level is still there underneath for the ones that have one.
+
+  Two of the ten are NOT wired: mobility and mindset live in the sheets and feed
+  index.html, but getPortalBootstrap never sends them to this portal. They are
+  drawn greyed, labelled, and scored out — honest about what would need adding.
+
+  Data: athlete 41's real record, pulled by ID. No names, no emails.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --burgundy:#874B46; --gold:#D4AF37; --gold-l:#f5e6b3;
+         --ink:#1f1b19; --mute:#7a6a60; --line:#eee3dd; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#fef8f6;font-family:'Inter',system-ui,sans-serif;color:var(--ink);padding-bottom:50px}
+  .wrap{max-width:460px;margin:0 auto;padding:16px}
+  h1{font-family:'Fraunces',Georgia,serif;font-size:21px;margin:0 0 4px}
+  .sub{font-size:12.5px;color:var(--mute);margin:0 0 14px;line-height:1.5}
+  .bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{font:600 12.5px 'Inter';background:#fff;border:1.5px solid var(--line);border-radius:999px;
+        padding:7px 12px;cursor:pointer}
+  .chip.on{background:var(--burgundy);border-color:var(--burgundy);color:#fff}
+
+  .card{position:relative;border-radius:22px;padding:18px 16px 15px;overflow:hidden;
+        background:radial-gradient(120% 90% at 50% 0%, #4a3f38 0%, #2b2521 55%, #1a1512 100%);
+        box-shadow:0 18px 50px rgba(26,20,17,.3), inset 0 0 0 1px rgba(212,175,55,.35)}
+  .card::after{content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.07) 46%,transparent 54%)}
+  .c-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;position:relative;z-index:1}
+  .c-ovr b{font-family:'Barlow Condensed',sans-serif;font-size:54px;font-weight:800;color:var(--gold);display:block;line-height:.9}
+  .c-ovr span{font:800 9px 'Inter';letter-spacing:.14em;color:rgba(247,241,236,.55)}
+  .c-id{text-align:right}
+  .c-tier{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;letter-spacing:.09em;text-transform:uppercase}
+  .c-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:#f7f1ec;line-height:1}
+  .c-meta{font:600 10.5px 'Inter';color:rgba(247,241,236,.55);letter-spacing:.05em;text-transform:uppercase;margin-top:3px}
+  .c-radar{display:block;margin:0 auto;position:relative;z-index:1}
+  .c-foot{position:relative;z-index:1;margin-top:2px;border-top:1px solid rgba(247,241,236,.14);padding-top:11px}
+  .c-read{font-family:'Fraunces',Georgia,serif;font-size:14.5px;color:#f7f1ec;line-height:1.4;margin:0}
+  .c-sub{font:500 11.5px 'Inter';color:rgba(247,241,236,.6);margin:5px 0 0;line-height:1.5}
+  .c-prov{display:inline-block;font:700 9px 'Inter';letter-spacing:.07em;text-transform:uppercase;
+          background:rgba(212,175,55,.16);color:var(--gold);border-radius:999px;padding:3px 8px;margin-top:9px}
+
+  .grp{font:800 10px 'Inter';letter-spacing:.11em;text-transform:uppercase;color:var(--mute);margin:14px 0 7px}
+  .attrs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+  @media (max-width:420px){ .attrs{grid-template-columns:repeat(5,1fr);gap:4px} }
+  .at{background:#fff;border:1px solid var(--line);border-radius:11px;padding:8px 4px;cursor:pointer;
+      text-align:center;font:inherit;width:100%}
+  .at.dent{border-style:dashed;background:#fbf7f5}
+  .at.off{opacity:.45}
+  .at b{font-family:'Barlow Condensed',sans-serif;font-size:23px;font-weight:800;display:block;line-height:1}
+  .at.dent b{color:#c5b5ac}
+  .at span{font:700 8.5px 'Inter';letter-spacing:.04em;text-transform:uppercase;color:var(--mute);display:block;margin-top:2px}
+  .bar10{height:4px;border-radius:2px;background:#ece2dc;margin-top:5px;overflow:hidden}
+  .bar10 i{display:block;height:100%;background:var(--burgundy)}
+
+  .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:12px}
+  .panel h3{font-family:'Fraunces',Georgia,serif;font-size:16px;margin:0 0 3px}
+  .panel p{font-size:13px;color:#4a3f39;line-height:1.55;margin:0 0 8px}
+  .panel .next{font:700 12.5px 'Inter';color:var(--burgundy);margin:0}
+  .panel .src{font:600 11px 'Inter';color:var(--mute);margin:8px 0 0}
+  .tiers{display:flex;gap:4px;margin-top:11px}
+  .tier{flex:1;text-align:center;border-radius:8px;padding:6px 2px;font:800 9px 'Inter';
+        letter-spacing:.05em;text-transform:uppercase;background:#f3ebe6;color:#b3a299}
+  .note{background:#fdf7e8;border:1px solid var(--gold-l);border-radius:10px;padding:10px 12px;
+        font-size:12.5px;color:#4a3f39;line-height:1.5;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Your card</h1>
+  <p class="sub">Prototype. Ten attributes, each out of ten. Tap any one.</p>
+  <div class="bar">
+    <button class="chip on" id="pMe" onclick="setWho('me')">Athlete 41 · real</button>
+    <button class="chip" id="pEx" onclick="setWho('ex')">Example</button>
+    <button class="chip" id="pGr" onclick="setWho('gr')">A year on</button>
+  </div>
+  <div id="card"></div>
+  <div id="attrs"></div>
+  <div id="panel"></div>
+  <div class="note"><strong>Why out of ten.</strong> The 1–5 levels are bands, and a band is a poor
+    motivator — you can add 15cm to your jump and watch the number refuse to move. These scores
+    interpolate between the same thresholds, so every centimetre shows up. The level is still
+    underneath.</div>
+</div>
+
+<script>
+/* ===================== the ten ===================== */
+const ATTRS = [
+  // BODY
+  { id:'strength', short:'STR', label:'Strength', grp:'body', wired:true,
+    what:'How much you can move, across the six patterns. Technique and load together.',
+    src:'Strength sheet — technique + load tier per pattern' },
+  { id:'power', short:'POW', label:'Power', grp:'body', wired:true,
+    what:'Strength, fast. Jumping, throwing, your first two steps.', src:'Broad jump' },
+  { id:'speed', short:'SPD', label:'Speed', grp:'body', wired:true,
+    what:'Top-end running. Sprinting is the best thing for sprinting; power underneath raises the ceiling.',
+    src:'40m sprint' },
+  { id:'agility', short:'AGI', label:'Agility', grp:'body', wired:true,
+    what:'Stopping, turning, going again. Built on strength and mobility as much as on speed.',
+    src:'5-10-5' },
+  { id:'engine', short:'END', label:'Engine', grp:'body', wired:true,
+    what:'How long you last. Only your aerobic base is measured — threshold and top end have no test yet.',
+    src:'Cooper 12 min' },
+  // ATHLETE
+  { id:'movement', short:'MOV', label:'Movement', grp:'athlete', wired:true,
+    what:'The six patterns signed off by your coach. The one thing that has to come first — you do not load a movement that is not stamped.',
+    src:'Technique levels 1–5, stamped at a check-in' },
+  { id:'mobility', short:'MOB', label:'Mobility', grp:'athlete', wired:true, coach:true,
+    what:'Range of motion and control — ankles, trunk, shoulders. Feeds agility and keeps you in one piece.',
+    src:'Three screens, scored 0–3 each, at a check-in' },
+  { id:'consistency', short:'CON', label:'Consistency', grp:'athlete', wired:true,
+    what:'Turning up. The share of your planned sessions you actually did over the last eight weeks.',
+    src:'Your logged sessions — the adherence part of your Grit score' },
+  { id:'knowledge', short:'KNW', label:'Knowledge', grp:'athlete', wired:true,
+    what:'What you have learned and can use. Ten blocks make up the academy — each one you pass is a point.',
+    src:'Level Up · 10 blocks across the academy' },
+  { id:'mindset', short:'MIN', label:'Mindset', grp:'athlete', wired:true, coach:true, slow:true,
+    what:'Mindset, effort, coachability and mental toughness. The one attribute no test can give you — your coach scores it from what they see over a term.',
+    src:'Scored by Mr Bain · the hardest one to measure, so it moves slowly' }
+];
+
+/* thresholds: the same ones the dashboard uses, now interpolated 0–10 */
+const T = {
+  power:   { M:[160,180,200,220,240],         F:[130,145,155,165,180],         higher:true,  unit:'cm' },
+  speed:   { M:[6.5,6.0,5.5,5.0,4.8],         F:[7.5,7.0,6.5,6.0,5.7],         higher:false, unit:'s' },
+  agility: { M:[5.5,5.1,4.8,4.5,4.2],         F:[6.0,5.6,5.3,5.0,4.7],         higher:false, unit:'s' },
+  engine:  { M:[1600,2000,2400,2800,3000],    F:[1200,1600,2000,2400,2600],    higher:true,  unit:'m' }
+};
+// Each threshold is a rung at 2, 4, 6, 8, 10. Between rungs the score slides,
+// which is the whole point: a 15cm jump improvement moves this, where a band
+// would have swallowed it.
+function score10(key, v, gender){
+  const c = T[key]; if(!c || !v) return 0;
+  const t = c[gender === 'F' ? 'F' : 'M'];
+  const pts = c.higher ? t : t.slice();            // ascending for higher-better
+  const inc = c.higher;
+  const better = (a,b) => inc ? a >= b : a <= b;
+  if(!better(v, pts[0])){                           // below the first rung
+    const floor = inc ? pts[0]*0.6 : pts[0]*1.4;
+    const f = (v - floor) / (pts[0] - floor);
+    return Math.max(0, Math.min(2, f*2));
+  }
+  for(let i=0;i<4;i++){
+    if(better(pts[i+1], v) ? false : true){         // v has not reached pts[i+1]
+      const f = (v - pts[i]) / (pts[i+1] - pts[i]);
+      return Math.max(0, Math.min(10, 2 + i*2 + f*2));
+    }
+  }
+  return 10;
+}
+
+/* ===================== profiles (raw, so the scoring is real) ===================== */
+const PAT = ['Squat','Hinge','Push','Pull','Lunge','Press'];
+const PROFILES = {
+  me: { id:'41', sport:'Hyrox', year:'G—', gender:'M',
+        tech:{Squat:2,Hinge:2,Push:2,Pull:2,Lunge:2,Press:2},
+        load:{Squat:1,Hinge:2,Push:1,Pull:2,Lunge:2,Press:2},
+        tests:{}, mobility:null, psych:null,
+        adherence:47, learn:{passed:0,started:2}, was:null },
+  ex: { id:'EXAMPLE', sport:'Rugby', year:'G11', gender:'M',
+        tech:{Squat:4,Hinge:0,Push:3,Pull:2,Lunge:3,Press:0},
+        load:{Squat:3,Hinge:0,Push:2,Pull:0,Lunge:3,Press:0},
+        tests:{power:212, speed:5.82, engine:2480}, mobility:[2,2,1], psych:null,
+        adherence:72, learn:{passed:1,started:1},
+        was:{ strength:2.4, power:5.2, speed:4.6, agility:0, engine:6.4, movement:4.0,
+              mobility:0, consistency:5.5, knowledge:2.5, mindset:0 } },
+  gr: { id:'EXAMPLE', sport:'Rugby', year:'G12', gender:'M',
+        tech:{Squat:5,Hinge:3,Push:4,Pull:3,Lunge:4,Press:3},
+        load:{Squat:4,Hinge:2,Push:3,Pull:2,Lunge:3,Press:2},
+        tests:{power:228, speed:5.42, agility:4.9, engine:2760}, mobility:[3,2,2], psych:[4,4,3,4,4],
+        adherence:86, learn:{passed:4,started:1},
+        was:{ strength:3.7, power:6.3, speed:5.4, agility:0, engine:6.4, movement:4.4,
+              mobility:0, consistency:7.2, knowledge:7.5, mindset:0 } }
+};
+const ACADEMY_BLOCKS = 10;   // the course, when it is finished
+let who = 'me', openAttr = null;
+const P = () => PROFILES[who];
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function scores(){
+  const p = P(), s = {};
+  // Strength: technique and load added per pattern, which is already a 0–10,
+  // then averaged over all six so an unassessed pattern pulls it down.
+  s.strength = PAT.reduce((a,k)=>a + Math.min(10,(p.tech[k]||0)+(p.load[k]||0)), 0) / 6;
+  s.movement = PAT.reduce((a,k)=>a + (p.tech[k]||0), 0) / 6 / 5 * 10;
+  ['power','speed','agility','engine'].forEach(k => { s[k] = score10(k, p.tests[k], p.gender); });
+  s.mobility    = p.mobility ? p.mobility.reduce((a,b)=>a+b,0)/(p.mobility.length*3)*10 : 0;
+  s.consistency = (p.adherence||0)/10;
+  // Each block passed is worth a point out of ten; a block in progress is worth
+  // a third of one, so starting something shows up without being a free pass.
+  s.knowledge   = Math.min(10, p.learn.passed + p.learn.started*0.35);
+  s.mindset     = p.psych ? p.psych.reduce((a,b)=>a+b,0)/p.psych.length/5*10 : 0;
+  return s;
+}
+const TIERS = [ {name:'Prospect',min:0,col:'#a0784a'}, {name:'Contender',min:40,col:'#b8b8bd'},
+                {name:'Competitor',min:58,col:'#D4AF37'}, {name:'Elite',min:76,col:'#f0e0a8'} ];
+// Out of 99 from the attributes that HAVE a number. An attribute nobody has
+// measured does not drag the score down; it leaves the card provisional.
+function overall(s){
+  const got = ATTRS.filter(a => a.wired && s[a.id] > 0).map(a => s[a.id]);
+  if(!got.length) return 0;
+  return Math.round(got.reduce((a,b)=>a+b,0)/got.length/10*99);
+}
+const tierOf = o => TIERS.slice().reverse().find(t => o >= t.min) || TIERS[0];
+
+/* ===================== radar ===================== */
+function radar(s, was){
+  const S = 310, C = S/2, R = 86, n = ATTRS.length;
+  const pt = (i,r) => { const a = (Math.PI*2*i/n) - Math.PI/2; return [C+Math.cos(a)*r, C+Math.sin(a)*r]; };
+  const poly = v => ATTRS.map((a,i)=>({i, val:(v[a.id]||0)})).filter(o=>o.val>0)
+      .map(o=>pt(o.i, o.val/10*R).map(x=>x.toFixed(1)).join(',')).join(' ');
+  const measured = v => ATTRS.filter(a=>(v[a.id]||0)>0).length;
+  let g = '';
+  for(let k=1;k<=5;k++){
+    const rr = R*k/5;
+    g += '<polygon points="'+ATTRS.map((_,i)=>pt(i,rr).map(x=>x.toFixed(1)).join(',')).join(' ')+
+         '" fill="none" stroke="rgba(247,241,236,'+(k===5?0.22:0.08)+')" stroke-width="1"/>';
+  }
+  ATTRS.forEach((a,i)=>{
+    const [x,y]=pt(i,R);
+    g += '<line x1="'+C+'" y1="'+C+'" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="rgba(247,241,236,.09)"/>';
+    const [lx,ly]=pt(i,R+19);
+    const anchor = lx < C-6 ? 'end' : (lx > C+6 ? 'start' : 'middle');
+    const v = s[a.id]||0, dim = !a.wired || !v;
+    const y1 = (i===0) ? ly-11 : ly;
+    g += '<text x="'+lx.toFixed(1)+'" y="'+y1.toFixed(1)+'" text-anchor="'+anchor+'" font-family="Barlow Condensed" '+
+         'font-size="12" font-weight="700" letter-spacing=".06em" fill="rgba(247,241,236,'+(dim?.3:.85)+')">'+a.short+'</text>'+
+         '<text x="'+lx.toFixed(1)+'" y="'+(y1+15).toFixed(1)+'" text-anchor="'+anchor+'" font-family="Barlow Condensed" '+
+         'font-size="17" font-weight="800" fill="'+(dim?'rgba(247,241,236,.22)':'#D4AF37')+'">'+(v?v.toFixed(1):'–')+'</text>';
+  });
+  if(was && measured(was) >= 3)
+    g += '<polygon points="'+poly(was)+'" fill="none" stroke="rgba(247,241,236,.4)" stroke-width="1.5" stroke-dasharray="4 3"/>';
+  if(measured(s) >= 3)
+    g += '<polygon points="'+poly(s)+'" fill="url(#f)" stroke="#D4AF37" stroke-width="2.5" stroke-linejoin="round"/>';
+  ATTRS.forEach((a,i)=>{
+    const v = s[a.id]||0;
+    if(v){ const [x,y]=pt(i,v/10*R); g += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3" fill="#D4AF37"/>'; }
+    else { const [x,y]=pt(i,R);     // an empty ring at the rim: nothing here yet
+           g += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="4" fill="none" '+
+                'stroke="rgba(247,241,236,.3)" stroke-width="1.5" stroke-dasharray="2 2"/>'; }
+  });
+  return '<svg class="c-radar" width="'+S+'" height="'+S+'" viewBox="0 0 '+S+' '+S+'"><defs>'+
+    '<radialGradient id="f" cx="50%" cy="50%"><stop offset="0%" stop-color="rgba(212,175,55,.5)"/>'+
+    '<stop offset="100%" stop-color="rgba(135,75,70,.55)"/></radialGradient></defs>'+g+'</svg>';
+}
+
+/* ===================== what the shape says ===================== */
+function readShape(s){
+  const live = ATTRS.filter(a => a.wired);
+  const got  = live.filter(a => s[a.id] > 0);
+  const miss = live.filter(a => !s[a.id]);
+  if(got.length < 5) return { title: got.length ? 'Barely measured' : 'Not measured yet',
+    line: 'Only <em>'+got.length+' of '+live.length+'</em> have a number. One testing session fills in most of this — '+
+          'until then the shape is not really yours, it is just what we happen to know.' };
+  const vals = got.map(a=>s[a.id]);
+  const hi = Math.max.apply(null,vals), lo = Math.min.apply(null,vals);
+  const mean = vals.reduce((a,b)=>a+b,0)/vals.length, spread = hi-lo;
+  const top = got.filter(a=>s[a.id]===hi)[0], bot = got.filter(a=>s[a.id]===lo)[0];
+  let title;
+  if(spread <= 2 && mean >= 7)      title = 'Complete athlete';
+  else if(spread <= 2)              title = 'All-rounder — no holes';
+  else if(top.id==='engine' && (bot.id==='strength'||bot.id==='power')) title = 'Big engine, light chassis';
+  else if((top.id==='power'||top.id==='speed') && bot.id==='engine')    title = 'Explosive — built short and sharp';
+  else if(top.id==='consistency')   title = 'Your best quality is turning up';
+  else if(top.id==='strength' && (bot.id==='engine'||bot.id==='speed')) title = 'Strong — '+bot.label.toLowerCase()+' is the gap';
+  else                              title = top.label+' carries you';
+  return { title: title,
+    line: 'Your strongest is <em>'+top.label+'</em>. Your lowest is <em>'+bot.label+'</em>'+
+      (miss.length ? ', and <em>'+miss.length+'</em> still '+(miss.length===1?'has':'have')+' no number at all.' : '.') };
+}
+
+/* ===================== render ===================== */
+function nextFor(a, s){
+  const p = P(), v = s[a.id]||0;
+  if(a.coach && !v) return a.slow
+    ? 'Nothing scored yet. Your coach writes this one from what they see over a term.'
+    : 'Not scored yet — three screens at a check-in and this has a number.';
+  if(a.id==='movement')    return v>=10 ? 'Every pattern at technique 5.' : 'Get the next pattern stamped at a check-in.';
+  if(a.id==='strength')    { const w = PAT.slice().sort((x,y)=>((p.tech[x]||0)+(p.load[x]||0))-((p.tech[y]||0)+(p.load[y]||0)))[0];
+                             return (p.tech[w]||0)<2 ? w+' is not stamped — that one is holding this down.'
+                                                     : w+' is your lowest. Move that and the whole score moves.'; }
+  if(a.id==='consistency') return 'You are at '+(p.adherence||0)+'% of your planned sessions. One more a week moves this.';
+  if(a.id==='knowledge')   return p.learn.passed+' of '+ACADEMY_BLOCKS+' blocks passed'+
+    (p.learn.started?', '+p.learn.started+' on the go':'')+'. Each one you finish is a whole point.';
+  if(!p.tests[a.id])       return 'Not tested yet — one test and this stops being a blank.';
+  const c = T[a.id], t = c[p.gender==='F'?'F':'M'];
+  const i = Math.min(4, Math.max(0, Math.floor(v/2)));
+  return (c.higher ? 'Reach ' : 'Get under ') + t[i] + c.unit + ' to move up.';
+}
+function render(){
+  [['me','pMe'],['ex','pEx'],['gr','pGr']].forEach(([k,id]) => document.getElementById(id).classList.toggle('on', who===k));
+  const p = P(), s = scores(), o = overall(s), t = tierOf(o);
+  const live = ATTRS.filter(a=>a.wired), nGot = live.filter(a=>s[a.id]>0).length;
+  const read = readShape(s);
+
+  document.getElementById('card').innerHTML = '<div class="card">'+
+    '<div class="c-top"><div class="c-ovr"><b>'+(o||'–')+'</b><span>OVERALL</span></div>'+
+    '<div class="c-id"><div class="c-tier" style="color:'+t.col+'">'+t.name+'</div>'+
+    '<div class="c-name">'+(p.id==='EXAMPLE'?'EXAMPLE':'ATHLETE '+esc(p.id))+'</div>'+
+    '<div class="c-meta">'+esc(p.sport)+' · '+esc(p.year)+'</div></div></div>'+
+    radar(s, p.was)+
+    '<div class="c-foot"><p class="c-read">'+read.title+'</p><p class="c-sub">'+read.line+'</p>'+
+    (nGot < live.length ? '<span class="c-prov">Provisional · '+nGot+' of '+live.length+' measured</span>' : '')+
+    '</div></div>';
+
+  const cell = a => { const v = s[a.id]||0;
+    return '<button class="at'+(v?'':' dent')+(a.wired?'':' off')+'" onclick="openA(\''+a.id+'\')">'+
+      '<b>'+(v?v.toFixed(1):'–')+'</b><span>'+a.label+'</span>'+
+      '<span class="bar10"><i style="width:'+(v*10)+'%"></i></span></button>'; };
+  document.getElementById('attrs').innerHTML =
+    '<p class="grp">Body</p><div class="attrs">'+ATTRS.filter(a=>a.grp==='body').map(cell).join('')+'</div>'+
+    '<p class="grp">Athlete</p><div class="attrs">'+ATTRS.filter(a=>a.grp==='athlete').map(cell).join('')+'</div>';
+
+  const a = ATTRS.find(x=>x.id===openAttr);
+  document.getElementById('panel').innerHTML = '<div class="panel">'+
+    (a ? '<h3>'+esc(a.label)+' · '+((s[a.id]||0).toFixed(1))+' / 10</h3><p>'+esc(a.what)+'</p>'+
+         '<p class="next">Next: '+esc(nextFor(a,s))+'</p><p class="src">From: '+esc(a.src)+'</p>'
+       : '<h3>Tap an attribute</h3><p>Each one says what it is, where you are, and the next step.</p>')+
+    '<div class="tiers">'+TIERS.map(x=>'<span class="tier"'+(x.name===t.name?' style="background:'+x.col+';color:#fff"':'')+'>'+x.name+'</span>').join('')+'</div>'+
+  '</div>';
+}
+function openA(id){ openAttr = (openAttr===id)?null:id; render(); }
+function setWho(w){ who = w; openAttr = null; render(); }
+render();
+</script>
+</body>
+</html>
