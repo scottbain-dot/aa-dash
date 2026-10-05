@@ -393,3 +393,30 @@ withdrawn.**
 
 If maturity banding is ever wanted, it is a teacher-side adjustment applied
 invisibly — never a number shown to a student.
+
+### Correction, 5 Oct — the timescales were not sourced when first written
+
+The "how long it takes" lines were written from practitioner knowledge, not
+from papers, and two were misleading. Checked and corrected against:
+
+- **Lesinski et al.**, 43 studies of youth athletes: dose-response favoured
+  training periods **>23 weeks** for muscle strength. The original "six to eight
+  weeks before you judge it" implied a conclusion could be drawn at eight weeks
+  — wrong, and in the direction that makes a student stop.
+  https://doi.org/10.1136/bjsports-2015-095497
+  Same paper: moderate effects on strength and vertical jump (SMD 0.8–1.09) but
+  only **small** effects on linear sprint and agility (0.58–0.75). Sprint is the
+  hardest quality on the card to move and the card now says so.
+- **Behringer et al.**, meta-analysis in children and adolescents: duration
+  (r=0.28) and frequency (r=0.26) both positively correlated with effect size,
+  and strength trainability rises with age and maturity **with no boost at
+  puberty**. https://doi.org/10.1542/peds.2010-0445 Further evidence against
+  maturity-window thinking.
+- **Chaabene et al.** on change-of-direction speed: large effects at both ≤8
+  weeks and >8 weeks, two sessions a week sufficient, higher frequencies no
+  better. https://doi.org/10.1007/s40279-020-01293-w
+
+Engine and Mobility are now labelled as coaching experience rather than
+presented as research findings, because no supporting study was retrieved for
+the figures given. Movement, Consistency, Knowledge and Mindset describe how
+this system works rather than physiology, so they need no citation.
