@@ -203,4 +203,107 @@ Nothing else is worth building until the two leaks in §3 are closed.
 - What the system does when it sees an overtraining or under-fuelling pattern.
 - Whether club load is entered by the athlete, imported, or stays invisible.
 - What an athlete takes with them at graduation.
-- Whether the G9 and G10–12 portals converge on shared content or stay separate.
+- ~~Whether the G9 and G10–12 portals converge on shared content or stay separate.~~
+  **Decided 5 Oct: they stay separate.** `index.html`, `strength-portal.html`
+  and `grit-portal.html` are last year's G9 build. They are not touched by
+  G10–12 work. Scott takes pieces across into the current G9 system himself as
+  that year group moves on.
+
+---
+
+## 8. Abstraction review — 5 October 2026
+
+A second pass over the same scope, asking two questions of every surface: what
+complexity is on screen that belongs on the back end, and where is the
+experience weaker than the data behind it.
+
+### The scoreboard problem
+
+A G10–12 athlete currently carries **six scores on five different scales**, none
+of which states its relationship to any other:
+
+| Score | Scale | Where |
+|---|---|---|
+| XP and rank | 0–4000, Rookie → Legend | hero, every tab |
+| Grit band | Consistent / Relentless | Load |
+| Technique level | L1–L5 per pattern | CV |
+| Blocks passed | a count | Level Up |
+| Fitness tests | raw cm / sec / m | CV |
+| Week size | % of a normal week | Load |
+
+A seventh, **Training Age, is promised and not built** — `portal-lab.html:4949`
+shows a "Coming soon" veil for it, and the CV tab is commented as absorbing it
+later (`1632`, `11834`). So Training Age for this cohort is not a migration of
+anything from the G9 stack. It is a promise already made to these students,
+to be built from their own data.
+
+**This is the piece that makes the other five make sense.** One card, ten
+attributes out of ten, with every score above feeding it — the card prototype
+on the branch. Until it exists, a student has six numbers and no self-image.
+
+### Complexity that belonged on the back end — done 5 Oct
+
+Removed from the student's screen in `portal-lab.html`; all of it still computed
+and still stored.
+
+- **"Weekly load target · au/week"** on the month sheet. Never read by anything,
+  and an unanswerable question. Existing stored values preserved.
+- **"525 au"** as a read-only field in the log-session sheet, shown at the exact
+  moment logging should feel like one tap.
+- **"Coach view · detailed load"** — au totals, the acute:chronic overlay drawn
+  on an unlabelled second axis, and a paragraph defining ACWR.
+- **"Coach view · the number"** on the Grit card — the score out of 100 and the
+  60/25/15 weighting table. The band is the read; the three counts are the
+  workings.
+- **`RPE 7 · 315au`** on every logged session row → `60 min · solid`, via
+  `effortWord()`. Same for the day summary and the last-week reference.
+
+Kept: the year-long week-by-week bar strip. It needs no explaining.
+
+### Still on the back-end list
+
+- **Year planning is still the athlete's job.** `suggestState()` seeds ghost
+  tiles, but every month must be opened and confirmed, and the sheet then asks
+  for phase, split-half phase, focus text, note and components — up to 12 months
+  × sports. The back end knows the A-priority date, the busy months, the fixture
+  list and now the actual training mix. It should propose the whole year and ask
+  the athlete to correct it. Planning is a coach's job; confirming is a
+  student's.
+- **Effort is still ten numbered pips** (`portal-lab.html` effort section). The
+  quick-tap row already proved three words work. Needs a design pass, not a
+  find-and-replace.
+- **Focus tags should be derived server-side** on write, so admin, Training Age
+  and the load read see one set of tags instead of three implementations.
+- **The dashboard reports children as decimals out of 5 and shows VO₂max** —
+  G9 stack, out of scope here, noted so it is not repeated in the card.
+
+### Where the experience is weaker than the data
+
+1. **Nothing says "you are better than you were."** XP counts activity —
+   sessions, PBs, badges — which is showing up, not improving. `apLoadTesting()`
+   already returns first value, latest value, signed delta and test count per
+   fitness test, and none of it is ever said as a sentence.
+   **Constraint (Scott, 5 Oct): it has to be legit — students see through
+   fake.** So progress language is earned-only: it appears when there is a
+   second measurement and says nothing until then. How many of the 34 have two
+   or more tests on record is not yet measured, and must be before this is
+   built as a headline.
+2. **Achievement is mostly padlocks.** The CV draws untested items as blurred
+   `00.0` and unassessed patterns as locks. For the 24 with no stamps, the CV is
+   a wall of locks.
+3. **The verdict voice exists on one tab.** "A lighter week than a build block
+   wants." A state, a sentence, an action. Year, CV and Level Up each open with
+   a card stack and no sentence.
+4. **The Year tab stacks nine cards** — hero, goal check, goal components,
+   season blocks, grid, add sport, fixtures, testing, key dates.
+5. **No human is ever visible.** The booking copy names Mr Bain; the six tabs
+   never do. One coach line per block would outperform every badge in §2.
+
+### Order
+
+1. ~~Remove the au surfaces.~~ Done 5 Oct.
+2. **One scoreboard** — the card, wired to real data, delivering the Training
+   Age promise already on screen. The big piece; everything else is easier after
+   it.
+3. **Progress language everywhere**, earned-only, once the test-history count is
+   measured.
