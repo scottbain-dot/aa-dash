@@ -50,7 +50,7 @@
   .seg button{flex:1;border:none;background:none;cursor:pointer;border-radius:999px;padding:8px 4px;
               font:700 10.5px 'Inter';color:var(--ink-3)}
   .seg button.on{background:rgba(245,239,233,.10);color:var(--ink)}
-  .ctx{display:flex;gap:6px;align-items:center;margin-bottom:22px;font:600 10px 'Inter';
+  .ctx{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:22px;font:600 10px 'Inter';
        letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
   .ctx select{background:rgba(245,239,233,.06);color:var(--ink);border:1px solid var(--hair);
               border-radius:8px;padding:5px 8px;font:600 11px 'Inter'}
@@ -116,7 +116,7 @@
   .s-sub{font:500 11px 'Inter';color:var(--ink-3);display:block;margin-top:3px}
   .s-cmp{font:700 11px 'Inter';display:block;margin-top:3px}
   .s-au{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;text-align:right;line-height:1}
-  .s-au u{text-decoration:none;font-size:10px;color:var(--ink-3);font-weight:600}
+  .s-au u{text-decoration:none;font-size:9px;color:var(--ink-3);font-weight:600;letter-spacing:.02em;display:block;line-height:1.15;margin-top:3px}
 
   /* ---------- maths ---------- */
   .maths{margin-top:18px;border:1px solid var(--hair);border-radius:14px;overflow:hidden}
@@ -154,7 +154,7 @@
       <option value="speed">Speed</option><option value="power">Power</option>
       <option value="mds">Agility</option><option value="">nothing set</option>
     </select>
-    <span style="margin-left:auto">pick a week to see what it would have said</span>
+    <span style="flex:1 0 100%;margin:2px 0 0;opacity:.55">pick a week above to see what it would have said</span>
   </div>
   <div id="app"></div>
   <p class="foot">Prototype — nothing saves. Athlete 41's real term, pulled by Athlete&nbsp;ID.
@@ -310,7 +310,8 @@ function verdict(st){
 
   if(up === null && a === null)
     return { tone:'none', flag:'First week', h:'Nothing to compare it to yet.',
-      p:'This is the first week with training in it — '+fmt(st.load)+' au. Next week there will be a number to beat.',
+      p:'This is the first week with training in it — '+st.sessions.length+' session'+(st.sessions.length===1?'':'s')+
+        ', '+hhmm(st.sessions.reduce((x,y)=>x+y.dur,0))+'. Next week there will be something to compare it to.',
       act:'Log the next one and this page starts working.' };
 
   // A big jump matters whether or not we know your normal yet, so this is tested
@@ -340,7 +341,7 @@ function verdict(st){
 
   if(a !== null && a < 0.7 && block === 'build')
     return { tone:'warn', flag:'Under your usual', h:'A lighter week than a build block wants.',
-      p:'You did <b>'+Math.round((1-a)*100)+'% less</b> than your usual '+fmt(st.usual)+' au, and you are in a build block — '+
+      p:'You did <b>'+Math.round((1-a)*100)+'% less</b> than a normal week for you, and you are in a build block — '+
         'the stretch where the work is meant to be going up.',
       act:'Next week, '+inSessions(st.usual*1.05 - st.load)+' than this week gets you back where a build block wants you.' };
 
@@ -424,7 +425,7 @@ function render(){
 
   const bars = WEEKS.map(w=>{
     const h = Math.max(3, Math.round(WEEK_TOTALS[w]/max*72));
-    return '<button class="bar'+(w===sel?' on':'')+'" onclick="setWeek(\''+w+'\')" title="'+fmt(WEEK_TOTALS[w])+' au">'+
+    return '<button class="bar'+(w===sel?' on':'')+'" onclick="setWeek(\''+w+'\')" title="Week of '+w+'">'+
       '<i style="height:'+h+'px"></i><u>'+d(w).getUTCDate()+'/'+(d(w).getUTCMonth()+1)+'</u></button>';
   }).join('');
 
@@ -439,7 +440,11 @@ function render(){
       '<span class="s-sub">'+esc(s.sport)+' · '+s.dur+' min · RPE '+s.rpe+
         (s.focus?' <span class="fchip" style="border-color:'+FOCUS_COL[s.focus]+'55;color:'+FOCUS_COL[s.focus]+'">'+FOCI[s.focus]+'</span>':'')+
       '</span>'+cmp+'</span>'+
-      '<span class="s-au">'+fmt(s.load)+'<u> au</u></span></div>';
+      // Share of the week, not an arbitrary unit. With a single session the share
+      // is trivially 100% and says nothing, so it is left off.
+      (st.sessions.length > 1 && st.load
+        ? '<span class="s-au">'+Math.round(s.load/st.load*100)+'<u>% of<br>your week</u></span>'
+        : '')+'</div>';
   }).join('') || '<p style="color:var(--ink-3);font-size:12.5px;padding:10px 0">No sessions logged in this week.</p>';
 
   const mRow=(k,val,note)=>'<div class="m-row"><span>'+k+(note?'<i>'+note+'</i>':'')+'</span><b>'+val+'</b></div>';
