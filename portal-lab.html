@@ -1423,6 +1423,22 @@
   </div>
 </div>
 
+<!-- PERSONAL BEST — spotted from what they just logged, confirmed in one tap.
+     Same shell as the streak celebration so it feels like the same system. -->
+<div class="streak-cel pb-cel" id="pbCelebrate" hidden onclick="closePBCel()">
+  <div class="streak-cel-confetti" id="pbConfetti" aria-hidden="true"></div>
+  <div class="streak-cel-card pb-cel-card" onclick="event.stopPropagation()">
+    <p class="streak-cel-milestone" id="pbCelKicker"><i class="ti ti-trophy" aria-hidden="true"></i> New best</p>
+    <div class="streak-cel-flame" id="pbCelIcon">🏆</div>
+    <h2 class="pb-cel-title" id="pbCelTitle">Back squat</h2>
+    <div class="pb-cel-jump" id="pbCelJump"></div>
+    <p class="streak-cel-sub" id="pbCelSub"></p>
+    <div class="pb-cel-more" id="pbCelMore"></div>
+    <button class="streak-cel-btn" id="pbCelSave" onclick="pbCelConfirm()">Save it <i class="ti ti-check" aria-hidden="true"></i></button>
+    <button class="pb-cel-skip" onclick="closePBCel()">Not this time</button>
+  </div>
+</div>
+
 <!-- BADGE UNLOCK CELEBRATION — a burst when a new achievement is earned -->
 <div class="streak-cel badge-cel" id="badgeCelebrate" hidden onclick="closeBadgeCelebration()">
   <div class="streak-cel-confetti" id="badgeConfetti" aria-hidden="true"></div>
@@ -2623,6 +2639,40 @@
   .crd-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 13px; font: 600 12.5px 'Inter', sans-serif;
     color: var(--burgundy); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; cursor: pointer; }
   .crd-src { font: italic 400 11px 'Fraunces', serif; color: var(--ink-mute); margin: 13px 0 0; }
+  /* ---- Personal best celebration ---- */
+  .pb-cel-title { font: 700 30px 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .02em;
+    color: var(--ink); margin: 6px 0 10px; line-height: 1.05; }
+  .pb-cel-jump { display: flex; align-items: baseline; justify-content: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .pb-cel-jump i { color: var(--ink-mute); font-size: 18px; align-self: center; }
+  .pb-cel-was { font: 700 24px 'Barlow Condensed', sans-serif; color: var(--ink-mute); text-decoration: line-through; opacity: .7; }
+  .pb-cel-now { font: 700 44px 'Barlow Condensed', sans-serif; color: var(--gold); line-height: 1; }
+  .pb-cel-more { margin: 12px 0 4px; }
+  .pb-cel-more-l { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 7px; }
+  .pb-cel-chip { display: inline-block; margin: 0 5px 5px 0; padding: 5px 11px; border-radius: 999px;
+    border: 1px solid var(--line); font: 500 12px 'Inter', sans-serif; color: var(--ink-soft); }
+  .pb-cel-chip b { color: var(--burgundy); font-weight: 700; }
+  .pb-cel-skip { display: block; width: 100%; margin-top: 10px; background: none; border: none; cursor: pointer;
+    font: 500 12.5px 'Inter', sans-serif; color: var(--ink-mute); text-decoration: underline; }
+  /* ---- Bests, on the Training Age tab ---- */
+  /* Named pbest-* rather than pb-strip-*: a dead .pb-strip component from an
+     earlier design is still in the stylesheet with a dark background, and the
+     two collided. */
+  .pbest-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .pbest-row::-webkit-scrollbar { display: none; }
+  .pbest-tile { flex: 0 0 auto; min-width: 118px; padding: 12px 14px; border-radius: 14px;
+    background: var(--cream); border: 1px solid var(--line); }
+  .pbest-tile-ex { font: 600 11.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 0 0 5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .pbest-tile-v { font: 700 26px 'Barlow Condensed', sans-serif; color: var(--ink); line-height: 1; }
+  .pbest-tile-v u { text-decoration: none; font-size: 12px; color: var(--ink-mute); }
+  .pbest-tile-up { font: 700 10.5px 'Inter', sans-serif; color: var(--green-dark, #16a34a); margin: 5px 0 0; }
+  .pbest-tile-date { font: 400 10.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 4px 0 0; }
+  .crd-bests { margin: 11px 0 0; }
+  .crd-bests-l { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 6px; }
+  .crd-best { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0;
+    border-bottom: 1px solid var(--line-soft); font: 500 12.5px 'Inter', sans-serif; color: var(--ink-soft); }
+  .crd-best b { color: var(--ink); font-weight: 700; }
+  .crd-best span.up { color: var(--green-dark, #16a34a); font-weight: 700; font-size: 11.5px; }
   .crd-delta { margin-left: 8px; font: 700 10.5px 'Inter', sans-serif; letter-spacing: .03em; }
   .crd-delta.up { color: var(--green-dark, #16a34a); }
   .crd-delta.down { color: var(--ink-mute); }
@@ -6722,6 +6772,77 @@
   }
   window.closeStreakCelebration = closeStreakCelebration;
 
+  // ---- Personal best: offer, confirm, celebrate -------------------------
+  // pbOfferFor returns true when it took over the screen, so the caller knows
+  // not to fire a streak or badge celebration on top of it.
+  let _pbPending = null;
+  function pbOfferFor(session){
+    const scan = pbScan(session);
+    if(!scan.beats.length && !scan.marks.length) return false;
+    _pbPending = scan;
+    const isBeat = scan.beats.length > 0;
+    const lead = isBeat ? scan.beats[0] : scan.marks[0];
+    const others = (isBeat ? scan.beats : scan.marks).slice(1);
+    const unitWord = lead.unit === PB_UNIT_REPS ? ' reps' : lead.unit;
+
+    document.getElementById('pbCelKicker').innerHTML = isBeat
+      ? '<i class="ti ti-trophy" aria-hidden="true"></i> New best'
+      : '<i class="ti ti-flag" aria-hidden="true"></i> Starting mark';
+    document.getElementById('pbCelIcon').textContent = isBeat ? '🏆' : '📍';
+    document.getElementById('pbCelTitle').textContent = lead.exercise;
+    document.getElementById('pbCelJump').innerHTML = isBeat
+      ? '<span class="pb-cel-was">'+lead.previousValue+unitWord+'</span>'+
+        '<i class="ti ti-arrow-right" aria-hidden="true"></i>'+
+        '<span class="pb-cel-now">'+lead.value+unitWord+'</span>'
+      : '<span class="pb-cel-now">'+lead.value+unitWord+'</span>';
+    document.getElementById('pbCelSub').textContent = isBeat
+      ? 'Up '+(+(lead.value - lead.previousValue).toFixed(1))+unitWord+' on your old best. That is yours — nobody gave it to you.'
+      : 'First time logged, so there is nothing to beat yet. Save it and every time after this one has something to go at.';
+    document.getElementById('pbCelMore').innerHTML = others.length
+      ? '<p class="pb-cel-more-l">'+(isBeat?'Also beaten':'Also starting')+'</p>'+
+        others.map(o => '<span class="pb-cel-chip">'+esc(o.exercise)+' <b>'+o.value+
+          (o.unit===PB_UNIT_REPS?' reps':o.unit)+'</b></span>').join('')
+      : '';
+    document.getElementById('pbCelSave').innerHTML = (others.length ? 'Save all '+(others.length+1) : 'Save it')+
+      ' <i class="ti ti-check" aria-hidden="true"></i>';
+    if(isBeat) spawnConfetti('pbConfetti');
+    const el = document.getElementById('pbCelebrate');
+    el.hidden = false; requestAnimationFrame(() => el.classList.add('open'));
+    if(isBeat){ try { navigator.vibrate && navigator.vibrate([25,40,25,40,60]); } catch(e){} }
+    return true;
+  }
+  function closePBCel(){
+    const el = document.getElementById('pbCelebrate');
+    el.classList.remove('open');
+    setTimeout(() => {
+      el.hidden = true; const c = document.getElementById('pbConfetti'); if(c) c.innerHTML = '';
+      _pbPending = null;
+      if(!maybeCelebrateStreak()) maybeCelebrateBadges();   // whatever was queued behind it
+    }, 280);
+  }
+  window.closePBCel = closePBCel;
+  async function pbCelConfirm(){
+    const pend = _pbPending;
+    if(!pend){ closePBCel(); return; }
+    const all = pend.beats.concat(pend.marks);
+    const btn = document.getElementById('pbCelSave');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    // Saved optimistically: the celebration should never sit waiting on Apps
+    // Script, and a PB that fails to sync is recoverable from the session.
+    for(const p of all){
+      try {
+        await apiData({ action:'savePB', pb: {
+          sport: p.sport, exercise: p.exercise, value: String(p.value), unit: p.unit,
+          date: p.date, note: 'Spotted from your session', sessionId: (p.sessionId || '') } });
+      } catch(e){ console.error('auto PB save', e); }
+    }
+    try { await refreshPBs(); } catch(e){}
+    btn.disabled = false;
+    showToast(all.length > 1 ? all.length+' bests saved' : 'Best saved', 'success');
+    closePBCel();
+  }
+  window.pbCelConfirm = pbCelConfirm;
+
   // ============================================================
   // GAMIFICATION — XP, athlete rank/level, and earnable badges.
   // Everything is derived from data we already hold: distinct
@@ -8896,6 +9017,72 @@
     return sx;
   }
 
+  // ============================================================
+  // PERSONAL BESTS — spotted automatically, never invented
+  // ============================================================
+  // A personal best is the one thing this system can hand a student the moment
+  // it happens, in their own numbers, with no coach in the loop. It was being
+  // thrown away: a student could add 10kg to their squat and the app would know
+  // and say nothing until a stamping session months later.
+  //
+  // THE RULES ARE DELIBERATELY NARROW, because a celebration that turns out to
+  // be wrong is worse than no celebration at all.
+  //
+  //  - A detail carrying a WEIGHT is compared on weight. "4×5 @ 60kg" against a
+  //    stored 50kg is unambiguous.
+  //  - A detail carrying REPS AND NO WEIGHT is compared on reps. Pull-ups
+  //    8 → 11 is unambiguous.
+  //  - Anything else — times, distances, "40-50min steady Z2", free text — gets
+  //    NO automatic claim. Lower is sometimes better, the units are ambiguous,
+  //    and a wrong call here is exactly the kind of thing students see through.
+  //  - Units must match. A kg best is never compared against a reps best.
+  //  - Weight and reps both rising is a weight PB, because the weight is the
+  //    harder claim and the one worth naming.
+  //  - The FIRST time an exercise is logged is not a personal best. It is a
+  //    starting mark, offered as one, with nothing to beat yet.
+  const PB_UNIT_KG = 'kg', PB_UNIT_REPS = 'reps';
+  function pbCandidateFrom(detail){
+    const sx = wktParse(detail || '');
+    if(sx.weight){
+      const n = parseFloat(sx.weight);
+      if(n > 0 && /kg/i.test(sx.weight)) return { value: n, unit: PB_UNIT_KG, reps: parseInt(sx.reps,10) || null };
+      return null;   // lb and % are not compared — mixing units is how you get a false PB
+    }
+    if(sx.reps && !sx.time){
+      const n = parseInt(sx.reps, 10);
+      if(n > 0) return { value: n, unit: PB_UNIT_REPS, reps: n };
+    }
+    return null;
+  }
+  function pbFor(exercise){
+    const key = String(exercise||'').trim().toLowerCase();
+    if(!key) return null;
+    return (state.pbs || []).find(p => String(p.exercise||'').trim().toLowerCase() === key) || null;
+  }
+  // Returns { beats: [...], marks: [...] } for one session's workout.
+  function pbScan(session){
+    const beats = [], marks = [], seen = {};
+    ((session && session.workout) || []).forEach(it => {
+      const name = String((it && it.name) || '').trim();
+      if(!name || seen[name.toLowerCase()]) return;
+      const cand = pbCandidateFrom(it.detail);
+      if(!cand) return;
+      seen[name.toLowerCase()] = 1;
+      const prev = pbFor(name);
+      if(!prev){
+        marks.push({ exercise: name, value: cand.value, unit: cand.unit, sport: session.sport || '', date: session.date || isoToday() });
+        return;
+      }
+      const prevUnit = String(prev.unit || '').trim().toLowerCase();
+      if(prevUnit !== cand.unit) return;                 // never compare across units
+      const prevVal = parseFloat(prev.value);
+      if(!(prevVal > 0) || !(cand.value > prevVal)) return;
+      beats.push({ exercise: name, value: cand.value, unit: cand.unit, previousValue: prevVal,
+                   sport: session.sport || '', date: session.date || isoToday() });
+    });
+    return { beats: beats, marks: marks };
+  }
+
   function startWorkout(id){
     const s = (state.week.sessions||[]).find(x => x.id===id);
     if(!s){ return; }
@@ -9147,7 +9334,11 @@
     document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
     if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
     showToast(logged ? wktWords(wktSession).logged : wktWords(wktSession).saved, 'success');
-    if(logged){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
+    // A beaten best outranks a streak or a badge — it is the thing they just
+    // did, in their own numbers, and it is the only celebration here that is
+    // about getting better rather than about turning up.
+    const finished = wktSession;
+    if(logged && !pbOfferFor(finished)){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
     try {
       const res = await apiData({ action:'saveSession', session: Object.assign({}, wktSession, { id: isNew ? null : wktSession.id }) });
       if(res.success && res.id && isNew){ wktSession.id = res.id; if(activeTab==='week') renderWeek(); }
@@ -12055,6 +12246,23 @@
     const t = (state.testing || []).find(x => x.key === key);
     return (t && t.done && t.value) ? t : null;
   }
+  // Which attribute a personal best belongs under. A PB does NOT change any
+  // score — those are coach-assessed and a student renaming an exercise should
+  // never move them — but it is the strongest evidence a student owns, so it
+  // appears as proof inside the attribute it speaks to.
+  function pbAttrFor(exercise, sport){
+    const t = ((exercise||'') + ' ' + (sport||'')).toLowerCase();
+    if(/jump|throw|slam|clean|snatch|plyo|bound|box/.test(t)) return 'power';
+    if(/sprint|40m|60m|100m|dash|flying/.test(t)) return 'speed';
+    if(/5-10-5|shuttle|agility|t-test|cut/.test(t)) return 'agility';
+    if(/cooper|12 min|5k|3k|1500|mile|row|bike|swim|run/.test(t)) return 'engine';
+    if(/squat|hinge|deadlift|rdl|bench|press|push|pull|chin|row|lunge|split|hip thrust|carry/.test(t)) return 'strength';
+    if(/stretch|mobility|hold|straddle|pancake|bridge/.test(t)) return 'mobility';
+    return '';
+  }
+  function pbsForAttr(id){
+    return (state.pbs || []).filter(p => pbAttrFor(p.exercise, p.sport) === id);
+  }
   function cardLearnPassed(){
     return (typeof LEARN_BLOCKS === 'undefined' ? [] : LEARN_BLOCKS).filter(b => learnBlockPassed(b)).length;
   }
@@ -12344,8 +12552,48 @@
       '<div class="crd-next"><b>Next</b><span>'+esc(cardNextFor(a, s))+'</span></div>'+
       (sup.under.length ? '<p class="crd-lab">Raises the ceiling on this</p><div class="crd-rels">'+sup.under.map(chip).join('')+'</div>' : '')+
       (sup.lifts.length ? '<p class="crd-lab">This raises the ceiling on</p><div class="crd-rels">'+sup.lifts.map(chip).join('')+'</div>' : '')+
+      cardBestsHTML(a.id)+
       (go ? '<button class="crd-go" onclick="'+go.act+'"><i class="ti ti-arrow-down-right" aria-hidden="true"></i> '+esc(go.label)+'</button>' : '')+
       '<p class="crd-src">'+esc(a.src)+'</p></div>';
+  }
+
+  // The student's own bests, inside the attribute they belong to. The score
+  // above came from a coach; this came from them, and for most students it will
+  // be the only line on the card that moved this month.
+  function cardBestsHTML(attrId){
+    const list = pbsForAttr(attrId);
+    if(!list.length) return '';
+    const rows = list.slice(0, 5).map(p => {
+      const unit = p.unit ? (String(p.unit)==='reps' ? ' reps' : ' '+p.unit) : '';
+      const prev = parseFloat(p.previousValue), now = parseFloat(p.value);
+      const up = (prev > 0 && now > prev) ? '<span class="up">+'+(+(now-prev).toFixed(1))+'</span>' : '';
+      return '<div class="crd-best"><span>'+esc(p.exercise)+'</span>'+
+        '<span><b>'+esc(String(p.value))+unit+'</b> '+up+'</span></div>';
+    }).join('');
+    return '<div class="crd-bests"><p class="crd-bests-l">Your bests</p>'+rows+'</div>';
+  }
+
+  // The bests strip — the one card surface that is entirely the student's own
+  // work, newest first, sitting directly under the card.
+  function pbStripHTML(){
+    const list = (state.pbs || []).slice().sort((a,b) => String(b.date||'').localeCompare(String(a.date||'')));
+    if(!list.length){
+      return '<div class="card"><p class="card-eyebrow">Your bests</p>'+
+        '<p class="crd-foot-p">Nothing yet. Log a session with a weight or a rep count in it and the app spots your '+
+        'best on its own — you do not have to remember to record anything.</p></div>';
+    }
+    const tiles = list.slice(0, 10).map(p => {
+      const unit = p.unit ? (String(p.unit)==='reps' ? '<u> reps</u>' : '<u> '+esc(p.unit)+'</u>') : '';
+      const prev = parseFloat(p.previousValue), now = parseFloat(p.value);
+      const up = (prev > 0 && now > prev) ? '<p class="pbest-tile-up">▲ +'+(+(now-prev).toFixed(1))+' on your last</p>' : '';
+      return '<div class="pbest-tile"><p class="pbest-tile-ex">'+esc(p.exercise)+'</p>'+
+        '<p class="pbest-tile-v">'+esc(String(p.value))+unit+'</p>'+ up +
+        (p.date ? '<p class="pbest-tile-date">'+esc(fmtNice(p.date))+'</p>' : '')+'</div>';
+    }).join('');
+    return '<div class="card"><p class="card-eyebrow">Your bests'+
+      '<span class="card-eyebrow-action"><button class="block-phase-link" onclick="addPB()">Add →</button></span></p>'+
+      '<div class="pbest-row">'+tiles+'</div>'+
+      '<p class="crd-foot-p">These are yours. Nobody assessed them, nobody awarded them — you went and did them.</p></div>';
   }
 
   function cardHTML(){
@@ -12462,7 +12710,7 @@
 
   function renderAge(){
     document.getElementById('view-age').innerHTML =
-      '<div class="card-stack">'+ cardHTML() + cardFootHTML() + cardScaleHTML() +'</div>';
+      '<div class="card-stack">'+ cardHTML() + pbStripHTML() + cardFootHTML() + cardScaleHTML() +'</div>';
   }
 
   // ============================================================
