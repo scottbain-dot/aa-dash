@@ -2583,8 +2583,14 @@
   .crd-rail-l span, .crd-rail-l b { flex: 1; font: 500 8.5px 'Inter', sans-serif; letter-spacing: .08em;
     text-transform: uppercase; color: rgba(245,239,233,.26); text-align: center; }
   .crd-rail-l b { color: var(--gold); font-weight: 700; }
-  .crd-rail-go { font: 400 12px 'Inter', sans-serif; color: rgba(245,239,233,.5); margin: 9px 0 0; }
-  .crd-rail-go b { color: #f5efe9; font-weight: 600; }
+  /* The stage rail now lives on the pale card at the foot, not on the dark
+     face, so its track and labels need the light-background tones. */
+  .crd-scale .crd-rail-track i { background: var(--line); }
+  .crd-scale .crd-rail-track i.on { background: rgba(212,175,55,.6); }
+  .crd-scale .crd-rail-l span { color: var(--ink-mute); }
+  .crd-scale .crd-rail-l b { color: var(--burgundy); }
+  .crd-ovr b.up { color: var(--green-dark, #16a34a); }
+  .crd-ovr b u { text-decoration: none; font-size: 26px; opacity: .45; }
 
   .crd-rows { margin-top: 14px; }
   .crd-grp { display: flex; align-items: center; gap: 10px; margin: 16px 0 6px; }
@@ -12279,8 +12285,18 @@
     }
     const t = cardTestValue(a.id);
     if(!t) return 'Not tested yet — one test and this stops being a blank.';
-    const c = CARD_T[a.id], th = c[cardGender()==='F'?'F':'M'], i = Math.min(4, Math.max(0, Math.floor(v/2)));
-    return (c.higher ? 'Reach ' : 'Get under ')+th[i]+c.unit+' to move up.';
+    // Beat YOUR number, not a threshold. A rung on a shared scale can sit a
+    // long way off for someone who has not had their growth yet, and "reach
+    // 220cm" reads as a verdict on them rather than a next step. Where there is
+    // a previous test, the target is their own last result.
+    const c = CARD_T[a.id];
+    if(t.first && t.first !== t.value){
+      const better = c.higher ? (t.value > t.first) : (t.value < t.first);
+      return better
+        ? 'You went '+t.first+' → '+t.value+esc(t.unit)+'. Beat '+t.value+esc(t.unit)+' next time and the line keeps going.'
+        : 'Your best so far is '+t.first+esc(t.unit)+'. Getting back there is the next step.';
+    }
+    return 'One test on record: '+t.value+esc(t.unit)+'. The next one tells you whether what you are doing works.';
   }
 
   // Where the proof already lives. Four of the ten have a real detail surface
@@ -12332,31 +12348,16 @@
       '<p class="crd-src">'+esc(a.src)+'</p></div>';
   }
 
-  function cardRailHTML(o, t){
-    const i = CARD_STAGES.indexOf(t), next = CARD_STAGES[i+1];
-    const segs = CARD_STAGES.map(function(x,k){
-      if(k < i) return '<i class="on"></i>';
-      if(k > i) return '<i></i>';
-      const lo = x.min, hi = next ? next.min : 99;
-      return '<i class="part" style="--p:'+Math.max(6, Math.min(100, Math.round((o-lo)/(hi-lo)*100)))+'%"></i>';
-    }).join('');
-    return '<div class="crd-rail"><p class="crd-rail-cap">Development stage</p>'+
-      '<div class="crd-rail-track">'+segs+'</div>'+
-      '<div class="crd-rail-l">'+CARD_STAGES.map(function(x,k){
-        return k===i ? '<b>'+esc(x.name)+'</b>' : '<span>'+esc(x.name)+'</span>'; }).join('')+'</div>'+
-      '<p class="crd-rail-go">'+(next
-        ? '<b>'+(next.min-o)+' points</b> to '+esc(next.name)+'.'
-        : 'The last stage. Nothing above this one.')+'</p></div>';
-  }
-
   function cardHTML(){
     const s = cardScores('now'), was = cardScores('first'), deltas = cardDeltas(s, was);
-    const o = cardOverall(s), t = cardStageOf(o);
     // Counted the same way everywhere — the badge, the read and the overall all
     // use cardCounts(), so the card can never say "1 of 10 measured" above a
     // line that says "nothing measured yet".
     const nGot = cardCounts(s).length;
     const read = cardReadShape(s, deltas);
+    // Total ground gained across every attribute that moved up. Only counts
+    // rises — a dip somewhere does not cancel out work done somewhere else.
+    const moveTotal = Object.keys(deltas).reduce((a,k) => a + Math.max(0, deltas[k]), 0);
     const row = a => {
       const v = s[a.id] || 0, isOpen = cardOpenAttr === a.id, d = deltas[a.id], w = was[a.id];
       // Where you were sits UNDER the bar as a pale stub, so the gold section
@@ -12376,14 +12377,25 @@
       '<div class="crd-face">'+
         '<div class="crd-grain" aria-hidden="true"></div>'+
         '<div class="crd-top">'+
-          '<span class="crd-ovr"><b id="crdOvr">'+o+'</b><span>Overall</span></span>'+
-          '<span class="crd-who"><span class="crd-stage">'+esc(t.name)+'</span>'+
+          // THE HERO NUMBER IS MOVEMENT, NOT STANDING.
+          //
+          // An overall out of 99 and a stage name are the two most positional
+          // objects that could sit here, and four of the ten attributes under
+          // them are scored against population thresholds — so a late developer
+          // and an early developer doing identical work get different numbers.
+          // That is the one comparison this programme does not make. The number
+          // a student leads with is now the distance they have travelled; the
+          // overall has moved to the foot of the tab as a quiet scale reading.
+          '<span class="crd-ovr">'+ (moveTotal
+              ? '<b class="up">+'+moveTotal.toFixed(1)+'</b><span>Gained since '+esc(cardSinceLabel()||'you started')+'</span>'
+              : '<b>'+nGot+'<u>/'+CARD_ATTRS.length+'</u></b><span>Measured so far</span>')+
+          '</span>'+
+          '<span class="crd-who">'+
             '<span class="crd-nm">'+esc(athleteName())+'</span></span>'+
         '</div>'+
         cardRadarSVG(s, was)+
         '<div class="crd-read"><h2>'+read.title+'</h2><p>'+read.line+'</p>'+
           (nGot < CARD_ATTRS.length ? '<span class="crd-prov">Provisional · '+nGot+' of '+CARD_ATTRS.length+' measured</span>' : '')+
-          cardRailHTML(o, t)+
         '</div>'+
       '</div>'+
       '<div class="crd-rows">'+
@@ -12398,7 +12410,7 @@
   // What this tab is for, said once, under the rows rather than above the card —
   // the card should be the first thing on screen, not a paragraph about it.
   function cardFootHTML(){
-    const s = cardScores();
+    const s = cardScores('now');
     const unmeasured = CARD_ATTRS.filter(a => !(s[a.id]||0));
     const coachOnes = unmeasured.filter(a => a.coach).length;
     const testOnes  = unmeasured.filter(a => CARD_TEST_KEY[a.id]).length;
@@ -12413,12 +12425,44 @@
       '<p class="crd-foot-p crd-foot-why"><strong>Why out of ten.</strong> Levels 1 to 5 are bands, and a band is a '+
         'poor motivator — you can add fifteen centimetres to your jump and watch the number refuse to move. '+
         'These slide between the same thresholds, so every centimetre shows up. The level is still underneath.</p>'+
+      '<p class="crd-foot-p crd-foot-why"><strong>This is never a comparison with anyone else.</strong> Six of the ten '+
+        'are scored against a standard you either meet or do not — a pattern is stamped or it is not, a block is passed '+
+        'or it is not, a session was planned and done or it was not. The four from fitness testing sit on a scale that '+
+        'has to be shared so ten different units can live on one shape. That scale is a ruler, not a ranking: people '+
+        'grow at very different times and two athletes doing identical work will read differently on it for a year or '+
+        'two. <em>Your own line is the only one that means anything.</em></p>'+
+    '</div>';
+  }
+
+  // The scale reading, kept where it belongs — after the explanation, not as
+  // the first thing a student sees. It answers "how far along the whole thing
+  // am I" without being the headline verdict on the person.
+  function cardScaleHTML(){
+    const s = cardScores('now'), o = cardOverall(s), t = cardStageOf(o);
+    const i = CARD_STAGES.indexOf(t), next = CARD_STAGES[i+1];
+    const segs = CARD_STAGES.map(function(x,k){
+      if(k < i) return '<i class="on"></i>';
+      if(k > i) return '<i></i>';
+      const lo = x.min, hi = next ? next.min : 99;
+      return '<i class="part" style="--p:'+Math.max(6, Math.min(100, Math.round((o-lo)/(hi-lo)*100)))+'%"></i>';
+    }).join('');
+    return '<div class="card crd-scale">'+
+      '<p class="card-eyebrow">Where you are overall</p>'+
+      '<div class="crd-rail">'+
+        '<div class="crd-rail-track">'+segs+'</div>'+
+        '<div class="crd-rail-l">'+CARD_STAGES.map(function(x,k){
+          return k===i ? '<b>'+esc(x.name)+'</b>' : '<span>'+esc(x.name)+'</span>'; }).join('')+'</div>'+
+      '</div>'+
+      '<p class="crd-foot-p">'+(next
+        ? 'Across everything measured you are in <strong>'+esc(t.name)+'</strong>. This moves slowly and it is '+
+          'the least useful number on the page — what you did since '+esc(cardSinceLabel()||'you started')+' is the one that matters.'
+        : 'Across everything measured you are in <strong>'+esc(t.name)+'</strong>, the last stage.')+'</p>'+
     '</div>';
   }
 
   function renderAge(){
     document.getElementById('view-age').innerHTML =
-      '<div class="card-stack">'+ cardHTML() + cardFootHTML() +'</div>';
+      '<div class="card-stack">'+ cardHTML() + cardFootHTML() + cardScaleHTML() +'</div>';
   }
 
   // ============================================================
