@@ -2617,6 +2617,15 @@
   .crd-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 13px; font: 600 12.5px 'Inter', sans-serif;
     color: var(--burgundy); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; cursor: pointer; }
   .crd-src { font: italic 400 11px 'Fraunces', serif; color: var(--ink-mute); margin: 13px 0 0; }
+  .crd-delta { margin-left: 8px; font: 700 10.5px 'Inter', sans-serif; letter-spacing: .03em; }
+  .crd-delta.up { color: var(--green-dark, #16a34a); }
+  .crd-delta.down { color: var(--ink-mute); }
+  .crd-track b { position: absolute; left: 0; top: 0; height: 100%; border-radius: 2px; background: var(--line-soft); }
+  .crd-track { position: relative; }
+  .crd-track i { position: relative; }
+  .crd-moved { font: 600 13px 'Inter', sans-serif; margin: 0 0 12px; }
+  .crd-moved.up { color: var(--green-dark, #16a34a); }
+  .crd-moved.down { color: var(--ink-mute); }
   .crd-foot-p { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.6; margin: 10px 0 0; }
   .crd-foot-todo { color: var(--ink); }
   .crd-foot-todo strong { color: var(--burgundy); }
@@ -4787,13 +4796,15 @@
       { key:'agility',    label:'5-10-5 agility', unit:'s', done:false },
       { key:'cooper',     label:'Cooper 12 min',  unit:'m', done:true, value:2480, date:'2026-06-14', tests:1, first:null, delta:null }
     ];
+    // firstTech / firstLoad mirror what apLoadStrengthLevels now returns from
+    // the earliest Strength row, so the demo shows the progress read.
     state.strengthLevels = [
-      { pattern:'Squat', tech:4, load:3, done:true },
-      { pattern:'Push',  tech:3, load:2, done:true },
-      { pattern:'Pull',  tech:2, load:0, done:true },
-      { pattern:'Hinge', tech:0, load:0, done:false },
-      { pattern:'Lunge', tech:3, load:3, done:true },
-      { pattern:'Press', tech:0, load:0, done:false }
+      { pattern:'Squat', tech:4, load:3, done:true, firstTech:3, firstLoad:2, firstDate:'2026-09-02', assessments:2 },
+      { pattern:'Push',  tech:3, load:2, done:true, firstTech:2, firstLoad:1, firstDate:'2026-09-02', assessments:2 },
+      { pattern:'Pull',  tech:2, load:0, done:true, firstTech:2, firstLoad:0, firstDate:'2026-09-02', assessments:2 },
+      { pattern:'Hinge', tech:0, load:0, done:false, firstTech:0, firstLoad:0, firstDate:'2026-09-02', assessments:2 },
+      { pattern:'Lunge', tech:3, load:3, done:true, firstTech:2, firstLoad:2, firstDate:'2026-09-02', assessments:2 },
+      { pattern:'Press', tech:0, load:0, done:false, firstTech:0, firstLoad:0, firstDate:'2026-09-02', assessments:2 }
     ];
     state.mobility = { done:true, score10:7.8, date:'2026-09-02', screens:[
       { key:'asl', label:'Active straight leg', value:3, max:3 },
@@ -11956,33 +11967,43 @@
   const CARD_ATTRS = [
     { id:'strength', short:'STR', label:'Strength', grp:'body',
       what:'How much you can move on the six patterns. Only counts on a pattern a coach has stamped — there is no tested load on a movement nobody has signed off.',
-      src:'Strength sheet · the load tier earned at your technique level', goes:'levels' },
+      src:'Strength sheet · the load tier earned at your technique level', goes:'levels',
+      pace:'The slowest of the ten. Six to eight weeks of real work before you judge it.' },
     { id:'power', short:'POW', label:'Power', grp:'body',
-      what:'Strength, fast. Jumping, throwing, your first two steps.', src:'Broad jump', goes:'testing' },
+      what:'Strength, fast. Jumping, throwing, your first two steps.', src:'Broad jump', goes:'testing',
+      pace:'Four to six weeks. Moves faster than strength because a lot of it is your nervous system learning to fire harder.' },
     { id:'speed', short:'SPD', label:'Speed', grp:'body',
       what:'Top-end running. Sprinting is the best thing for sprinting; power underneath raises the ceiling.',
-      src:'40m sprint', goes:'testing' },
+      src:'40m sprint', goes:'testing',
+      pace:'Six weeks or more, and in small amounts. Sprinting is the slowest to show on a clock and the easiest to waste by training it tired.' },
     { id:'agility', short:'AGI', label:'Agility', grp:'body',
       what:'Stopping, turning, going again. Built on strength and mobility as much as on speed.',
-      src:'5-10-5', goes:'testing' },
+      src:'5-10-5', goes:'testing',
+      pace:'Four to six weeks. Technique on the turns can move inside a fortnight; the engine behind it takes longer.' },
     { id:'engine', short:'END', label:'Engine', grp:'body',
       what:'How long you last. Only your aerobic base is measured — threshold and top end have no test yet.',
-      src:'Cooper 12 min', goes:'testing' },
+      src:'Cooper 12 min', goes:'testing',
+      pace:'Six to eight weeks, and it keeps giving. The most reliable of the ten if you actually do the easy running.' },
     { id:'movement', short:'MOV', label:'Movement', grp:'athlete', coach:true,
       what:'The six patterns, signed off by your coach. The one thing that genuinely comes first — you do not load a pattern that is not stamped.',
-      src:'Technique levels 1–5, stamped at a check-in', goes:'levels' },
+      src:'Technique levels 1–5, stamped at a check-in', goes:'levels',
+      pace:'Changes the day you get stamped. Weeks of drilling, then one check-in and it jumps.' },
     { id:'mobility', short:'MOB', label:'Mobility', grp:'athlete', coach:true,
       what:'Range of motion and control — ankles, trunk, shoulders. Feeds agility and keeps you in one piece.',
-      src:'Three screens, 0–3 each, at a check-in' },
+      src:'Three screens, 0–3 each, at a check-in',
+      pace:'Two to four weeks of daily work. The quickest thing on this card to change.' },
     { id:'consistency', short:'CON', label:'Consistency', grp:'athlete',
       what:'Turning up. The share of your own planned sessions you actually did over the last eight weeks.',
-      src:'Your logged sessions · the training part of Grit', goes:'load' },
+      src:'Your logged sessions · the training part of Grit', goes:'load',
+      pace:'Next week. The only one you can move immediately, which is why it carries the others.' },
     { id:'knowledge', short:'KNW', label:'Knowledge', grp:'athlete',
       what:'What you have learned and can use. Ten blocks make up the academy — each one you pass is a point.',
-      src:'Level Up · 10 blocks across the academy', goes:'learn' },
+      src:'Level Up · 10 blocks across the academy', goes:'learn',
+      pace:'A whole point the moment you finish a block.' },
     { id:'mindset', short:'MIN', label:'Mindset', grp:'athlete', coach:true, slow:true,
       what:'Mindset, effort, coachability and mental toughness. The one attribute no test can give you — your coach writes it from a term of watching.',
-      src:'Scored by your coach · moves slowly, by design' }
+      src:'Scored by your coach · moves slowly, by design',
+      pace:'A term. It is not a session, a week or a good day — it is the pattern across all of them.' }
   ];
 
   // Support, never gates. The one genuine gate is stated on movement alone.
@@ -12039,24 +12060,69 @@
     return (typeof LEARN_BLOCKS === 'undefined' ? [] : LEARN_BLOCKS).length;
   }
 
-  function cardScores(){
+  // `when` is 'now' or 'first'. The 'first' pass rebuilds the same ten scores
+  // from the EARLIEST measurement on record, so the card can say what changed
+  // rather than only what is. Nothing is stored to do this — every input is
+  // already dated, so the before is recomputed, not snapshotted.
+  //
+  // An attribute with only one measurement returns null for 'first', never 0.
+  // A fabricated zero would turn a first-ever test into a heroic improvement.
+  function cardScores(when){
+    const first = (when === 'first');
     const lv = {}; (state.strengthLevels || []).forEach(l => { lv[l.pattern] = l; });
-    const tech = k => (lv[k] && lv[k].tech) || 0;
-    const load = k => (lv[k] && lv[k].load) || 0;
+    const hasStrengthHistory = (state.strengthLevels || []).some(l => l.firstTech != null);
+    const tech = k => (first ? (lv[k] && lv[k].firstTech) : (lv[k] && lv[k].tech)) || 0;
+    const load = k => (first ? (lv[k] && lv[k].firstLoad) : (lv[k] && lv[k].load)) || 0;
     const g = cardGender(), s = {};
 
-    s.movement = CARD_PATTERNS.reduce((a,k) => a + tech(k), 0) / 6 / 5 * 10;
-    s.strength = CARD_PATTERNS.reduce((a,k) => a + (tech(k) > 0 ? load(k) : 0), 0) / 6 / 5 * 10;
+    if(first && !hasStrengthHistory){ s.movement = null; s.strength = null; }
+    else {
+      s.movement = CARD_PATTERNS.reduce((a,k) => a + tech(k), 0) / 6 / 5 * 10;
+      s.strength = CARD_PATTERNS.reduce((a,k) => a + (tech(k) > 0 ? load(k) : 0), 0) / 6 / 5 * 10;
+    }
     ['power','speed','agility','engine'].forEach(k => {
       const t = cardTestValue(k);
-      s[k] = t ? cardScore10(k, t.value, g) : 0;
+      if(first){
+        // apLoadTesting only fills `first` when there are two or more tests.
+        s[k] = (t && t.first) ? cardScore10(k, t.first, g) : null;
+      } else {
+        s[k] = t ? cardScore10(k, t.value, g) : 0;
+      }
     });
-    s.mobility = (state.mobility && state.mobility.done) ? (state.mobility.score10 || 0) : 0;
-    s.mindset  = (state.psych && state.psych.done) ? (state.psych.score10 || 0) : 0;
+    // Mobility, Mindset, Consistency and Knowledge have no history in the
+    // bootstrap yet — the first two return only the latest assessment and the
+    // last two are rolling. No before, so no delta claimed.
+    s.mobility = first ? null : ((state.mobility && state.mobility.done) ? (state.mobility.score10 || 0) : 0);
+    s.mindset  = first ? null : ((state.psych && state.psych.done) ? (state.psych.score10 || 0) : 0);
     const adh = state.grit && state.grit.parts && state.grit.parts.adherence;
-    s.consistency = adh ? Math.min(10, (adh.pct || 0) / 10) : 0;
-    s.knowledge = Math.min(10, cardLearnPassed() + cardLearnStarted() * 0.35);
+    s.consistency = first ? null : (adh ? Math.min(10, (adh.pct || 0) / 10) : 0);
+    s.knowledge = first ? null : Math.min(10, cardLearnPassed() + cardLearnStarted() * 0.35);
     return s;
+  }
+
+  // Deltas, only where a real before exists and the number actually moved.
+  // A move under a tenth is measurement noise and is not reported as progress.
+  function cardDeltas(now, was){
+    const out = {};
+    CARD_ATTRS.forEach(a => {
+      const n = now[a.id], w = was[a.id];
+      if(w == null || n == null || !n) return;
+      const d = n - w;
+      if(Math.abs(d) < 0.1) return;
+      out[a.id] = d;
+    });
+    return out;
+  }
+  // The date the oldest "before" comes from, so the card can name it rather
+  // than saying a vague "earlier".
+  function cardSinceLabel(){
+    const dates = [];
+    (state.strengthLevels || []).forEach(l => { if(l.firstDate) dates.push(l.firstDate); });
+    (state.testing || []).forEach(t => { if(t.first && t.date) dates.push(t.date); });
+    if(!dates.length) return '';
+    dates.sort();
+    const d = parseISO(dates[0]);
+    return d ? MONTHS[d.getMonth()] : '';
   }
 
   // Knowledge is held out of the overall until the academy actually has ten
@@ -12075,7 +12141,7 @@
   ];
   const cardStageOf = o => CARD_STAGES.slice().reverse().find(t => o >= t.min) || CARD_STAGES[0];
 
-  function cardRadarSVG(s){
+  function cardRadarSVG(s, was){
     const S=300, C=S/2, R=88, n=CARD_ATTRS.length;
     const pt=(i,r)=>{ const a=(Math.PI*2*i/n)-Math.PI/2; return [C+Math.cos(a)*r, C+Math.sin(a)*r]; };
     const measured = CARD_ATTRS.filter(a => (s[a.id]||0) > 0).length;
@@ -12085,6 +12151,24 @@
            '" fill="none" stroke="rgba(245,239,233,'+(k===5?.16:.055)+')" stroke-width="1"/>'; }
     CARD_ATTRS.forEach((a,i)=>{ const [x,y]=pt(i,R);
       g += '<line x1="'+C+'" y1="'+C+'" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="rgba(245,239,233,.055)"/>'; });
+    // Where you were, marked PER AXIS rather than joined into a ghost shape.
+    //
+    // A polygon through the befores would only pass through the axes that have
+    // one — four here, eight on the gold shape — so the two outlines would have
+    // different vertex sets and the dashed one would read as "you used to be
+    // tiny" when the truth is just that we did not measure the rest. A tick on
+    // each axis says exactly what is known and nothing more.
+    if(was){
+      CARD_ATTRS.forEach((a,i) => {
+        const w = was[a.id];
+        if(w == null || !w) return;
+        const [x,y] = pt(i, w/10*R);
+        const ang = (Math.PI*2*i/n) - Math.PI/2;
+        const dx = Math.cos(ang+Math.PI/2)*4.5, dy = Math.sin(ang+Math.PI/2)*4.5;
+        g += '<line x1="'+(x-dx).toFixed(1)+'" y1="'+(y-dy).toFixed(1)+'" x2="'+(x+dx).toFixed(1)+'" y2="'+(y+dy).toFixed(1)+
+             '" stroke="rgba(245,239,233,.42)" stroke-width="1.6" stroke-linecap="round"/>';
+      });
+    }
     // The shape is drawn through MEASURED axes only. Running it through zeros
     // turns three real scores into a collapsed star that reads as broken.
     if(measured >= 3){
@@ -12116,7 +12200,34 @@
 
   // Naming a shape off two or three numbers is a guess dressed as a verdict, so
   // below five measured attributes the card says what it is instead.
-  function cardReadShape(s){
+  function cardReadShape(s, deltas){
+    // PROGRESS COMES FIRST, where there is any.
+    //
+    // A single number out of ten is an other-referenced measure — it invites a
+    // student to compare themselves with the person next to them, and the youth
+    // sport literature is consistent that an ego-involving climate is the worse
+    // one, most of all for the students who are not already winning. A
+    // self-referenced read — what YOU moved, against what YOU were — is the
+    // version that holds up. So when the card has a before, it leads with the
+    // change and the shape description waits its turn.
+    const moved = Object.keys(deltas || {});
+    if(moved.length){
+      const ups = moved.filter(k => deltas[k] > 0).sort((a,b) => deltas[b] - deltas[a]);
+      const since = cardSinceLabel();
+      const sinceBit = since ? ' since '+esc(since) : '';
+      if(ups.length){
+        const top = CARD_ATTRS.find(a => a.id === ups[0]);
+        const rest = ups.length - 1;
+        return { title: 'Up '+deltas[ups[0]].toFixed(1)+' on '+esc(top.label).toLowerCase()+sinceBit,
+          line: rest
+            ? '<em>'+(rest+1)+'</em> of your ten have gone up. That is the number worth watching — not where you sit, but how far you have moved.'
+            : 'That is real, and it is yours. The dotted shape is where you started.' };
+      }
+      const downs = moved.sort((a,b) => deltas[a] - deltas[b]);
+      const worst = CARD_ATTRS.find(a => a.id === downs[0]);
+      return { title: esc(worst.label)+' has slipped'+sinceBit,
+        line: 'Down <em>'+Math.abs(deltas[downs[0]]).toFixed(1)+'</em>. Worth a conversation rather than a panic — a dip after a break, an illness or a growth spurt is ordinary.' };
+    }
     // Reads the SAME set the overall counts. Knowledge sits out while the
     // academy has fewer than ten blocks, so naming it "your lowest" would tell
     // a student their weakest quality is one they have barely been offered.
@@ -12195,15 +12306,25 @@
   function cardOpenA(id){ cardOpenAttr = (cardOpenAttr === id) ? null : id; renderAge(); }
   window.cardOpenA = cardOpenA;
 
-  function cardDetailHTML(a, s){
+  function cardDetailHTML(a, s, delta){
     const sup = CARD_SUPPORT[a.id] || { under:[], lifts:[] };
     const nm = id => (CARD_ATTRS.find(x => x.id === id) || {}).label || id;
     const chip = id => '<button class="crd-rel" onclick="cardOpenA(\''+id+'\')">'+esc(nm(id))+
       ' <b>'+((s[id]||0) ? s[id].toFixed(1) : '–')+'</b></button>';
     const go = a.goes && CARD_GOES[a.goes];
+    const since = cardSinceLabel();
+    // How long before this should be expected to move. Without it, a student
+    // trains speed for three weeks, sees nothing, and concludes it does not
+    // work — when in fact they stopped one week into a six week change.
+    const pace = a.pace ? '<p class="crd-lab">How long it takes</p><p class="crd-d-move">'+esc(a.pace)+'</p>' : '';
+    const moved = delta
+      ? '<p class="crd-moved'+(delta>0?' up':' down')+'">'+(delta>0?'Up ':'Down ')+Math.abs(delta).toFixed(1)+
+        (since ? ' since '+esc(since) : ' since your first assessment')+'.</p>'
+      : '';
     return '<div class="crd-detail">'+
-      '<p class="crd-d-what">'+esc(a.what)+'</p>'+
+      '<p class="crd-d-what">'+esc(a.what)+'</p>'+ moved +
       '<p class="crd-lab">What moves it</p><p class="crd-d-move">'+esc(sup.move||'')+'</p>'+
+      pace +
       '<div class="crd-next"><b>Next</b><span>'+esc(cardNextFor(a, s))+'</span></div>'+
       (sup.under.length ? '<p class="crd-lab">Raises the ceiling on this</p><div class="crd-rels">'+sup.under.map(chip).join('')+'</div>' : '')+
       (sup.lifts.length ? '<p class="crd-lab">This raises the ceiling on</p><div class="crd-rels">'+sup.lifts.map(chip).join('')+'</div>' : '')+
@@ -12229,21 +12350,27 @@
   }
 
   function cardHTML(){
-    const s = cardScores(), o = cardOverall(s), t = cardStageOf(o);
+    const s = cardScores('now'), was = cardScores('first'), deltas = cardDeltas(s, was);
+    const o = cardOverall(s), t = cardStageOf(o);
     // Counted the same way everywhere — the badge, the read and the overall all
     // use cardCounts(), so the card can never say "1 of 10 measured" above a
     // line that says "nothing measured yet".
     const nGot = cardCounts(s).length;
-    const read = cardReadShape(s);
-    const open = CARD_ATTRS.find(x => x.id === cardOpenAttr);
+    const read = cardReadShape(s, deltas);
     const row = a => {
-      const v = s[a.id] || 0, isOpen = cardOpenAttr === a.id;
+      const v = s[a.id] || 0, isOpen = cardOpenAttr === a.id, d = deltas[a.id], w = was[a.id];
+      // Where you were sits UNDER the bar as a pale stub, so the gold section
+      // reads as the part you added rather than as the whole thing.
+      const ghost = (d && w != null) ? '<b style="width:'+(Math.min(v,w)*10)+'%"></b>' : '';
+      const chip = d
+        ? '<span class="crd-delta'+(d>0?' up':' down')+'">'+(d>0?'▲ +':'▼ ')+d.toFixed(1)+'</span>'
+        : '';
       return '<button class="crd-row'+(v?'':' dim')+(isOpen?' open':'')+'" onclick="cardOpenA(\''+a.id+'\')" '+
           'aria-expanded="'+(isOpen?'true':'false')+'">'+
-        '<span class="crd-row-l"><span class="crd-row-n">'+esc(a.label)+'</span>'+
-          '<span class="crd-track"><i style="width:'+(v*10)+'%"></i></span></span>'+
+        '<span class="crd-row-l"><span class="crd-row-n">'+esc(a.label)+chip+'</span>'+
+          '<span class="crd-track">'+ghost+'<i style="width:'+(v*10)+'%"></i></span></span>'+
         '<span class="crd-row-v">'+(v ? v.toFixed(1)+'<u>/10</u>' : '–')+'</span></button>'+
-        (isOpen ? cardDetailHTML(a, s) : '');
+        (isOpen ? cardDetailHTML(a, s, d) : '');
     };
     return '<div class="crd">'+
       '<div class="crd-face">'+
@@ -12253,7 +12380,7 @@
           '<span class="crd-who"><span class="crd-stage">'+esc(t.name)+'</span>'+
             '<span class="crd-nm">'+esc(athleteName())+'</span></span>'+
         '</div>'+
-        cardRadarSVG(s)+
+        cardRadarSVG(s, was)+
         '<div class="crd-read"><h2>'+read.title+'</h2><p>'+read.line+'</p>'+
           (nGot < CARD_ATTRS.length ? '<span class="crd-prov">Provisional · '+nGot+' of '+CARD_ATTRS.length+' measured</span>' : '')+
           cardRailHTML(o, t)+
