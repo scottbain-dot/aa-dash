@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Load — prototype</title>
+<!--
+  PROTOTYPE. Nothing saves, nothing is wired to a portal.
+
+  The brief: hide the machinery, say one sentence. "This week was 7% higher than
+  last." Then let anyone who wants it open up every step of how that number was
+  reached.
+
+  WHAT THE NUMBER IS, AND WHY IT IS NOT MORE THAN THAT
+  Load is RPE x minutes — session-RPE, Foster's method, the standard across
+  professional sport. It is not a simplification we settled for: a rating of
+  perceived exertion already contains the distance, the pace, the hills, the
+  heat and whether the athlete slept. A session-RPE of 7 over 70 minutes carries
+  all of that in one number the athlete gives you in two seconds.
+
+  Training_Sessions has no distance, pace or speed column, so "5% harder taking
+  account of distance and speed" is not computable — and I would argue against
+  adding those columns. Every extra field costs logging, and 62% of the roster
+  has never logged a session at all. The cheapest honest measure beats the
+  richest one nobody fills in.
+
+  Data: athlete 41's real term, pulled by Athlete_ID. No names, no emails.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --gold:#D4AF37; --gold-s:#f0dc9a; --burg:#874B46; --burg-l:#a9645e;
+         --ok:#7fae79; --warn:#dba43c; --risk:#cf7158;
+         --ink:#f5efe9; --ink-2:rgba(245,239,233,.62); --ink-3:rgba(245,239,233,.34);
+         --hair:rgba(245,239,233,.10); --hair-2:rgba(245,239,233,.06); }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:#100d0c}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);padding-bottom:64px;
+       background:radial-gradient(130% 70% at 50% -5%, #352c27 0%, #1d1816 42%, #100d0c 100%);
+       background-attachment:fixed;-webkit-font-smoothing:antialiased}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E")}
+  .wrap{position:relative;z-index:1;max-width:470px;margin:0 auto;padding:22px 18px}
+  .brand{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
+  .brand b{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.22em;
+           text-transform:uppercase;color:var(--ink-2)}
+  .brand span{font:600 9px 'Inter';letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+  .seg{display:flex;gap:2px;background:rgba(245,239,233,.05);border-radius:999px;padding:3px;margin-bottom:10px}
+  .seg button{flex:1;border:none;background:none;cursor:pointer;border-radius:999px;padding:8px 4px;
+              font:700 10.5px 'Inter';color:var(--ink-3)}
+  .seg button.on{background:rgba(245,239,233,.10);color:var(--ink)}
+  .ctx{display:flex;gap:6px;align-items:center;margin-bottom:22px;font:600 10px 'Inter';
+       letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  .ctx select{background:rgba(245,239,233,.06);color:var(--ink);border:1px solid var(--hair);
+              border-radius:8px;padding:5px 8px;font:600 11px 'Inter'}
+
+  /* ---------- the one sentence ---------- */
+  .top{padding-bottom:16px;border-bottom:1px solid var(--hair)}
+  .top-cap{font:700 8.5px 'Inter';letter-spacing:.24em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px}
+  .top-row{display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
+  .au{font-family:'Barlow Condensed',sans-serif;font-size:66px;font-weight:800;line-height:.82;
+      background:linear-gradient(170deg,var(--gold-s),var(--gold) 55%,#9c7d24);
+      -webkit-background-clip:text;background-clip:text;color:transparent}
+  .au u{text-decoration:none;font-size:15px;color:var(--ink-3);-webkit-text-fill-color:var(--ink-3);
+        font-weight:600;margin-left:5px}
+  .delta{text-align:right;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:31px;line-height:1}
+  .delta small{display:block;font:700 8.5px 'Inter';letter-spacing:.14em;text-transform:uppercase;
+               color:var(--ink-3);margin-top:4px}
+  .verdict{margin-top:18px}
+  .verdict h2{font-family:'Fraunces',Georgia,serif;font-size:21px;font-weight:600;margin:0;line-height:1.25}
+  .verdict p{font-size:13px;color:var(--ink-2);line-height:1.6;margin:8px 0 0}
+  .flag{display:inline-flex;align-items:center;gap:7px;margin-bottom:10px;font:700 8.5px 'Inter';
+        letter-spacing:.16em;text-transform:uppercase}
+  .flag::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+
+  .act{display:flex;gap:10px;align-items:flex-start;margin-top:15px;padding:13px 15px;border-radius:12px;
+       background:linear-gradient(100deg,rgba(212,175,55,.14),rgba(212,175,55,.03));
+       border:1px solid rgba(212,175,55,.22)}
+  .act b{font:700 8.5px 'Inter';letter-spacing:.16em;text-transform:uppercase;color:var(--gold);
+         padding-top:2px;flex:0 0 auto}
+  .act span{font:600 12.5px 'Inter';line-height:1.55}
+
+  /* ---------- week bars ---------- */
+  .bars{display:flex;align-items:flex-end;gap:5px;height:84px;margin:26px 0 6px}
+  .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;
+       cursor:pointer;background:none;border:none;padding:0;height:100%}
+  .bar i{display:block;width:100%;border-radius:4px 4px 2px 2px;background:rgba(245,239,233,.13);min-height:3px;
+         transition:height .5s cubic-bezier(.2,.8,.2,1)}
+  .bar.on i{background:linear-gradient(180deg,var(--gold-s),var(--burg))}
+  .bar u{text-decoration:none;font:700 8px 'Inter';letter-spacing:.06em;color:var(--ink-3)}
+  .bar.on u{color:var(--gold)}
+  .usual-line{position:relative;height:0}
+  .bars-cap{font:600 10px 'Inter';color:var(--ink-3);text-align:center;margin:0 0 4px}
+
+  /* ---------- sessions ---------- */
+  .grp{display:flex;align-items:center;gap:12px;margin:26px 0 8px}
+  .grp b{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.16em;
+         text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
+  .grp i{flex:1;height:1px;background:var(--hair-2)}
+  .s-row{display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;
+         padding:11px 2px;border-bottom:1px solid var(--hair-2)}
+  .s-day{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.08em;
+         text-transform:uppercase;color:var(--ink-3)}
+  .s-main{min-width:0}
+  .s-name{font:700 12.5px 'Inter';display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .s-sub{font:500 11px 'Inter';color:var(--ink-3);display:block;margin-top:3px}
+  .s-cmp{font:700 11px 'Inter';display:block;margin-top:3px}
+  .s-au{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;text-align:right;line-height:1}
+  .s-au u{text-decoration:none;font-size:10px;color:var(--ink-3);font-weight:600}
+
+  /* ---------- maths ---------- */
+  .maths{margin-top:18px;border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+  .m-head{width:100%;background:none;border:none;color:inherit;font:inherit;cursor:pointer;
+          padding:13px 15px;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left}
+  .m-head b{font:700 8.5px 'Inter';letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+  .m-head span{font:600 11px 'Inter';color:var(--ink-3)}
+  .m-body{padding:0 15px 15px;display:none}
+  .m-body.open{display:block}
+  .m-row{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-top:1px solid var(--hair-2);
+         font:600 12px 'Inter';color:var(--ink-2)}
+  .m-row b{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--ink)}
+  .m-row i{display:block;font:500 10.5px 'Inter';font-style:normal;color:var(--ink-3);margin-top:2px}
+  .m-note{font:500 11px 'Inter';color:var(--ink-3);line-height:1.6;margin:12px 0 0;padding-top:12px;
+          border-top:1px solid var(--hair-2)}
+  .foot{margin-top:28px;padding-top:16px;border-top:1px solid var(--hair-2);
+        font:500 10.5px 'Inter';color:var(--ink-3);line-height:1.6}
+  .rise{opacity:0;transform:translateY(10px);animation:rise .55s cubic-bezier(.2,.8,.2,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.rise{animation:none;opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><b>Athlete Academy</b><span>Load</span></div>
+  <div class="seg" id="weekSeg"></div>
+  <div class="ctx"><span>Block</span>
+    <select id="blockSel" onchange="setBlock(this.value)">
+      <option value="build">Build</option><option value="maintain">Maintain</option>
+      <option value="peak">Peak</option><option value="recover">Recover</option>
+    </select>
+    <span style="margin-left:auto">pick a week to see what it would have said</span>
+  </div>
+  <div id="app"></div>
+  <p class="foot">Prototype — nothing saves. Athlete 41's real term, pulled by Athlete&nbsp;ID.
+     Load is RPE × minutes (session-RPE). No distance or pace is stored, and none is needed:
+     an effort rating already contains the pace, the hills and the heat.</p>
+</div>
+
+<script>
+/* ===================== real data ===================== */
+const SESSIONS = [
+  { date:'2026-08-27', sport:'Strength',     name:'Push (Up) + Bike',  rpe:7, dur:60 },
+  { date:'2026-08-28', sport:'Bike',         name:'Base (Bike Z2)',    rpe:6, dur:60 },
+  { date:'2026-09-07', sport:'Strength',     name:'Pull (Down)',       rpe:6, dur:60 },
+  { date:'2026-09-09', sport:'Conditioning', name:'Threshold',         rpe:6, dur:40 },
+  { date:'2026-09-14', sport:'Bike',         name:'Base (Bike Z2)',    rpe:7, dur:40 },
+  { date:'2026-09-15', sport:'Strength',     name:'Pull (Down)',       rpe:6, dur:70 },
+  { date:'2026-09-16', sport:'Conditioning', name:'VO2 Max (Curve)',   rpe:7, dur:30 },
+  { date:'2026-09-20', sport:'Strength',     name:'Push (Up) + Bike',  rpe:7, dur:70 },
+  { date:'2026-09-21', sport:'Bike',         name:'Base (Bike or Run)',rpe:4, dur:45 },
+  { date:'2026-09-22', sport:'Conditioning', name:'Threshold',         rpe:6, dur:40 },
+  { date:'2026-09-26', sport:'Strength',     name:'Pull (Down)',       rpe:6, dur:90 },
+  { date:'2026-10-01', sport:'Strength',     name:'Push (Up) + Bike',  rpe:7, dur:30 }
+];
+SESSIONS.forEach(s => { s.load = s.rpe * s.dur; });
+/* The two August/September weeks are padded to the real weekly totals the server
+   reports (780 and 600) — those weeks were logged before every session carried a
+   full record, and inventing sessions to make them add up would be worse than
+   saying so. The last three weeks are complete and are the ones worth reading. */
+const WEEK_TOTALS = { '2026-08-24':780, '2026-09-07':600, '2026-09-14':1400, '2026-09-21':960, '2026-09-28':210 };
+const WEEKS = Object.keys(WEEK_TOTALS).sort();
+const COMPLETE_FROM = '2026-09-14';
+
+let sel = '2026-09-14', block = 'build', mathsOpen = false;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const d = iso => new Date(iso+'T00:00:00Z');
+const addD = (iso,n) => { const x=d(iso); x.setUTCDate(x.getUTCDate()+n); return x.toISOString().slice(0,10); };
+const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const fmt = n => n.toLocaleString('en-GB');
+
+/* ===================== the maths =====================
+   Everything below works off one quantity — RPE x minutes — and nothing else is
+   needed to answer the questions a student actually has. */
+
+const sessionsIn = ws => SESSIONS.filter(s => s.date >= ws && s.date <= addD(ws,6));
+
+// Your usual: the mean of the last four weeks that CONTAINED training. Blank
+// weeks are skipped rather than counted as zero — a school athlete misses weeks
+// for exams and holidays, and treating those as "rest" would make every return
+// to training look like a spike.
+function usualBefore(ws){
+  const prior = WEEKS.filter(w => w < ws && WEEK_TOTALS[w] > 0).slice(-4);
+  if(!prior.length) return { mean:0, n:0 };
+  return { mean: prior.reduce((a,w)=>a+WEEK_TOTALS[w],0)/prior.length, n:prior.length, weeks:prior };
+}
+// Monotony (Foster): how same-y the week was. Mean daily load over its standard
+// deviation, across all seven days. A week of five identical sessions scores
+// higher than the same load with one hard day and real rest, and that sameness
+// is the part associated with running into trouble.
+function monotonyOf(ws){
+  const days = [];
+  for(let i=0;i<7;i++){
+    const day = addD(ws,i);
+    days.push(SESSIONS.filter(s=>s.date===day).reduce((a,s)=>a+s.load,0));
+  }
+  const mean = days.reduce((a,b)=>a+b,0)/7;
+  if(!mean) return { monotony:0, days:days, mean:0 };
+  const sd = Math.sqrt(days.reduce((a,b)=>a+Math.pow(b-mean,2),0)/7);
+  return { monotony: sd ? mean/sd : 0, days:days, mean:mean, sd:sd };
+}
+// A session against your own usual for that sport — the median of the last six,
+// so one monster session does not move the yardstick. Under three prior sessions
+// it says nothing at all rather than comparing against noise.
+function sessionVsUsual(s){
+  const prior = SESSIONS.filter(x => x.sport===s.sport && x.date < s.date).slice(-6).map(x=>x.load).sort((a,b)=>a-b);
+  if(prior.length < 3) return null;
+  const mid = Math.floor(prior.length/2);
+  const med = prior.length%2 ? prior[mid] : (prior[mid-1]+prior[mid])/2;
+  return { pct: Math.round((s.load-med)/med*100), median: med, n: prior.length };
+}
+function weekStats(ws){
+  const load = WEEK_TOTALS[ws]||0;
+  const idx = WEEKS.indexOf(ws);
+  const prevWs = WEEKS.slice(0,idx).filter(w=>WEEK_TOTALS[w]>0).pop() || null;
+  const prev = prevWs ? WEEK_TOTALS[prevWs] : 0;
+  const u = usualBefore(ws);
+  const m = monotonyOf(ws);
+  return {
+    ws, load, prevWs, prev,
+    vsPrev: prev ? Math.round((load-prev)/prev*100) : null,
+    usual: Math.round(u.mean), usualN: u.n, usualWeeks: u.weeks||[],
+    acwr: (u.n >= 3 && u.mean > 0) ? load/u.mean : null,
+    monotony: m.monotony, days: m.days,
+    sessions: sessionsIn(ws).sort((a,b)=>a.date<b.date?-1:1),
+    complete: ws >= COMPLETE_FROM
+  };
+}
+
+/* ===================== the sentence =====================
+   One verdict, chosen by priority: risk first, then the thing the block says
+   they should be doing, then reassurance. The thresholds are deliberately wide.
+   A school athlete's week is erratic by nature — fixtures, exams, a bus that did
+   not turn up — and a system that cries wolf every Monday gets ignored by
+   February. */
+const BLOCK_WORD = { build:'build', maintain:'maintain', peak:'peak', recover:'recovery' };
+function verdict(st){
+  const up = st.vsPrev, a = st.acwr, thin = st.usualN < 3;
+  // Hedge for a week-on-week number built on very little history. The comparison
+  // is still worth making — a doubling is a doubling — it just should not be
+  // dressed up as if we know this athlete's normal yet.
+  const hedge = thin ? ' I have only '+st.usualN+' week'+(st.usualN===1?'':'s')+' to go on, so treat it as a rough read.' : '';
+
+  if(up === null && a === null)
+    return { tone:'none', flag:'First week', h:'Nothing to compare it to yet.',
+      p:'This is the first week with training in it — '+fmt(st.load)+' au. Next week there will be a number to beat.',
+      act:'Log the next one and this page starts working.' };
+
+  // A big jump matters whether or not we know your normal yet, so this is tested
+  // BEFORE the thin-history guard. Suppressing a doubling because the history is
+  // short would hide the single most useful thing on the page.
+  if((a !== null && a > 1.5) || (up !== null && up > 60))
+    return { tone:'risk', flag:'Big jump', h:'That is a lot more than you have been doing.',
+      p:'Up <b>'+up+'%</b> on last week'+(a?', and '+Math.round((a-1)*100)+'% above your usual':'')+
+        '. Jumping more than about half again is where people tend to pick up niggles — not a certainty, just the pattern.'+hedge,
+      act:'Next week, repeat this rather than beating it. The gain from a week like this lands while you recover, not while you keep adding.' };
+
+  if(up !== null && up > 40)
+    return { tone:'warn', flag:'Sharp rise', h:'A big step up on last week.',
+      p:'Up <b>'+up+'%</b>. Fine once — it is the second and third week in a row that catches people.'+hedge,
+      act:'Hold it level next week and let your body catch up with the work.' };
+
+  if(st.monotony > 2.2 && st.sessions.length >= 4)
+    return { tone:'warn', flag:'Every day the same', h:'Plenty of work, not much variation.',
+      p:'Your sessions were all much the same size this week. Weeks with no easy day and no hard day are the ones that quietly grind people down.',
+      act:'Make one session clearly hard and one clearly easy. Same total, better week.' };
+
+  if(thin)
+    return { tone:'none', flag:'Still learning your normal', h:(up>0?'Up ':'Down ')+Math.abs(up)+'% on last week.',
+      p:'That is '+fmt(st.load)+' au against '+fmt(st.prev)+' last week. I need about three weeks of logging before '+
+        'I can tell you what is normal <em>for you</em> rather than just what changed.',
+      act:'Keep logging. One more week and the comparisons get real.' };
+
+  if(a !== null && a < 0.7 && block === 'build')
+    return { tone:'warn', flag:'Under your usual', h:'A lighter week than a build block wants.',
+      p:'You did <b>'+Math.round((1-a)*100)+'% less</b> than your usual '+fmt(st.usual)+' au, and you are in a build block — '+
+        'the stretch where the work is meant to be going up.',
+      act:'Aim for about '+fmt(Math.round(st.usual*1.05))+' au next week. One extra session, or twenty minutes on two of them, gets you there.' };
+
+  if(a !== null && a < 0.7)
+    return { tone:'ok', flag:'Lighter week', h:'A lighter week than usual.',
+      p:'Down to <b>'+Math.round(a*100)+'%</b> of your normal. In a '+BLOCK_WORD[block]+' block that is often exactly right — '+
+        'worth knowing it happened rather than finding out in three weeks.',
+      act:'If that was planned, nothing to do. If it was not, '+fmt(st.usual)+' au is your normal week.' };
+
+  // The case that makes the whole thing worth building: a big move against last
+  // week that is not a real move at all, because last week was the odd one.
+  if(a !== null && a >= 0.85 && a <= 1.2 && up !== null && Math.abs(up) > 20)
+    return { tone:'ok', flag:'On track', h:(up>0?'Up ':'Down ')+Math.abs(up)+'% on last week — but right on your usual.',
+      p:'You are at <b>'+Math.round(a*100)+'%</b> of your normal week. It is last week that was the odd one, not this one. '+
+        'Your usual is the number worth watching; a single week will swing all over the place.',
+      act:'Nothing to change. This is the pace that actually builds something.' };
+
+  if(up !== null && Math.abs(up) <= 15)
+    return { tone:'ok', flag:'On track', h:'Right about where you should be.',
+      p:'<b>'+(up>=0?'+':'')+up+'%</b> on last week, and '+(a?Math.round(a*100)+'% of':'close to')+' your usual. '+
+        'That is the pace that actually builds something.',
+      act:'More of the same. In a build block, five to ten percent up again next week is plenty.' };
+
+  return { tone:'ok', flag:'Steady', h:(up>0?'Up ':'Down ')+Math.abs(up)+'% on last week.',
+    p:'Nothing out of the ordinary — you are at <b>'+(a?Math.round(a*100):'—')+'%</b> of your usual week.',
+    act:'Carry on. The sessions below show where the change came from.' };
+}
+const TONE = { risk:'var(--risk)', warn:'var(--warn)', ok:'var(--ok)', none:'var(--ink-3)' };
+
+/* ===================== render ===================== */
+function render(){
+  const st = weekStats(sel), v = verdict(st);
+  const max = Math.max.apply(null, WEEKS.map(w=>WEEK_TOTALS[w]));
+  document.getElementById('weekSeg').innerHTML = WEEKS.map(w=>
+    '<button class="'+(w===sel?'on':'')+'" onclick="setWeek(\''+w+'\')">'+
+      DOW[0]+' '+d(w).getUTCDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d(w).getUTCMonth()]+
+    '</button>').join('');
+  document.getElementById('blockSel').value = block;
+
+  const bars = WEEKS.map(w=>{
+    const h = Math.max(3, Math.round(WEEK_TOTALS[w]/max*72));
+    return '<button class="bar'+(w===sel?' on':'')+'" onclick="setWeek(\''+w+'\')" title="'+fmt(WEEK_TOTALS[w])+' au">'+
+      '<i style="height:'+h+'px"></i><u>'+d(w).getUTCDate()+'/'+(d(w).getUTCMonth()+1)+'</u></button>';
+  }).join('');
+
+  const sess = st.sessions.map(s=>{
+    const c = sessionVsUsual(s);
+    const cmp = c===null
+      ? '<span class="s-cmp" style="color:var(--ink-3)">first few '+esc(s.sport).toLowerCase()+' sessions — nothing to compare yet</span>'
+      : '<span class="s-cmp" style="color:'+(Math.abs(c.pct)<8?'var(--ink-3)':(c.pct>0?'var(--gold)':'var(--ink-3)'))+'">'+
+        (c.pct>0?'+':'')+c.pct+'% on your usual '+esc(s.sport).toLowerCase()+' session</span>';
+    return '<div class="s-row"><span class="s-day">'+DOW[(d(s.date).getUTCDay()+6)%7]+'</span>'+
+      '<span class="s-main"><span class="s-name">'+esc(s.name)+'</span>'+
+      '<span class="s-sub">'+esc(s.sport)+' · '+s.dur+' min · RPE '+s.rpe+'</span>'+cmp+'</span>'+
+      '<span class="s-au">'+fmt(s.load)+'<u> au</u></span></div>';
+  }).join('') || '<p style="color:var(--ink-3);font-size:12.5px;padding:10px 0">No sessions logged in this week.</p>';
+
+  const mRow=(k,val,note)=>'<div class="m-row"><span>'+k+(note?'<i>'+note+'</i>':'')+'</span><b>'+val+'</b></div>';
+  const maths = '<div class="maths"><button class="m-head" onclick="toggleMaths()">'+
+      '<b>How this number was worked out</b><span>'+(mathsOpen?'Hide':'Show')+'</span></button>'+
+      '<div class="m-body'+(mathsOpen?' open':'')+'">'+
+      mRow('This week', fmt(st.load)+' au', st.sessions.length+' session'+(st.sessions.length===1?'':'s')+' · RPE × minutes, added up')+
+      mRow('Last week', st.prev?fmt(st.prev)+' au':'—', st.prevWs?'week of '+st.prevWs:'nothing before this')+
+      mRow('Your usual', st.usual?fmt(st.usual)+' au':'—',
+           st.usualN?('mean of the last '+st.usualN+' week'+(st.usualN===1?'':'s')+' you trained — blank weeks skipped'):'not enough weeks yet')+
+      mRow('This week ÷ usual', st.acwr?st.acwr.toFixed(2):'—',
+           st.acwr?'0.8 to 1.3 is the comfortable range; over 1.5 is the one to watch':'needs three weeks of history')+
+      mRow('Sameness', st.monotony?st.monotony.toFixed(1):'—',
+           'daily load ÷ how much it varied. Over about 2.2 means every day looked alike')+
+      mRow('Hardest day', st.days.length?fmt(Math.max.apply(null,st.days))+' au':'—','the biggest single day this week')+
+      '<p class="m-note">Load is <strong>RPE × minutes</strong> — session-RPE. There is no distance or pace '+
+      'in it and there does not need to be: your effort rating already contains the pace, the hills and how you slept. '+
+      (st.complete?'':'<br><br>This week predates full session records, so only the weekly total is exact.')+
+      '</p></div></div>';
+
+  document.getElementById('app').innerHTML =
+    '<div class="rise"><div class="top">'+
+      '<p class="top-cap">Week of '+st.ws+'</p>'+
+      '<div class="top-row"><span class="au">'+fmt(st.load)+'<u>au</u></span>'+
+      '<span class="delta" style="color:'+(st.vsPrev===null?'var(--ink-3)':(st.vsPrev>0?'var(--gold)':'var(--ink-2)'))+'">'+
+        (st.vsPrev===null?'—':(st.vsPrev>0?'+':'')+st.vsPrev+'%')+
+        '<small>on last week</small></span></div></div>'+
+      '<div class="verdict"><span class="flag" style="color:'+TONE[v.tone]+'">'+v.flag+'</span>'+
+      '<h2>'+v.h+'</h2><p>'+v.p+'</p>'+
+      '<div class="act"><b>Do this</b><span>'+v.act+'</span></div></div>'+
+    '</div>'+
+    '<div class="rise" style="animation-delay:.07s"><div class="bars">'+bars+'</div>'+
+      '<p class="bars-cap">Your term, week by week</p>'+maths+'</div>'+
+    '<div class="rise" style="animation-delay:.12s"><div class="grp"><b>The sessions</b><i></i></div>'+sess+'</div>';
+}
+function setWeek(w){ sel=w; render(); }
+function setBlock(b){ block=b; render(); }
+function toggleMaths(){ mathsOpen=!mathsOpen; render(); }
+render();
+</script>
+</body>
+</html>
