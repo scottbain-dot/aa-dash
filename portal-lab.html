@@ -991,10 +991,6 @@
   .duration-input:focus { outline: none; border-color: var(--burgundy); }
   .duration-suffix { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--ink-mute); }
 
-  .load-preview { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--cream); border-radius: 8px; }
-  .load-preview-label { font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mute); }
-  .load-preview-value { font-family: 'Fraunces', serif; font-size: 22px; color: var(--burgundy); }
-  .load-preview-value em { font-style: italic; font-size: 12px; color: var(--ink-mute); }
 
   .pb-toggle { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--cream); border-radius: 10px; cursor: pointer; transition: background 0.15s; }
   .pb-toggle:hover { background: var(--line-soft); }
@@ -1772,16 +1768,11 @@
       </div>
     </div>
 
-    <div class="sheet-section" id="loadSection">
-      <p class="sheet-section-label">
-        Load
-        <i class="ti ti-info-circle info-i" title="Load = effort × duration. Used to track training stress over time."></i>
-      </p>
-      <div class="load-preview">
-        <span class="load-preview-label">This session</span>
-        <span class="load-preview-value" id="load-preview">525 <em>au</em></span>
-      </div>
-    </div>
+    <!-- The load figure (effort × minutes) used to sit here as a read-only
+         "525 au" field. It is backend arithmetic: the athlete cannot change it,
+         has no use for it, and an arbitrary unit at the moment of logging only
+         makes logging feel like data entry. It is still computed and stored —
+         it just isn't shown. -->
 
     <div class="sheet-section" id="pbSection">
       <p class="sheet-section-label">Personal best</p>
@@ -1904,13 +1895,11 @@
       <input class="duration-input plan-field" id="blockFocus" placeholder="e.g. hold technique under fatigue">
     </div>
 
-    <div class="sheet-section">
-      <p class="sheet-section-label">Weekly load target · optional</p>
-      <div class="duration-row">
-        <input type="text" inputmode="numeric" class="duration-input" id="blockLoad" placeholder="e.g. 1350">
-        <span class="duration-suffix">au / week</span>
-      </div>
-    </div>
+    <!-- "Weekly load target · au/week" used to sit here. Nothing ever read the
+         value, and asking a fifteen year old to name a number of arbitrary
+         units per week is a question nobody can answer — a coach can't either.
+         The Load tab now does this job properly, in weeks and sessions, from
+         what the athlete has actually been doing. -->
 
     <div class="sheet-section">
       <p class="sheet-section-label">Note · optional</p>
@@ -2334,7 +2323,7 @@
     <div id="qlogInput">
       <p class="ql-help">Type or paste anything — one session or many. Claude turns it into draft cards you can check and edit. Nothing is saved until you confirm.</p>
       <textarea class="note-input" id="qlogText" style="min-height:150px;"
-        placeholder="Tue: 5km easy run, 30min, felt good, RPE 5. Wed: strength session, 45min, RPE 7."></textarea>
+        placeholder="Tue: 5km easy run, 30min, felt good. Wed: strength session, 45min, really hard."></textarea>
       <div class="ql-error" id="qlogError" style="display:none;"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="qlogErrorText"></span></div>
     </div>
 
@@ -2577,6 +2566,7 @@
   .grit-part:first-child { border-top: none; }
   .grit-part-l { font: 600 13px 'Inter', sans-serif; color: var(--ink); }
   .grit-part-v { font: 500 12.5px 'Inter', sans-serif; color: var(--ink-mute); text-align: right; }
+  .grit-window { font: 400 11.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 12px 0 0; }
   .grit-pending { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-mute); margin: 4px 0 0; line-height: 1.5; }
   .cv-grit-bar { height: 7px; border-radius: 999px; background: var(--line-soft); overflow: hidden; margin: 10px auto 0; max-width: 260px; }
   .cv-grit-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #93b58d, #5a8757); }
@@ -3795,7 +3785,7 @@
   .legend-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
   .load-chart-legend { display: inline-flex; align-items: center; gap: 5px; text-transform: none; letter-spacing: 0; }
   .load-chart-legend .legend-swatch { width: 10px; height: 10px; }
-  .load-acwr-key { display: inline-flex; align-items: center; gap: 5px; text-transform: none; letter-spacing: 0; }
+  .load-chart-foot { font: italic 400 12px 'Fraunces', serif; color: var(--ink-mute); margin: 10px 0 0; }
   .load-bar { cursor: pointer; transition: opacity 0.12s; }
   .load-bar:hover { opacity: 0.78; }
   .load-empty-note {
@@ -4173,19 +4163,6 @@
     background: rgba(135,75,70,0.08); color: var(--burgundy); border-radius: 12px;
     padding: 10px 14px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
   }
-  /* Coach view — detailed load, collapsed by default */
-  .coach-load { background: var(--surface); border: 1px solid var(--card-line); border-radius: 16px; overflow: hidden; }
-  .coach-load > summary {
-    list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    padding: 14px 16px; font-family: 'Inter', sans-serif;
-  }
-  .coach-load > summary::-webkit-details-marker { display: none; }
-  .coach-load-title { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--burgundy); }
-  .coach-load-chev { color: var(--ink-mute); font-size: 16px; transition: transform 0.2s; }
-  .coach-load[open] .coach-load-chev { transform: rotate(180deg); }
-  .coach-load-body { padding: 0 16px 16px; }
-  .coach-load-note { font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.55; color: var(--ink-mute); margin: 0 0 10px; background: var(--cream); border-radius: 10px; padding: 10px 12px; }
-  .coach-load-detail { font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; color: var(--ink); margin: 0 0 12px; }
 
   /* ============================
      BOOK TAB — coach check-ins + month calendar (mockup-style)
@@ -6863,6 +6840,19 @@
     { key:'ok',   label:'Moderate', short:'OK',   rpe:6 },
     { key:'hard', label:'Hard',     short:'Hard', rpe:8 }
   ];
+  // A logged session used to read "45min · RPE 7 · 315au". Two numbers an
+  // athlete can picture and two they can't. The effort rating is theirs, so it
+  // stays — as the word they'd use out loud, not the figure. The load is
+  // arithmetic and doesn't belong on the row at all.
+  function effortWord(rpe){
+    const n = +rpe;
+    if(!n) return '';
+    if(n <= 3) return 'easy';
+    if(n <= 5) return 'steady';
+    if(n <= 7) return 'solid';
+    if(n <= 8) return 'hard';
+    return 'all out';
+  }
   function quickLogRowHTML(s, compact){
     if(!s || isLogged(s)) return '';
     return '<div class="qtap'+(compact?' qtap-compact':'')+'">'+
@@ -7150,7 +7140,8 @@
     const doneFlag = isLogged(s) ? ' <span class="done-flag"><span class="done-flag-ico"><i class="ti ti-check" aria-hidden="true"></i></span>'+doneWord(s)+'</span>' : '';
     let meta;
     if(s.status==='missed') meta = 'Missed' + (s.note? ' · '+esc(s.note) : '');
-    else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au'+resultBit;
+    else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min'+
+      (effortWord(s.rpe) ? ' · '+effortWord(s.rpe) : '')+resultBit;
     else meta = esc(s.sport)+' · '+(s.plannedDuration||0)+'min planned'+resultBit;
     const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
     // LAB: read-only "Last week: …" reference on a session carried forward via Copy last week.
@@ -7223,7 +7214,8 @@
     const planned = ds.filter(s=>s.status==='planned');
     const missed = ds.filter(s=>s.status==='missed');
     const parts = [];
-    if(done.length){ const au = done.reduce((a,s)=>a+(s.load||0),0); parts.push(done.length+' done'+(au?' · '+au+'au':'')); }
+    if(done.length){ const mins = done.reduce((a,s)=>a+(s.duration||s.plannedDuration||0),0);
+      parts.push(done.length+' done'+(mins?' · '+(mins>=60 ? Math.floor(mins/60)+'h'+(mins%60?' '+(mins%60)+'m':'') : mins+'min'):'')); }
     if(planned.length) parts.push(planned.length+' planned');
     if(missed.length) parts.push(missed.length+' missed');
     return parts.join(' · ');
@@ -7237,7 +7229,8 @@
     else cls += isToday ? 'session-planned-today' : 'session-planned';
     let meta;
     if(s.status==='missed'){ meta = 'Missed' + (s.note? ' · '+esc(s.note):''); }
-    else if(isLogged(s)){ meta = '<strong>'+esc(s.sport)+'</strong> · '+(s.duration||s.plannedDuration||0)+'min · RPE '+(s.rpe||'—')+' · '+(s.load||0)+'au'; }
+    else if(isLogged(s)){ meta = '<strong>'+esc(s.sport)+'</strong> · '+(s.duration||s.plannedDuration||0)+'min'+
+      (effortWord(s.rpe) ? ' · '+effortWord(s.rpe) : ''); }
     else { meta = '<strong>'+esc(s.sport)+'</strong> · '+(s.plannedDuration||0)+'min planned'; }
     const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
     const dotCls = s.intensity ? (' '+s.intensity) : '';
@@ -7455,7 +7448,7 @@
   function applyDateAwareSheet(){
     const planning = (sheetMode === 'plan') || isFutureSheetDate();
     const hide = planning ? 'none' : '';
-    ['effortSection','durationSection','loadSection','pbSection','readinessSection','noteSection'].forEach(id => {
+    ['effortSection','durationSection','pbSection','readinessSection','noteSection'].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.style.display = hide;
     });
@@ -8296,14 +8289,10 @@
   }
   window.editWorkout = editWorkout;
 
-  // RPE + duration live load
-  function updateLoad(){
-    const sel = document.querySelector('#rpe-row .rpe-pip.selected');
-    const dur = parseInt(document.getElementById('duration-input').value,10) || 0;
-    const el = document.getElementById('load-preview');
-    if(!sel){ el.innerHTML = '<em>rate your effort</em>'; return; }
-    el.innerHTML = (parseInt(sel.dataset.val,10)*dur) + ' <em>au</em>';
-  }
+  // Load (effort × minutes) is still computed on save and still drives the Load
+  // tab — it just has no on-screen field any more, so there is nothing to keep
+  // live as the athlete types. Kept as a no-op so every call site stays valid.
+  function updateLoad(){}
   // Log a PB tied to a specific exercise + result (opens the proper PB form),
   // carrying over the session's sport and date — not the session name.
   function logPBFromSession(){
@@ -10089,7 +10078,7 @@
         field('Date', '<input type="date" id="ql-date-'+i+'" value="'+esc(d.date)+'">')+
         field('Sport', '<select id="ql-sport-'+i+'">'+sportOptions(d.sport)+'</select>')+
         field('Duration · min', '<input type="text" inputmode="numeric" id="ql-dur-'+i+'" value="'+(d.duration==null?'':d.duration)+'" placeholder="—" oninput="qlogReval('+i+')">')+
-        field('Effort · RPE 1–10', '<input type="text" inputmode="numeric" id="ql-rpe-'+i+'" value="'+(d.rpe==null?'':d.rpe)+'" placeholder="—" oninput="qlogReval('+i+')">')+
+        field('Effort · 1 easy → 10 max', '<input type="text" inputmode="numeric" id="ql-rpe-'+i+'" value="'+(d.rpe==null?'':d.rpe)+'" placeholder="—" oninput="qlogReval('+i+')">')+
         field('Intensity', '<select id="ql-int-'+i+'">'+intensityOptions(d.intensity)+'</select>', true)+
         field('Target', '<input type="text" id="ql-target-'+i+'" value="'+esc(d.target)+'" placeholder="Pace · HR · weights">', true)+
         field('Note', '<textarea id="ql-note-'+i+'" placeholder="How did it feel?">'+esc(d.note)+'</textarea>', true)+
@@ -10994,7 +10983,6 @@
     document.getElementById('stateLabel').textContent = isSplit ? 'First half' : 'Training state';
     document.querySelectorAll('#statePicker2 .state-pill').forEach(p => p.classList.toggle('sel', p.dataset.state===(existing.state2||'')));
     document.getElementById('blockFocus').value = existing.focus || '';
-    document.getElementById('blockLoad').value = existing.loadTarget || '';
     document.getElementById('blockNote').value = existing.note || '';
     blockComponents = (existing.components || []).slice();
     renderCompPicker();
@@ -11067,7 +11055,9 @@
       state2: (splitOn && sel2) ? sel2.dataset.state : '',
       focus: val('blockFocus').trim(),
       components: blockComponents.slice(),
-      loadTarget: numOrNull(val('blockLoad')),
+      // loadTarget is no longer collected. Any value already stored on a month
+      // is preserved below rather than being blanked on the next save.
+      loadTarget: (blockCtx.block && blockCtx.block.loadTarget) || null,
       note: val('blockNote')
     };
     const sportName = blockCtx.sportName;
@@ -11570,32 +11560,25 @@
       (lines.length ? '<div class="grit-parts">'+lines.map(l =>
         '<div class="grit-part"><span class="grit-part-l">'+esc(l[0])+'</span>'+
         '<span class="grit-part-v">'+esc(l[1])+'</span></div>').join('')+'</div>' : '')+
-      '<details class="coach-load">'+
-        '<summary><span class="coach-load-title"><i class="ti ti-chart-histogram" aria-hidden="true"></i> Coach view · the number</span>'+
-          '<i class="ti ti-chevron-down coach-load-chev" aria-hidden="true"></i></summary>'+
-        '<div class="coach-load-body">'+
-          '<p class="coach-load-detail">Grit '+g.score+' / 100 · '+esc(band)+
-            ' · over the last '+(g.windowWeeks||8)+' weeks'+
-            ((g.weeksFlagged) ? ' · '+g.weeksFlagged+' week'+(g.weeksFlagged===1?'':'s')+' excluded (injured/ill)' : '')+'</p>'+
-          '<p class="coach-load-note">Weighted: training '+GRIT_W.adherence+'%, check-ins '+GRIT_W.checkins+
-            '%, training through quiet months '+GRIT_W.hard+'%. Any part with no data is left out and the rest re-weighted.</p>'+
-        '</div>'+
-      '</details>'+
+      // The /100, the weighting table and the "excluded weeks" line used to be
+      // here behind a "Coach view" disclosure. A score out of 100 the athlete
+      // can't influence directly, plus the formula that produced it, is the
+      // opposite of the band and the three counts above — which say the same
+      // thing in things they did. The band IS the read; the parts ARE the
+      // workings. There is nothing left worth hiding behind a toggle.
+      '<p class="grit-window">Last '+(g.windowWeeks||8)+' weeks'+
+        ((g.weeksFlagged) ? ' · '+g.weeksFlagged+' week'+(g.weeksFlagged===1?'':'s')+' off for injury or illness, not counted against you' : '')+
+      '</p>'+
     '</div>';
   }
-  const GRIT_W = { adherence: 60, checkins: 25, hard: 15 };   // mirrors GRIT_WEIGHTS in the script
+  // (The 60/25/15 weighting that produces the Grit score lives in the Apps
+  // Script, where it belongs. It used to be mirrored here only to print it at
+  // the athlete.)
 
   function renderLoad(){
     const view = document.getElementById('view-load');
     const read = loadRead();
     const phase = (currentPhaseInfo()||{}).phase || '';
-    // Coach-view detail: the raw numbers, kept for the teacher, out of the student's way.
-    const dayBit = read.partial ? ' (day '+read.days+' of 7, on pace ~'+read.pace+' au)' : '';
-    const coachDetail = read.enough
-      ? ('This week ~'+read.thisWeek+' au'+dayBit+' · usual ~'+read.usual+' au'+
-         (read.partial ? ' (~'+read.usualByNow+' au by now)' : '')+
-         ' · ACWR '+(read.acwr!=null?read.acwr.toFixed(2):'—'))
-      : ((read.thisWeek||0)+' au this week · '+read.weeksLogged+' week'+(read.weeksLogged===1?'':'s')+' logged');
     view.innerHTML =
       '<div class="card-stack">'+
         // Student-facing: the plain-language read, no jargon.
@@ -11606,21 +11589,22 @@
         weekMixCard()+
         // How consistently, next to how much.
         gritCard()+
-        // Coach view — the detailed season chart + workload numbers, collapsed by default.
-        '<details class="coach-load">'+
-          '<summary><span class="coach-load-title"><i class="ti ti-chart-histogram" aria-hidden="true"></i> Coach view · detailed load</span><i class="ti ti-chevron-down coach-load-chev" aria-hidden="true"></i></summary>'+
-          '<div class="coach-load-body">'+
-            '<p class="coach-load-note">Load = effort (RPE 1–10) × minutes, in “au”. The line is the acute:chronic workload ratio (this week vs the last month) — around 0.8–1.3 is the steady zone; a spike over 1.5 flags a fast ramp. Needs ~4 consistent weeks to mean much.</p>'+
-            '<p class="coach-load-detail">'+coachDetail+'</p>'+
-            '<p class="load-chart-title">Bars = weekly load · colour = phase'+
-              '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--gold);"></span>💪 Build</span>'+
-              '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--sage);"></span>⚡ Maintain</span>'+
-              '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--burgundy);"></span>🏆 Peak</span>'+
-              '<span class="load-acwr-key"><i class="ti ti-wave-sine" aria-hidden="true"></i> Workload trend</span>'+
-            '</p>'+
-            '<div class="load-chart-scroll">'+loadChartSVG()+'</div>'+
-          '</div>'+
-        '</details>'+
+        // Your term, week by week. The bars stay — a year of your own training
+        // in one strip is the most motivating object on this tab, and it needs
+        // no explaining. What has gone with them is everything that had to be
+        // explained: the au totals, the ACWR overlay and the paragraph defining
+        // acute:chronic. That read belongs to the coach, in admin, not folded
+        // into the student's tab behind a toggle every curious kid will open.
+        '<div class="card">'+
+          '<p class="card-eyebrow">Your year, week by week</p>'+
+          '<p class="load-chart-title">Taller = a bigger week · colour = what that month was for'+
+            '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--gold);"></span>💪 Build</span>'+
+            '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--sage);"></span>⚡ Maintain</span>'+
+            '<span class="load-chart-legend"><span class="legend-swatch" style="background:var(--burgundy);"></span>🏆 Peak</span>'+
+          '</p>'+
+          '<div class="load-chart-scroll">'+loadChartSVG()+'</div>'+
+          '<p class="load-chart-foot">Tap a week to see the sessions in it.</p>'+
+        '</div>'+
       '</div>';
   }
 
@@ -11628,16 +11612,18 @@
     const WEEKS = 44, step = 18, padL = 8, padR = 8, padT = 10, padB = 22, h = 180;
     const start = seasonStartMonday();
     const series = (state.load && state.load.weeks) || [];
-    const loadByWeek = {}; const acwrByWeek = {};
-    series.forEach(w => { loadByWeek[w.weekStart] = w.load; if(w.acwr!=null) acwrByWeek[w.weekStart] = w.acwr; });
+    const loadByWeek = {};
+    series.forEach(w => { loadByWeek[w.weekStart] = w.load; });
     const weeks = [];
-    for(let i=0;i<WEEKS;i++){ const iso = addDays(start, i*7); weeks.push({ iso: iso, load: loadByWeek[iso]||0, acwr: acwrByWeek[iso] }); }
+    for(let i=0;i<WEEKS;i++){ const iso = addDays(start, i*7); weeks.push({ iso: iso, load: loadByWeek[iso]||0 }); }
     const maxLoad = Math.max(100, ...weeks.map(w=>w.load));
     const width = padL + padR + WEEKS*step;
     const barW = step - 6;
     const chartH = h - padT - padB;
-    const yFor = v => padT + chartH * (1 - Math.min(v, maxLoad)/maxLoad);
     const curMon = fmtISO(mondayOf(new Date()));
+    // A week as a share of the athlete's biggest week. Gives the bar a hover
+    // label that means something without naming a unit.
+    const pctOfBest = v => maxLoad ? Math.round(v/maxLoad*100) : 0;
 
     let bars = '', ticks = '', lastMonth = '';
     weeks.forEach((w, i) => {
@@ -11647,28 +11633,25 @@
       const isCur = w.iso===curMon;
       if(bh>0){
         bars += '<rect class="load-bar" x="'+x+'" y="'+(padT+chartH-bh)+'" width="'+barW+'" height="'+bh+'" rx="2" fill="'+colour+'"'+
-          (isCur?' stroke="var(--ink)" stroke-width="1.5"':'')+' onclick="drillWeek(\''+w.iso+'\')"><title>'+fmtNice(w.iso)+' · '+w.load+'au</title></rect>';
+          (isCur?' stroke="var(--ink)" stroke-width="1.5"':'')+' onclick="drillWeek(\''+w.iso+'\')"><title>'+fmtNice(w.iso)+' · '+pctOfBest(w.load)+'% of your biggest week</title></rect>';
       } else {
-        bars += '<rect class="load-bar" x="'+x+'" y="'+(padT+chartH-3)+'" width="'+barW+'" height="3" rx="1.5" fill="var(--line-soft)" onclick="drillWeek(\''+w.iso+'\')"><title>'+fmtNice(w.iso)+' · no load</title></rect>';
+        bars += '<rect class="load-bar" x="'+x+'" y="'+(padT+chartH-3)+'" width="'+barW+'" height="3" rx="1.5" fill="var(--line-soft)" onclick="drillWeek(\''+w.iso+'\')"><title>'+fmtNice(w.iso)+' · nothing logged</title></rect>';
       }
       const mon = monShort(w.iso);
       if(mon!==lastMonth){ ticks += '<text x="'+x+'" y="'+(h-6)+'" font-family="Inter,sans-serif" font-size="9" fill="#7a6a60">'+mon+'</text>'; lastMonth = mon; }
     });
 
-    // ACWR overlay: map [0,2] across chart height; reference line at 1.0
-    const acwrY = v => padT + chartH * (1 - Math.min(v,2)/2);
-    let line = '', refY = acwrY(1).toFixed(1);
-    const pts = weeks.map((w,i)=> w.acwr!=null ? (padL + i*step + barW/2)+','+acwrY(w.acwr).toFixed(1) : null).filter(Boolean);
-    let refLine = '<line x1="'+padL+'" y1="'+refY+'" x2="'+(width-padR)+'" y2="'+refY+'" stroke="var(--ink-mute)" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"></line>';
-    if(pts.length>1){ line = '<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--burgundy)" stroke-width="2" stroke-linejoin="round"></polyline>'; }
-    const dots = weeks.map((w,i)=> w.acwr!=null ? '<circle cx="'+(padL+i*step+barW/2)+'" cy="'+acwrY(w.acwr).toFixed(1)+'" r="2.5" fill="var(--burgundy)"></circle>' : '').join('');
-
+    // The acute:chronic ratio used to be drawn over these bars as a second
+    // series with its own invisible axis — two scales on one chart, one of them
+    // unlabelled, explained by a paragraph about injury risk. It told the
+    // athlete nothing the verdict sentence at the top doesn't say better. The
+    // ratio is still computed; the coach can have it in admin.
     const hasData = series.some(w=>w.load>0);
     if(!hasData){
-      return '<div class="load-empty-note">No load logged yet. Log sessions in the Week tab and your weekly load builds here.</div>';
+      return '<div class="load-empty-note">Nothing logged yet. Log a session in My Program and your year starts filling in here.</div>';
     }
     return '<svg width="'+width+'" height="'+h+'" viewBox="0 0 '+width+' '+h+'" style="display:block;">'+
-      refLine + bars + line + dots + ticks + '</svg>';
+      bars + ticks + '</svg>';
   }
 
   // Weeks already fetched this session, keyed by weekStart. Apps Script round
@@ -11763,7 +11746,7 @@
   function lastWeekRefLine(prev){
     const parts = [];
     if(prev.target != null && String(prev.target).trim()) parts.push(String(prev.target).trim());
-    if(prev.rpe != null && prev.rpe !== '') parts.push('RPE '+prev.rpe);
+    if(prev.rpe != null && prev.rpe !== '' && effortWord(prev.rpe)) parts.push(effortWord(prev.rpe));
     if(prev.duration != null && prev.duration !== '') parts.push(prev.duration+' min');
     return parts.length ? 'Last week: '+parts.join(' · ') : '';
   }
