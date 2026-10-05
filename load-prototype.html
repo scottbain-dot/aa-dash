@@ -58,6 +58,15 @@
   /* ---------- the one sentence ---------- */
   .top{padding-bottom:16px;border-bottom:1px solid var(--hair)}
   .top-cap{font:700 8.5px 'Inter';letter-spacing:.24em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px}
+  .top-sub{font:500 12px 'Inter';color:var(--ink-2);margin:12px 0 0}
+  .top-sub b{color:var(--ink);font-weight:700}
+  .fchip{display:inline-block;font:700 9px 'Inter';letter-spacing:.06em;text-transform:uppercase;
+         background:rgba(245,239,233,.07);border:1px solid var(--hair);border-radius:5px;
+         padding:2px 6px;margin-top:4px;color:var(--ink-2)}
+  .fbar{display:flex;height:9px;border-radius:5px;overflow:hidden;margin:10px 0 9px;background:rgba(245,239,233,.07)}
+  .fbar i{display:block}
+  .fleg{display:flex;flex-wrap:wrap;gap:10px;font:600 10.5px 'Inter';color:var(--ink-3)}
+  .fleg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;font-style:normal}
   .top-row{display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
   .au{font-family:'Barlow Condensed',sans-serif;font-size:66px;font-weight:800;line-height:.82;
       background:linear-gradient(170deg,var(--gold-s),var(--gold) 55%,#9c7d24);
@@ -139,6 +148,12 @@
       <option value="build">Build</option><option value="maintain">Maintain</option>
       <option value="peak">Peak</option><option value="recover">Recover</option>
     </select>
+    <span>building</span>
+    <select id="focusSel" onchange="setFocus(this.value)">
+      <option value="strength">Strength</option><option value="endurance">Endurance</option>
+      <option value="speed">Speed</option><option value="power">Power</option>
+      <option value="mds">Agility</option><option value="">nothing set</option>
+    </select>
     <span style="margin-left:auto">pick a week to see what it would have said</span>
   </div>
   <div id="app"></div>
@@ -163,7 +178,49 @@ const SESSIONS = [
   { date:'2026-09-26', sport:'Strength',     name:'Pull (Down)',       rpe:6, dur:90 },
   { date:'2026-10-01', sport:'Strength',     name:'Push (Up) + Bike',  rpe:7, dur:30 }
 ];
-SESSIONS.forEach(s => { s.load = s.rpe * s.dur; });
+/* ---- what the session was FOR -------------------------------------------
+   The same seven qualities the year map and the card already use, so a block
+   that says "building strength" can be checked against what was actually done.
+   The tag is DERIVED from the sport and the session name, not typed: the
+   athlete inherits it from their program and only ever corrects it. Asking a
+   fifteen year old to classify their own training is how you stop them logging. */
+const FOCI = {
+  strength:'Strength', power:'Power', speed:'Speed', mds:'Agility',
+  endurance:'Endurance', mobility:'Mobility', skill:'Skill'
+};
+function deriveFocus(sport, name){
+  const t = ((sport||'') + ' ' + (name||'')).toLowerCase();
+  if(/mobility|stretch|yoga|flexib/.test(t))                    return 'mobility';
+  if(/sprint|speed|accel|flying|40m/.test(t))                   return 'speed';
+  if(/agility|5-10-5|cut|change of direction|mds/.test(t))      return 'mds';
+  if(/jump|throw|plyo|power|ballistic/.test(t))                 return 'power';
+  if(/strength|lift|squat|hinge|push|pull|press|lunge|gym/.test(t)) return 'strength';
+  if(/vo2|threshold|tempo|interval|base|z2|run|bike|swim|row|condition|engine|aerobic/.test(t)) return 'endurance';
+  if(/skill|tactic|game|match|practice|technique/.test(t))      return 'skill';
+  return '';
+}
+SESSIONS.forEach(s => { s.load = s.rpe * s.dur; s.focus = deriveFocus(s.sport, s.name); });
+
+/* A session's worth, in sessions. The median of everything they have logged, so
+   "two sessions short" means two of THEIR sessions, not an abstraction. */
+function medianSession(){
+  const v = SESSIONS.map(x=>x.load).sort((a,b)=>a-b);
+  if(!v.length) return 0;
+  const m = Math.floor(v.length/2);
+  return v.length%2 ? v[m] : (v[m-1]+v[m])/2;
+}
+const hhmm = mins => { const h=Math.floor(mins/60), m=Math.round(mins%60);
+  return h ? (h+'h'+(m?' '+m+'m':'')) : m+' min'; };
+// Turn a gap in load into the thing you would actually do about it.
+function inSessions(gapAu){
+  const med = medianSession();
+  if(!med) return '';
+  const n = gapAu/med;
+  if(n < 0.6) return 'a short session';
+  if(n < 1.4) return 'one more session';
+  if(n < 2.4) return 'two more sessions';
+  return Math.round(n)+' more sessions';
+}
 /* The two August/September weeks are padded to the real weekly totals the server
    reports (780 and 600) — those weeks were logged before every session carried a
    full record, and inventing sessions to make them add up would be worse than
@@ -172,7 +229,7 @@ const WEEK_TOTALS = { '2026-08-24':780, '2026-09-07':600, '2026-09-14':1400, '20
 const WEEKS = Object.keys(WEEK_TOTALS).sort();
 const COMPLETE_FROM = '2026-09-14';
 
-let sel = '2026-09-14', block = 'build', mathsOpen = false;
+let sel = '2026-09-14', block = 'build', blockFocus = 'strength', mathsOpen = false;
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const d = iso => new Date(iso+'T00:00:00Z');
 const addD = (iso,n) => { const x=d(iso); x.setUTCDate(x.getUTCDate()+n); return x.toISOString().slice(0,10); };
@@ -263,7 +320,7 @@ function verdict(st){
     return { tone:'risk', flag:'Big jump', h:'That is a lot more than you have been doing.',
       p:'Up <b>'+up+'%</b> on last week'+(a?', and '+Math.round((a-1)*100)+'% above your usual':'')+
         '. Jumping more than about half again is where people tend to pick up niggles — not a certainty, just the pattern.'+hedge,
-      act:'Next week, repeat this rather than beating it. The gain from a week like this lands while you recover, not while you keep adding.' };
+      act:'Next week, repeat this rather than beating it — same sessions, same lengths. The gain from a week like this lands while you recover, not while you keep adding.' };
 
   if(up !== null && up > 40)
     return { tone:'warn', flag:'Sharp rise', h:'A big step up on last week.',
@@ -277,7 +334,7 @@ function verdict(st){
 
   if(thin)
     return { tone:'none', flag:'Still learning your normal', h:(up>0?'Up ':'Down ')+Math.abs(up)+'% on last week.',
-      p:'That is '+fmt(st.load)+' au against '+fmt(st.prev)+' last week. I need about three weeks of logging before '+
+      p:'That is '+st.sessions.length+' session'+(st.sessions.length===1?'':'s')+' against last week. I need about three weeks of logging before '+
         'I can tell you what is normal <em>for you</em> rather than just what changed.',
       act:'Keep logging. One more week and the comparisons get real.' };
 
@@ -285,13 +342,13 @@ function verdict(st){
     return { tone:'warn', flag:'Under your usual', h:'A lighter week than a build block wants.',
       p:'You did <b>'+Math.round((1-a)*100)+'% less</b> than your usual '+fmt(st.usual)+' au, and you are in a build block — '+
         'the stretch where the work is meant to be going up.',
-      act:'Aim for about '+fmt(Math.round(st.usual*1.05))+' au next week. One extra session, or twenty minutes on two of them, gets you there.' };
+      act:'Next week, '+inSessions(st.usual*1.05 - st.load)+' than this week gets you back where a build block wants you.' };
 
   if(a !== null && a < 0.7)
     return { tone:'ok', flag:'Lighter week', h:'A lighter week than usual.',
       p:'Down to <b>'+Math.round(a*100)+'%</b> of your normal. In a '+BLOCK_WORD[block]+' block that is often exactly right — '+
         'worth knowing it happened rather than finding out in three weeks.',
-      act:'If that was planned, nothing to do. If it was not, '+fmt(st.usual)+' au is your normal week.' };
+      act:'If that was planned, nothing to do. If it was not, '+inSessions(st.usual - st.load)+' puts you back on your normal.' };
 
   // The case that makes the whole thing worth building: a big move against last
   // week that is not a real move at all, because last week was the odd one.
@@ -314,6 +371,47 @@ function verdict(st){
 const TONE = { risk:'var(--risk)', warn:'var(--warn)', ok:'var(--ok)', none:'var(--ink-3)' };
 
 /* ===================== render ===================== */
+const FOCUS_COL = { strength:'#D4AF37', endurance:'#7fae79', speed:'#cf7158',
+                    power:'#b98ad6', mds:'#5fa8c7', mobility:'#c9a2a2', skill:'#9aa77f', '':'#4a423c' };
+/* The plan has always said one thing and the training another, and nothing has
+   ever put the two side by side. Three weeks is the window — one week is noise,
+   a whole block is too late to do anything about. */
+function focusCheck(){
+  const weeks = WEEKS.filter(w => w <= sel).slice(-3);
+  const inWin = SESSIONS.filter(x => weeks.some(w => x.date >= w && x.date <= addD(w,6)));
+  const byFocus = {};
+  inWin.forEach(x => { const k=x.focus||''; byFocus[k] = (byFocus[k]||0) + x.load; });
+  const total = Object.keys(byFocus).reduce((a,k)=>a+byFocus[k],0);
+  if(!total) return '';
+  const order = Object.keys(byFocus).sort((a,b)=>byFocus[b]-byFocus[a]);
+  const bar = order.map(k=>'<i style="width:'+(byFocus[k]/total*100).toFixed(1)+'%;background:'+FOCUS_COL[k]+'"></i>').join('');
+  const leg = order.map(k=>'<span><i style="background:'+FOCUS_COL[k]+'"></i>'+
+    (k?FOCI[k]:'untagged')+' '+Math.round(byFocus[k]/total*100)+'%</span>').join('');
+  let verdict;
+  if(!blockFocus){
+    verdict = { t:'none', h:'No focus set for this block.',
+      p:'Your sessions have been mostly <b>'+(FOCI[order[0]]||'untagged').toLowerCase()+'</b>. Saying what the block is for '+
+        'is what lets this page tell you whether you are doing it.' };
+  } else {
+    const share = Math.round((byFocus[blockFocus]||0)/total*100);
+    const n = inWin.filter(x=>x.focus===blockFocus).length;
+    if(share >= 40) verdict = { t:'ok', h:'Doing what you said you would.',
+      p:'<b>'+share+'%</b> of your training over three weeks has been '+FOCI[blockFocus].toLowerCase()+
+        ' — '+n+' session'+(n===1?'':'s')+'. That is a block actually building the thing it says it is.' };
+    else if(share >= 20) verdict = { t:'warn', h:'Some of it, not most of it.',
+      p:'Only <b>'+share+'%</b> of three weeks has been '+FOCI[blockFocus].toLowerCase()+'. Most of your work has gone into '+
+        (FOCI[order[0]]||'untagged').toLowerCase()+'. Not wrong — just not the block you wrote down.' };
+    else verdict = { t:'risk', h:'The plan and the training disagree.',
+      p:'You said this block is for '+FOCI[blockFocus].toLowerCase()+', and <b>'+share+'%</b> of the last three weeks has been. '+
+        'Either the sessions change, or the plan should.' };
+  }
+  return '<div class="rise" style="animation-delay:.1s"><div class="grp"><b>What you have been building</b><i></i></div>'+
+    '<span class="flag" style="color:'+TONE[verdict.t]+'">Last three weeks</span>'+
+    '<h2 style="font-family:Fraunces,Georgia,serif;font-size:19px;font-weight:600;margin:4px 0 0">'+verdict.h+'</h2>'+
+    '<p style="font-size:12.5px;color:var(--ink-2);line-height:1.6;margin:7px 0 0">'+verdict.p+'</p>'+
+    '<div class="fbar">'+bar+'</div><div class="fleg">'+leg+'</div></div>';
+}
+
 function render(){
   const st = weekStats(sel), v = verdict(st);
   const max = Math.max.apply(null, WEEKS.map(w=>WEEK_TOTALS[w]));
@@ -322,6 +420,7 @@ function render(){
       DOW[0]+' '+d(w).getUTCDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d(w).getUTCMonth()]+
     '</button>').join('');
   document.getElementById('blockSel').value = block;
+  document.getElementById('focusSel').value = blockFocus;
 
   const bars = WEEKS.map(w=>{
     const h = Math.max(3, Math.round(WEEK_TOTALS[w]/max*72));
@@ -337,7 +436,9 @@ function render(){
         (c.pct>0?'+':'')+c.pct+'% on your usual '+esc(s.sport).toLowerCase()+' session</span>';
     return '<div class="s-row"><span class="s-day">'+DOW[(d(s.date).getUTCDay()+6)%7]+'</span>'+
       '<span class="s-main"><span class="s-name">'+esc(s.name)+'</span>'+
-      '<span class="s-sub">'+esc(s.sport)+' · '+s.dur+' min · RPE '+s.rpe+'</span>'+cmp+'</span>'+
+      '<span class="s-sub">'+esc(s.sport)+' · '+s.dur+' min · RPE '+s.rpe+
+        (s.focus?' <span class="fchip" style="border-color:'+FOCUS_COL[s.focus]+'55;color:'+FOCUS_COL[s.focus]+'">'+FOCI[s.focus]+'</span>':'')+
+      '</span>'+cmp+'</span>'+
       '<span class="s-au">'+fmt(s.load)+'<u> au</u></span></div>';
   }).join('') || '<p style="color:var(--ink-3);font-size:12.5px;padding:10px 0">No sessions logged in this week.</p>';
 
@@ -359,23 +460,34 @@ function render(){
       (st.complete?'':'<br><br>This week predates full session records, so only the weekly total is exact.')+
       '</p></div></div>';
 
+  // The athlete never sees "au". The headline is the comparison — percentages
+  // are intuitive and already carry the intensity — and the size of the week is
+  // given in the two things a fifteen year old can picture: sessions and time.
+  const mins = st.sessions.reduce((a,x)=>a+x.dur,0);
+  const pctUsual = st.acwr ? Math.round(st.acwr*100) : null;
   document.getElementById('app').innerHTML =
     '<div class="rise"><div class="top">'+
       '<p class="top-cap">Week of '+st.ws+'</p>'+
-      '<div class="top-row"><span class="au">'+fmt(st.load)+'<u>au</u></span>'+
+      '<div class="top-row"><span class="au">'+(pctUsual!==null?pctUsual:'—')+'<u>%</u></span>'+
       '<span class="delta" style="color:'+(st.vsPrev===null?'var(--ink-3)':(st.vsPrev>0?'var(--gold)':'var(--ink-2)'))+'">'+
         (st.vsPrev===null?'—':(st.vsPrev>0?'+':'')+st.vsPrev+'%')+
-        '<small>on last week</small></span></div></div>'+
+        '<small>on last week</small></span></div>'+
+      '<p class="top-sub">'+(pctUsual!==null?'of a normal week for you':'no normal yet')+
+        ' · <b>'+st.sessions.length+' session'+(st.sessions.length===1?'':'s')+'</b>'+
+        (mins?' · <b>'+hhmm(mins)+'</b>':'')+'</p>'+
+      '</div>'+
       '<div class="verdict"><span class="flag" style="color:'+TONE[v.tone]+'">'+v.flag+'</span>'+
       '<h2>'+v.h+'</h2><p>'+v.p+'</p>'+
       '<div class="act"><b>Do this</b><span>'+v.act+'</span></div></div>'+
     '</div>'+
     '<div class="rise" style="animation-delay:.07s"><div class="bars">'+bars+'</div>'+
       '<p class="bars-cap">Your term, week by week</p>'+maths+'</div>'+
-    '<div class="rise" style="animation-delay:.12s"><div class="grp"><b>The sessions</b><i></i></div>'+sess+'</div>';
+    focusCheck()+
+    '<div class="rise" style="animation-delay:.14s"><div class="grp"><b>The sessions</b><i></i></div>'+sess+'</div>';
 }
 function setWeek(w){ sel=w; render(); }
 function setBlock(b){ block=b; render(); }
+function setFocus(f){ blockFocus=f; render(); }
 function toggleMaths(){ mathsOpen=!mathsOpen; render(); }
 render();
 </script>
