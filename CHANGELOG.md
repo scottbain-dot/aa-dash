@@ -2,17 +2,24 @@
 
 Newest first.
 
-**How we work:** everything lands on `claude/genericise-portal-lab-r1l098` first and
-is shown as screenshots here before anything goes near `main`. Nothing merges
-until Scott says so. The two sections below are the two states — what students
-have, and what is waiting on a yes.
+**How we work:** everything is built on a branch and shown as screenshots here
+before it goes near `main`. Nothing merges until Scott says so.
+
+Finished work on the real files goes to `main` on its own, so students get it.
+**Prototypes stay on the branch and never reach `main`** — `main` publishes to
+GitHub Pages, so a file on `main` is live on the public internet whether or not
+anything links to it. "Unlinked" is not "unreleased".
+
+The two sections below are the two states — what students have, and what is
+waiting on a yes.
 
 ---
 
 ## On the branch, waiting on a decision
 
-Not merged. Students see none of this. No portal file is touched by any of it —
-these are standalone pages plus this changelog.
+**These files are not on `main` and are not reachable by any student.** They live
+only on `claude/genericise-portal-lab-r1l098`. No portal file is touched by any
+of them — they are standalone pages.
 
 | | |
 |---|---|
@@ -28,6 +35,38 @@ these are standalone pages plus this changelog.
 - Does the Year tab's block expand into the ladder, or do they stay separate?
 - Only the aerobic base is measured. Threshold and top end would each need a test adding.
 - Focus tags are derived from the sport and session name. Should the athlete be able to correct a wrong one, and should `Training_Sessions` get a `Focus` column so the correction sticks?
+
+---
+
+## Going to main — 5 Oct 2026
+
+**No arbitrary units on the student's screen.** "au" is a sports-science unit;
+"aim for 1350 au a week" is an instruction nobody can follow, including a coach.
+Everything below is still computed and still stored — it just isn't shown.
+
+| What | Where |
+|---|---|
+| **The "Weekly load target · au/week" field is gone.** Nothing ever read the value, and it asked a fifteen year old to name a number of arbitrary units per week. Any figure already saved on a month is kept, not blanked. | Year → month sheet |
+| **The read-only "525 au" field is gone** from the log sheet. Backend arithmetic shown as a form field, at the exact moment logging should feel like one tap. | Session sheet |
+| **Logged sessions read "60 min · solid"** instead of "60min · RPE 7 · 315au". The effort rating is the athlete's own, so it stays — as the word they'd say out loud. The day summary now totals minutes, not units. | My Program |
+| **"Coach view · detailed load" is gone** — au totals, the acute:chronic ratio drawn over the bars on an unlabelled second axis, and a paragraph defining ACWR. The verdict sentence above it already says this in English. The ratio is still computed, for admin. | Load |
+| **"Coach view · the number" is gone** from the Grit card — the score out of 100 and the 60/25/15 weighting table. The band is the read and the three counts are the workings; there was nothing left worth hiding behind a toggle. An excluded week now reads "not counted against you". | Load |
+| **The year strip stays**, retitled *"Your year, week by week"* with a plain legend and a hover of "% of your biggest week". A year of your own training in one picture needs no explaining. | Load |
+
+Verified before pushing: identity guard passes, the page parses, and a headless
+pass over My Program / Load / Year finds no "au", "ACWR" or "RPE" anywhere in the
+rendered text, with no page errors.
+
+### Also on this push
+
+- **`SYSTEM-REVIEW-AND-ROADMAP.md` §8** — the abstraction review, and the G9 /
+  G10–12 question closed: **they stay separate.** `index.html`,
+  `strength-portal.html` and `grit-portal.html` are last year's G9 build and are
+  not touched by G10–12 work.
+- **`COMPLETE-APPS-SCRIPT.gs`** — `apLoadMobility()` and `apLoadPsych()` added to
+  the bootstrap return, so the portal can finally see mobility screens and
+  psychology scores. Both skip unscored items rather than counting them as zero.
+  **Needs a paste to take effect** — merging does not deploy it.
 
 ---
 
