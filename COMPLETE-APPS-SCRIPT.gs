@@ -3733,32 +3733,57 @@ function apLoadTesting(ss, athleteId) {
 
 // Per movement pattern: the technique level passed, and the load level tested
 // at that technique. Both are assessed by staff.
+// Pull one pattern's technique and load out of a Strength row.
+function apPatternLevels_(row, pat) {
+  var tech = row ? (parseInt(row[pat + '_Tech'], 10) || 0) : 0;
+  var load = 0;
+  if (row && tech >= 2 && tech <= 5) {
+    load = parseInt(row[pat + '_Str_L' + tech], 10) || 0;
+    // TEMPORARY FALLBACK (see CLAUDE.md) — the live Strength sheet still
+    // carries only the flat legacy {Pattern}_Str column; the _Str_L2..L5
+    // columns do not exist on it yet. Without this the level-specific read
+    // finds nothing and EVERY athlete's load level shows as 0 on the CV,
+    // even where the sheet has a value. Remove alongside the other _Str
+    // fallbacks once the data is migrated.
+    if (!load) load = parseInt(row[pat + '_Str'], 10) || 0;
+  }
+  return { tech: tech, load: load };
+}
+
+// Latest levels per pattern, PLUS the earliest assessment on record.
+//
+// The first row is what makes the Training Age card able to say "up 1.3 since
+// September" instead of only "4.0". Self-referenced progress is the thing the
+// motivational-climate literature actually supports for this age group, and it
+// needs a before as well as an after. firstTech/firstLoad are only populated
+// when there genuinely IS an earlier assessment — a single stamp returns null,
+// so the card shows no delta rather than inventing a +0.
 function apLoadStrengthLevels(ss, athleteId) {
   var out = [];
   try {
     var sheet = ss.getSheetByName('Strength');
     if (!sheet) return out;
     var rows = apReadObjects(sheet);
-    var latest = null;
+    var mine = [];
     for (var i = 0; i < rows.length; i++) {
       if (String(rows[i].Athlete_ID).trim() !== String(athleteId).trim()) continue;
-      if (!latest || apIsoDate_(rows[i].Date) >= apIsoDate_(latest.Date)) latest = rows[i];
+      mine.push(rows[i]);
     }
+    mine.sort(function (a, b) { return apIsoDate_(a.Date) < apIsoDate_(b.Date) ? -1 : 1; });
+    var earliest = mine.length ? mine[0] : null;
+    var latest = mine.length ? mine[mine.length - 1] : null;
+    var hasHistory = mine.length > 1;
     for (var p = 0; p < CV_PATTERNS.length; p++) {
       var pat = CV_PATTERNS[p];
-      var tech = latest ? (parseInt(latest[pat + '_Tech'], 10) || 0) : 0;
-      var load = 0;
-      if (latest && tech >= 2 && tech <= 5) {
-        load = parseInt(latest[pat + '_Str_L' + tech], 10) || 0;
-        // TEMPORARY FALLBACK (see CLAUDE.md) — the live Strength sheet still
-        // carries only the flat legacy {Pattern}_Str column; the _Str_L2..L5
-        // columns do not exist on it yet. Without this the level-specific read
-        // finds nothing and EVERY athlete's load level shows as 0 on the CV,
-        // even where the sheet has a value. Remove alongside the other _Str
-        // fallbacks once the data is migrated.
-        if (!load) load = parseInt(latest[pat + '_Str'], 10) || 0;
-      }
-      out.push({ pattern: pat, tech: tech, load: load, done: tech > 0 });
+      var now = apPatternLevels_(latest, pat);
+      var was = hasHistory ? apPatternLevels_(earliest, pat) : null;
+      out.push({
+        pattern: pat, tech: now.tech, load: now.load, done: now.tech > 0,
+        firstTech: was ? was.tech : null,
+        firstLoad: was ? was.load : null,
+        firstDate: hasHistory ? apIsoDate_(earliest.Date) : '',
+        assessments: mine.length
+      });
     }
   } catch (e) { /* no strength assessment yet */ }
   return out;

@@ -1423,6 +1423,22 @@
   </div>
 </div>
 
+<!-- PERSONAL BEST — spotted from what they just logged, confirmed in one tap.
+     Same shell as the streak celebration so it feels like the same system. -->
+<div class="streak-cel pb-cel" id="pbCelebrate" hidden onclick="closePBCel()">
+  <div class="streak-cel-confetti" id="pbConfetti" aria-hidden="true"></div>
+  <div class="streak-cel-card pb-cel-card" onclick="event.stopPropagation()">
+    <p class="streak-cel-milestone" id="pbCelKicker"><i class="ti ti-trophy" aria-hidden="true"></i> New best</p>
+    <div class="streak-cel-flame" id="pbCelIcon">🏆</div>
+    <h2 class="pb-cel-title" id="pbCelTitle">Back squat</h2>
+    <div class="pb-cel-jump" id="pbCelJump"></div>
+    <p class="streak-cel-sub" id="pbCelSub"></p>
+    <div class="pb-cel-more" id="pbCelMore"></div>
+    <button class="streak-cel-btn" id="pbCelSave" onclick="pbCelConfirm()">Save it <i class="ti ti-check" aria-hidden="true"></i></button>
+    <button class="pb-cel-skip" onclick="closePBCel()">Not this time</button>
+  </div>
+</div>
+
 <!-- BADGE UNLOCK CELEBRATION — a burst when a new achievement is earned -->
 <div class="streak-cel badge-cel" id="badgeCelebrate" hidden onclick="closeBadgeCelebration()">
   <div class="streak-cel-confetti" id="badgeConfetti" aria-hidden="true"></div>
@@ -1597,6 +1613,7 @@
       <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
       <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
       <button class="tab" data-tab="learn" onclick="switchTab('learn')">Level Up</button>
+      <button class="tab" data-tab="age" onclick="switchTab('age')">Training Age</button>
       <button class="tab" data-tab="cv" onclick="switchTab('cv')">CV</button>
     </div>
   </div>
@@ -1628,8 +1645,11 @@
 <!-- ===== LEARN TAB ===== -->
 <div class="tab-view" id="view-learn"></div>
 
-<!-- ===== PBS TAB ===== -->
-<!-- ===== CV TAB — the athletic CV (absorbs PBs + Training Age) ===== -->
+<!-- ===== TRAINING AGE TAB — the card, and the ten attributes behind it ===== -->
+<div class="tab-view" id="view-age"></div>
+
+<!-- ===== CV TAB — the athletic CV (absorbs PBs). Highlights only, by design:
+         the working-out lives on Training Age, the proof lives here. ===== -->
 <div class="tab-view" id="view-cv"></div>
 
 </div><!-- /.content -->
@@ -2541,6 +2561,132 @@
   .cv-head::after { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; border-radius: 50%;
     background: radial-gradient(circle, rgba(212,175,55,0.26), rgba(212,175,55,0) 70%); pointer-events: none; }
   .cv-head-main { position: relative; z-index: 1; min-width: 0; }
+  /* ============================
+     THE CARD — top of the CV tab
+     ============================ */
+  .crd { margin: 0 0 18px; }
+  .crd-face { position: relative; overflow: hidden; border-radius: 22px; padding: 20px 18px 18px;
+    background: radial-gradient(120% 90% at 20% 0%, #3a2f2b 0%, #241d1b 55%, #1b1614 100%);
+    box-shadow: 0 18px 44px -22px rgba(0,0,0,.65), inset 0 1px 0 rgba(245,239,233,.07); }
+  /* A faint diagonal sheen, so the face reads as a physical card rather than a
+     dark rectangle. Purely decorative and kept well under the text. */
+  .crd-grain { position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(118deg, rgba(245,239,233,.07) 0%, rgba(245,239,233,0) 34%, rgba(245,239,233,0) 66%, rgba(245,239,233,.04) 100%); }
+  .crd-top { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .crd-ovr { display: flex; flex-direction: column; line-height: .9; }
+  .crd-ovr b { font: 700 54px 'Barlow Condensed', sans-serif; color: var(--gold); letter-spacing: -.01em; }
+  .crd-ovr span { font: 600 9.5px 'Inter', sans-serif; letter-spacing: .18em; text-transform: uppercase; color: rgba(245,239,233,.42); margin-top: 4px; }
+  .crd-who { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 2px; }
+  .crd-stage { font: 700 11px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: rgba(245,239,233,.5); }
+  .crd-nm { font: 700 23px 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .02em; color: #f5efe9; line-height: 1.05; }
+  .crd-radar { position: relative; display: flex; justify-content: center; margin: 2px 0 4px; }
+  .crd-radar svg { max-width: 100%; height: auto; }
+  .crd-glow { position: absolute; width: 190px; height: 190px; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    background: radial-gradient(circle, rgba(212,175,55,.16) 0%, rgba(212,175,55,0) 70%); pointer-events: none; }
+  .crd-read { position: relative; border-top: 1px solid rgba(245,239,233,.1); padding-top: 14px; }
+  .crd-read h2 { font: 400 21px 'Fraunces', serif; color: #f5efe9; margin: 0 0 6px; line-height: 1.2; }
+  .crd-read p { font: 400 13.5px 'Inter', sans-serif; color: rgba(245,239,233,.62); margin: 0; line-height: 1.55; }
+  .crd-read p em { font-style: normal; color: var(--gold); font-weight: 600; }
+  .crd-prov { display: inline-block; margin-top: 12px; font: 600 9.5px 'Inter', sans-serif; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--gold); border: 1px solid rgba(212,175,55,.34); border-radius: 999px; padding: 5px 11px; }
+  .crd-rail { margin-top: 16px; }
+  .crd-rail-cap { font: 600 9px 'Inter', sans-serif; letter-spacing: .18em; text-transform: uppercase; color: rgba(245,239,233,.32); margin: 0 0 7px; }
+  .crd-rail-track { display: flex; gap: 4px; }
+  .crd-rail-track i { flex: 1; height: 4px; border-radius: 2px; background: rgba(245,239,233,.1); position: relative; overflow: hidden; }
+  .crd-rail-track i.on { background: rgba(212,175,55,.55); }
+  .crd-rail-track i.part::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--p); background: var(--gold); border-radius: 2px; }
+  .crd-rail-l { display: flex; gap: 4px; margin-top: 6px; }
+  .crd-rail-l span, .crd-rail-l b { flex: 1; font: 500 8.5px 'Inter', sans-serif; letter-spacing: .08em;
+    text-transform: uppercase; color: rgba(245,239,233,.26); text-align: center; }
+  .crd-rail-l b { color: var(--gold); font-weight: 700; }
+  /* The stage rail now lives on the pale card at the foot, not on the dark
+     face, so its track and labels need the light-background tones. */
+  .crd-scale .crd-rail-track i { background: var(--line); }
+  .crd-scale .crd-rail-track i.on { background: rgba(212,175,55,.6); }
+  .crd-scale .crd-rail-l span { color: var(--ink-mute); }
+  .crd-scale .crd-rail-l b { color: var(--burgundy); }
+  .crd-ovr b.up { color: var(--green-dark, #16a34a); }
+  .crd-ovr b u { text-decoration: none; font-size: 26px; opacity: .45; }
+
+  .crd-rows { margin-top: 14px; }
+  .crd-grp { display: flex; align-items: center; gap: 10px; margin: 16px 0 6px; }
+  .crd-grp b { font: 700 9.5px 'Inter', sans-serif; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-mute); }
+  .crd-grp i { flex: 1; height: 1px; background: var(--line); }
+  .crd-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 2px;
+    background: none; border: none; border-bottom: 1px solid var(--line-soft); cursor: pointer; text-align: left; }
+  .crd-row.open { border-bottom-color: transparent; }
+  .crd-row-l { flex: 1; min-width: 0; }
+  .crd-row-n { display: block; font: 600 14px 'Inter', sans-serif; color: var(--ink); margin-bottom: 6px; }
+  .crd-track { display: block; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+  .crd-track i { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--burgundy), var(--gold)); transition: width .5s ease; }
+  .crd-row-v { font: 700 21px 'Barlow Condensed', sans-serif; color: var(--ink); white-space: nowrap; }
+  .crd-row-v u { text-decoration: none; font-size: 11px; color: var(--ink-mute); font-weight: 600; }
+  .crd-row.dim .crd-row-n { color: var(--ink-mute); }
+  .crd-row.dim .crd-row-v { color: var(--line-soft); }
+
+  .crd-detail { background: var(--cream); border-radius: 14px; padding: 15px 16px; margin: 0 0 10px; }
+  .crd-d-what { font: 400 13.5px 'Inter', sans-serif; color: var(--ink); margin: 0 0 12px; line-height: 1.55; }
+  .crd-lab { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); margin: 12px 0 5px; }
+  .crd-d-move { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); margin: 0; line-height: 1.55; }
+  .crd-next { display: flex; gap: 10px; align-items: baseline; margin: 12px 0 0; padding: 11px 13px;
+    background: rgba(212,175,55,.13); border: 1px solid rgba(212,175,55,.3); border-radius: 11px; }
+  .crd-next b { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--burgundy); white-space: nowrap; }
+  .crd-next span { font: 500 13px 'Inter', sans-serif; color: var(--ink); line-height: 1.5; }
+  .crd-rels { display: flex; flex-wrap: wrap; gap: 6px; }
+  .crd-rel { font: 500 12px 'Inter', sans-serif; color: var(--ink-soft); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; cursor: pointer; }
+  .crd-rel b { color: var(--burgundy); font-weight: 700; }
+  .crd-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 13px; font: 600 12.5px 'Inter', sans-serif;
+    color: var(--burgundy); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; cursor: pointer; }
+  .crd-src { font: italic 400 11px 'Fraunces', serif; color: var(--ink-mute); margin: 13px 0 0; }
+  /* ---- Personal best celebration ---- */
+  .pb-cel-title { font: 700 30px 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .02em;
+    color: var(--ink); margin: 6px 0 10px; line-height: 1.05; }
+  .pb-cel-jump { display: flex; align-items: baseline; justify-content: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .pb-cel-jump i { color: var(--ink-mute); font-size: 18px; align-self: center; }
+  .pb-cel-was { font: 700 24px 'Barlow Condensed', sans-serif; color: var(--ink-mute); text-decoration: line-through; opacity: .7; }
+  .pb-cel-now { font: 700 44px 'Barlow Condensed', sans-serif; color: var(--gold); line-height: 1; }
+  .pb-cel-more { margin: 12px 0 4px; }
+  .pb-cel-more-l { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 7px; }
+  .pb-cel-chip { display: inline-block; margin: 0 5px 5px 0; padding: 5px 11px; border-radius: 999px;
+    border: 1px solid var(--line); font: 500 12px 'Inter', sans-serif; color: var(--ink-soft); }
+  .pb-cel-chip b { color: var(--burgundy); font-weight: 700; }
+  .pb-cel-skip { display: block; width: 100%; margin-top: 10px; background: none; border: none; cursor: pointer;
+    font: 500 12.5px 'Inter', sans-serif; color: var(--ink-mute); text-decoration: underline; }
+  /* ---- Bests, on the Training Age tab ---- */
+  /* Named pbest-* rather than pb-strip-*: a dead .pb-strip component from an
+     earlier design is still in the stylesheet with a dark background, and the
+     two collided. */
+  .pbest-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .pbest-row::-webkit-scrollbar { display: none; }
+  .pbest-tile { flex: 0 0 auto; min-width: 118px; padding: 12px 14px; border-radius: 14px;
+    background: var(--cream); border: 1px solid var(--line); }
+  .pbest-tile-ex { font: 600 11.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 0 0 5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .pbest-tile-v { font: 700 26px 'Barlow Condensed', sans-serif; color: var(--ink); line-height: 1; }
+  .pbest-tile-v u { text-decoration: none; font-size: 12px; color: var(--ink-mute); }
+  .pbest-tile-up { font: 700 10.5px 'Inter', sans-serif; color: var(--green-dark, #16a34a); margin: 5px 0 0; }
+  .pbest-tile-date { font: 400 10.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 4px 0 0; }
+  .crd-bests { margin: 11px 0 0; }
+  .crd-bests-l { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 6px; }
+  .crd-best { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0;
+    border-bottom: 1px solid var(--line-soft); font: 500 12.5px 'Inter', sans-serif; color: var(--ink-soft); }
+  .crd-best b { color: var(--ink); font-weight: 700; }
+  .crd-best span.up { color: var(--green-dark, #16a34a); font-weight: 700; font-size: 11.5px; }
+  .crd-delta { margin-left: 8px; font: 700 10.5px 'Inter', sans-serif; letter-spacing: .03em; }
+  .crd-delta.up { color: var(--green-dark, #16a34a); }
+  .crd-delta.down { color: var(--ink-mute); }
+  .crd-track b { position: absolute; left: 0; top: 0; height: 100%; border-radius: 2px; background: var(--line-soft); }
+  .crd-track { position: relative; }
+  .crd-track i { position: relative; }
+  .crd-moved { font: 600 13px 'Inter', sans-serif; margin: 0 0 12px; }
+  .crd-moved.up { color: var(--green-dark, #16a34a); }
+  .crd-moved.down { color: var(--ink-mute); }
+  .crd-foot-p { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.6; margin: 10px 0 0; }
+  .crd-foot-todo { color: var(--ink); }
+  .crd-foot-todo strong { color: var(--burgundy); }
+  .crd-foot-why { font-size: 12.5px; color: var(--ink-mute); border-top: 1px solid var(--line-soft); padding-top: 11px; margin-top: 14px; }
+
   .cv-eyebrow { font: 700 10px 'Inter', sans-serif; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin: 0; }
   .cv-name { font: 800 28px 'Fraunces', serif; color: #fff; margin: 4px 0 2px; line-height: 1.1; }
   .cv-sub { font: 600 13px 'Inter', sans-serif; color: rgba(250,243,237,0.9); margin: 0; }
@@ -4383,7 +4529,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, availability: [], grit: null, testing: [], strengthLevels: [], games: [], booking: null, planName: '', athleteId: '' };
+  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, availability: [], grit: null, testing: [], strengthLevels: [], mobility: null, psych: null, games: [], booking: null, planName: '', athleteId: '' };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -4648,6 +4794,12 @@
       state.grit = data.grit || null;
       state.testing = data.testing || [];
       state.strengthLevels = data.strengthLevels || [];
+      // Mobility screens and psychology scores. Both arrive pre-scored out of
+      // ten and both skip unscored items rather than counting them as zero.
+      // They are null until the Apps Script carrying apLoadMobility/apLoadPsych
+      // is deployed, and the card reads a missing one as "not scored yet".
+      state.mobility = data.mobility || null;
+      state.psych = data.psych || null;
       syncStreakSeen();   // baseline the streak so opening the app never triggers a celebration
       syncBadgesSeen();   // baseline earned badges so opening the app never triggers a celebration
       renderNav();
@@ -4657,7 +4809,7 @@
       // land on Year and get the walkthrough to set their vision first.
       var savedTab = null;
       try { savedTab = sessionStorage.getItem('aa_tab'); } catch(e){}
-      var resume = savedTab && ['week','year','load','book','cv','learn'].indexOf(savedTab) >= 0;
+      var resume = savedTab && ['week','year','load','book','cv','learn','age'].indexOf(savedTab) >= 0;
       switchTab(resume ? savedTab : (hasYear() ? 'week' : 'year'));
       if(!hasYear() && !resume) openWalkthrough();
       setLoading(false);
@@ -4700,14 +4852,21 @@
       { key:'agility',    label:'5-10-5 agility', unit:'s', done:false },
       { key:'cooper',     label:'Cooper 12 min',  unit:'m', done:true, value:2480, date:'2026-06-14', tests:1, first:null, delta:null }
     ];
+    // firstTech / firstLoad mirror what apLoadStrengthLevels now returns from
+    // the earliest Strength row, so the demo shows the progress read.
     state.strengthLevels = [
-      { pattern:'Squat', tech:4, load:3, done:true },
-      { pattern:'Push',  tech:3, load:2, done:true },
-      { pattern:'Pull',  tech:2, load:0, done:true },
-      { pattern:'Hinge', tech:0, load:0, done:false },
-      { pattern:'Lunge', tech:3, load:3, done:true },
-      { pattern:'Press', tech:0, load:0, done:false }
+      { pattern:'Squat', tech:4, load:3, done:true, firstTech:3, firstLoad:2, firstDate:'2026-09-02', assessments:2 },
+      { pattern:'Push',  tech:3, load:2, done:true, firstTech:2, firstLoad:1, firstDate:'2026-09-02', assessments:2 },
+      { pattern:'Pull',  tech:2, load:0, done:true, firstTech:2, firstLoad:0, firstDate:'2026-09-02', assessments:2 },
+      { pattern:'Hinge', tech:0, load:0, done:false, firstTech:0, firstLoad:0, firstDate:'2026-09-02', assessments:2 },
+      { pattern:'Lunge', tech:3, load:3, done:true, firstTech:2, firstLoad:2, firstDate:'2026-09-02', assessments:2 },
+      { pattern:'Press', tech:0, load:0, done:false, firstTech:0, firstLoad:0, firstDate:'2026-09-02', assessments:2 }
     ];
+    state.mobility = { done:true, score10:7.8, date:'2026-09-02', screens:[
+      { key:'asl', label:'Active straight leg', value:3, max:3 },
+      { key:'trunk', label:'Trunk stability', value:2, max:3 },
+      { key:'shoulder', label:'Shoulder mobility', value:2, max:3 } ] };
+    state.psych = null;   // not every athlete has been scored — the card must read that honestly
     state.games = demo.games || [];
     state.booking = demo.booking;
     state.planName = (demo.weeklyTemplate && demo.weeklyTemplate.name) || 'Swimming Performance';
@@ -4887,7 +5046,7 @@
   const LAUNCH_MODE = true;
   // My Program (week) is live so students can build their own program, and Book
   // (check-ins) is now live too. Load/PBs stay teased until they're ready.
-  const LIVE_TABS = { year:true, week:true, book:true, cv:true, load:true };
+  const LIVE_TABS = { year:true, week:true, book:true, cv:true, load:true, age:true };
   // Booking is still in testing — students see the "coming soon" teaser. It's
   // unlocked only for the demo, a ?book=1 override, and named testers. This just
   // reveals the UI; the SERVER enforces the real lock (BOOKING_LIVE / tester
@@ -4924,6 +5083,12 @@
     // on My Program by design.)
     try { sessionStorage.setItem('aa_tab', tab); } catch(e){}
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    // Seven tabs no longer fit a phone, and the strip scrolls. Without this the
+    // tab you just tapped can sit half off the right edge.
+    const activeBtn = document.querySelector('.tab[data-tab="'+tab+'"]');
+    if(activeBtn && activeBtn.scrollIntoView) {
+      try { activeBtn.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' }); } catch(e){}
+    }
     document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-'+tab).classList.add('active');
     renderBlockBar();
@@ -4933,6 +5098,7 @@
     else if(tab==='load') renderLoad();
     else if(tab==='book'){ renderBook(); loadBooking(); }
     else if(tab==='learn') renderLearn();
+    else if(tab==='age') renderAge();
     else if(tab==='cv') renderCV();
     window.scrollTo(0,0);
   }
@@ -4945,8 +5111,9 @@
     load: { icon:'ti-activity',  title:'Training load',          line:'See how hard you’re training week to week — and whether it’s too much, too little, or just right.' },
     book: { icon:'ti-calendar-event', title:'Book your sessions', line:'Reserve your spot in Athlete Academy sessions, straight from your phone.' },
     cv:   { icon:'ti-id-badge-2', title:'My athletic CV',        line:'Your bests, your results and your training record — one page you can take to a coach.' },
-    learn:{ icon:'ti-book',      title:'Level Up',               line:'Short blocks on fuelling, recovery, strength and mindset — do the work, pass the block, earn the badge.' },
-    age:  { icon:'ti-radar',     title:'My Training Age',        line:'Your athletic development across psychology, physiology and skills — one score that grows as you do. Coming soon.' }
+    learn:{ icon:'ti-book',      title:'Level Up',               line:'Short blocks on fuelling, recovery, strength and mindset — do the work, pass the block, earn the badge.' }
+    // 'age' used to promise "My Training Age · Coming soon". It has arrived —
+    // it is the card at the top of the CV tab — so the promise is retired.
   };
   function renderTeaser(tab){
     const c = TEASER_COPY[tab] || { icon:'ti-lock', title:'Coming soon', line:'Something good is on the way.' };
@@ -6604,6 +6771,77 @@
     }, 280);
   }
   window.closeStreakCelebration = closeStreakCelebration;
+
+  // ---- Personal best: offer, confirm, celebrate -------------------------
+  // pbOfferFor returns true when it took over the screen, so the caller knows
+  // not to fire a streak or badge celebration on top of it.
+  let _pbPending = null;
+  function pbOfferFor(session){
+    const scan = pbScan(session);
+    if(!scan.beats.length && !scan.marks.length) return false;
+    _pbPending = scan;
+    const isBeat = scan.beats.length > 0;
+    const lead = isBeat ? scan.beats[0] : scan.marks[0];
+    const others = (isBeat ? scan.beats : scan.marks).slice(1);
+    const unitWord = lead.unit === PB_UNIT_REPS ? ' reps' : lead.unit;
+
+    document.getElementById('pbCelKicker').innerHTML = isBeat
+      ? '<i class="ti ti-trophy" aria-hidden="true"></i> New best'
+      : '<i class="ti ti-flag" aria-hidden="true"></i> Starting mark';
+    document.getElementById('pbCelIcon').textContent = isBeat ? '🏆' : '📍';
+    document.getElementById('pbCelTitle').textContent = lead.exercise;
+    document.getElementById('pbCelJump').innerHTML = isBeat
+      ? '<span class="pb-cel-was">'+lead.previousValue+unitWord+'</span>'+
+        '<i class="ti ti-arrow-right" aria-hidden="true"></i>'+
+        '<span class="pb-cel-now">'+lead.value+unitWord+'</span>'
+      : '<span class="pb-cel-now">'+lead.value+unitWord+'</span>';
+    document.getElementById('pbCelSub').textContent = isBeat
+      ? 'Up '+(+(lead.value - lead.previousValue).toFixed(1))+unitWord+' on your old best. That is yours — nobody gave it to you.'
+      : 'First time logged, so there is nothing to beat yet. Save it and every time after this one has something to go at.';
+    document.getElementById('pbCelMore').innerHTML = others.length
+      ? '<p class="pb-cel-more-l">'+(isBeat?'Also beaten':'Also starting')+'</p>'+
+        others.map(o => '<span class="pb-cel-chip">'+esc(o.exercise)+' <b>'+o.value+
+          (o.unit===PB_UNIT_REPS?' reps':o.unit)+'</b></span>').join('')
+      : '';
+    document.getElementById('pbCelSave').innerHTML = (others.length ? 'Save all '+(others.length+1) : 'Save it')+
+      ' <i class="ti ti-check" aria-hidden="true"></i>';
+    if(isBeat) spawnConfetti('pbConfetti');
+    const el = document.getElementById('pbCelebrate');
+    el.hidden = false; requestAnimationFrame(() => el.classList.add('open'));
+    if(isBeat){ try { navigator.vibrate && navigator.vibrate([25,40,25,40,60]); } catch(e){} }
+    return true;
+  }
+  function closePBCel(){
+    const el = document.getElementById('pbCelebrate');
+    el.classList.remove('open');
+    setTimeout(() => {
+      el.hidden = true; const c = document.getElementById('pbConfetti'); if(c) c.innerHTML = '';
+      _pbPending = null;
+      if(!maybeCelebrateStreak()) maybeCelebrateBadges();   // whatever was queued behind it
+    }, 280);
+  }
+  window.closePBCel = closePBCel;
+  async function pbCelConfirm(){
+    const pend = _pbPending;
+    if(!pend){ closePBCel(); return; }
+    const all = pend.beats.concat(pend.marks);
+    const btn = document.getElementById('pbCelSave');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    // Saved optimistically: the celebration should never sit waiting on Apps
+    // Script, and a PB that fails to sync is recoverable from the session.
+    for(const p of all){
+      try {
+        await apiData({ action:'savePB', pb: {
+          sport: p.sport, exercise: p.exercise, value: String(p.value), unit: p.unit,
+          date: p.date, note: 'Spotted from your session', sessionId: (p.sessionId || '') } });
+      } catch(e){ console.error('auto PB save', e); }
+    }
+    try { await refreshPBs(); } catch(e){}
+    btn.disabled = false;
+    showToast(all.length > 1 ? all.length+' bests saved' : 'Best saved', 'success');
+    closePBCel();
+  }
+  window.pbCelConfirm = pbCelConfirm;
 
   // ============================================================
   // GAMIFICATION — XP, athlete rank/level, and earnable badges.
@@ -8779,6 +9017,72 @@
     return sx;
   }
 
+  // ============================================================
+  // PERSONAL BESTS — spotted automatically, never invented
+  // ============================================================
+  // A personal best is the one thing this system can hand a student the moment
+  // it happens, in their own numbers, with no coach in the loop. It was being
+  // thrown away: a student could add 10kg to their squat and the app would know
+  // and say nothing until a stamping session months later.
+  //
+  // THE RULES ARE DELIBERATELY NARROW, because a celebration that turns out to
+  // be wrong is worse than no celebration at all.
+  //
+  //  - A detail carrying a WEIGHT is compared on weight. "4×5 @ 60kg" against a
+  //    stored 50kg is unambiguous.
+  //  - A detail carrying REPS AND NO WEIGHT is compared on reps. Pull-ups
+  //    8 → 11 is unambiguous.
+  //  - Anything else — times, distances, "40-50min steady Z2", free text — gets
+  //    NO automatic claim. Lower is sometimes better, the units are ambiguous,
+  //    and a wrong call here is exactly the kind of thing students see through.
+  //  - Units must match. A kg best is never compared against a reps best.
+  //  - Weight and reps both rising is a weight PB, because the weight is the
+  //    harder claim and the one worth naming.
+  //  - The FIRST time an exercise is logged is not a personal best. It is a
+  //    starting mark, offered as one, with nothing to beat yet.
+  const PB_UNIT_KG = 'kg', PB_UNIT_REPS = 'reps';
+  function pbCandidateFrom(detail){
+    const sx = wktParse(detail || '');
+    if(sx.weight){
+      const n = parseFloat(sx.weight);
+      if(n > 0 && /kg/i.test(sx.weight)) return { value: n, unit: PB_UNIT_KG, reps: parseInt(sx.reps,10) || null };
+      return null;   // lb and % are not compared — mixing units is how you get a false PB
+    }
+    if(sx.reps && !sx.time){
+      const n = parseInt(sx.reps, 10);
+      if(n > 0) return { value: n, unit: PB_UNIT_REPS, reps: n };
+    }
+    return null;
+  }
+  function pbFor(exercise){
+    const key = String(exercise||'').trim().toLowerCase();
+    if(!key) return null;
+    return (state.pbs || []).find(p => String(p.exercise||'').trim().toLowerCase() === key) || null;
+  }
+  // Returns { beats: [...], marks: [...] } for one session's workout.
+  function pbScan(session){
+    const beats = [], marks = [], seen = {};
+    ((session && session.workout) || []).forEach(it => {
+      const name = String((it && it.name) || '').trim();
+      if(!name || seen[name.toLowerCase()]) return;
+      const cand = pbCandidateFrom(it.detail);
+      if(!cand) return;
+      seen[name.toLowerCase()] = 1;
+      const prev = pbFor(name);
+      if(!prev){
+        marks.push({ exercise: name, value: cand.value, unit: cand.unit, sport: session.sport || '', date: session.date || isoToday() });
+        return;
+      }
+      const prevUnit = String(prev.unit || '').trim().toLowerCase();
+      if(prevUnit !== cand.unit) return;                 // never compare across units
+      const prevVal = parseFloat(prev.value);
+      if(!(prevVal > 0) || !(cand.value > prevVal)) return;
+      beats.push({ exercise: name, value: cand.value, unit: cand.unit, previousValue: prevVal,
+                   sport: session.sport || '', date: session.date || isoToday() });
+    });
+    return { beats: beats, marks: marks };
+  }
+
   function startWorkout(id){
     const s = (state.week.sessions||[]).find(x => x.id===id);
     if(!s){ return; }
@@ -9030,7 +9334,11 @@
     document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
     if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
     showToast(logged ? wktWords(wktSession).logged : wktWords(wktSession).saved, 'success');
-    if(logged){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
+    // A beaten best outranks a streak or a badge — it is the thing they just
+    // did, in their own numbers, and it is the only celebration here that is
+    // about getting better rather than about turning up.
+    const finished = wktSession;
+    if(logged && !pbOfferFor(finished)){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
     try {
       const res = await apiData({ action:'saveSession', session: Object.assign({}, wktSession, { id: isNew ? null : wktSession.id }) });
       if(res.success && res.id && isNew){ wktSession.id = res.id; if(activeTab==='week') renderWeek(); }
@@ -11830,6 +12138,582 @@
   // PBS TAB
   // ============================================================
   // ============================================================
+  // THE CARD — Training Age, delivered.
+  // ============================================================
+  // Ten attributes, each out of ten, at the top of the CV. The CV below it is
+  // the evidence; this is the read. Every number here already existed somewhere
+  // in the portal — this is the one place they are put on the same scale and
+  // made to mean something together.
+  //
+  // Scoring rules that matter:
+  //  - An attribute nobody has measured scores nothing and is LEFT OUT of the
+  //    overall. Scoring a student zero for a test they were never given is a
+  //    lie the card tells, and 24 of 34 athletes have no strength stamps.
+  //  - Movement reads technique; Strength reads the load tier earned AT that
+  //    technique. They share the same six patterns, so if both counted
+  //    technique, getting one pattern stamped would move two attributes at once
+  //    and the two radar axes could never move independently.
+  //  - Knowledge is scored out of the whole academy (10 blocks), not out of
+  //    what happens to be published, so finishing everything available does not
+  //    max it out. But while fewer than 10 blocks exist it is held OUT of the
+  //    overall — otherwise the student who has passed every block there is
+  //    scores 1.0 and gets dragged down for work that does not exist yet.
+  const CARD_PATTERNS = ['Squat','Hinge','Push','Pull','Lunge','Press'];
+  const ACADEMY_BLOCKS = 10;
+
+  const CARD_ATTRS = [
+    { id:'strength', short:'STR', label:'Strength', grp:'body',
+      what:'How much you can move on the six patterns. Only counts on a pattern a coach has stamped — there is no tested load on a movement nobody has signed off.',
+      src:'Strength sheet · the load tier earned at your technique level', goes:'levels',
+      pace:'Months, not weeks. Across 43 studies of young athletes the biggest strength gains came from programmes running longer than about six months, and both the length and how often you trained made the gains bigger. Judge this across a season.' },
+    { id:'power', short:'POW', label:'Power', grp:'body',
+      what:'Strength, fast. Jumping, throwing, your first two steps.', src:'Broad jump', goes:'testing',
+      pace:'Weeks to months. Jumping responds about as well as strength does in the research — a lot of the early change is your nervous system learning to fire harder, and the rest follows the strength underneath it.' },
+    { id:'speed', short:'SPD', label:'Speed', grp:'body',
+      what:'Top-end running. Sprinting is the best thing for sprinting; power underneath raises the ceiling.',
+      src:'40m sprint', goes:'testing',
+      pace:'The hardest one on this card to move. In the research, lifting improves jumping and strength clearly but shows only a small effect on straight-line sprint time — so expect this to be slow, keep the reps short and fresh, and do not read a flat number as failure.' },
+    { id:'agility', short:'AGI', label:'Agility', grp:'body',
+      what:'Stopping, turning, going again. Built on strength and mobility as much as on speed.',
+      src:'5-10-5', goes:'testing',
+      pace:'Six to eight weeks, twice a week. This is one of the better-evidenced ones — strength work shows a large effect on changing direction inside two months, and training more often than twice a week did not help.' },
+    { id:'engine', short:'END', label:'Engine', grp:'body',
+      what:'How long you last. Only your aerobic base is measured — threshold and top end have no test yet.',
+      src:'Cooper 12 min', goes:'testing',
+      pace:'Six to eight weeks before a test moves, and it keeps giving for years. Coaching experience more than a specific study — but it is the quality that rewards patience most.' },
+    { id:'movement', short:'MOV', label:'Movement', grp:'athlete', coach:true,
+      what:'The six patterns, signed off by your coach. The one thing that genuinely comes first — you do not load a pattern that is not stamped.',
+      src:'Technique levels 1–5, stamped at a check-in', goes:'levels',
+      pace:'Changes the day you get stamped. Weeks of drilling, then one check-in and it jumps.' },
+    { id:'mobility', short:'MOB', label:'Mobility', grp:'athlete', coach:true,
+      what:'Range of motion and control — ankles, trunk, shoulders. Feeds agility and keeps you in one piece.',
+      src:'Three screens, 0–3 each, at a check-in',
+      pace:'Two to four weeks of near-daily work. That is coaching experience rather than a study, but it is the fastest physical thing on this card to change.' },
+    { id:'consistency', short:'CON', label:'Consistency', grp:'athlete',
+      what:'Turning up. The share of your own planned sessions you actually did over the last eight weeks.',
+      src:'Your logged sessions · the training part of Grit', goes:'load',
+      pace:'Next week. The only one you can move immediately, which is why it carries the others.' },
+    { id:'knowledge', short:'KNW', label:'Knowledge', grp:'athlete',
+      what:'What you have learned and can use. Ten blocks make up the academy — each one you pass is a point.',
+      src:'Level Up · 10 blocks across the academy', goes:'learn',
+      pace:'A whole point the moment you finish a block.' },
+    { id:'mindset', short:'MIN', label:'Mindset', grp:'athlete', coach:true, slow:true,
+      what:'Mindset, effort, coachability and mental toughness. The one attribute no test can give you — your coach writes it from a term of watching.',
+      src:'Scored by your coach · moves slowly, by design',
+      pace:'A term. It is not a session, a week or a good day — it is the pattern across all of them.' }
+  ];
+
+  // Support, never gates. The one genuine gate is stated on movement alone.
+  const CARD_SUPPORT = {
+    strength:{under:['movement'],lifts:['power','speed','agility'],move:'Heavier work on the six patterns, two to three times a week. The slowest of the ten — give it six to eight weeks before you judge it.'},
+    power:{under:['strength'],lifts:['speed','agility'],move:'Jumps and throws, fresh and few. Tired power training is just conditioning.'},
+    speed:{under:['power','mobility'],lifts:[],move:'Short sprints with full recovery. Never add fatigue to make it harder — that trains something else.'},
+    agility:{under:['strength','mobility'],lifts:[],move:'Cuts and turns against a reaction, not a cone you already knew about. Strength is what lets you stop.'},
+    engine:{under:[],lifts:[],move:'Mostly easy running, one harder session a week, built up about ten percent at a time.'},
+    movement:{under:[],lifts:['strength'],move:'Film it, drill it, get it stamped at a check-in.'},
+    mobility:{under:[],lifts:['speed','agility'],move:'Ten minutes on your worst screen, most days. Range you can control, not range you can flop into.'},
+    consistency:{under:[],lifts:['strength','power','speed','agility','engine'],move:'Turn up. One more session a week than last week is the whole method.'},
+    knowledge:{under:[],lifts:[],move:'Finish a Level Up block. Each one is a whole point out of ten.'},
+    mindset:{under:[],lifts:['consistency'],move:'No single session moves this. It is what your coach sees over a term — how you take feedback, and what you do on the bad days.'}
+  };
+
+  // Thresholds are rungs at 2, 4, 6, 8 and 10, and the score slides between
+  // them — which is the point. Fifteen centimetres of jump has to show up.
+  const CARD_T = {
+    power:  {M:[160,180,200,220,240],      F:[130,145,155,165,180],      higher:true,  unit:'cm'},
+    speed:  {M:[6.5,6.0,5.5,5.0,4.8],      F:[7.5,7.0,6.5,6.0,5.7],      higher:false, unit:'s'},
+    agility:{M:[5.5,5.1,4.8,4.5,4.2],      F:[6.0,5.6,5.3,5.0,4.7],      higher:false, unit:'s'},
+    engine: {M:[1600,2000,2400,2800,3000], F:[1200,1600,2000,2400,2600], higher:true,  unit:'m'}
+  };
+  // Which Performance test feeds which attribute.
+  const CARD_TEST_KEY = { power:'broad_jump', speed:'sprint_40m', agility:'agility', engine:'cooper' };
+
+  function cardScore10(key, v, g){
+    const c = CARD_T[key]; if(!c || !v) return 0;
+    const t = c[g === 'F' ? 'F' : 'M'], inc = c.higher, reached = (a,b) => inc ? a>=b : a<=b;
+    if(!reached(v, t[0])){ const floor = inc ? t[0]*0.6 : t[0]*1.4;
+      return Math.max(0, Math.min(2, (v-floor)/(t[0]-floor)*2)); }
+    for(let i=0;i<4;i++) if(!reached(v, t[i+1]))
+      return Math.max(0, Math.min(10, 2 + i*2 + (v-t[i])/(t[i+1]-t[i])*2));
+    return 10;
+  }
+  function cardGender(){
+    const g = String((athlete && athlete.Gender) || '').trim().toUpperCase();
+    return g.charAt(0) === 'F' ? 'F' : 'M';
+  }
+  function cardTestValue(attrId){
+    const key = CARD_TEST_KEY[attrId];
+    const t = (state.testing || []).find(x => x.key === key);
+    return (t && t.done && t.value) ? t : null;
+  }
+  // Which attribute a personal best belongs under. A PB does NOT change any
+  // score — those are coach-assessed and a student renaming an exercise should
+  // never move them — but it is the strongest evidence a student owns, so it
+  // appears as proof inside the attribute it speaks to.
+  function pbAttrFor(exercise, sport){
+    const t = ((exercise||'') + ' ' + (sport||'')).toLowerCase();
+    if(/jump|throw|slam|clean|snatch|plyo|bound|box/.test(t)) return 'power';
+    if(/sprint|40m|60m|100m|dash|flying/.test(t)) return 'speed';
+    if(/5-10-5|shuttle|agility|t-test|cut/.test(t)) return 'agility';
+    if(/cooper|12 min|5k|3k|1500|mile|row|bike|swim|run/.test(t)) return 'engine';
+    if(/squat|hinge|deadlift|rdl|bench|press|push|pull|chin|row|lunge|split|hip thrust|carry/.test(t)) return 'strength';
+    if(/stretch|mobility|hold|straddle|pancake|bridge/.test(t)) return 'mobility';
+    return '';
+  }
+  function pbsForAttr(id){
+    return (state.pbs || []).filter(p => pbAttrFor(p.exercise, p.sport) === id);
+  }
+  function cardLearnPassed(){
+    return (typeof LEARN_BLOCKS === 'undefined' ? [] : LEARN_BLOCKS).filter(b => learnBlockPassed(b)).length;
+  }
+  function cardLearnStarted(){
+    return (typeof LEARN_BLOCKS === 'undefined' ? [] : LEARN_BLOCKS)
+      .filter(b => !learnBlockPassed(b) && learnCounts(b).done > 0).length;
+  }
+  function cardBlocksPublished(){
+    return (typeof LEARN_BLOCKS === 'undefined' ? [] : LEARN_BLOCKS).length;
+  }
+
+  // `when` is 'now' or 'first'. The 'first' pass rebuilds the same ten scores
+  // from the EARLIEST measurement on record, so the card can say what changed
+  // rather than only what is. Nothing is stored to do this — every input is
+  // already dated, so the before is recomputed, not snapshotted.
+  //
+  // An attribute with only one measurement returns null for 'first', never 0.
+  // A fabricated zero would turn a first-ever test into a heroic improvement.
+  function cardScores(when){
+    const first = (when === 'first');
+    const lv = {}; (state.strengthLevels || []).forEach(l => { lv[l.pattern] = l; });
+    const hasStrengthHistory = (state.strengthLevels || []).some(l => l.firstTech != null);
+    const tech = k => (first ? (lv[k] && lv[k].firstTech) : (lv[k] && lv[k].tech)) || 0;
+    const load = k => (first ? (lv[k] && lv[k].firstLoad) : (lv[k] && lv[k].load)) || 0;
+    const g = cardGender(), s = {};
+
+    if(first && !hasStrengthHistory){ s.movement = null; s.strength = null; }
+    else {
+      s.movement = CARD_PATTERNS.reduce((a,k) => a + tech(k), 0) / 6 / 5 * 10;
+      s.strength = CARD_PATTERNS.reduce((a,k) => a + (tech(k) > 0 ? load(k) : 0), 0) / 6 / 5 * 10;
+    }
+    ['power','speed','agility','engine'].forEach(k => {
+      const t = cardTestValue(k);
+      if(first){
+        // apLoadTesting only fills `first` when there are two or more tests.
+        s[k] = (t && t.first) ? cardScore10(k, t.first, g) : null;
+      } else {
+        s[k] = t ? cardScore10(k, t.value, g) : 0;
+      }
+    });
+    // Mobility, Mindset, Consistency and Knowledge have no history in the
+    // bootstrap yet — the first two return only the latest assessment and the
+    // last two are rolling. No before, so no delta claimed.
+    s.mobility = first ? null : ((state.mobility && state.mobility.done) ? (state.mobility.score10 || 0) : 0);
+    s.mindset  = first ? null : ((state.psych && state.psych.done) ? (state.psych.score10 || 0) : 0);
+    const adh = state.grit && state.grit.parts && state.grit.parts.adherence;
+    s.consistency = first ? null : (adh ? Math.min(10, (adh.pct || 0) / 10) : 0);
+    s.knowledge = first ? null : Math.min(10, cardLearnPassed() + cardLearnStarted() * 0.35);
+    return s;
+  }
+
+  // Deltas, only where a real before exists and the number actually moved.
+  // A move under a tenth is measurement noise and is not reported as progress.
+  function cardDeltas(now, was){
+    const out = {};
+    CARD_ATTRS.forEach(a => {
+      const n = now[a.id], w = was[a.id];
+      if(w == null || n == null || !n) return;
+      const d = n - w;
+      if(Math.abs(d) < 0.1) return;
+      out[a.id] = d;
+    });
+    return out;
+  }
+  // The date the oldest "before" comes from, so the card can name it rather
+  // than saying a vague "earlier".
+  function cardSinceLabel(){
+    const dates = [];
+    (state.strengthLevels || []).forEach(l => { if(l.firstDate) dates.push(l.firstDate); });
+    (state.testing || []).forEach(t => { if(t.first && t.date) dates.push(t.date); });
+    if(!dates.length) return '';
+    dates.sort();
+    const d = parseISO(dates[0]);
+    return d ? MONTHS[d.getMonth()] : '';
+  }
+
+  // Knowledge is held out of the overall until the academy actually has ten
+  // blocks — see the note at the top of this section.
+  function cardCounts(s){
+    const full = cardBlocksPublished() >= ACADEMY_BLOCKS;
+    return CARD_ATTRS.filter(a => (s[a.id] || 0) > 0 && (full || a.id !== 'knowledge'));
+  }
+  function cardOverall(s){
+    const got = cardCounts(s).map(a => s[a.id]);
+    return got.length ? Math.round(got.reduce((a,b) => a+b, 0) / got.length / 10 * 99) : 0;
+  }
+  const CARD_STAGES = [
+    { name:'Foundation',  min:0  }, { name:'Developing', min:40 },
+    { name:'Established', min:58 }, { name:'Advanced',   min:76 }
+  ];
+  const cardStageOf = o => CARD_STAGES.slice().reverse().find(t => o >= t.min) || CARD_STAGES[0];
+
+  function cardRadarSVG(s, was){
+    const S=300, C=S/2, R=88, n=CARD_ATTRS.length;
+    const pt=(i,r)=>{ const a=(Math.PI*2*i/n)-Math.PI/2; return [C+Math.cos(a)*r, C+Math.sin(a)*r]; };
+    const measured = CARD_ATTRS.filter(a => (s[a.id]||0) > 0).length;
+    let g = '';
+    for(let k=1;k<=5;k++){ const rr=R*k/5;
+      g += '<polygon points="'+CARD_ATTRS.map((_,i)=>pt(i,rr).map(x=>x.toFixed(1)).join(',')).join(' ')+
+           '" fill="none" stroke="rgba(245,239,233,'+(k===5?.16:.055)+')" stroke-width="1"/>'; }
+    CARD_ATTRS.forEach((a,i)=>{ const [x,y]=pt(i,R);
+      g += '<line x1="'+C+'" y1="'+C+'" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="rgba(245,239,233,.055)"/>'; });
+    // Where you were, marked PER AXIS rather than joined into a ghost shape.
+    //
+    // A polygon through the befores would only pass through the axes that have
+    // one — four here, eight on the gold shape — so the two outlines would have
+    // different vertex sets and the dashed one would read as "you used to be
+    // tiny" when the truth is just that we did not measure the rest. A tick on
+    // each axis says exactly what is known and nothing more.
+    if(was){
+      CARD_ATTRS.forEach((a,i) => {
+        const w = was[a.id];
+        if(w == null || !w) return;
+        const [x,y] = pt(i, w/10*R);
+        const ang = (Math.PI*2*i/n) - Math.PI/2;
+        const dx = Math.cos(ang+Math.PI/2)*4.5, dy = Math.sin(ang+Math.PI/2)*4.5;
+        g += '<line x1="'+(x-dx).toFixed(1)+'" y1="'+(y-dy).toFixed(1)+'" x2="'+(x+dx).toFixed(1)+'" y2="'+(y+dy).toFixed(1)+
+             '" stroke="rgba(245,239,233,.42)" stroke-width="1.6" stroke-linecap="round"/>';
+      });
+    }
+    // The shape is drawn through MEASURED axes only. Running it through zeros
+    // turns three real scores into a collapsed star that reads as broken.
+    if(measured >= 3){
+      const poly = CARD_ATTRS.map((a,i)=>({i, val:s[a.id]||0})).filter(o=>o.val>0)
+        .map(o => pt(o.i, o.val/10*R).map(x=>x.toFixed(1)).join(',')).join(' ');
+      g += '<polygon points="'+poly+'" fill="url(#cgf)" stroke="url(#cgs)" stroke-width="2" stroke-linejoin="round" filter="url(#cgl)"/>';
+    }
+    CARD_ATTRS.forEach((a,i)=>{ const v=s[a.id]||0;
+      if(v){ const [x,y]=pt(i, v/10*R);
+        g += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.6" fill="#f0dc9a"/>'; }
+      else { const [x,y]=pt(i,R);   // unmeasured sits as a hollow ring at the rim
+        g += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.4" fill="none" stroke="rgba(245,239,233,.22)" stroke-width="1.2" stroke-dasharray="1.5 2"/>'; }});
+    CARD_ATTRS.forEach((a,i)=>{
+      const [lx,ly]=pt(i,R+20), anc = lx<C-6?'end':(lx>C+6?'start':'middle');
+      const v=s[a.id]||0, dim=!v, y1=(i===0)?ly-10:ly;
+      g += '<text x="'+lx.toFixed(1)+'" y="'+y1.toFixed(1)+'" text-anchor="'+anc+'" font-family="Inter" font-size="8.5" '+
+           'font-weight="700" letter-spacing="1.4" fill="rgba(245,239,233,'+(dim?.26:.5)+')">'+a.short+'</text>'+
+           '<text x="'+lx.toFixed(1)+'" y="'+(y1+16).toFixed(1)+'" text-anchor="'+anc+'" font-family="Barlow Condensed" '+
+           'font-size="18" font-weight="700" fill="'+(dim?'rgba(245,239,233,.2)':'#f0dc9a')+'">'+(v?v.toFixed(1):'–')+'</text>'; });
+    return '<div class="crd-radar"><div class="crd-glow"></div><svg width="'+S+'" height="'+S+'" viewBox="0 0 '+S+' '+S+'" role="img" aria-label="Your ten attributes"><defs>'+
+      '<radialGradient id="cgf" cx="50%" cy="50%"><stop offset="0%" stop-color="rgba(212,175,55,.42)"/>'+
+      '<stop offset="100%" stop-color="rgba(135,75,70,.42)"/></radialGradient>'+
+      '<linearGradient id="cgs" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f0dc9a"/>'+
+      '<stop offset="100%" stop-color="#c79a28"/></linearGradient>'+
+      '<filter id="cgl" x="-30%" y="-30%" width="160%" height="160%">'+
+      '<feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+      '</defs>'+g+'</svg></div>';
+  }
+
+  // Naming a shape off two or three numbers is a guess dressed as a verdict, so
+  // below five measured attributes the card says what it is instead.
+  function cardReadShape(s, deltas){
+    // PROGRESS COMES FIRST, where there is any.
+    //
+    // A single number out of ten is an other-referenced measure — it invites a
+    // student to compare themselves with the person next to them, and the youth
+    // sport literature is consistent that an ego-involving climate is the worse
+    // one, most of all for the students who are not already winning. A
+    // self-referenced read — what YOU moved, against what YOU were — is the
+    // version that holds up. So when the card has a before, it leads with the
+    // change and the shape description waits its turn.
+    const moved = Object.keys(deltas || {});
+    if(moved.length){
+      const ups = moved.filter(k => deltas[k] > 0).sort((a,b) => deltas[b] - deltas[a]);
+      const since = cardSinceLabel();
+      const sinceBit = since ? ' since '+esc(since) : '';
+      if(ups.length){
+        const top = CARD_ATTRS.find(a => a.id === ups[0]);
+        const rest = ups.length - 1;
+        return { title: 'Up '+deltas[ups[0]].toFixed(1)+' on '+esc(top.label).toLowerCase()+sinceBit,
+          line: rest
+            ? '<em>'+(rest+1)+'</em> of your ten have gone up. That is the number worth watching — not where you sit, but how far you have moved.'
+            : 'That is real, and it is yours. The dotted shape is where you started.' };
+      }
+      const downs = moved.sort((a,b) => deltas[a] - deltas[b]);
+      const worst = CARD_ATTRS.find(a => a.id === downs[0]);
+      return { title: esc(worst.label)+' has slipped'+sinceBit,
+        line: 'Down <em>'+Math.abs(deltas[downs[0]]).toFixed(1)+'</em>. Worth a conversation rather than a panic — a dip after a break, an illness or a growth spurt is ordinary.' };
+    }
+    // Reads the SAME set the overall counts. Knowledge sits out while the
+    // academy has fewer than ten blocks, so naming it "your lowest" would tell
+    // a student their weakest quality is one they have barely been offered.
+    const got = cardCounts(s);
+    const miss = CARD_ATTRS.filter(a => !(s[a.id]||0));
+    if(!got.length) return { title:'Nothing measured yet', line:'One check-in and one testing session fill in most of this card.' };
+    if(got.length < 5) return { title:'Barely measured',
+      line:'Only <em>'+got.length+' of '+CARD_ATTRS.length+'</em> have a number. Until more do, this shape is not really yours — it is just what we happen to know.' };
+    const vals = got.map(a => s[a.id]);
+    const hi = Math.max.apply(null, vals), lo = Math.min.apply(null, vals);
+    const mean = vals.reduce((a,b)=>a+b,0)/vals.length, spread = hi - lo;
+    const top = got.filter(a => s[a.id]===hi)[0], bot = got.filter(a => s[a.id]===lo)[0];
+    let title;
+    if(spread <= 2 && mean >= 7) title = 'Complete athlete';
+    else if(spread <= 2) title = 'All-rounder — no holes';
+    else if(top.id==='engine' && (bot.id==='strength'||bot.id==='power')) title = 'Big engine, light chassis';
+    else if((top.id==='power'||top.id==='speed') && bot.id==='engine') title = 'Explosive — built short and sharp';
+    else if(top.id==='consistency') title = 'Your best quality is turning up';
+    else if(top.id==='strength' && (bot.id==='engine'||bot.id==='speed')) title = 'Strong — '+bot.label.toLowerCase()+' is the gap';
+    else title = top.label+' carries you';
+    return { title: title, line:'Your strongest is <em>'+esc(top.label)+'</em>. Your lowest is <em>'+esc(bot.label)+'</em>'+
+      (miss.length ? ', and <em>'+miss.length+'</em> still '+(miss.length===1?'has':'have')+' no number at all.' : '.') };
+  }
+
+  function cardNextFor(a, s){
+    const v = s[a.id] || 0;
+    if(a.coach && !v) return a.slow
+      ? 'Nothing scored yet. Your coach writes this one from what they see over a term.'
+      : 'Not scored yet — a few minutes at a check-in and this has a number.';
+    const lv = {}; (state.strengthLevels || []).forEach(l => { lv[l.pattern] = l; });
+    if(a.id === 'movement') return v >= 10 ? 'Every pattern at technique 5.' : 'Get the next pattern stamped at a check-in.';
+    if(a.id === 'strength'){
+      const worst = CARD_PATTERNS.slice().sort((x,y) =>
+        (((lv[x]||{}).tech||0)+((lv[x]||{}).load||0)) - (((lv[y]||{}).tech||0)+((lv[y]||{}).load||0)))[0];
+      return ((lv[worst]||{}).tech||0) < 2
+        ? worst+' is not stamped — that one is holding this down.'
+        : worst+' is your lowest. Move that and the whole score moves.';
+    }
+    if(a.id === 'consistency'){
+      const adh = state.grit && state.grit.parts && state.grit.parts.adherence;
+      return adh ? 'You are at '+adh.pct+'% of your planned sessions. One more a week moves this.'
+                 : 'Log a few weeks of sessions and this starts reading.';
+    }
+    if(a.id === 'knowledge'){
+      const pub = cardBlocksPublished();
+      return cardLearnPassed()+' of '+ACADEMY_BLOCKS+' blocks passed'+
+        (pub < ACADEMY_BLOCKS ? ' — '+pub+(pub===1?' is':' are')+' open so far, more arrive through the year' : '')+
+        '. Each one you finish is a whole point.';
+    }
+    const t = cardTestValue(a.id);
+    if(!t) return 'Not tested yet — one test and this stops being a blank.';
+    // Beat YOUR number, not a threshold. A rung on a shared scale can sit a
+    // long way off for someone who has not had their growth yet, and "reach
+    // 220cm" reads as a verdict on them rather than a next step. Where there is
+    // a previous test, the target is their own last result.
+    const c = CARD_T[a.id];
+    if(t.first && t.first !== t.value){
+      const better = c.higher ? (t.value > t.first) : (t.value < t.first);
+      return better
+        ? 'You went '+t.first+' → '+t.value+esc(t.unit)+'. Beat '+t.value+esc(t.unit)+' next time and the line keeps going.'
+        : 'Your best so far is '+t.first+esc(t.unit)+'. Getting back there is the next step.';
+    }
+    return 'One test on record: '+t.value+esc(t.unit)+'. The next one tells you whether what you are doing works.';
+  }
+
+  // Where the proof already lives. Four of the ten have a real detail surface
+  // in the portal already — the card points at them rather than rebuilding.
+  const CARD_GOES = {
+    levels:  { label:'See your six movements', act:"cardGoTo('cv','cvLevels')" },
+    testing: { label:'See your test results',  act:"cardGoTo('cv','cvTesting')" },
+    load:    { label:'See your training',      act:"switchTab('load')" },
+    learn:   { label:'Open Level Up',          act:"switchTab('learn')" }
+  };
+  // Cross-tab: switch, then scroll to the panel. switchTab scrolls to the top
+  // on the way in, so the scroll has to land after that, not race it.
+  function cardGoTo(tab, anchorId){
+    switchTab(tab);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(anchorId);
+      if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+    });
+  }
+  window.cardGoTo = cardGoTo;
+
+  let cardOpenAttr = null;
+  function cardOpenA(id){ cardOpenAttr = (cardOpenAttr === id) ? null : id; renderAge(); }
+  window.cardOpenA = cardOpenA;
+
+  function cardDetailHTML(a, s, delta){
+    const sup = CARD_SUPPORT[a.id] || { under:[], lifts:[] };
+    const nm = id => (CARD_ATTRS.find(x => x.id === id) || {}).label || id;
+    const chip = id => '<button class="crd-rel" onclick="cardOpenA(\''+id+'\')">'+esc(nm(id))+
+      ' <b>'+((s[id]||0) ? s[id].toFixed(1) : '–')+'</b></button>';
+    const go = a.goes && CARD_GOES[a.goes];
+    const since = cardSinceLabel();
+    // How long before this should be expected to move. Without it, a student
+    // trains speed for three weeks, sees nothing, and concludes it does not
+    // work — when in fact they stopped one week into a six week change.
+    const pace = a.pace ? '<p class="crd-lab">How long it takes</p><p class="crd-d-move">'+esc(a.pace)+'</p>' : '';
+    const moved = delta
+      ? '<p class="crd-moved'+(delta>0?' up':' down')+'">'+(delta>0?'Up ':'Down ')+Math.abs(delta).toFixed(1)+
+        (since ? ' since '+esc(since) : ' since your first assessment')+'.</p>'
+      : '';
+    return '<div class="crd-detail">'+
+      '<p class="crd-d-what">'+esc(a.what)+'</p>'+ moved +
+      '<p class="crd-lab">What moves it</p><p class="crd-d-move">'+esc(sup.move||'')+'</p>'+
+      pace +
+      '<div class="crd-next"><b>Next</b><span>'+esc(cardNextFor(a, s))+'</span></div>'+
+      (sup.under.length ? '<p class="crd-lab">Raises the ceiling on this</p><div class="crd-rels">'+sup.under.map(chip).join('')+'</div>' : '')+
+      (sup.lifts.length ? '<p class="crd-lab">This raises the ceiling on</p><div class="crd-rels">'+sup.lifts.map(chip).join('')+'</div>' : '')+
+      cardBestsHTML(a.id)+
+      (go ? '<button class="crd-go" onclick="'+go.act+'"><i class="ti ti-arrow-down-right" aria-hidden="true"></i> '+esc(go.label)+'</button>' : '')+
+      '<p class="crd-src">'+esc(a.src)+'</p></div>';
+  }
+
+  // The student's own bests, inside the attribute they belong to. The score
+  // above came from a coach; this came from them, and for most students it will
+  // be the only line on the card that moved this month.
+  function cardBestsHTML(attrId){
+    const list = pbsForAttr(attrId);
+    if(!list.length) return '';
+    const rows = list.slice(0, 5).map(p => {
+      const unit = p.unit ? (String(p.unit)==='reps' ? ' reps' : ' '+p.unit) : '';
+      const prev = parseFloat(p.previousValue), now = parseFloat(p.value);
+      const up = (prev > 0 && now > prev) ? '<span class="up">+'+(+(now-prev).toFixed(1))+'</span>' : '';
+      return '<div class="crd-best"><span>'+esc(p.exercise)+'</span>'+
+        '<span><b>'+esc(String(p.value))+unit+'</b> '+up+'</span></div>';
+    }).join('');
+    return '<div class="crd-bests"><p class="crd-bests-l">Your bests</p>'+rows+'</div>';
+  }
+
+  // The bests strip — the one card surface that is entirely the student's own
+  // work, newest first, sitting directly under the card.
+  function pbStripHTML(){
+    const list = (state.pbs || []).slice().sort((a,b) => String(b.date||'').localeCompare(String(a.date||'')));
+    if(!list.length){
+      return '<div class="card"><p class="card-eyebrow">Your bests</p>'+
+        '<p class="crd-foot-p">Nothing yet. Log a session with a weight or a rep count in it and the app spots your '+
+        'best on its own — you do not have to remember to record anything.</p></div>';
+    }
+    const tiles = list.slice(0, 10).map(p => {
+      const unit = p.unit ? (String(p.unit)==='reps' ? '<u> reps</u>' : '<u> '+esc(p.unit)+'</u>') : '';
+      const prev = parseFloat(p.previousValue), now = parseFloat(p.value);
+      const up = (prev > 0 && now > prev) ? '<p class="pbest-tile-up">▲ +'+(+(now-prev).toFixed(1))+' on your last</p>' : '';
+      return '<div class="pbest-tile"><p class="pbest-tile-ex">'+esc(p.exercise)+'</p>'+
+        '<p class="pbest-tile-v">'+esc(String(p.value))+unit+'</p>'+ up +
+        (p.date ? '<p class="pbest-tile-date">'+esc(fmtNice(p.date))+'</p>' : '')+'</div>';
+    }).join('');
+    return '<div class="card"><p class="card-eyebrow">Your bests'+
+      '<span class="card-eyebrow-action"><button class="block-phase-link" onclick="addPB()">Add →</button></span></p>'+
+      '<div class="pbest-row">'+tiles+'</div>'+
+      '<p class="crd-foot-p">These are yours. Nobody assessed them, nobody awarded them — you went and did them.</p></div>';
+  }
+
+  function cardHTML(){
+    const s = cardScores('now'), was = cardScores('first'), deltas = cardDeltas(s, was);
+    // Counted the same way everywhere — the badge, the read and the overall all
+    // use cardCounts(), so the card can never say "1 of 10 measured" above a
+    // line that says "nothing measured yet".
+    const nGot = cardCounts(s).length;
+    const read = cardReadShape(s, deltas);
+    // Total ground gained across every attribute that moved up. Only counts
+    // rises — a dip somewhere does not cancel out work done somewhere else.
+    const moveTotal = Object.keys(deltas).reduce((a,k) => a + Math.max(0, deltas[k]), 0);
+    const row = a => {
+      const v = s[a.id] || 0, isOpen = cardOpenAttr === a.id, d = deltas[a.id], w = was[a.id];
+      // Where you were sits UNDER the bar as a pale stub, so the gold section
+      // reads as the part you added rather than as the whole thing.
+      const ghost = (d && w != null) ? '<b style="width:'+(Math.min(v,w)*10)+'%"></b>' : '';
+      const chip = d
+        ? '<span class="crd-delta'+(d>0?' up':' down')+'">'+(d>0?'▲ +':'▼ ')+d.toFixed(1)+'</span>'
+        : '';
+      return '<button class="crd-row'+(v?'':' dim')+(isOpen?' open':'')+'" onclick="cardOpenA(\''+a.id+'\')" '+
+          'aria-expanded="'+(isOpen?'true':'false')+'">'+
+        '<span class="crd-row-l"><span class="crd-row-n">'+esc(a.label)+chip+'</span>'+
+          '<span class="crd-track">'+ghost+'<i style="width:'+(v*10)+'%"></i></span></span>'+
+        '<span class="crd-row-v">'+(v ? v.toFixed(1)+'<u>/10</u>' : '–')+'</span></button>'+
+        (isOpen ? cardDetailHTML(a, s, d) : '');
+    };
+    return '<div class="crd">'+
+      '<div class="crd-face">'+
+        '<div class="crd-grain" aria-hidden="true"></div>'+
+        '<div class="crd-top">'+
+          // THE HERO NUMBER IS MOVEMENT, NOT STANDING.
+          //
+          // An overall out of 99 and a stage name are the two most positional
+          // objects that could sit here, and four of the ten attributes under
+          // them are scored against population thresholds — so a late developer
+          // and an early developer doing identical work get different numbers.
+          // That is the one comparison this programme does not make. The number
+          // a student leads with is now the distance they have travelled; the
+          // overall has moved to the foot of the tab as a quiet scale reading.
+          '<span class="crd-ovr">'+ (moveTotal
+              ? '<b class="up">+'+moveTotal.toFixed(1)+'</b><span>Gained since '+esc(cardSinceLabel()||'you started')+'</span>'
+              : '<b>'+nGot+'<u>/'+CARD_ATTRS.length+'</u></b><span>Measured so far</span>')+
+          '</span>'+
+          '<span class="crd-who">'+
+            '<span class="crd-nm">'+esc(athleteName())+'</span></span>'+
+        '</div>'+
+        cardRadarSVG(s, was)+
+        '<div class="crd-read"><h2>'+read.title+'</h2><p>'+read.line+'</p>'+
+          (nGot < CARD_ATTRS.length ? '<span class="crd-prov">Provisional · '+nGot+' of '+CARD_ATTRS.length+' measured</span>' : '')+
+        '</div>'+
+      '</div>'+
+      '<div class="crd-rows">'+
+        '<div class="crd-grp"><b>What you can do</b><i></i></div>'+
+          CARD_ATTRS.filter(x => x.grp==='body').map(row).join('')+
+        '<div class="crd-grp"><b>What it’s built on</b><i></i></div>'+
+          CARD_ATTRS.filter(x => x.grp==='athlete').map(row).join('')+
+      '</div>'+
+    '</div>';
+  }
+
+  // What this tab is for, said once, under the rows rather than above the card —
+  // the card should be the first thing on screen, not a paragraph about it.
+  function cardFootHTML(){
+    const s = cardScores('now');
+    const unmeasured = CARD_ATTRS.filter(a => !(s[a.id]||0));
+    const coachOnes = unmeasured.filter(a => a.coach).length;
+    const testOnes  = unmeasured.filter(a => CARD_TEST_KEY[a.id]).length;
+    const bits = [];
+    if(testOnes)  bits.push('<strong>'+testOnes+'</strong> need'+(testOnes===1?'s':'')+' a testing session');
+    if(coachOnes) bits.push('<strong>'+coachOnes+'</strong> need'+(coachOnes===1?'s':'')+' a check-in with your coach');
+    return '<div class="card crd-foot">'+
+      '<p class="card-eyebrow">How this works</p>'+
+      '<p class="crd-foot-p">Ten qualities, each out of ten. They are not a report card — they are a map of '+
+        'what you have built so far and what is next. Tap any one to see what moves it.</p>'+
+      (bits.length ? '<p class="crd-foot-p crd-foot-todo">'+bits.join(', and ')+'.</p>' : '')+
+      '<p class="crd-foot-p crd-foot-why"><strong>Why out of ten.</strong> Levels 1 to 5 are bands, and a band is a '+
+        'poor motivator — you can add fifteen centimetres to your jump and watch the number refuse to move. '+
+        'These slide between the same thresholds, so every centimetre shows up. The level is still underneath.</p>'+
+      '<p class="crd-foot-p crd-foot-why"><strong>This is never a comparison with anyone else.</strong> Six of the ten '+
+        'are scored against a standard you either meet or do not — a pattern is stamped or it is not, a block is passed '+
+        'or it is not, a session was planned and done or it was not. The four from fitness testing sit on a scale that '+
+        'has to be shared so ten different units can live on one shape. That scale is a ruler, not a ranking: people '+
+        'grow at very different times and two athletes doing identical work will read differently on it for a year or '+
+        'two. <em>Your own line is the only one that means anything.</em></p>'+
+    '</div>';
+  }
+
+  // The scale reading, kept where it belongs — after the explanation, not as
+  // the first thing a student sees. It answers "how far along the whole thing
+  // am I" without being the headline verdict on the person.
+  function cardScaleHTML(){
+    const s = cardScores('now'), o = cardOverall(s), t = cardStageOf(o);
+    const i = CARD_STAGES.indexOf(t), next = CARD_STAGES[i+1];
+    const segs = CARD_STAGES.map(function(x,k){
+      if(k < i) return '<i class="on"></i>';
+      if(k > i) return '<i></i>';
+      const lo = x.min, hi = next ? next.min : 99;
+      return '<i class="part" style="--p:'+Math.max(6, Math.min(100, Math.round((o-lo)/(hi-lo)*100)))+'%"></i>';
+    }).join('');
+    return '<div class="card crd-scale">'+
+      '<p class="card-eyebrow">Where you are overall</p>'+
+      '<div class="crd-rail">'+
+        '<div class="crd-rail-track">'+segs+'</div>'+
+        '<div class="crd-rail-l">'+CARD_STAGES.map(function(x,k){
+          return k===i ? '<b>'+esc(x.name)+'</b>' : '<span>'+esc(x.name)+'</span>'; }).join('')+'</div>'+
+      '</div>'+
+      '<p class="crd-foot-p">'+(next
+        ? 'Across everything measured you are in <strong>'+esc(t.name)+'</strong>. This moves slowly and it is '+
+          'the least useful number on the page — what you did since '+esc(cardSinceLabel()||'you started')+' is the one that matters.'
+        : 'Across everything measured you are in <strong>'+esc(t.name)+'</strong>, the last stage.')+'</p>'+
+    '</div>';
+  }
+
+  function renderAge(){
+    document.getElementById('view-age').innerHTML =
+      '<div class="card-stack">'+ cardHTML() + pbStripHTML() + cardFootHTML() + cardScaleHTML() +'</div>';
+  }
+
+  // ============================================================
   // CV — the one page a student can take to a coach or a college.
   // Absorbs personal bests and (later) Training Age. Deliberately shows
   // EFFORT as well as achievement, so a student with modest numbers but real
@@ -11886,7 +12770,10 @@
     const grade = (athlete && (athlete.Grade || athlete.Year_Group)) || '';
     const sports = athleteSports();
 
-    // --- header ---
+    // The CV is highlights, by design — the bests, the results, the record, on
+    // one page a student hands to a coach. The card and the ten attributes
+    // behind it live on their own tab: that is the working-out, and the working
+    // out is for the athlete, not for the person they hand this to.
     let html = '<div class="card-stack" id="cvSheetWrap">'+
       '<div class="cv-head">'+
         '<div class="cv-head-main">'+
@@ -11926,7 +12813,7 @@
     // --- fitness testing: Academy-measured, so it belongs on a CV ---
     const tests = state.testing || [];
     if(tests.length){
-      html += '<div class="card"><p class="card-eyebrow">Fitness testing</p>'+
+      html += '<div class="card" id="cvTesting"><p class="card-eyebrow">Fitness testing</p>'+
         '<div class="cv-tests">'+ tests.map(t => {
           if(!t.done){
             return '<div class="cv-test locked"><span class="cv-lock"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
@@ -11947,7 +12834,7 @@
     // --- strength: technique passed + level tested, both staff-assessed ---
     const levels = (state.strengthLevels || []);
     if(levels.length){
-      html += '<div class="card"><p class="card-eyebrow">Strength levels</p>'+
+      html += '<div class="card" id="cvLevels"><p class="card-eyebrow">Strength levels</p>'+
         '<p class="cv-note">Technique passed and load level tested by a coach.</p>'+
         '<div class="cv-levels">'+ levels.map(l => {
           if(!l.done){

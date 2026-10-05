@@ -307,3 +307,116 @@ Kept: the year-long week-by-week bar strip. It needs no explaining.
    it.
 3. **Progress language everywhere**, earned-only, once the test-history count is
    measured.
+
+---
+
+## 9. The Training Age tab — the evidence behind it
+
+**Date:** 5 October 2026. Sources retrieved from PubMed; DOIs below so any claim
+the portal makes to a student can be traced to a paper.
+
+### What the literature asks of this tab
+
+**Self-referenced, not ranked.** Eys et al. studied 997 youth athletes (mean age
+15.3) and found task-involving (mastery) climate positively related to cohesion
+while ego-involving climate was negatively related — and the effect was *more
+pronounced for athletes less likely to derive enjoyment from other-referenced
+competency*. The students most harmed by ranking are the ones who need the
+system most. https://doi.org/10.1080/02701367.2013.814909
+
+**Chronological age is a poor organiser.** The NSCA position statement on
+long-term athletic development rests on this
+(https://doi.org/10.1519/JSC.0000000000001387), as do Lloyd & Oliver parts 1
+(https://doi.org/10.1519/JSC.0000000000000756) and 2
+(https://doi.org/10.1519/01.JSC.0000465424.75389.56). Toselli et al. showed
+biological maturity drives most anthropometric difference between same-age peers
+(https://doi.org/10.3390/ijerph18083902). Till et al. surveyed 236 practitioners
+and found growth-and-maturity practices had the *lowest* adherence of anything
+in LTAD (https://doi.org/10.1371/journal.pone.0262995).
+
+**Support, not a chain — and it shifts with maturity.** Meylan et al. measured
+this directly across three maturity bands: differences in leg-press strength and
+jump peak power explained *most* of the maturity-related improvement in 20m
+sprint *before* peak height velocity, but only *some* after. Their conclusion is
+that factors beyond strength and power must also be developed for speed during
+puberty. https://doi.org/10.1055/s-0033-1363191
+
+This is why the card draws support relationships rather than gates.
+
+**Technique before load.** 2014 International Consensus on youth resistance
+training. https://doi.org/10.1136/bjsports-2013-092952 The card encodes it by
+scoring Strength only on patterns a coach has stamped.
+
+### Built, 5 Oct
+
+- **Progress is the headline.** The card recomputes itself from the earliest
+  measurement on record and leads with what moved: *"Up 1.4 on power since
+  September"*. Nothing is snapshotted — every input is already dated, so the
+  before is derived. An attribute with one measurement shows no delta rather
+  than a fabricated +0.
+- **Per-axis before markers on the radar**, not a ghost outline. A polygon
+  through only the axes that have a before would have a different vertex set
+  from the current shape and would read as "you used to be tiny" when the truth
+  is that the rest was never measured.
+- **Each attribute states how long it takes to move** — Consistency next week,
+  Mobility two to four, Power four to six, Strength six to eight, Mindset a
+  term. A student who trains speed for three weeks, sees nothing and concludes
+  it does not work is a student lost one week into a six-week change.
+
+### Height and maturity banding — considered and rejected
+
+An earlier draft of this section recommended capturing standing height at
+check-ins to band the thresholds by maturity. **That recommendation is
+withdrawn.**
+
+- The harm literature on body measurement in schools concerns weight and BMI,
+  not height, and is strong enough that removal of school BMI screening is under
+  active debate (https://doi.org/10.1089/chi.2021.29011.editorial). Parent focus
+  groups raise fear of embarrassing the child
+  (https://doi.org/10.1007/s40615-015-0149-0).
+- The base rate in this population is the deciding number. Magee et al. screened
+  94 high-school athletes: **68.6% of females and 42.9% of males at risk for
+  eating disorders**, 52.1% of females at risk for low energy availability.
+  https://doi.org/10.3390/nu15061502 Measurement does not cause this, but about
+  half the people being measured are already vulnerable to how body data is
+  framed.
+- Height carries its own risks distinct from weight: late maturers reading
+  "behind", short-stature distress, and a termly ritual that makes bodies the
+  subject.
+- **The design argument settles it independently.** Everything on this tab is
+  meant to be something a student can move. Height is the one number a fifteen
+  year old cannot train. Putting it here contradicts the tab.
+- **Self-referenced progress removes most of the need.** Maturity banding exists
+  to stop an early maturer out-scoring a late maturer on identical effort. A
+  card that leads with "up 1.3 since September" compares a student to
+  themselves, which is what Eys et al. supports anyway.
+
+If maturity banding is ever wanted, it is a teacher-side adjustment applied
+invisibly — never a number shown to a student.
+
+### Correction, 5 Oct — the timescales were not sourced when first written
+
+The "how long it takes" lines were written from practitioner knowledge, not
+from papers, and two were misleading. Checked and corrected against:
+
+- **Lesinski et al.**, 43 studies of youth athletes: dose-response favoured
+  training periods **>23 weeks** for muscle strength. The original "six to eight
+  weeks before you judge it" implied a conclusion could be drawn at eight weeks
+  — wrong, and in the direction that makes a student stop.
+  https://doi.org/10.1136/bjsports-2015-095497
+  Same paper: moderate effects on strength and vertical jump (SMD 0.8–1.09) but
+  only **small** effects on linear sprint and agility (0.58–0.75). Sprint is the
+  hardest quality on the card to move and the card now says so.
+- **Behringer et al.**, meta-analysis in children and adolescents: duration
+  (r=0.28) and frequency (r=0.26) both positively correlated with effect size,
+  and strength trainability rises with age and maturity **with no boost at
+  puberty**. https://doi.org/10.1542/peds.2010-0445 Further evidence against
+  maturity-window thinking.
+- **Chaabene et al.** on change-of-direction speed: large effects at both ≤8
+  weeks and >8 weeks, two sessions a week sufficient, higher frequencies no
+  better. https://doi.org/10.1007/s40279-020-01293-w
+
+Engine and Mobility are now labelled as coaching experience rather than
+presented as research findings, because no supporting study was retrieved for
+the figures given. Movement, Consistency, Knowledge and Mindset describe how
+this system works rather than physiology, so they need no citation.
