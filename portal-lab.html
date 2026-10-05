@@ -2639,6 +2639,24 @@
   .crd-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 13px; font: 600 12.5px 'Inter', sans-serif;
     color: var(--burgundy); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; cursor: pointer; }
   .crd-src { font: italic 400 11px 'Fraunces', serif; color: var(--ink-mute); margin: 13px 0 0; }
+  /* ---- Squad ---- */
+  .sq-head { font: 400 16px 'Fraunces', serif; color: var(--ink); margin: 2px 0 0; line-height: 1.45; }
+  .sq-head strong { font-weight: 600; color: var(--burgundy); }
+  .sq-list { list-style: none; margin: 12px 0 0; padding: 0; }
+  .sq-list li { font: 400 13.5px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.55;
+    padding: 7px 0 7px 18px; position: relative; }
+  .sq-list li::before { content: ''; position: absolute; left: 2px; top: 15px; width: 5px; height: 5px;
+    border-radius: 50%; background: var(--gold); }
+  .sq-list strong { color: var(--ink); font-weight: 700; }
+  .sq-sports { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+  .sq-sport { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
+  .sq-sport-n { flex: 0 0 86px; font: 600 12.5px 'Inter', sans-serif; color: var(--ink-soft);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sq-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .sq-bar i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--burgundy), var(--gold)); }
+  .sq-sport-v { font: 600 12px 'Inter', sans-serif; color: var(--ink-mute); white-space: nowrap; }
+  .sq-note { font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); margin: 9px 0 0; line-height: 1.5; }
+  .sq-foot { font: italic 400 12px 'Fraunces', serif; color: var(--ink-mute); margin: 12px 0 0; }
   /* ---- Personal best celebration ---- */
   .pb-cel-title { font: 700 30px 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .02em;
     color: var(--ink); margin: 6px 0 10px; line-height: 1.05; }
@@ -4670,6 +4688,12 @@
     if(action==='getWeek') return Promise.resolve({ success:true, weekStart: payload.weekStart,
       sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
+    if(action==='getSquadPulse') return Promise.resolve({ success:true, enough:true,
+      weekStart: payload.weekStart || '', cohort: 34, trained: 19, threePlus: 7, lighter: 6,
+      bests: 4, bestAthletes: 3,
+      sports: [ { name:'Swimming', size:9, trained:7 }, { name:'Football', size:7, trained:4 },
+                { name:'Athletics', size:6, trained:2 } ],
+      you: { trained: true, sessions: 2, best: false } });
     if(action==='saveAvailability' || action==='clearAvailability') return Promise.resolve({ success:true });
     if(action==='getAvailability') return Promise.resolve({ success:true, availability: state.availability||[] });
     if(action==='getGrit') return Promise.resolve({ success:true, grit: state.grit });
@@ -6562,12 +6586,86 @@
           weekBlockCard() +
           weekBuildCard() +
           weekThisWeekCard(ws, curMon, byDay, today) +
+          // The squad, as counts. Sits here rather than on its own tab because
+          // this is the screen a student opens when deciding whether to train,
+          // and "nine of us trained this week" belongs at that moment.
+          squadCard() +
           // No point telling someone with nothing logged that their load read
           // needs three weeks of data.
           (loggedDaySet().length ? weekLoadCard() + weekMixCard() : '') );
+    loadSquadPulse(ws);   // fills the card in the background; never blocks the week
 
     initSwipe();   // LAB: bind swipe-to-delete (delegated on #weekGrid)
     initWeekDrag();   // grip-drag a session onto another day
+  }
+
+  // ============================================================
+  // THE SQUAD — belonging, without a single comparison
+  // ============================================================
+  // Holt et al.'s model of positive youth development through sport puts PEER
+  // RELATIONSHIPS at the centre of the climate, and this portal has had none:
+  // thirty-four athletes, each in a single-player game, unaware of each other.
+  //
+  // What it is NOT is a leaderboard. There is no position, no order, nobody to
+  // beat and nobody to be beaten by — those compare ability between children,
+  // which is the one thing this programme does not do. What it is instead is
+  // the group as a fact: how many of us trained, how many set a best, how many
+  // had a lighter week than last. Nobody can lose any of those, and the student
+  // is placed inside the number rather than against it.
+  //
+  // Every figure is counted on the server. No other athlete's row, name or ID
+  // is ever sent to the device — see handleGetSquadPulse in the Apps Script.
+  let squadPulse = null, _squadWeek = '', _squadBusy = false;
+  async function loadSquadPulse(ws){
+    if(_squadBusy || _squadWeek === ws) return;
+    _squadBusy = true;
+    try {
+      const r = await apiDataGet({ action:'getSquadPulse', weekStart: ws });
+      if(r && r.success){ squadPulse = r; _squadWeek = ws; paintSquadCard(); }
+    } catch(e){ /* the week must render with or without the squad */ }
+    finally { _squadBusy = false; }
+  }
+  function paintSquadCard(){
+    const host = document.getElementById('squadCard');
+    if(host) host.outerHTML = squadCard();
+  }
+  function squadCard(){
+    const p = squadPulse;
+    if(!p || !p.enough) return '<div id="squadCard"></div>';   // placeholder until it lands
+    const lines = [];
+
+    // Where they sit INSIDE the group, never against it.
+    const head = p.you.trained
+      ? '<strong>'+p.trained+' of us</strong> trained this week — you are one of them.'
+      : '<strong>'+p.trained+' of us</strong> have trained this week.';
+
+    if(p.bests > 0){
+      lines.push(p.you.best
+        ? '<strong>'+p.bests+'</strong> personal best'+(p.bests===1?'':'s')+' set across the squad this week, and one of them is yours.'
+        : '<strong>'+p.bests+'</strong> personal best'+(p.bests===1?'':'s')+' set across the squad this week.');
+    }
+    if(p.threePlus >= 3) lines.push('<strong>'+p.threePlus+'</strong> trained on three or more days.');
+    // The normalising line. A student having a thin week assumes they are the
+    // only one, and that assumption is usually wrong and always discouraging.
+    if(!p.you.trained && p.lighter >= 3){
+      lines.push('<strong>'+p.lighter+'</strong> are having a lighter week than last week too. It happens to most people most terms.');
+    }
+
+    const sports = (p.sports || []).length
+      ? '<div class="sq-sports">'+p.sports.map(s =>
+          '<div class="sq-sport"><span class="sq-sport-n">'+esc(s.name)+'</span>'+
+          '<span class="sq-bar"><i style="width:'+Math.round(s.trained/s.size*100)+'%"></i></span>'+
+          '<span class="sq-sport-v">'+s.trained+'/'+s.size+'</span></div>').join('')+
+        '<p class="sq-note">Sports with fewer than five in them are left out — with numbers that small you would be naming people.</p></div>'
+      : '';
+
+    return '<div class="card" id="squadCard">'+
+      '<p class="card-eyebrow">Your squad · this week</p>'+
+      '<p class="sq-head">'+head+'</p>'+
+      (lines.length ? '<ul class="sq-list">'+lines.map(l => '<li>'+l+'</li>').join('')+'</ul>' : '')+
+      sports+
+      '<p class="sq-foot">No names, no order, nobody to beat. Just how many of us are at it.</p>'+
+    '</div>';
   }
 
   // What this block asks of THIS week — one line, and only when it has something
