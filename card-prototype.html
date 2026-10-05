@@ -161,8 +161,8 @@
 /* ===================== attributes ===================== */
 const ATTRS = [
   { id:'strength', short:'STR', label:'Strength', grp:'body', wired:true,
-    what:'How much you can move across the six patterns — technique and load together.',
-    src:'Strength sheet · technique + load tier per pattern' },
+    what:'How much you can move on the six patterns. Only counts on a pattern your coach has stamped — there is no tested load on a movement nobody has signed off.',
+    src:'Strength sheet · the load tier earned at your technique level' },
   { id:'power', short:'POW', label:'Power', grp:'body', wired:true,
     what:'Strength, fast. Jumping, throwing, your first two steps.', src:'Broad jump' },
   { id:'speed', short:'SPD', label:'Speed', grp:'body', wired:true,
@@ -247,8 +247,18 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 
 function scores(){
   const p=P(), s={};
-  s.strength=PAT.reduce((a,k)=>a+Math.min(10,(p.tech[k]||0)+(p.load[k]||0)),0)/6;
+  /* Movement and Strength read the SAME six patterns, so they have to read
+     different columns of them or the card double counts. Technique was in both
+     — getting a pattern stamped moved two of the ten attributes at once, and
+     Strength could never be low while Movement was high.
+       Movement = technique only. Can you do it well?
+       Strength = the load tier earned AT that technique. How much can you move?
+     That matches how the sheet is built ({Pattern}_Tech vs {Pattern}_Str_L2..L5)
+     and it tells a better story: getting stamped moves Movement today and opens
+     a load score to go and earn. A pattern with no stamp scores 0 for Strength,
+     which is true — there is no tested load on an unstamped pattern. */
   s.movement=PAT.reduce((a,k)=>a+(p.tech[k]||0),0)/6/5*10;
+  s.strength=PAT.reduce((a,k)=>a+((p.tech[k]||0)>0?(p.load[k]||0):0),0)/6/5*10;
   ['power','speed','agility','engine'].forEach(k=>{s[k]=score10(k,p.tests[k],p.gender);});
   s.mobility=p.mobility?p.mobility.reduce((a,b)=>a+b,0)/(p.mobility.length*3)*10:0;
   s.consistency=(p.adherence||0)/10;
