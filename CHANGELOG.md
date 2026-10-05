@@ -19,6 +19,7 @@ these are standalone pages plus this changelog.
 | **`ladder-prototype.html`** | **Where you are now.** Speed / Power / Strength / Move well as a stack, Change of direction and Engine alongside. Each rung says the same four things: what you can do, where that sits, which way it's going, what you're doing about it. The rungs *support* each other — they do not gate. Feeds Training Age directly. Runs on athlete 41's real record and a worked example. |
 | **`year-view-prototype.html`** · Focus first | The month tile carries **what you're building**; the sports drop to an in-season / training / off ribbon. Dissolves the "which sport leads" problem — sports tied for the lead are tied on phase, so the tile looked identical either way. |
 | **`year-view-prototype.html`** · Year strip | The 12-tile strip made multi-sport: tile = the leading sport, name shown only where the lead *changes*, other sports as lettered pips. Two rows of six on a phone so the whole year fits without scrolling. |
+| **`load-prototype.html`** | **How much you are doing, and whether it matches the plan.** The headline is *"22% of a normal week for you · 1 session · 30 min"* — no arbitrary units anywhere a student can see them. Advice is in sessions: *"2 more sessions than this week"*. Underneath, **what you have been building**: every session is auto-tagged to one of the seven components from its sport and name, and the last three weeks' real mix is held up against what the block claims to be for. Runs on athlete 41's real term. |
 | **`CHANGELOG.md`** | This file. |
 
 **Open questions before any of it merges**
@@ -26,6 +27,7 @@ these are standalone pages plus this changelog.
 - The dashboard's level bands return `4` for two adjacent thresholds, so Level 4 is twice as wide as every other band and Level 5 only opens at the top threshold. The ladder leans entirely on these. Fix or confirm first.
 - Does the Year tab's block expand into the ladder, or do they stay separate?
 - Only the aerobic base is measured. Threshold and top end would each need a test adding.
+- Focus tags are derived from the sport and session name. Should the athlete be able to correct a wrong one, and should `Training_Sessions` get a `Focus` column so the correction sticks?
 
 ---
 
