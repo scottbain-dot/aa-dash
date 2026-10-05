@@ -1597,6 +1597,7 @@
       <button class="tab" data-tab="load" onclick="switchTab('load')">Load</button>
       <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
       <button class="tab" data-tab="learn" onclick="switchTab('learn')">Level Up</button>
+      <button class="tab" data-tab="age" onclick="switchTab('age')">Training Age</button>
       <button class="tab" data-tab="cv" onclick="switchTab('cv')">CV</button>
     </div>
   </div>
@@ -1628,8 +1629,11 @@
 <!-- ===== LEARN TAB ===== -->
 <div class="tab-view" id="view-learn"></div>
 
-<!-- ===== PBS TAB ===== -->
-<!-- ===== CV TAB — the athletic CV (absorbs PBs + Training Age) ===== -->
+<!-- ===== TRAINING AGE TAB — the card, and the ten attributes behind it ===== -->
+<div class="tab-view" id="view-age"></div>
+
+<!-- ===== CV TAB — the athletic CV (absorbs PBs). Highlights only, by design:
+         the working-out lives on Training Age, the proof lives here. ===== -->
 <div class="tab-view" id="view-cv"></div>
 
 </div><!-- /.content -->
@@ -2613,6 +2617,10 @@
   .crd-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 13px; font: 600 12.5px 'Inter', sans-serif;
     color: var(--burgundy); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; cursor: pointer; }
   .crd-src { font: italic 400 11px 'Fraunces', serif; color: var(--ink-mute); margin: 13px 0 0; }
+  .crd-foot-p { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.6; margin: 10px 0 0; }
+  .crd-foot-todo { color: var(--ink); }
+  .crd-foot-todo strong { color: var(--burgundy); }
+  .crd-foot-why { font-size: 12.5px; color: var(--ink-mute); border-top: 1px solid var(--line-soft); padding-top: 11px; margin-top: 14px; }
 
   .cv-eyebrow { font: 700 10px 'Inter', sans-serif; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin: 0; }
   .cv-name { font: 800 28px 'Fraunces', serif; color: #fff; margin: 4px 0 2px; line-height: 1.1; }
@@ -4736,7 +4744,7 @@
       // land on Year and get the walkthrough to set their vision first.
       var savedTab = null;
       try { savedTab = sessionStorage.getItem('aa_tab'); } catch(e){}
-      var resume = savedTab && ['week','year','load','book','cv','learn'].indexOf(savedTab) >= 0;
+      var resume = savedTab && ['week','year','load','book','cv','learn','age'].indexOf(savedTab) >= 0;
       switchTab(resume ? savedTab : (hasYear() ? 'week' : 'year'));
       if(!hasYear() && !resume) openWalkthrough();
       setLoading(false);
@@ -4971,7 +4979,7 @@
   const LAUNCH_MODE = true;
   // My Program (week) is live so students can build their own program, and Book
   // (check-ins) is now live too. Load/PBs stay teased until they're ready.
-  const LIVE_TABS = { year:true, week:true, book:true, cv:true, load:true };
+  const LIVE_TABS = { year:true, week:true, book:true, cv:true, load:true, age:true };
   // Booking is still in testing — students see the "coming soon" teaser. It's
   // unlocked only for the demo, a ?book=1 override, and named testers. This just
   // reveals the UI; the SERVER enforces the real lock (BOOKING_LIVE / tester
@@ -5008,6 +5016,12 @@
     // on My Program by design.)
     try { sessionStorage.setItem('aa_tab', tab); } catch(e){}
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    // Seven tabs no longer fit a phone, and the strip scrolls. Without this the
+    // tab you just tapped can sit half off the right edge.
+    const activeBtn = document.querySelector('.tab[data-tab="'+tab+'"]');
+    if(activeBtn && activeBtn.scrollIntoView) {
+      try { activeBtn.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' }); } catch(e){}
+    }
     document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-'+tab).classList.add('active');
     renderBlockBar();
@@ -5017,6 +5031,7 @@
     else if(tab==='load') renderLoad();
     else if(tab==='book'){ renderBook(); loadBooking(); }
     else if(tab==='learn') renderLearn();
+    else if(tab==='age') renderAge();
     else if(tab==='cv') renderCV();
     window.scrollTo(0,0);
   }
@@ -12160,19 +12175,24 @@
   // Where the proof already lives. Four of the ten have a real detail surface
   // in the portal already — the card points at them rather than rebuilding.
   const CARD_GOES = {
-    levels:  { label:'See your six movements', act:"cardScrollTo('cvLevels')" },
-    testing: { label:'See your test results',  act:"cardScrollTo('cvTesting')" },
+    levels:  { label:'See your six movements', act:"cardGoTo('cv','cvLevels')" },
+    testing: { label:'See your test results',  act:"cardGoTo('cv','cvTesting')" },
     load:    { label:'See your training',      act:"switchTab('load')" },
     learn:   { label:'Open Level Up',          act:"switchTab('learn')" }
   };
-  function cardScrollTo(id){
-    const el = document.getElementById(id);
-    if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  // Cross-tab: switch, then scroll to the panel. switchTab scrolls to the top
+  // on the way in, so the scroll has to land after that, not race it.
+  function cardGoTo(tab, anchorId){
+    switchTab(tab);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(anchorId);
+      if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+    });
   }
-  window.cardScrollTo = cardScrollTo;
+  window.cardGoTo = cardGoTo;
 
   let cardOpenAttr = null;
-  function cardOpenA(id){ cardOpenAttr = (cardOpenAttr === id) ? null : id; renderCV(); }
+  function cardOpenA(id){ cardOpenAttr = (cardOpenAttr === id) ? null : id; renderAge(); }
   window.cardOpenA = cardOpenA;
 
   function cardDetailHTML(a, s){
@@ -12248,6 +12268,32 @@
     '</div>';
   }
 
+  // What this tab is for, said once, under the rows rather than above the card —
+  // the card should be the first thing on screen, not a paragraph about it.
+  function cardFootHTML(){
+    const s = cardScores();
+    const unmeasured = CARD_ATTRS.filter(a => !(s[a.id]||0));
+    const coachOnes = unmeasured.filter(a => a.coach).length;
+    const testOnes  = unmeasured.filter(a => CARD_TEST_KEY[a.id]).length;
+    const bits = [];
+    if(testOnes)  bits.push('<strong>'+testOnes+'</strong> need'+(testOnes===1?'s':'')+' a testing session');
+    if(coachOnes) bits.push('<strong>'+coachOnes+'</strong> need'+(coachOnes===1?'s':'')+' a check-in with your coach');
+    return '<div class="card crd-foot">'+
+      '<p class="card-eyebrow">How this works</p>'+
+      '<p class="crd-foot-p">Ten qualities, each out of ten. They are not a report card — they are a map of '+
+        'what you have built so far and what is next. Tap any one to see what moves it.</p>'+
+      (bits.length ? '<p class="crd-foot-p crd-foot-todo">'+bits.join(', and ')+'.</p>' : '')+
+      '<p class="crd-foot-p crd-foot-why"><strong>Why out of ten.</strong> Levels 1 to 5 are bands, and a band is a '+
+        'poor motivator — you can add fifteen centimetres to your jump and watch the number refuse to move. '+
+        'These slide between the same thresholds, so every centimetre shows up. The level is still underneath.</p>'+
+    '</div>';
+  }
+
+  function renderAge(){
+    document.getElementById('view-age').innerHTML =
+      '<div class="card-stack">'+ cardHTML() + cardFootHTML() +'</div>';
+  }
+
   // ============================================================
   // CV — the one page a student can take to a coach or a college.
   // Absorbs personal bests and (later) Training Age. Deliberately shows
@@ -12305,14 +12351,11 @@
     const grade = (athlete && (athlete.Grade || athlete.Year_Group)) || '';
     const sports = athleteSports();
 
-    // --- the card, then the evidence ---
-    // The card is the READ: one shape, ten attributes, where you are and what
-    // moves next. Everything under it is the RECORD: the tests, the levels, the
-    // bests, the results. Same data, two jobs, and the card has to come first —
-    // a list of numbers does not tell a fifteen year old what kind of athlete
-    // they are, which is the question they actually opened this tab to answer.
+    // The CV is highlights, by design — the bests, the results, the record, on
+    // one page a student hands to a coach. The card and the ten attributes
+    // behind it live on their own tab: that is the working-out, and the working
+    // out is for the athlete, not for the person they hand this to.
     let html = '<div class="card-stack" id="cvSheetWrap">'+
-      cardHTML()+
       '<div class="cv-head">'+
         '<div class="cv-head-main">'+
           '<p class="cv-eyebrow">Athletic CV</p>'+
