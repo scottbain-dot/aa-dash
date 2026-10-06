@@ -9743,14 +9743,30 @@
   //  - The FIRST time an exercise is logged is not a personal best. It is a
   //    starting mark, offered as one, with nothing to beat yet.
   const PB_UNIT_KG = 'kg', PB_UNIT_REPS = 'reps';
-  function pbCandidateFrom(detail){
-    const sx = wktParse(detail || '');
-    if(sx.weight){
-      const n = parseFloat(sx.weight);
-      if(n > 0 && /kg/i.test(sx.weight)) return { value: n, unit: PB_UNIT_KG, reps: parseInt(sx.reps,10) || null };
-      return null;   // lb and % are not compared — mixing units is how you get a false PB
+  // Reads the STRUCTURED fields when workout mode has them, and only falls back
+  // to parsing the target string when it does not.
+  //
+  // This matters because of how editing in workout mode works. Changing the
+  // weight writes it.sx and recomposes it.detail, and the recomposed string is
+  // then re-parsed by a regex that insists on a unit — so a student who types
+  // "67.5" into a field already labelled Weight, which plenty will, produced a
+  // detail of "4×5 · 67.5" and the scan found nothing at all. The best was
+  // thrown away silently, which is the worst way to lose one.
+  //
+  // A number in the Weight field is a weight. It does not need to say so twice.
+  // Only an explicit lb or % still blocks the claim, because those are a real
+  // unit mismatch rather than a missing label.
+  function pbCandidateFrom(item){
+    const it = (item && typeof item === 'object') ? item : { detail: item };
+    const sx = (it.sx && (it.sx.weight || it.sx.reps || it.sx.time)) ? it.sx : wktParse(it.detail || '');
+    const wRaw = String(sx.weight || '').trim();
+    if(wRaw){
+      if(/lb|%/i.test(wRaw)) return null;          // genuine unit mismatch — never compared
+      const n = parseFloat(wRaw);
+      if(n > 0) return { value: n, unit: PB_UNIT_KG, reps: parseInt(sx.reps,10) || null };
+      return null;
     }
-    if(sx.reps && !sx.time){
+    if(sx.reps && !String(sx.time || '').trim()){
       const n = parseInt(sx.reps, 10);
       if(n > 0) return { value: n, unit: PB_UNIT_REPS, reps: n };
     }
@@ -9767,7 +9783,7 @@
     ((session && session.workout) || []).forEach(it => {
       const name = String((it && it.name) || '').trim();
       if(!name || seen[name.toLowerCase()]) return;
-      const cand = pbCandidateFrom(it.detail);
+      const cand = pbCandidateFrom(it);   // the whole item: structured fields win over the string
       if(!cand) return;
       seen[name.toLowerCase()] = 1;
       const prev = pbFor(name);
