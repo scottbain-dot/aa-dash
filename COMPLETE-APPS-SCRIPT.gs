@@ -255,6 +255,9 @@ function doGet(e) {
     if (action === 'getPBs') {
       return apJson(handleGetPBs(ss, e.parameter.athleteId));
     }
+    if (action === 'getSquadPulse') {
+      return apJson(handleGetSquadPulse(ss, e.parameter.athleteId, e.parameter.weekStart));
+    }
     if (action === 'getExerciseHistory') {
       return apJson(handleGetExerciseHistory(ss, e.parameter.athleteId, e.parameter.name, e.parameter.todayISO));
     }
@@ -3465,6 +3468,172 @@ function apPBObj(r) {
     note: r.Note || '',
     sessionId: r.Session_ID || ''
   };
+}
+
+// ============================================================
+// SQUAD PULSE — the group, as counts only
+// ============================================================
+// Training alone in an app is the thing this programme is worst at. A student
+// logs, the number moves, and nobody is there. This gives them the squad.
+//
+// THE PRIVACY DESIGN IS THE WHOLE DESIGN. Two rules, both non-negotiable:
+//
+//  1. NO ATHLETE'S ROW EVER CROSSES THE WIRE. Every figure below is counted
+//     server side and returned as an integer. The client is never sent another
+//     student's sessions, bests, names or IDs, so there is nothing on the
+//     device to re-identify from and nothing for a curious student to read out
+//     of the network tab. This is the Athlete_ID rule carried into a feature
+//     that could easily have broken it.
+//  2. SMALL GROUPS ARE SUPPRESSED. A cohort of 34 is small enough that
+//     "3 of 3 swimmers trained" names three people. Any group under
+//     SQUAD_MIN_GROUP is not reported at all, and a sport the requester is the
+//     only member of can never appear.
+//
+// Nothing here is a ranking. There is no position, no order and no "better
+// than" — only how many of us did a thing, which is a fact about the group and
+// cannot be lost.
+var SQUAD_MIN_GROUP = 5;    // below this, a sport breakdown identifies people
+var SQUAD_MIN_COHORT = 6;   // below this, even the squad-wide counts are too thin
+
+// The programme a student belongs to. G9 is a separate build with a separate
+// cohort, so a G9 student must never be counted into the G10-12 squad or shown
+// its numbers, and vice versa.
+function apProgrammeOf_(gradeRaw) {
+  var g = parseInt(String(gradeRaw == null ? '' : gradeRaw).replace(/[^0-9]/g, ''), 10);
+  if (!g) return '';
+  return g <= 9 ? 'g9' : 'sr';
+}
+
+function handleGetSquadPulse(ss, athleteId, weekStart) {
+  try {
+    var me = String(athleteId || '').trim();
+    if (!me) return { success: false, error: 'athleteId required' };
+
+    // ---- who is in this squad ----
+    var aSheet = ss.getSheetByName('Athletes');
+    if (!aSheet) return { success: true, enough: false };
+    var aRows = apReadObjects(aSheet);
+    var myProg = '', idSet = {}, cohort = 0, sportOf = {};
+    for (var i = 0; i < aRows.length; i++) {
+      var id = String(aRows[i].Athlete_ID || '').trim();
+      if (id === me) { myProg = apProgrammeOf_(aRows[i].Grade || aRows[i].Year_Group); break; }
+    }
+    if (!myProg) return { success: true, enough: false };
+    for (var j = 0; j < aRows.length; j++) {
+      var jid = String(aRows[j].Athlete_ID || '').trim();
+      if (!jid) continue;
+      if (apProgrammeOf_(aRows[j].Grade || aRows[j].Year_Group) !== myProg) continue;
+      idSet[jid] = true; cohort++;
+      sportOf[jid] = String(aRows[j].Sport_1 || '').trim();
+    }
+    if (cohort < SQUAD_MIN_COHORT) return { success: true, enough: false, cohort: cohort };
+
+    var ws = String(weekStart || '').trim() || apWeekStartOf_(new Date());
+    var prevWs = apShiftWeek_(ws, -7);
+
+    // ---- sessions: who trained, this week and last ----
+    var sSheet = ss.getSheetByName('Training_Sessions');
+    var thisWk = {}, lastWk = {}, daysThisWk = {};
+    if (sSheet) {
+      var sRows = apReadObjects(sSheet);
+      for (var k = 0; k < sRows.length; k++) {
+        var r = sRows[k];
+        var rid = String(r.Athlete_ID || '').trim();
+        if (!idSet[rid]) continue;
+        var done = String(r.Status || '').trim().toLowerCase() === 'done';
+        if (!done) continue;
+        var rws = String(r.Week_Start || '').trim();
+        if (rws === ws) {
+          thisWk[rid] = (thisWk[rid] || 0) + 1;
+          var d = apIsoDate_(r.Date);
+          if (d) { daysThisWk[rid] = daysThisWk[rid] || {}; daysThisWk[rid][d] = 1; }
+        } else if (rws === prevWs) {
+          lastWk[rid] = (lastWk[rid] || 0) + 1;
+        }
+      }
+    }
+    var trained = 0, threePlus = 0, lighter = 0;
+    for (var id2 in idSet) {
+      var n = thisWk[id2] || 0;
+      if (n > 0) trained++;
+      if (daysThisWk[id2] && apCountKeys_(daysThisWk[id2]) >= 3) threePlus++;
+      // Only counts someone who trained LAST week and less this week — a
+      // student with nothing at all is not evidence that the week was hard.
+      if ((lastWk[id2] || 0) > 0 && n < (lastWk[id2] || 0)) lighter++;
+    }
+
+    // ---- bests set this week ----
+    var bests = 0, bestAthletes = {};
+    var pSheet = ss.getSheetByName('PBs');
+    if (pSheet) {
+      var pRows = apReadObjects(pSheet);
+      for (var m = 0; m < pRows.length; m++) {
+        var pid = String(pRows[m].Athlete_ID || '').trim();
+        if (!idSet[pid]) continue;
+        var pd = apIsoDate_(pRows[m].Date);
+        if (!pd || pd < ws || pd > apShiftWeek_(ws, 6)) continue;
+        bests++; bestAthletes[pid] = 1;
+      }
+    }
+
+    // ---- sport groups, suppressed below the threshold ----
+    var bySport = {};
+    for (var id3 in idSet) {
+      var sp = sportOf[id3] || '';
+      if (!sp) continue;
+      bySport[sp] = bySport[sp] || { name: sp, size: 0, trained: 0 };
+      bySport[sp].size++;
+      if ((thisWk[id3] || 0) > 0) bySport[sp].trained++;
+    }
+    var sports = [];
+    for (var sp2 in bySport) {
+      if (bySport[sp2].size < SQUAD_MIN_GROUP) continue;   // too small to be anonymous
+      sports.push({ name: bySport[sp2].name, size: bySport[sp2].size, trained: bySport[sp2].trained });
+    }
+    sports.sort(function (a, b) { return (b.trained / b.size) - (a.trained / a.size); });
+
+    return {
+      success: true, enough: true, weekStart: ws, cohort: cohort,
+      trained: trained, threePlus: threePlus, lighter: lighter,
+      bests: bests, bestAthletes: apCountKeys_(bestAthletes),
+      sports: sports,
+      // The coach's pinned line, read from Config so one edit reaches everyone.
+      // Set BoardNote (and optionally BoardNoteDate) on the Config sheet.
+      coachNote: apConfigValue_(ss, 'BoardNote'),
+      coachNoteDate: apConfigValue_(ss, 'BoardNoteDate'),
+      // The only thing about the requester, so the card can place them inside
+      // the group rather than describing it from outside.
+      you: { trained: (thisWk[me] || 0) > 0, sessions: thisWk[me] || 0, best: !!bestAthletes[me] }
+    };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+function apCountKeys_(o) { var n = 0; for (var k in o) if (o.hasOwnProperty(k)) n++; return n; }
+// Plain string read from the Config sheet. getConfig() returns a ContentService
+// response for the HTTP layer; this is the value on its own, for internal use.
+function apConfigValue_(ss, key) {
+  try {
+    var sheet = ss.getSheetByName('Config');
+    if (!sheet) return '';
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === key) return String(data[i][1] == null ? '' : data[i][1]).trim();
+    }
+  } catch (e) { /* no config yet */ }
+  return '';
+}
+function apWeekStartOf_(d) {
+  var x = new Date(d.getTime());
+  var dow = (x.getDay() + 6) % 7;            // Monday = 0
+  x.setDate(x.getDate() - dow);
+  return Utilities.formatDate(x, 'UTC', 'yyyy-MM-dd');
+}
+function apShiftWeek_(iso, days) {
+  var p = String(iso).split('-');
+  var d = new Date(Date.UTC(+p[0], (+p[1]) - 1, +p[2]));
+  d.setUTCDate(d.getUTCDate() + days);
+  return Utilities.formatDate(d, 'UTC', 'yyyy-MM-dd');
 }
 
 function handleGetPBs(ss, athleteId) {
