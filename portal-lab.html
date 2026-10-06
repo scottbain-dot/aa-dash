@@ -4782,7 +4782,23 @@
   // ============================================================
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function val(id){ const el=document.getElementById(id); return el? el.value : ''; }
-  function numOrNull(v){ if(v===''||v==null) return null; const n=parseInt(v,10); return isNaN(n)?null:n; }
+  // numOrNull used to be parseInt and nothing else, which let several things
+  // through that then poisoned everything downstream of them:
+  //   "-30"                  -> -30   and a load of 8 × -30 = -240
+  //   "99999999999999999999" -> 1e20  and a load that flattens every chart
+  //   "1e9"                  -> 1     silently, because parseInt stops at "e"
+  //   "0x10"                 -> 0
+  // A duration is minutes a human spent training. Nothing outside 0 to 1440
+  // is a real answer, and a negative one is never a real answer.
+  function numOrNull(v, lo, hi){
+    if(v===''||v==null) return null;
+    const n = parseFloat(String(v).trim());
+    if(!isFinite(n)) return null;
+    const i = Math.round(n);
+    const min = (lo==null) ? 0 : lo, max = (hi==null) ? 1440 : hi;
+    if(i < min || i > max) return null;
+    return i;
+  }
   function fmtISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function parseISO(s){ const p=String(s).split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
   function isoToday(){ return fmtISO(new Date()); }
@@ -9722,7 +9738,13 @@
   function wktParse(detail){
     const d=String(detail||''); const sx={sets:'',reps:'',weight:'',time:''};
     const m=d.match(/(\d+)\s*[×xX]\s*(\d+)/); if(m){ sx.sets=m[1]; sx.reps=m[2]; }
-    const w=d.match(/(\d+(?:\.\d+)?\s*(?:kg|lb|lbs|%))/i); if(w) sx.weight=w[1].replace(/\s+/g,'');
+    // The weight has to be a whole clean token, not a number found INSIDE a
+    // messier one. The old pattern matched "70kg" inside "-70kg" and "5.5kg"
+    // inside "70.5.5kg", so a negative weight came back positive and a typo
+    // came back as a different number entirely — both of which then went on to
+    // be offered as personal bests. Refusing to guess is the only safe answer.
+    const w=d.match(/(^|[^\d.\-eE])(\d+(?:\.\d+)?)\s*(kg|lb|lbs|%)(?![\d.])/i);
+    if(w) sx.weight=(w[2]+w[3]).replace(/\s+/g,'');
     const t=d.match(/(\d+\s*(?:s|sec|secs|min|mins)\b)/i); if(t) sx.time=t[1].replace(/\s+/g,'');
     return sx;
   }
@@ -9751,6 +9773,10 @@
   //  - The FIRST time an exercise is logged is not a personal best. It is a
   //    starting mark, offered as one, with nothing to beat yet.
   const PB_UNIT_KG = 'kg', PB_UNIT_REPS = 'reps';
+  // Sanity ceilings. A school gym does not produce a 999999kg squat or a set
+  // of 99999 reps, and a typo that does should be refused rather than
+  // enshrined as somebody's personal best.
+  const PB_MAX_KG = 500, PB_MAX_REPS = 100;
   // Reads the STRUCTURED fields when workout mode has them, and only falls back
   // to parsing the target string when it does not.
   //
@@ -9764,19 +9790,45 @@
   // A number in the Weight field is a weight. It does not need to say so twice.
   // Only an explicit lb or % still blocks the claim, because those are a real
   // unit mismatch rather than a missing label.
-  function pbCandidateFrom(item){
+  function pbCandidateFrom(item, style){
     const it = (item && typeof item === 'object') ? item : { detail: item };
-    const sx = (it.sx && (it.sx.weight || it.sx.reps || it.sx.time)) ? it.sx : wktParse(it.detail || '');
+    const structured = !!(it.sx && (it.sx.weight || it.sx.reps || it.sx.time));
+    const sx = structured ? it.sx : wktParse(it.detail || '');
+    const detail = String(it.detail || '');
+    // A line that CONTAINS a weight unit but whose weight would not parse is a
+    // line we do not understand — "-70kg", "70.5.5kg", "1e9kg". Falling through
+    // to the rep count there would claim "5 reps" off a line that was actually
+    // about load, so the whole item is refused instead.
+    if(!structured && !String(sx.weight||'').trim() && /\d\s*(kg|lb|lbs)\b/i.test(detail)) return null;
     const wRaw = String(sx.weight || '').trim();
     if(wRaw){
       if(/lb|%/i.test(wRaw)) return null;          // genuine unit mismatch — never compared
-      const n = parseFloat(wRaw);
-      if(n > 0) return { value: n, unit: PB_UNIT_KG, reps: parseInt(sx.reps,10) || null };
-      return null;
+      // Must be ONE clean number. "-70kg" used to read as 70 because the regex
+      // never captured the minus, so typing a negative claimed a positive best;
+      // "70.5.5" used to read as 5.5. Anything that is not a plain number with
+      // an optional unit is refused rather than guessed at.
+      const m = wRaw.match(/^(\d+(?:\.\d+)?)\s*(kg)?$/i);
+      if(!m) return null;
+      const n = parseFloat(m[1]);
+      if(!(n > 0) || n > PB_MAX_KG) return null;   // nobody is squatting 999999
+      return { value: n, unit: PB_UNIT_KG, reps: parseInt(sx.reps,10) || null };
     }
     if(sx.reps && !String(sx.time || '').trim()){
-      const n = parseInt(sx.reps, 10);
-      if(n > 0) return { value: n, unit: PB_UNIT_REPS, reps: n };
+      // "8×100m off 1:40" is a swim set, not eight sets of a hundred reps, and
+      // "6×30s" is a sprint interval. When the second number is followed by a
+      // letter it is a distance or a time, so the rep reading is wrong and a
+      // "100 reps" best would be nonsense. Only applies to a parsed string —
+      // the structured editor's Reps box is already a rep count.
+      if(!structured && /\d\s*[×xX]\s*\d+\s*[a-z]/i.test(detail)) return null;
+      // And a rep claim only makes sense in a gym-shaped session at all.
+      // "10×200 @ pace" in a swim set is ten 200s, not two hundred reps —
+      // there is no unit letter to catch it, so the session's own style is
+      // what rules it out.
+      if(style === 'session') return null;
+      const rRaw = String(sx.reps).trim();
+      if(!/^\d+$/.test(rRaw)) return null;
+      const n = parseInt(rRaw, 10);
+      if(n > 0 && n <= PB_MAX_REPS) return { value: n, unit: PB_UNIT_REPS, reps: n };
     }
     return null;
   }
@@ -9791,7 +9843,7 @@
     ((session && session.workout) || []).forEach(it => {
       const name = String((it && it.name) || '').trim();
       if(!name || seen[name.toLowerCase()]) return;
-      const cand = pbCandidateFrom(it);   // the whole item: structured fields win over the string
+      const cand = pbCandidateFrom(it, sessionStyle(session));   // item first, style for the rep rule
       if(!cand) return;
       seen[name.toLowerCase()] = 1;
       const prev = pbFor(name);

