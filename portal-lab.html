@@ -1466,6 +1466,21 @@
   <div class="sheet-body" id="trophyBody"></div>
 </div>
 
+<!-- NOTICEBOARD — the squad, in one place. The Trophy Room is your stuff;
+     this is everyone's. Nothing on it can be lost and nobody is ranked. -->
+<div class="sheet-backdrop" id="board-backdrop" onclick="closeBoard()"></div>
+<div class="sheet" id="boardSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-header-content">
+      <p class="sheet-eyebrow">Athlete Academy</p>
+      <h2 class="sheet-title">The <em>board</em>.</h2>
+    </div>
+    <button class="sheet-close" onclick="closeBoard()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="sheet-body" id="boardBody"></div>
+</div>
+
 <!-- FIRST-RUN WALKTHROUGH — guides writing a vision + periodising the year -->
 <div class="wt" id="walkthrough" hidden>
   <div class="wt-card">
@@ -2657,6 +2672,45 @@
   .sq-sport-v { font: 600 12px 'Inter', sans-serif; color: var(--ink-mute); white-space: nowrap; }
   .sq-note { font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); margin: 9px 0 0; line-height: 1.5; }
   .sq-foot { font: italic 400 12px 'Fraunces', serif; color: var(--ink-mute); margin: 12px 0 0; }
+  .sq-con { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); margin: 12px 0 0;
+    padding-top: 11px; border-top: 1px solid var(--line-soft); }
+  .sq-con strong { color: var(--ink); font-weight: 700; }
+  .bd-open { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; margin-top: 13px;
+    padding: 11px; border-radius: 12px; border: 1px solid var(--line); background: none; cursor: pointer;
+    font: 700 13px 'Inter', sans-serif; color: var(--burgundy); }
+  /* ---- The board ---- */
+  .bd-sec { padding: 16px 0; border-bottom: 1px solid var(--line-soft); }
+  .bd-sec:last-of-type { border-bottom: none; }
+  .bd-sec-l { font: 700 9.5px 'Inter', sans-serif; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--ink-mute); margin: 0 0 10px; }
+  .bd-list { list-style: none; margin: 0; padding: 0; }
+  .bd-list li { font: 400 14px 'Inter', sans-serif; color: var(--ink-soft); line-height: 1.55;
+    padding: 6px 0 6px 18px; position: relative; }
+  .bd-list li::before { content: ''; position: absolute; left: 2px; top: 14px; width: 5px; height: 5px;
+    border-radius: 50%; background: var(--gold); }
+  .bd-list b { color: var(--ink); font-weight: 700; }
+  .bd-sports { margin-top: 12px; }
+  .bd-note { font: 400 11.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 10px 0 0; line-height: 1.55; }
+  .bd-coach { background: var(--cream); border-radius: 16px; padding: 15px 16px; margin-bottom: 4px;
+    border-left: 3px solid var(--burgundy); }
+  .bd-coach-top { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .bd-coach-av { width: 34px; height: 34px; border-radius: 50%; background: var(--burgundy); color: #fff;
+    display: flex; align-items: center; justify-content: center; font: 700 12px 'Inter', sans-serif; letter-spacing: .04em; }
+  .bd-coach-who { font: 700 13.5px 'Inter', sans-serif; color: var(--ink); display: flex; flex-direction: column; }
+  .bd-coach-who small { font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); margin-top: 1px; }
+  .bd-coach-msg { font: 400 14.5px 'Fraunces', serif; color: var(--ink); margin: 0; line-height: 1.55; }
+  .bd-con-main { display: flex; align-items: baseline; gap: 10px; }
+  .bd-con-main b { font: 700 42px 'Barlow Condensed', sans-serif; color: var(--burgundy); line-height: 1; }
+  .bd-con-main span { font: 400 13.5px 'Inter', sans-serif; color: var(--ink-soft); }
+  .bd-con-sub { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+  .bd-pill { font: 600 11.5px 'Inter', sans-serif; color: var(--ink-mute); border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 11px; }
+  .bd-pill.on { color: var(--burgundy); border-color: rgba(135,75,70,.35); background: rgba(135,75,70,.07); }
+  .bd-roll { font: 400 15px 'Fraunces', serif; color: var(--ink); margin: 0; line-height: 1.5; }
+  .bd-roll b { color: var(--burgundy); font-weight: 600; }
+  .bd-cta { margin-top: 12px; padding: 11px 16px; border-radius: 12px; border: none; cursor: pointer;
+    background: var(--burgundy); color: #fff; font: 700 13px 'Inter', sans-serif; }
+  .bd-foot { font: italic 400 12.5px 'Fraunces', serif; color: var(--ink-mute); margin: 18px 0 0; text-align: center; }
   /* ---- Personal best celebration ---- */
   .pb-cel-title { font: 700 30px 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .02em;
     color: var(--ink); margin: 6px 0 10px; line-height: 1.05; }
@@ -4693,6 +4747,8 @@
       bests: 4, bestAthletes: 3,
       sports: [ { name:'Swimming', size:9, trained:7 }, { name:'Football', size:7, trained:4 },
                 { name:'Athletics', size:6, trained:2 } ],
+      coachNote: 'Big week for the swimmers. If your block says build and you only got one session in, that is the thing to fix before anything else — two is the floor, not the target. Movement masterclass slots are open: get the hinge stamped.',
+      coachNoteDate: '2026-10-05',
       you: { trained: true, sessions: 2, best: false } });
     if(action==='saveAvailability' || action==='clearAvailability') return Promise.resolve({ success:true });
     if(action==='getAvailability') return Promise.resolve({ success:true, availability: state.availability||[] });
@@ -6621,7 +6677,12 @@
     _squadBusy = true;
     try {
       const r = await apiDataGet({ action:'getSquadPulse', weekStart: ws });
-      if(r && r.success){ squadPulse = r; _squadWeek = ws; paintSquadCard(); }
+      if(r && r.success){
+        squadPulse = r; _squadWeek = ws;
+        state.board = { coachNote: r.coachNote || '', coachNoteDate: r.coachNoteDate || '' };
+        paintSquadCard();
+        if(document.getElementById('boardSheet').classList.contains('open')) renderBoard();
+      }
     } catch(e){ /* the week must render with or without the squad */ }
     finally { _squadBusy = false; }
   }
@@ -6629,6 +6690,101 @@
     const host = document.getElementById('squadCard');
     if(host) host.outerHTML = squadCard();
   }
+  // ---- The board -------------------------------------------------------------
+  // Everything social in one place, rather than scattered across three tabs.
+  // A noticeboard is the right object for a school: it is the thing outside the
+  // gym that you glance at, it changes, and nobody has to post on it.
+  function openBoard(){
+    renderBoard();
+    document.getElementById('board-backdrop').classList.add('open');
+    document.getElementById('boardSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    loadSquadPulse(state.week.weekStart || fmtISO(mondayOf(new Date())));
+  }
+  function closeBoard(){
+    document.getElementById('board-backdrop').classList.remove('open');
+    document.getElementById('boardSheet').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  window.openBoard = openBoard; window.closeBoard = closeBoard;
+
+  // Pinned coach line. Lives in Config so one edit reaches every student, and
+  // is the only place an adult speaks inside this app. Holt et al. put adult
+  // relationships at the centre of the development climate and this portal has
+  // had none — thirty-four athletes training inside a system where the coach
+  // is invisible between check-ins.
+  function boardCoachHTML(){
+    const msg = String((state.board && state.board.coachNote) || '').trim();
+    if(!msg) return '';
+    return '<div class="bd-coach"><div class="bd-coach-top">'+
+      '<span class="bd-coach-av">SB</span>'+
+      '<span class="bd-coach-who">Mr Bain<small>'+esc((state.board && state.board.coachNoteDate) ? fmtNice(state.board.coachNoteDate) : 'pinned')+'</small></span>'+
+    '</div><p class="bd-coach-msg">'+esc(msg)+'</p></div>';
+  }
+
+  function boardConsistencyHTML(){
+    const c = weekRunInfo();
+    if(!c.started) return '';
+    return '<div class="bd-sec"><p class="bd-sec-l">Your consistency</p>'+
+      '<div class="bd-con">'+
+        '<div class="bd-con-main"><b>'+c.weeks+'</b><span>of your '+c.span+' weeks had training in them</span></div>'+
+        '<div class="bd-con-sub">'+
+          (c.run >= 2 ? '<span class="bd-pill on">'+c.run+' in a row now</span>' : '')+
+          (c.best >= 2 ? '<span class="bd-pill">Best run '+c.best+'</span>' : '')+
+        '</div>'+
+      '</div>'+
+      '<p class="bd-note">This number only goes up. A week off for illness or injury is skipped, not counted against you.</p>'+
+    '</div>';
+  }
+
+  function boardSquadHTML(){
+    const p = squadPulse;
+    if(!p || !p.enough) return '<div class="bd-sec"><p class="bd-sec-l">The squad</p>'+
+      '<p class="bd-note">Loading the squad…</p></div>';
+    const bits = [];
+    bits.push('<li><b>'+p.trained+'</b> of us trained this week'+(p.you.trained?' — you are one of them':'')+'.</li>');
+    if(p.bests > 0) bits.push('<li><b>'+p.bests+'</b> personal best'+(p.bests===1?'':'s')+' set'+(p.you.best?', one of them yours':'')+'.</li>');
+    if(p.threePlus >= 3) bits.push('<li><b>'+p.threePlus+'</b> trained on three or more days.</li>');
+    if(!p.you.trained && p.lighter >= 3) bits.push('<li><b>'+p.lighter+'</b> are having a lighter week than last week too. It happens to most people most terms.</li>');
+    const sports = (p.sports || []).length
+      ? '<div class="bd-sports">'+p.sports.map(s =>
+          '<div class="sq-sport"><span class="sq-sport-n">'+esc(s.name)+'</span>'+
+          '<span class="sq-bar"><i style="width:'+Math.round(s.trained/s.size*100)+'%"></i></span>'+
+          '<span class="sq-sport-v">'+s.trained+'/'+s.size+'</span></div>').join('')+'</div>'+
+        '<p class="bd-note">Sport against sport, never person against person. Groups under five are left off — with numbers that small you would be naming people.</p>'
+      : '';
+    return '<div class="bd-sec"><p class="bd-sec-l">The squad · this week</p>'+
+      '<ul class="bd-list">'+bits.join('')+'</ul>'+ sports +'</div>';
+  }
+
+  // Who is in on the next check-in. Turning up is easier when you can see that
+  // other people are, and this is the one number on the board a student can
+  // change in ten seconds.
+  function boardRollCallHTML(){
+    const bk = state.booking;
+    if(!bk || !(bk.slots||[]).length) return '';
+    const today = isoToday();
+    const up = (bk.slots||[]).filter(s => s.date && s.date >= today)
+      .sort((a,b) => (a.date+a.start) < (b.date+b.start) ? -1 : 1);
+    if(!up.length) return '';
+    const seq = up[0].seq;
+    const group = up.filter(s => String(s.seq) === String(seq));
+    const booked = group.reduce((a,s) => a + (+s.booked || 0), 0);
+    const mine = group.some(s => s.myBookingId);
+    const title = String(group[0].title || 'the next check-in').split('·')[0].trim();
+    return '<div class="bd-sec"><p class="bd-sec-l">Next check-in</p>'+
+      '<p class="bd-roll"><b>'+booked+'</b> '+(booked===1?'person has':'of us have')+' signed up for <strong>'+esc(title)+'</strong>'+
+        (mine ? ' — including you.' : '.')+'</p>'+
+      (mine ? '' : '<button class="bd-cta" onclick="closeBoard(); switchTab(\'book\');">Grab a time</button>')+
+    '</div>';
+  }
+
+  function renderBoard(){
+    document.getElementById('boardBody').innerHTML =
+      boardCoachHTML() + boardSquadHTML() + boardRollCallHTML() + boardConsistencyHTML() +
+      '<p class="bd-foot">No names, no order, nobody to beat. The board only ever carries what people have done.</p>';
+  }
+
   function squadCard(){
     const p = squadPulse;
     if(!p || !p.enough) return '<div id="squadCard"></div>';   // placeholder until it lands
@@ -6659,12 +6815,14 @@
         '<p class="sq-note">Sports with fewer than five in them are left out — with numbers that small you would be naming people.</p></div>'
       : '';
 
+    const con = consistencyLine();
     return '<div class="card" id="squadCard">'+
       '<p class="card-eyebrow">Your squad · this week</p>'+
       '<p class="sq-head">'+head+'</p>'+
       (lines.length ? '<ul class="sq-list">'+lines.map(l => '<li>'+l+'</li>').join('')+'</ul>' : '')+
       sports+
-      '<p class="sq-foot">No names, no order, nobody to beat. Just how many of us are at it.</p>'+
+      (con ? '<p class="sq-con">'+con+'</p>' : '')+
+      '<button class="bd-open" onclick="openBoard()"><i class="ti ti-layout-board" aria-hidden="true"></i> Open the board</button>'+
     '</div>';
   }
 
@@ -6787,6 +6945,71 @@
     }
     return { streak: streak, total: total };
   }
+  // ---- Consistency, in WEEKS -------------------------------------------------
+  // The day streak was the only number in this app that could go backwards to
+  // nothing. Everything else accumulates — progress since September, bests,
+  // blocks passed. Four missed days over an exam week turned a 20 into a 0, and
+  // the student most likely to break a run is the one already struggling, so
+  // the app's answer to a wobble was to take away the only thing they had
+  // built. Loss aversion does the rest.
+  //
+  // A week is also the real unit of training. "Trained this week" survives a
+  // planned rest day, a sore knee and a Saturday fixture; "trained today" does
+  // not, and a programme with rest days in it should never punish rest.
+  //
+  // Three numbers come out of this, and only one of them can fall:
+  //   weeks   — weeks with training in them, out of weeks since you started.
+  //             CANNOT GO DOWN. This is the one shown biggest.
+  //   run     — the current unbroken run of weeks. Can fall, never shown as 0.
+  //   best    — the longest run so far. Never taken away.
+  // A week flagged in Availability (injured or ill) is skipped entirely rather
+  // than counted as a miss — the same rule the Grit score already uses, which
+  // the day streak ignored.
+  function flaggedWeekSet(){
+    const out = {};
+    (state.availability || []).forEach(a => {
+      if(!a || !a.from) return;
+      let w = fmtISO(mondayOf(parseISO(a.from)));
+      const end = a.to ? fmtISO(mondayOf(parseISO(a.to))) : w;
+      let guard = 0;
+      while(w <= end && guard++ < 60){ out[w] = 1; w = addDays(w, 7); }
+    });
+    return out;
+  }
+  function weekRunInfo(){
+    const days = loggedDaySet();
+    if(!days.length) return { weeks:0, span:0, run:0, best:0, thisWeek:false, started:false };
+    const flagged = flaggedWeekSet();
+    const trained = {};
+    days.forEach(d => { trained[fmtISO(mondayOf(parseISO(d)))] = 1; });
+    const first = fmtISO(mondayOf(parseISO(days[0])));
+    const nowW = fmtISO(mondayOf(new Date()));
+    // Walk every week from the first one trained to this one.
+    const line = [];
+    let w = first, guard = 0;
+    while(w <= nowW && guard++ < 400){ line.push(w); w = addDays(w, 7); }
+    let weeks = 0, span = 0, run = 0, best = 0, cur = 0;
+    line.forEach((wk, i) => {
+      if(flagged[wk]) return;                       // injured or ill — not counted either way
+      span++;
+      if(trained[wk]){ weeks++; cur++; if(cur > best) best = cur; }
+      // The CURRENT week is not a miss until it is over — a student opening the
+      // app on Monday morning has not failed anything yet.
+      else if(wk !== nowW){ cur = 0; }
+    });
+    run = cur;
+    return { weeks:weeks, span:span, run:run, best:best, thisWeek: !!trained[nowW], started:true };
+  }
+  // One line, and never a zero. A missed week moves the sentence to the
+  // cumulative count, which is still true and still something to be proud of.
+  function consistencyLine(){
+    const c = weekRunInfo();
+    if(!c.started) return '';
+    if(c.run >= 2) return '<strong>'+c.run+' weeks in a row</strong> with training in them.';
+    if(c.weeks >= 2) return 'You have trained in <strong>'+c.weeks+' of your '+c.span+' weeks</strong> so far.';
+    return 'First week on the board. It only goes up from here.';
+  }
+
   function streakLabel(n){
     if(n>=60) return 'Unstoppable';
     if(n>=30) return 'Relentless';

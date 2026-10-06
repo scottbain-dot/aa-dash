@@ -3597,6 +3597,10 @@ function handleGetSquadPulse(ss, athleteId, weekStart) {
       trained: trained, threePlus: threePlus, lighter: lighter,
       bests: bests, bestAthletes: apCountKeys_(bestAthletes),
       sports: sports,
+      // The coach's pinned line, read from Config so one edit reaches everyone.
+      // Set BoardNote (and optionally BoardNoteDate) on the Config sheet.
+      coachNote: apConfigValue_(ss, 'BoardNote'),
+      coachNoteDate: apConfigValue_(ss, 'BoardNoteDate'),
       // The only thing about the requester, so the card can place them inside
       // the group rather than describing it from outside.
       you: { trained: (thisWk[me] || 0) > 0, sessions: thisWk[me] || 0, best: !!bestAthletes[me] }
@@ -3606,6 +3610,19 @@ function handleGetSquadPulse(ss, athleteId, weekStart) {
   }
 }
 function apCountKeys_(o) { var n = 0; for (var k in o) if (o.hasOwnProperty(k)) n++; return n; }
+// Plain string read from the Config sheet. getConfig() returns a ContentService
+// response for the HTTP layer; this is the value on its own, for internal use.
+function apConfigValue_(ss, key) {
+  try {
+    var sheet = ss.getSheetByName('Config');
+    if (!sheet) return '';
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === key) return String(data[i][1] == null ? '' : data[i][1]).trim();
+    }
+  } catch (e) { /* no config yet */ }
+  return '';
+}
 function apWeekStartOf_(d) {
   var x = new Date(d.getTime());
   var dow = (x.getDay() + 6) % 7;            // Monday = 0
