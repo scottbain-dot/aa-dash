@@ -1634,6 +1634,15 @@
   </div>
 </div>
 
+<!-- NOTICE BAR — one line, always on screen, rotating. The board behind a tap
+     is a PULL surface and most students never pull; this is the push half. -->
+<button class="nbar" id="noticeBar" hidden onclick="openBoard()">
+  <span class="nbar-dot" id="nbarDot" hidden></span>
+  <span class="nbar-text" id="nbarText"></span>
+  <span class="nbar-pips" id="nbarPips"></span>
+  <i class="ti ti-chevron-right nbar-chev" aria-hidden="true"></i>
+</button>
+
 <!-- BLOCK CONTEXT BAR (filled per active tab by JS) -->
 <div class="block-bar">
   <div class="block-bar-inner" id="blockBar"></div>
@@ -2678,6 +2687,31 @@
   .bd-open { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; margin-top: 13px;
     padding: 11px; border-radius: 12px; border: 1px solid var(--line); background: none; cursor: pointer;
     font: 700 13px 'Inter', sans-serif; color: var(--burgundy); }
+  /* ---- Notice bar ---------------------------------------------------------
+     One line under the tabs, on every screen. Slim enough to ignore, loud
+     enough to read, and the only route most students will ever take to the
+     board. */
+  .nbar { display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 10px 20px; border: none; cursor: pointer; text-align: left;
+    background: linear-gradient(180deg, #241d1b, #1d1715); color: var(--cream);
+    border-bottom: 1px solid rgba(245,239,233,.09); }
+  .nbar.is-fresh { background: linear-gradient(180deg, #2f2420, #241b18); }
+  .nbar-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex: 0 0 auto;
+    box-shadow: 0 0 0 0 rgba(212,175,55,.6); animation: nbarPing 2s ease-out infinite; }
+  @keyframes nbarPing { 0% { box-shadow: 0 0 0 0 rgba(212,175,55,.55); }
+                        70% { box-shadow: 0 0 0 7px rgba(212,175,55,0); }
+                        100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); } }
+  .nbar-text { flex: 1; min-width: 0; font: 400 13px 'Inter', sans-serif; color: rgba(245,239,233,.72);
+    line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nbar-text b { color: var(--gold); font-weight: 700; }
+  @keyframes nbarIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+  .nbar-text.in { animation: nbarIn .34s cubic-bezier(.2,.8,.3,1) both; }
+  .nbar-pips { display: flex; gap: 3px; flex: 0 0 auto; }
+  .nbar-pips i { width: 4px; height: 4px; border-radius: 50%; background: rgba(245,239,233,.2); transition: background .2s; }
+  .nbar-pips i.on { background: var(--gold); }
+  .nbar-chev { color: rgba(245,239,233,.35); font-size: 15px; flex: 0 0 auto; }
+  @media (prefers-reduced-motion: reduce) { .nbar-dot, .nbar-text.in { animation: none !important; } }
+
   /* ---- The board ---------------------------------------------------------
      A noticeboard has to look like somewhere. Dark pinned surface, paper slips,
      lights for people, a race for the sports, a ribbon for the bests. Every
@@ -5265,6 +5299,7 @@
     document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-'+tab).classList.add('active');
     renderBlockBar();
+    renderNoticeBar();
     if(tabGated(tab)){ renderTeaser(tab); window.scrollTo(0,0); return; }
     if(tab==='week') renderWeek();
     else if(tab==='year') renderYear();
@@ -6774,6 +6809,7 @@
         squadPulse = r; _squadWeek = ws;
         state.board = { coachNote: r.coachNote || '', coachNoteDate: r.coachNoteDate || '' };
         paintSquadCard();
+        renderNoticeBar();
         if(document.getElementById('boardSheet').classList.contains('open')) renderBoard();
       }
     } catch(e){ /* the week must render with or without the squad */ }
@@ -6783,15 +6819,96 @@
     const host = document.getElementById('squadCard');
     if(host) host.outerHTML = squadCard();
   }
+  // ---- The notice bar --------------------------------------------------------
+  // The board is a pull surface: a student has to decide to open it, and most
+  // never will — the whole funnel problem in this system is that everything
+  // built sits downstream of an action the majority do not take. This is the
+  // push half. One line, under the tabs, on every screen, rotating. It costs
+  // nothing to read, so it gets read, and tapping it is how anybody finds the
+  // board in the first place.
+  //
+  // Ordered by what deserves the slot, not by what is interesting: something
+  // new from the coach first, then something the student can act on today,
+  // then the squad, then them.
+  let _nbarItems = [], _nbarIdx = 0, _nbarTimer = null;
+  function noticeSeenKey(){ return 'aaNoticeSeen:' + currentAthleteId(); }
+  function noticeSeen(){ try { return localStorage.getItem(noticeSeenKey()) || ''; } catch(e){ return ''; } }
+  function markNoticeSeen(sig){ try { localStorage.setItem(noticeSeenKey(), sig); } catch(e){} }
+
+  function buildNotices(){
+    const p = squadPulse, out = [];
+    const note = String((state.board && state.board.coachNote) || '').trim();
+    if(note){
+      // Trimmed to a glance. The full thing is on the board.
+      const short = note.length > 86 ? note.slice(0, 84).replace(/\s+\S*$/, '') + '…' : note;
+      out.push({ k:'coach', html:'<b>Mr Bain</b> ' + esc(short), fresh: noticeSeen() !== note });
+    }
+    // Something to do today beats something to know.
+    const bk = state.booking;
+    if(bk && (bk.slots||[]).length){
+      const today = isoToday();
+      const up = (bk.slots||[]).filter(s => s.date && s.date >= today && String(s.status||'open') === 'open')
+        .sort((a,b) => (a.date+a.start) < (b.date+b.start) ? -1 : 1);
+      if(up.length){
+        const seq = up[0].seq;
+        const grp = up.filter(s => String(s.seq) === String(seq));
+        const mine = grp.some(s => s.myBookingId);
+        const booked = grp.reduce((a,s) => a + (+s.booked || 0), 0);
+        const left = grp.reduce((a,s) => a + Math.max(0, (+s.capacity||0) - (+s.booked||0)), 0);
+        const title = String(grp[0].title || 'the next check-in').split('·')[0].trim();
+        out.push(mine
+          ? { k:'book', html:'You are in for <b>'+esc(title)+'</b> · '+booked+' of us going' }
+          : { k:'book', html:'<b>'+booked+'</b> signed up for '+esc(title)+(left ? ' · '+left+' space'+(left===1?'':'s')+' left' : ''), fresh: !!left });
+      }
+    }
+    if(p && p.enough){
+      out.push({ k:'squad', html:'<b>'+p.trained+' of '+p.cohort+'</b> of us trained this week'+(p.you.trained ? ' — you included' : '') });
+      if(p.bests > 0) out.push({ k:'pb', html:'<b>'+p.bests+'</b> personal best'+(p.bests===1?'':'s')+' set across the squad this week' });
+      if(!p.you.trained && p.lighter >= 3)
+        out.push({ k:'soft', html:'<b>'+p.lighter+'</b> are having a lighter week too — it happens to most people most terms' });
+    }
+    const c = weekRunInfo();
+    if(c.started && c.run >= 2) out.push({ k:'you', html:'<b>'+c.run+' weeks in a row</b> with training in them' });
+    else if(c.started && c.weeks >= 2) out.push({ k:'you', html:'You have trained in <b>'+c.weeks+' of your '+c.span+'</b> weeks' });
+    return out;
+  }
+
+  function renderNoticeBar(){
+    const bar = document.getElementById('noticeBar');
+    if(!bar) return;
+    _nbarItems = buildNotices();
+    if(!_nbarItems.length){ bar.hidden = true; return; }
+    bar.hidden = false;
+    if(_nbarIdx >= _nbarItems.length) _nbarIdx = 0;
+    document.getElementById('nbarPips').innerHTML =
+      _nbarItems.map((_,i) => '<i class="'+(i===_nbarIdx?'on':'')+'"></i>').join('');
+    const it = _nbarItems[_nbarIdx];
+    const txt = document.getElementById('nbarText');
+    txt.innerHTML = it.html;
+    txt.classList.remove('in'); void txt.offsetWidth; txt.classList.add('in');
+    document.getElementById('nbarDot').hidden = !it.fresh;
+    bar.classList.toggle('is-fresh', !!it.fresh);
+    if(_nbarTimer) clearTimeout(_nbarTimer);
+    // A line with something new in it holds longer than one that is just a fact.
+    _nbarTimer = setTimeout(() => { _nbarIdx = (_nbarIdx + 1) % _nbarItems.length; renderNoticeBar(); },
+      it.fresh ? 7000 : 4600);
+  }
+  window.renderNoticeBar = renderNoticeBar;
+
   // ---- The board -------------------------------------------------------------
   // Everything social in one place, rather than scattered across three tabs.
   // A noticeboard is the right object for a school: it is the thing outside the
   // gym that you glance at, it changes, and nobody has to post on it.
   function openBoard(){
+    // Opening the board is what "read" means for the coach's note — the dot on
+    // the bar goes out and stays out until the note itself changes.
+    const note = String((state.board && state.board.coachNote) || '').trim();
+    if(note) markNoticeSeen(note);
     renderBoard();
     document.getElementById('board-backdrop').classList.add('open');
     document.getElementById('boardSheet').classList.add('open');
     document.body.style.overflow = 'hidden';
+    renderNoticeBar();
     loadSquadPulse(state.week.weekStart || fmtISO(mondayOf(new Date())));
   }
   function closeBoard(){
