@@ -4707,6 +4707,14 @@
   .wkt-finish { width: 100%; border: none; border-radius: 13px; padding: 15px; font-family: 'Inter', sans-serif;
     font-size: 15px; font-weight: 700; background: var(--gold); color: var(--burgundy-dark); cursor: pointer; }
   .wkt-finish:hover { filter: brightness(0.96); }
+  /* Everything ticked: the Finish button is the only thing left to do, so it
+     stops being one button among several and asks for the tap. */
+  @keyframes wktReady { 0%,100% { box-shadow: 0 0 0 0 rgba(212,175,55,.5); }
+                        50%     { box-shadow: 0 0 0 10px rgba(212,175,55,0); } }
+  .wkt-all-done #wktFinishBtn { animation: wktReady 1.9s ease-out infinite; }
+  .wkt-all-done #wktProgressLabel { color: var(--gold); font-weight: 700; }
+  .wkt-all-done .wkt-bar-fill, .wkt-all-done #wktBar { background: var(--gold); }
+  @media (prefers-reduced-motion: reduce) { .wkt-all-done #wktFinishBtn { animation: none; } }
   /* Finish panel (RPE + duration) */
   .wkt-finish-panel { position: absolute; inset: 0; z-index: 2; background: rgba(20,13,11,0.72); backdrop-filter: blur(3px);
     display: none; align-items: flex-end; justify-content: center; }
@@ -9852,9 +9860,16 @@
   function wktUpdateProgress(){
     const w = wktSession.workout || [];
     const done = (wktSession._checked||[]).filter(Boolean).length;
+    const all = !!w.length && done === w.length;
     const pct = w.length ? Math.round(done/w.length*100) : 0;
     document.getElementById('wktBar').style.width = pct+'%';
-    document.getElementById('wktProgressLabel').textContent = done+' / '+w.length + ((w.length && done===w.length) ? ' · done' : '');
+    document.getElementById('wktProgressLabel').textContent =
+      all ? 'All done — finish it off' : (done+' / '+w.length);
+    // Ticking the last exercise used to change a small grey label and nothing
+    // else. The one thing a student must still do is the one thing nothing
+    // pointed at, so the Finish button now lights up and asks for the tap.
+    const mode = document.getElementById('workoutMode');
+    if(mode) mode.classList.toggle('wkt-all-done', all);
   }
   function wktField(label,id,val,ph){ return '<div class="wkt-field"><label for="'+id+'">'+label+'</label><input id="'+id+'" value="'+esc(val||'')+'" placeholder="'+(ph||'')+'" autocomplete="off"></div>'; }
   function wktCardHTML(it, i){
@@ -10021,11 +10036,21 @@
   window.wktRest = wktRest; window.wktRestStop = wktRestStop; window.wktRestAdd = wktRestAdd;
 
   // ---- Finish → log ----
+  // A planned session already carries an intensity — easy, moderate or hard —
+  // chosen when the week was built. Using it as the effort default is the
+  // difference between a workout that logs and one that silently does not.
+  const WKT_INTENSITY_RPE = { easy:4, moderate:6, hard:8 };
   function wktFinishOpen(){
     let pips = '';
     for(let v=1; v<=10; v++) pips += '<i data-v="'+v+'" onclick="wktPickRpe('+v+')">'+v+'</i>';
     document.getElementById('wktRpe').innerHTML = pips;
-    wktRpeVal = (wktSession.rpe!=null) ? wktSession.rpe : null;
+    // THE TRAP THIS CLOSES: effort started blank, and a session saved without
+    // one stays "planned". A student could tick every exercise, hit Finish,
+    // skip the dial and walk away having logged nothing — no load, no streak,
+    // no squad count, no PB scan, and a toast that said it was saved. The whole
+    // workout, gone, with nothing on screen to say so.
+    wktRpeVal = (wktSession.rpe != null) ? wktSession.rpe
+              : (WKT_INTENSITY_RPE[String(wktSession.intensity||'').toLowerCase()] || 6);
     wktMarkRpe();
     document.getElementById('wktDuration').value = (wktSession.duration!=null ? wktSession.duration : (wktSession.plannedDuration!=null ? wktSession.plannedDuration : ''));
     document.getElementById('wktFinishPanel').classList.add('open');
@@ -10038,7 +10063,12 @@
   async function wktSaveFinish(){
     if(!wktSession) return;
     const rpe = wktRpeVal;
-    const duration = numOrNull(document.getElementById('wktDuration').value);
+    // Duration falls back to what was planned, then to 45. A blank box should
+    // not be the difference between a session that counts and one that does
+    // not — and a logged session with no duration carries no load at all.
+    const duration = numOrNull(document.getElementById('wktDuration').value)
+      || (wktSession.plannedDuration != null ? wktSession.plannedDuration : null)
+      || (((wktSession._checked||[]).some(Boolean)) ? 45 : null);
     const logged = rpe!=null && duration!=null;
     if(logged){ wktSession.rpe = rpe; wktSession.duration = duration; wktSession.load = rpe*duration; wktSession.status = 'done'; }
     const changed = structuralSig(wktSession) !== _wktOpenSig;   // did any target change?
