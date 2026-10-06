@@ -7452,8 +7452,31 @@
   // pbOfferFor returns true when it took over the screen, so the caller knows
   // not to fire a streak or badge celebration on top of it.
   let _pbPending = null;
-  function pbOfferFor(session){
-    const scan = pbScan(session);
+  // Every route that turns a session into a logged one has to go through here,
+  // or a best gets thrown away silently. There are three of them and the first
+  // version only covered one:
+  //
+  //   wktSaveFinish       — workout mode. Covered from the start.
+  //   saveCurrentSession  — the session sheet. This is the obvious one to miss
+  //                         and the likeliest in real use: a student opens the
+  //                         sheet, changes 4×5 @ 60kg to 4×5 @ 65kg because
+  //                         that is what they actually lifted, sets effort and
+  //                         duration, saves. Logged, beaten, and nothing said.
+  //   quickLogDone        — one tap from the day row. No editing happens here,
+  //                         but a PROGRAM can carry a heavier week forward, so
+  //                         the planned weight itself can be a best.
+  //
+  // opts.marks=false suppresses the "starting mark" prompt. One tap is designed
+  // to be frictionless; interrupting it to name a baseline is not worth it, but
+  // interrupting it for an actual beaten best is.
+  function maybePBAfterLog(session, opts){
+    if(!session || !isLogged(session)) return false;
+    return pbOfferFor(session, opts);
+  }
+  function pbOfferFor(session, opts){
+    const wantMarks = !(opts && opts.marks === false);
+    const raw = pbScan(session);
+    const scan = { beats: raw.beats, marks: wantMarks ? raw.marks : [] };
     if(!scan.beats.length && !scan.marks.length) return false;
     _pbPending = scan;
     const isBeat = scan.beats.length > 0;
@@ -7797,7 +7820,8 @@
       if(!res || !res.success) throw new Error((res && res.error) || 'save failed');
       if(res.id) s.id = res.id;
       showToast('Logged · '+duration+' min · '+rpe+'/10', 'success');
-      if(!maybeCelebrateStreak()) maybeCelebrateBadges();
+      // Beats only here: a one-tap log should not stop to name a baseline.
+      if(!maybePBAfterLog(s, { marks:false })){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
     } catch(e){
       Object.assign(s, before);
       renderWeek(); renderBlockBar();
@@ -9278,7 +9302,9 @@
     closeSheet();
     renderWeek(); renderBlockBar();
     showToast((logged ? 'Session logged' : 'Session planned') + programMsg, 'success');
-    if(logged){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
+    // The path a student most often takes after changing what they actually
+    // lifted: edit the weight in the sheet, set effort and duration, save.
+    if(logged){ if(!maybePBAfterLog(session)){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); } }
     if(tplChanged) persistTemplate();
     if(askProgram) openProgramEditChoice(session.name);
     try {
@@ -10014,7 +10040,7 @@
     // did, in their own numbers, and it is the only celebration here that is
     // about getting better rather than about turning up.
     const finished = wktSession;
-    if(logged && !pbOfferFor(finished)){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
+    if(logged && !maybePBAfterLog(finished)){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
     try {
       const res = await apiData({ action:'saveSession', session: Object.assign({}, wktSession, { id: isNew ? null : wktSession.id }) });
       if(res.success && res.id && isNew){ wktSession.id = res.id; if(activeTab==='week') renderWeek(); }
