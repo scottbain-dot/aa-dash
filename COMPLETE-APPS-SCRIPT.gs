@@ -3819,6 +3819,10 @@ function handleGetSquadPulse(ss, athleteId, weekStart) {
     // ---- sessions: who trained, this week and last ----
     var sSheet = ss.getSheetByName('Training_Sessions');
     var thisWk = {}, lastWk = {}, daysThisWk = {};
+    // The season so far, accumulated in the same pass. A quiet week needs
+    // something true to point at that is not this week's count, and the sheet
+    // is already fully read here, so this costs a counter rather than a read.
+    var byWeek = {}, totalSessions = 0;
     if (sSheet) {
       var sRows = apReadObjects(sSheet);
       for (var k = 0; k < sRows.length; k++) {
@@ -3828,6 +3832,12 @@ function handleGetSquadPulse(ss, athleteId, weekStart) {
         var done = String(r.Status || '').trim().toLowerCase() === 'done';
         if (!done) continue;
         var rws = String(r.Week_Start || '').trim();
+        if (rws) {
+          byWeek[rws] = byWeek[rws] || { ids: {}, sessions: 0 };
+          byWeek[rws].ids[rid] = 1;
+          byWeek[rws].sessions++;
+          totalSessions++;
+        }
         if (rws === ws) {
           thisWk[rid] = (thisWk[rid] || 0) + 1;
           var d = apIsoDate_(r.Date);
@@ -3836,6 +3846,17 @@ function handleGetSquadPulse(ss, athleteId, weekStart) {
           lastWk[rid] = (lastWk[rid] || 0) + 1;
         }
       }
+    }
+    // The best week the squad has had: most people training in one week, with
+    // the number of sessions that week alongside it. Counts only — which week
+    // was busiest says nothing about who was in it.
+    var best = { trained: 0, sessions: 0, weekStart: '' }, weeksWithTraining = 0;
+    for (var bw in byWeek) {
+      if (!byWeek.hasOwnProperty(bw)) continue;
+      weeksWithTraining++;
+      var bn = apCountKeys_(byWeek[bw].ids);
+      // Ties go to the earlier week, so the highlight stops moving about.
+      if (bn > best.trained) best = { trained: bn, sessions: byWeek[bw].sessions, weekStart: bw };
     }
     var trained = 0, threePlus = 0, lighter = 0;
     for (var id2 in idSet) {
@@ -3882,6 +3903,10 @@ function handleGetSquadPulse(ss, athleteId, weekStart) {
       trained: trained, threePlus: threePlus, lighter: lighter,
       bests: bests, bestAthletes: apCountKeys_(bestAthletes),
       sports: sports,
+      // The season so far, for the weeks when this one has nothing to show.
+      // Aggregate counts over the whole cohort — no athlete is identifiable in
+      // any of it, and it is gated behind the same `enough` floor as the rest.
+      season: { best: best, totalSessions: totalSessions, weeks: weeksWithTraining },
       // The coach's pinned line, read from Config so one edit reaches everyone.
       // Set BoardNote (and optionally BoardNoteDate) on the Config sheet.
       coachNote: apConfigValue_(ss, 'BoardNote'),
