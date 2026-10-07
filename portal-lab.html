@@ -6990,7 +6990,15 @@
       }
     }
     if(p && p.enough){
-      out.push({ k:'squad', html:'<b>'+p.trained+' of '+p.cohort+'</b> of us trained this week'+(p.you.trained ? ' — you included' : '') });
+      // Never ticker a zero. This is the push surface — it scrolls past a
+      // student who never asked a question, so "0 of 30 of us trained this
+      // week" is an unprompted announcement that the program is empty. On a
+      // holiday week that is also simply misleading about what it means. No
+      // count, no line; the ticker has other things to say, and if it has
+      // nothing it stays hidden.
+      if(p.trained > 0){
+        out.push({ k:'squad', html:'<b>'+p.trained+' of '+p.cohort+'</b> of us trained this week'+(p.you.trained ? ' — you included' : '') });
+      }
       if(p.bests > 0) out.push({ k:'pb', html:'<b>'+p.bests+'</b> personal best'+(p.bests===1?'':'s')+' set across the squad this week' });
       if(!p.you.trained && p.lighter >= 3)
         out.push({ k:'soft', html:'<b>'+p.lighter+'</b> are having a lighter week too — it happens to most people most terms' });
@@ -7102,6 +7110,15 @@
     const n = Math.max(p.cohort || 0, 0);
     if(!n) return '';
     const on = Math.min(p.trained || 0, n);
+    // Thirty unlit dots under "0 of 30" is the bleakest thing in the app, and it
+    // is what a holiday week looks like. The field is a picture of a group; with
+    // nobody in it there is no picture, so ask for the first one instead of
+    // drawing an empty grid.
+    if(on === 0){
+      return '<div class="bd-field"><p class="bd-field-cap">'+
+        'Nobody has lit one up yet this week. Yours would be the first.'+
+      '</p></div>';
+    }
     // Scattered, not filled left-to-right: a solid block of gold reads as a
     // progress bar, and this is a group of people, not a measure. The spread is
     // a fixed arithmetic walk over a prime-ish step, so it is stable between
@@ -7144,6 +7161,12 @@
   function boardRaceHTML(p){
     const list = (p.sports || []);
     if(!list.length) return '';
+    // A race needs runners. With one sport moving, or none, every lane but one
+    // sits at 0% and the block reads as a scoreboard of nobody — so it waits
+    // until there is actually a contest. When it does show, every qualifying
+    // sport is in it, zeros included; this withholds the block, it never
+    // withholds a lane.
+    if(list.filter(s => s.trained > 0).length < 2) return '';
     const rows = list.map((s, i) => {
       const pct = Math.round(s.trained / s.size * 100);
       return '<div class="bd-lane" style="--i:'+(i+4)+'">'+
@@ -7261,9 +7284,21 @@
     const lines = [];
 
     // Where they sit INSIDE the group, never against it.
-    const head = p.you.trained
-      ? '<strong>'+p.trained+' of us</strong> trained this week — you are one of them.'
-      : '<strong>'+p.trained+' of us</strong> have trained this week.';
+    //
+    // Zero is the one count this card must never report. "0 of us have trained
+    // this week", under a row of empty bars, tells a student the program is
+    // dead — which is the opposite of what the card is for, and is wrong
+    // anyway: a quiet week is a holiday or a Monday morning, not an empty
+    // program. Nothing here invents activity, which students would see through
+    // instantly. It just stops narrating an absence and asks for something
+    // instead, which is true either way — nobody HAS gone yet.
+    const head = p.trained === 0
+      ? 'Be the first to log a session this week.'
+      : (p.trained === 1 && p.you.trained
+          ? 'You are the first to log a session this week.'
+          : (p.you.trained
+              ? '<strong>'+p.trained+' of us</strong> trained this week — you are one of them.'
+              : '<strong>'+p.trained+' of us</strong> have trained this week.'));
 
     if(p.bests > 0){
       lines.push(p.you.best
@@ -7277,7 +7312,13 @@
       lines.push('<strong>'+p.lighter+'</strong> are having a lighter week than last week too. It happens to most people most terms.');
     }
 
-    const sports = (p.sports || []).length
+    // The per-sport split is worth showing once there is a split to see. With
+    // one sport active, or none, every bar but one reads zero — a column of
+    // empty bars that says nothing except "nobody is here". Withholding a
+    // breakdown is not the same as misreporting one: when it does appear, every
+    // sport in it is shown, zeros included.
+    const sportsActive = (p.sports || []).filter(s => s.trained > 0).length;
+    const sports = (p.sports || []).length && sportsActive >= 2
       ? '<div class="sq-sports">'+p.sports.map(s =>
           '<div class="sq-sport"><span class="sq-sport-n">'+esc(s.name)+'</span>'+
           '<span class="sq-bar"><i style="width:'+Math.round(s.trained/s.size*100)+'%"></i></span>'+
