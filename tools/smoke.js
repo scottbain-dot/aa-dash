@@ -127,6 +127,25 @@ async function check(name, qs, opts = {}) {
   await check('getConfig',          'action=getConfig');
   await check('getExerciseHistory', 'action=getExerciseHistory&athleteId=' + ID + '&name=Back%20Squat');
 
+  // The squad feed behind the notice ticker and the board. An older script has
+  // no such action at all, so a missing route here means the paste did not land
+  // — which is exactly the silent failure this file exists to catch, because
+  // the portal keeps working and the social half is simply invisible.
+  await check('getSquadPulse', 'action=getSquadPulse&athleteId=' + ID, {
+    expect: b => {
+      if (b.enough === undefined) return 'no "enough" field — getSquadPulse not deployed';
+      // Nothing identifying may ever come back from this route.
+      const leak = ['athletes', 'names', 'ids', 'rows', 'emails'].find(k => b[k] !== undefined);
+      if (leak) return 'LEAK: response carries "' + leak + '" — this endpoint must return counts only';
+      (b.sports || []).forEach(s => { if (s.size < 5) return 'group of ' + s.size + ' reported — under the suppression floor'; });
+      return '';
+    },
+    note: b => b.enough
+      ? (b.trained + '/' + b.cohort + ' trained · ' + b.bests + ' bests · ' +
+         (b.sports || []).length + ' sport groups' + (b.coachNote ? ' · coach note set' : ' · no coach note'))
+      : 'cohort too small to report'
+  });
+
   // Admin routes: we only assert that they exist and refuse us.
   await check('getAttention (gated)',   'action=getAttention&token=smoke-probe');
   await check('getObservations (gated)','action=getObservations&token=smoke-probe');
