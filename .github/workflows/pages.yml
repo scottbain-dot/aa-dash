@@ -1,0 +1,125 @@
+#  Publish the portals — and only the portals.
+#
+#  Until this existed, Pages served the repository root, so everything in the
+#  repo was on the public internet whether it was meant to be or not:
+#  CLAUDE.md, COMPLETE-APPS-SCRIPT.gs and tools/ all returned 200 on the live
+#  site. Making the repository private does NOT fix that by itself — a public
+#  Pages site serves whatever is in the published output regardless of who can
+#  see the repository. The allowlist below is what actually keeps the backend
+#  source and the design docs off the web.
+#
+#  The rule: the published site is the HTML portals, the images they
+#  reference, and nothing else. No *.md, no *.gs, no tools/, no hooks/, no
+#  dotfiles except .nojekyll. Nothing is moved or renamed to achieve that —
+#  the repository layout is untouched and the site is assembled into _site/
+#  at build time.
+#
+#  The check step is the point. An intention to exclude things drifts; a build
+#  that fails when something unexpected reaches _site/ does not.
+
+name: Deploy portals to Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it — a half-published
+# site is worse than a slightly stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the site
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+
+          # The portals. Root only — nothing nested is a page.
+          find . -maxdepth 1 -type f -name '*.html' -exec cp -t _site/ {} +
+
+          # The images the portals reference from the root
+          # (strength-squat.jpg and friends, WarriorsKit.png).
+          find . -maxdepth 1 -type f \
+            \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \
+            -o -iname '*.gif' -o -iname '*.svg' -o -iname '*.webp' \
+            -o -iname '*.ico' \) -exec cp -t _site/ {} +
+
+          # The assets folder, whole — the sport icons are referenced by
+          # name built at runtime, so picking through them statically would
+          # drop the ones only JavaScript knows about.
+          if [ -d assets ]; then cp -R assets _site/assets; fi
+
+          # Pages runs Jekyll over the output otherwise, which silently drops
+          # anything starting with an underscore.
+          touch _site/.nojekyll
+
+      - name: Refuse to publish anything that is not a site file
+        run: |
+          set -euo pipefail
+
+          # An allowlist, not a denylist. A denylist only catches the things
+          # we thought of. Root files are already safe by construction — only
+          # *.html and images are copied from there — so this is really
+          # guarding assets/, which is copied whole. Verified to fail on a
+          # stray .md, a .env and a creds.json dropped into assets/.
+          leaked=$(find _site -type f \
+            ! -name '.nojekyll' \
+            ! -name '*.html' \
+            ! -iname '*.png'  ! -iname '*.jpg' ! -iname '*.jpeg' \
+            ! -iname '*.gif'  ! -iname '*.svg' ! -iname '*.webp' \
+            ! -iname '*.ico')
+
+          if [ -n "$leaked" ]; then
+            echo "::error::These reached the published site and must not be there:"
+            echo "$leaked"
+            exit 1
+          fi
+
+          # The other direction: an empty or gutted publish would also pass a
+          # leak check, and would take the portals offline silently.
+          for required in index.html portal-lab.html admin.html; do
+            if [ ! -f "_site/$required" ]; then
+              echo "::error::$required is missing from the published site."
+              exit 1
+            fi
+          done
+
+          pages=$(find _site -type f -name '*.html' | wc -l)
+          imgs=$(find _site -type f ! -name '*.html' ! -name '.nojekyll' | wc -l)
+          echo "Publishing $pages portals and $imgs images."
+
+      # Only on main. configure-pages asks GitHub for the site's settings and
+      # fails if Pages is not set to "GitHub Actions" as its source, which is
+      # not something a pull request should be blocked on.
+      - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: _site
+
+  # Split from the build so the allowlist check runs on pull requests too,
+  # where there is nothing to deploy.
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

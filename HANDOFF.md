@@ -216,7 +216,7 @@ Don't make these decisions silently. Surface them with a recommendation:
 
 ## What success looks like
 
-A G10–12 athlete opens `https://scottbain-dot.github.io/aa-dash/athlete-portal.html` on their phone Sunday evening. They:
+A G10–12 athlete opens `https://sbfis.github.io/aa-dash/athlete-portal.html` on their phone Sunday evening. They:
 
 1. See their Year tab — clear, their year, their sports, their goal
 2. Tap the current month's block → see it's a Build phase, with key sessions defined
