@@ -1573,12 +1573,12 @@
   </div>
   <div class="wkt-list" id="wktList"></div>
   <div class="wkt-foot">
-    <div class="wkt-rest" id="wktRestBar">
-      <span class="wkt-rest-label">Rest</span>
-      <button class="wkt-rest-chip" onclick="wktRest(60)">60s</button>
-      <button class="wkt-rest-chip" onclick="wktRest(90)">90s</button>
-      <button class="wkt-rest-chip" onclick="wktRest(120)">2 min</button>
-    </div>
+    <!-- The rest chips are gone. 60s / 90s / 2min sat there every session
+         regardless of what had just been done, which is wrong after a heavy
+         triple and wrong mid-circuit, and a timer nobody asked for is noise.
+         wktRest() and the countdown stay in the file for when rest is derived
+         from the set that was actually just finished. -->
+    <div class="wkt-rest" id="wktRestBar" hidden></div>
     <button class="wkt-finish" id="wktFinishBtn" onclick="wktFinishOpen()"><i class="ti ti-flag-checkered" aria-hidden="true"></i> Finish workout</button>
   </div>
   <!-- Finish: log effort + time -->
@@ -4665,7 +4665,10 @@
   .wkt-card.done { opacity: 0.62; background: rgba(74,157,91,0.14); border-color: rgba(74,157,91,0.4); }
   .wkt-check { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(250,243,237,0.4);
     background: transparent; color: transparent; cursor: pointer; display: grid; place-items: center; font-size: 20px; transition: all 0.15s; }
-  .wkt-card.done .wkt-check { background: var(--green); border-color: var(--green); color: #fff; }
+  /* --green is not a token in this file, so this rule did nothing and a ticked
+     exercise only went dim. The tick is the one confirmation a student gets
+     that the set counted — it needs to actually fill in. */
+  .wkt-card.done .wkt-check { background: #4a9d5b; border-color: #4a9d5b; color: #fff; }
   .wkt-check:hover { border-color: var(--gold); }
   .wkt-main { flex: 1; min-width: 0; }
   .wkt-ex-name { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700; color: var(--cream); margin: 0 0 2px; }
@@ -4695,6 +4698,7 @@
   .wkt-foot { flex: none; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(250,243,237,0.12);
     background: rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 10px; }
   .wkt-rest { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .wkt-rest[hidden] { display: none; }
   .wkt-rest-label { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(250,243,237,0.55); }
   .wkt-rest-chip { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--cream);
     background: rgba(250,243,237,0.08); border: 1px solid rgba(250,243,237,0.18); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
@@ -4707,6 +4711,33 @@
   .wkt-finish { width: 100%; border: none; border-radius: 13px; padding: 15px; font-family: 'Inter', sans-serif;
     font-size: 15px; font-weight: 700; background: var(--gold); color: var(--burgundy-dark); cursor: pointer; }
   .wkt-finish:hover { filter: brightness(0.96); }
+  /* UP NEXT — the one card that is actually in front of them. A flat list of
+     eight identical cards gives a student nothing to aim at. */
+  .wkt-card { transition: opacity .25s, transform .25s, box-shadow .25s; }
+  .wkt-card.up-next { position: relative; border-color: rgba(212,175,55,.55);
+    background: linear-gradient(165deg, rgba(212,175,55,.13), rgba(212,175,55,.04));
+    box-shadow: 0 10px 26px -14px rgba(212,175,55,.5); transform: scale(1.012); }
+  .wkt-next-tag { position: absolute; top: -8px; left: 16px; z-index: 1;
+    background: var(--gold); color: #2a1f14; border-radius: 999px; padding: 3px 10px;
+    font: 800 8.5px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+  /* Done recedes; still-to-come waits its turn. Not so far that the green tick
+     stops reading — the point of ticking is to see that it landed. */
+  .wkt-card.done { opacity: .58; }
+  .wkt-list .wkt-card:not(.up-next):not(.done) { opacity: .72; }
+  .wkt-ex-last { display: flex; align-items: center; gap: 6px; margin: 7px 0 0;
+    font: 500 12.5px 'Inter', sans-serif; color: rgba(245,239,233,.6); }
+  .wkt-ex-last b { color: var(--gold); font-weight: 700; }
+  .wkt-ex-last u { text-decoration: none; color: rgba(245,239,233,.38); font-size: 11.5px; }
+  .wkt-ex-last i { font-size: 13px; opacity: .6; }
+  @media (prefers-reduced-motion: reduce) { .wkt-card { transition: none; } .wkt-card.up-next { transform: none; } }
+  /* Everything ticked: the Finish button is the only thing left to do, so it
+     stops being one button among several and asks for the tap. */
+  @keyframes wktReady { 0%,100% { box-shadow: 0 0 0 0 rgba(212,175,55,.5); }
+                        50%     { box-shadow: 0 0 0 10px rgba(212,175,55,0); } }
+  .wkt-all-done #wktFinishBtn { animation: wktReady 1.9s ease-out infinite; }
+  .wkt-all-done #wktProgressLabel { color: var(--gold); font-weight: 700; }
+  .wkt-all-done .wkt-bar-fill, .wkt-all-done #wktBar { background: var(--gold); }
+  @media (prefers-reduced-motion: reduce) { .wkt-all-done #wktFinishBtn { animation: none; } }
   /* Finish panel (RPE + duration) */
   .wkt-finish-panel { position: absolute; inset: 0; z-index: 2; background: rgba(20,13,11,0.72); backdrop-filter: blur(3px);
     display: none; align-items: flex-end; justify-content: center; }
@@ -4774,7 +4805,23 @@
   // ============================================================
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function val(id){ const el=document.getElementById(id); return el? el.value : ''; }
-  function numOrNull(v){ if(v===''||v==null) return null; const n=parseInt(v,10); return isNaN(n)?null:n; }
+  // numOrNull used to be parseInt and nothing else, which let several things
+  // through that then poisoned everything downstream of them:
+  //   "-30"                  -> -30   and a load of 8 × -30 = -240
+  //   "99999999999999999999" -> 1e20  and a load that flattens every chart
+  //   "1e9"                  -> 1     silently, because parseInt stops at "e"
+  //   "0x10"                 -> 0
+  // A duration is minutes a human spent training. Nothing outside 0 to 1440
+  // is a real answer, and a negative one is never a real answer.
+  function numOrNull(v, lo, hi){
+    if(v===''||v==null) return null;
+    const n = parseFloat(String(v).trim());
+    if(!isFinite(n)) return null;
+    const i = Math.round(n);
+    const min = (lo==null) ? 0 : lo, max = (hi==null) ? 1440 : hi;
+    if(i < min || i > max) return null;
+    return i;
+  }
   function fmtISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function parseISO(s){ const p=String(s).split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
   function isoToday(){ return fmtISO(new Date()); }
@@ -4882,6 +4929,13 @@
     if(action==='getWeek') return Promise.resolve({ success:true, weekStart: payload.weekStart,
       sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
+    if(action==='getLastTimes'){
+      const want = String(payload.names||'').split('\t').map(x=>x.trim().toLowerCase()).filter(Boolean);
+      const fake = { 'back squat':{date:'2026-09-29',detail:'4×5 @ 60kg'}, 'rdl':{date:'2026-09-29',detail:'3×8 @ 40kg'},
+                     'split squat':{date:'2026-09-22',detail:'3×10'} };
+      const last = {}; want.forEach(n=>{ if(fake[n]) last[n]=fake[n]; });
+      return Promise.resolve({ success:true, last });
+    }
     if(action==='getSquadPulse') return Promise.resolve({ success:true, enough:true,
       weekStart: payload.weekStart || '', cohort: 34, trained: 19, threePlus: 7, lighter: 6,
       bests: 4, bestAthletes: 3,
@@ -7452,8 +7506,31 @@
   // pbOfferFor returns true when it took over the screen, so the caller knows
   // not to fire a streak or badge celebration on top of it.
   let _pbPending = null;
-  function pbOfferFor(session){
-    const scan = pbScan(session);
+  // Every route that turns a session into a logged one has to go through here,
+  // or a best gets thrown away silently. There are three of them and the first
+  // version only covered one:
+  //
+  //   wktSaveFinish       — workout mode. Covered from the start.
+  //   saveCurrentSession  — the session sheet. This is the obvious one to miss
+  //                         and the likeliest in real use: a student opens the
+  //                         sheet, changes 4×5 @ 60kg to 4×5 @ 65kg because
+  //                         that is what they actually lifted, sets effort and
+  //                         duration, saves. Logged, beaten, and nothing said.
+  //   quickLogDone        — one tap from the day row. No editing happens here,
+  //                         but a PROGRAM can carry a heavier week forward, so
+  //                         the planned weight itself can be a best.
+  //
+  // opts.marks=false suppresses the "starting mark" prompt. One tap is designed
+  // to be frictionless; interrupting it to name a baseline is not worth it, but
+  // interrupting it for an actual beaten best is.
+  function maybePBAfterLog(session, opts){
+    if(!session || !isLogged(session)) return false;
+    return pbOfferFor(session, opts);
+  }
+  function pbOfferFor(session, opts){
+    const wantMarks = !(opts && opts.marks === false);
+    const raw = pbScan(session);
+    const scan = { beats: raw.beats, marks: wantMarks ? raw.marks : [] };
     if(!scan.beats.length && !scan.marks.length) return false;
     _pbPending = scan;
     const isBeat = scan.beats.length > 0;
@@ -7797,7 +7874,8 @@
       if(!res || !res.success) throw new Error((res && res.error) || 'save failed');
       if(res.id) s.id = res.id;
       showToast('Logged · '+duration+' min · '+rpe+'/10', 'success');
-      if(!maybeCelebrateStreak()) maybeCelebrateBadges();
+      // Beats only here: a one-tap log should not stop to name a baseline.
+      if(!maybePBAfterLog(s, { marks:false })){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
     } catch(e){
       Object.assign(s, before);
       renderWeek(); renderBlockBar();
@@ -9278,7 +9356,9 @@
     closeSheet();
     renderWeek(); renderBlockBar();
     showToast((logged ? 'Session logged' : 'Session planned') + programMsg, 'success');
-    if(logged){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
+    // The path a student most often takes after changing what they actually
+    // lifted: edit the weight in the sheet, set effort and duration, save.
+    if(logged){ if(!maybePBAfterLog(session)){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); } }
     if(tplChanged) persistTemplate();
     if(askProgram) openProgramEditChoice(session.name);
     try {
@@ -9688,7 +9768,13 @@
   function wktParse(detail){
     const d=String(detail||''); const sx={sets:'',reps:'',weight:'',time:''};
     const m=d.match(/(\d+)\s*[×xX]\s*(\d+)/); if(m){ sx.sets=m[1]; sx.reps=m[2]; }
-    const w=d.match(/(\d+(?:\.\d+)?\s*(?:kg|lb|lbs|%))/i); if(w) sx.weight=w[1].replace(/\s+/g,'');
+    // The weight has to be a whole clean token, not a number found INSIDE a
+    // messier one. The old pattern matched "70kg" inside "-70kg" and "5.5kg"
+    // inside "70.5.5kg", so a negative weight came back positive and a typo
+    // came back as a different number entirely — both of which then went on to
+    // be offered as personal bests. Refusing to guess is the only safe answer.
+    const w=d.match(/(^|[^\d.\-eE])(\d+(?:\.\d+)?)\s*(kg|lb|lbs|%)(?![\d.])/i);
+    if(w) sx.weight=(w[2]+w[3]).replace(/\s+/g,'');
     const t=d.match(/(\d+\s*(?:s|sec|secs|min|mins)\b)/i); if(t) sx.time=t[1].replace(/\s+/g,'');
     return sx;
   }
@@ -9717,16 +9803,62 @@
   //  - The FIRST time an exercise is logged is not a personal best. It is a
   //    starting mark, offered as one, with nothing to beat yet.
   const PB_UNIT_KG = 'kg', PB_UNIT_REPS = 'reps';
-  function pbCandidateFrom(detail){
-    const sx = wktParse(detail || '');
-    if(sx.weight){
-      const n = parseFloat(sx.weight);
-      if(n > 0 && /kg/i.test(sx.weight)) return { value: n, unit: PB_UNIT_KG, reps: parseInt(sx.reps,10) || null };
-      return null;   // lb and % are not compared — mixing units is how you get a false PB
+  // Sanity ceilings. A school gym does not produce a 999999kg squat or a set
+  // of 99999 reps, and a typo that does should be refused rather than
+  // enshrined as somebody's personal best.
+  const PB_MAX_KG = 500, PB_MAX_REPS = 100;
+  // Reads the STRUCTURED fields when workout mode has them, and only falls back
+  // to parsing the target string when it does not.
+  //
+  // This matters because of how editing in workout mode works. Changing the
+  // weight writes it.sx and recomposes it.detail, and the recomposed string is
+  // then re-parsed by a regex that insists on a unit — so a student who types
+  // "67.5" into a field already labelled Weight, which plenty will, produced a
+  // detail of "4×5 · 67.5" and the scan found nothing at all. The best was
+  // thrown away silently, which is the worst way to lose one.
+  //
+  // A number in the Weight field is a weight. It does not need to say so twice.
+  // Only an explicit lb or % still blocks the claim, because those are a real
+  // unit mismatch rather than a missing label.
+  function pbCandidateFrom(item, style){
+    const it = (item && typeof item === 'object') ? item : { detail: item };
+    const structured = !!(it.sx && (it.sx.weight || it.sx.reps || it.sx.time));
+    const sx = structured ? it.sx : wktParse(it.detail || '');
+    const detail = String(it.detail || '');
+    // A line that CONTAINS a weight unit but whose weight would not parse is a
+    // line we do not understand — "-70kg", "70.5.5kg", "1e9kg". Falling through
+    // to the rep count there would claim "5 reps" off a line that was actually
+    // about load, so the whole item is refused instead.
+    if(!structured && !String(sx.weight||'').trim() && /\d\s*(kg|lb|lbs)\b/i.test(detail)) return null;
+    const wRaw = String(sx.weight || '').trim();
+    if(wRaw){
+      if(/lb|%/i.test(wRaw)) return null;          // genuine unit mismatch — never compared
+      // Must be ONE clean number. "-70kg" used to read as 70 because the regex
+      // never captured the minus, so typing a negative claimed a positive best;
+      // "70.5.5" used to read as 5.5. Anything that is not a plain number with
+      // an optional unit is refused rather than guessed at.
+      const m = wRaw.match(/^(\d+(?:\.\d+)?)\s*(kg)?$/i);
+      if(!m) return null;
+      const n = parseFloat(m[1]);
+      if(!(n > 0) || n > PB_MAX_KG) return null;   // nobody is squatting 999999
+      return { value: n, unit: PB_UNIT_KG, reps: parseInt(sx.reps,10) || null };
     }
-    if(sx.reps && !sx.time){
-      const n = parseInt(sx.reps, 10);
-      if(n > 0) return { value: n, unit: PB_UNIT_REPS, reps: n };
+    if(sx.reps && !String(sx.time || '').trim()){
+      // "8×100m off 1:40" is a swim set, not eight sets of a hundred reps, and
+      // "6×30s" is a sprint interval. When the second number is followed by a
+      // letter it is a distance or a time, so the rep reading is wrong and a
+      // "100 reps" best would be nonsense. Only applies to a parsed string —
+      // the structured editor's Reps box is already a rep count.
+      if(!structured && /\d\s*[×xX]\s*\d+\s*[a-z]/i.test(detail)) return null;
+      // And a rep claim only makes sense in a gym-shaped session at all.
+      // "10×200 @ pace" in a swim set is ten 200s, not two hundred reps —
+      // there is no unit letter to catch it, so the session's own style is
+      // what rules it out.
+      if(style === 'session') return null;
+      const rRaw = String(sx.reps).trim();
+      if(!/^\d+$/.test(rRaw)) return null;
+      const n = parseInt(rRaw, 10);
+      if(n > 0 && n <= PB_MAX_REPS) return { value: n, unit: PB_UNIT_REPS, reps: n };
     }
     return null;
   }
@@ -9738,10 +9870,19 @@
   // Returns { beats: [...], marks: [...] } for one session's workout.
   function pbScan(session){
     const beats = [], marks = [], seen = {};
-    ((session && session.workout) || []).forEach(it => {
+    // ONLY WHAT THEY ACTUALLY TICKED. An exercise left unticked was not done —
+    // the rack was busy, something hurt, they ran out of time — and claiming a
+    // best off a line nobody performed is the exact kind of made-up number that
+    // would make a student stop believing any of them. Where nothing has been
+    // ticked at all (the session sheet and one-tap paths, which have no ticks),
+    // the whole workout counts, because logging it IS the claim that it happened.
+    const ticks = (session && session._checked) || null;
+    const anyTicked = !!(ticks && ticks.some(Boolean));
+    ((session && session.workout) || []).forEach((it, idx) => {
+      if(anyTicked && !ticks[idx]) return;
       const name = String((it && it.name) || '').trim();
       if(!name || seen[name.toLowerCase()]) return;
-      const cand = pbCandidateFrom(it.detail);
+      const cand = pbCandidateFrom(it, sessionStyle(session));   // item first, style for the rep rule
       if(!cand) return;
       seen[name.toLowerCase()] = 1;
       const prev = pbFor(name);
@@ -9778,6 +9919,7 @@
     document.getElementById('wktTitle').textContent = wktSession.name || 'Session';
     wktRestStop();
     renderWorkoutMode();
+    wktLoadLastTimes(wktSession);   // fills in behind the first render
     document.getElementById('workoutMode').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -9810,9 +9952,16 @@
   function wktUpdateProgress(){
     const w = wktSession.workout || [];
     const done = (wktSession._checked||[]).filter(Boolean).length;
+    const all = !!w.length && done === w.length;
     const pct = w.length ? Math.round(done/w.length*100) : 0;
     document.getElementById('wktBar').style.width = pct+'%';
-    document.getElementById('wktProgressLabel').textContent = done+' / '+w.length + ((w.length && done===w.length) ? ' · done' : '');
+    document.getElementById('wktProgressLabel').textContent =
+      all ? 'All done — finish it off' : (done+' / '+w.length);
+    // Ticking the last exercise used to change a small grey label and nothing
+    // else. The one thing a student must still do is the one thing nothing
+    // pointed at, so the Finish button now lights up and asks for the tap.
+    const mode = document.getElementById('workoutMode');
+    if(mode) mode.classList.toggle('wkt-all-done', all);
   }
   function wktField(label,id,val,ph){ return '<div class="wkt-field"><label for="'+id+'">'+label+'</label><input id="'+id+'" value="'+esc(val||'')+'" placeholder="'+(ph||'')+'" autocomplete="off"></div>'; }
   function wktCardHTML(it, i){
@@ -9849,17 +9998,56 @@
         '</div></div>';
       }
     }
-    return '<div class="wkt-card'+(done?' done':'')+'">'+
+    // UP NEXT: the first thing not yet ticked. A flat list of eight identical
+    // cards gives a student nothing to aim at; one card that is clearly the one
+    // in front of them does. Done ones recede, the rest wait their turn.
+    const next = wktNextIndex();
+    const isNext = !done && i === next;
+    // What they did last time, right where the decision to add weight is made.
+    // It was two taps away behind History, so in practice nobody saw it and
+    // nobody progressed the weight, because nobody knew what the weight was.
+    const lastRaw = _wktLast[String(it.name||'').trim().toLowerCase()];
+    const last = (lastRaw && lastRaw.detail && lastRaw.detail !== rx)
+      ? '<p class="wkt-ex-last"><i class="ti ti-history" aria-hidden="true"></i> Last time <b>'+esc(lastRaw.detail)+'</b>'+
+        (lastRaw.date ? ' <u>'+esc(fmtNice(lastRaw.date))+'</u>' : '')+'</p>'
+      : (lastRaw && lastRaw.detail ? '<p class="wkt-ex-last"><i class="ti ti-history" aria-hidden="true"></i> Same as last time</p>' : '');
+    return '<div class="wkt-card'+(done?' done':'')+(isNext?' up-next':'')+'">'+
+      (isNext? '<span class="wkt-next-tag">Up next</span>' : '')+
       '<button class="wkt-check" onclick="wktToggle('+i+')" aria-label="Mark done"><i class="ti ti-check" aria-hidden="true"></i></button>'+
       '<div class="wkt-main">'+
         '<p class="wkt-ex-name">'+esc(it.name||w.item)+'</p>'+
         (rx? '<p class="wkt-ex-rx">'+esc(rx)+'</p>':'')+
+        (done? '' : last)+
         (cue? '<p class="wkt-ex-cue">'+esc(cue)+'</p>':'')+
         (caution? '<span class="wkt-ex-caution"><i class="ti ti-alert-triangle" aria-hidden="true"></i> '+esc(caution)+'</span>':'')+
-        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' '+w.target+'</button><button class="wkt-ex-btn" onclick="wktExHistory('+i+')"><i class="ti ti-history" aria-hidden="true"></i> History</button><button class="wkt-ex-btn" onclick="wktLogPB('+i+')"><i class="ti ti-trophy" aria-hidden="true"></i> PB</button></div>')+
+        // The PB button has gone. Bests are spotted automatically from what is
+        // logged now, so it duplicated the system and took a third of a narrow
+        // action row to do it. Manual entry still lives on the CV.
+        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' '+w.target+'</button><button class="wkt-ex-btn" onclick="wktExHistory('+i+')"><i class="ti ti-history" aria-hidden="true"></i> History</button></div>')+
         editor+
       '</div>'+
     '</div>';
+  }
+  function wktNextIndex(){
+    const ck = (wktSession && wktSession._checked) || [];
+    const n = ((wktSession && wktSession.workout) || []).length;
+    for(let i=0;i<n;i++) if(!ck[i]) return i;
+    return -1;
+  }
+
+  // One call at the top of the workout for every exercise in it. Per-exercise
+  // would be eight round trips to Apps Script, which is slow enough that the
+  // feature would not get used.
+  let _wktLast = {};
+  async function wktLoadLastTimes(session){
+    _wktLast = {};
+    const names = [...new Set(((session && session.workout) || [])
+      .map(x => String((x && x.name) || '').trim()).filter(Boolean))];
+    if(!names.length) return;
+    try {
+      const r = await apiDataGet({ action:'getLastTimes', names: names.join('\t'), todayISO: session.date || isoToday() });
+      if(r && r.success && r.last){ _wktLast = r.last; if(wktSession === session) renderWorkoutMode(); }
+    } catch(e){ /* the workout must run with or without it */ }
   }
   function wktToggle(i){
     if(!wktSession._checked) wktSession._checked = [];
@@ -9952,16 +10140,17 @@
 
   // ---- Rest timer ----
   function wktFmt(s){ const m=Math.floor(s/60), ss=s%60; return m+':'+String(ss).padStart(2,'0'); }
+  // The bar is empty and hidden unless a rest timer is actually running. The
+  // standing 60s / 90s / 2min chips are gone — see the note on #wktRestBar.
   function wktRenderRest(){
     const bar = document.getElementById('wktRestBar'); if(!bar) return;
     if(wktRestInterval && wktRestLeft>0){
       bar.innerHTML = '<div class="wkt-rest-live"><span class="wkt-rest-count">'+wktFmt(wktRestLeft)+'</span>'+
         '<button onclick="wktRestAdd(15)">+15s</button><button onclick="wktRestStop()">Skip</button></div>';
+      bar.hidden = false;
     } else {
-      bar.innerHTML = '<span class="wkt-rest-label">Rest</span>'+
-        '<button class="wkt-rest-chip" onclick="wktRest(60)">60s</button>'+
-        '<button class="wkt-rest-chip" onclick="wktRest(90)">90s</button>'+
-        '<button class="wkt-rest-chip" onclick="wktRest(120)">2 min</button>';
+      bar.innerHTML = '';
+      bar.hidden = true;
     }
   }
   function wktRest(sec){
@@ -9979,11 +10168,21 @@
   window.wktRest = wktRest; window.wktRestStop = wktRestStop; window.wktRestAdd = wktRestAdd;
 
   // ---- Finish → log ----
+  // A planned session already carries an intensity — easy, moderate or hard —
+  // chosen when the week was built. Using it as the effort default is the
+  // difference between a workout that logs and one that silently does not.
+  const WKT_INTENSITY_RPE = { easy:4, moderate:6, hard:8 };
   function wktFinishOpen(){
     let pips = '';
     for(let v=1; v<=10; v++) pips += '<i data-v="'+v+'" onclick="wktPickRpe('+v+')">'+v+'</i>';
     document.getElementById('wktRpe').innerHTML = pips;
-    wktRpeVal = (wktSession.rpe!=null) ? wktSession.rpe : null;
+    // THE TRAP THIS CLOSES: effort started blank, and a session saved without
+    // one stays "planned". A student could tick every exercise, hit Finish,
+    // skip the dial and walk away having logged nothing — no load, no streak,
+    // no squad count, no PB scan, and a toast that said it was saved. The whole
+    // workout, gone, with nothing on screen to say so.
+    wktRpeVal = (wktSession.rpe != null) ? wktSession.rpe
+              : (WKT_INTENSITY_RPE[String(wktSession.intensity||'').toLowerCase()] || 6);
     wktMarkRpe();
     document.getElementById('wktDuration').value = (wktSession.duration!=null ? wktSession.duration : (wktSession.plannedDuration!=null ? wktSession.plannedDuration : ''));
     document.getElementById('wktFinishPanel').classList.add('open');
@@ -9996,7 +10195,12 @@
   async function wktSaveFinish(){
     if(!wktSession) return;
     const rpe = wktRpeVal;
-    const duration = numOrNull(document.getElementById('wktDuration').value);
+    // Duration falls back to what was planned, then to 45. A blank box should
+    // not be the difference between a session that counts and one that does
+    // not — and a logged session with no duration carries no load at all.
+    const duration = numOrNull(document.getElementById('wktDuration').value)
+      || (wktSession.plannedDuration != null ? wktSession.plannedDuration : null)
+      || (((wktSession._checked||[]).some(Boolean)) ? 45 : null);
     const logged = rpe!=null && duration!=null;
     if(logged){ wktSession.rpe = rpe; wktSession.duration = duration; wktSession.load = rpe*duration; wktSession.status = 'done'; }
     const changed = structuralSig(wktSession) !== _wktOpenSig;   // did any target change?
@@ -10014,7 +10218,7 @@
     // did, in their own numbers, and it is the only celebration here that is
     // about getting better rather than about turning up.
     const finished = wktSession;
-    if(logged && !pbOfferFor(finished)){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
+    if(logged && !maybePBAfterLog(finished)){ if(!maybeCelebrateStreak()) maybeCelebrateBadges(); }
     try {
       const res = await apiData({ action:'saveSession', session: Object.assign({}, wktSession, { id: isNew ? null : wktSession.id }) });
       if(res.success && res.id && isNew){ wktSession.id = res.id; if(activeTab==='week') renderWeek(); }
