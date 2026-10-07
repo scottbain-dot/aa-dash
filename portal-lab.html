@@ -1573,12 +1573,12 @@
   </div>
   <div class="wkt-list" id="wktList"></div>
   <div class="wkt-foot">
-    <div class="wkt-rest" id="wktRestBar">
-      <span class="wkt-rest-label">Rest</span>
-      <button class="wkt-rest-chip" onclick="wktRest(60)">60s</button>
-      <button class="wkt-rest-chip" onclick="wktRest(90)">90s</button>
-      <button class="wkt-rest-chip" onclick="wktRest(120)">2 min</button>
-    </div>
+    <!-- The rest chips are gone. 60s / 90s / 2min sat there every session
+         regardless of what had just been done, which is wrong after a heavy
+         triple and wrong mid-circuit, and a timer nobody asked for is noise.
+         wktRest() and the countdown stay in the file for when rest is derived
+         from the set that was actually just finished. -->
+    <div class="wkt-rest" id="wktRestBar" hidden></div>
     <button class="wkt-finish" id="wktFinishBtn" onclick="wktFinishOpen()"><i class="ti ti-flag-checkered" aria-hidden="true"></i> Finish workout</button>
   </div>
   <!-- Finish: log effort + time -->
@@ -4665,7 +4665,10 @@
   .wkt-card.done { opacity: 0.62; background: rgba(74,157,91,0.14); border-color: rgba(74,157,91,0.4); }
   .wkt-check { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(250,243,237,0.4);
     background: transparent; color: transparent; cursor: pointer; display: grid; place-items: center; font-size: 20px; transition: all 0.15s; }
-  .wkt-card.done .wkt-check { background: var(--green); border-color: var(--green); color: #fff; }
+  /* --green is not a token in this file, so this rule did nothing and a ticked
+     exercise only went dim. The tick is the one confirmation a student gets
+     that the set counted — it needs to actually fill in. */
+  .wkt-card.done .wkt-check { background: #4a9d5b; border-color: #4a9d5b; color: #fff; }
   .wkt-check:hover { border-color: var(--gold); }
   .wkt-main { flex: 1; min-width: 0; }
   .wkt-ex-name { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700; color: var(--cream); margin: 0 0 2px; }
@@ -4695,6 +4698,7 @@
   .wkt-foot { flex: none; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(250,243,237,0.12);
     background: rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 10px; }
   .wkt-rest { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .wkt-rest[hidden] { display: none; }
   .wkt-rest-label { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(250,243,237,0.55); }
   .wkt-rest-chip { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--cream);
     background: rgba(250,243,237,0.08); border: 1px solid rgba(250,243,237,0.18); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
@@ -4707,6 +4711,25 @@
   .wkt-finish { width: 100%; border: none; border-radius: 13px; padding: 15px; font-family: 'Inter', sans-serif;
     font-size: 15px; font-weight: 700; background: var(--gold); color: var(--burgundy-dark); cursor: pointer; }
   .wkt-finish:hover { filter: brightness(0.96); }
+  /* UP NEXT — the one card that is actually in front of them. A flat list of
+     eight identical cards gives a student nothing to aim at. */
+  .wkt-card { transition: opacity .25s, transform .25s, box-shadow .25s; }
+  .wkt-card.up-next { position: relative; border-color: rgba(212,175,55,.55);
+    background: linear-gradient(165deg, rgba(212,175,55,.13), rgba(212,175,55,.04));
+    box-shadow: 0 10px 26px -14px rgba(212,175,55,.5); transform: scale(1.012); }
+  .wkt-next-tag { position: absolute; top: -8px; left: 16px; z-index: 1;
+    background: var(--gold); color: #2a1f14; border-radius: 999px; padding: 3px 10px;
+    font: 800 8.5px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+  /* Done recedes; still-to-come waits its turn. Not so far that the green tick
+     stops reading — the point of ticking is to see that it landed. */
+  .wkt-card.done { opacity: .58; }
+  .wkt-list .wkt-card:not(.up-next):not(.done) { opacity: .72; }
+  .wkt-ex-last { display: flex; align-items: center; gap: 6px; margin: 7px 0 0;
+    font: 500 12.5px 'Inter', sans-serif; color: rgba(245,239,233,.6); }
+  .wkt-ex-last b { color: var(--gold); font-weight: 700; }
+  .wkt-ex-last u { text-decoration: none; color: rgba(245,239,233,.38); font-size: 11.5px; }
+  .wkt-ex-last i { font-size: 13px; opacity: .6; }
+  @media (prefers-reduced-motion: reduce) { .wkt-card { transition: none; } .wkt-card.up-next { transform: none; } }
   /* Everything ticked: the Finish button is the only thing left to do, so it
      stops being one button among several and asks for the tap. */
   @keyframes wktReady { 0%,100% { box-shadow: 0 0 0 0 rgba(212,175,55,.5); }
@@ -4906,6 +4929,13 @@
     if(action==='getWeek') return Promise.resolve({ success:true, weekStart: payload.weekStart,
       sessions: payload.weekStart===state.week.weekStart ? state.week.sessions : [] });
     if(action==='getPBs') return Promise.resolve({ success:true, pbs: state.pbs });
+    if(action==='getLastTimes'){
+      const want = String(payload.names||'').split('\t').map(x=>x.trim().toLowerCase()).filter(Boolean);
+      const fake = { 'back squat':{date:'2026-09-29',detail:'4×5 @ 60kg'}, 'rdl':{date:'2026-09-29',detail:'3×8 @ 40kg'},
+                     'split squat':{date:'2026-09-22',detail:'3×10'} };
+      const last = {}; want.forEach(n=>{ if(fake[n]) last[n]=fake[n]; });
+      return Promise.resolve({ success:true, last });
+    }
     if(action==='getSquadPulse') return Promise.resolve({ success:true, enough:true,
       weekStart: payload.weekStart || '', cohort: 34, trained: 19, threePlus: 7, lighter: 6,
       bests: 4, bestAthletes: 3,
@@ -9840,7 +9870,16 @@
   // Returns { beats: [...], marks: [...] } for one session's workout.
   function pbScan(session){
     const beats = [], marks = [], seen = {};
-    ((session && session.workout) || []).forEach(it => {
+    // ONLY WHAT THEY ACTUALLY TICKED. An exercise left unticked was not done —
+    // the rack was busy, something hurt, they ran out of time — and claiming a
+    // best off a line nobody performed is the exact kind of made-up number that
+    // would make a student stop believing any of them. Where nothing has been
+    // ticked at all (the session sheet and one-tap paths, which have no ticks),
+    // the whole workout counts, because logging it IS the claim that it happened.
+    const ticks = (session && session._checked) || null;
+    const anyTicked = !!(ticks && ticks.some(Boolean));
+    ((session && session.workout) || []).forEach((it, idx) => {
+      if(anyTicked && !ticks[idx]) return;
       const name = String((it && it.name) || '').trim();
       if(!name || seen[name.toLowerCase()]) return;
       const cand = pbCandidateFrom(it, sessionStyle(session));   // item first, style for the rep rule
@@ -9880,6 +9919,7 @@
     document.getElementById('wktTitle').textContent = wktSession.name || 'Session';
     wktRestStop();
     renderWorkoutMode();
+    wktLoadLastTimes(wktSession);   // fills in behind the first render
     document.getElementById('workoutMode').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -9958,17 +9998,56 @@
         '</div></div>';
       }
     }
-    return '<div class="wkt-card'+(done?' done':'')+'">'+
+    // UP NEXT: the first thing not yet ticked. A flat list of eight identical
+    // cards gives a student nothing to aim at; one card that is clearly the one
+    // in front of them does. Done ones recede, the rest wait their turn.
+    const next = wktNextIndex();
+    const isNext = !done && i === next;
+    // What they did last time, right where the decision to add weight is made.
+    // It was two taps away behind History, so in practice nobody saw it and
+    // nobody progressed the weight, because nobody knew what the weight was.
+    const lastRaw = _wktLast[String(it.name||'').trim().toLowerCase()];
+    const last = (lastRaw && lastRaw.detail && lastRaw.detail !== rx)
+      ? '<p class="wkt-ex-last"><i class="ti ti-history" aria-hidden="true"></i> Last time <b>'+esc(lastRaw.detail)+'</b>'+
+        (lastRaw.date ? ' <u>'+esc(fmtNice(lastRaw.date))+'</u>' : '')+'</p>'
+      : (lastRaw && lastRaw.detail ? '<p class="wkt-ex-last"><i class="ti ti-history" aria-hidden="true"></i> Same as last time</p>' : '');
+    return '<div class="wkt-card'+(done?' done':'')+(isNext?' up-next':'')+'">'+
+      (isNext? '<span class="wkt-next-tag">Up next</span>' : '')+
       '<button class="wkt-check" onclick="wktToggle('+i+')" aria-label="Mark done"><i class="ti ti-check" aria-hidden="true"></i></button>'+
       '<div class="wkt-main">'+
         '<p class="wkt-ex-name">'+esc(it.name||w.item)+'</p>'+
         (rx? '<p class="wkt-ex-rx">'+esc(rx)+'</p>':'')+
+        (done? '' : last)+
         (cue? '<p class="wkt-ex-cue">'+esc(cue)+'</p>':'')+
         (caution? '<span class="wkt-ex-caution"><i class="ti ti-alert-triangle" aria-hidden="true"></i> '+esc(caution)+'</span>':'')+
-        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' '+w.target+'</button><button class="wkt-ex-btn" onclick="wktExHistory('+i+')"><i class="ti ti-history" aria-hidden="true"></i> History</button><button class="wkt-ex-btn" onclick="wktLogPB('+i+')"><i class="ti ti-trophy" aria-hidden="true"></i> PB</button></div>')+
+        // The PB button has gone. Bests are spotted automatically from what is
+        // logged now, so it duplicated the system and took a third of a narrow
+        // action row to do it. Manual entry still lives on the CV.
+        (editing? '' : '<div class="wkt-ex-actions"><button class="wkt-ex-btn" onclick="wktEdit('+i+')"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> '+(it.detail?'Change':'Add')+' '+w.target+'</button><button class="wkt-ex-btn" onclick="wktExHistory('+i+')"><i class="ti ti-history" aria-hidden="true"></i> History</button></div>')+
         editor+
       '</div>'+
     '</div>';
+  }
+  function wktNextIndex(){
+    const ck = (wktSession && wktSession._checked) || [];
+    const n = ((wktSession && wktSession.workout) || []).length;
+    for(let i=0;i<n;i++) if(!ck[i]) return i;
+    return -1;
+  }
+
+  // One call at the top of the workout for every exercise in it. Per-exercise
+  // would be eight round trips to Apps Script, which is slow enough that the
+  // feature would not get used.
+  let _wktLast = {};
+  async function wktLoadLastTimes(session){
+    _wktLast = {};
+    const names = [...new Set(((session && session.workout) || [])
+      .map(x => String((x && x.name) || '').trim()).filter(Boolean))];
+    if(!names.length) return;
+    try {
+      const r = await apiDataGet({ action:'getLastTimes', names: names.join('\t'), todayISO: session.date || isoToday() });
+      if(r && r.success && r.last){ _wktLast = r.last; if(wktSession === session) renderWorkoutMode(); }
+    } catch(e){ /* the workout must run with or without it */ }
   }
   function wktToggle(i){
     if(!wktSession._checked) wktSession._checked = [];
@@ -10061,16 +10140,17 @@
 
   // ---- Rest timer ----
   function wktFmt(s){ const m=Math.floor(s/60), ss=s%60; return m+':'+String(ss).padStart(2,'0'); }
+  // The bar is empty and hidden unless a rest timer is actually running. The
+  // standing 60s / 90s / 2min chips are gone — see the note on #wktRestBar.
   function wktRenderRest(){
     const bar = document.getElementById('wktRestBar'); if(!bar) return;
     if(wktRestInterval && wktRestLeft>0){
       bar.innerHTML = '<div class="wkt-rest-live"><span class="wkt-rest-count">'+wktFmt(wktRestLeft)+'</span>'+
         '<button onclick="wktRestAdd(15)">+15s</button><button onclick="wktRestStop()">Skip</button></div>';
+      bar.hidden = false;
     } else {
-      bar.innerHTML = '<span class="wkt-rest-label">Rest</span>'+
-        '<button class="wkt-rest-chip" onclick="wktRest(60)">60s</button>'+
-        '<button class="wkt-rest-chip" onclick="wktRest(90)">90s</button>'+
-        '<button class="wkt-rest-chip" onclick="wktRest(120)">2 min</button>';
+      bar.innerHTML = '';
+      bar.hidden = true;
     }
   }
   function wktRest(sec){
