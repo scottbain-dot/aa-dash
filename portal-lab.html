@@ -4851,7 +4851,14 @@
   function handleCredentialResponse(resp){
     try {
       const payload = JSON.parse(b64urlDecode(resp.credential.split('.')[1]));
-      currentUser = { email: payload.email, name: payload.name, picture: payload.picture, loginTime: Date.now() };
+      // The credential is kept now, not decoded and dropped. Every data call is
+      // gated on a session token, and this is what buys one: bootstrap trades a
+      // verified Google credential for a token of ours. Google's own expires
+      // after an hour, which is why we do not simply send it on every call.
+      currentUser = {
+        email: payload.email, name: payload.name, picture: payload.picture,
+        loginTime: Date.now(), credential: resp.credential
+      };
       localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
       startPortal();
     } catch(e){ showToast('Sign-in failed. Try again.', 'error'); }
@@ -4915,14 +4922,48 @@
 
   // ============================================================
   // IDENTITY RULE (see CLAUDE.md): every portal data read/write is keyed by
-  // Athlete_ID — never email. Email is used exactly once, in the getPortalBootstrap
-  // login call, to resolve the Athlete_ID. All data calls MUST go through
-  // apiData()/apiDataGet(), which attach the athleteId. Never pass `email:` to a
-  // data endpoint. `node tools/check-identity.js` enforces this.
+  // Athlete_ID — never email. The login call no longer sends an email either: it
+  // sends the Google credential and the server uses the address Google vouches
+  // for, so you can only bootstrap as yourself. All data calls MUST go through
+  // apiData()/apiDataGet(), which attach the athleteId and the session token the
+  // server gates on. Never pass `email:` to any endpoint.
+  // `node tools/check-identity.js` enforces this.
   // ============================================================
   function currentAthleteId(){ return (currentUser && currentUser.athleteId) || state.athleteId || ''; }
-  function apiData(payload, timeoutMs){ return apiPost(Object.assign({ athleteId: currentAthleteId() }, payload), timeoutMs); }
-  function apiDataGet(params){ return apiGet(Object.assign({ athleteId: currentAthleteId() }, params)); }
+
+  // The session token, minted by getPortalBootstrap and sent with every data
+  // call. The server checks that the Athlete_ID in the token matches the one in
+  // the request, so holding a valid token still gets you nothing but your own
+  // record. Kept beside the user so one logout clears both.
+  function sessionToken(){ return (currentUser && currentUser.sessionToken) || ''; }
+  function setSessionToken(tok){
+    if(!currentUser) return;
+    currentUser.sessionToken = tok || '';
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser)); } catch(e){}
+  }
+
+  // A token lasts a week and the sign-in it came from lasts the same week, so
+  // in normal use it never expires mid-session. It can still go stale — a
+  // redeployed script, a changed secret, a tab left open over a holiday — and
+  // the honest answer to that is to sign in again rather than to fail silently
+  // in the middle of saving somebody's training.
+  function handleAuthRequired(){
+    setSessionToken('');
+    try { localStorage.removeItem(SESSION_KEY); } catch(e){}
+    showToast('Please sign in again.', 'error');
+    setTimeout(() => location.reload(), 1200);
+  }
+  function guardReply(r){
+    if(r && r.authRequired) handleAuthRequired();
+    return r;
+  }
+
+  function apiData(payload, timeoutMs){
+    return apiPost(Object.assign({ athleteId: currentAthleteId(), token: sessionToken() }, payload), timeoutMs).then(guardReply);
+  }
+  function apiDataGet(params){
+    return apiGet(Object.assign({ athleteId: currentAthleteId(), token: sessionToken() }, params)).then(guardReply);
+  }
   // Demo short-circuit: keep every interaction local, never touch the network.
   function demoApi(payload){
     const action = (payload && payload.action) || '';
@@ -5034,13 +5075,22 @@
       let data = null, lastErr = null;
       for(let attempt = 0; attempt < 3; attempt++){
         try {
-          data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
+          // Returning students send the session token they already hold; a
+          // fresh sign-in sends the Google credential. Google's expires after
+          // an hour, so a week-old visit can only be proved with the former.
+          data = await apiGet({ action:'getPortalBootstrap',
+                                credential: currentUser.credential || '',
+                                token: sessionToken() });
           if(data && data.success) break;
           lastErr = new Error(data && data.error || 'load failed'); data = null;
         } catch(err){ lastErr = err; data = null; }
         if(attempt < 2){ setLoading(true, 'Reconnecting…'); await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); }
       }
       if(!data){ throw lastErr || new Error('load failed'); }
+      // The session token every other call is gated on. Google's credential is
+      // spent here and is no use after an hour; this one lasts the week, which
+      // is how long a student stays signed in.
+      setSessionToken(data.sessionToken || '');
       athlete = data.athlete;
       if(!athlete){ setLoading(false); renderNoAthlete(); return; }
       // Resolve the Athlete_ID once, here — every later call is keyed by it, not

@@ -15,17 +15,45 @@ const ok  = m => console.log('  ✓ ' + m);
   if (!fs.existsSync(file)) return;
   const before = fail;
   const lines = fs.readFileSync(file, 'utf8').split('\n');
-  // (A) email may appear in an API call ONLY in the bootstrap login
-  const emailCalls = lines.map((l, i) => ({ l, i })).filter(o => /email:\s*currentUser\.email/.test(o.l));
-  if (!emailCalls.length) err('expected the bootstrap call to send email, found none');
-  emailCalls.filter(o => !/getPortalBootstrap/.test(o.l))
-    .forEach(o => err(`${file}:${o.i + 1} sends email to a non-bootstrap endpoint — use apiData()/apiDataGet() (athleteId)`));
+  // (A) No API call may send an email at all, bootstrap included.
+  //
+  // This used to allow one exception: the bootstrap login sent
+  // `email: currentUser.email`, and the rule was that nothing else could. That
+  // exception was itself the hole — ?email=someone@fis.edu returned that
+  // student's whole record to anybody, because the server trusted an address
+  // the caller typed. Bootstrap now sends the Google credential and the server
+  // uses the address Google vouches for, so there is no longer any reason for
+  // an email to appear in a request. The guard asserts the stronger rule.
+  lines.map((l, i) => ({ l, i }))
+    .filter(o => /email:\s*currentUser\.email/.test(o.l))
+    .forEach(o => err(`${file}:${o.i + 1} sends an email in an API call — bootstrap takes the Google credential, everything else takes athleteId`));
+  // These calls are formatted across several lines in one portal and on one
+  // line in the other, so match a short window rather than a single line —
+  // a guard that a line break can defeat is not a guard.
+  const windowAt = (i, n) => lines.slice(i, i + n).join(' ');
+
+  // The bootstrap call must prove who it is with the credential.
+  const bootstraps = lines
+    .map((l, i) => ({ l, i }))
+    .filter(o => /getPortalBootstrap/.test(o.l) && /api(Get|Post)\(/.test(o.l));
+  if (!bootstraps.length) err(`${file}: no getPortalBootstrap call found`);
+  bootstraps.filter(o => !/credential:/.test(windowAt(o.i, 4)))
+    .forEach(o => err(`${file}:${o.i + 1} bootstrap must send credential: — without it the server cannot tell who is asking`));
+
+  // (A2) Every data call must carry the session token. apiData/apiDataGet attach
+  // it centrally, so check the two chokepoints rather than 38 call sites.
+  const attachers = lines
+    .map((l, i) => ({ l, i }))
+    .filter(o => /^\s*function api(Data|DataGet)\s*\(/.test(o.l));
+  if (attachers.length !== 2) err(`${file}: expected apiData and apiDataGet to be defined once each, found ${attachers.length}`);
+  attachers.filter(o => !/token:\s*sessionToken\(\)/.test(windowAt(o.i, 4)))
+    .forEach(o => err(`${file}:${o.i + 1} ${o.l.trim().slice(0, 50)}… does not attach the session token`));
   // (B) no raw apiPost/apiGet for data calls (bootstrap apiGet excepted)
   lines.forEach((l, i) => {
     if (/apiPost\(\{\s*action:/.test(l)) err(`${file}:${i + 1} uses apiPost for a data call — use apiData()`);
     if (/apiGet\(\{\s*action:/.test(l) && !/getPortalBootstrap/.test(l)) err(`${file}:${i + 1} uses apiGet for a data call — use apiDataGet()`);
   });
-  if (fail === before) ok(`${file}: email only in bootstrap; all data calls use apiData()/apiDataGet()`);
+  if (fail === before) ok(`${file}: no email in any call; bootstrap proves identity with the credential; every data call carries the session token`);
 });
 
 // ---- Admin: admin.html must key every API call by Athlete_ID, never email ----
