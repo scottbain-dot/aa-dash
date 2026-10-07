@@ -47,8 +47,37 @@ jobs:
           set -euo pipefail
           mkdir -p _site
 
-          # The portals. Root only — nothing nested is a page.
-          find . -maxdepth 1 -type f -name '*.html' -exec cp -t _site/ {} +
+          # The portals in use this year, named one by one.
+          #
+          # This was every *.html at the root, which published nine pages nobody
+          # is using — among them two superseded G10-12 portals and last year's
+          # G9 set, all of which call the older ungated endpoints. A page that is
+          # not being used is not worth the exposure, and the ones left out are
+          # not deleted: they stay in the repository and come back by adding a
+          # line here once they have been brought up to the current auth.
+          #
+          # Left out deliberately, and why:
+          #   index.html                  last year's G9 dashboard
+          #   strength-portal.html        \ to be folded into g9-portal
+          #   grit-portal.html            /
+          #   clash.html                  Clash of the Codes, same plan
+          #   academy-portal.html         abandoned first G10-12 shell (Sept 2026)
+          #   athlete-portal.html         the G10-12 portal portal-lab replaced
+          #   fuel-lab.html               wanted later in the year
+          #   apply.html, nominate.html   wanted later in the year
+          #   *-prototype.html            design references, never student-facing
+          for page in \
+            portal-lab.html \
+            g9-portal.html \
+            admin.html \
+            guide.html \
+            profile-mockup.html
+          do
+            if [ -f "$page" ]; then cp "$page" _site/; else
+              echo "::error::$page is in the publish list but not in the repository."
+              exit 1
+            fi
+          done
 
           # The images the portals reference from the root
           # (strength-squat.jpg and friends, WarriorsKit.png).
@@ -90,9 +119,21 @@ jobs:
 
           # The other direction: an empty or gutted publish would also pass a
           # leak check, and would take the portals offline silently.
-          for required in index.html portal-lab.html admin.html; do
+          for required in portal-lab.html g9-portal.html admin.html; do
             if [ ! -f "_site/$required" ]; then
               echo "::error::$required is missing from the published site."
+              exit 1
+            fi
+          done
+
+          # And the pages that are meant to be archived must stay archived. A
+          # publish list is easy to add to by reflex; this makes putting one of
+          # these back a deliberate act with a failing build in the way of it.
+          for archived in index.html athlete-portal.html academy-portal.html \
+                          strength-portal.html grit-portal.html clash.html \
+                          fuel-lab.html apply.html nominate.html; do
+            if [ -f "_site/$archived" ]; then
+              echo "::error::$archived is archived and must not be published — it still calls the ungated endpoints."
               exit 1
             fi
           done
