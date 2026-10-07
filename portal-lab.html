@@ -4886,6 +4886,13 @@
       if(!raw) return false;
       const u = JSON.parse(raw);
       if(!u.loginTime || (Date.now() - u.loginTime) > SESSION_MAX_AGE){ localStorage.removeItem(SESSION_KEY); return false; }
+      // A session stored before data calls were gated has neither a credential
+      // nor a session token, because the old sign-in decoded the Google JWT and
+      // threw it away. There is nothing in it to prove who they are, so it
+      // cannot load anything — treat it as signed out and show the sign-in
+      // screen rather than letting bootstrap fail into an error page they
+      // cannot get out of.
+      if(!u.credential && !u.sessionToken){ localStorage.removeItem(SESSION_KEY); return false; }
       currentUser = u; return true;
     } catch(e){ return false; }
   }
@@ -5082,6 +5089,10 @@
                                 credential: currentUser.credential || '',
                                 token: sessionToken() });
           if(data && data.success) break;
+          // Neither the credential nor the session token convinced the server —
+          // expired, or stored before any of this existed. Retrying cannot help
+          // and the error screen is a dead end, so send them to sign in again.
+          if(data && data.authRequired){ handleAuthRequired(); return; }
           lastErr = new Error(data && data.error || 'load failed'); data = null;
         } catch(err){ lastErr = err; data = null; }
         if(attempt < 2){ setLoading(true, 'Reconnecting…'); await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); }
