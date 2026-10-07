@@ -1447,7 +1447,10 @@
         // ============================================
         async function loadStudents() {
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=getAllStudents&_t=${Date.now()}`);
+                // The token is what makes Email / Grade / Class come back at all —
+                // getAllStudents withholds them from an unverified caller, because
+                // the endpoint is reachable by anyone who has the URL.
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getAllStudents&token=${encodeURIComponent(adminToken())}&_t=${Date.now()}`);
                 const data = await response.json();
                 
                 if (data.success && data.students) {

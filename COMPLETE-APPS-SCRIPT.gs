@@ -113,8 +113,13 @@ function doGet(e) {
     const action = e.parameter.action;
 
     // ===== ADMIN PANEL ACTIONS =====
+    // Not gated outright, because clash.html calls this from its student path
+    // (bootstrapStudent) and from the public display screen (loadDisplayStatic),
+    // neither of which holds a teacher token. Instead the handler decides what to
+    // hand back: a verified teacher gets the full record, everyone else gets the
+    // roster with the personal columns stripped. See getAllStudents.
     if (action === 'getAllStudents') {
-      return getAllStudents(ss);
+      return getAllStudents(ss, e.parameter.token);
     }
 
     if (action === 'getConfig') {
@@ -1132,8 +1137,27 @@ function handleUpdatePsychScores(ss, email, mindset, mentalToughness, grit) {
 // ========================================
 
 // Get all students with their strength data + session counts from Workout_Logs
-function getAllStudents(ss) {
+// The roster, with the personal columns withheld unless a verified teacher asked.
+//
+// This endpoint used to return Name, Email, Grade, Class and Gender for every
+// athlete to any anonymous caller — the web app is deployed "Anyone", so a
+// single unauthenticated GET returned the linking table between Athlete_IDs and
+// real children. The identity rule in CLAUDE.md kept training data keyed by ID
+// rather than email, which is right, but pseudonymous is not access-controlled:
+// this handler handed over the key.
+//
+// It cannot simply be gated. clash.html calls it from bootstrapStudent (the
+// student path) and from loadDisplayStatic (the public scoreboard), and neither
+// holds a teacher token, so a gate would take Clash of the Codes off the wall
+// mid-event. What those callers actually need is Athlete_ID and a name to put on
+// a team sheet. So that is all they get. Email — the field that unlocks every
+// email-keyed endpoint in this script — now requires a teacher.
+function getAllStudents(ss, idToken) {
   try {
+    // A failed verification is not an error here, just a smaller answer.
+    var isTeacher = false;
+    try { isTeacher = !!(idToken && apVerifyTeacher(idToken).ok); } catch (e) { isTeacher = false; }
+
     const athletesSheet = ss.getSheetByName('Athletes');
     const strengthSheet = ss.getSheetByName('Strength');
     const logsSheet = ss.getSheetByName('Workout_Logs');
@@ -1201,11 +1225,23 @@ function getAllStudents(ss) {
       var student = {
         Athlete_ID: athleteId,
         Name: name.trim(),
-        Email: row[athletesHeaders.indexOf('Email')] || '',
-        Grade: row[athletesHeaders.indexOf('Grade')] || row[athletesHeaders.indexOf('Year_Group')] || '',
-        Class: athletesHeaders.indexOf('Class') >= 0 ? (row[athletesHeaders.indexOf('Class')] || '') : '',
+        // Kept open, reluctantly: clash.html reads Gender on both its student
+        // path (studentState.gender) and the display screen, so withholding it
+        // takes Clash down. It is still personal data going to an anonymous
+        // caller — closed properly in the student-token pass, once clash has an
+        // identity to present.
         Gender: row[athletesHeaders.indexOf('Gender')] || ''
       };
+      // Teachers only. Email is the one that matters most: it is the key to
+      // getAthleteData, getPortalBootstrap and getGritChallenge, so handing it to
+      // an anonymous caller hands over every one of those too. Grade and Class
+      // narrow a name down to a particular child in a particular room, and
+      // nothing outside admin reads them.
+      if (isTeacher) {
+        student.Email = row[athletesHeaders.indexOf('Email')] || '';
+        student.Grade = row[athletesHeaders.indexOf('Grade')] || row[athletesHeaders.indexOf('Year_Group')] || '';
+        student.Class = athletesHeaders.indexOf('Class') >= 0 ? (row[athletesHeaders.indexOf('Class')] || '') : '';
+      }
 
       // Find matching strength data
       var strengthRow = null;
@@ -1903,6 +1939,7 @@ function getNextWeights(athleteId) {
 // ========================================
 function handleGetAICoachingInsights(studentData) {
   try {
+    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
@@ -1981,6 +2018,7 @@ function handleGetAICoachingInsights(studentData) {
 // ========================================
 function handleGetHeroInsight(studentData) {
   try {
+    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
@@ -2048,6 +2086,7 @@ function handleGetHeroInsight(studentData) {
 // ========================================
 function handleParseSessions(email, text, todayISO) {
   try {
+    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
@@ -2174,6 +2213,7 @@ function handleParseSessions(email, text, todayISO) {
 // ========================================
 function handleParseProgram(email, text) {
   try {
+    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
@@ -2271,6 +2311,7 @@ function handleParseProgram(email, text) {
 // returns the same {name, days:[...]} shape the client already matches + applies.
 function handleGenerateProgram(spec) {
   try {
+    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
@@ -2697,6 +2738,44 @@ function apVerifyTeacher(idToken) {
 // Returns null when allowed, or a JSON error response to send back. Verified
 // tokens are cached by hash for 15 minutes so a busy admin session does not
 // call Google on every tap.
+// A ceiling on what an anonymous caller can spend.
+//
+// Six handlers in this script call Anthropic with the key held in Script
+// Properties, and none of them knew who was asking. The web app is deployed
+// "Anyone", so those handlers were an open LLM proxy billed to one person: the
+// key itself could not be stolen, but it could be spent.
+//
+// Identity is the real fix and it is the next piece of work. Until the portals
+// carry a token there is nobody to attribute a call to, so this caps the total
+// instead: a fixed window per clock hour, counted in the script cache. Thirty-odd
+// students opening a dashboard and parsing the occasional program sit far below
+// the ceiling; something hammering the endpoint reaches it in a minute and stays
+// there until the hour turns over.
+//
+// CacheService has no atomic increment, so concurrent calls can undercount. That
+// is fine for a spend cap — it is a wall, not an accountant.
+var AI_CALLS_PER_HOUR = 300;
+
+function apAiRateLimit_() {
+  try {
+    var cache = CacheService.getScriptCache();
+    var key = 'ai:' + Math.floor(Date.now() / 3600000);
+    var n = parseInt(cache.get(key) || '0', 10) + 1;
+    cache.put(key, String(n), 3900);          // outlive the window it counts
+    if (n > AI_CALLS_PER_HOUR) {
+      return {
+        success: false,
+        rateLimited: true,
+        error: 'The coaching assistant is busy right now. Try again in a few minutes.'
+      };
+    }
+  } catch (e) {
+    // Cache unavailable. Fail open: a transient cache blip must not take the
+    // dashboard down for everyone.
+  }
+  return null;
+}
+
 function apAdminGate_(idToken) {
   if (!idToken) return apJson({ success: false, error: 'Admin sign-in required', authRequired: true });
   var cache = CacheService.getScriptCache();
@@ -4650,6 +4729,7 @@ function handleSaveLearnProgress(ss, athleteId, blockId, progress, meta) {
 // blocks a student on it.
 function handleGradeLearnAnswers(items) {
   try {
+    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
