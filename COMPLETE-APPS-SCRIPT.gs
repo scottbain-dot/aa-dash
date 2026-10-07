@@ -2895,16 +2895,30 @@ function apReadSession_(token) {
 // authRequired is the flag the portals already understand: it makes them
 // re-authenticate rather than show an error.
 function apStudentGate_(token, athleteId) {
-  var sess = apReadSession_(token);
-  if (!sess) return { success: false, error: 'Sign in required', authRequired: true };
   var want = String(athleteId == null ? '' : athleteId).trim();
   if (!want) return { success: false, error: 'No athlete specified' };
-  // The heart of it: the token says who you are, the request says whose data
-  // you want, and those have to be the same person.
-  if (sess.athleteId !== want) {
-    return { success: false, error: 'That is not your record', authRequired: false };
+
+  var sess = apReadSession_(token);
+  if (sess) {
+    // The heart of it: the token says who you are, the request says whose data
+    // you want, and those have to be the same person.
+    if (sess.athleteId !== want) {
+      return { success: false, error: 'That is not your record', authRequired: false };
+    }
+    return null;
   }
-  return null;
+
+  // Not a session token — but a teacher may read any athlete's record, and does:
+  // admin.html calls getLearnProgress per student to build the stamps grid. It
+  // carries a Google ID token, not a session token, so without this the admin
+  // panel would go blank the moment the gate went live.
+  //
+  // Only attempted for something shaped like a JWT (three dot-separated parts;
+  // a session token has two). Otherwise every junk string would cost a round
+  // trip to Google.
+  if (String(token || '').split('.').length === 3 && apAdminGate_(token) === null) return null;
+
+  return { success: false, error: 'Sign in required', authRequired: true };
 }
 
 // Same verification as apVerifyTeacher, without the teacher allowlist — this

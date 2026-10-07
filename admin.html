@@ -2046,7 +2046,9 @@
                 while (i < todo.length) {
                     const id = todo[i++];
                     try {
-                        const r = await fetch(`${APPS_SCRIPT_URL}?action=getLearnProgress&athleteId=${encodeURIComponent(id)}&_t=${Date.now()}`);
+                        // getLearnProgress is gated: a student opens their own record with a
+                        // session token, a teacher opens anyone's with this one.
+                        const r = await fetch(`${APPS_SCRIPT_URL}?action=getLearnProgress&athleteId=${encodeURIComponent(id)}&token=${encodeURIComponent(adminToken())}&_t=${Date.now()}`);
                         const d = await r.json();
                         const blocks = (d && d.learn && d.learn.blocks) || {};
                         const intro = (blocks.intro && blocks.intro.progress) || {};
