@@ -425,6 +425,11 @@ function checkExistingSession(){
   try {
     const u = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
     if (!u || !u.loginTime || Date.now() - u.loginTime > SESSION_MAX_AGE) { localStorage.removeItem(SESSION_KEY); return false; }
+    // A session stored before data calls were gated carries neither a credential
+    // nor a session token — the old sign-in decoded the Google JWT and dropped
+    // it. There is nothing in it to prove who they are, so show the sign-in
+    // screen instead of failing a load they cannot fix.
+    if (!u.credential && !u.sessionToken) { localStorage.removeItem(SESSION_KEY); return false; }
     currentUser = u; return true;
   } catch (e) { return false; }
 }
@@ -438,12 +443,21 @@ async function start(){
   veil(true, 'Loading your passport…');
   let data = null, lastErr = null;
   for (let i = 0; i < 3; i++) {
-    try { data = await apiGet({ action:'getPortalBootstrap', credential: currentUser.credential || '', token: sessionToken() }); if (data && data.success) break; }
+    try {
+      data = await apiGet({ action:'getPortalBootstrap', credential: currentUser.credential || '', token: sessionToken() });
+      if (data && data.success) break;
+      // Retrying an auth failure cannot help — nothing we hold will convince the
+      // server on the second attempt either. Stop and send them to sign in.
+      if (data && data.authRequired) break;
+    }
     catch (e) { lastErr = e; }
     await new Promise(r => setTimeout(r, i === 0 ? 1500 : 3000));
   }
   veil(false);
   if (!data || !data.success || !data.athlete) {
+    // Nothing we hold convinced the server. Drop the stale session so the next
+    // load starts clean rather than retrying something that cannot work.
+    if (data && data.authRequired) { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
     document.getElementById('welcome').style.display = '';
     toast(!data || !data.success ? 'Could not load. Check your connection and try again.' : 'That account is not on the Academy list yet. Tell Mr Bain.', true);
     return;
