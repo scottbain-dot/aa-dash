@@ -356,8 +356,10 @@ const RULES = {
 
 // ============================================================
 // TRANSPORT + IDENTITY
-// Email is used once, in getPortalBootstrap, to resolve the Athlete_ID.
-// Every other call goes through apiData()/apiDataGet(), which attach athleteId.
+// Email is never sent. getPortalBootstrap takes the Google credential (or the
+// session token on a return visit) and resolves the Athlete_ID from what Google
+// vouches for. Every other call goes through apiData()/apiDataGet(), which
+// attach athleteId and the session token.
 // ============================================================
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbJOS1zq2rn0LyKREtYfG1uMZMGJJvGaIz71mPowkFCvukic3FwnXDOYzRv8kCrODI/exec';
 const SESSION_KEY = 'aaG9PortalUser';
@@ -375,8 +377,26 @@ async function apiFetch(url, opts){
 }
 function apiGet(params){ const q = new URLSearchParams(Object.assign({ _t: Date.now() }, params)); return apiFetch(`${APPS_SCRIPT_URL}?${q}`); }
 function apiPost(body){ return apiFetch(APPS_SCRIPT_URL, { method:'POST', headers:{ 'Content-Type':'text/plain' }, body: JSON.stringify(body) }); }
-function apiData(payload){ return apiPost(Object.assign({ athleteId: state.athleteId }, payload)); }
-function apiDataGet(params){ return apiGet(Object.assign({ athleteId: state.athleteId }, params)); }
+// The session token, minted by getPortalBootstrap and sent with every data
+// call. The server checks the Athlete_ID in the token against the one in the
+// request, so a valid token still only opens its own record.
+function sessionToken(){ return (currentUser && currentUser.sessionToken) || ''; }
+function setSessionToken(tok){
+  if (!currentUser) return;
+  currentUser.sessionToken = tok || '';
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser)); } catch (e) {}
+}
+// A stale token means sign in again rather than fail quietly mid-save.
+function handleAuthRequired(){
+  setSessionToken('');
+  try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+  toast('Please sign in again.', true);
+  setTimeout(() => location.reload(), 1200);
+}
+function guardReply(r){ if (r && r.authRequired) handleAuthRequired(); return r; }
+
+function apiData(payload){ return apiPost(Object.assign({ athleteId: state.athleteId, token: sessionToken() }, payload)).then(guardReply); }
+function apiDataGet(params){ return apiGet(Object.assign({ athleteId: state.athleteId, token: sessionToken() }, params)).then(guardReply); }
 
 function b64urlDecode(seg){
   let s = String(seg || '').replace(/-/g, '+').replace(/_/g, '/');
@@ -387,7 +407,9 @@ function b64urlDecode(seg){
 function handleCredentialResponse(resp){
   try {
     const payload = JSON.parse(b64urlDecode(resp.credential.split('.')[1]));
-    currentUser = { email: payload.email, name: payload.name, loginTime: Date.now() };
+    // Keep the credential: bootstrap trades it for the session token that every
+    // other call is gated on.
+    currentUser = { email: payload.email, name: payload.name, loginTime: Date.now(), credential: resp.credential };
     localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
     start();
   } catch (e) { toast('Sign-in failed. Try again.', true); }
@@ -416,7 +438,7 @@ async function start(){
   veil(true, 'Loading your passport…');
   let data = null, lastErr = null;
   for (let i = 0; i < 3; i++) {
-    try { data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email }); if (data && data.success) break; }
+    try { data = await apiGet({ action:'getPortalBootstrap', credential: currentUser.credential || '', token: sessionToken() }); if (data && data.success) break; }
     catch (e) { lastErr = e; }
     await new Promise(r => setTimeout(r, i === 0 ? 1500 : 3000));
   }
@@ -426,6 +448,8 @@ async function start(){
     toast(!data || !data.success ? 'Could not load. Check your connection and try again.' : 'That account is not on the Academy list yet. Tell Mr Bain.', true);
     return;
   }
+  // The token every other call is gated on, minted by bootstrap.
+  setSessionToken(data.sessionToken || '');
   hydrate(data);
   document.getElementById('app').style.display = 'block';
   renderAll();
@@ -472,7 +496,7 @@ async function pollPassport(){
       if (d && d.success && d.strengthLevels) return applyPassport(d.strengthLevels, d.stamps);
       pollLight = false; schedulePoll();   // old deployment: use the bootstrap instead
     }
-    const data = await apiGet({ action:'getPortalBootstrap', email: currentUser.email });
+    const data = await apiGet({ action:'getPortalBootstrap', credential: currentUser.credential || '', token: sessionToken() });
     if (data && data.success && data.athlete) {
       const sb = data.learn && data.learn.blocks && data.learn.blocks.stamps;
       return applyPassport(data.strengthLevels, sb && sb.progress ? sb.progress : { notyet: {}, stamped: {} });

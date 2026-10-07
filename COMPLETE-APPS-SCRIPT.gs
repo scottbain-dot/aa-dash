@@ -237,7 +237,16 @@ function doGet(e) {
     // the login lookup that resolves the Athlete_ID. Every other portal data
     // endpoint below is keyed by athleteId only (see IDENTITY RULE in CLAUDE.md).
     if (action === 'getPortalBootstrap') {
-      return apJson(handleGetPortalBootstrap(ss, e.parameter.email));
+      // Takes the Google credential now, not a bare email. The portals send it
+      // as `credential`; `email` is still read so an older cached page gets a
+      // clean "sign in again" rather than a crash.
+      return apJson(handleGetPortalBootstrap(ss, e.parameter.credential, e.parameter.token));
+    }
+    // Everything below is somebody's personal training record. One check, from
+    // one list — see AA_STUDENT_GET_ROUTES.
+    if (AA_STUDENT_GET_ROUTES.indexOf(action) !== -1) {
+      var gateStuGet = apStudentGate_(e.parameter.token, e.parameter.athleteId);
+      if (gateStuGet) return apJson(gateStuGet);
     }
     if (action === 'getYearMap') {
       return apJson(handleGetYearMap(ss, e.parameter.athleteId));
@@ -456,6 +465,12 @@ function doPost(e) {
 
     // ===== ATHLETE PORTAL (G10-12) WRITES =====
     // Portal data writes are keyed by athleteId only — never email (IDENTITY RULE).
+    // Everything in AA_STUDENT_POST_ROUTES writes to, or deletes from, somebody's
+    // record. deleteSession in particular was reachable by anyone with an ID.
+    if (AA_STUDENT_POST_ROUTES.indexOf(data.action) !== -1) {
+      var gateStuPost = apStudentGate_(data.token, data.athleteId);
+      if (gateStuPost) return apJson(gateStuPost);
+    }
     if (data.action === 'saveYearMap') {
       var ssAp = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSaveYearMap(ssAp, data.athleteId, data.yearMap));
@@ -487,8 +502,15 @@ function doPost(e) {
       return apJson(handleSavePB(ssAp4, data.athleteId, data.pb));
     }
     if (data.action === 'saveLearnProgress') {
-      // The 'stamps' block is written by admin only (not-yet notes, stamp dates).
-      if (String(data.blockId || '') === 'stamps') { var gateStamps = apAdminGate_(data.token); if (gateStamps) return gateStamps; }
+      // Two different writers, so two different gates. The 'stamps' block is a
+      // teacher recording something about a student, and carries a teacher
+      // token; every other block is a student recording their own work, and
+      // carries a session token.
+      if (String(data.blockId || '') === 'stamps') {
+        var gateStamps = apAdminGate_(data.token); if (gateStamps) return gateStamps;
+      } else {
+        var gateLearn = apStudentGate_(data.token, data.athleteId); if (gateLearn) return apJson(gateLearn);
+      }
       var ssLearn = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSaveLearnProgress(ssLearn, data.athleteId, data.blockId, data.progress, data.meta));
     }
@@ -2734,10 +2756,6 @@ function apVerifyTeacher(idToken) {
   }
 }
 
-// Admin-only actions: the caller must present a verified teacher ID token.
-// Returns null when allowed, or a JSON error response to send back. Verified
-// tokens are cached by hash for 15 minutes so a busy admin session does not
-// call Google on every tap.
 // A ceiling on what an anonymous caller can spend.
 //
 // Six handlers in this script call Anthropic with the key held in Script
@@ -2776,6 +2794,144 @@ function apAiRateLimit_() {
   return null;
 }
 
+// ============================================================================
+// STUDENT SESSIONS
+// ----------------------------------------------------------------------------
+// Every athleteId route in this script used to answer anybody. The IDs run
+// 41-74, so "give me athlete 47's year" was a URL, and so was "delete athlete
+// 47's sessions". The identity rule in CLAUDE.md made the data pseudonymous,
+// which is worth having, but pseudonymous is not access-controlled.
+//
+// Why a session token rather than just passing the Google ID token on every
+// call: Google's ID tokens expire after an hour. Students keep the portal open
+// for days and come back to it between lessons, so verifying the Google token
+// per request would sign them out mid-week — and would also mean a round trip
+// to Google on every tap. Instead the Google credential is spent once, at
+// sign-in, for a token of our own that lasts a week.
+//
+// The token is HMAC-signed rather than stored. Nothing to keep, nothing to
+// clean up, nothing to grow: the signature is the proof. It carries the
+// Athlete_ID it was issued for, and the gate refuses any request for a
+// different one — so a student holding a valid token still cannot read or
+// write anyone else's row.
+// ============================================================================
+var AA_SESSION_DAYS = 7;
+
+// The routes a student session unlocks, and the only ones it unlocks. Kept as
+// one list checked in one place rather than a gate line on each handler:
+// fifteen separate gates are fifteen chances to forget one, and forgetting one
+// is how the whole set came to be open in the first place.
+//
+// saveLearnProgress is deliberately absent. Its 'stamps' block is written by a
+// teacher about a student, so it cannot take a blanket student gate — it is
+// gated inline, admin for stamps and student for everything else.
+var AA_STUDENT_GET_ROUTES = [
+  'getYearMap', 'getWeeklyTemplate', 'getWeek', 'getGames', 'getBookingData',
+  'getYearLoad', 'getPBs', 'getSquadPulse', 'getLastTimes', 'getExerciseHistory',
+  'getLearnProgress', 'getPassport', 'getGrit', 'getAvailability'
+];
+var AA_STUDENT_POST_ROUTES = [
+  'saveYearMap', 'saveBlock', 'saveWeeklyTemplate', 'saveSession', 'deleteSession',
+  'bookCheckIn', 'cancelBooking', 'savePB', 'saveAvailability', 'clearAvailability'
+];
+
+// Created once, on first use, and kept in Script Properties thereafter. The
+// lock is because two students signing in at the same moment on a brand new
+// deployment would otherwise each generate a secret, and whichever lost would
+// have handed out a token that no longer verifies.
+function apSessionSecret_() {
+  var props = PropertiesService.getScriptProperties();
+  var s = props.getProperty('AA_SESSION_SECRET');
+  if (s) return s;
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(5000);
+    s = props.getProperty('AA_SESSION_SECRET');
+    if (!s) {
+      s = Utilities.getUuid() + Utilities.getUuid();
+      props.setProperty('AA_SESSION_SECRET', s);
+    }
+  } catch (e) {
+    s = props.getProperty('AA_SESSION_SECRET');
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
+  return s;
+}
+
+function apSignPayload_(json) {
+  return Utilities.base64EncodeWebSafe(
+    Utilities.computeHmacSha256Signature(json, apSessionSecret_()));
+}
+
+// Returns a token string: base64url(payload) "." base64url(signature).
+function apMintSession_(athleteId) {
+  var json = JSON.stringify({
+    i: String(athleteId),
+    e: Date.now() + AA_SESSION_DAYS * 86400000
+  });
+  return Utilities.base64EncodeWebSafe(json) + '.' + apSignPayload_(json);
+}
+
+// Returns { athleteId: '41' } for a good token, or null. Null covers every
+// failure the same way on purpose — expired, forged, truncated, nonsense — so
+// the reply never tells a prober which of those it was.
+function apReadSession_(token) {
+  try {
+    var parts = String(token || '').split('.');
+    if (parts.length !== 2) return null;
+    var json = Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString();
+    if (apSignPayload_(json) !== parts[1]) return null;
+    var p = JSON.parse(json);
+    if (!p || !p.i || !p.e) return null;
+    if (Date.now() > Number(p.e)) return null;
+    return { athleteId: String(p.i) };
+  } catch (e) {
+    return null;
+  }
+}
+
+// The gate. Returns null when the call is allowed, or the object to send back.
+// authRequired is the flag the portals already understand: it makes them
+// re-authenticate rather than show an error.
+function apStudentGate_(token, athleteId) {
+  var sess = apReadSession_(token);
+  if (!sess) return { success: false, error: 'Sign in required', authRequired: true };
+  var want = String(athleteId == null ? '' : athleteId).trim();
+  if (!want) return { success: false, error: 'No athlete specified' };
+  // The heart of it: the token says who you are, the request says whose data
+  // you want, and those have to be the same person.
+  if (sess.athleteId !== want) {
+    return { success: false, error: 'That is not your record', authRequired: false };
+  }
+  return null;
+}
+
+// Same verification as apVerifyTeacher, without the teacher allowlist — this
+// answers "is this a real, current Google sign-in for THIS app", which is what
+// minting a student session needs.
+function apVerifyGoogleUser_(idToken) {
+  try {
+    if (!idToken) return { ok: false, error: 'Sign in required' };
+    var res = UrlFetchApp.fetch(
+      'https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken),
+      { muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) return { ok: false, error: 'Sign in required' };
+    var p = JSON.parse(res.getContentText());
+    // Minted for this app, or anyone could present a Google token from any
+    // other site that uses Google Sign-In.
+    if (p.aud !== AA_OAUTH_CLIENT_ID) return { ok: false, error: 'Sign in required' };
+    if (String(p.email_verified) !== 'true') return { ok: false, error: 'Sign in required' };
+    return { ok: true, email: String(p.email || '').toLowerCase() };
+  } catch (err) {
+    return { ok: false, error: 'Sign in required' };
+  }
+}
+
+// Admin-only actions: the caller must present a verified teacher ID token.
+// Returns null when allowed, or a JSON error response to send back. Verified
+// tokens are cached by hash for 15 minutes so a busy admin session does not
+// call Google on every tap.
 function apAdminGate_(idToken) {
   if (!idToken) return apJson({ success: false, error: 'Admin sign-in required', authRequired: true });
   var cache = CacheService.getScriptCache();
@@ -3883,11 +4039,43 @@ function handleSavePB(ss, athleteId, pb) {
 }
 
 // ----- Bootstrap: one round-trip for portal open -----
-function handleGetPortalBootstrap(ss, email) {
+// The login call, and the only one that takes an email — see the identity rule
+// in CLAUDE.md.
+//
+// It now takes the Google credential instead of a bare email, and the email it
+// looks up is the one Google vouches for, not one the caller typed. That is the
+// whole difference between "tell me about this address" and "tell me about me".
+// Previously ?email=someone@fis.edu returned that student's entire record to
+// anybody who asked.
+//
+// On success it also mints the session token every other route is gated on, so
+// signing in is still one round trip.
+function handleGetPortalBootstrap(ss, credential, sessionTok) {
   try {
-    var athlete = apGetAthlete(ss, email);
+    // Two ways in. A fresh sign-in presents a Google credential; a student
+    // coming back presents the session token they already hold.
+    //
+    // The second path is not a convenience. A Google credential is only good
+    // for an hour, and students leave the portal open for days and reopen it
+    // between lessons — so if a returning visit could only be proved with the
+    // credential, everyone would be signed out every hour, which is worse than
+    // what this replaced. The session token re-mints on each load, so a student
+    // who keeps using the portal stays signed in.
+    var athlete = null;
+    var sess = apReadSession_(sessionTok);
+    if (sess) {
+      athlete = apGetAthleteById(ss, sess.athleteId);
+    } else {
+      var who = apVerifyGoogleUser_(credential);
+      if (!who.ok) return { success: false, error: who.error, authRequired: true };
+      athlete = apGetAthlete(ss, who.email);
+    }
+
+    // A real Google account that is not on the roster. Not an error — it is a
+    // sibling, a parent, or a student who has not been added yet.
     if (!athlete) return { success: true, athlete: null, firstTime: true };
     var athleteId = athlete.Athlete_ID;
+    var sessionToken = apMintSession_(athleteId);
     var map = apLoadYearMap(ss, athleteId);
     if (map) delete map.__row;
     var tpl = apLoadWeeklyTemplate(ss, athleteId);
@@ -3899,6 +4087,8 @@ function handleGetPortalBootstrap(ss, email) {
     var learnRes = handleGetLearnProgress(ss, athleteId);
     return {
       success: true,
+      sessionToken: sessionToken,
+      sessionExpires: Date.now() + AA_SESSION_DAYS * 86400000,
       athlete: athlete,
       yearMap: map,
       weeklyTemplate: tpl,
