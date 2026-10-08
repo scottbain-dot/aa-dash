@@ -7696,16 +7696,33 @@
     if(n>=3)  return 'Building momentum';
     return 'Warming up';
   }
+  // WEEKS, NOT DAYS — finishing a job that was only half done.
+  //
+  // The reasoning was written up where flaggedWeekSet lives: a day streak is
+  // the one number here that can fall to nothing, four missed days over an exam
+  // week turn a 20 into a 0, and the student most likely to break a run is the
+  // one already struggling. The weeks machinery was built and the board moved
+  // to it. This chip — the single most prominent number on the home screen —
+  // was left on days, so the app went on contradicting itself in its loudest
+  // place.
+  //
+  // It now shows weeks WITH TRAINING IN THEM, which is the figure that cannot
+  // go down. The run and the best run are in the tap, where a wobble is
+  // context rather than a headline.
   function streakChipHTML(){
-    const s = streakInfo();
-    if(!s.streak) return '<button class="streak-chip streak-off" onclick="streakTap()" aria-label="Start a streak"><span class="streak-flame"><i class="ti ti-flame" aria-hidden="true"></i></span> Start a streak</button>';
-    const hot = s.streak >= 7 ? ' hot' : '';
-    return '<button class="streak-chip'+hot+'" onclick="streakTap()" aria-label="Training streak"><span class="streak-flame"><i class="ti ti-flame-filled" aria-hidden="true"></i></span>'+s.streak+' <span class="streak-chip-label">day streak</span></button>';
+    const c = weekRunInfo();
+    if(!c.started) return '<button class="streak-chip streak-off" onclick="streakTap()" aria-label="Start training"><span class="streak-flame"><i class="ti ti-flame" aria-hidden="true"></i></span> Log your first session</button>';
+    const hot = c.run >= 3 ? ' hot' : '';
+    return '<button class="streak-chip'+hot+'" onclick="streakTap()" aria-label="Weeks trained"><span class="streak-flame"><i class="ti ti-flame-filled" aria-hidden="true"></i></span>'+
+      c.weeks+' <span class="streak-chip-label">week'+(c.weeks===1?'':'s')+' trained</span></button>';
   }
   function streakTap(){
-    const s = streakInfo();
-    if(!s.streak) showToast('Log a session to start your streak — keep training and it grows.', '');
-    else showToast('🔥 '+s.streak+'-day streak · '+s.total+' training days logged. Log again within '+STREAK_GRACE+' days to keep it going.', 'success');
+    const c = weekRunInfo();
+    if(!c.started){ showToast('Log a session and this starts counting — by the week, not the day.', ''); return; }
+    const bits = ['🔥 '+c.weeks+' of your '+c.span+' weeks had training in them'];
+    if(c.run >= 2) bits.push(c.run+' in a row now');
+    if(c.best >= 2 && c.best > c.run) bits.push('best run '+c.best);
+    showToast(bits.join(' · ')+'. A week off injured or ill is skipped, not counted against you.', 'success');
   }
   window.streakTap = streakTap;
 
@@ -7872,20 +7889,35 @@
   // the best streak reached (persisted per athlete). No new server
   // fields — the whole system recomputes on every render.
   // ============================================================
-  const XP_SESSION = 10;   // per distinct training day logged
-  const XP_PB      = 30;   // per personal best set
-  const XP_BADGE   = 20;   // bonus per badge earned
 
   // Named ranks, ascending. Level = index + 1.
+  // SESSIONS, NOT POINTS.
+  //
+  // XP was a generic currency laid over a system that already had specific,
+  // meaningful ones. "260 XP" says nothing on its own; it only means something
+  // against the next threshold. Worse, it did three unhelpful things at once:
+  // it rewarded LOGGING rather than training, so a meticulous logger out-earned
+  // a harder trainer; it flattened a personal best and three turn-ups into the
+  // same 30 points; and it gave the app a second overall score competing with
+  // Training Age for "how good am I" — the generic one being the louder.
+  //
+  // Sessions logged is concrete, honest and cannot be inflated into meaning
+  // more than it does. It also sits beside Training Age without fighting it,
+  // because it is obviously a different axis: what you put IN, against what you
+  // can DO. Bests and badges keep their own celebrations and no longer
+  // double-count into a ladder.
+  //
+  // The thresholds are a three-year arc. At three sessions a week across a
+  // forty-week year, a hundred is about one full year of training.
   const RANKS = [
-    { name:'Rookie',     min:0    },
-    { name:'Prospect',   min:100  },
-    { name:'Contender',  min:250  },
-    { name:'Competitor', min:500  },
-    { name:'Athlete',    min:900  },
-    { name:'Elite',      min:1500 },
-    { name:'Champion',   min:2500 },
-    { name:'Legend',     min:4000 }
+    { name:'Rookie',     min:0   },
+    { name:'Prospect',   min:10  },
+    { name:'Contender',  min:25  },
+    { name:'Competitor', min:50  },
+    { name:'Athlete',    min:100 },
+    { name:'Elite',      min:175 },
+    { name:'Champion',   min:275 },
+    { name:'Legend',     min:400 }
   ];
   function rankFor(xp){
     let i = 0;
@@ -7900,16 +7932,16 @@
   // Badges. Each is earned when stats[metric] >= goal; grouped by track.
   const BADGES = [
     { id:'day1',     name:'First Steps',   icon:'ti-run',          metric:'days', goal:1,   blurb:'Log your first session',   track:'Volume'      },
-    { id:'streak3',  name:'Momentum',      icon:'ti-flame',        metric:'best', goal:3,   blurb:'Reach a 3-day streak',     track:'Consistency' },
+    { id:'streak3',  name:'Momentum',      icon:'ti-flame',        metric:'weekRun', goal:2,  blurb:'Train two weeks running', track:'Consistency' },
     { id:'pb1',      name:'Record Breaker',icon:'ti-trophy',       metric:'pbs',  goal:1,   blurb:'Set your first PB',        track:'Records'     },
     { id:'day10',    name:'Regular',       icon:'ti-calendar-check',metric:'days',goal:10,  blurb:'Log 10 sessions',          track:'Volume'      },
-    { id:'streak7',  name:'Week Warrior',  icon:'ti-flame-filled', metric:'best', goal:7,   blurb:'Reach a 7-day streak',     track:'Consistency' },
+    { id:'streak7',  name:'Week Warrior',  icon:'ti-flame-filled', metric:'weekRun', goal:4,  blurb:'Train four weeks running', track:'Consistency' },
     { id:'pb5',      name:'PB Machine',    icon:'ti-medal',        metric:'pbs',  goal:5,   blurb:'Set 5 personal bests',     track:'Records'     },
     { id:'day25',    name:'Grinder',       icon:'ti-barbell',      metric:'days', goal:25,  blurb:'Log 25 sessions',          track:'Volume'      },
-    { id:'streak14', name:'Locked In',     icon:'ti-bolt',         metric:'best', goal:14,  blurb:'Reach a 14-day streak',    track:'Consistency' },
+    { id:'streak14', name:'Locked In',     icon:'ti-bolt',         metric:'weekRun', goal:8,  blurb:'Train eight weeks running', track:'Consistency' },
     { id:'pb10',     name:'Record Hunter', icon:'ti-award',        metric:'pbs',  goal:10,  blurb:'Set 10 personal bests',    track:'Records'     },
     { id:'day50',    name:'Iron Athlete',  icon:'ti-shield-bolt',  metric:'days', goal:50,  blurb:'Log 50 sessions',          track:'Volume'      },
-    { id:'streak30', name:'Unbreakable',   icon:'ti-shield-check', metric:'best', goal:30,  blurb:'Reach a 30-day streak',    track:'Consistency' },
+    { id:'streak30', name:'Unbreakable',   icon:'ti-shield-check', metric:'weekRun', goal:16, blurb:'Train sixteen weeks running', track:'Consistency' },
     { id:'day100',   name:'Centurion',     icon:'ti-crown',        metric:'days', goal:100, blurb:'Log 100 sessions',         track:'Volume'      },
     { id:'lrn_basics',   name:'Fuel Basics',       icon:'ti-apple',            metric:'lBasics',      goal:1, blurb:'Finish the food basics lesson',   track:'Learn' },
     { id:'lrn_energy',   name:'Energy Systems',    icon:'ti-bolt',             metric:'lEnergy',      goal:1, blurb:'Match 6 of 8 efforts',            track:'Learn' },
@@ -7925,10 +7957,9 @@
     { key:'Learn',       icon:'ti-book' }
   ];
 
-  // Learn counts toward XP, but deliberately less than training does: a term of
-  // actual sessions should still out-earn the classroom work.
-  const XP_LESSON = 15;   // per lesson finished
-  const XP_BLOCK  = 50;   // bonus for passing a whole block
+  // Learn no longer feeds the rank ladder — sessions logged is the only thing
+  // that does. Lessons and blocks earn badges of their own instead, which is
+  // the honest split: the ladder is what you put in, the shelf is what you won.
   function learnMetrics(){
     const out = { lessons:0, blocksPassed:0, lBasics:0, lEnergy:0, lGameday:0, lOwnplan:0 };
     (typeof LEARN_BLOCKS === 'undefined' ? [] : LEARN_BLOCKS).forEach(b => {
@@ -7960,16 +7991,22 @@
     const best = bumpBestStreak();
     const cur  = streakInfo().streak;
     const lm = learnMetrics();
-    const m = Object.assign({ days:days, pbs:pbs, best:best, cur:cur }, lm);
+    // The consistency badges run off WEEKS now, like the chip and the board.
+    // They were the last place still rewarding a day streak, which meant a
+    // student could lose a badge's progress to an exam week.
+    const wk = weekRunInfo();
+    const m = Object.assign({ days:days, pbs:pbs, best:best, cur:cur,
+                              weekRun:(wk.best || 0), weeksTrained:(wk.weeks || 0) }, lm);
     const badges = BADGES.map(b => {
       const have = m[b.metric] || 0;
       return Object.assign({}, b, { have:have, earned: have >= b.goal });
     });
     const earnedCount = badges.filter(b => b.earned).length;
-    const xp = days*XP_SESSION + pbs*XP_PB + earnedCount*XP_BADGE
-             + lm.lessons*XP_LESSON + lm.blocksPassed*XP_BLOCK;
-    return { days:days, pbs:pbs, best:best, cur:cur, lessons:lm.lessons, blocksPassed:lm.blocksPassed,
-             badges:badges, earnedCount:earnedCount, xp:xp, rank:rankFor(xp) };
+    // The ladder is sessions logged. It only ever goes up, it means exactly
+    // what it says, and nothing else is folded into it.
+    return { days:days, pbs:pbs, best:best, cur:cur, weekRun:m.weekRun, weeksTrained:m.weeksTrained,
+             lessons:lm.lessons, blocksPassed:lm.blocksPassed,
+             badges:badges, earnedCount:earnedCount, xp:days, rank:rankFor(days) };
   }
 
   function rankMedalHTML(rank, cls){
@@ -7985,11 +8022,11 @@
     const r = g.rank;
     const ring = 'background: conic-gradient(var(--gold) '+r.pct+'%, var(--line) 0);';
     const badges = g.earnedCount ? (' · '+g.earnedCount+' badge'+(g.earnedCount===1?'':'s')) : '';
-    const nextLine = (r.next ? (r.toNext+' XP to '+esc(r.next.name)) : 'Top rank — legend') + badges;
+    const nextLine = (r.next ? (r.toNext+' session'+(r.toNext===1?'':'s')+' to '+esc(r.next.name)) : 'Top rank — legend') + badges;
     return '<button class="hero-rank" onclick="openTrophyRoom()" aria-label="Your rank and badges">'+
       '<span class="hero-rank-medal" style="'+ring+'"><span class="hero-rank-medal-in">'+r.level+'</span></span>'+
       '<span class="hero-rank-body">'+
-        '<span class="hero-rank-top"><span class="hero-rank-name">'+esc(r.name)+'</span><span class="hero-rank-xp">'+r.xp+' XP</span></span>'+
+        '<span class="hero-rank-top"><span class="hero-rank-name">'+esc(r.name)+'</span><span class="hero-rank-xp">'+r.xp+' session'+(r.xp===1?'':'s')+'</span></span>'+
         '<span class="hero-rank-bar"><span style="width:'+r.pct+'%"></span></span>'+
         '<span class="hero-rank-next">'+nextLine+'</span>'+
       '</span>'+
@@ -8019,7 +8056,7 @@
       rankMedalHTML(r, 'trophy-medal')+
       '<div class="trophy-hero-body">'+
         '<p class="trophy-hero-name">'+esc(r.name)+'</p>'+
-        '<p class="trophy-hero-xp">Level '+r.level+' · '+r.xp+' XP'+(r.next ? ' · '+r.toNext+' to '+esc(r.next.name) : ' · max rank')+'</p>'+
+        '<p class="trophy-hero-xp">Level '+r.level+' · '+r.xp+' session'+(r.xp===1?'':'s')+' logged'+(r.next ? ' · '+r.toNext+' to '+esc(r.next.name) : ' · max rank')+'</p>'+
         '<div class="rank-bar" style="margin-top:8px;"><span style="width:'+r.pct+'%"></span></div>'+
       '</div>'+
     '</div>';
@@ -8045,7 +8082,7 @@
       groups += '<p class="trophy-group-label"><i class="ti '+t.icon+'" aria-hidden="true"></i> '+t.key+'</p>'+
         '<div class="badge-grid">'+tiles+'</div>';
     });
-    const howto = '<p class="trophy-howto">Earn XP for everything you do: <strong>+'+XP_SESSION+'</strong> a session, <strong>+'+XP_PB+'</strong> a personal best, <strong>+'+XP_BADGE+'</strong> a badge. Keep training to rank up.</p>';
+    const howto = '<p class="trophy-howto">Your rank is <strong>sessions logged</strong> — nothing else is folded in, and it only ever goes up. Bests and badges have their own shelf.</p>';
     document.getElementById('trophyBody').innerHTML = hero + stats + groups + howto;
   }
 
