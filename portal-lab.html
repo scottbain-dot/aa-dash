@@ -12782,6 +12782,29 @@
   //  2. A part-finished week is not a week. Comparing Wednesday's total against
   //     finished weeks tells everyone they are slacking until Saturday. So the
   //     comparison is made against how much of a usual week you'd have done BY NOW.
+  // What a week in THIS block should look like, derived rather than asked for.
+  //
+  // The year map has a loadTarget field per month. It is no longer collected
+  // from the athlete — rightly, because "set your monthly load target in
+  // arbitrary units" is a coach's question, not a fifteen-year-old's — and so
+  // nothing has been filling it in and nothing has been reading it. That left
+  // the load card judging every week against the average of the last four,
+  // which is the wrong mark in a block that is deliberately lighter or heavier.
+  // A taper is SUPPOSED to be down on recent weeks. Reading "easing off" at
+  // exactly the moment the plan says ease off is the app arguing with itself.
+  //
+  // So the expectation comes from the block the athlete already set: their own
+  // normal week, scaled by what this phase is for. Nothing is asked and no
+  // number is shown — they see "on plan" or they do not. A stored loadTarget,
+  // if a coach ever sets one, wins over the derived figure.
+  const PHASE_LOAD = { build: 1.15, maintain: 1.0, peak: 0.8, recover: 0.55, off: 0.2 };
+  function expectedWeek(usual, phase, stored){
+    if(stored > 0) return stored;
+    if(!usual) return 0;
+    const k = PHASE_LOAD[phase];
+    return k ? Math.round(usual * k) : usual;
+  }
+
   function loadRead(){
     const series = (state.load && state.load.weeks) || [];
     const todayIso = fmtISO(new Date());
@@ -12801,7 +12824,17 @@
     // What a usual week looks like by this point in it — the fair comparison.
     const usualByNow = partial ? Math.round(usual * days / 7) : usual;
     const weeksLogged = past.length + (thisWeek > 0 ? 1 : 0);
-    const base = { thisWeek, usual, usualByNow, pace, days, partial, weeksLogged };
+
+    // The block the athlete already set, read here rather than asked for again.
+    const info = currentPhaseInfo() || {};
+    const phase = info.phase || '';
+    const expected = expectedWeek(usual, phase, info.loadTarget);
+    // Mid-week, the mark is how much of an expected week you would have done by
+    // now — otherwise every Wednesday reads as behind.
+    const expectedByNow = partial ? Math.round(expected * days / 7) : expected;
+
+    const base = { thisWeek, usual, usualByNow, pace, days, partial, weeksLogged,
+                   phase, expected, expectedByNow };
 
     // Need ~3 finished weeks behind you before a comparison means anything.
     if(past.length < 3 || !usual){
@@ -12814,13 +12847,22 @@
       return Object.assign(base, { enough:true, early:true, acwr:null, band:'healthy', tone:'steady',
                verdict:'Early in the week' });
     }
-    const acwr = pace / usual;
+    // Two different questions, deliberately kept apart.
+    //
+    // "Are you on plan?" is measured against what this block asks for. "Are you
+    // ramping dangerously?" is measured against what your body is used to —
+    // the true acute:chronic ratio, with no block adjustment, because a spike
+    // is a spike whatever the plan says. Folding the plan into the injury
+    // signal would quietly raise the ceiling in a build month, which is exactly
+    // when it should not move.
+    const acwr = pace / usual;                 // safety: unchanged, always vs chronic
+    const onPlan = expected ? pace / expected : acwr;
     let verdict, band, tone;
-    if(acwr < 0.8){ verdict = 'Easing off'; band = 'healthy'; tone = 'easing'; }
-    else if(acwr <= 1.3){ verdict = 'Building steadily'; band = 'healthy'; tone = 'steady'; }
-    else if(acwr <= 1.5){ verdict = 'Pushing up'; band = 'healthy'; tone = 'push'; }
-    else { verdict = 'Ramping fast — watch recovery'; band = 'ramp'; tone = 'ramp'; }
-    return Object.assign(base, { enough:true, acwr, verdict, band, tone });
+    if(acwr > 1.5){ verdict = 'Ramping fast — watch recovery'; band = 'ramp'; tone = 'ramp'; }
+    else if(onPlan < 0.7){  verdict = phase ? 'Behind your plan' : 'Easing off'; band='healthy'; tone='easing'; }
+    else if(onPlan <= 1.2){ verdict = phase ? 'On plan' : 'Building steadily';    band='healthy'; tone='steady'; }
+    else { verdict = phase ? 'Ahead of plan' : 'Pushing up';                      band='healthy'; tone='push'; }
+    return Object.assign(base, { enough:true, acwr, onPlan, verdict, band, tone });
   }
 
   function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
@@ -12828,7 +12870,11 @@
   // A short, state-aware sentence: how this week compares to usual, tied to the
   // athlete's current training state (from the year map).
   function loadSentence(read, phase){
-    const usual = read.usual;
+    // Compare against the block's expectation when there is one, so this
+    // sentence and the headline above it are answering the same question. They
+    // used to disagree: the headline measured against recent weeks and the
+    // sentence then added "right for a Recover block" underneath it.
+    const usual = read.expected || read.usual;
     // Mid-week, judge the pace, not the running total — and say so, so nobody
     // reads "down on your recent weeks" on a Wednesday as a verdict on the week.
     const val = read.partial ? read.pace : read.thisWeek;
@@ -12838,21 +12884,25 @@
              ' in — your read shows once the week has more in it.';
     }
     if(!usual){ dir='same'; rel='about the same as your recent weeks'; }
-    else if(val >= usual*1.35){ dir='above'; rel = read.partial ? 'on pace for a big week' : 'well above your recent weeks'; }
-    else if(val >= usual*1.1){  dir='above'; rel = read.partial ? 'on pace to be up on your recent weeks' : 'a little above your recent weeks'; }
-    else if(val <= usual*0.65){ dir='below'; rel = read.partial ? 'well down on your recent weeks so far' : 'well below your recent weeks'; }
-    else if(val <= usual*0.9){  dir='below'; rel = read.partial ? 'a little down on your recent weeks so far' : 'a little below your recent weeks'; }
-    else { dir='same'; rel = read.partial ? 'on pace for a normal week' : 'about the same as your recent weeks'; }
+    else if(val >= usual*1.35){ dir='above'; rel = read.partial ? 'on pace for a big week' : (phase ? 'well above what this block asks for' : 'well above your recent weeks'); }
+    else if(val >= usual*1.1){  dir='above'; rel = read.partial ? 'on pace to be a little up' : (phase ? 'a little above what this block asks for' : 'a little above your recent weeks'); }
+    else if(val <= usual*0.65){ dir='below'; rel = read.partial ? 'well down so far' : (phase ? 'well below what this block asks for' : 'well below your recent weeks'); }
+    else if(val <= usual*0.9){  dir='below'; rel = read.partial ? 'a little down so far' : (phase ? 'a little below what this block asks for' : 'a little below your recent weeks'); }
+    else { dir='same'; rel = read.partial ? 'on pace for a normal week' : (phase ? 'about what this block asks for' : 'about the same as your recent weeks'); }
     // A gentle, data-informed coaching tail keyed to the load tone / direction.
     let tail = '';
     if(read.tone==='ramp') tail = ' Watch your recovery this week.';
     else if(dir==='above') tail = ' Keep an eye on how the hard days feel.';
     if(!phase) return cap(rel)+'.'+tail;
     const label = PHASE_FRIENDLY[phase] || STATE_LABEL[phase] || '';
-    // Affirm only when the direction fits the block's intent; else stay neutral.
-    const fits = { build:['above','same'], peak:['above','same'], maintain:['same'], recover:['below'], off:['below','same'] };
-    const ok = (fits[phase]||[]).indexOf(dir) >= 0;
-    return cap(rel) + ' — ' + (ok ? 'right for a '+label+' block.' : 'you\'re in a '+label+' block.') + tail;
+    // The block's intent is already inside the number being compared against,
+    // so matching it IS being on plan — in every phase. The old map affirmed
+    // directions relative to recent weeks ("below is right for Recover"), which
+    // double-counted the phase once the mark started moving with it.
+    const art = /^[AEIOU]/i.test(label) ? 'an ' : 'a ';   // "an Off block"
+    return cap(rel) + ' — ' + (dir === 'same'
+      ? 'right for ' + art + label + ' block.'
+      : 'you\'re in ' + art + label + ' block.') + tail;
   }
 
   // Shared load body: verdict headline + this-week-vs-usual bar + sentence + au
@@ -12866,7 +12916,12 @@
     // Mid-week the marker is "how much of a usual week you'd have done by now",
     // so the bar and the marker are measuring the same span of days. On Sunday
     // the two are the same thing and it reads as a straight week-vs-week compare.
-    const mark = read.partial ? read.usualByNow : read.usual;
+    // The mark is what this BLOCK asks for, not what the last four weeks
+    // averaged. In a taper those are different numbers and only one of them is
+    // the plan. Falls back to the plain average when there is no block set.
+    const mark = read.expected
+      ? (read.partial ? read.expectedByNow : read.expected)
+      : (read.partial ? read.usualByNow : read.usual);
     const scaleMax = Math.max(read.thisWeek, mark, 1) * 1.4;
     const fillPct = Math.min(100, read.thisWeek/scaleMax*100);
     const markPct = Math.min(100, mark/scaleMax*100);
