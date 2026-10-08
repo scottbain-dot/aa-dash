@@ -88,19 +88,26 @@ async function check(name, qs, opts = {}) {
   console.log('');
 
   // ---- 1. Is the deployed script the one in this repo? --------------------
-  // getAttention only exists in the current script. An old deployment has no
+  // An action that exists only in the current script. An old deployment has no
   // such action and falls through to the legacy email branch, so the shape of
   // the reply tells us which code is live without needing a teacher token.
-  const att = await get('action=getAttention&token=smoke-probe');
+  //
+  // THE MARKER HAS TO BE THE NEWEST HANDLER, not merely a recent one. It sat on
+  // getAttention for weeks while three later pushes added handlers underneath
+  // it, so a deployment could be four versions behind and still read "current"
+  // — which is the exact failure this check exists to catch. Move it every time
+  // the script gains a route.
+  const MARKER = 'getPrefs';     // added with Athlete_Prefs — 8 Oct 2026
+  const att = await get('action=' + MARKER + '&athleteId=' + ID);
   let deployCurrent = false;
   if (!att.ok) {
     record('DEPLOY · script version', 'FAIL', att.error);
-  } else if (att.body && att.body.authRequired) {
+  } else if (att.body && (att.body.authRequired || att.body.success === true)) {
     deployCurrent = true;
-    record('DEPLOY · script version', 'PASS', 'current (getAttention present and gated)');
+    record('DEPLOY · script version', 'PASS', 'current (' + MARKER + ' present and gated)');
   } else {
     record('DEPLOY · script version', 'FAIL',
-      'STALE — getAttention missing. The editor still holds older code; paste ' +
+      'STALE — ' + MARKER + ' missing. The editor still holds older code; paste ' +
       'COMPLETE-APPS-SCRIPT.gs in, save, then Manage deployments → New version.');
   }
 
@@ -159,6 +166,7 @@ async function check(name, qs, opts = {}) {
   await check('getAwards', 'action=getAwards&athleteId=' + ID);
 
   // Admin routes: we only assert that they exist and refuse us.
+  await check('getPrefs',               'action=getPrefs&athleteId=' + ID);
   await check('getAttention (gated)',   'action=getAttention&token=smoke-probe');
   await check('getObservations (gated)','action=getObservations&token=smoke-probe');
 
