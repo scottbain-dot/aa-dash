@@ -59,7 +59,13 @@ const NOT_DEPLOYED = b => b && b.authenticated === false && /No email provided/i
 
 // An endpoint passes if it answers in JSON and does not report an error.
 // authRequired is a PASS: it proves the handler exists and is gated, which is
-// exactly what we want to know about an admin route without holding a token.
+// exactly what we want to know without holding a token.
+//
+// Since the student-session gate landed, that now covers most of the portal
+// routes too — they refuse this script because it has no session token, which
+// is the correct answer and still proves the paste landed. It does mean the
+// expect() bodies below no longer run for those routes; they stay because a
+// future token-carrying mode would use them.
 async function check(name, qs, opts = {}) {
   const r = await get(qs);
   if (!r.ok) return record(name, 'FAIL', r.error);
@@ -145,6 +151,12 @@ async function check(name, qs, opts = {}) {
          (b.sports || []).length + ' sport groups' + (b.coachNote ? ' · coach note set' : ' · no coach note'))
       : 'cohort too small to report'
   });
+
+  // The awards ledger behind the medals. The Awards sheet creates itself on the
+  // first write, so there is nothing to set up — this only proves the route is
+  // live. It answers authRequired without a session token, which counts as a
+  // pass: a handler that is gated is a handler that exists.
+  await check('getAwards', 'action=getAwards&athleteId=' + ID);
 
   // Admin routes: we only assert that they exist and refuse us.
   await check('getAttention (gated)',   'action=getAttention&token=smoke-probe');
