@@ -2488,6 +2488,53 @@
   .hero-rank-next { font: 600 10.5px 'Inter', sans-serif; color: var(--ink-mute); }
   .hero-rank-go { color: var(--ink-mute); font-size: 17px; flex-shrink: 0; align-self: center; }
 
+  /* ---- GROUP 2: how you are going ----------------------------------------
+     Three tiles, three numbers that cannot fall, then the ladder they feed. */
+  .pg-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 0; }
+  .pg-tile { position: relative; cursor: pointer; text-align: center; padding: 12px 6px 11px;
+    border-radius: 15px; border: 1px solid var(--line-soft); background: var(--cream);
+    display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .pg-tile-ico { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+    margin-bottom: 4px; background: #efe5dd; color: var(--ink-mute); font-size: 14px; }
+  .pg-tile-num { font: 800 22px 'Fraunces', serif; color: var(--burgundy); line-height: 1; }
+  /* The label is given the height of two lines whether it needs them or not, so
+     "weeks trained" wrapping does not push its sub-line below the other two. */
+  .pg-tile-lab { font: 700 9px 'Inter', sans-serif; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--ink-mute); margin-top: 4px; line-height: 1.25; min-height: 23px; }
+  .pg-tile-sub { font: 700 9.5px 'Inter', sans-serif; color: var(--gold-strong, #b8860b); margin-top: 1px; }
+  .pg-tile.gold { border-color: rgba(201,154,29,.4); background: linear-gradient(180deg, #fffaec, var(--cream)); }
+  .pg-tile.gold .pg-tile-ico { background: linear-gradient(145deg, #e8c450, #c99a1d); color: #fff;
+    box-shadow: 0 4px 10px -4px rgba(201,154,29,.9); }
+  /* A run worth having gets the flame it used to have as a chip. */
+  .pg-tile.hot { border-color: rgba(226,85,29,.35); background: linear-gradient(180deg, #fff3ec, var(--cream)); }
+  .pg-tile.hot .pg-tile-ico { background: linear-gradient(135deg, #ff9f43, #e2551d); color: #fff;
+    box-shadow: 0 4px 10px -4px rgba(226,85,29,.8); }
+  .pg-tile.hot .pg-tile-sub { color: #d1491a; }
+  .pg-card .week-progress { margin-top: 0; }
+
+  /* ---- GROUP 3: what you are running --------------------------------------- */
+  .prg-eyebrow { gap: 9px; flex-wrap: wrap; text-transform: none; letter-spacing: normal; }
+  .prg-where { font: 700 10px 'Inter', sans-serif; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-mute); }
+  .prg-main { display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; text-align: left;
+    padding: 14px 14px 14px 16px; border-radius: 16px; border: 1px solid var(--line-soft);
+    background: linear-gradient(135deg, #fdf6f2, #f7ece6); }
+  .prg-main-body { flex: 1; min-width: 0; }
+  .prg-name { display: block; font: 600 17px 'Fraunces', serif; color: var(--ink); line-height: 1.25; }
+  .prg-sub { display: block; font: 500 12px 'Inter', sans-serif; color: var(--ink-mute); margin-top: 3px; line-height: 1.4; }
+  .prg-go { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--burgundy); color: var(--cream); font-size: 16px;
+    box-shadow: 0 6px 14px -7px rgba(135,75,70,.9); }
+  /* No program yet: this is the one thing to do on the screen, so it leads. */
+  .prg-main.prg-new { background: linear-gradient(135deg, var(--burgundy), #6a3a36); border-color: transparent;
+    box-shadow: 0 12px 26px -16px rgba(135,75,70,.9); }
+  .prg-main.prg-new .prg-name { color: #fff; }
+  .prg-main.prg-new .prg-sub { color: rgba(250,243,237,.82); }
+  .prg-main.prg-new .prg-go { background: var(--gold); color: #5c2f1d; box-shadow: none; }
+  /* The block's ask, as a note under the program rather than a box of its own. */
+  .prg-card .blk-line { margin: 10px 0 0; background: transparent; border: none;
+    border-left: 3px solid var(--gold); border-radius: 0 10px 10px 0; padding: 4px 4px 4px 12px; }
+  .prg-card .blk-line-ask { background: #fdf7e8; border-left-color: var(--burgundy); padding: 9px 10px 9px 12px; }
+
   /* Rank medallion + XP bar (shared by the Trophy Room hero) */
   .rank-medal { width: 62px; height: 62px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
     padding: 4px; position: relative; z-index: 1; box-shadow: 0 0 0 1px rgba(255,255,255,0.14); }
@@ -5988,7 +6035,11 @@
   // (and collapses) there.
   function renderBlockBar(){
     const bar = document.getElementById('blockBar');
-    if(activeTab!=='week' && activeTab!=='load'){ bar.innerHTML = ''; return; }
+    // Not on My Program any more. "Hyrox build · week 10 of 26" pinned above
+    // the whole page described a program that was four cards further down — it
+    // read as a stray label. It is now the eyebrow on the program card itself.
+    // Load still gets it: there the block IS the frame for every chart below.
+    if(activeTab!=='load'){ bar.innerHTML = ''; return; }
     const info = currentPhaseInfo();
     if(info){
       // Quiet strip: state chip + where you are in the block. "week 3 of 8" is
@@ -7172,13 +7223,15 @@
           // first thing after "what am I doing now", and disappears once it has
           // been answered.
           lastWeekCard() +
-          // The program first, then what this block asks of it. The block line
-          // used to sit ABOVE the button, so "On top of your sport: 2–3
-          // sessions a week" arrived with nothing to attach to — an instruction
-          // floating between today's session and a button. Underneath, it reads
-          // as context for the program you are looking at.
-          weekBuildCard() +
-          weekBlockCard() +
+          // THREE GROUPS, in the order a student asks the questions: what am I
+          // doing today → how am I going → what am I running.
+          //
+          // They used to be one overloaded hero (today AND the week bar AND the
+          // rank row), a burgundy button, a bordered note, and the block strip
+          // stranded above the whole screen with nothing to attach to. Same
+          // information, three objects, one visual family.
+          weekProgressCard() +
+          weekProgramCard() +
           weekThisWeekCard(ws, curMon, byDay, today) +
           // The squad, as counts. Sits here rather than on its own tab because
           // this is the screen a student opens when deciding whether to train,
@@ -7762,49 +7815,56 @@
     '</button>';
   }
 
-  // Prominent "Build my program" entry — top of My Program, opens the build hub
-  // (build your own, AI, ready-made preview, fill week, quick add…).
-  // The block's ask as plain text, for the build button. Same source as the
-  // block line, without the markup or the chevron.
-  function blockAskLine(){
-    const b = currentBlock();
-    if(!b) return '';
-    const w = OWN_WORK[b.phase];
-    if(!w) return '';
-    if(w.line) return String(w.line).replace(/<[^>]*>/g,'');
-    if(!w.n) return '';
-    const month = MONTHS[new Date().getMonth()];
-    const leadKey = String(b.sport||'').trim().toLowerCase();
-    const ms = ((plannedSports().find(x=>String(x.name||'').trim().toLowerCase()===leadKey)||{}).monthlyStates||[])
-                 .find(m=>m.month===month) || {};
-    const comps = componentLabels(ms.components);
-    return 'This block asks for ' + w.n +
-           (comps.length ? ' of ' + comps.join(' and ').toLowerCase() : '') + (w.tail||'');
-  }
-
-  // The big button carries the program. It used to say "Build my program" to an
-  // athlete who already had one, with a separate thin "Repeats from Engine
-  // Rebuild · Edit program" row underneath saying the same thing again in grey.
-  // One object now: the name of what you are running, and the right verb.
-  function weekBuildCard(){
+  // ---- GROUP 3: WHAT AM I RUNNING -------------------------------------------
+  // The program, the block it sits in, and what that block asks on top of it —
+  // one card, because they are one thought.
+  //
+  // Before this they were three unrelated objects. "Hyrox build · week 10 of
+  // 26" lived in the context strip pinned above the entire page, attached to
+  // nothing; the program was a fat burgundy button with an icon, two lines of
+  // text and a chevron crammed into it; and "On top of your sport" was a third
+  // box in a different style again. The strip was the orphan Scott named, and
+  // the fix is not to restyle it — it is to give it the thing it describes.
+  function weekProgramCard(){
     const n = templateSessions().length;
     const name = String((state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || '').trim();
     const has = n > 0;
-    const label = has ? (name || 'My program') : 'Build my program';
-    // With no program yet, what this block asks for is the most useful thing
-    // this button could say — it is the brief for the thing they are about to
-    // build, rather than a generic invitation.
-    const ask = has ? '' : blockAskLine();
+
+    // The block, as the card's eyebrow. This is the context strip's content,
+    // now sitting on top of the program it is the context FOR.
+    const info = currentPhaseInfo();
+    const b = currentBlock();
+    let eyebrow = '<i class="ti ti-calendar-month" aria-hidden="true"></i> Your program';
+    if(info){
+      const chip = '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+
+                   esc(b ? b.label : PHASE_FRIENDLY[info.phase])+'</span>';
+      const where = b ? ('week '+b.week+' of '+b.weeks) : (info.focus || info.month || '');
+      eyebrow = chip + (where ? '<span class="prg-where">'+esc(where)+'</span>' : '');
+    }
+
+    // The block's ask used to be repeated here when there was no program yet.
+    // It is already the line at the bottom of this same card, so it said the
+    // same sentence twice, three centimetres apart — and in raw markup, because
+    // blockAskLine() returns HTML and this slot is escaped.
     const sub = has
-      ? n + ' session' + (n===1?'':'s') + ' a week · tap to edit'
-      : (ask || 'Answer a few questions, or build your own');
-    return '<button class="build-cta-card'+(has?' has-prog':'')+'" onclick="openMoreActions()">'+
-      '<i class="ti '+(has?'ti-list-check':'ti-tools')+' build-cta-lead" aria-hidden="true"></i>'+
-      '<span class="build-cta-main">'+
-        '<span class="build-cta-label">'+esc(label)+'</span>'+
-        '<span class="build-cta-sub">'+esc(sub)+'</span>'+
+      ? n + ' session' + (n===1?'':'s') + ' a week'
+      : 'Answer a few questions, or build your own';
+
+    const main = '<button class="prg-main'+(has?'':' prg-new')+'" onclick="openMoreActions()">'+
+      '<span class="prg-main-body">'+
+        '<span class="prg-name">'+esc(has ? (name || 'My program') : 'Build my program')+'</span>'+
+        '<span class="prg-sub">'+esc(sub)+'</span>'+
       '</span>'+
-      '<i class="ti ti-chevron-right build-cta-go" aria-hidden="true"></i></button>';
+      '<span class="prg-go"><i class="ti '+(has?'ti-pencil':'ti-arrow-right')+'" aria-hidden="true"></i></span>'+
+    '</button>';
+
+    return '<div class="card prg-card">'+
+      '<p class="card-eyebrow prg-eyebrow">'+eyebrow+'</p>'+
+      main +
+      // What the block asks ON TOP of the program, inside the same card so it
+      // reads as a note about the thing above it rather than a new instruction.
+      weekBlockCard() +
+    '</div>';
   }
 
   // ---- Training streak (gamified "days logged") -----------------------------
@@ -8228,20 +8288,17 @@
     const g = gameStats();
     const r = g.rank;
     const ring = 'background: conic-gradient(var(--gold) '+r.pct+'%, var(--line) 0);';
-    // "15 sessions" sat directly under "3 of 9 sessions this week" and read as
-    // another weekly figure. It is the lifetime total — the thing the rank is
-    // made of — so it says so.
-    //
-    // Weeks trained moved here too. It used to float as a chip at the top of
-    // the card; this row is the whole "over time" story, and the top of the
-    // card is about today.
-    const badges = g.earnedCount ? (' · '+g.earnedCount+' badge'+(g.earnedCount===1?'':'s')) : '';
-    const wks = g.weeksTrained ? (' · '+g.weeksTrained+' week'+(g.weeksTrained===1?'':'s')+' trained') : '';
-    const nextLine = (r.next ? (r.toNext+' to '+esc(r.next.name)) : 'Top rank — legend') + wks + badges;
+    // Just the ladder. The counts it is made of are the tiles directly above,
+    // so repeating them here as a grey run-on line said everything twice and
+    // emphasised none of it. The medal already carries the level, so the
+    // right-hand slot carries the badges the tiles no longer show.
+    const nextLine = r.next ? (r.toNext+' more to '+esc(r.next.name)) : 'Top rank — legend';
+    const badges = g.earnedCount ? (g.earnedCount+' badge'+(g.earnedCount===1?'':'s')) : '';
     return '<button class="hero-rank" onclick="openTrophyRoom()" aria-label="Your rank and badges">'+
       '<span class="hero-rank-medal" style="'+ring+'"><span class="hero-rank-medal-in">'+r.level+'</span></span>'+
       '<span class="hero-rank-body">'+
-        '<span class="hero-rank-top"><span class="hero-rank-name">'+esc(r.name)+'</span><span class="hero-rank-xp">'+r.xp+' logged all-time'+'</span></span>'+
+        '<span class="hero-rank-top"><span class="hero-rank-name">'+esc(r.name)+'</span>'+
+          (badges ? '<span class="hero-rank-xp">'+badges+'</span>' : '')+'</span>'+
         '<span class="hero-rank-bar"><span style="width:'+r.pct+'%"></span></span>'+
         '<span class="hero-rank-next">'+nextLine+'</span>'+
       '</span>'+
@@ -8545,17 +8602,64 @@
       cta = '<button class="card-cta card-cta-gold" onclick="newSession(\''+today+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add today’s session</button>';
     }
     const heroDone = todays.length && isLogged(todays[0]) ? ' hero-done' : '';
+    // TODAY, and only today. The week bar and the rank row have moved to the
+    // progress card below. They are a different question — "how am I going" is
+    // not "what am I doing now" — and stacking four progress objects under one
+    // session made the biggest card on the screen the vaguest one.
     return '<div class="card card-hero'+heroDone+'">'+
-      // The weeks chip has moved into the rank row below. Four progress objects
-      // in one card — a done flag, a weeks chip, a week bar and a rank line —
-      // was two too many, and the chip and the rank row were telling the same
-      // story at different time scales.
       '<div class="hero-eyebrow-row"><p class="card-hero-eyebrow">'+eyebrow+'</p></div>'+
       '<h2 class="card-hero-title">'+titleHTML+'</h2>'+
       '<p class="card-hero-sub">'+subHTML+'</p>'+
       (todays.length ? quickLogRowHTML(todays[0]) : '')+
       '<div class="week-today-cta">'+cta+'</div>'+
+    '</div>';
+  }
+
+  // ---- GROUP 2: HOW AM I GOING ----------------------------------------------
+  // Everything that accumulates, in one place: this week's sessions, the three
+  // counts that can only go up, and the rank they feed.
+  //
+  // The weeks number is back as a number. Moving the streak to weeks was right
+  // — a day streak was the one figure in this app that could fall to zero — but
+  // it then got folded into a grey run-on line reading "10 to Contender · 6
+  // weeks trained · 5 badges", which is where a thing goes to be ignored.
+  // Consistency is the single most important habit this programme is trying to
+  // build, so it gets a tile, a flame, and the current run under it.
+  function weekProgressCard(){
+    const g = gameStats();
+    const c = weekRunInfo();
+    const done = state.week.sessions.filter(isLogged).length;
+    const total = state.week.sessions.length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const progress = total
+      ? (done+' of '+total+' session'+(total===1?'':'s')+' this week')
+      : 'No sessions planned this week yet';
+
+    // Three tiles, three things that cannot be taken away. Tapping any of them
+    // goes where the detail lives.
+    const tile = (cls, icon, num, lab, sub, onclick) =>
+      '<button class="pg-tile'+(cls?' '+cls:'')+'" onclick="'+onclick+'">'+
+        '<span class="pg-tile-ico"><i class="ti '+icon+'" aria-hidden="true"></i></span>'+
+        '<span class="pg-tile-num">'+num+'</span>'+
+        '<span class="pg-tile-lab">'+esc(lab)+'</span>'+
+        (sub ? '<span class="pg-tile-sub">'+esc(sub)+'</span>' : '')+
+      '</button>';
+
+    const runSub = c.run >= 2 ? (c.run+' in a row') : (c.best >= 2 ? ('best run '+c.best) : 'keep it going');
+    const tiles =
+      tile(c.run >= 3 ? 'hot' : '', c.run >= 3 ? 'ti-flame-filled' : 'ti-flame',
+           c.weeks, c.weeks === 1 ? 'week trained' : 'weeks trained', runSub, 'streakTap()') +
+      tile('', 'ti-barbell', g.days, 'sessions', 'all time', 'openTrophyRoom()') +
+      // Bests get the third tile rather than badges. Scott's read, and he is
+      // right: a personal best is the most earned thing in the app and it was
+      // two taps deep. A zero here is an invitation, never a score.
+      tile(g.pbs ? 'gold' : '', 'ti-trophy', g.pbs || '–', g.pbs === 1 ? 'best' : 'bests',
+           g.pbs ? 'all time' : 'add your first', g.pbs ? 'openTrophyRoom()' : 'addPB()');
+
+    return '<div class="card pg-card">'+
+      '<p class="card-eyebrow"><i class="ti ti-chart-line" aria-hidden="true"></i> How you are going</p>'+
       '<p class="week-progress"><span class="week-progress-track"><span style="width:'+pct+'%"></span></span>'+esc(progress)+'</p>'+
+      '<div class="pg-tiles">'+tiles+'</div>'+
       heroRankHTML()+
     '</div>';
   }

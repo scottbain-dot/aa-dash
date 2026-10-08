@@ -38,6 +38,29 @@ of them — they are standalone pages.
 
 ---
 
+## Going to main — 8 Oct 2026 (second push)
+
+**My Program, in three groups.** Scott's read of the screen, and he grouped it
+himself: today, logging and streaks, program details. It was one overloaded hero
+card, a burgundy button, a bordered note, and a context strip stranded above the
+whole page.
+
+| What | Where |
+|---|---|
+| **The streak is back, as a number.** Moving it from days to weeks was right — a day streak was the one figure here that could fall to zero — but it then got folded into a grey run-on line reading "10 to Contender · 6 weeks trained · 5 badges", which is where a thing goes to be ignored. Consistency is the habit this programme exists to build, so it gets a tile, a flame, and the current run under it. | My Program |
+| **"How you are going" is its own card.** The week bar, three counts that cannot fall — weeks trained, sessions logged, personal bests — and the rank they feed. Today's card now carries today and nothing else. | My Program |
+| **Personal bests are on the main screen.** They were two taps into the trophy room. A zero there is an invitation to set the first one, never a score. | My Program |
+| **The build button is a card, not a button.** Program name, session count, one edit affordance. It was an icon, two lines of text and a chevron crammed into a burgundy bar. | My Program |
+| **"Hyrox build · week 10 of 26" is no longer orphaned.** It was pinned above the entire page, describing a program four cards further down. It is the eyebrow on the program card now, sitting on the thing it is the context for, with "on top of your sport" inside the same card. The Load tab keeps the strip, where the block really does frame everything below it. | My Program |
+
+Verified headless at 390px and 430px: the three cards share one radius family,
+the tiles are equal height with their sub-lines aligned, the tiles are real
+buttons that go where they should, the strip is gone from My Program and still
+on Load, the program card stands up with no year map set, and no raw markup
+leaks into the text. No page errors. Identity and reading guards pass.
+
+---
+
 ## Going to main — 8 Oct 2026
 
 **The trophy room is a room now, and the medals are in it.** Three things Scott
