@@ -2635,7 +2635,6 @@
     position: relative; overflow: hidden; box-shadow: 0 10px 26px rgba(107,58,54,0.22); }
   .cv-head::after { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; border-radius: 50%;
     background: radial-gradient(circle, rgba(212,175,55,0.26), rgba(212,175,55,0) 70%); pointer-events: none; }
-  .cv-head-main { position: relative; z-index: 1; min-width: 0; }
   /* ============================
      THE CARD — top of the CV tab
      ============================ */
@@ -2906,6 +2905,9 @@
   .bd-block { margin-top: 22px; padding-top: 20px; border-top: 1px solid rgba(245,239,233,.09); }
   .bd-note { font: 400 11px 'Inter', sans-serif; color: rgba(245,239,233,.34); margin: 11px 0 0; line-height: 1.55; }
   .bd-foot { font: italic 400 12px 'Fraunces', serif; color: rgba(245,239,233,.3); margin: 26px 0 0; text-align: center; }
+  /* Only ever on screen when a block of the board actually failed. */
+  .bd-foot-warn { font: 500 10.5px 'Inter', sans-serif; font-style: normal;
+    color: rgba(245,239,233,.42); margin-top: 8px; line-height: 1.5; }
   .bd-count { font-variant-numeric: tabular-nums; }
 
   /* the field of lights */
@@ -3061,22 +3063,11 @@
   .crd-foot-you strong { color: var(--burgundy); }
   .crd-foot .crd-why { margin-top: 8px; }
 
-  .cv-eyebrow { font: 700 10px 'Inter', sans-serif; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin: 0; }
-  .cv-name { font: 800 28px 'Fraunces', serif; color: #fff; margin: 4px 0 2px; line-height: 1.1; }
-  .cv-sub { font: 600 13px 'Inter', sans-serif; color: rgba(250,243,237,0.9); margin: 0; }
-  .cv-org { font: 400 11.5px 'Inter', sans-serif; color: rgba(250,243,237,0.7); margin: 6px 0 0; }
   .cv-print { flex-shrink: 0; position: relative; z-index: 1; cursor: pointer; background: rgba(255,255,255,0.14);
     border: 1px solid rgba(255,255,255,0.28); color: var(--cream); border-radius: 999px; padding: 8px 14px;
     font: 700 12px 'Inter', sans-serif; display: inline-flex; align-items: center; gap: 5px; }
-  .cv-print:hover { background: rgba(255,255,255,0.22); }
-  .cv-grit { text-align: center; padding: 6px 0 14px; }
   .cv-grit-band { display: inline-block; font: 800 13px 'Inter', sans-serif; letter-spacing: 0.06em; text-transform: uppercase;
     border-radius: 999px; padding: 6px 16px; color: #fff; }
-  .cv-band-relentless { background: linear-gradient(135deg, #f6d873, #b8860b); color: #4a3405; }
-  .cv-band-consistent { background: linear-gradient(135deg, #93b58d, #5a8757); }
-  .cv-band-building   { background: var(--line); color: var(--ink-soft); }
-  .cv-band-none       { background: var(--line); color: var(--ink-mute); }
-  .cv-grit-line { font: italic 400 13px 'Fraunces', serif; color: var(--ink-soft); margin: 10px 0 0; }
   /* Grit on the Load tab — the band, then what's driving it, in counts. */
   .grit-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .grit-line { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-soft); margin: 0; flex: 1 1 160px; }
@@ -3088,32 +3079,18 @@
   .grit-part-v { font: 500 12.5px 'Inter', sans-serif; color: var(--ink-mute); text-align: right; }
   .grit-window { font: 400 11.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 12px 0 0; }
   .grit-pending { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-mute); margin: 4px 0 0; line-height: 1.5; }
-  .cv-grit-bar { height: 7px; border-radius: 999px; background: var(--line-soft); overflow: hidden; margin: 10px auto 0; max-width: 260px; }
-  .cv-grit-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #93b58d, #5a8757); }
-  .cv-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .cv-stat { text-align: center; background: var(--cream); border: 1px solid var(--line-soft); border-radius: 14px; padding: 12px 4px; }
-  .cv-stat-n { display: block; font: 800 22px 'Fraunces', serif; color: var(--burgundy); line-height: 1; }
   .cv-stat-l { display: block; font: 700 9px 'Inter', sans-serif; letter-spacing: 0.05em; text-transform: uppercase;
     color: var(--ink-mute); margin-top: 5px; line-height: 1.25; }
   .cv-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
   .cv-add { cursor: pointer; background: var(--cream); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
     font: 700 12px 'Inter', sans-serif; color: var(--burgundy); display: inline-flex; align-items: center; gap: 4px; }
-  .cv-add:hover { border-color: var(--burgundy); }
   .cv-group { font: 800 10px 'Inter', sans-serif; letter-spacing: 0.12em; text-transform: uppercase;
     color: var(--ink-mute); margin: 16px 0 4px; }
-  .cv-empty { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-mute); margin: 8px 0 0; line-height: 1.5; }
-  .cv-results { display: flex; flex-direction: column; }
   .cv-result { display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 11px 0; border-bottom: 1px solid var(--line-soft); }
-  .cv-result:last-child { border-bottom: none; }
-  .cv-result-name { font: 600 14.5px 'Inter', sans-serif; color: var(--ink); margin: 0; }
-  .cv-result-sub { font: 400 12px 'Inter', sans-serif; color: var(--ink-mute); margin: 2px 0 0; }
-  .cv-result-val { font: 700 14px 'Inter', sans-serif; color: var(--burgundy); margin: 0; text-align: right; flex-shrink: 0; }
-  .cv-blocks { display: flex; flex-wrap: wrap; gap: 7px; }
   .cv-block { display: inline-flex; align-items: center; gap: 5px; font: 700 12.5px 'Inter', sans-serif; color: #4a3405;
     background: linear-gradient(135deg, #f6d873, #e0bf55); border-radius: 999px; padding: 6px 13px; }
   .cv-block .ti { font-size: 14px; }
-  .cv-foot { font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); text-align: center; line-height: 1.5; margin: 4px 8px 0; }
 
   /* ---- The trophy room ----------------------------------------------------
      A shelf, not a grid. A trophy sits on something: each one is a card with
@@ -3162,16 +3139,12 @@
   .cv-back { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; cursor: pointer;
     background: none; border: none; padding: 2px 0 0; margin-bottom: -4px;
     font: 700 12.5px 'Inter', sans-serif; color: var(--burgundy); }
-  .cv-hl { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
   .cv-hl-item { display: flex; align-items: center; gap: 11px; padding: 11px 12px;
     border-radius: 14px; border: 1px solid var(--line-soft); background: var(--cream); }
   .cv-hl-item.gold { border-color: rgba(201,154,29,.4); background: linear-gradient(90deg, #fffaec, var(--cream)); }
   .cv-hl-ico { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
     font-size: 17px; color: #fff; background: linear-gradient(145deg, #b9b2aa, #8d8780); }
   .cv-hl-item.gold .cv-hl-ico { background: linear-gradient(145deg, #e8c450, #c99a1d); }
-  .cv-hl-line { font: 400 15px 'Fraunces', serif; color: var(--ink); margin: 0; line-height: 1.3; }
-  .cv-hl-line b { font-weight: 600; color: var(--burgundy); }
-  .cv-hl-meta { font: 500 10.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 3px 0 0; }
   .cv-pick { display: flex; flex-direction: column; }
   .cv-pick-row { display: flex; align-items: center; gap: 11px; width: 100%; cursor: pointer; text-align: left;
     background: none; border: none; border-bottom: 1px solid var(--line-soft); padding: 10px 2px; }
@@ -3184,33 +3157,119 @@
   .cv-pick-line { display: block; font: 600 13.5px 'Inter', sans-serif; color: var(--ink); }
   .cv-pick-line b { font-weight: 700; color: var(--burgundy); }
   .cv-pick-meta { display: block; font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); margin-top: 1px; }
-  /* Printing: just the CV, nothing else. */
+  /* ---- THE ATHLETIC CV, as a document -------------------------------------
+     Deliberately unlike the rest of the portal. A page a seventeen-year-old
+     emails to a university coach has to read as a record, so: a letterhead, a
+     serif, rules instead of cards, tables instead of tiles, one accent colour,
+     and no shadows. Everything here is built to survive the print stylesheet
+     without being redrawn for it. */
+  .cvd { background: #fff; border: 1px solid var(--line-soft); border-radius: 4px;
+    padding: 34px 28px 26px; color: #1f1a18; }
+  @media (max-width: 560px) { .cvd { padding: 26px 20px 20px; } }
+
+  .cvd-head { border-bottom: 2px solid var(--burgundy); padding-bottom: 14px; margin-bottom: 4px; }
+  .cvd-name { font: 600 31px/1.08 'Fraunces', serif; color: #1f1a18; margin: 0; letter-spacing: -.01em; }
+  .cvd-role { font: 600 13px 'Inter', sans-serif; color: var(--burgundy); margin: 7px 0 0;
+    letter-spacing: .02em; }
+  .cvd-org { font: 400 11.5px 'Inter', sans-serif; color: #6d615b; margin: 5px 0 0; }
+
+  .cvd-sec { margin-top: 24px; break-inside: avoid; }
+  .cvd-sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    border-bottom: 1px solid #e4dbd5; padding-bottom: 5px; margin-bottom: 10px; }
+  .cvd-h { font: 700 10.5px 'Inter', sans-serif; letter-spacing: .17em; text-transform: uppercase;
+    color: var(--burgundy); margin: 0; }
+  .cvd-note { font: italic 400 11.5px 'Fraunces', serif; color: #7d706a; margin: -4px 0 10px; }
+  .cvd-para { font: 400 13.5px/1.62 'Inter', sans-serif; color: #2e2724; margin: 0; }
+  .cvd-para strong { font-weight: 600; color: #1f1a18; }
+  .cvd-group { font: 700 10px 'Inter', sans-serif; letter-spacing: .1em; text-transform: uppercase;
+    color: #8a7c75; margin: 14px 0 4px; }
+  .cvd-sec:first-of-type .cvd-group:first-child, .cvd-group:first-child { margin-top: 0; }
+
+  /* Achievements read as lines of record, not medals. */
+  .cvd-list { list-style: none; margin: 0; padding: 0; }
+  .cvd-list li { display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+    padding: 7px 0; border-bottom: 1px dotted #e4dbd5; }
+  .cvd-list li:last-child { border-bottom: none; }
+  .cvd-list-main { font: 400 14.5px 'Fraunces', serif; color: #1f1a18; }
+  .cvd-list-main b { font-weight: 600; color: var(--burgundy); }
+  .cvd-list-meta { flex: 0 0 auto; font: 500 11px 'Inter', sans-serif; color: #8a7c75; white-space: nowrap; }
+
+  .cvd-table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; }
+  .cvd-table th { font: 700 9.5px 'Inter', sans-serif; letter-spacing: .1em; text-transform: uppercase;
+    color: #8a7c75; text-align: left; padding: 0 0 6px; border-bottom: 1px solid #e4dbd5; }
+  .cvd-table th.num, .cvd-table td.num { text-align: right; }
+  .cvd-table td { font-size: 13px; color: #2e2724; padding: 8px 0; border-bottom: 1px dotted #ece4df;
+    vertical-align: baseline; }
+  .cvd-table tr:last-child td { border-bottom: none; }
+  .cvd-table td strong { font-weight: 600; color: #1f1a18; font-variant-numeric: tabular-nums; }
+  .cvd-unit { font-size: 11px; color: #8a7c75; }
+  .cvd-dash { color: #b6a9a2; }
+  .cvd-delta { font-size: 11.5px; color: #8a7c75; font-variant-numeric: tabular-nums; }
+  .cvd-delta.up { color: #4a7c52; }
+
+  .cvd-foot { margin-top: 26px; padding-top: 12px; border-top: 1px solid #e4dbd5; }
+  .cvd-foot p { font: 400 10.5px/1.6 'Inter', sans-serif; color: #8a7c75; margin: 0; }
+  .cvd-issued { margin-top: 5px !important; color: #a3958e !important; }
+
+  /* ---- The controls. None of this is the document. ---- */
+  .cvd-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+  .cvd-bar-end { display: flex; gap: 7px; }
+  .cvd-back { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    background: none; border: none; padding: 2px 0; font: 700 12.5px 'Inter', sans-serif; color: var(--burgundy); }
+  .cvd-btn { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    font: 700 12px 'Inter', sans-serif; color: var(--burgundy); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; }
+  .cvd-btn.on { background: var(--burgundy); border-color: var(--burgundy); color: var(--cream); }
+  .cvd-btn-solid { background: var(--burgundy); border-color: var(--burgundy); color: var(--cream); }
+  .cvd-edit-hint { font: 400 12px/1.55 'Inter', sans-serif; color: var(--ink-mute);
+    background: var(--cream); border-left: 3px solid var(--gold); border-radius: 0 10px 10px 0;
+    padding: 10px 12px; margin: 0 0 4px; }
+  .cvd-field { margin: 16px 0 0; }
+  .cvd-field label { display: block; font: 700 10px 'Inter', sans-serif; letter-spacing: .1em;
+    text-transform: uppercase; color: #8a7c75; margin-bottom: 5px; }
+  .cvd-input, .cvd-area { width: 100%; font: 400 13.5px/1.55 'Inter', sans-serif; color: #2e2724;
+    background: var(--cream); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .cvd-area { resize: vertical; }
+  .cvd-input:focus, .cvd-area:focus { outline: none; border-color: var(--burgundy); }
+  /* A section switched out is still on screen while editing, greyed, so the
+     athlete can see what they have taken off rather than losing it. */
+  .cvd-sec.is-off { opacity: .42; }
+  .cvd-switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; flex: 0 0 auto;
+    font: 700 10px 'Inter', sans-serif; letter-spacing: .06em; text-transform: uppercase;
+    color: #8a7c75; background: var(--cream); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
+  .cvd-switch.on { color: var(--burgundy); border-color: rgba(135,75,70,.35); }
+  .cvd-switch-dot { width: 7px; height: 7px; border-radius: 50%; background: #c9bdb6; }
+  .cvd-switch.on .cvd-switch-dot { background: var(--burgundy); }
+  .cvd-pick-h { font: 700 10px 'Inter', sans-serif; letter-spacing: .1em; text-transform: uppercase;
+    color: #8a7c75; margin: 16px 0 2px; }
+  .cvd-hint { font: italic 400 12px 'Fraunces', serif; color: #8a7c75; margin: 8px 0 0; }
+  .cvd-rowedit { cursor: pointer; background: none; border: none; padding: 0 0 0 10px;
+    color: var(--burgundy); font-size: 15px; line-height: 1; }
+  .cvd-add { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; margin-top: 12px;
+    font: 700 12px 'Inter', sans-serif; color: var(--burgundy); background: var(--cream);
+    border: 1px dashed var(--line); border-radius: 999px; padding: 7px 14px; }
+
+  /* Printing: the document, on paper, and nothing else at all. */
   @media print {
+    @page { margin: 14mm; }
     body.cv-printing .nav, body.cv-printing .tabs, body.cv-printing .block-bar,
-    body.cv-printing .tab-view:not(#view-cv), body.cv-printing .cv-print,
-    body.cv-printing .cv-add, body.cv-printing .sheet, body.cv-printing .sheet-backdrop,
-    body.cv-printing .toast, body.cv-printing #demoPill,
-    /* The way back and the picker are controls, not content — a printed CV
-       should not carry "Trophy room" or a list of things that were NOT picked. */
-    body.cv-printing .cv-back, body.cv-printing .cv-pick,
-    body.cv-printing .nbar, body.cv-printing .award-pop { display: none !important; }
-    body.cv-printing .card { box-shadow: none; border: 1px solid #e0e0e0; break-inside: avoid; }
-    body.cv-printing .cv-head { box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    body.cv-printing .cv-grit-band, body.cv-printing .cv-block,
-    body.cv-printing .cv-hl-item, body.cv-printing .cv-hl-ico { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.cv-printing .tab-view:not(#view-cv), body.cv-printing .sheet,
+    body.cv-printing .sheet-backdrop, body.cv-printing .toast, body.cv-printing #demoPill,
+    body.cv-printing .nbar, body.cv-printing .award-pop,
+    /* Controls, and anything the athlete switched out. */
+    body.cv-printing .cvd-bar, body.cv-printing .cvd-edit-hint, body.cv-printing .cvd-field,
+    body.cv-printing .cvd-switch, body.cv-printing .cvd-hint, body.cv-printing .cvd-add,
+    body.cv-printing .cvd-pick-h, body.cv-printing .cv-pick, body.cv-printing .cvd-rowedit,
+    body.cv-printing .cvd-sec.is-off { display: none !important; }
+    body.cv-printing { background: #fff; }
+    body.cv-printing .cvd { border: none; padding: 0; }
+    body.cv-printing .cvd-head, body.cv-printing .cvd-h, body.cv-printing .cvd-role,
+    body.cv-printing .cvd-list-main b, body.cv-printing .cvd-delta.up {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 
   /* CV: testing + strength levels, with blurred locks for what's not done */
-  .cv-note { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 4px 0 12px; }
-  .cv-tests { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 9px; }
-  .cv-test { position: relative; border: 1px solid var(--line-soft); border-radius: 14px; padding: 13px 12px; background: var(--cream); }
-  .cv-test-name { font: 700 11px 'Inter', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-mute); margin: 0; }
-  .cv-test-val { font: 800 26px 'Fraunces', serif; color: var(--burgundy); margin: 5px 0 0; line-height: 1; }
-  .cv-test-val small { font-size: 13px; margin-left: 2px; opacity: 0.65; }
-  .cv-test-sub { font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); margin: 5px 0 0; }
-  .cv-test-move { font: 700 11px 'Inter', sans-serif; color: var(--ink-mute); margin: 4px 0 0; }
   .cv-test-move.up { color: #357843; }
-  .cv-levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 9px; }
   .cv-level { position: relative; border: 1px solid var(--line-soft); border-radius: 14px; padding: 13px 12px;
     background: var(--cream); overflow: hidden; }
   .cv-level.earned { border-color: var(--line); background: var(--surface); box-shadow: var(--shadow-card); }
@@ -3218,15 +3277,9 @@
     object-position: center top; opacity: 0.38; pointer-events: none;
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
     mask-image: linear-gradient(90deg, transparent, #000 45%); }
-  .cv-level-body { position: relative; z-index: 1; }
-  .cv-level-name { font: 700 13px 'Inter', sans-serif; color: var(--ink); margin: 0; }
-  .cv-level-dots { display: flex; gap: 4px; margin: 8px 0 6px; }
-  .cv-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
   .cv-dot.on { background: linear-gradient(150deg, #f6d873, #b8860b); }
-  .cv-level-meta { font: 600 11px 'Inter', sans-serif; color: var(--burgundy); margin: 0; }
   /* Locked = you can see the shape of what's coming, not a zero */
   .cv-test.locked, .cv-level.locked { border-style: dashed; background: transparent; }
-  .blurred { filter: blur(4px); opacity: 0.5; user-select: none; }
   .cv-lock { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; border-radius: 50%;
     background: var(--line-soft); color: var(--ink-mute); display: flex; align-items: center; justify-content: center; }
   .cv-lock .ti { font-size: 11px; }
@@ -5025,7 +5078,7 @@
 
   let currentUser = null;
   let athlete = null;
-  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, availability: [], grit: null, testing: [], strengthLevels: [], mobility: null, psych: null, games: [], booking: null, planName: '', athleteId: '' };
+  let state = { yearMap: null, weeklyTemplate: null, library: null, week: { weekStart: '', sessions: [] }, pbs: [], load: { weeks: [], summary: {} }, learn: { blocks: {} }, availability: [], grit: null, testing: [], strengthLevels: [], mobility: null, psych: null, games: [], booking: null, planName: '', athleteId: '', prefs: {} };
   let DEMO_MODE = false;     // ?demo=1 — render from hardcoded data, no auth, no network
   let activeTab = 'week';
   let editing = null;        // session currently in the sheet
@@ -5277,6 +5330,7 @@
     // pop-up queue and the CV picker are all exercised by ?demo=1. The store
     // persists on the device so a reload does not replay every celebration.
     if(action==='getAwards') return Promise.resolve({ success:true, awards: demoAwardStore() });
+    if(action==='savePref') return Promise.resolve({ success:true, key: payload.key });
     if(action==='saveAwards'){
       const store = demoAwardStore();
       const have = {}; store.forEach(a => { have[a.id] = 1; });
@@ -5434,6 +5488,7 @@
       state.load = data.load || { weeks: [], summary: {} };
       state.learn = data.learn || { blocks: {} };
       state.availability = data.availability || [];
+      state.prefs = data.prefs || {};
       state.grit = data.grit || null;
       state.testing = data.testing || [];
       state.strengthLevels = data.strengthLevels || [];
@@ -7333,8 +7388,9 @@
       // A quiet week carries the season instead: the squad's biggest week and
       // the work behind it. Real figures, nothing invented, and something to
       // walk back towards rather than a gap to feel bad about.
+      const you = p.you || {};          // see renderBoard — one field, one paste behind
       if(p.trained > 0){
-        out.push({ k:'squad', html:'<b>'+p.trained+' of '+p.cohort+'</b> of us trained this week'+(p.you.trained ? ' — you included' : '') });
+        out.push({ k:'squad', html:'<b>'+p.trained+' of '+p.cohort+'</b> of us trained this week'+(you.trained ? ' — you included' : '') });
       } else {
         const sb = p.season && p.season.best;
         if(sb && sb.trained) out.push({ k:'squad', html:'Our biggest week so far · <b>'+sb.trained+' of '+p.cohort+'</b> of us training' });
@@ -7342,7 +7398,7 @@
         if(tot >= 20) out.push({ k:'squad2', html:'<b>'+tot+' sessions</b> logged between us this season' });
       }
       if(p.bests > 0) out.push({ k:'pb', html:'<b>'+p.bests+'</b> personal best'+(p.bests===1?'':'s')+' set across the squad this week' });
-      if(!p.you.trained && p.lighter >= 3)
+      if(!you.trained && p.lighter >= 3)
         out.push({ k:'soft', html:'<b>'+p.lighter+'</b> are having a lighter week too — it happens to most people most terms' });
     }
     const c = weekRunInfo();
@@ -7492,7 +7548,8 @@
       lit[slot % n] = 1; slot += 7;
     }
     let mine = -1;
-    if(p.you.trained){ for(let i = 0; i < n; i++) if(lit[i]){ mine = i; break; } }
+    const you = p.you || {};
+    if(you.trained){ for(let i = 0; i < n; i++) if(lit[i]){ mine = i; break; } }
     else { for(let i = n - 1; i >= 0; i--) if(!lit[i]){ mine = i; break; } }
     let dots = '';
     for(let i = 0; i < n; i++){
@@ -7501,7 +7558,7 @@
     return '<div class="bd-field">'+
       '<div class="bd-field-grid">'+dots+'</div>'+
       '<p class="bd-field-cap"><b class="bd-count" data-to="'+on+'">0</b> of '+n+' of us trained this week'+
-        (p.you.trained ? ' <span class="bd-you-tag">the gold one is you</span>' : '')+'</p>'+
+        (you.trained ? ' <span class="bd-you-tag">the gold one is you</span>' : '')+'</p>'+
     '</div>';
   }
 
@@ -7619,23 +7676,47 @@
     });
   }
 
+  // A noticeboard is a set of independent notices, and it should fail like one.
+  // One block throwing used to take the whole board down to "could not load" —
+  // which is what Scott hit, on a board whose other five blocks were fine. Each
+  // block is rendered on its own now; a broken one costs that block.
+  //
+  // The names are kept so a failure can be reported rather than guessed at. A
+  // single line at the foot of the board is enough to say which part is missing
+  // and enough for me to find it, without putting a stack trace on a student's
+  // phone.
+  let _bdFailed = [];
+  function bdSafe(name, fn){
+    try { return fn() || ''; }
+    catch(e){ _bdFailed.push(name + ' (' + (e && e.message ? e.message : e) + ')'); return ''; }
+  }
   function renderBoard(){
     const p = squadPulse;
+    _bdFailed = [];
+    // `you` has been assumed present since the squad shipped. It is one field
+    // on a hand-pasted Apps Script, and a deployment a version behind returns
+    // the rest of the payload without it.
+    const you = (p && p.you) || {};
     const head = (p && p.enough)
       ? '<div class="bd-top rise-in" style="--i:1">'+
           '<p class="bd-kicker">The squad · week of '+esc(fmtNice(p.weekStart || fmtISO(mondayOf(new Date()))))+'</p>'+
-          boardFieldHTML(p)+
+          bdSafe('the squad', () => boardFieldHTML(p))+
         '</div>'
       : '<div class="bd-top"><p class="bd-kicker">The squad</p><p class="bd-note">Gathering the week…</p></div>';
-    const lighter = (p && p.enough && !p.you.trained && p.lighter >= 3)
+    const lighter = (p && p.enough && !you.trained && p.lighter >= 3)
       ? '<p class="bd-soft rise-in" style="--i:3"><b>'+p.lighter+'</b> are having a lighter week than last week too. It happens to most people most terms.</p>'
       : '';
+    const body =
+      head +
+      bdSafe('the coach’s note', boardCoachHTML) + lighter +
+      (p && p.enough ? bdSafe('sport v sport', () => boardRaceHTML(p)) +
+                       bdSafe('the bests ribbon', () => boardTickerHTML(p)) : '') +
+      bdSafe('the next check-in', boardRollCallHTML) +
+      bdSafe('your weeks', boardWeeksHTML);
     document.getElementById('boardBody').innerHTML =
-      '<div class="bd-surface">'+
-        head + boardCoachHTML() + lighter +
-        (p && p.enough ? boardRaceHTML(p) + boardTickerHTML(p) : '') +
-        boardRollCallHTML() + boardWeeksHTML() +
+      '<div class="bd-surface">'+ body +
         '<p class="bd-foot">No names, no order, nobody to beat.</p>'+
+        (_bdFailed.length ? '<p class="bd-foot bd-foot-warn">Could not load: '+esc(_bdFailed.join('; '))+'</p>' : '')+
       '</div>';
     requestAnimationFrame(boardCountUp);
   }
@@ -7663,6 +7744,7 @@
   function squadCard(){
     const p = squadPulse;
     if(!p || !p.enough) return '<div id="squadCard"></div>';   // placeholder until it lands
+    const you = p.you || {};        // see renderBoard — one field, one paste behind
     const lines = [];
 
     // Where they sit INSIDE the group, never against it.
@@ -7678,7 +7760,7 @@
     // is true, is theirs, and is the thing worth walking back towards.
     const head = p.trained === 0
       ? seasonHead()
-      : (p.you.trained
+      : (you.trained
           ? '<strong>'+p.trained+' of us</strong> trained this week — you are one of them.'
           : '<strong>'+p.trained+' of us</strong> have trained this week.');
 
@@ -7692,14 +7774,14 @@
     }
 
     if(p.bests > 0){
-      lines.push(p.you.best
+      lines.push(you.best
         ? '<strong>'+p.bests+'</strong> personal best'+(p.bests===1?'':'s')+' set across the squad this week, and one of them is yours.'
         : '<strong>'+p.bests+'</strong> personal best'+(p.bests===1?'':'s')+' set across the squad this week.');
     }
     if(p.threePlus >= 3) lines.push('<strong>'+p.threePlus+'</strong> trained on three or more days.');
     // The normalising line. A student having a thin week assumes they are the
     // only one, and that assumption is usually wrong and always discouraging.
-    if(!p.you.trained && p.lighter >= 3){
+    if(!you.trained && p.lighter >= 3){
       lines.push('<strong>'+p.lighter+'</strong> are having a lighter week than last week too. It happens to most people most terms.');
     }
 
@@ -8853,7 +8935,11 @@
       return { tier:AWARD_GOLD, icon:'ti-chart-arrows-vertical', shelf:'Training Age',
         title: label + ' is up',
         line: (prev != null ? (+prev).toFixed(1)+' → ' : '') + '<b>'+(+val).toFixed(1)+'</b>',
-        note: 'An all-time high.' };
+        note: 'An all-time high.',
+        // On the CV this is read by somebody who has never heard of our Training
+        // Age. "5.4 → 6.2" means nothing to them; it needs naming and a scale.
+        cvMain: esc(label)+' rating '+(prev != null ? (+prev).toFixed(1)+' → ' : '')+'<b>'+(+val).toFixed(1)+'</b> out of 10',
+        cvMeta: 'Training Age assessment' };
     }
     if(kind === 'pb'){
       const u = String(a.detail || '');
@@ -8862,20 +8948,25 @@
       return { tier:AWARD_GOLD, icon:'ti-trophy', shelf:'Personal bests',
         title:'New best',
         line: esc(label)+' <b>'+esc(String(val))+unit+'</b>',
-        note: hadPrev ? 'Up from '+esc(String(prev))+unit+'.' : 'Your first on this one.' };
+        note: hadPrev ? 'Up from '+esc(String(prev))+unit+'.' : 'Your first on this one.',
+        cvMain: esc(label)+' — <b>'+esc(String(val))+unit+'</b>',
+        cvMeta: 'Personal best' };
     }
     if(kind === 'badge'){
       // The blurb lives in the badge definition, not the sheet — look it back up.
       let note = '';
       try { (gameStats().badges || []).forEach(b => { if('badge_'+b.id === id) note = b.blurb || ''; }); } catch(e){}
       return { tier:AWARD_SILVER, icon:'ti-medal', shelf:'Badges',
-        title:'Badge earned', line:'<b>'+esc(label)+'</b>', note:note };
+        title:'Badge earned', line:'<b>'+esc(label)+'</b>', note:note,
+        cvMain:'<b>'+esc(label)+'</b>', cvMeta:'Athlete Academy award' };
     }
     if(kind === 'rank'){
       let lvl = 0;
       RANKS.forEach((r, i) => { if(r.name.toLowerCase() === label.toLowerCase()) lvl = i + 1; });
       return { tier:AWARD_SILVER, icon:'ti-military-award', shelf:'Ranks',
-        title:'New rank', line:'<b>'+esc(label)+'</b>', note: lvl ? 'Level '+lvl+'.' : '' };
+        title:'New rank', line:'<b>'+esc(label)+'</b>', note: lvl ? 'Level '+lvl+'.' : '',
+        cvMain:'<b>'+esc(label)+'</b>'+(lvl ? ' — training level '+lvl+' of '+RANKS.length : ''),
+        cvMeta:'Athlete Academy rank' };
     }
     return { tier:null };
   }
@@ -8886,6 +8977,22 @@
       return v && v.tier ? Object.assign({}, a, v) : null;
     }).filter(Boolean)
       .sort((x, y) => String(y.earned || '').localeCompare(String(x.earned || '')));
+  }
+
+  // ---- Athlete prefs ---------------------------------------------------------
+  // Small things the athlete writes or chooses that are not training data: the
+  // line they want a coach to read first, which sections of their CV to send.
+  // Written through optimistically — the screen is already showing the new
+  // value, and a failed write to a text field is not worth a dialog.
+  function prefGet(key, fallback){
+    const v = (state.prefs || {})[key];
+    return (v === undefined || v === null || v === '') ? (fallback === undefined ? '' : fallback) : v;
+  }
+  function prefSet(key, value){
+    state.prefs = state.prefs || {};
+    if(value === '' || value == null) delete state.prefs[key]; else state.prefs[key] = String(value);
+    return apiData({ action:'savePref', key: key, value: (value == null ? '' : String(value)) })
+      .catch(() => {});
   }
 
   // ---- CV HIGHLIGHTS ---------------------------------------------------------
@@ -14898,21 +15005,6 @@
     if(/^g\s*\d+$/i.test(v)) return 'Grade '+esc(v.replace(/^g\s*/i, ''));
     return 'Grade '+esc(v);
   }
-  // The movement photos the G9 strength portal uses, reused here so an earned
-  // pattern looks like something rather than a row of text.
-  // NOTE: these source files are 1.4-2.2MB each. They're lazy-loaded and only
-  // fetched for patterns the athlete has actually passed, but they should be
-  // resized down to thumbnails when there's tooling to do it.
-  const PATTERN_IMAGES = {
-    Squat: 'strength-squat.jpg', Hinge: 'strength-hinge.jpg', Push: 'strength-push.jpg',
-    Pull:  'strength-pull.jpg',  Lunge: 'strength-lunge.jpg', Press: 'strength-press.jpg'
-  };
-  // Five dots, filled to the level reached.
-  function cvDots(n, max){
-    let out = '';
-    for(let i=1;i<=max;i++) out += '<span class="cv-dot'+(i<=n?' on':'')+'"></span>';
-    return out;
-  }
   function athleteSports(){
     return [athlete && athlete.Sport_1, athlete && athlete.Sport_2, athlete && athlete.Sport_3]
       .filter(s => s && String(s).trim()).join(' · ');
@@ -14923,191 +15015,256 @@
       .filter(g => g.result && String(g.result).trim())
       .sort((a,b) => (a.date < b.date ? 1 : -1));
   }
-  // The top of the CV: what the athlete chose to lead with, and the picker for
-  // changing it. Nothing here is computed from "best" — a student knows which
-  // of their results means something and an app does not.
-  let cvPickOpen = false;
-  function cvTogglePicker(){ cvPickOpen = !cvPickOpen; renderCV(); }
-  window.cvTogglePicker = cvTogglePicker;
+  // ============================================================
+  // THE ATHLETIC CV — a document, not a screen
+  // ============================================================
+  // Scott's test, and it is the right one: picture the athlete hitting Export
+  // to PDF and emailing it to a university coach. Would they send THIS?
+  //
+  // The answer was no, and the reason was that the page was built like the rest
+  // of the portal — gold medallions, a coloured grit pill, stat tiles, and rows
+  // of blurred padlocks showing everything the athlete had NOT done yet. Locked
+  // placeholders are a game mechanic: they work on the athlete, who is meant to
+  // want to fill them in. On a document sent to a stranger they are a list of
+  // gaps, and no CV in the world lists the jobs you did not get.
+  //
+  // So: letterhead, rules, tables, one accent colour, real dates, and nothing
+  // on the page that has not been achieved. Everything the athlete can decide —
+  // what it says about them, what it leads with, which sections go — they
+  // decide, behind an Edit toggle that prints as nothing.
+  const CV_SECTIONS = [
+    { id:'profile',    name:'Profile' },
+    { id:'highlights', name:'Selected achievements' },
+    { id:'results',    name:'Competition record' },
+    { id:'testing',    name:'Fitness testing' },
+    { id:'strength',   name:'Strength assessment' },
+    { id:'pbs',        name:'Personal bests' },
+    { id:'blocks',     name:'Development programme' },
+    { id:'record',     name:'Training record' }
+  ];
+  let cvEditOpen = false;
+  function cvHidden(){
+    try { return JSON.parse(prefGet('cv.hide', '[]')) || []; } catch(e){ return []; }
+  }
+  function cvIsHidden(id){ return cvHidden().indexOf(id) !== -1; }
+  function cvToggleSection(id){
+    const h = cvHidden(), at = h.indexOf(id);
+    if(at >= 0) h.splice(at, 1); else h.push(id);
+    prefSet('cv.hide', JSON.stringify(h));
+    renderCV();
+  }
+  function cvToggleEdit(){ cvEditOpen = !cvEditOpen; renderCV(); }
+  window.cvToggleSection = cvToggleSection;
+  window.cvToggleEdit = cvToggleEdit;
+  // Free text the athlete owns. Saved on blur rather than per keystroke: this
+  // is a paragraph, not a search box, and every keystroke is a sheet write.
+  function cvSaveText(key, el){
+    const v = String(el.value || '').trim();
+    if(v === prefGet(key, '')) return;
+    prefSet(key, v);
+    if(key === 'cv.title') renderCV();      // the title shows in the letterhead
+  }
+  window.cvSaveText = cvSaveText;
 
-  function cvHighlightsHTML(){
-    const shelf = awardShelf();
-    if(!shelf.length) return '';            // nothing won yet — no empty shelf on a CV
-    const picks = cvHighlights();
-    const chosen = {}; cvChosenIds().forEach((id, i) => { chosen[id] = i + 1; });
-    const anyChosen = Object.keys(chosen).length > 0;
+  // A section wrapper: the heading rule, and in edit mode the switch that
+  // decides whether it is in the document at all.
+  // Dates on a document need a year. "14 Feb" is fine inside the app, where
+  // everything is this season; on a page sent to a university coach in two
+  // years' time it is unreadable.
+  function cvDate(iso){
+    if(!iso) return '';
+    const y = parseISO(iso).getFullYear();
+    return fmtNice(iso) + (isFinite(y) ? ' ' + y : '');
+  }
 
-    let html = '<div class="card" id="cvHighlights">'+
-      '<div class="cv-sec-head"><p class="card-eyebrow" style="margin:0;">Highlights</p>'+
-      '<button class="cv-add" onclick="cvTogglePicker()">'+
-        (cvPickOpen ? '<i class="ti ti-check" aria-hidden="true"></i> Done'
-                    : '<i class="ti ti-pencil" aria-hidden="true"></i> Change')+'</button></div>';
-
-    html += '<div class="cv-hl">'+picks.map(a =>
-      '<div class="cv-hl-item '+a.tier+'">'+
-        '<span class="cv-hl-ico"><i class="ti '+a.icon+'" aria-hidden="true"></i></span>'+
-        '<div><p class="cv-hl-line">'+a.line+'</p>'+
-        '<p class="cv-hl-meta">'+esc(a.title)+(a.earned ? ' · '+esc(fmtNice(a.earned)) : '')+'</p></div>'+
-      '</div>').join('')+'</div>';
-
-    if(!anyChosen){
-      html += '<p class="cv-note">Picked for you from your newest results. Tap <strong>Change</strong> to choose your own.</p>';
-    }
-
-    if(cvPickOpen){
-      html += '<p class="cv-group">Pick up to '+CV_MAX_HIGHLIGHTS+'</p><div class="cv-pick">'+
-        shelf.map(a => {
-          const n = chosen[a.id] || 0;
-          return '<button class="cv-pick-row'+(n?' on':'')+'" onclick="cvPinToggle(\''+escArg(a.id)+'\')">'+
-            '<span class="cv-pick-box">'+(n ? n : '')+'</span>'+
-            '<span class="cv-pick-body"><span class="cv-pick-line">'+a.line+'</span>'+
-            '<span class="cv-pick-meta">'+esc(a.title)+(a.earned ? ' · '+esc(fmtNice(a.earned)) : '')+'</span></span>'+
-          '</button>';
-        }).join('')+'</div>'+
-        '<p class="cv-note">The number is the order they appear in. Tap one again to take it off.</p>';
-    }
-    return html + '</div>';
+  function cvSec(id, name, inner, note){
+    if(!inner) return '';
+    const hidden = cvIsHidden(id);
+    if(hidden && !cvEditOpen) return '';
+    const toggle = cvEditOpen
+      ? '<button class="cvd-switch'+(hidden?'':' on')+'" onclick="cvToggleSection(\''+escArg(id)+'\')">'+
+          '<span class="cvd-switch-dot"></span>'+(hidden ? 'Not included' : 'Included')+'</button>'
+      : '';
+    return '<section class="cvd-sec'+(hidden?' is-off':'')+'">'+
+      '<div class="cvd-sec-head"><h3 class="cvd-h">'+esc(name)+'</h3>'+toggle+'</div>'+
+      (note ? '<p class="cvd-note">'+note+'</p>' : '')+
+      inner+
+    '</section>';
+  }
+  // A plain data table. Every row on this page is a fact with a date on it.
+  function cvTable(cols, rows){
+    if(!rows.length) return '';
+    return '<table class="cvd-table"><thead><tr>'+
+      cols.map((c,i) => '<th'+(i?' class="num"':'')+'>'+esc(c)+'</th>').join('')+
+      '</tr></thead><tbody>'+
+      rows.map(r => '<tr>'+r.map((c,i) => '<td'+(i?' class="num"':'')+'>'+c+'</td>').join('')+'</tr>').join('')+
+      '</tbody></table>';
   }
 
   function renderCV(){
     const view = document.getElementById('view-cv');
     const g = gameStats();
+    const c = weekRunInfo();
     const grit = state.grit || null;
     const pbs = state.pbs || [];
     const results = cvResults();
-    const blocks = LEARN_BLOCKS.filter(b => learnBlockPassed(b));
     const grade = (athlete && (athlete.Grade || athlete.Year_Group)) || '';
     const sports = athleteSports();
+    const title = prefGet('cv.title', '');
+    const profile = prefGet('cv.profile', '');
 
-    // The CV is highlights, by design — the bests, the results, the record, on
-    // one page a student hands to a coach. The card and the ten attributes
-    // behind it live on their own tab: that is the working-out, and the working
-    // out is for the athlete, not for the person they hand this to.
-    let html = '<div class="card-stack" id="cvSheetWrap">'+
-      // The way back. The CV is a page inside the trophy room, and a page with
-      // no way out of it is a dead end on a phone — there is no tab lit up for
-      // it to go back to.
-      '<button class="cv-back" onclick="switchTab(\'trophy\')">'+
+    // --- the controls, which are not part of the document -------------------
+    const bar = '<div class="cvd-bar">'+
+      '<button class="cvd-back" onclick="switchTab(\'trophy\')">'+
         '<i class="ti ti-arrow-left" aria-hidden="true"></i> Trophy room</button>'+
-      '<div class="cv-head">'+
-        '<div class="cv-head-main">'+
-          '<p class="cv-eyebrow">Athletic CV</p>'+
-          '<h2 class="cv-name">'+esc(athleteName())+'</h2>'+
-          '<p class="cv-sub">'+[gradeLabel(grade), esc(sports)].filter(Boolean).join(' · ')+'</p>'+
-          '<p class="cv-org">Athlete Academy · Frankfurt International School</p>'+
-        '</div>'+
-        /* Export not offered yet. exportCV() and the print stylesheet are
-           already in place, so adding the button back is a one-liner. */
-      '</div>';
+      '<div class="cvd-bar-end">'+
+        '<button class="cvd-btn'+(cvEditOpen?' on':'')+'" onclick="cvToggleEdit()">'+
+          '<i class="ti '+(cvEditOpen?'ti-check':'ti-pencil')+'" aria-hidden="true"></i> '+
+          (cvEditOpen?'Done':'Edit')+'</button>'+
+        '<button class="cvd-btn cvd-btn-solid" onclick="exportCV()">'+
+          '<i class="ti ti-download" aria-hidden="true"></i> Export PDF</button>'+
+      '</div></div>'+
+      (cvEditOpen ? '<p class="cvd-edit-hint">Write your own profile, choose what you lead with, and switch any section out. '+
+        'Results, testing and strength levels are recorded by the Academy — they are what makes this worth sending, so they are not editable.</p>' : '');
 
-    html += cvHighlightsHTML();
+    // --- letterhead ----------------------------------------------------------
+    const headLine = [title || sports, gradeLabel(grade)].filter(Boolean).join('  ·  ');
+    let doc = '<article class="cvd" id="cvDoc">'+
+      '<header class="cvd-head">'+
+        '<h1 class="cvd-name">'+esc(athleteName())+'</h1>'+
+        (headLine ? '<p class="cvd-role">'+headLine+'</p>' : '')+
+        '<p class="cvd-org">Athlete Academy · Frankfurt International School</p>'+
+      '</header>'+
+      (cvEditOpen
+        ? '<div class="cvd-field"><label for="cvTitle">Your line — the sport and level you want read first</label>'+
+          '<input id="cvTitle" class="cvd-input" maxlength="80" placeholder="'+esc(sports || 'e.g. Hyrox · 800m')+'" '+
+          'value="'+esc(title)+'" onblur="cvSaveText(\'cv.title\', this)"></div>'
+        : '');
 
-    // --- training record ---
-    // Only ever shows what's been earned. The Grit band appears from
-    // "Consistent" up; below that we show the effort honestly with no label,
-    // because nobody should read a bottom-tier verdict on their own CV.
-    const stats = [];
-    if(g.days)         stats.push(['Sessions logged', g.days]);
-    if(g.best >= 3)    stats.push(['Longest streak', g.best]);
-    if(pbs.length)     stats.push(['Personal bests', pbs.length]);
-    if(blocks.length)  stats.push(['Blocks passed', blocks.length]);
-    const bandEarned = grit && grit.enough && (grit.band === 'Consistent' || grit.band === 'Relentless');
-    if(bandEarned || stats.length){
-      html += '<div class="card"><p class="card-eyebrow">Training record</p>';
-      if(bandEarned){
-        html += '<div class="cv-grit">'+
-          '<span class="cv-grit-band cv-band-'+esc(String(grit.band).toLowerCase())+'">'+esc(grit.band)+'</span>'+
-          '<p class="cv-grit-line">Grit — how consistently this athlete trains</p></div>';
+    // --- profile -------------------------------------------------------------
+    const profileInner = cvEditOpen
+      ? '<textarea class="cvd-area" rows="4" maxlength="600" placeholder="Two or three sentences. What you train for, what you are working towards, and what a coach should know about how you train." '+
+        'onblur="cvSaveText(\'cv.profile\', this)">'+esc(profile)+'</textarea>'
+      : (profile ? '<p class="cvd-para">'+esc(profile)+'</p>' : '');
+    doc += cvSec('profile', 'Profile', profileInner);
+
+    // --- selected achievements ----------------------------------------------
+    // The athlete's own pick, as lines of record rather than medals.
+    const picks = cvHighlights();
+    let hlInner = '';
+    if(picks.length){
+      hlInner = '<ul class="cvd-list">'+picks.map(a =>
+        '<li><span class="cvd-list-main">'+(a.cvMain || a.line)+'</span>'+
+        '<span class="cvd-list-meta">'+esc(a.cvMeta || a.title)+(a.earned ? ' · '+esc(cvDate(a.earned)) : '')+'</span></li>'
+      ).join('')+'</ul>';
+      if(cvEditOpen){
+        const shelf = awardShelf();
+        const chosen = {}; cvChosenIds().forEach((id, i) => { chosen[id] = i + 1; });
+        hlInner += '<p class="cvd-pick-h">Choose up to '+CV_MAX_HIGHLIGHTS+', in the order you want them read</p>'+
+          '<div class="cv-pick">'+shelf.map(a => {
+            const n = chosen[a.id] || 0;
+            return '<button class="cv-pick-row'+(n?' on':'')+'" onclick="cvPinToggle(\''+escArg(a.id)+'\')">'+
+              '<span class="cv-pick-box">'+(n ? n : '')+'</span>'+
+              '<span class="cv-pick-body"><span class="cv-pick-line">'+a.line+'</span>'+
+              '<span class="cv-pick-meta">'+esc(a.title)+(a.earned ? ' · '+esc(fmtNice(a.earned)) : '')+'</span></span>'+
+            '</button>';
+          }).join('')+'</div>';
+      } else if(!cvChosenIds().length){
+        hlInner += '<p class="cvd-hint">Chosen for you from your newest results — tap Edit to pick your own.</p>';
       }
-      if(stats.length){
-        html += '<div class="cv-stats">'+stats.map(s =>
-          '<div class="cv-stat"><span class="cv-stat-n">'+s[1]+'</span><span class="cv-stat-l">'+esc(s[0])+'</span></div>').join('')+'</div>';
-      }
-      html += '</div>';
     }
+    doc += cvSec('highlights', 'Selected achievements', hlInner);
 
-    // --- fitness testing: Academy-measured, so it belongs on a CV ---
-    const tests = state.testing || [];
-    if(tests.length){
-      html += '<div class="card" id="cvTesting"><p class="card-eyebrow">Fitness testing</p>'+
-        '<div class="cv-tests">'+ tests.map(t => {
-          if(!t.done){
-            return '<div class="cv-test locked"><span class="cv-lock"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
-              '<p class="cv-test-name">'+esc(t.label)+'</p>'+
-              '<p class="cv-test-val blurred">00.0</p><p class="cv-test-sub">Not tested yet</p></div>';
-          }
-          let move = '';
-          if(t.delta && t.delta.raw){
-            move = '<p class="cv-test-move '+(t.delta.improved?'up':'')+'">'+
-              (t.delta.improved?'▲':'▼')+' '+t.delta.raw+' '+esc(t.unit)+' since first test</p>';
-          }
-          return '<div class="cv-test"><p class="cv-test-name">'+esc(t.label)+'</p>'+
-            '<p class="cv-test-val">'+t.value+'<small>'+esc(t.unit)+'</small></p>'+
-            '<p class="cv-test-sub">'+(t.date?fmtNice(t.date):'')+'</p>'+move+'</div>';
-        }).join('')+'</div></div>';
-    }
+    // --- competition record --------------------------------------------------
+    doc += cvSec('results', 'Competition record', cvTable(
+      ['Event', 'Sport', 'Date', 'Result'],
+      results.map(r => [
+        esc(r.name || 'Competition'), esc(r.sport || ''),
+        r.date ? esc(cvDate(r.date)) : '', '<strong>'+esc(r.result)+'</strong>'
+      ])
+    ));
 
-    // --- strength: technique passed + level tested, both staff-assessed ---
-    const levels = (state.strengthLevels || []);
-    if(levels.length){
-      html += '<div class="card" id="cvLevels"><p class="card-eyebrow">Strength levels</p>'+
-        '<p class="cv-note">Technique passed and load level tested by a coach.</p>'+
-        '<div class="cv-levels">'+ levels.map(l => {
-          if(!l.done){
-            // No photo on a locked pattern: it shouldn't tease with a nice
-            // picture, and it saves a student who's done least the download.
-            return '<div class="cv-level locked"><span class="cv-lock"><i class="ti ti-lock" aria-hidden="true"></i></span>'+
-              '<p class="cv-level-name">'+esc(l.pattern)+'</p><p class="cv-level-dots blurred">'+cvDots(0,5)+'</p>'+
-              '<p class="cv-test-sub">Not assessed</p></div>';
-          }
-          const img = PATTERN_IMAGES[l.pattern];
-          const imgTag = img ? '<img class="cv-level-img" src="'+esc(img)+'" alt="" loading="lazy">' : '';
-          return '<div class="cv-level earned">'+imgTag+
-            '<div class="cv-level-body"><p class="cv-level-name">'+esc(l.pattern)+'</p>'+
-            '<p class="cv-level-dots">'+cvDots(l.tech,5)+'</p>'+
-            '<p class="cv-level-meta">Technique L'+l.tech+(l.load?' · Load L'+l.load:'')+'</p></div></div>';
-        }).join('')+'</div></div>';
-    }
+    // --- fitness testing -----------------------------------------------------
+    // Tested rows only. An untested row on a CV is a gap being advertised.
+    const tested = (state.testing || []).filter(t => t.done);
+    doc += cvSec('testing', 'Fitness testing', cvTable(
+      ['Test', 'Result', 'Tested', 'Progress'],
+      tested.map(t => [
+        esc(t.label),
+        '<strong>'+esc(String(t.value))+'</strong> <span class="cvd-unit">'+esc(t.unit)+'</span>',
+        t.date ? esc(cvDate(t.date)) : '',
+        // The stored delta is a MAGNITUDE plus an improved flag — the server
+        // already knows that a lower time and a longer jump are both progress.
+        // Printing "+0.29 s" for a sprint that got faster was the sign being
+        // guessed from the wrong end, and on a document sent to a coach it read
+        // as a result going backwards.
+        (t.delta && t.delta.raw)
+          ? '<span class="cvd-delta'+(t.delta.improved?' up':'')+'">'+
+            (t.delta.improved ? 'improved ' : 'down ')+esc(String(t.delta.raw))+' '+esc(t.unit)+'</span>'
+          : '<span class="cvd-dash">—</span>'
+      ])
+    ), 'Measured by Academy staff under standard conditions.');
 
-    // --- personal bests ---
-    html += '<div class="card"><div class="cv-sec-head"><p class="card-eyebrow" style="margin:0;">Personal bests</p>'+
-      '<button class="cv-add" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add</button></div>';
-    if(!pbs.length){
-      html += '<p class="cv-empty">Your bests land here as you set them.</p>';
-    } else {
+    // --- strength ------------------------------------------------------------
+    const levels = (state.strengthLevels || []).filter(l => l.done);
+    doc += cvSec('strength', 'Strength assessment', cvTable(
+      ['Movement', 'Technique', 'Load level'],
+      levels.map(l => [
+        esc(l.pattern),
+        'Level '+esc(String(l.tech))+' of 5',
+        l.load ? ('Level '+esc(String(l.load))+' of 5') : '<span class="cvd-dash">—</span>'
+      ])
+    ), 'Technique signed off and load tested by a coach.');
+
+    // --- personal bests ------------------------------------------------------
+    let pbInner = '';
+    if(pbs.length){
       const groups = {};
       pbs.forEach(p => { const k = p.sport || 'Other'; (groups[k] = groups[k] || []).push(p); });
-      Object.keys(groups).sort().forEach(sport => {
-        html += '<p class="cv-group">'+esc(sport)+'</p>';
-        groups[sport].forEach(p => { html += pbPageItem(p); });
-      });
+      const cols = ['Exercise', 'Best', 'Set'].concat(cvEditOpen ? [''] : []);
+      pbInner = Object.keys(groups).sort().map(sport =>
+        '<p class="cvd-group">'+esc(sport)+'</p>'+
+        cvTable(cols, groups[sport].map(p => [
+          esc(p.exercise || ''),
+          '<strong>'+esc(String(p.value))+'</strong>'+(p.unit ? ' <span class="cvd-unit">'+esc(String(p.unit))+'</span>' : ''),
+          p.date ? esc(cvDate(p.date)) : ''
+        ].concat(cvEditOpen
+          ? ['<button class="cvd-rowedit" onclick="editPB('+pbKey(p)+')" aria-label="Edit"><i class="ti ti-pencil" aria-hidden="true"></i></button>']
+          : [])))
+      ).join('');
     }
-    html += '</div>';
-
-    // --- competition results (only when there are some) ---
-    if(results.length){
-      html += '<div class="card"><p class="card-eyebrow">Competition results</p>'+
-        '<div class="cv-results">'+results.map(r =>
-          '<div class="cv-result"><div><p class="cv-result-name">'+esc(r.name||'Game')+'</p>'+
-            '<p class="cv-result-sub">'+[r.date?fmtNice(r.date):'', esc(r.sport||'')].filter(Boolean).join(' · ')+'</p></div>'+
-            '<p class="cv-result-val">'+esc(r.result)+'</p></div>').join('')+'</div></div>';
+    if(cvEditOpen){
+      pbInner += '<button class="cvd-add" onclick="addPB()"><i class="ti ti-plus" aria-hidden="true"></i> Add a best</button>';
     }
+    doc += cvSec('pbs', 'Personal bests', pbInner, 'Recorded by the athlete.');
 
-    // --- development blocks: earned ones crisp, the rest blurred ---
-    const allBlocks = BLOCK_ROADMAP;
-    html += '<div class="card"><p class="card-eyebrow">Development blocks</p>'+
-      '<div class="cv-blocks">'+ allBlocks.map(b => {
-        const live = learnBlock(b.id);
-        const passed = live && learnBlockPassed(live);
-        return passed
-          ? '<span class="cv-block"><i class="ti ti-rosette-discount-check-filled" aria-hidden="true"></i> '+esc(b.name)+'</span>'
-          : '<span class="cv-block locked blurred"><i class="ti ti-lock" aria-hidden="true"></i> '+esc(b.name)+'</span>';
-      }).join('')+'</div></div>';
+    // --- development programme ----------------------------------------------
+    // Passed blocks only, as a sentence. The roadmap of everything not yet done
+    // belongs on Level Up, where it is a plan; here it would be a list of gaps.
+    const passed = BLOCK_ROADMAP.filter(b => { const live = learnBlock(b.id); return live && learnBlockPassed(live); });
+    doc += cvSec('blocks', 'Development programme',
+      passed.length ? '<p class="cvd-para">Completed and assessed: '+
+        passed.map(b => '<strong>'+esc(b.name)+'</strong>').join(', ')+'.</p>' : '');
 
-    html += '<p class="cv-foot">Fitness tests, strength levels and check-ins are recorded by the Academy. '+
-      'Training sessions are logged by the athlete.</p>';
-    html += '</div>';
-    view.innerHTML = html;
+    // --- training record -----------------------------------------------------
+    const rec = [];
+    if(g.days) rec.push('<strong>'+g.days+'</strong> training session'+(g.days===1?'':'s')+' logged');
+    if(c.started && c.weeks) rec.push('trained in <strong>'+c.weeks+'</strong> of '+c.span+' week'+(c.span===1?'':'s'));
+    if(pbs.length) rec.push('<strong>'+pbs.length+'</strong> personal best'+(pbs.length===1?'':'s')+' set');
+    const bandEarned = grit && grit.enough && (grit.band === 'Consistent' || grit.band === 'Relentless');
+    doc += cvSec('record', 'Training record',
+      rec.length
+        ? '<p class="cvd-para">'+rec.join(' · ')+'.'+
+          (bandEarned ? ' Consistency rated <strong>'+esc(grit.band)+'</strong> by the programme.' : '')+'</p>'
+        : '');
+
+    doc += '<footer class="cvd-foot">'+
+      '<p>Competition results, fitness testing and strength assessments are recorded by Athlete Academy staff. '+
+      'Training sessions and personal bests are logged by the athlete.</p>'+
+      '<p class="cvd-issued">Issued '+esc(cvDate(isoToday()))+' · Athlete Academy, Frankfurt International School</p>'+
+    '</footer></article>';
+
+    view.innerHTML = bar + doc;
   }
   window.renderCV = renderCV;
   // Print-to-PDF: the student saves it and hands it over themselves. No link,
@@ -15120,19 +15277,6 @@
   }
   window.exportCV = exportCV;
 
-  function pbPageItem(p){
-    const cur = parseFloat(p.value), prev = parseFloat(p.previousValue);
-    let trend = '';
-    if(!isNaN(cur) && !isNaN(prev) && cur !== prev){
-      const diff = +(cur - prev).toFixed(2);
-      const cls = diff > 0 ? 'up' : 'down';
-      trend = '<p class="pb-page-trend '+cls+'">'+(diff>0?'↑':'↓')+' '+Math.abs(diff)+(p.unit? ' '+esc(p.unit):'')+' · was '+esc(String(p.previousValue))+'</p>';
-    }
-    return '<div class="pb-page-item" onclick="editPB('+pbKey(p)+')">'+
-      '<div><p class="pb-page-name">'+esc(p.exercise)+'</p>'+
-        '<p class="pb-page-sub">'+(p.date? fmtNice(p.date):'')+(p.note? ' · '+esc(p.note):'')+'</p></div>'+
-      '<div class="pb-page-right"><p class="pb-page-value">'+esc(String(p.value))+(p.unit? ' <small>'+esc(p.unit)+'</small>':'')+'</p>'+trend+'</div></div>';
-  }
   function pbKey(p){ return "'"+esc(p.sessionId||'')+"','"+esc(p.sport||'')+"','"+esc(p.exercise||'')+"'"; }
 
   // ----- PB add / edit sheet -----
