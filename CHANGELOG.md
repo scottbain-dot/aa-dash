@@ -38,6 +38,27 @@ of them — they are standalone pages.
 
 ---
 
+## Going to main — 8 Oct 2026 (fifth push)
+
+**The season card and the year strip were saying the same thing twice.** Scott
+asked what the season view was really offering over the year, and for a
+single-sport athlete the answer was: a reformat of the row below it.
+
+| What | Where |
+|---|---|
+| **The blocks bracket the months they cover.** The one thing the card alone carried was block *boundaries* — a row of twelve coloured months tells you what each month is and nothing about where one block ends and the next begins, which is the actual unit of training and the only place the week count lives. It is drawn on the strip now, one grid and two rows so a bracket cannot drift out of line with its months. The block you are in is marked, and an over-long one is flagged on itself. | Year |
+| **What is left is one line, not a card.** Where you are today — block, week N of M — and the program running it, as the way out of the plan and into the week. With no program yet, the same slot is the invitation to build one. That was Scott's other ask: the link from the year to My Program was never explicit. | Year |
+| **"What are you building this month?"** The empty state used to report a gap — "You have not said what this block is building." It asks the question instead, and names the year planner it is sending you to. | My Program |
+
+Verified headless: the brackets cover the twelve months exactly once, never
+overlap, line up with the tiles, carry their week counts, mark the current block
+and flag the over-long one; the now line names the block and the week and lands
+on My Program; the build invitation replaces it when there is no program;
+compare-grid mode still says where you are; and the empty state asks a question
+and reaches the planner. No page errors. Identity, icon and reading guards pass.
+
+---
+
 ## Going to main — 8 Oct 2026 (fourth push)
 
 **Five icons were rendering as nothing**, including the one on the Finish
