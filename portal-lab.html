@@ -2930,6 +2930,11 @@
   .crd-foot-todo { color: var(--ink); }
   .crd-foot-todo strong { color: var(--burgundy); }
   .crd-foot-why { font-size: 12.5px; color: var(--ink-mute); border-top: 1px solid var(--line-soft); padding-top: 11px; margin-top: 14px; }
+  /* The you-vs-you line is the point of the whole card, so it is the one that
+     stays out when the reasoning behind it folds away. */
+  .crd-foot-you { border-top: 1px solid var(--line-soft); padding-top: 12px; margin-top: 14px; }
+  .crd-foot-you strong { color: var(--burgundy); }
+  .crd-foot .crd-why { margin-top: 8px; }
 
   .cv-eyebrow { font: 700 10px 'Inter', sans-serif; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin: 0; }
   .cv-name { font: 800 28px 'Fraunces', serif; color: #fff; margin: 4px 0 2px; line-height: 1.1; }
@@ -6044,9 +6049,9 @@
   const FUEL_MYTHS = [
     { claim:'“Energy drinks give you long-lasting energy.”', verdict:'Mostly false', text:'Energy drinks give you a short caffeine + sugar spike followed by a crash. They’re not “fuel” — they’re stimulants with sugar. For sustained energy in sport, food and a sensible pre-game meal beats them every time.' },
     { claim:'“You need a protein shake right after training or you’ll lose your gains.”', verdict:'Exaggerated', text:'The “anabolic window” is wider than 30 minutes. Eating decent protein within a few hours of training is what matters. A sandwich, milk, or a normal meal works fine — shakes are convenient, not magic.' },
-    { claim:'“Carbs are bad and make you slow.”', verdict:'False', text:'For most sports, carbs are the #1 fuel for working muscles. Skipping them tanks your performance. The type matters (whole grains, fruit, veg over refined sugar most of the time) but cutting carbs as an athlete is a bad call.' },
+    { claim:'“Carbs are bad and make you slow.”', verdict:'False', text:'For most sports, carbs are the number one fuel. Skip them and your performance tanks. The type matters: whole grains, fruit and veg over sugar most of the time. But cutting carbs as an athlete is a bad call.' },
     { claim:'“Skipping breakfast is fine, you’ll burn more fat.”', verdict:'Bad for performance', text:'For an athlete training in school PE or before a game, skipping breakfast means you start the day under-fuelled. You’ll feel flat, lose focus, and underperform. Fat loss isn’t the goal — performance is.' },
-    { claim:'“Eating fat makes you fat.”', verdict:'False', text:'Healthy fats (avocado, nuts, olive oil, oily fish) are essential for hormones, brain function, and joints. What makes you gain unwanted weight is a sustained surplus of total energy — not fat specifically.' },
+    { claim:'“Eating fat makes you fat.”', verdict:'False', text:'Healthy fats — avocado, nuts, olive oil, oily fish — are essential for hormones, your brain and your joints. Weight gain comes from eating more than you use, not from fat itself.' },
     { claim:'“Athletes need supplements to perform.”', verdict:'Mostly false', text:'For 99% of school-age athletes, real food covers it. Supplements are a tiny edge at the very top end. Get your sleep, hydration, and three good meals dialled before even thinking about a tub of anything.' },
     { claim:'“Sports drinks are necessary for any workout.”', verdict:'Mostly false', text:'For a normal PE session or short game, water is fine. Sports drinks earn their place in long efforts (over 60–90 min) or hot conditions where you’re losing meaningful sweat and fuel.' },
     { claim:'“You should eat right before competing for energy.”', verdict:'Depends', text:'A big meal too close to competition can leave you sluggish or queasy. A proper meal 2–3 hours before, and a small top-up snack 30–60 min before, is the usual play.' }
@@ -6264,11 +6269,11 @@
     { key:'green',  name:'Green',  dur:'2 min and up',      desc:'Steady, sustainable effort. Long games, distance running, anything you keep going for ages.', fuel:'Carbs + fat + oxygen' }
   ];
   const SCENARIOS = [
-    { prompt:'100m sprint',            sub:'All-out, over in about 10 seconds.',                  answer:'red',    explain:'Under 10 seconds of maximum power — that’s the Red system (ATP-CP) using energy already stored in the muscle.' },
+    { prompt:'100m sprint',            sub:'All-out, over in about 10 seconds.',                  answer:'red',    explain:'Under 10 seconds flat out is Red. It uses energy already sitting in the muscle.' },
     { prompt:'5km run',                sub:'A steady effort lasting around 20 minutes.',          answer:'green',  explain:'Sustained effort well over 2 minutes runs on the Green (aerobic) system — carbs and fat with oxygen.' },
     { prompt:'Rugby ruck',             sub:'A few seconds of maximum force, then it’s over.',     answer:'red',    explain:'A short explosive collision is Red (ATP-CP) — instant power, then you recover before the next one.' },
     { prompt:'Tennis rally',           sub:'A burst of effort with rest between points.',         answer:'red',    explain:'Most points are short, sharp bursts under 10 seconds — Red system. The rest between points lets it recharge.' },
-    { prompt:'Marathon',               sub:'Hours of continuous running.',                        answer:'green',  explain:'Long, continuous effort is almost entirely Green (aerobic) — this is where fat becomes an important fuel alongside carbs.' },
+    { prompt:'Marathon',               sub:'Hours of continuous running.',                        answer:'green',  explain:'Hours of steady effort is almost all Green. This is where fat matters as well as carbs.' },
     { prompt:'Single heavy deadlift',  sub:'One maximum lift lasting a couple of seconds.',       answer:'red',    explain:'One huge effort over in seconds is pure Red (ATP-CP) — stored energy fires instantly.' },
     { prompt:'400m run',               sub:'All-out for around 50–60 seconds — it really burns.', answer:'yellow', explain:'That deep burn from 10 seconds to about 2 minutes is the Yellow (lactic) system. The 400m is the classic example.' },
     { prompt:'Football match',         sub:'Repeated sprints across 90 minutes.',                 answer:'red',    explain:'The decisive actions — sprints, tackles, jumps — are Red (ATP-CP). The Green system works in the background to keep you recovering between them.' }
@@ -6318,10 +6323,10 @@
       '<div class="esys esys-'+s.key+'"><p class="esys-name">'+esc(s.name)+'</p><p class="esys-dur">'+esc(s.dur)+'</p>'+
       '<p class="esys-desc">'+esc(s.desc)+'</p><p class="esys-fuel">Fuel: '+esc(s.fuel)+'</p></div>').join('');
     const snaps = DIAL_SNAPS.map(sp => '<button class="dial-snap" onclick="dialTo('+sp.sec+')">'+esc(sp.label)+'</button>').join('');
-    return '<p class="learn-lesson-intro">Your body has three ways of making energy, and which one you use comes down to one thing: how long the effort lasts.</p>'+
+    return '<p class="learn-lesson-intro">Your body has three ways of making energy. Which one you use comes down to one thing: how long the effort lasts.</p>'+
       '<div class="esys-grid">'+cards+'</div>'+
       '<div class="learn-callout gold"><p class="lc-eyebrow">Key point</p>'+
-        '<p>In most sports, because of the energy systems they rely on, <strong>carbs are the main and most important fuel</strong> for the working muscles.</p></div>'+
+        '<p>Most sports run on the yellow and green systems. Both burn carbs — so <strong>carbs are your main fuel</strong>.</p></div>'+
       '<p class="learn-sec">Slide the effort dial</p>'+
       '<p class="learn-p">Drag it and watch the mix change. Short efforts are almost all Red; long ones are almost all Green.</p>'+
       '<div class="dial-box">'+
@@ -6763,9 +6768,9 @@
       '<p class="learn-sec">The ART of tournament performance</p>'+
       '<div class="art-grid">'+art+'</div>'+
       '<div class="learn-callout gold"><p class="lc-eyebrow">#1 recovery tool</p><h4>Sleep.</h4>'+
-        '<p>It’s free, you already do it, and nothing else comes close. 8–10 hours for teenagers, in a cool dark room, no screens for an hour before bed. Your body releases growth hormone, repairs muscle and locks in what you learned in training while you sleep. Skip it and you cancel out half the work you did that day.</p></div>'+
+        '<p>It’s free, you already do it, and nothing else comes close.</p><p><strong>8–10 hours</strong>, cool dark room, no screens for an hour before bed. Your body repairs muscle and locks in what you learned. Skip it and you cancel out half the work you did that day.</p></div>'+
       '<p class="learn-sec">Recovery snacks that actually work</p>'+
-      '<p class="learn-p">Between short recovery windows (1–2 hours), pick something that’s mostly carbs with a bit of protein and is easy to digest.</p>'+
+      '<p class="learn-p">Only 1–2 hours until the next effort? Go mostly carbs, a bit of protein, easy to digest.</p>'+
       '<div class="snack-grid">'+snacks+'</div>'+
       '<p class="learn-sec">Active vs passive recovery</p>'+
       '<div class="vs-grid">'+
@@ -6774,7 +6779,7 @@
       '</div>'+
       '<p class="learn-sec">How do you know you’re recovered?</p>'+
       '<div class="sign-grid">'+signs+'</div>'+
-      '<div class="learn-callout"><p>There’s no physiological difference between <strong>under-recovery</strong> and <strong>overtraining</strong>. If you keep hammering without recovering, you’re a rat on a wheel — moving lots, getting nowhere.</p></div>'+
+      '<div class="learn-callout"><p>Your body cannot tell <strong>under-recovery</strong> and <strong>overtraining</strong> apart. Train hard with no recovery and you are a rat on a wheel — busy, going nowhere.</p></div>'+
       learnDoneBtn(blockId, lessonId, 'Mark this lesson done');
   }
 
@@ -6784,13 +6789,13 @@
   const FUEL_QUIZ = [
     { q:'For most sports, what is the main fuel for working muscles?',
       options:['Fat','Protein','Carbohydrates','Water'], correct:2,
-      explain:'Carbs are the dominant fuel for the yellow (lactic) system and a big chunk of the green (aerobic) one — which most sports lean on heavily.' },
+      explain:'Carbs fuel the yellow system, and a big chunk of the green one. Most sports lean on both.' },
     { q:'Which energy system provides energy for explosive efforts under 10 seconds?',
       options:['Red (ATP-CP)','Yellow (lactic acid)','Green (aerobic)','All three equally'], correct:0,
       explain:'Red uses ATP and creatine phosphate already stored in the muscle — instant power, but it runs out fast.' },
     { q:'When should you eat your main pre-competition meal?',
       options:['Right before the event','30 minutes before','2–3 hours before','Skip it — you’ll perform on empty'], correct:2,
-      explain:'2–3 hours before gives your body time to digest and absorb the energy without it sitting heavy in your stomach.' },
+      explain:'2–3 hours gives you time to digest it. Any closer and it sits heavy.' },
     { q:'True or false: energy drinks give you long-lasting energy.',
       options:['True','False'], correct:1,
       explain:'Energy drinks give a short caffeine and sugar spike followed by a crash. They’re stimulants with sugar, not real fuel.' },
@@ -6799,16 +6804,16 @@
       explain:'Carbs refill glycogen and protein helps muscle repair. Together they’re more effective than either on its own.' },
     { q:'What is the number one recovery tool an athlete has?',
       options:['Ice baths','Protein supplements','Sleep','Compression garments'], correct:2,
-      explain:'Free, powerful, and you already do it. Growth hormone release, muscle repair and memory consolidation all happen while you sleep.' },
+      explain:'Free, powerful, and you already do it. Your muscles repair and your training sinks in while you sleep.' },
     { q:'When should you use active recovery rather than passive recovery?',
       options:['Active between games or races, passive between days','Always passive — you need full rest','Always active — keep moving','It doesn’t matter'], correct:0,
       explain:'Light activity between events helps clear lactate and keeps you loose. Between days, full rest lets your body actually rebuild.' },
     { q:'What does the ART framework stand for?',
       options:['Athlete, Recovery, Training','Act, Recover, Think','Aerobic, Resistance, Tempo','Active, Rest, Train'], correct:1,
-      explain:'Act like a champ, Recover with intent, Think about what you can control — three things to stay on top of across any tournament day.' },
+      explain:'Act like a champ. Recover with intent. Think about what you can control. Three things to hold on to all day.' },
     { q:'Which of these is NOT a sign you’re well recovered?',
       options:['Resting heart rate is normal','You feel motivated to train','Your sleep was solid last night','You’ve been sore for 4 days and feel tired'], correct:3,
-      explain:'Persistent soreness and fatigue are clear signals your body hasn’t recovered — back off, sleep more, eat more, ease the load.' },
+      explain:'Sore and tired for days means you have not recovered. Back off, sleep more, eat more.' },
     { q:'Should you try a new pre-game meal or sports drink for the first time at a major competition?',
       options:['Yes, it might give you an edge','No — test it at training first'], correct:1,
       explain:'Don’t experiment in competition. Something new could cause stomach trouble at the worst possible moment. Test it in training and find what works for you.' }
@@ -8085,7 +8090,7 @@
               '<button class="card-cta card-cta-ghost" onclick="newSession(\''+isoToday()+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Or log a session you’ve done</button>';
     } else {
       title = 'Your program is ready.';
-      body  = 'Log one session and the rest switches on — your load, your streak, your badges and your CV all build from what you record.';
+      body  = 'Log one session and the rest switches on. Your load, badges and CV all build from what you record.';
       cta   = '<button class="card-cta card-cta-gold" onclick="newSession(\''+isoToday()+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Log today’s session</button>';
     }
     return '<div class="card card-hero">'+
@@ -12644,16 +12649,16 @@
       case 'periodise':
         return '<p class="wt-eyebrow">Step 3 · How your year flows</p>'+
           '<h2 class="wt-title">Know when to <em>push</em>.</h2>'+
-          '<p class="wt-body">The point of your year isn’t to go flat-out all the time — it’s to know <strong>when to push a little harder, when to hold steady, and when to back off and recover</strong>. Go hard forever and you break down; plan it and you get better.</p>'+
+          '<p class="wt-body">The point of your year is not to go flat out all the time. It is knowing <strong>when to push, when to hold steady, and when to back off</strong>. Go hard forever and you break down. Plan it and you get better.</p>'+
           wtYearStripHTML()+
           '<div class="wt-legend">'+
-            '<span class="wt-legend-item"><span class="le-emoji">💪</span><strong>Build</strong> · <em>push a bit harder and get fitter and stronger. How much of your year you build depends on your sport and season.</em></span>'+
+            '<span class="wt-legend-item"><span class="le-emoji">💪</span><strong>Build</strong> · <em>push harder, get fitter and stronger. How much of your year is build depends on your sport.</em></span>'+
             '<span class="wt-legend-item"><span class="le-emoji">⚡</span><strong>Maintain</strong> · <em>hold your level. Don’t over-reach when school or games are busy.</em></span>'+
             '<span class="wt-legend-item"><span class="le-emoji">🏆</span><strong>Peak</strong> · <em>the clever one — see below.</em></span>'+
             '<span class="wt-legend-item"><span class="le-emoji">🌙</span><strong>Recover</strong> · <em>ease right off and let your body absorb the work.</em></span>'+
           '</div>'+
           '<div class="wt-example" style="border-left-color:var(--burgundy);"><p class="wt-example-label">🏆 What “Peak” really means</p>'+
-            '<p class="wt-example-text" style="font-style:normal; font-size:14px; font-family:\'Inter\',sans-serif; color:var(--ink-mute); line-height:1.55;">It’s not “train the hardest.” In the week or two before a big event you actually train <strong>a little less</strong> — so you turn up <strong>fresh and sharp</strong> instead of tired. Peaking means arriving rested, ready to perform.</p></div>'+
+            '<p class="wt-example-text" style="font-style:normal; font-size:14px; font-family:\'Inter\',sans-serif; color:var(--ink-mute); line-height:1.55;">It is not “train the hardest.” In the week or two before a big event you train <strong>a little less</strong>. You turn up <strong>fresh and sharp</strong> instead of tired.</p></div>'+
           '<p class="wt-note">We’ve coloured your year from your event date — you can fine-tune any month, or any week, later.</p>';
       case 'finish':
       default:
@@ -13758,20 +13763,25 @@
     const bits = [];
     if(testOnes)  bits.push('<strong>'+testOnes+'</strong> need'+(testOnes===1?'s':'')+' a testing session');
     if(coachOnes) bits.push('<strong>'+coachOnes+'</strong> need'+(coachOnes===1?'s':'')+' a check-in with your coach');
+    // Two paragraphs of justification used to sit here permanently — 157 words a
+    // student had to scroll past every time. The one line that is actually the
+    // point stays out; the reasoning behind it folds away for anyone who asks.
     return '<div class="card crd-foot">'+
       '<p class="card-eyebrow">How this works</p>'+
-      '<p class="crd-foot-p">Ten qualities, each out of ten. They are not a report card — they are a map of '+
-        'what you have built so far and what is next. Tap any one to see what moves it.</p>'+
+      '<p class="crd-foot-p">Ten qualities, each out of ten. Not a report card — a map of what you have '+
+        'built and what is next. Tap any one to see what moves it.</p>'+
       (bits.length ? '<p class="crd-foot-p crd-foot-todo">'+bits.join(', and ')+'.</p>' : '')+
-      '<p class="crd-foot-p crd-foot-why"><strong>Why out of ten.</strong> Levels 1 to 5 are bands, and a band is a '+
-        'poor motivator — you can add fifteen centimetres to your jump and watch the number refuse to move. '+
-        'These slide between the same thresholds, so every centimetre shows up. The level is still underneath.</p>'+
-      '<p class="crd-foot-p crd-foot-why"><strong>This is never a comparison with anyone else.</strong> Six of the ten '+
-        'are scored against a standard you either meet or do not — a pattern is stamped or it is not, a block is passed '+
-        'or it is not, a session was planned and done or it was not. The four from fitness testing sit on a scale that '+
-        'has to be shared so ten different units can live on one shape. That scale is a ruler, not a ranking: people '+
-        'grow at very different times and two athletes doing identical work will read differently on it for a year or '+
-        'two. <em>Your own line is the only one that means anything.</em></p>'+
+      '<p class="crd-foot-p crd-foot-you"><strong>This is never a comparison with anyone else.</strong> '+
+        'Your own line is the only one that means anything.</p>'+
+      '<details class="crd-why"><summary>Why out of ten?</summary>'+
+        '<p>Levels 1 to 5 are bands. You can add fifteen centimetres to your jump and watch a band refuse '+
+        'to move. These slide between the same thresholds, so every centimetre shows. The level is still '+
+        'underneath.</p></details>'+
+      '<details class="crd-why"><summary>How the ten are scored</summary>'+
+        '<p>Six of them you either meet or you do not. A pattern is stamped or it is not. A block is passed '+
+        'or it is not. The four from fitness testing share one scale, so ten different units fit on one '+
+        'shape. That scale is a ruler, not a ranking — people grow at very different times, and two '+
+        'athletes doing identical work can read differently on it for a year or two.</p></details>'+
     '</div>';
   }
 
