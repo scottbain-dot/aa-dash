@@ -2693,6 +2693,25 @@
   .crd-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 13px; font: 600 12.5px 'Inter', sans-serif;
     color: var(--burgundy); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; cursor: pointer; }
   .crd-src { font: italic 400 11px 'Fraunces', serif; color: var(--ink-mute); margin: 13px 0 0; }
+  /* ---- Last week review ---- */
+  .lw-card { border-left: 3px solid var(--burgundy); }
+  .lw-card.good { border-left-color: var(--int-easy, #4a9d5b); }
+  .lw-head { font: 400 16px 'Fraunces', serif; color: var(--ink); margin: 2px 0 0; line-height: 1.45; }
+  .lw-head strong { font-weight: 600; color: var(--burgundy); }
+  .lw-card.good .lw-head strong { color: #3f8a4f; }
+  .lw-sub { font: 500 12px 'Inter', sans-serif; color: var(--ink-mute); margin: 10px 0 0;
+    letter-spacing: .04em; text-transform: uppercase; }
+  .lw-actions { display: flex; gap: 8px; margin-top: 9px; flex-wrap: wrap; }
+  /* Both answers carry the same weight on purpose. A filled primary next to a
+     ghost secondary is a recommendation, and the whole point of this card is
+     that only the athlete knows which of the two it was. */
+  .lw-btn { flex: 1 1 auto; min-width: 140px; font: 600 13px 'Inter', sans-serif; cursor: pointer;
+    color: var(--burgundy); background: rgba(135,75,70,.07);
+    border: 1px solid rgba(135,75,70,.3); border-radius: 999px; padding: 10px 14px; }
+  .lw-btn:active { background: rgba(135,75,70,.14); }
+  .lw-ok { margin-top: 11px; font: 600 13px 'Inter', sans-serif; cursor: pointer; color: var(--ink-soft);
+    background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 8px 15px; }
+
   /* ---- Squad ---- */
   .sq-head { font: 400 16px 'Fraunces', serif; color: var(--ink); margin: 2px 0 0; line-height: 1.45; }
   .sq-head strong { font-weight: 600; color: var(--burgundy); }
@@ -6933,6 +6952,10 @@
     document.getElementById('weekStack').innerHTML = fresh
       ? ( weekStartCard() + weekThisWeekCard(ws, curMon, byDay, today) )
       : ( weekTodayCard(todays, today) +
+          // A look back before a look forward. Sits under Today so it is the
+          // first thing after "what am I doing now", and disappears once it has
+          // been answered.
+          lastWeekCard() +
           weekBlockCard() +
           weekBuildCard() +
           weekThisWeekCard(ws, curMon, byDay, today) +
@@ -8277,6 +8300,91 @@
   }
 
   // (c) LOAD — legible, plain-language read (shared builder, see loadVerdictHTML).
+  // ============================================================
+  // LAST WEEK — the review step.
+  //
+  // The portal had eight ways to build a plan and none to look back at one. A
+  // student could miss half their program every week for a term and never be
+  // told, because nothing ever compared what the program said to what they did.
+  //
+  // It is not a form. Nobody is asked how their week went — everything here is
+  // already on the client: last week is in weekCache from the prefetch, the
+  // program is in state.weeklyTemplate, and injury weeks are in availability.
+  // The app does the looking and says one honest sentence.
+  //
+  // When it finds a gap it does not pick a side. Same rule as a goal that
+  // clashes with a taper: name the conflict, let the athlete say which thing
+  // should change — the plan was too much, or the week was. Deciding for them
+  // is how an app ends up nagging a kid who had exams.
+  // ============================================================
+  function lastWeekReview(){
+    const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
+    // Only on the current week — stepping back through the year is browsing,
+    // not reviewing, and a verdict on each one would be noise.
+    if(ws !== fmtISO(mondayOf(new Date()))) return null;
+    const prevWs = addDays(ws, -7);
+    const prev = weekCache[prevWs];
+    if(!prev) return null;                      // not prefetched yet; it will be
+
+    // A week flagged injured or ill is not a week to be judged on.
+    if(flaggedWeekSet()[prevWs]) return { kind:'flagged', weekStart: prevWs };
+
+    const done = prev.filter(x => { const st = String((x&&x.status)||'').toLowerCase();
+                                    return st === 'done' || st === 'modified'; }).length;
+    const planned = prev.filter(x => { const st = String((x&&x.status)||'').toLowerCase();
+                                       return st !== 'skipped'; }).length;
+    if(!planned && !done) return null;          // nothing there to review
+
+    const pbs = (state.pbs || []).filter(b => b && b.date && b.date >= prevWs && b.date < ws).length;
+    const kind = done >= planned && planned > 0 ? 'all'
+               : (done === 0 ? 'none' : 'some');
+    return { kind, done, planned, pbs, weekStart: prevWs, missed: Math.max(0, planned - done) };
+  }
+
+  // Dismissed per week, so answering it once does not mean answering it weekly.
+  function lwDismissKey(ws){ return 'aaLastWeek_' + ws; }
+  function lwDismissed(ws){ try { return !!localStorage.getItem(lwDismissKey(ws)); } catch(e){ return false; } }
+  function lwDismiss(ws){
+    try { localStorage.setItem(lwDismissKey(ws), '1'); } catch(e){}
+    renderWeek();
+  }
+  window.lwDismiss = lwDismiss;
+  // "The plan was too much" — open the program so they can cut a day. Changing
+  // it for them would be guessing which session to drop.
+  function lwEaseProgram(ws){ lwDismiss(ws); moreMyProgram(); }
+  window.lwEaseProgram = lwEaseProgram;
+
+  function lastWeekCard(){
+    const r = lastWeekReview();
+    if(!r || lwDismissed(r.weekStart)) return '';
+    const when = 'Week of ' + esc(fmtNice(r.weekStart));
+
+    if(r.kind === 'flagged'){
+      return '<div class="card lw-card"><p class="card-eyebrow">Last week · ' + when + '</p>' +
+        '<p class="lw-head">You were out last week. Nothing to review.</p>' +
+        '<p class="lw-sub">Flagged weeks never count against you.</p></div>';
+    }
+    const pbBit = r.pbs ? ' And <strong>' + r.pbs + ' personal best' + (r.pbs===1?'':'s') + '</strong>.' : '';
+
+    if(r.kind === 'all'){
+      return '<div class="card lw-card good"><p class="card-eyebrow">Last week · ' + when + '</p>' +
+        '<p class="lw-head">You did all <strong>' + r.planned + '</strong> you planned.' + pbBit + '</p>' +
+        '<button class="lw-ok" onclick="lwDismiss(\'' + r.weekStart + '\')">Good week</button></div>';
+    }
+    // The gap, and the choice. Two buttons, no recommendation — only the
+    // athlete knows whether the plan was wrong or the week was.
+    const headline = r.kind === 'none'
+      ? 'You planned <strong>' + r.planned + '</strong> and logged none.'
+      : 'You planned <strong>' + r.planned + '</strong>, did <strong>' + r.done + '</strong>.';
+    return '<div class="card lw-card"><p class="card-eyebrow">Last week · ' + when + '</p>' +
+      '<p class="lw-head">' + headline + pbBit + '</p>' +
+      '<p class="lw-sub">Which was it?</p>' +
+      '<div class="lw-actions">' +
+        '<button class="lw-btn" onclick="lwEaseProgram(\'' + r.weekStart + '\')">The plan was too much</button>' +
+        '<button class="lw-btn" onclick="lwDismiss(\'' + r.weekStart + '\')">Just a busy week</button>' +
+      '</div></div>';
+  }
+
   function weekLoadCard(){
     const read = loadRead();
     const phase = (currentPhaseInfo()||{}).phase || '';
