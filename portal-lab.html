@@ -2696,6 +2696,10 @@
   .crd-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 13px; font: 600 12.5px 'Inter', sans-serif;
     color: var(--burgundy); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; cursor: pointer; }
   .crd-src { font: italic 400 11px 'Fraunces', serif; color: var(--ink-mute); margin: 13px 0 0; }
+  /* "Baseline" sits where a number sits, so it needs a number's weight — but
+     not gold, which is reserved for a figure that was earned. */
+  .crd-ovr > b.base { font-size: 30px; letter-spacing: -.01em; color: rgba(250,243,237,.92); }
+
   /* ---- Today, done ---- */
   .card-hero.hero-done { background: linear-gradient(160deg, rgba(74,157,91,.1), rgba(74,157,91,.03)); }
   .hero-done-flag { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle;
@@ -13776,6 +13780,26 @@
 
   // Naming a shape off two or three numbers is a guess dressed as a verdict, so
   // below five measured attributes the card says what it is instead.
+  // The next time this card can move. Read from the testing windows the athlete
+  // already set on their year — never asked for, and the difference between
+  // "you are missing seven numbers" and "seven of these get filled in March".
+  function cardNextTesting(){
+    const ym = state.yearMap || {};
+    const months = (ym.testingWindows || []).map(w => (w && (w.month || w)) || '').filter(Boolean);
+    if(!months.length) return '';
+    const now = new Date().getMonth();
+    // The next window that has not happened yet; otherwise the first one, which
+    // will be next year.
+    let best = '', bestGap = 99;
+    months.forEach(m => {
+      const i = MONTHS.indexOf(m);
+      if(i < 0) return;
+      const gap = (i - now + 12) % 12;
+      if(gap > 0 && gap < bestGap){ bestGap = gap; best = m; }
+    });
+    return best;
+  }
+
   function cardReadShape(s, deltas){
     // PROGRESS COMES FIRST, where there is any.
     //
@@ -13809,9 +13833,24 @@
     // a student their weakest quality is one they have barely been offered.
     const got = cardCounts(s);
     const miss = CARD_ATTRS.filter(a => !(s[a.id]||0));
-    if(!got.length) return { title:'Nothing measured yet', line:'One check-in and one testing session fill in most of this card.' };
-    if(got.length < 5) return { title:'Barely measured',
-      line:'Only <em>'+got.length+' of '+CARD_ATTRS.length+'</em> have a number. Until more do, this shape is not really yours — it is just what we happen to know.' };
+    // A FIRST MEASUREMENT IS A STARTING LINE, NOT A DEFICIENCY.
+    //
+    // This card leads with growth, which is right — but growth needs a before,
+    // and a before takes two testing windows. So every student in their first
+    // year, which is every student right now, fell through to "Barely measured
+    // — only 3 of 10 have a number", under a radar with seven empty spokes. The
+    // one encouragement built into this card could not reach the people who
+    // most needed it, and what they got instead was a list of what is missing.
+    //
+    // Same numbers, read forwards. These are the first marks on the wall, and
+    // the next window is when they move.
+    const next = cardNextTesting();
+    const nextBit = next ? ' We measure again in <em>'+esc(next)+'</em>.' : '';
+    if(!got.length) return { title:'Your starting line',
+      line:'Nothing on here yet. One check-in and one testing session fill in most of it.'+nextBit };
+    if(got.length < 5) return { title:'Baseline set',
+      line:'<em>'+got.length+'</em> of your ten measured — these are your first marks on the wall. '+
+           'The number does not matter yet; what it does next does.'+nextBit };
     const vals = got.map(a => s[a.id]);
     const hi = Math.max.apply(null, vals), lo = Math.min.apply(null, vals);
     const mean = vals.reduce((a,b)=>a+b,0)/vals.length, spread = hi - lo;
@@ -14014,16 +14053,26 @@
           // That is the one comparison this programme does not make. The number
           // a student leads with is now the distance they have travelled; the
           // overall has moved to the foot of the tab as a quiet scale reading.
+          //
+          // Before there is movement to show, this used to be the COUNT of what
+          // had been measured, sitting in the slot a score sits in: "3/10,
+          // measured so far", above a radar with seven empty spokes, with the
+          // same count repeated in the read and again on a Provisional chip.
+          // Three statements of what a student has not got yet, and nothing
+          // they have. It is a baseline — so it says baseline, and when the
+          // next window is.
           '<span class="crd-ovr">'+ (moveTotal
               ? '<b class="up">+'+moveTotal.toFixed(1)+'</b><span>Gained since '+esc(cardSinceLabel()||'you started')+'</span>'
-              : '<b>'+nGot+'<u>/'+CARD_ATTRS.length+'</u></b><span>Measured so far</span>')+
+              : '<b class="base">Baseline</b><span>'+nGot+' of '+CARD_ATTRS.length+' set'+
+                (cardNextTesting() ? ' · next '+esc(cardNextTesting()) : '')+'</span>')+
           '</span>'+
           '<span class="crd-who">'+
             '<span class="crd-nm">'+esc(athleteName())+'</span></span>'+
         '</div>'+
         cardRadarSVG(s, was)+
         '<div class="crd-read"><h2>'+read.title+'</h2><p>'+read.line+'</p>'+
-          (nGot < CARD_ATTRS.length ? '<span class="crd-prov">Provisional · '+nGot+' of '+CARD_ATTRS.length+' measured</span>' : '')+
+          (moveTotal && nGot < CARD_ATTRS.length
+            ? '<span class="crd-prov">Provisional · '+nGot+' of '+CARD_ATTRS.length+' measured</span>' : '')+
         '</div>'+
       '</div>'+
       '<div class="crd-rows">'+
