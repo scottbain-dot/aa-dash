@@ -2553,9 +2553,12 @@
   .prg-build { display: block; width: 100%; text-align: left; font: 400 13px 'Inter', sans-serif;
     color: var(--ink-soft); margin: -4px 0 11px; line-height: 1.45; }
   .prg-build strong { color: var(--ink); font-weight: 600; }
-  .prg-build-ask { cursor: pointer; background: #fdf7e8; border: none;
-    border-left: 3px solid var(--burgundy); border-radius: 0 10px 10px 0; padding: 9px 11px; margin-bottom: 11px; }
-  .prg-build-ask strong { color: var(--burgundy); }
+  .prg-build-ask { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    cursor: pointer; background: #fdf7e8; border: none; border-left: 3px solid var(--burgundy);
+    border-radius: 0 12px 12px 0; padding: 11px 13px; margin-bottom: 11px; flex-wrap: wrap; }
+  .prg-ask-q { font: 600 13.5px 'Inter', sans-serif; color: var(--ink); }
+  .prg-ask-go { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto;
+    font: 700 11.5px 'Inter', sans-serif; color: var(--burgundy); }
   .prg-main { display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; text-align: left;
     padding: 14px 14px 14px 16px; border-radius: 16px; border: 1px solid var(--line-soft);
     background: linear-gradient(135deg, #fdf6f2, #f7ece6); }
@@ -4313,6 +4316,29 @@
     overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 12px 0 2px;
   }
   .year-months::-webkit-scrollbar { display: none; }
+  /* Two rows: the blocks the year adds up to, over the months they cover. One
+     grid for both, so a bracket can never drift out of line with its months. */
+  .year-months.has-brackets { grid-template-rows: auto auto; row-gap: 6px; }
+  .year-months.has-brackets > .year-month { grid-row: 2; }
+  .ymb { grid-row: 1; min-width: 0; display: flex; align-items: center; gap: 6px;
+    height: 23px; padding: 0 8px; border-radius: 8px 8px 3px 3px; overflow: hidden;
+    border-bottom: 2px solid currentColor; }
+  .ymb-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font: 700 10.5px 'Inter', sans-serif; }
+  .ymb-weeks { flex: 0 0 auto; font: 700 9.5px 'Inter', sans-serif; opacity: .75;
+    font-variant-numeric: tabular-nums; }
+  .ymb-now { flex: 0 0 auto; font: 800 8.5px 'Inter', sans-serif; letter-spacing: .1em;
+    text-transform: uppercase; background: var(--gold); color: #5c2f1d; border-radius: 999px; padding: 1px 6px; }
+  /* Phase colours, as a tint rather than the solid the month tiles use — the
+     bracket is a label for the row below, not another row of blocks. */
+  .ymb.ym-build    { background: var(--st-build);    color: var(--st-build-ink); }
+  .ymb.ym-maintain { background: var(--st-maintain); color: var(--st-maintain-ink); }
+  .ymb.ym-peak     { background: var(--st-peak);     color: var(--st-peak-ink); }
+  .ymb.ym-recover  { background: var(--st-recover);  color: var(--st-recover-ink); }
+  .ymb.ym-off      { background: var(--st-off);      color: var(--st-off-ink); }
+  .ymb.is-now { box-shadow: inset 0 0 0 1.5px var(--gold); }
+  /* Nobody trains the same way for four months. Say so on the block itself. */
+  .ymb.is-long { border-bottom-style: dashed; }
   .year-month {
     min-height: 64px; border-radius: 13px; padding: 7px 3px; cursor: pointer; position: relative;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
@@ -4687,37 +4713,29 @@
     color: var(--ink, #1a1a1a); background: #fff; border: 1.5px solid var(--line, #eee3dd);
     border-radius: 999px; padding: 9px 15px; min-height: 40px; }
   .comp-pill.on { background: var(--burgundy, #874B46); border-color: var(--burgundy, #874B46); color: #fff; }
-  /* Your season — the year as blocks, current one marked. */
-  .sb-intro { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 13.5px;
-    color: var(--ink-soft, #4a3f39); margin: 0 0 12px; line-height: 1.5; }
-  .sb-list { display: flex; flex-direction: column; }
-  .sb-row { display: flex; gap: 14px; padding: 11px 0; border-top: 1px solid var(--line, #eee3dd); }
-  .sb-row:first-child { border-top: none; }
-  .sb-row.is-now { background: var(--cream, #fdf6f2); margin: 0 -18px; padding: 13px 18px;
-    border-radius: 10px; border-top-color: transparent; }
-  .sb-when { flex: 0 0 72px; display: flex; flex-direction: column; gap: 2px; }
-  .sb-months { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
-    letter-spacing: 0.03em; text-transform: uppercase; color: var(--burgundy, #874B46); }
-  .sb-weeks { font-family: 'Inter', sans-serif; font-size: 10.5px; color: var(--ink-mute, #7a6a60); }
-  .sb-body { min-width: 0; flex: 1; }
-  .sb-name { font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 600;
-    color: var(--ink, #1a1a1a); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .sb-now { font-family: 'Inter', sans-serif; font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
-    text-transform: uppercase; background: var(--gold-light, #f5e6b3); color: #6a3a36;
-    border-radius: 999px; padding: 2px 8px; }
-  .sb-prog { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px;
-    font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-mute, #7a6a60); }
-  .sb-jump { margin-top: 14px; width: 100%; cursor: pointer; display: inline-flex; align-items: center;
-    justify-content: center; gap: 7px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
-    color: var(--burgundy, #874B46); background: var(--cream, #fdf6f2);
-    border: 1.5px solid var(--line, #eee3dd); border-radius: 999px; padding: 11px 16px; }
+  /* Where you are in the plan, and the step out of it into the week. */
+  .bnow-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin: 0 0 11px; }
+  .bnow-where { font: 700 10px 'Inter', sans-serif; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--ink-mute); }
+  .bnow-go { display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; text-align: left;
+    padding: 13px 13px 13px 14px; border-radius: 15px; border: 1px solid var(--line-soft);
+    background: var(--cream); }
+  .bnow-go-ico { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 10px; display: grid;
+    place-items: center; background: #f1e8e2; color: var(--burgundy); font-size: 17px; }
+  .bnow-go-body { flex: 1; min-width: 0; }
+  .bnow-go-h { display: block; font: 600 14.5px 'Inter', sans-serif; color: var(--ink); }
+  .bnow-go-s { display: block; font: 400 11.5px 'Inter', sans-serif; color: var(--ink-mute); margin-top: 2px; }
+  .bnow-go-chev { flex: 0 0 auto; color: var(--ink-mute); font-size: 17px; }
+  /* No program yet: this is the one thing to do on the Year tab. */
+  .bnow-go-new { background: linear-gradient(135deg, var(--burgundy), #6a3a36); border-color: transparent; }
+  .bnow-go-new .bnow-go-ico { background: rgba(255,255,255,.15); color: var(--gold); }
+  .bnow-go-new .bnow-go-h { color: #fff; }
+  .bnow-go-new .bnow-go-s { color: rgba(250,243,237,.82); }
+  .bnow-go-new .bnow-go-chev { color: rgba(250,243,237,.7); }
+  .bnow-long { font: italic 400 11.5px 'Fraunces', serif; color: var(--ink-mute);
+    margin: 10px 0 0; line-height: 1.45; }
   .yog-lede { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-soft, #4a3f39);
     margin: 0 0 12px; line-height: 1.5; }
-  .sb-long { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--ink-mute, #7a6a60);
-    margin: 5px 0 0; line-height: 1.45; font-style: italic; }
-  .sb-build { margin-top: 7px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12.5px;
-    font-weight: 700; color: var(--burgundy, #874B46); background: #fff;
-    border: 1.5px solid var(--line, #eee3dd); border-radius: 999px; padding: 7px 14px; }
   /* Week grid, before there is a week to show. */
   .week-blank { padding: 26px 18px 22px; text-align: center; }
   .week-blank-line { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 14.5px;
@@ -8024,8 +8042,13 @@
       ? (building.length
           ? '<p class="prg-build">Building <strong>'+esc(building.join(' and ').toLowerCase())+'</strong>'+
             (b && b.sport ? ' for <strong>'+esc(b.sport)+'</strong>' : '')+'.</p>'
+          // Asked as a question, with the planner named. "You have not said…"
+          // is a report of a gap; "What are you building this month?" is the
+          // thing the athlete is being invited to answer.
           : '<button class="prg-build prg-build-ask" onclick="switchTab(\'year\'); openGoalComponents();">'+
-            'You have not said what this block is building. <strong>Pick it →</strong></button>')
+            '<span class="prg-ask-q">What are you building this month?</span>'+
+            '<span class="prg-ask-go">Set it in your year planner <i class="ti ti-arrow-right" aria-hidden="true"></i></span>'+
+            '</button>')
       : '';
 
     const sub = has
@@ -13155,42 +13178,42 @@
     '</div>';
   }
 
-  // ---- Your season: the year read back as blocks, with the program on each ----
-  // Eight athletes on the roster set a year map and never built a program. The
-  // Year tab ended with a filled-in grid and no next step. This turns the grid
-  // into the chapters it implies, marks the one you're in, and puts the way into
-  // a program on the block that needs it.
-  function seasonBlocksCard(){
-    const blocks = yearBlocks();
-    if(!blocks.length) return '';
+  // ---- The block you are in, as one line ------------------------------------
+  // This used to be a whole card — "Your season" — listing every block of the
+  // year with its week count, above a strip of twelve months that said the same
+  // thing in colour. Scott's question was the right one: for a single-sport
+  // athlete it was a reformat of the row below it.
+  //
+  // What the card alone carried was the block BOUNDARIES — the grid shows
+  // months, not how long a block runs — and that belongs on the grid, so it is
+  // drawn there now as brackets over the months (see renderMonths). What is
+  // left is the one thing a list cannot show: where you are today, and the step
+  // out of the plan into the week. That is a line, not a card.
+  function blockNowLine(){
     const cur = currentBlock();
+    if(!cur) return '';
     const hasProgram = programHasAnySessions();
     const progName = (state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || 'My program';
-    const rows = blocks.map(function(b){
-      const isNow = !!(cur && cur.startISO === b.startISO && cur.sport === b.sport);
-      const weeks = b.weeks + ' week' + (b.weeks===1?'':'s');
-      const prog = !isNow ? ''
-        : (hasProgram
-            ? '<span class="sb-prog"><i class="ti ti-repeat" aria-hidden="true"></i> '+esc(progName)+'</span>'
-            : '<button class="sb-build" onclick="switchTab(\'week\'); openMoreActions();">Build a program for this block →</button>');
-      // A block only gets this long when months were left on one setting. Nobody
-      // trains the same way for half a year, so say so where it can be fixed.
-      const longRun = b.weeks > 16
-        ? '<p class="sb-long">That’s a long stretch on one setting. Splitting it gives each part a job.</p>'
-        : '';
-      return '<div class="sb-row'+(isNow?' is-now':'')+'">'+
-        '<div class="sb-when"><span class="sb-months">'+esc(monthRangeLabel(b))+'</span>'+
-          '<span class="sb-weeks">'+weeks+'</span></div>'+
-        '<div class="sb-body"><div class="sb-name">'+esc(b.label)+
-          (isNow?'<span class="sb-now">now · week '+cur.week+'</span>':'')+'</div>'+ prog + longRun +'</div>'+
-      '</div>';
-    }).join('');
-    return '<div class="card">'+
-      '<p class="card-eyebrow">Your season</p>'+
-      '<p class="sb-intro">This is what your plan adds up to — you don’t edit it here. '+
-        'It’s built from the months you set below, so change a month and this changes with it.</p>'+
-      '<div class="sb-list">'+rows+'</div>'+
-      '<button class="sb-jump" onclick="jumpToYearGrid()">Change my months <i class="ti ti-arrow-down" aria-hidden="true"></i></button>'+
+    const long = cur.weeks > 16
+      ? '<p class="bnow-long">That’s a long stretch on one setting. Splitting it gives each part a job.</p>'
+      : '';
+    return '<div class="card bnow'+(hasProgram?'':' bnow-ask')+'">'+
+      '<p class="card-eyebrow">Right now</p>'+
+      '<p class="bnow-head"><span class="block-phase-chip ym-'+cur.phase+'"><span>'+PHASE_EMOJI[cur.phase]+'</span> '+
+        esc(cur.label)+'</span>'+
+        '<span class="bnow-where">week '+cur.week+' of '+cur.weeks+'</span></p>'+
+      (hasProgram
+        ? '<button class="bnow-go" onclick="switchTab(\'week\')">'+
+            '<span class="bnow-go-ico"><i class="ti ti-repeat" aria-hidden="true"></i></span>'+
+            '<span class="bnow-go-body"><span class="bnow-go-h">'+esc(progName)+'</span>'+
+            '<span class="bnow-go-s">The program running this block · open My Program</span></span>'+
+            '<i class="ti ti-chevron-right bnow-go-chev" aria-hidden="true"></i></button>'
+        : '<button class="bnow-go bnow-go-new" onclick="switchTab(\'week\'); openMoreActions();">'+
+            '<span class="bnow-go-ico"><i class="ti ti-tools" aria-hidden="true"></i></span>'+
+            '<span class="bnow-go-body"><span class="bnow-go-h">Build a program for this block</span>'+
+            '<span class="bnow-go-s">The plan is set. This is the week that runs it.</span></span>'+
+            '<i class="ti ti-chevron-right bnow-go-chev" aria-hidden="true"></i></button>')+
+      long+
     '</div>';
   }
 
@@ -13285,15 +13308,6 @@
 
   // Season card → the grid that drives it. Flashes the grid so it's obvious
   // what just answered the question.
-  function jumpToYearGrid(){
-    const el = document.getElementById('yearGridCard');
-    if(!el) return;
-    el.scrollIntoView({ behavior:'smooth', block:'start' });
-    el.classList.remove('year-flash');
-    void el.offsetWidth;            // restart the animation if it's already run
-    el.classList.add('year-flash');
-  }
-  window.jumpToYearGrid = jumpToYearGrid;
 
   function renderYear(){
     const view = document.getElementById('view-year');
@@ -13308,7 +13322,7 @@
     html += yearHeroHTML(ym, ap);
     html += goalCheckCard();
     html += goalComponentsCard();
-    html += seasonBlocksCard();
+    html += blockNowLine();
 
     if(gridMode){
       html += overviewGridHTML(ym, curMonth, ap);
@@ -13506,12 +13520,45 @@
     return m;
   }
 
-  // Render all 12 academic months as clean, colour-coded tiles (one per month).
+  // The blocks this sport's year adds up to, drawn OVER the months they cover.
+  //
+  // This is the half of "Your season" worth keeping. A row of twelve coloured
+  // months tells you what each month is and nothing about where one block ends
+  // and the next begins — which is the actual unit of training, and the only
+  // place the week count lives. A separate card listing them underneath was
+  // saying it twice; a bracket says it once, on the thing it describes.
+  function blockBracketsHTML(sport){
+    const mine = yearBlocks().filter(b => b.sport === sport.name);
+    if(!mine.length) return '';
+    const cur = currentBlock();
+    let out = '';
+    mine.forEach(b => {
+      const idx = (b.months || []).map(m => ACADEMIC_MONTHS.indexOf(m)).filter(i => i >= 0).sort((x,y) => x - y);
+      if(!idx.length) return;
+      const start = idx[0], span = idx[idx.length-1] - start + 1;
+      const isNow = !!(cur && cur.startISO === b.startISO && cur.sport === b.sport);
+      // A one-month bracket has room for the weeks and nothing else; the name is
+      // already on the tile underneath it as a colour and an emoji.
+      const label = span >= 2
+        ? '<span class="ymb-name">'+esc(b.label)+'</span><span class="ymb-weeks">'+b.weeks+'w</span>'
+        : '<span class="ymb-weeks">'+b.weeks+'w</span>';
+      out += '<div class="ymb ym-'+b.phase+(isNow?' is-now':'')+(b.weeks > 16 ? ' is-long' : '')+'"'+
+        ' style="grid-column:'+(start+1)+' / span '+span+'"'+
+        ' title="'+esc(b.label+' · '+monthRangeLabel(b)+' · '+b.weeks+' week'+(b.weeks===1?'':'s'))+'">'+
+        (isNow ? '<span class="ymb-now">Now</span>' : '')+ label +
+      '</div>';
+    });
+    return out;
+  }
+
+  // Render all 12 academic months as clean, colour-coded tiles (one per month),
+  // with the blocks they add up to bracketed across the top. One grid, two rows,
+  // so the brackets cannot drift out of line with the months they span.
   function renderMonths(sport, si, curMonth){
     const ap = state.yearMap.aPriority;
     const apIndex = (ap && ap.month) ? ACADEMIC_MONTHS.indexOf(ap.month) : -1;
     const busy = busyMonthsSet();
-    let html = '<div class="year-months">';
+    let html = '<div class="year-months has-brackets">' + blockBracketsHTML(sport);
     ACADEMIC_MONTHS.forEach(month => {
       const committed = monthCommittedState(sport, month);
       if(committed) html += monthTile(sport, si, month, committed, false, curMonth);
