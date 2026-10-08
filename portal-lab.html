@@ -2068,6 +2068,8 @@
 </div>
 
 <!-- MY PROGRAM — the student's owned, repeating week -->
+<!-- Medals land here. One at a time, biggest first — see showAwards(). -->
+<div class="award-pop" id="awardPop"></div>
 <div class="sheet-backdrop" id="myprog-backdrop" onclick="closeMyProgram()"></div>
 <div class="sheet" id="myProgramSheet">
   <div class="sheet-handle"></div>
@@ -2699,6 +2701,30 @@
   /* "Baseline" sits where a number sits, so it needs a number's weight — but
      not gold, which is reserved for a figure that was earned. */
   .crd-ovr > b.base { font-size: 30px; letter-spacing: -.01em; color: rgba(250,243,237,.92); }
+
+  /* ---- Medals ---- */
+  .award-pop { position: fixed; inset: 0; z-index: 400; display: none;
+    align-items: center; justify-content: center; padding: 24px;
+    background: rgba(26,20,19,.62); backdrop-filter: blur(3px); }
+  .award-pop.open { display: flex; }
+  .award-card { width: 100%; max-width: 330px; text-align: center; padding: 26px 22px 20px;
+    border-radius: 22px; background: var(--surface, #fff);
+    box-shadow: 0 24px 60px -20px rgba(26,20,19,.6); animation: awardIn .32s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes awardIn { from { opacity: 0; transform: scale(.88) translateY(14px); } }
+  .award-medal { width: 68px; height: 68px; margin: 0 auto 14px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 32px; color: #fff; }
+  .award-pop.gold   .award-medal { background: linear-gradient(145deg, #e8c450, #c99a1d);
+    box-shadow: 0 8px 22px -8px rgba(201,154,29,.9); }
+  .award-pop.silver .award-medal { background: linear-gradient(145deg, #b9b2aa, #8d8780);
+    box-shadow: 0 8px 22px -8px rgba(141,135,128,.8); }
+  .award-kicker { font: 800 10.5px 'Inter', sans-serif; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--burgundy); margin: 0 0 6px; }
+  .award-line { font: 400 22px 'Fraunces', serif; color: var(--ink); margin: 0; line-height: 1.3; }
+  .award-line b { font-weight: 600; color: var(--burgundy); }
+  .award-note { font: 400 13px 'Inter', sans-serif; color: var(--ink-mute); margin: 9px 0 0; }
+  .award-ok { margin-top: 18px; width: 100%; font: 700 14px 'Inter', sans-serif; cursor: pointer;
+    color: var(--cream); background: var(--burgundy); border: none; border-radius: 999px; padding: 12px; }
+  @media (prefers-reduced-motion: reduce) { .award-card { animation: none; } }
 
   /* ---- Today, done ---- */
   .card-hero.hero-done { background: linear-gradient(160deg, rgba(74,157,91,.1), rgba(74,157,91,.03)); }
@@ -5192,6 +5218,7 @@
       // spent here and is no use after an hour; this one lasts the week, which
       // is how long a student stays signed in.
       setSessionToken(data.sessionToken || '');
+      setTimeout(syncAwards, 1200);   // after the week paints; never blocks it
       athlete = data.athlete;
       if(!athlete){ setLoading(false); renderNoAthlete(); return; }
       // Resolve the Athlete_ID once, here — every later call is keyed by it, not
@@ -8345,6 +8372,159 @@
   }
 
   // (c) LOAD — legible, plain-language read (shared builder, see loadVerdictHTML).
+  // ============================================================
+  // AWARDS — what just became true.
+  //
+  // Badges were derived on render: recomputed from stats every draw. That says
+  // what IS true and never what just BECAME true, so nothing could pop — the app
+  // could not tell a best set this morning from one set in March.
+  //
+  // The ledger on the server is the record. This is the detector: it works out
+  // what the athlete has earned right now, and anything the ledger has not seen
+  // before is both saved and celebrated. Detection runs from state, so it is
+  // idempotent — the server skips IDs it already holds, and re-rendering cannot
+  // mint the same medal twice.
+  //
+  // Tiers exist so this does not become wallpaper. Gold takes the screen and is
+  // reserved for the two things that are actually rare: a personal best, and a
+  // Training Age attribute moving.
+  // ============================================================
+  let awardLedger = null;          // from the server; null until loaded
+  const AWARD_GOLD = 'gold', AWARD_SILVER = 'silver';
+
+  function awardsById(){
+    const m = {};
+    (awardLedger || []).forEach(a => { m[a.id] = a; });
+    return m;
+  }
+
+  // Everything the athlete has earned, as it stands. Pure — no side effects, so
+  // it can be called freely and tested without a network.
+  function detectAwards(){
+    const out = [];
+    const have = awardsById();
+    const today = isoToday();
+
+    // 1. TRAINING AGE. The thing the programme is named after, and until now the
+    //    one thing that moved in total silence. Four of the ten can move without
+    //    a testing window at all — Movement on a stamp, Consistency weekly,
+    //    Knowledge per block, Mindset when a coach updates it — so this is a
+    //    regular event, not a twice-a-year one.
+    const s = cardScores('now');
+    CARD_ATTRS.forEach(a => {
+      const v = +(s[a.id] || 0);
+      if(!(v > 0)) return;
+      // The ledger carries the high-water mark: the best value ever recorded for
+      // this attribute, whatever award it came in on.
+      let best = 0;
+      (awardLedger || []).forEach(x => {
+        if(x.kind === 'training_age' && x.detail === a.id && x.value > best) best = x.value;
+      });
+      if(!best){
+        // First time this attribute has a number. That is a baseline, not a
+        // gain — the card says so too. Record it silently so the NEXT move has
+        // something to be measured against.
+        out.push({ id:'ta_base_'+a.id, kind:'training_age', label:a.label, detail:a.id,
+                   value:v, previous:null, earned:today, tier:null, silent:true });
+        return;
+      }
+      if(v > best + 0.05){   // a real move, not a rounding wobble
+        out.push({ id:'ta_'+a.id+'_'+v.toFixed(1), kind:'training_age', label:a.label, detail:a.id,
+                   value:v, previous:best, earned:today, tier:AWARD_GOLD,
+                   title: a.label+' is up', line:best.toFixed(1)+' → <b>'+v.toFixed(1)+'</b>',
+                   note:'An all-time high.' });
+      }
+    });
+
+    // 2. PERSONAL BESTS — gold. The most concrete, most earned thing in the app.
+    (state.pbs || []).forEach(b => {
+      if(!b || !b.exercise) return;
+      const unit = b.unit ? (String(b.unit)==='reps' ? ' reps' : ' '+b.unit) : '';
+      const id = 'pb_'+String(b.exercise).toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+b.value;
+      const prev = parseFloat(b.previousValue);
+      out.push({ id, kind:'pb', label:b.exercise, detail:String(b.unit||''),
+                 value:parseFloat(b.value)||null, previous:isFinite(prev)?prev:null,
+                 earned:b.date || today, tier:AWARD_GOLD,
+                 title:'New best', line:esc(b.exercise)+' <b>'+esc(String(b.value))+unit+'</b>',
+                 note: isFinite(prev) && prev>0 ? 'Up from '+prev+unit+'.' : 'Your first on this one.' });
+    });
+
+    // 3. BADGES and RANK — silver. Already computed; they just had nowhere to be
+    //    recorded, so they could never pop.
+    const g = gameStats();
+    (g.badges || []).forEach(bd => {
+      if(!bd.earned) return;
+      out.push({ id:'badge_'+bd.id, kind:'badge', label:bd.name, detail:bd.track,
+                 value:bd.goal, previous:null, earned:today, tier:AWARD_SILVER,
+                 title:'Badge earned', line:'<b>'+esc(bd.name)+'</b>', note:bd.blurb });
+    });
+    const rk = g.rank;
+    if(rk && rk.index > 0){
+      out.push({ id:'rank_'+rk.name.toLowerCase(), kind:'rank', label:rk.name, detail:'',
+                 value:rk.min, previous:null, earned:today, tier:AWARD_SILVER,
+                 title:'New rank', line:'<b>'+esc(rk.name)+'</b>', note:'Level '+rk.level+'.' });
+    }
+
+    return out.filter(a => !have[a.id]);
+  }
+
+  // Load, detect, record, celebrate. Fire-and-forget: a medal is never worth
+  // blocking the week on, and a failed sync just means it pops next load.
+  async function syncAwards(){
+    try {
+      const r = await apiDataGet({ action:'getAwards' });
+      if(!r || !r.success) return;
+      awardLedger = r.awards || [];
+      const fresh = detectAwards();
+      if(fresh.length){
+        await apiData({ action:'saveAwards', awards: fresh.map(a => ({
+          id:a.id, kind:a.kind, label:a.label, detail:a.detail,
+          value:a.value, previous:a.previous, earned:a.earned })) });
+        awardLedger = awardLedger.concat(fresh.map(a => Object.assign({ seen:false }, a)));
+      }
+      // Anything earned but never shown — including medals minted on an earlier
+      // load whose celebration never actually ran because the tab closed.
+      const unseen = (awardLedger || []).filter(a => !a.seen && a.tier);
+      if(unseen.length) showAwards(unseen);
+    } catch(e){ /* never block the week on a medal */ }
+  }
+
+  // One at a time, biggest first. A queue rather than a stack of overlays,
+  // because four medals at once is noise and the student dismisses all of them.
+  let awardQueue = [];
+  function showAwards(list){
+    // Rank by tier, NOT with `order[tier] || 9` — gold maps to 0, and 0 is
+    // falsy, so that expression sent the biggest medal to the back of the queue
+    // and opened on a badge.
+    const order = { gold:1, silver:2 };
+    awardQueue = list.slice().sort((a,b) => (order[a.tier] || 9) - (order[b.tier] || 9));
+    awardNext();
+  }
+  function awardNext(){
+    const el = document.getElementById('awardPop');
+    if(!el) return;
+    const a = awardQueue.shift();
+    if(!a){ el.classList.remove('open'); el.innerHTML = ''; return; }
+    el.className = 'award-pop open ' + (a.tier || 'silver');
+    el.innerHTML =
+      '<div class="award-card">'+
+        '<div class="award-medal"><i class="ti '+(a.kind==='pb' ? 'ti-trophy'
+          : a.kind==='training_age' ? 'ti-chart-arrows-vertical'
+          : a.kind==='rank' ? 'ti-military-award' : 'ti-medal')+'" aria-hidden="true"></i></div>'+
+        '<p class="award-kicker">'+esc(a.title || 'Earned')+'</p>'+
+        '<p class="award-line">'+(a.line || esc(a.label))+'</p>'+
+        (a.note ? '<p class="award-note">'+esc(a.note)+'</p>' : '')+
+        '<button class="award-ok" onclick="awardSeen(\''+esc(a.id)+'\')">'+
+          (awardQueue.length ? 'Next' : 'Nice')+'</button>'+
+      '</div>';
+  }
+  function awardSeen(id){
+    (awardLedger || []).forEach(a => { if(a.id === id) a.seen = true; });
+    apiData({ action:'markAwardsSeen', ids:[id] }).catch(() => {});
+    awardNext();
+  }
+  window.awardSeen = awardSeen;
+
   // ============================================================
   // LAST WEEK — the review step.
   //
