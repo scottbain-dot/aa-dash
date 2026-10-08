@@ -2702,6 +2702,12 @@
      not gold, which is reserved for a figure that was earned. */
   .crd-ovr > b.base { font-size: 30px; letter-spacing: -.01em; color: rgba(250,243,237,.92); }
 
+  /* The build button now carries a name and a sub-line, so it needs a column
+     for them rather than a single centred label. */
+  .build-cta-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+  .build-cta-sub { font: 500 12px 'Inter', sans-serif; opacity: .78; line-height: 1.35; }
+  .build-cta-card.has-prog .build-cta-label { font-weight: 700; }
+
   /* ---- Medals ---- */
   .award-pop { position: fixed; inset: 0; z-index: 400; display: none;
     align-items: center; justify-content: center; padding: 24px;
@@ -7016,8 +7022,13 @@
           // first thing after "what am I doing now", and disappears once it has
           // been answered.
           lastWeekCard() +
-          weekBlockCard() +
+          // The program first, then what this block asks of it. The block line
+          // used to sit ABOVE the button, so "On top of your sport: 2–3
+          // sessions a week" arrived with nothing to attach to — an instruction
+          // floating between today's session and a button. Underneath, it reads
+          // as context for the program you are looking at.
           weekBuildCard() +
+          weekBlockCard() +
           weekThisWeekCard(ws, curMon, byDay, today) +
           // The squad, as counts. Sits here rather than on its own tab because
           // this is the screen a student opens when deciding whether to train,
@@ -7593,10 +7604,46 @@
 
   // Prominent "Build my program" entry — top of My Program, opens the build hub
   // (build your own, AI, ready-made preview, fill week, quick add…).
+  // The block's ask as plain text, for the build button. Same source as the
+  // block line, without the markup or the chevron.
+  function blockAskLine(){
+    const b = currentBlock();
+    if(!b) return '';
+    const w = OWN_WORK[b.phase];
+    if(!w) return '';
+    if(w.line) return String(w.line).replace(/<[^>]*>/g,'');
+    if(!w.n) return '';
+    const month = MONTHS[new Date().getMonth()];
+    const leadKey = String(b.sport||'').trim().toLowerCase();
+    const ms = ((plannedSports().find(x=>String(x.name||'').trim().toLowerCase()===leadKey)||{}).monthlyStates||[])
+                 .find(m=>m.month===month) || {};
+    const comps = componentLabels(ms.components);
+    return 'This block asks for ' + w.n +
+           (comps.length ? ' of ' + comps.join(' and ').toLowerCase() : '') + (w.tail||'');
+  }
+
+  // The big button carries the program. It used to say "Build my program" to an
+  // athlete who already had one, with a separate thin "Repeats from Engine
+  // Rebuild · Edit program" row underneath saying the same thing again in grey.
+  // One object now: the name of what you are running, and the right verb.
   function weekBuildCard(){
-    return '<button class="build-cta-card" onclick="openMoreActions()">'+
-      '<i class="ti ti-tools build-cta-lead" aria-hidden="true"></i>'+
-      '<span class="build-cta-label">Build my program</span>'+
+    const n = templateSessions().length;
+    const name = String((state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || '').trim();
+    const has = n > 0;
+    const label = has ? (name || 'My program') : 'Build my program';
+    // With no program yet, what this block asks for is the most useful thing
+    // this button could say — it is the brief for the thing they are about to
+    // build, rather than a generic invitation.
+    const ask = has ? '' : blockAskLine();
+    const sub = has
+      ? n + ' session' + (n===1?'':'s') + ' a week · tap to edit'
+      : (ask || 'Answer a few questions, or build your own');
+    return '<button class="build-cta-card'+(has?' has-prog':'')+'" onclick="openMoreActions()">'+
+      '<i class="ti '+(has?'ti-list-check':'ti-tools')+' build-cta-lead" aria-hidden="true"></i>'+
+      '<span class="build-cta-main">'+
+        '<span class="build-cta-label">'+esc(label)+'</span>'+
+        '<span class="build-cta-sub">'+esc(sub)+'</span>'+
+      '</span>'+
       '<i class="ti ti-chevron-right build-cta-go" aria-hidden="true"></i></button>';
   }
 
@@ -8021,12 +8068,20 @@
     const g = gameStats();
     const r = g.rank;
     const ring = 'background: conic-gradient(var(--gold) '+r.pct+'%, var(--line) 0);';
+    // "15 sessions" sat directly under "3 of 9 sessions this week" and read as
+    // another weekly figure. It is the lifetime total — the thing the rank is
+    // made of — so it says so.
+    //
+    // Weeks trained moved here too. It used to float as a chip at the top of
+    // the card; this row is the whole "over time" story, and the top of the
+    // card is about today.
     const badges = g.earnedCount ? (' · '+g.earnedCount+' badge'+(g.earnedCount===1?'':'s')) : '';
-    const nextLine = (r.next ? (r.toNext+' session'+(r.toNext===1?'':'s')+' to '+esc(r.next.name)) : 'Top rank — legend') + badges;
+    const wks = g.weeksTrained ? (' · '+g.weeksTrained+' week'+(g.weeksTrained===1?'':'s')+' trained') : '';
+    const nextLine = (r.next ? (r.toNext+' to '+esc(r.next.name)) : 'Top rank — legend') + wks + badges;
     return '<button class="hero-rank" onclick="openTrophyRoom()" aria-label="Your rank and badges">'+
       '<span class="hero-rank-medal" style="'+ring+'"><span class="hero-rank-medal-in">'+r.level+'</span></span>'+
       '<span class="hero-rank-body">'+
-        '<span class="hero-rank-top"><span class="hero-rank-name">'+esc(r.name)+'</span><span class="hero-rank-xp">'+r.xp+' session'+(r.xp===1?'':'s')+'</span></span>'+
+        '<span class="hero-rank-top"><span class="hero-rank-name">'+esc(r.name)+'</span><span class="hero-rank-xp">'+r.xp+' logged all-time'+'</span></span>'+
         '<span class="hero-rank-bar"><span style="width:'+r.pct+'%"></span></span>'+
         '<span class="hero-rank-next">'+nextLine+'</span>'+
       '</span>'+
@@ -8270,7 +8325,11 @@
     }
     const heroDone = todays.length && isLogged(todays[0]) ? ' hero-done' : '';
     return '<div class="card card-hero'+heroDone+'">'+
-      '<div class="hero-eyebrow-row"><p class="card-hero-eyebrow">'+eyebrow+'</p>'+streakChipHTML()+'</div>'+
+      // The weeks chip has moved into the rank row below. Four progress objects
+      // in one card — a done flag, a weeks chip, a week bar and a rank line —
+      // was two too many, and the chip and the rank row were telling the same
+      // story at different time scales.
+      '<div class="hero-eyebrow-row"><p class="card-hero-eyebrow">'+eyebrow+'</p></div>'+
       '<h2 class="card-hero-title">'+titleHTML+'</h2>'+
       '<p class="card-hero-sub">'+subHTML+'</p>'+
       (todays.length ? quickLogRowHTML(todays[0]) : '')+
@@ -8316,7 +8375,9 @@
       : '';
     const progName = (state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || '';
     const prov = tplN
-      ? '<button class="week-prov" onclick="openMyProgram()"><i class="ti ti-repeat" aria-hidden="true"></i> Repeats from <strong>'+esc(progName||'my program')+'</strong> · Edit program <i class="ti ti-chevron-right" aria-hidden="true"></i></button>'
+      // The program name and the way into editing it both live on the big
+      // button now, so this row said the same thing twice in a quieter voice.
+      ? ''
       : '<button class="week-prov" onclick="openMoreActions()"><i class="ti ti-clipboard-list" aria-hidden="true"></i> No program yet · Build one <i class="ti ti-chevron-right" aria-hidden="true"></i></button>';
     return '<div class="card">'+
       '<div class="week-head">'+
@@ -8392,17 +8453,23 @@
 
   // A quiet "next game" line on This Week — the soonest upcoming fixture, with a
   // countdown, so a match on the horizon is always visible. Tapping opens its week.
+  // Only when it is close enough to matter. A competition 121 days out is not
+  // news on a Thursday in October — it told an athlete nothing they could act
+  // on and took the most eye-catching card on the week for it. The Year tab
+  // owns the horizon; this strip is for the thing that changes what you do now.
+  const NEXT_EVENT_HORIZON = 28;   // days
   function nextGameStrip(ws){
     const up = upcomingGames();
     if(!up.length) return '';
     const g = up[0];
     const days = daysBetween(isoToday(), g.date);
+    if(days > NEXT_EVENT_HORIZON) return '';
     const when = days<=0 ? 'today' : days===1 ? 'tomorrow' : ('in '+days+' days');
     const inThisWeek = g.date >= ws && g.date <= addDays(ws,6);
     const action = inThisWeek ? '' : ' onclick="drillWeek(\''+fmtISO(mondayOf(parseISO(g.date)))+'\')"';
     return '<button class="week-nextgame"'+action+'>'+
       '<i class="ti ti-trophy" aria-hidden="true"></i>'+
-      '<span class="week-nextgame-txt"><strong>Next game · '+esc(g.name)+'</strong>'+
+      '<span class="week-nextgame-txt"><strong>Next up · '+esc(g.name)+'</strong>'+
         '<small>'+dowShort(g.date)+' '+dayNum(g.date)+' '+monShort(g.date)+' · '+when+(g.sport?' · '+esc(g.sport):'')+'</small></span>'+
       (inThisWeek ? '' : '<i class="ti ti-chevron-right" aria-hidden="true"></i>')+
     '</button>';
