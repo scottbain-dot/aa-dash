@@ -266,6 +266,9 @@ function doGet(e) {
     if (action === 'getYearLoad') {
       return apJson(handleGetYearLoad(ss, e.parameter.athleteId));
     }
+    if (action === 'getAwards') {
+      return apJson(handleGetAwards(ss, e.parameter.athleteId));
+    }
     if (action === 'getPBs') {
       return apJson(handleGetPBs(ss, e.parameter.athleteId));
     }
@@ -496,6 +499,12 @@ function doPost(e) {
     }
     if (data.action === 'cancelBooking') {
       return apJson(handleCancelBooking(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.bookingId));
+    }
+    if (data.action === 'saveAwards') {
+      return apJson(handleSaveAwards(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.awards));
+    }
+    if (data.action === 'markAwardsSeen') {
+      return apJson(handleMarkAwardsSeen(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.ids));
     }
     if (data.action === 'savePB') {
       var ssAp4 = SpreadsheetApp.getActiveSpreadsheet();
@@ -2856,11 +2865,12 @@ var AA_SESSION_DAYS = 7;
 var AA_STUDENT_GET_ROUTES = [
   'getYearMap', 'getWeeklyTemplate', 'getWeek', 'getGames', 'getBookingData',
   'getYearLoad', 'getPBs', 'getSquadPulse', 'getLastTimes', 'getExerciseHistory',
-  'getLearnProgress', 'getPassport', 'getGrit', 'getAvailability'
+  'getLearnProgress', 'getPassport', 'getGrit', 'getAvailability', 'getAwards'
 ];
 var AA_STUDENT_POST_ROUTES = [
   'saveYearMap', 'saveBlock', 'saveWeeklyTemplate', 'saveSession', 'deleteSession',
-  'bookCheckIn', 'cancelBooking', 'savePB', 'saveAvailability', 'clearAvailability'
+  'bookCheckIn', 'cancelBooking', 'savePB', 'saveAvailability', 'clearAvailability',
+  'saveAwards', 'markAwardsSeen'
 ];
 
 // Created once, on first use, and kept in Script Properties thereafter. The
@@ -4064,6 +4074,129 @@ function handleGetExerciseHistory(ss, athleteId, name, todayISO) {
     }
     out.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
     return { success: true, name: name || '', history: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ============================================================================
+// THE AWARDS LEDGER
+// ----------------------------------------------------------------------------
+// Celebrations used to be derived on render: the badge list was recomputed from
+// stats every time the page drew. That tells an athlete what is TRUE, but never
+// what just BECAME true — so nothing could pop, because nothing could tell a
+// best set this morning from one set in March.
+//
+// This is the record. Every earned thing is a row with the date it happened and
+// whether it has been shown. Writes are idempotent on Award_ID, so a re-render,
+// a double tap or a flaky connection cannot mint the same medal twice.
+//
+// It also carries the high-water mark. A Training Age attribute award stores
+// the value it was earned at, so the next read knows both "has this gone up
+// since last time" and "is this the highest it has ever been" without needing a
+// separate history table.
+// ============================================================================
+function apEnsureAwards(ss) {
+  var sheet = ss.getSheetByName('Awards');
+  if (!sheet) {
+    sheet = ss.insertSheet('Awards');
+    sheet.getRange(1, 1, 1, 9).setValues([[
+      'Athlete_ID', 'Award_ID', 'Kind', 'Label', 'Detail', 'Value', 'Previous', 'Earned', 'Seen'
+    ]]);
+    sheet.getRange('1:1').setFontWeight('bold');
+  }
+  return sheet;
+}
+
+function handleGetAwards(ss, athleteId) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId required' };
+    var rows = apReadObjects(apEnsureAwards(ss));
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Athlete_ID).trim() !== athleteId) continue;
+      out.push({
+        id: String(rows[i].Award_ID || ''),
+        kind: String(rows[i].Kind || ''),
+        label: String(rows[i].Label || ''),
+        detail: String(rows[i].Detail || ''),
+        value: rows[i].Value === '' ? null : Number(rows[i].Value),
+        previous: rows[i].Previous === '' ? null : Number(rows[i].Previous),
+        earned: apDateStr(rows[i].Earned) || '',
+        seen: String(rows[i].Seen) === 'true' || rows[i].Seen === true
+      });
+    }
+    out.sort(function (a, b) { return a.earned < b.earned ? 1 : -1; });   // newest first
+    return { success: true, awards: out };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// One award, or several in a batch. Already-present IDs are skipped rather than
+// erroring: the client detects from the same state on every load, so sending a
+// medal that already exists is the normal case, not a fault.
+function handleSaveAwards(ss, athleteId, awards) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId required' };
+    var list = Array.isArray(awards) ? awards : (awards ? [awards] : []);
+    if (!list.length) return { success: true, added: 0, awards: [] };
+
+    var sheet = apEnsureAwards(ss);
+    var rows = apReadObjects(sheet);
+    var have = {};
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].Athlete_ID).trim() === athleteId) have[String(rows[i].Award_ID || '')] = 1;
+    }
+    var added = [], toWrite = [];
+    for (var j = 0; j < list.length; j++) {
+      var a = list[j] || {};
+      var id = String(a.id || '').trim();
+      if (!id || have[id]) continue;
+      have[id] = 1;   // guards duplicates inside one batch too
+      toWrite.push(apSafeRow_([
+        athleteId, id, String(a.kind || ''), String(a.label || ''), String(a.detail || ''),
+        (a.value == null ? '' : a.value), (a.previous == null ? '' : a.previous),
+        apDateStr(a.earned) || apDateStr(new Date()), false
+      ]));
+      added.push(id);
+    }
+    if (toWrite.length) {
+      sheet.getRange(sheet.getLastRow() + 1, 1, toWrite.length, toWrite[0].length).setValues(toWrite);
+    }
+    return { success: true, added: added.length, awards: added };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// Shown once. Marking is separate from saving so a medal that was minted but
+// never actually displayed — the tab closed mid-celebration — pops next time.
+function handleMarkAwardsSeen(ss, athleteId, ids) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId required' };
+    var list = Array.isArray(ids) ? ids : String(ids || '').split('\t');
+    var want = {};
+    for (var k = 0; k < list.length; k++) { var v = String(list[k] || '').trim(); if (v) want[v] = 1; }
+    if (!apCountKeys_(want)) return { success: true, marked: 0 };
+
+    var sheet = apEnsureAwards(ss);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idC = headers.indexOf('Athlete_ID'), awC = headers.indexOf('Award_ID'), seenC = headers.indexOf('Seen');
+    if (idC < 0 || awC < 0 || seenC < 0) return { success: false, error: 'Awards sheet is missing a column' };
+    var n = 0;
+    for (var r = 1; r < data.length; r++) {
+      if (String(data[r][idC]).trim() !== athleteId) continue;
+      if (!want[String(data[r][awC] || '').trim()]) continue;
+      if (data[r][seenC] === true) continue;
+      sheet.getRange(r + 1, seenC + 1).setValue(true);
+      n++;
+    }
+    return { success: true, marked: n };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
