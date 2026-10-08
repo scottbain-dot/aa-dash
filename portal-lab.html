@@ -2647,10 +2647,24 @@
   .crd-row.dim .crd-row-n { color: var(--ink-mute); }
   .crd-row.dim .crd-row-v { color: var(--line-soft); }
 
-  .crd-detail { background: var(--cream); border-radius: 14px; padding: 15px 16px; margin: 0 0 10px; }
-  .crd-d-what { font: 400 13.5px 'Inter', sans-serif; color: var(--ink); margin: 0 0 12px; line-height: 1.55; }
-  .crd-lab { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); margin: 12px 0 5px; }
-  .crd-d-move { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); margin: 0; line-height: 1.55; }
+  /* The panel had one voice — 13px grey body copy under 9px grey labels, four
+     times over. Nothing to land on, so nothing got read. Each part now looks
+     like what it is: the definition reads as a sentence, the instruction as an
+     instruction, and how-long as a fact on a pill. */
+  .crd-detail { background: var(--cream); border-radius: 14px; padding: 16px; margin: 0 0 10px; }
+  .crd-d-what { font: 400 15px 'Fraunces', serif; color: var(--ink); margin: 0 0 13px; line-height: 1.5; }
+  .crd-lab { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); margin: 14px 0 6px; }
+
+  /* The method. An instruction, so it gets an instruction's weight and a rule
+     down the side rather than being a third grey paragraph. */
+  .crd-how { margin: 13px 0 0; padding: 11px 0 11px 13px; border-left: 3px solid var(--burgundy); }
+  .crd-how-t { display: flex; gap: 8px; font: 500 14px 'Inter', sans-serif; color: var(--ink);
+    margin: 0; line-height: 1.5; }
+  .crd-how-t > i { font-size: 16px; color: var(--burgundy); flex: none; margin-top: 1px; }
+  .crd-pace { display: inline-flex; align-items: center; gap: 5px; margin: 9px 0 0;
+    font: 600 11.5px 'Inter', sans-serif; color: var(--burgundy-dark);
+    background: rgba(135,75,70,.09); border-radius: 999px; padding: 5px 11px; line-height: 1.35; }
+  .crd-pace > i { font-size: 13px; opacity: .75; }
   /* The research, folded away. Present for anyone who wants it, never the first
      thing a fourteen-year-old has to read. */
   .crd-why { margin: 6px 0 0; }
@@ -2662,10 +2676,16 @@
   .crd-why[open] > summary::after { transform: rotate(90deg); }
   .crd-why > p { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-mute);
     margin: 4px 0 0; line-height: 1.5; }
-  .crd-next { display: flex; gap: 10px; align-items: baseline; margin: 12px 0 0; padding: 11px 13px;
-    background: rgba(212,175,55,.13); border: 1px solid rgba(212,175,55,.3); border-radius: 11px; }
-  .crd-next b { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--burgundy); white-space: nowrap; }
-  .crd-next span { font: 500 13px 'Inter', sans-serif; color: var(--ink); line-height: 1.5; }
+  /* The only line on the panel written about THIS student, so it is the one
+     thing that should be impossible to scroll past. */
+  .crd-next { display: block; margin: 14px 0 0; padding: 13px 14px; border-radius: 12px;
+    background: linear-gradient(135deg, rgba(212,175,55,.2), rgba(212,175,55,.08));
+    border: 1px solid rgba(212,175,55,.45); box-shadow: 0 4px 14px -8px rgba(135,75,70,.4); }
+  .crd-next-tag { display: inline-flex; align-items: center; gap: 5px; margin-bottom: 6px;
+    font: 800 9.5px 'Inter', sans-serif; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--burgundy); }
+  .crd-next-tag > i { font-size: 13px; }
+  .crd-next-t { display: block; font: 600 15px 'Inter', sans-serif; color: var(--ink); line-height: 1.45; }
   .crd-rels { display: flex; flex-wrap: wrap; gap: 6px; }
   .crd-rel { font: 500 12px 'Inter', sans-serif; color: var(--ink-soft); background: var(--surface);
     border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; cursor: pointer; }
@@ -13598,21 +13618,33 @@
     // The short answer, then the evidence folded away behind it. A student who
     // wants to know why can open it; one who just wants to know how long gets a
     // line, not a paragraph.
+    // A pill, not a paragraph. How long something takes is a fact about the
+    // thing, the size of a bus time — it does not need a heading and a block of
+    // body copy, and giving it one made the panel read as four identical slabs.
     const pace = a.pace
-      ? '<p class="crd-lab">How long it takes</p><p class="crd-d-move">'+esc(a.pace)+'</p>'+
+      ? '<p class="crd-pace"><i class="ti ti-clock-hour-4" aria-hidden="true"></i> '+esc(a.pace)+'</p>'+
         (a.why ? '<details class="crd-why"><summary>Why?</summary><p>'+esc(a.why)+'</p></details>' : '')
       : '';
     const moved = delta
       ? '<p class="crd-moved'+(delta>0?' up':' down')+'">'+(delta>0?'Up ':'Down ')+Math.abs(delta).toFixed(1)+
         (since ? ' since '+esc(since) : ' since your first assessment')+'.</p>'
       : '';
+    // Order matters more than wording here. This used to open with two generic
+    // paragraphs and bury the one personal, actionable line below them — so the
+    // only sentence written about THIS student was the last thing they reached.
+    // Now: what it is, what you gained, what to do next, then the method.
     return '<div class="crd-detail">'+
       '<p class="crd-d-what">'+esc(a.what)+'</p>'+ moved +
-      '<p class="crd-lab">What moves it</p><p class="crd-d-move">'+esc(sup.move||'')+'</p>'+
-      pace +
-      '<div class="crd-next"><b>Next</b><span>'+esc(cardNextFor(a, s))+'</span></div>'+
-      (sup.under.length ? '<p class="crd-lab">Raises the ceiling on this</p><div class="crd-rels">'+sup.under.map(chip).join('')+'</div>' : '')+
-      (sup.lifts.length ? '<p class="crd-lab">This raises the ceiling on</p><div class="crd-rels">'+sup.lifts.map(chip).join('')+'</div>' : '')+
+      '<div class="crd-next"><span class="crd-next-tag"><i class="ti ti-target-arrow" aria-hidden="true"></i> Do this next</span>'+
+        '<span class="crd-next-t">'+esc(cardNextFor(a, s))+'</span></div>'+
+      '<div class="crd-how">'+
+        '<p class="crd-how-t"><i class="ti ti-barbell" aria-hidden="true"></i> '+esc(sup.move||'')+'</p>'+
+        pace +
+      '</div>'+
+      // "Raises the ceiling on" is coach's language. A student reads these two
+      // labels as the same words in a different order and skips both.
+      (sup.under.length ? '<p class="crd-lab">What holds this up</p><div class="crd-rels">'+sup.under.map(chip).join('')+'</div>' : '')+
+      (sup.lifts.length ? '<p class="crd-lab">What this helps</p><div class="crd-rels">'+sup.lifts.map(chip).join('')+'</div>' : '')+
       cardBestsHTML(a.id)+
       (go ? '<button class="crd-go" onclick="'+go.act+'"><i class="ti ti-arrow-down-right" aria-hidden="true"></i> '+esc(go.label)+'</button>' : '')+
       '<p class="crd-src">'+esc(a.src)+'</p></div>';
