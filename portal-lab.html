@@ -2651,6 +2651,17 @@
   .crd-d-what { font: 400 13.5px 'Inter', sans-serif; color: var(--ink); margin: 0 0 12px; line-height: 1.55; }
   .crd-lab { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-mute); margin: 12px 0 5px; }
   .crd-d-move { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); margin: 0; line-height: 1.55; }
+  /* The research, folded away. Present for anyone who wants it, never the first
+     thing a fourteen-year-old has to read. */
+  .crd-why { margin: 6px 0 0; }
+  .crd-why > summary { display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+    font: 600 11px 'Inter', sans-serif; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--burgundy); list-style: none; padding: 3px 0; }
+  .crd-why > summary::-webkit-details-marker { display: none; }
+  .crd-why > summary::after { content: '▸'; font-size: 10px; transition: transform .15s; }
+  .crd-why[open] > summary::after { transform: rotate(90deg); }
+  .crd-why > p { font: 400 12.5px 'Inter', sans-serif; color: var(--ink-mute);
+    margin: 4px 0 0; line-height: 1.5; }
   .crd-next { display: flex; gap: 10px; align-items: baseline; margin: 12px 0 0; padding: 11px 13px;
     background: rgba(212,175,55,.13); border: 1px solid rgba(212,175,55,.3); border-radius: 11px; }
   .crd-next b { font: 700 9px 'Inter', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--burgundy); white-space: nowrap; }
@@ -13191,60 +13202,74 @@
   const CARD_PATTERNS = ['Squat','Hinge','Push','Pull','Lunge','Press'];
   const ACADEMY_BLOCKS = 10;
 
+  // Reading level is the point here. These panels are read by fourteen-year-olds,
+  // some with learning needs, on a phone — so every line that matters is short
+  // and plain, and the research sits behind a "Why?" toggle for the ones who
+  // want it. That is the house rule in CLAUDE.md: hide complexity, do not delete
+  // it. The evidence did not change; it stopped being the first thing you read.
   const CARD_ATTRS = [
     { id:'strength', short:'STR', label:'Strength', grp:'body',
-      what:'How much you can move on the six patterns. Only counts on a pattern a coach has stamped — there is no tested load on a movement nobody has signed off.',
+      what:'How much you can move on the six patterns. It only counts on a pattern your coach has stamped.',
       src:'Strength sheet · the load tier earned at your technique level', goes:'levels',
-      pace:'Months, not weeks. Across 43 studies of young athletes the biggest strength gains came from programmes running longer than about six months, and both the length and how often you trained made the gains bigger. Judge this across a season.' },
+      pace:'Months, not weeks. Judge it across a season.',
+      why:'Across 43 studies of young athletes, the biggest strength gains came from programmes running longer than about six months. Training for longer, and more often, made the gains bigger.' },
     { id:'power', short:'POW', label:'Power', grp:'body',
       what:'Strength, fast. Jumping, throwing, your first two steps.', src:'Broad jump', goes:'testing',
-      pace:'Weeks to months. Jumping responds about as well as strength does in the research — a lot of the early change is your nervous system learning to fire harder, and the rest follows the strength underneath it.' },
+      pace:'Weeks to months.',
+      why:'Jumping responds about as well as strength does. Early on you are teaching your nervous system to fire harder, and the rest follows the strength underneath it.' },
     { id:'speed', short:'SPD', label:'Speed', grp:'body',
-      what:'Top-end running. Sprinting is the best thing for sprinting; power underneath raises the ceiling.',
+      what:'Top-end running. Sprinting is the best thing for sprinting.',
       src:'40m sprint', goes:'testing',
-      pace:'The hardest one on this card to move. In the research, lifting improves jumping and strength clearly but shows only a small effect on straight-line sprint time — so expect this to be slow, keep the reps short and fresh, and do not read a flat number as failure.' },
+      pace:'The slowest one here to move. A flat number is not failure.',
+      why:'Lifting clearly improves jumping and strength, but the research shows only a small effect on straight-line sprint time. Keep the reps short and fresh, and give it time.' },
     { id:'agility', short:'AGI', label:'Agility', grp:'body',
-      what:'Stopping, turning, going again. Built on strength and mobility as much as on speed.',
+      what:'Stopping, turning, going again.',
       src:'5-10-5', goes:'testing',
-      pace:'Six to eight weeks, twice a week. This is one of the better-evidenced ones — strength work shows a large effect on changing direction inside two months, and training more often than twice a week did not help.' },
+      pace:'Six to eight weeks, twice a week.',
+      why:'One of the best-evidenced on this card. Strength work shows a large effect on changing direction inside two months, and training more often than twice a week did not help.' },
     { id:'engine', short:'END', label:'Engine', grp:'body',
-      what:'How long you last. Only your aerobic base is measured — threshold and top end have no test yet.',
+      what:'How long you last. Only your aerobic base is measured so far.',
       src:'Cooper 12 min', goes:'testing',
-      pace:'Six to eight weeks before a test moves, and it keeps giving for years. Coaching experience more than a specific study — but it is the quality that rewards patience most.' },
+      pace:'Six to eight weeks before a test moves. Then it keeps giving for years.',
+      why:'Coaching experience more than a specific study — but it is the quality that rewards patience most.' },
     { id:'movement', short:'MOV', label:'Movement', grp:'athlete', coach:true,
-      what:'The six patterns, signed off by your coach. The one thing that genuinely comes first — you do not load a pattern that is not stamped.',
+      what:'The six patterns, signed off by your coach. You do not load a pattern that is not stamped.',
       src:'Technique levels 1–5, stamped at a check-in', goes:'levels',
-      pace:'Changes the day you get stamped. Weeks of drilling, then one check-in and it jumps.' },
+      pace:'Changes the day you get stamped.',
+      why:'Weeks of drilling, then one check-in and it jumps. The work is invisible until it is signed off.' },
     { id:'mobility', short:'MOB', label:'Mobility', grp:'athlete', coach:true,
-      what:'Range of motion and control — ankles, trunk, shoulders. Feeds agility and keeps you in one piece.',
+      what:'Range of motion and control — ankles, trunk, shoulders.',
       src:'Three screens, 0–3 each, at a check-in',
-      pace:'Two to four weeks of near-daily work. That is coaching experience rather than a study, but it is the fastest physical thing on this card to change.' },
+      pace:'Two to four weeks of near-daily work.',
+      why:'Coaching experience rather than a study, but it is the fastest physical thing on this card to change.' },
     { id:'consistency', short:'CON', label:'Consistency', grp:'athlete',
-      what:'Turning up. The share of your own planned sessions you actually did over the last eight weeks.',
+      what:'Turning up. How many of your planned sessions you actually did.',
       src:'Your logged sessions · the training part of Grit', goes:'load',
-      pace:'Next week. The only one you can move immediately, which is why it carries the others.' },
+      pace:'Next week.',
+      why:'The only one you can move immediately, which is why it carries all the others.' },
     { id:'knowledge', short:'KNW', label:'Knowledge', grp:'athlete',
-      what:'What you have learned and can use. Ten blocks make up the academy — each one you pass is a point.',
+      what:'What you have learned and can use. Ten blocks make up the academy.',
       src:'Level Up · 10 blocks across the academy', goes:'learn',
       pace:'A whole point the moment you finish a block.' },
     { id:'mindset', short:'MIN', label:'Mindset', grp:'athlete', coach:true, slow:true,
-      what:'Mindset, effort, coachability and mental toughness. The one attribute no test can give you — your coach writes it from a term of watching.',
+      what:'Mindset, effort, coachability and toughness. Your coach writes this one.',
       src:'Scored by your coach · moves slowly, by design',
-      pace:'A term. It is not a session, a week or a good day — it is the pattern across all of them.' }
+      pace:'A term.',
+      why:'Not a session, a week or a good day — it is the pattern across all of them.' }
   ];
 
   // Support, never gates. The one genuine gate is stated on movement alone.
   const CARD_SUPPORT = {
-    strength:{under:['movement'],lifts:['power','speed','agility'],move:'Heavier work on the six patterns, two to three times a week. The slowest of the ten — give it six to eight weeks before you judge it.'},
+    strength:{under:['movement'],lifts:['power','speed','agility'],move:'Heavier work on the six patterns, two or three times a week.'},
     power:{under:['strength'],lifts:['speed','agility'],move:'Jumps and throws, fresh and few. Tired power training is just conditioning.'},
-    speed:{under:['power','mobility'],lifts:[],move:'Short sprints with full recovery. Never add fatigue to make it harder — that trains something else.'},
-    agility:{under:['strength','mobility'],lifts:[],move:'Cuts and turns against a reaction, not a cone you already knew about. Strength is what lets you stop.'},
-    engine:{under:[],lifts:[],move:'Mostly easy running, one harder session a week, built up about ten percent at a time.'},
+    speed:{under:['power','mobility'],lifts:[],move:'Short sprints with full recovery. Never add fatigue to make it harder.'},
+    agility:{under:['strength','mobility'],lifts:[],move:'Cuts and turns you did not see coming, not a cone you already knew about.'},
+    engine:{under:[],lifts:[],move:'Mostly easy running. One harder session a week.'},
     movement:{under:[],lifts:['strength'],move:'Film it, drill it, get it stamped at a check-in.'},
-    mobility:{under:[],lifts:['speed','agility'],move:'Ten minutes on your worst screen, most days. Range you can control, not range you can flop into.'},
-    consistency:{under:[],lifts:['strength','power','speed','agility','engine'],move:'Turn up. One more session a week than last week is the whole method.'},
-    knowledge:{under:[],lifts:[],move:'Finish a Level Up block. Each one is a whole point out of ten.'},
-    mindset:{under:[],lifts:['consistency'],move:'No single session moves this. It is what your coach sees over a term — how you take feedback, and what you do on the bad days.'}
+    mobility:{under:[],lifts:['speed','agility'],move:'Ten minutes on your worst screen, most days.'},
+    consistency:{under:[],lifts:['strength','power','speed','agility','engine'],move:'Turn up. One more session a week than last week.'},
+    knowledge:{under:[],lifts:[],move:'Finish a Level Up block. Each one is a whole point.'},
+    mindset:{under:[],lifts:['consistency'],move:'No single session moves this. It is what your coach sees over a term.'}
   };
 
   // Thresholds are rungs at 2, 4, 6, 8 and 10, and the score slides between
@@ -13570,7 +13595,13 @@
     // How long before this should be expected to move. Without it, a student
     // trains speed for three weeks, sees nothing, and concludes it does not
     // work — when in fact they stopped one week into a six week change.
-    const pace = a.pace ? '<p class="crd-lab">How long it takes</p><p class="crd-d-move">'+esc(a.pace)+'</p>' : '';
+    // The short answer, then the evidence folded away behind it. A student who
+    // wants to know why can open it; one who just wants to know how long gets a
+    // line, not a paragraph.
+    const pace = a.pace
+      ? '<p class="crd-lab">How long it takes</p><p class="crd-d-move">'+esc(a.pace)+'</p>'+
+        (a.why ? '<details class="crd-why"><summary>Why?</summary><p>'+esc(a.why)+'</p></details>' : '')
+      : '';
     const moved = delta
       ? '<p class="crd-moved'+(delta>0?' up':' down')+'">'+(delta>0?'Up ':'Down ')+Math.abs(delta).toFixed(1)+
         (since ? ' since '+esc(since) : ' since your first assessment')+'.</p>'
