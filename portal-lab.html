@@ -2248,6 +2248,9 @@
       <label class="ai-guide-label" for="aiNotes" style="display:block;">In your own words · what are you after?</label>
       <textarea class="note-input ai-notes-primary" id="aiNotes" style="min-height:120px;" placeholder="e.g. I play rugby and want to get more explosive for next season. My left knee gets sore so nothing too heavy on squats. I can train 3 days a week, about 45 min, and I’d like a real core focus."></textarea>
       <div class="more-divider" style="margin-top:20px;">Quick choices · optional</div>
+      <!-- Raised when the chosen goal pulls against the current block. Named,
+           never vetoed — the athlete says which of the two should move. -->
+      <div class="ai-clash" id="aiClash" hidden></div>
       <div class="ai-guide-group">
         <p class="ai-guide-label">Your goal</p>
         <div class="ai-chips" data-k="goal">
@@ -3429,6 +3432,22 @@
   .embedded-warn i { font-size: 20px; color: var(--gold); flex-shrink: 0; margin-top: 1px; }
   .embedded-warn strong { display: block; margin-bottom: 3px; color: #fff; }
   .embedded-warn b { color: var(--gold-light); }
+  /* A clash between the goal and the block. Amber, not red — nothing is wrong,
+     two true things disagree and the athlete picks. Both answers equal weight. */
+  .ai-clash { margin: 16px 0; padding: 14px; border-radius: 12px;
+    background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.4); }
+  .ai-clash-h { display: flex; align-items: center; gap: 6px; margin: 0 0 6px;
+    font: 700 13px 'Inter', sans-serif; color: var(--ink); }
+  .ai-clash-h > i { color: #b4790b; font-size: 16px; }
+  .ai-clash-p { font: 400 13px 'Inter', sans-serif; color: var(--ink-soft); margin: 0; line-height: 1.5; }
+  .ai-clash-q { font: 600 11px 'Inter', sans-serif; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-mute); margin: 11px 0 7px; }
+  .ai-clash-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ai-clash-btn { flex: 1 1 auto; min-width: 132px; font: 600 13px 'Inter', sans-serif; cursor: pointer;
+    color: var(--ink); background: rgba(255,255,255,.75); border: 1px solid rgba(245,158,11,.5);
+    border-radius: 999px; padding: 9px 13px; }
+  .ai-clash-btn:active { background: rgba(255,255,255,1); }
+
   /* Build with AI */
   .ai-spinner { width: 34px; height: 34px; margin: 0 auto; border: 3px solid var(--line); border-top-color: var(--burgundy); border-radius: 50%; animation: ai-spin 0.8s linear infinite; }
   @keyframes ai-spin { to { transform: rotate(360deg); } }
@@ -9167,6 +9186,7 @@
   // ============================================================
   let aiMode = 'input', aiBusy = false, aiParsed = null;
   function openAIBuild(){
+    aiClashChoice = ''; hideAIClash();
     aiParsed = null; aiBusy = false;
     document.querySelectorAll('#aiInput .ai-chip.sel').forEach(c => c.classList.remove('sel'));
     ['aiNotes','aiText','aiSport'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
@@ -9190,6 +9210,33 @@
     document.body.style.overflow = 'hidden';
   }
   // Single-select chip within its group.
+  // The athlete's answer to a clash, remembered only for this build.
+  let aiClashChoice = '';
+  function showAIClash(c){
+    const box = document.getElementById('aiClash');
+    box.innerHTML =
+      '<p class="ai-clash-h"><i class="ti ti-alert-triangle" aria-hidden="true"></i> '+
+        esc(c.goal)+' in a '+esc(c.label)+' block</p>'+
+      '<p class="ai-clash-p">'+esc(c.says)+'</p>'+
+      '<p class="ai-clash-q">Which one changes?</p>'+
+      '<div class="ai-clash-actions">'+
+        '<button class="ai-clash-btn" onclick="aiClashKeepGoal(\''+esc(c.goal).replace(/'/g,"\\'")+'\')">'+
+          'Build it anyway</button>'+
+        '<button class="ai-clash-btn" onclick="aiClashFixYear()">Change my year</button>'+
+      '</div>';
+    box.hidden = false;
+    box.scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+  function hideAIClash(){ const b = document.getElementById('aiClash'); if(b){ b.hidden = true; b.innerHTML = ''; } }
+  // Goal wins: the block stays as it is and the AI is told to respect the goal
+  // while still being told what month it is, so it can hedge sensibly.
+  function aiClashKeepGoal(goal){ aiClashChoice = goal; hideAIClash(); submitAIBuild(); }
+  // Block wins: send them to the Year tab to change the month, because that is
+  // the thing that is actually wrong if the goal is right.
+  function aiClashFixYear(){ hideAIClash(); closeAIBuild(); switchTab('year'); }
+  window.aiClashKeepGoal = aiClashKeepGoal;
+  window.aiClashFixYear = aiClashFixYear;
+
   function aiPick(el){
     const group = el.closest('.ai-chips'); if(!group) return;
     if(group.dataset.multi){ el.classList.toggle('sel'); }               // equipment = pick many
@@ -9211,11 +9258,56 @@
       : '<i class="ti ti-sparkles" aria-hidden="true"></i> Build my program';
   }
   window.aiSetMode = aiSetMode;
+  // Which goals pull against which blocks. A taper is not the week to chase a
+  // new squat max, and a recovery block is not the week to add sprint volume.
+  // This is a conflict to name, never a veto: the athlete decides whether the
+  // goal moves or the block does.
+  const PHASE_CLASH = {
+    peak:    { against:['Strength','Power & plyometrics','Endurance'],
+               says:'You are in a Peak block — the plan is to arrive fresh, so this block trains a little less, not more.' },
+    recover: { against:['Strength','Power & plyometrics','Endurance','Speed'],
+               says:'You are in a Recover block — the plan is to let the work sink in before you load again.' },
+    off:     { against:['Strength','Power & plyometrics','Endurance','Speed','Foundation / base'],
+               says:'You are in an Off block — this is your break.' }
+  };
+  function aiBlockClash(goal){
+    const info = currentPhaseInfo() || {};
+    const c = PHASE_CLASH[info.phase];
+    if(!goal || !c || c.against.indexOf(goal) < 0) return null;
+    return { phase: info.phase, label: PHASE_FRIENDLY[info.phase] || info.phase, goal: goal, says: c.says };
+  }
+
   function collectAISpec(){
     const get = k => { const s = document.querySelector('#aiInput .ai-chips[data-k="'+k+'"] .ai-chip.sel'); return s ? s.dataset.val : ''; };
     const getMulti = k => [...document.querySelectorAll('#aiInput .ai-chips[data-k="'+k+'"] .ai-chip.sel')].map(c => c.dataset.val);
     const equip = getMulti('equipment');
+    // The year the athlete already built, attached without asking for it again.
+    // Before this, a student set a vision, an event date and twelve months of
+    // build/maintain/peak/recover, then tapped Build with AI and was asked what
+    // their goal was from scratch — so in April, the month their own plan said
+    // "taper into Regionals", the builder could not know that and would happily
+    // write a hard week.
+    const info = currentPhaseInfo() || {};
+    const ym = state.yearMap || {};
+    const ap = ym.aPriority || {};
+    const read = loadRead();
+    const weeksToEvent = ap.date
+      ? Math.max(0, Math.round((parseISO(ap.date) - new Date()) / 604800000))
+      : null;
     return {
+      block: info.phase ? {
+        phase: info.phase,                       // build | maintain | peak | recover | off
+        label: PHASE_FRIENDLY[info.phase] || '',
+        month: info.month || '',
+        focus: info.focus || '',                 // the athlete's own note for the month
+        sport: info.sport || '',
+        expectedWeekLoad: read.expected || null,  // derived, never asked for
+        usualWeekLoad: read.usual || null
+      } : null,
+      season: (ym.vision || ap.event) ? {
+        vision: ym.vision || '',
+        event: ap.event || '', eventDate: ap.date || '', weeksToEvent: weeksToEvent
+      } : null,
       goal: get('goal'),
       experience: get('experience') || 'some experience',
       days: parseInt(get('days') || '3', 10),
@@ -9337,6 +9429,11 @@
       if(spec.goal === 'Other' && !hasNotes){ showAIError('You picked “Other” — say what you’re after in the box up top.'); return; }
     }
     if(aiGenLeftToday() <= 0){ showAIError('You’ve built a lot today — tweak what you have, or try again tomorrow.'); return; }
+    // The goal and the block disagree. Say so and stop — but do not decide. The
+    // athlete knows whether the event moved, the plan was wrong, or they have
+    // simply changed their mind about what this month is for.
+    const clash = usePaste ? null : aiBlockClash(spec.goal);
+    if(clash && aiClashChoice !== clash.goal){ showAIClash(clash); return; }
     setAIMode('loading'); aiBusy = true;
     document.getElementById('aiLoadingText').textContent = usePaste ? 'Reading your plan…' : 'Building your program…';
     try {
