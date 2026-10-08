@@ -2366,6 +2366,9 @@ function handleGenerateProgram(spec) {
       + '- Use CANONICAL exercise names so they map cleanly, drawing from: Back Squat, Front Squat, Goblet Squat, Deadlift, Romanian Deadlift, Hip Thrust, Split Squat, Walking Lunge, Bench Press, Overhead Press, Push-Up, Dumbbell Press, Pull-Up, Chin-Up, Barbell Row, Dumbbell Row, Kettlebell Swing, Box Jump, Broad Jump, Med-Ball Slam, Med-Ball Throw, Sprint, Acceleration Run, Tempo Run, Interval Run, Row Intervals, Bike Intervals, Nordic Curl, Plank, Pallof Press, Farmer Carry, Hanging Leg Raise.\n'
       + '- Give simple, realistic set/rep detail for the goal and age (Strength ~4x5, Power ~4x3, Foundation ~3x10-12, Endurance = intervals/time). Do not prescribe 1-rep maxes.\n'
       + '- If the athlete has written a description of what they want, treat it as the MOST important input — honour their focus, injuries and constraints even if a structured field seems to say otherwise.\n'
+      + '- THE BLOCK. If the athlete is given a training block below, it is the shape of their year and it governs the WEEK YOU WRITE. build = a normal hard week, progressing. maintain = hold the level, do not add volume. peak = taper: FEWER and SHORTER sessions, keep some sharp intensity, arrive fresh. recover = easy aerobic and mobility only, no hard sessions, no heavy lifting. off = a break; two or three light optional sessions at most. Match the number of days and the session length DOWN when the block says peak, recover or off, even if the athlete asked for more.\n'
+      + '- When a goal and a block pull against each other, the athlete has already been shown the conflict and chosen to go ahead. Honour the goal, but keep it inside the block: in a peak block train the goal with low volume and high quality, in a recover block train it gently. Never write a heavy week in a taper.\n'
+      + '- If a month focus is given, it is the athlete\'s own note about what this month is for. Treat it like their description: specific and binding.\n'
       + '- Team commitments: dow uses 0=Mon,1=Tue,2=Wed,3=Thu,4=Fri,5=Sat,6=Sun. NEVER put a training day on the game day. Prefer NOT to add training on team-practice days (those are already covered) unless days/week can\'t otherwise be met. Keep the day BEFORE the game easy — never a hard session the day before a game. The game itself is that week\'s key hard effort, so don\'t also schedule a second hard day right next to it.\n'
       + '- Return ONLY the JSON object.';
 
@@ -2384,6 +2387,31 @@ function handleGenerateProgram(spec) {
     }
     if (spec.gameDay) {
       userMessage += '- Game day: ' + spec.gameDay + ' (NO training this day; keep the day before easy; the game is this week\'s key hard effort)\n';
+    }
+
+    // The year the athlete already built. Sent automatically by the portal — it
+    // is not another question. Without it the builder would ask a student what
+    // their goal is while their own plan, one tab away, says "taper into
+    // Regionals".
+    var blk = spec.block;
+    if (blk && blk.phase) {
+      userMessage += '\nTHE ATHLETE\'S CURRENT TRAINING BLOCK (governs the week you write):\n'
+        + '- Phase: ' + blk.phase + (blk.label ? ' (' + blk.label + ')' : '') + '\n'
+        + (blk.month ? '- Month: ' + blk.month + '\n' : '')
+        + (blk.sport ? '- Sport this block is for: ' + blk.sport + '\n' : '')
+        + (blk.focus ? '- What the athlete wrote this month is for: "' + String(blk.focus).slice(0, 200) + '"\n' : '');
+      if (blk.expectedWeekLoad && blk.usualWeekLoad) {
+        var pct = Math.round(blk.expectedWeekLoad / blk.usualWeekLoad * 100);
+        userMessage += '- This block asks for about ' + pct + '% of their normal training week'
+          + (pct < 95 ? ' — so write LESS than usual.\n' : (pct > 105 ? ' — so they can handle a full week.\n' : '.\n'));
+      }
+    }
+    var sea = spec.season;
+    if (sea && (sea.vision || sea.event)) {
+      userMessage += '\nWHAT THEY ARE BUILDING TOWARDS:\n'
+        + (sea.vision ? '- Their goal for the year: "' + String(sea.vision).slice(0, 200) + '"\n' : '')
+        + (sea.event ? '- Main event: ' + sea.event + (sea.eventDate ? ' on ' + sea.eventDate : '') + '\n' : '')
+        + (sea.weeksToEvent != null ? '- Weeks until it: ' + sea.weeksToEvent + '\n' : '');
     }
 
     var payload = {
