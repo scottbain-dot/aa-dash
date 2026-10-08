@@ -293,6 +293,9 @@ function doGet(e) {
     if (action === 'getAvailability') {
       return apJson(handleGetAvailability(ss, e.parameter.athleteId));
     }
+    if (action === 'getPrefs') {
+      return apJson(handleGetPrefs(ss, e.parameter.athleteId));
+    }
 
     // ===== CLASH OF THE CODES ACTIONS =====
     if (action === 'getClashTeams') {
@@ -508,6 +511,9 @@ function doPost(e) {
     }
     if (data.action === 'setAwardPins') {
       return apJson(handleSetAwardPins(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.ids));
+    }
+    if (data.action === 'savePref') {
+      return apJson(handleSavePref(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.key, data.value));
     }
     if (data.action === 'savePB') {
       var ssAp4 = SpreadsheetApp.getActiveSpreadsheet();
@@ -2868,12 +2874,12 @@ var AA_SESSION_DAYS = 7;
 var AA_STUDENT_GET_ROUTES = [
   'getYearMap', 'getWeeklyTemplate', 'getWeek', 'getGames', 'getBookingData',
   'getYearLoad', 'getPBs', 'getSquadPulse', 'getLastTimes', 'getExerciseHistory',
-  'getLearnProgress', 'getPassport', 'getGrit', 'getAvailability', 'getAwards'
+  'getLearnProgress', 'getPassport', 'getGrit', 'getAvailability', 'getAwards', 'getPrefs'
 ];
 var AA_STUDENT_POST_ROUTES = [
   'saveYearMap', 'saveBlock', 'saveWeeklyTemplate', 'saveSession', 'deleteSession',
   'bookCheckIn', 'cancelBooking', 'savePB', 'saveAvailability', 'clearAvailability',
-  'saveAwards', 'markAwardsSeen', 'setAwardPins'
+  'saveAwards', 'markAwardsSeen', 'setAwardPins', 'savePref'
 ];
 
 // Created once, on first use, and kept in Script Properties thereafter. The
@@ -4358,6 +4364,9 @@ function handleGetPortalBootstrap(ss, credential, sessionTok) {
       learn: (learnRes && learnRes.success && learnRes.learn) ? learnRes.learn : { blocks: {} },
       grit: apComputeGrit(ss, athleteId),
       availability: apLoadAvailability(ss, athleteId),
+      // What the athlete has written and chosen for their CV. Rides in on the
+      // bootstrap so the document paints complete rather than filling in.
+      prefs: apLoadPrefs(ss, athleteId),
       testing: apLoadTesting(ss, athleteId),
       strengthLevels: apLoadStrengthLevels(ss, athleteId),
       // Two of the athlete's ten attributes lived in the sheets and fed the
@@ -4573,6 +4582,93 @@ function apLoadStrengthLevels(ss, athleteId) {
 // Deliberately not locked down technically: the teacher can see every flag and
 // its reason, so this rests on visibility rather than a rule a student would
 // only find ways around.
+// ============================================================================
+// ATHLETE PREFS — a small per-athlete key/value store
+// ============================================================================
+// One row per athlete per key. It exists because the CV needs things the
+// athlete writes and chooses — the profile line they want a coach to read
+// first, and which sections of the document to include — and those are not
+// training data. They do not belong in Training_Sessions, they are not awards,
+// and giving each of them its own sheet and its own handler pair would be three
+// deploys for three text fields.
+//
+// Keyed by Athlete_ID like everything else. Values are strings; anything richer
+// is JSON the client parses, which keeps the sheet readable and the handler one
+// function rather than a schema.
+function apEnsurePrefs(ss) {
+  var sheet = ss.getSheetByName('Athlete_Prefs');
+  var headers = ['Athlete_ID', 'Key', 'Value', 'Updated'];
+  if (!sheet) {
+    sheet = ss.insertSheet('Athlete_Prefs');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  apEnsureColumns(sheet, headers);
+  return sheet;
+}
+
+function apLoadPrefs(ss, athleteId) {
+  var id = String(athleteId || '').trim();
+  var out = {};
+  if (!id) return out;
+  var rows = apReadObjects(apEnsurePrefs(ss));
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].Athlete_ID).trim() !== id) continue;
+    var k = String(rows[i].Key || '').trim();
+    // Unescaped on the way out — apSafeCell_ shields a leading =/+/-/@ on write,
+    // and a profile line starting with a dash is a thing a student will type.
+    if (k) out[k] = apUnsafeCell_(String(rows[i].Value == null ? '' : rows[i].Value));
+  }
+  return out;
+}
+
+function handleGetPrefs(ss, athleteId) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
+    return { success: true, prefs: apLoadPrefs(ss, athleteId) };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// Upsert. An empty value deletes the row rather than storing a blank, so
+// "cleared" and "never set" are the same thing and the client only has to
+// handle one of them.
+function handleSavePref(ss, athleteId, key, value) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    key = String(key || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId is required' };
+    if (!key) return { success: false, error: 'key is required' };
+    var val = String(value == null ? '' : value);
+    if (val.length > 4000) val = val.slice(0, 4000);
+
+    var sheet = apEnsurePrefs(ss);
+    var data = sheet.getDataRange().getValues();
+    var h = data[0];
+    var idC = h.indexOf('Athlete_ID'), kC = h.indexOf('Key'),
+        vC = h.indexOf('Value'), uC = h.indexOf('Updated');
+    if (idC < 0 || kC < 0 || vC < 0) return { success: false, error: 'Athlete_Prefs is missing a column' };
+
+    for (var r = data.length - 1; r >= 1; r--) {
+      if (String(data[r][idC]).trim() !== athleteId) continue;
+      if (String(data[r][kC]).trim() !== key) continue;
+      if (!val) { sheet.deleteRow(r + 1); return { success: true, key: key, cleared: true }; }
+      sheet.getRange(r + 1, vC + 1).setValue(apSafeCell_(val));
+      if (uC >= 0) sheet.getRange(r + 1, uC + 1).setValue(apDateStr(new Date()));
+      return { success: true, key: key };
+    }
+    if (!val) return { success: true, key: key, cleared: true };
+    sheet.appendRow(apSafeRow_([athleteId, key, val, apDateStr(new Date())]));
+    return { success: true, key: key, added: true };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
 function apEnsureAvailability(ss) {
   var sheet = ss.getSheetByName('Availability');
   var headers = ['Athlete_ID', 'From', 'To', 'Kind', 'Note', 'Created'];

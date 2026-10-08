@@ -38,6 +38,36 @@ of them — they are standalone pages.
 
 ---
 
+## Going to main — 8 Oct 2026 (third push)
+
+**The CV is a document now, and the board fails one block at a time.**
+
+| What | Where |
+|---|---|
+| **The board stopped failing as one thing.** Scott hit "Could not load the board" — which was the all-or-nothing catch added this morning doing its job: one block was throwing and taking the other five with it. A noticeboard is a set of independent notices and it fails like one now. A block that cannot render costs that block and names itself in a quiet line at the foot of the board. | Board |
+| **`p.you` was a real crash waiting.** Every surface that places the athlete inside the squad assumed the field was there. It is one field on a hand-pasted Apps Script, so a deployment a version behind returns the rest of the payload without it. Five call sites guarded. | Board, squad card, ticker |
+| **The CV reads like a CV.** Scott's test: picture them hitting Export and emailing it to a university coach — would they send this? No, because it was built like the rest of the portal. Gold medallions, a coloured grit pill, stat tiles, and rows of blurred padlocks showing everything they had *not* done. Locked placeholders are a game mechanic; on a document sent to a stranger they are a list of gaps. It is a letterhead, rules, tables, one accent colour and real dates, and nothing on it that has not been achieved. | CV |
+| **Export PDF is back on the page**, and the print stylesheet now drops every control, every other screen and the page frame. | CV |
+| **Editable the whole way.** The athlete writes their own headline and profile, picks what the page leads with, switches any section out of the document, and adds or corrects their own bests. Competition results, fitness testing and strength levels stay read-only — they are what makes the page worth sending, and the document says who recorded them. | CV |
+| **Two things that were quietly wrong on paper.** A sprint that got faster printed as "+0.29 s", because the stored delta is a magnitude and the sign was being guessed from the wrong end; it reads "improved 0.29 s" now. And every date carries a year — "14 Feb" is fine inside the app, where everything is this season, and unreadable on a page a coach opens in two years. | CV |
+
+**Needs a paste to take effect.** `COMPLETE-APPS-SCRIPT.gs` gains an
+`Athlete_Prefs` sheet (one row per athlete per key) with `getPrefs` / `savePref`,
+and the bootstrap returns prefs. This carries the CV's profile text and section
+choices. Until it is pasted, the CV renders and edits work for the session but
+the athlete's own words do not survive a reload. The `Pinned` column and
+`setAwardPins` from the previous push are in the same file — one paste covers
+both.
+
+Verified headless: the document carries no padlocks, medals, gradients or
+shadows, facts sit in tables, every date has a year, an internal rating is
+explained in words a stranger can read, edit mode exposes exactly the fields the
+athlete owns, a switched-out section leaves the document, print drops all of it,
+and the board survives every missing field in the squad payload. Identity and
+reading guards pass.
+
+---
+
 ## Going to main — 8 Oct 2026 (second push)
 
 **My Program, in three groups.** Scott's read of the screen, and he grouped it
