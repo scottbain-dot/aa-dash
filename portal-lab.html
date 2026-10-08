@@ -2696,6 +2696,16 @@
   .crd-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 13px; font: 600 12.5px 'Inter', sans-serif;
     color: var(--burgundy); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; cursor: pointer; }
   .crd-src { font: italic 400 11px 'Fraunces', serif; color: var(--ink-mute); margin: 13px 0 0; }
+  /* ---- Today, done ---- */
+  .card-hero.hero-done { background: linear-gradient(160deg, rgba(74,157,91,.1), rgba(74,157,91,.03)); }
+  .hero-done-flag { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle;
+    margin-right: 9px; padding: 5px 11px 5px 8px; border-radius: 999px;
+    background: #4a9d5b; color: #fff; font: 800 11px 'Inter', sans-serif;
+    letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+  .hero-done-flag > i { font-size: 13px; }
+  .hero-done-name { font-style: normal; }
+  .card-hero.hero-done .card-hero-sub strong { color: #3f8a4f; }
+
   /* ---- Last week review ---- */
   .lw-card { border-left: 3px solid var(--burgundy); }
   .lw-card.good { border-left-color: var(--int-easy, #4a9d5b); }
@@ -8164,8 +8174,19 @@
       // a gym session; the old rule hid the screen from them on a technicality.
       const hasWorkout = (s.workout||[]).length;
       if(isLogged(s)){
+        // Done is a different state, not the same card with an Edit button on
+        // it. The week list below has said "Nailed it" since day one while this
+        // card — the biggest thing on the screen — went on offering to edit, so
+        // the moment a student finishes, the loudest surface ignored it.
+        //
+        // Editing is still here, demoted. Nobody finishes a session wanting to
+        // edit it; they want to be told it counted.
+        titleHTML = '<span class="hero-done-flag"><i class="ti ti-check" aria-hidden="true"></i> '+esc(doneWord(s))+'</span>'+
+                    '<span class="hero-done-name">'+esc(s.name)+'</span>';
+        subHTML = '<strong>'+esc(s.sport)+'</strong> · '+(s.duration||s.plannedDuration||0)+' min'+
+                  (effortWord(s.rpe) ? ' · '+esc(effortWord(s.rpe)) : '')+' · in the bank'+extra;
         cta = (hasWorkout ? '<button class="card-cta card-cta-ghost" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> '+wktWords(s).open+'</button>' : '')+
-              '<button class="card-cta card-cta-gold" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Edit today’s '+noun+'</button>';
+              '<button class="card-cta card-cta-ghost" onclick="openSession(\''+s.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i> Edit today’s '+noun+'</button>';
       } else if(hasWorkout){
         // A real workout today → lead with Start workout, with the one-tap log
         // underneath for the days they trained but won't walk through it.
@@ -8179,7 +8200,8 @@
       subHTML = 'Nothing planned — recovery counts too.';
       cta = '<button class="card-cta card-cta-gold" onclick="newSession(\''+today+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add today’s session</button>';
     }
-    return '<div class="card card-hero">'+
+    const heroDone = todays.length && isLogged(todays[0]) ? ' hero-done' : '';
+    return '<div class="card card-hero'+heroDone+'">'+
       '<div class="hero-eyebrow-row"><p class="card-hero-eyebrow">'+eyebrow+'</p>'+streakChipHTML()+'</div>'+
       '<h2 class="card-hero-title">'+titleHTML+'</h2>'+
       '<p class="card-hero-sub">'+subHTML+'</p>'+
