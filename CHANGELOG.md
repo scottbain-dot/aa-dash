@@ -38,6 +38,32 @@ of them — they are standalone pages.
 
 ---
 
+## Going to main — 8 Oct 2026 (fourth push)
+
+**Five icons were rendering as nothing**, including the one on the Finish
+workout button. The free Tabler webfont the portal loads has no `-filled`
+variants at all, and `ti-flag-checkered` is not a name in it. A missing glyph
+does not error, does not warn and does not fall back — it renders as empty
+space, so the button keeps its circle and loses its picture. `tools/check-icons.js`
+now cross-checks every icon name against a vendored list of the 5,247 that
+really ship, so this cannot come back.
+
+| What | Where |
+|---|---|
+| **"Nailed it" sits beside the date.** Inline it pushed "Base (Bike or Run — Alternate)" onto a second line on every phone — a badge breaking the session name in half to say "done". | My Program |
+| **The streak is drawn, not counted.** A tile reading "6" is a dashboard; a row of flames that got longer last week is a streak, and the unlit one on the end is this week asking to be earned. The headline says what would come next — your longest run yet, one more equals your best — and never reports a zero. This week's session bar moved inside it, because that is the thing that keeps the run alive. | My Program |
+| **Sessions and bests became rows with somewhere to go.** Each names the next thing — "4 more to Prospect", "set one and it is yours for good" — instead of sitting there as a number. Badges moved to the trophy room, where they already live. | My Program |
+| **The block says what it is building.** "Hyrox build · week 10 of 26" is the setting, not the job. The components the athlete picked in the year map were sitting there unused; the card now reads "Building strength and endurance for Hyrox", and the whole eyebrow is the way into the Year tab. | My Program |
+| **"On top of your sport: 2–3 sessions a week" only appears when it is advice.** Told to an athlete already running a seven-session Hyrox program it is noise — they are doing four times what it asks and the line still reads as a job outstanding. It now counts the non-sport sessions already in their program and stays quiet when the program covers it. An athlete whose week is three football trainings still gets it, which is who it was always for. | My Program |
+
+Verified headless at 390px and 430px: the flag is in the eyebrow and the title
+keeps one line, the run draws and never reads zero, both rows name a next step,
+the block eyebrow carries the week and links to the year, the ask appears for a
+team-only week and disappears for a program that covers it, and the card stands
+up with no year map. No page errors. Identity, icon and reading guards pass.
+
+---
+
 ## Going to main — 8 Oct 2026 (third push)
 
 **The CV is a document now, and the board fails one block at a time.**

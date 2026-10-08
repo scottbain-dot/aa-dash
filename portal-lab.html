@@ -1570,7 +1570,7 @@
          wktRest() and the countdown stay in the file for when rest is derived
          from the set that was actually just finished. -->
     <div class="wkt-rest" id="wktRestBar" hidden></div>
-    <button class="wkt-finish" id="wktFinishBtn" onclick="wktFinishOpen()"><i class="ti ti-flag-checkered" aria-hidden="true"></i> Finish workout</button>
+    <button class="wkt-finish" id="wktFinishBtn" onclick="wktFinishOpen()"><i class="ti ti-flag" aria-hidden="true"></i> Finish workout</button>
   </div>
   <!-- Finish: log effort + time -->
   <div class="wkt-finish-panel" id="wktFinishPanel">
@@ -2489,32 +2489,73 @@
   .hero-rank-go { color: var(--ink-mute); font-size: 17px; flex-shrink: 0; align-self: center; }
 
   /* ---- GROUP 2: how you are going ----------------------------------------
-     Three tiles, three numbers that cannot fall, then the ladder they feed. */
-  .pg-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 0; }
-  .pg-tile { position: relative; cursor: pointer; text-align: center; padding: 12px 6px 11px;
-    border-radius: 15px; border: 1px solid var(--line-soft); background: var(--cream);
-    display: flex; flex-direction: column; align-items: center; gap: 1px; }
-  .pg-tile-ico { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
-    margin-bottom: 4px; background: #efe5dd; color: var(--ink-mute); font-size: 14px; }
-  .pg-tile-num { font: 800 22px 'Fraunces', serif; color: var(--burgundy); line-height: 1; }
-  /* The label is given the height of two lines whether it needs them or not, so
-     "weeks trained" wrapping does not push its sub-line below the other two. */
-  .pg-tile-lab { font: 700 9px 'Inter', sans-serif; letter-spacing: .07em; text-transform: uppercase;
-    color: var(--ink-mute); margin-top: 4px; line-height: 1.25; min-height: 23px; }
-  .pg-tile-sub { font: 700 9.5px 'Inter', sans-serif; color: var(--gold-strong, #b8860b); margin-top: 1px; }
-  .pg-tile.gold { border-color: rgba(201,154,29,.4); background: linear-gradient(180deg, #fffaec, var(--cream)); }
-  .pg-tile.gold .pg-tile-ico { background: linear-gradient(145deg, #e8c450, #c99a1d); color: #fff;
-    box-shadow: 0 4px 10px -4px rgba(201,154,29,.9); }
-  /* A run worth having gets the flame it used to have as a chip. */
-  .pg-tile.hot { border-color: rgba(226,85,29,.35); background: linear-gradient(180deg, #fff3ec, var(--cream)); }
-  .pg-tile.hot .pg-tile-ico { background: linear-gradient(135deg, #ff9f43, #e2551d); color: #fff;
-    box-shadow: 0 4px 10px -4px rgba(226,85,29,.8); }
-  .pg-tile.hot .pg-tile-sub { color: #d1491a; }
-  .pg-card .week-progress { margin-top: 0; }
+     The run is drawn, not counted. A number that says "6" is a dashboard; a
+     line of flames that got longer last week is a streak, and the unlit one on
+     the end is this week asking to be earned. */
+  .pg-run { display: block; width: 100%; text-align: left; cursor: pointer;
+    padding: 15px 16px 14px; border-radius: 17px; border: 1px solid var(--line-soft);
+    background: linear-gradient(170deg, #fff6f0, var(--cream)); }
+  .pg-run.hot { border-color: rgba(226,85,29,.32);
+    background: linear-gradient(170deg, #fff1e7, #fff8f3); }
+  .pg-flames { display: flex; align-items: center; gap: 3px; margin-bottom: 9px; flex-wrap: wrap; }
+  .pg-flame { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%;
+    font-style: normal; animation: pgFlameIn .4s both; animation-delay: var(--d, 0ms); }
+  .pg-flame .ti { font-size: 15px; }
+  .pg-flame.on { background: linear-gradient(145deg, #ff9f43, #e2551d); color: #fff;
+    box-shadow: 0 4px 10px -5px rgba(226,85,29,.95); }
+  .pg-run.hot .pg-flame.on:last-of-type .ti { animation: pgFlicker 1.5s ease-in-out infinite; }
+  /* This week, not yet earned. Outlined, so the gap is the invitation. */
+  .pg-flame.next { background: transparent; border: 1.5px dashed #e0cfc4; color: #cbb8ab; }
+  .pg-flame-more { font: 800 11px 'Inter', sans-serif; color: #d1491a; margin-left: 3px; }
+  @keyframes pgFlameIn { from { opacity: 0; transform: scale(.5) translateY(4px); } }
+  @keyframes pgFlicker { 50% { opacity: .72; transform: scale(.93); } }
+  .pg-run-head { display: block; font: 600 20px 'Fraunces', serif; color: var(--ink); line-height: 1.2; }
+  .pg-run-sub { display: block; font: 400 12.5px 'Inter', sans-serif; color: var(--ink-mute);
+    margin-top: 3px; line-height: 1.45; }
+  .pg-week { display: flex; align-items: center; gap: 9px; margin-top: 12px;
+    padding-top: 11px; border-top: 1px solid rgba(0,0,0,.055); }
+  .pg-week-track { flex: 1; height: 7px; border-radius: 999px; background: #ece2db; overflow: hidden; }
+  .pg-week-track > i { display: block; height: 100%; border-radius: 999px; background: var(--sage); }
+  .pg-week-lab { flex: 0 0 auto; font: 500 11.5px 'Inter', sans-serif; color: var(--ink-mute); }
+
+  /* The two counts that only go up. Rows, not tiles: each one has room to name
+     the next thing, so the card asks for something instead of reporting. */
+  .pg-row { display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; text-align: left;
+    margin-top: 9px; padding: 12px 13px; border-radius: 15px;
+    border: 1px solid var(--line-soft); background: var(--surface); }
+  .pg-row-ico { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
+    background: #f1e8e2; color: var(--burgundy); font-size: 17px; }
+  .pg-row-gold .pg-row-ico { background: linear-gradient(145deg, #e8c450, #c99a1d); color: #fff; }
+  .pg-row-body { flex: 1; min-width: 0; }
+  .pg-row-top { display: flex; align-items: baseline; gap: 8px;
+    font: 500 13.5px 'Inter', sans-serif; color: var(--ink); }
+  .pg-row-top b { font-weight: 800; font-size: 16px; color: var(--burgundy); }
+  .pg-row-rank { margin-left: auto; flex: 0 0 auto; font: 800 10.5px 'Inter', sans-serif;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--gold-strong, #b8860b); }
+  .pg-row-bar { display: block; height: 5px; border-radius: 999px; background: var(--line);
+    overflow: hidden; margin: 6px 0 4px; }
+  .pg-row-bar > i { display: block; height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, #e8c969, #D4AF37); }
+  .pg-row-sub { display: block; font: 500 11px 'Inter', sans-serif; color: var(--ink-mute); }
+  .pg-row-go { flex: 0 0 auto; color: var(--ink-mute); font-size: 17px; }
+  @media (prefers-reduced-motion: reduce) {
+    .pg-flame { animation: none; }
+    .pg-run.hot .pg-flame.on:last-of-type .ti { animation: none; }
+  }
 
   /* ---- GROUP 3: what you are running --------------------------------------- */
   .prg-eyebrow { gap: 9px; flex-wrap: wrap; text-transform: none; letter-spacing: normal; }
+  .prg-eyebrow-go { width: 100%; cursor: pointer; background: none; border: none; padding: 0;
+    text-align: left; align-items: center; }
+  .prg-eyebrow-chev { margin-left: auto; color: var(--ink-mute); font-size: 16px; }
   .prg-where { font: 700 10px 'Inter', sans-serif; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-mute); }
+  /* What the block is for, in the athlete's own words from the year map. */
+  .prg-build { display: block; width: 100%; text-align: left; font: 400 13px 'Inter', sans-serif;
+    color: var(--ink-soft); margin: -4px 0 11px; line-height: 1.45; }
+  .prg-build strong { color: var(--ink); font-weight: 600; }
+  .prg-build-ask { cursor: pointer; background: #fdf7e8; border: none;
+    border-left: 3px solid var(--burgundy); border-radius: 0 10px 10px 0; padding: 9px 11px; margin-bottom: 11px; }
+  .prg-build-ask strong { color: var(--burgundy); }
   .prg-main { display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; text-align: left;
     padding: 14px 14px 14px 16px; border-radius: 16px; border: 1px solid var(--line-soft);
     background: linear-gradient(135deg, #fdf6f2, #f7ece6); }
@@ -2782,12 +2823,12 @@
 
   /* ---- Today, done ---- */
   .card-hero.hero-done { background: linear-gradient(160deg, rgba(74,157,91,.1), rgba(74,157,91,.03)); }
-  .hero-done-flag { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle;
-    margin-right: 9px; padding: 5px 11px 5px 8px; border-radius: 999px;
-    background: #4a9d5b; color: #fff; font: 800 11px 'Inter', sans-serif;
+  /* In the eyebrow row, beside the date — see weekTodayCard. */
+  .hero-done-flag { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px 4px 7px; border-radius: 999px;
+    background: #4a9d5b; color: #fff; font: 800 10px 'Inter', sans-serif;
     letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
-  .hero-done-flag > i { font-size: 13px; }
-  .hero-done-name { font-style: normal; }
+  .hero-done-flag > i { font-size: 12px; }
   .card-hero.hero-done .card-hero-sub strong { color: #3f8a4f; }
 
   /* ---- Last week review ---- */
@@ -6322,7 +6363,7 @@
     const passed = learnBlockPassed(block);
     const ring = 'background: conic-gradient(var(--gold) '+c.pct+'%, rgba(255,255,255,0.18) 0);';
     const status = passed
-      ? '<span class="learn-hero-flag"><i class="ti ti-rosette-discount-check-filled" aria-hidden="true"></i> Block passed</span>'
+      ? '<span class="learn-hero-flag"><i class="ti ti-rosette-discount-check" aria-hidden="true"></i> Block passed</span>'
       : '<span class="learn-hero-sub">'+c.done+' of '+c.total+' lesson'+(c.total===1?'':'s')+' done</span>';
     return '<div class="learn-hero">'+
       '<div class="learn-hero-ring" style="'+ring+'"><span class="learn-hero-ring-in"><i class="ti '+block.icon+'" aria-hidden="true"></i></span></div>'+
@@ -7856,12 +7897,22 @@
     if(w && w.line){
       main = w.line;                                   // peak / recover / off say it in one go
     } else if(w && w.n){
-      // "On top of your sport" is the whole point — it says exactly what the
-      // number counts, and it isn't the sessions somebody else timetabled.
-      main = 'On top of your sport: ' + w.n +
-             (comps.length ? ' of <em>' + esc(comps.join(' and ').toLowerCase()) + '</em>' : '') +
-             (w.tail||'') + '.';
-      prompt = !comps.length;
+      // "On top of your sport" is advice for an athlete whose week is somebody
+      // else's timetable — three football trainings and nothing of their own.
+      // Told to an athlete already running a seven-session Hyrox program it is
+      // not advice, it is noise: they are doing four times what it asks and the
+      // line still reads as a job outstanding. So it only appears when the
+      // program does not already cover it.
+      //
+      // What the block is BUILDING is a different thing and always worth
+      // saying — that line now lives on the card above, where it belongs.
+      const need = OWN_WORK_N[b.phase] || 0;
+      if(!need || ownWorkInProgram() < need){
+        main = 'On top of your sport: ' + w.n +
+               (comps.length ? ' of <em>' + esc(comps.join(' and ').toLowerCase()) + '</em>' : '') +
+               (w.tail||'') + '.';
+        prompt = !comps.length;
+      }
     }
 
     // Only sports being treated DIFFERENTLY to the lead. A second sport also in
@@ -7907,15 +7958,53 @@
   // text and a chevron crammed into it; and "On top of your sport" was a third
   // box in a different style again. The strip was the orphan Scott named, and
   // the fix is not to restyle it — it is to give it the thing it describes.
+  // How many sessions a week this block asks the athlete to add of their own.
+  // A floor, from the phase. Used to decide whether saying so is worth saying.
+  const OWN_WORK_N = { build: 2, maintain: 1 };
+
+  // What the block is actually building this month, in the athlete's own words
+  // from the Year tab. This is the missing link Scott named: "Hyrox build" says
+  // the setting, not the job. "Building strength and endurance" says the job,
+  // and it is already sitting in the year map doing nothing.
+  function blockBuilding(){
+    const b = currentBlock();
+    if(!b) return [];
+    const month = MONTHS[new Date().getMonth()];
+    const leadKey = String(b.sport||'').trim().toLowerCase();
+    const ms = ((plannedSports().find(x => String(x.name||'').trim().toLowerCase() === leadKey) || {}).monthlyStates || [])
+                 .find(m => m.month === month) || {};
+    return componentLabels(ms.components);
+  }
+
+  // Sessions in the athlete's own program that are NOT their sport — the work
+  // the block's "on top of your sport" line is asking for. An athlete whose
+  // week is three football trainings has none of it; an athlete running a seven
+  // session Hyrox program has it covered several times over.
+  function ownWorkInProgram(){
+    const b = currentBlock();
+    const leadKey = b ? String(b.sport||'').trim().toLowerCase() : '';
+    const named = {};
+    plannedSports().forEach(sp => { named[String(sp.name||'').trim().toLowerCase()] = 1; });
+    return templateSessions().filter(x => {
+      const sp = String((x && x.sport) || '').trim().toLowerCase();
+      if(!sp) return true;                 // untagged is the athlete's own work
+      if(sp === leadKey) return false;     // their sport
+      return !named[sp];                   // another sport from the year map is still sport
+    }).length;
+  }
+
   function weekProgramCard(){
     const n = templateSessions().length;
     const name = String((state.weeklyTemplate && state.weeklyTemplate.name) || state.planName || '').trim();
     const has = n > 0;
 
-    // The block, as the card's eyebrow. This is the context strip's content,
-    // now sitting on top of the program it is the context FOR.
+    // The block, as the card's eyebrow, and the eyebrow is the way into the
+    // year. This is the context strip's content sitting on top of the program
+    // it is the context FOR — and now carrying what the block is building,
+    // which is the half of it the athlete actually chose.
     const info = currentPhaseInfo();
     const b = currentBlock();
+    const building = blockBuilding();
     let eyebrow = '<i class="ti ti-calendar-month" aria-hidden="true"></i> Your program';
     if(info){
       const chip = '<span class="block-phase-chip ym-'+info.phase+'"><span>'+PHASE_EMOJI[info.phase]+'</span> '+
@@ -7923,11 +8012,22 @@
       const where = b ? ('week '+b.week+' of '+b.weeks) : (info.focus || info.month || '');
       eyebrow = chip + (where ? '<span class="prg-where">'+esc(where)+'</span>' : '');
     }
+    const eyebrowHTML = info
+      ? '<button class="card-eyebrow prg-eyebrow prg-eyebrow-go" onclick="switchTab(\'year\')">'+
+          eyebrow+'<i class="ti ti-chevron-right prg-eyebrow-chev" aria-hidden="true"></i></button>'
+      : '<p class="card-eyebrow prg-eyebrow">'+eyebrow+'</p>';
 
-    // The block's ask used to be repeated here when there was no program yet.
-    // It is already the line at the bottom of this same card, so it said the
-    // same sentence twice, three centimetres apart — and in raw markup, because
-    // blockAskLine() returns HTML and this slot is escaped.
+    // What this block is for, under the block's name. Either the athlete's own
+    // picks from the year map, or — when they have not made any — the one tap
+    // that sets them.
+    const buildLine = info
+      ? (building.length
+          ? '<p class="prg-build">Building <strong>'+esc(building.join(' and ').toLowerCase())+'</strong>'+
+            (b && b.sport ? ' for <strong>'+esc(b.sport)+'</strong>' : '')+'.</p>'
+          : '<button class="prg-build prg-build-ask" onclick="switchTab(\'year\'); openGoalComponents();">'+
+            'You have not said what this block is building. <strong>Pick it →</strong></button>')
+      : '';
+
     const sub = has
       ? n + ' session' + (n===1?'':'s') + ' a week'
       : 'Answer a few questions, or build your own';
@@ -7941,10 +8041,9 @@
     '</button>';
 
     return '<div class="card prg-card">'+
-      '<p class="card-eyebrow prg-eyebrow">'+eyebrow+'</p>'+
-      main +
-      // What the block asks ON TOP of the program, inside the same card so it
-      // reads as a note about the thing above it rather than a new instruction.
+      eyebrowHTML + buildLine + main +
+      // What the block asks ON TOP of the program — and only when the program
+      // does not already do it. See weekBlockCard.
       weekBlockCard() +
     '</div>';
   }
@@ -8062,7 +8161,7 @@
     const c = weekRunInfo();
     if(!c.started) return '<button class="streak-chip streak-off" onclick="streakTap()" aria-label="Start training"><span class="streak-flame"><i class="ti ti-flame" aria-hidden="true"></i></span> Log your first session</button>';
     const hot = c.run >= 3 ? ' hot' : '';
-    return '<button class="streak-chip'+hot+'" onclick="streakTap()" aria-label="Weeks trained"><span class="streak-flame"><i class="ti ti-flame-filled" aria-hidden="true"></i></span>'+
+    return '<button class="streak-chip'+hot+'" onclick="streakTap()" aria-label="Weeks trained"><span class="streak-flame"><i class="ti ti-flame" aria-hidden="true"></i></span>'+
       c.weeks+' <span class="streak-chip-label">week'+(c.weeks===1?'':'s')+' trained</span></button>';
   }
   function streakTap(){
@@ -8284,7 +8383,7 @@
     { id:'streak3',  name:'Momentum',      icon:'ti-flame',        metric:'weekRun', goal:2,  blurb:'Train two weeks running', track:'Consistency' },
     { id:'pb1',      name:'Record Breaker',icon:'ti-trophy',       metric:'pbs',  goal:1,   blurb:'Set your first PB',        track:'Records'     },
     { id:'day10',    name:'Regular',       icon:'ti-calendar-check',metric:'days',goal:10,  blurb:'Log 10 sessions',          track:'Volume'      },
-    { id:'streak7',  name:'Week Warrior',  icon:'ti-flame-filled', metric:'weekRun', goal:4,  blurb:'Train four weeks running', track:'Consistency' },
+    { id:'streak7',  name:'Week Warrior',  icon:'ti-flame', metric:'weekRun', goal:4,  blurb:'Train four weeks running', track:'Consistency' },
     { id:'pb5',      name:'PB Machine',    icon:'ti-medal',        metric:'pbs',  goal:5,   blurb:'Set 5 personal bests',     track:'Records'     },
     { id:'day25',    name:'Grinder',       icon:'ti-barbell',      metric:'days', goal:25,  blurb:'Log 25 sessions',          track:'Volume'      },
     { id:'streak14', name:'Locked In',     icon:'ti-bolt',         metric:'weekRun', goal:8,  blurb:'Train eight weeks running', track:'Consistency' },
@@ -8645,7 +8744,7 @@
     // One adaptive action: log the session that's on today, or add one if the
     // day is empty. (A second session on the same day is still reachable from
     // the day list below — it isn't a co-equal button up here.)
-    let titleHTML, subHTML, cta;
+    let titleHTML, subHTML, cta, doneFlag = '';
     if(todays.length){
       const s = todays[0];
       const extra = todays.length>1 ? ' · +'+(todays.length-1)+' more today' : '';
@@ -8664,8 +8763,12 @@
         //
         // Editing is still here, demoted. Nobody finishes a session wanting to
         // edit it; they want to be told it counted.
-        titleHTML = '<span class="hero-done-flag"><i class="ti ti-check" aria-hidden="true"></i> '+esc(doneWord(s))+'</span>'+
-                    '<span class="hero-done-name">'+esc(s.name)+'</span>';
+        // The flag sits in the eyebrow, beside the date, not in front of the
+        // title. Inline it pushed "Base (Bike or Run — Alternate)" onto a
+        // second line on every phone — the session name is the thing being
+        // read, and a badge was breaking it in half to say "done".
+        doneFlag = '<span class="hero-done-flag"><i class="ti ti-check" aria-hidden="true"></i> '+esc(doneWord(s))+'</span>';
+        titleHTML = esc(s.name);
         subHTML = '<strong>'+esc(s.sport)+'</strong> · '+(s.duration||s.plannedDuration||0)+' min'+
                   (effortWord(s.rpe) ? ' · '+esc(effortWord(s.rpe)) : '')+' · in the bank'+extra;
         cta = (hasWorkout ? '<button class="card-cta card-cta-ghost" onclick="startWorkout(\''+s.id+'\')"><i class="ti ti-barbell" aria-hidden="true"></i> '+wktWords(s).open+'</button>' : '')+
@@ -8689,7 +8792,7 @@
     // not "what am I doing now" — and stacking four progress objects under one
     // session made the biggest card on the screen the vaguest one.
     return '<div class="card card-hero'+heroDone+'">'+
-      '<div class="hero-eyebrow-row"><p class="card-hero-eyebrow">'+eyebrow+'</p></div>'+
+      '<div class="hero-eyebrow-row"><p class="card-hero-eyebrow">'+eyebrow+'</p>'+doneFlag+'</div>'+
       '<h2 class="card-hero-title">'+titleHTML+'</h2>'+
       '<p class="card-hero-sub">'+subHTML+'</p>'+
       (todays.length ? quickLogRowHTML(todays[0]) : '')+
@@ -8713,36 +8816,94 @@
     const done = state.week.sessions.filter(isLogged).length;
     const total = state.week.sessions.length;
     const pct = total ? Math.round(done/total*100) : 0;
-    const progress = total
-      ? (done+' of '+total+' session'+(total===1?'':'s')+' this week')
+
+    // ---- THE RUN, as a run -------------------------------------------------
+    // Three tiles with three numbers on them was a dashboard, and Scott's read
+    // was exactly right: a counter that says "6" is not a streak. A streak is
+    // something you can SEE getting longer, and the whole point of it is that
+    // it would hurt to break.
+    //
+    // So the weeks are drawn, one flame each, and the current week is an unlit
+    // flame until there is a session in it — which turns this week into the
+    // obvious thing to do rather than a number to admire. Past the eighth it
+    // folds into a "+N" so a good term does not become a wall of fire.
+    const RUN_SHOWN = 8;
+    let flames = '', run = c.started ? c.run : 0;
+    const lit = Math.min(run, RUN_SHOWN);
+    for(let i = 0; i < lit; i++){
+      flames += '<i class="pg-flame on" style="--d:'+(i*55)+'ms"><i class="ti ti-flame" aria-hidden="true"></i></i>';
+    }
+    // The week in progress, waiting to be earned.
+    if(!c.thisWeek && lit < RUN_SHOWN){
+      flames += '<i class="pg-flame next" style="--d:'+(lit*55)+'ms"><i class="ti ti-flame" aria-hidden="true"></i></i>';
+    }
+    const over = run > RUN_SHOWN ? '<span class="pg-flame-more">+'+(run - RUN_SHOWN)+'</span>' : '';
+
+    // One honest headline, and it never reports a zero.
+    let runHead, runSub;
+    if(!c.started){
+      runHead = 'Your first week';
+      runSub  = 'Log a session and this starts counting — by the week, not the day.';
+    } else if(run >= 2){
+      runHead = run + ' weeks in a row';
+      runSub  = (run >= c.best)
+        ? 'Your longest run yet.'
+        : ((c.best - run) === 1 ? 'One more equals your best run.' : (c.best - run)+' more to beat your best of '+c.best+'.');
+    } else if(c.thisWeek){
+      runHead = 'This week is in';
+      runSub  = c.weeks >= 2 ? 'Train next week too and the run starts building.' : 'That is one. Next week makes it a run.';
+    } else {
+      runHead = 'Pick the run back up';
+      runSub  = c.weeks >= 2
+        ? 'You have trained in ' + c.weeks + ' of your ' + c.span + ' weeks. One session this week restarts it.'
+        : 'One session this week and you are away.';
+    }
+
+    // The week bar belongs to the run — it is the thing that keeps it alive.
+    const weekLine = total
+      ? (done + ' of ' + total + ' session' + (total===1?'':'s') + ' this week')
       : 'No sessions planned this week yet';
 
-    // Three tiles, three things that cannot be taken away. Tapping any of them
-    // goes where the detail lives.
-    const tile = (cls, icon, num, lab, sub, onclick) =>
-      '<button class="pg-tile'+(cls?' '+cls:'')+'" onclick="'+onclick+'">'+
-        '<span class="pg-tile-ico"><i class="ti '+icon+'" aria-hidden="true"></i></span>'+
-        '<span class="pg-tile-num">'+num+'</span>'+
-        '<span class="pg-tile-lab">'+esc(lab)+'</span>'+
-        (sub ? '<span class="pg-tile-sub">'+esc(sub)+'</span>' : '')+
+    // ---- The two counts that only go up ------------------------------------
+    // Kept, but as rows with somewhere to go rather than tiles with nothing to
+    // say. Each one names the next thing, so the card asks for something.
+    const r = g.rank;
+    const rows =
+      '<button class="pg-row" onclick="openTrophyRoom()">'+
+        '<span class="pg-row-ico"><i class="ti ti-barbell" aria-hidden="true"></i></span>'+
+        '<span class="pg-row-body">'+
+          '<span class="pg-row-top"><b>'+g.days+'</b> session'+(g.days===1?'':'s')+' logged'+
+            '<span class="pg-row-rank">'+esc(r.name)+'</span></span>'+
+          '<span class="pg-row-bar"><i style="width:'+r.pct+'%"></i></span>'+
+          '<span class="pg-row-sub">'+(r.next ? r.toNext+' more to '+esc(r.next.name) : 'Top rank — legend')+'</span>'+
+        '</span>'+
+        '<i class="ti ti-chevron-right pg-row-go" aria-hidden="true"></i>'+
+      '</button>'+
+      '<button class="pg-row pg-row-gold" onclick="'+(g.pbs ? 'openTrophyRoom()' : 'addPB()')+'">'+
+        '<span class="pg-row-ico"><i class="ti ti-trophy" aria-hidden="true"></i></span>'+
+        '<span class="pg-row-body">'+
+          '<span class="pg-row-top">'+(g.pbs
+            ? '<b>'+g.pbs+'</b> personal best'+(g.pbs===1?'':'s')
+            : 'No personal bests yet')+'</span>'+
+          '<span class="pg-row-sub">'+(g.pbs
+            ? 'On your shelf, and on your CV.'
+            : 'Set one and it is yours for good.')+'</span>'+
+        '</span>'+
+        '<i class="ti ti-chevron-right pg-row-go" aria-hidden="true"></i>'+
       '</button>';
-
-    const runSub = c.run >= 2 ? (c.run+' in a row') : (c.best >= 2 ? ('best run '+c.best) : 'keep it going');
-    const tiles =
-      tile(c.run >= 3 ? 'hot' : '', c.run >= 3 ? 'ti-flame-filled' : 'ti-flame',
-           c.weeks, c.weeks === 1 ? 'week trained' : 'weeks trained', runSub, 'streakTap()') +
-      tile('', 'ti-barbell', g.days, 'sessions', 'all time', 'openTrophyRoom()') +
-      // Bests get the third tile rather than badges. Scott's read, and he is
-      // right: a personal best is the most earned thing in the app and it was
-      // two taps deep. A zero here is an invitation, never a score.
-      tile(g.pbs ? 'gold' : '', 'ti-trophy', g.pbs || '–', g.pbs === 1 ? 'best' : 'bests',
-           g.pbs ? 'all time' : 'add your first', g.pbs ? 'openTrophyRoom()' : 'addPB()');
 
     return '<div class="card pg-card">'+
       '<p class="card-eyebrow"><i class="ti ti-chart-line" aria-hidden="true"></i> How you are going</p>'+
-      '<p class="week-progress"><span class="week-progress-track"><span style="width:'+pct+'%"></span></span>'+esc(progress)+'</p>'+
-      '<div class="pg-tiles">'+tiles+'</div>'+
-      heroRankHTML()+
+      '<button class="pg-run'+(run >= 3 ? ' hot' : '')+'" onclick="streakTap()">'+
+        '<span class="pg-flames">'+flames+over+'</span>'+
+        '<span class="pg-run-head">'+esc(runHead)+'</span>'+
+        '<span class="pg-run-sub">'+esc(runSub)+'</span>'+
+        '<span class="pg-week">'+
+          '<span class="pg-week-track"><i style="width:'+pct+'%"></i></span>'+
+          '<span class="pg-week-lab">'+esc(weekLine)+'</span>'+
+        '</span>'+
+      '</button>'+
+      rows+
     '</div>';
   }
 
@@ -11197,7 +11358,7 @@
       ? w.map((it,i) => wktCardHTML(it,i)).join('')
       : '<p style="color:rgba(250,243,237,0.7); font-family:Inter,sans-serif; text-align:center; padding:34px 12px; line-height:1.5;">'+esc(words.empty)+'</p>';
     const fin = document.getElementById('wktFinishBtn');
-    if(fin) fin.innerHTML = '<i class="ti ti-flag-checkered" aria-hidden="true"></i> '+esc(words.finish);
+    if(fin) fin.innerHTML = '<i class="ti ti-flag" aria-hidden="true"></i> '+esc(words.finish);
     const sav = document.getElementById('wktSaveBtn');
     if(sav) sav.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> '+esc(words.save);
     wktUpdateProgress();
@@ -12893,7 +13054,7 @@
       '<p class="card-hero-eyebrow">Your year · '+esc(ym.year||'2026–27')+'</p>'+
       '<h2 class="card-hero-title">'+(ym.vision? esc(ym.vision) : 'Map your <em>year</em>.')+'</h2>'+
       '<p class="card-hero-sub">'+(ap&&ap.event
-          ? '<i class="ti ti-flag-filled" aria-hidden="true"></i> A-priority · <strong>'+esc(ap.event)+'</strong>'+(ap.date?' · '+fmtNice(ap.date):'')
+          ? '<i class="ti ti-flag" aria-hidden="true"></i> A-priority · <strong>'+esc(ap.event)+'</strong>'+(ap.date?' · '+fmtNice(ap.date):'')
           : 'Set the one event your year points at.')+'</p>'+
       '<div class="week-today-cta" style="display:flex; gap:10px;"><button class="card-cta card-cta-ghost" onclick="editYearGoal()"><i class="ti ti-target-arrow" aria-hidden="true"></i> Edit goal</button>'+
         '<button class="card-cta card-cta-ghost" onclick="openYearHelp()"><i class="ti ti-help-circle" aria-hidden="true"></i> How to plan my year</button></div>'+
@@ -12910,12 +13071,12 @@
       '</p>'+
       '<div class="year-sport-head"><div class="year-sport-titles">'+
         '<p class="year-sport-name">'+esc(sport.name)+
-          (sport.isPriority? ' <i class="ti ti-star-filled year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
+          (sport.isPriority? ' <i class="ti ti-star year-sport-star" title="Priority sport" aria-hidden="true"></i>':'')+
           ' <button class="year-sport-rename" onclick="renameSport('+si+')" title="Rename sport" aria-label="Rename sport"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
           '<button class="year-sport-rename year-sport-del" onclick="deleteSport('+si+')" title="Remove sport" aria-label="Remove sport"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
         '</p>'+
       '</div></div>'+
-      (evt? '<p class="year-sport-goal"><i class="ti ti-flag-filled" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
+      (evt? '<p class="year-sport-goal"><i class="ti ti-flag" aria-hidden="true"></i> Big event · <strong>'+esc(evt.event)+'</strong>'+(evt.date?' · '+fmtNice(evt.date):'')+'</p>' : '')+
       '<div class="year-legend">'+legendItem('build',PHASE_SHORT.build)+legendItem('maintain',PHASE_SHORT.maintain)+legendItem('peak',PHASE_SHORT.peak)+legendItem('recover',PHASE_SHORT.recover)+'</div>'+
       renderMonths(sport, si, curMonth)+
       '<button class="year-addcomp" onclick="addGame()"><i class="ti ti-trophy" aria-hidden="true"></i> Add a competition</button>'+
@@ -12941,7 +13102,7 @@
     // names them, and tapping it jumps to "My games or competitions".
     let mark = '';
     if(apHere || monthGames.length){
-      const icon = apHere ? 'ti-star-filled' : 'ti-trophy';
+      const icon = apHere ? 'ti-star' : 'ti-trophy';
       const cnt = (!apHere && monthGames.length>1) ? '<b>'+monthGames.length+'</b>' : '';
       mark = '<button class="yog-mark" onclick="event.stopPropagation(); goToGames()" title="'+esc(names.join(', '))+'" aria-label="'+esc(names.join(', '))+' — open games"><i class="ti '+icon+'" aria-hidden="true"></i>'+cnt+'</button>';
     }
@@ -12966,7 +13127,7 @@
       ACADEMIC_MONTHS.map(m => '<div class="yog-mhead'+(m===curMonth?' now':'')+'">'+m.slice(0,1)+'</div>').join('');
     ym.sports.forEach((sport, si) => {
       grid += '<div class="yog-label" onclick="focusSport('+si+')" title="Open '+esc(sport.name)+'">'+
-        esc(sport.name)+(sport.isPriority? ' <i class="ti ti-star-filled" style="color:var(--gold);font-size:11px;" aria-hidden="true"></i>':'')+'</div>'+
+        esc(sport.name)+(sport.isPriority? ' <i class="ti ti-star" style="color:var(--gold);font-size:11px;" aria-hidden="true"></i>':'')+'</div>'+
         ACADEMIC_MONTHS.map(m => overviewCellHTML(sport, si, m, curMonth, apIndex, busy, ap)).join('');
     });
     grid += '</div>';
@@ -13735,7 +13896,7 @@
           '<h2 class="wt-title">Your year is <em>mapped</em>.</h2>'+
           '<div class="wt-summary">'+
             (wt.vision? '<div class="wt-summary-row"><i class="ti ti-target-arrow" aria-hidden="true"></i><div><div class="wsr-label">Vision</div><div class="wsr-value">'+esc(wt.vision)+'</div></div></div>':'')+
-            (wt.event? '<div class="wt-summary-row"><i class="ti ti-flag-filled" aria-hidden="true"></i><div><div class="wsr-label">Big event</div><div class="wsr-value">'+esc(wt.event)+(dateNice?' · '+esc(dateNice):'')+'</div></div></div>':'')+
+            (wt.event? '<div class="wt-summary-row"><i class="ti ti-flag" aria-hidden="true"></i><div><div class="wsr-label">Big event</div><div class="wsr-value">'+esc(wt.event)+(dateNice?' · '+esc(dateNice):'')+'</div></div></div>':'')+
             '<div class="wt-summary-row"><i class="ti ti-calendar-star" aria-hidden="true"></i><div><div class="wsr-label">Your year</div><div class="wsr-value">Colour-coded and ready to fine-tune.</div></div></div>'+
           '</div>'+
           '<p class="wt-note">Tap below to open your year. You can edit your vision, event and any month whenever you like.</p>';
