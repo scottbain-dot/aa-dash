@@ -38,6 +38,34 @@ of them — they are standalone pages.
 
 ---
 
+## Going to main — 8 Oct 2026
+
+**The trophy room is a room now, and the medals are in it.** Three things Scott
+hit on the live portal, in the order they bite.
+
+| What | Where |
+|---|---|
+| **The board opens on tap again.** The notice line travels across the bar like a ticker, and on iOS a tap whose target element moves between touch-down and touch-up never fires a click at all. The text was the tap target. Nothing inside the bar is a tap target now — the button is. The board also opens *before* it renders, so a throw in the contents can never again swallow the tap silently. | Notice bar |
+| **`syncAwards()` was never called from anywhere.** It was written, deployed and left unwired, which is why the Awards sheet was empty and medals only ever came from the older badge celebration. It now runs after paint on every load, live and demo. | Bootstrap |
+| **A medal can be shown again.** The tier and the wording used to be invented when a medal was minted and then thrown away — the sheet stores no tier — so a celebration interrupted by a closed tab was lost for good, and last term's gold had nothing to display. Presentation is now derived from the stored row. | Awards |
+| **Trophy Room is a tab.** It was a drawer behind the rank chip. It leads with **the shelf** — every trophy and medal earned, newest first, golds kept visually apart from silvers so a personal best never reads the same size as "logged four sessions" — then the CV, then rank and badges. | New tab |
+| **The CV is a door inside the trophy room**, not a tab of its own. The room is everything you have won; the CV is the one page you send to a coach at another school. The strip keeps Trophy Room lit while you are on it, and the CV has a way back. | CV |
+| **Highlights on the CV are the athlete's pick.** Up to four, in the order they tapped them, stored as a position on the award's own row so it survives a new phone. Until they pick, the newest results stand in — a blank highlights strip on a page you are about to send somebody is worse than a reasonable guess. | CV |
+| **A personal best is no longer rounded to a float.** `parseFloat("2:14.8")` is `2`, so a 200m freestyle was being recorded as a best of "2". Values are stored and shown exactly as the athlete entered them. | Awards |
+
+**Needs a paste to take effect.** `COMPLETE-APPS-SCRIPT.gs` gains a `Pinned`
+column on the `Awards` sheet (added automatically to the existing sheet) and a
+`setAwardPins` action. Until it is pasted and redeployed, the shelf and the
+trophy room work fully and the CV picks simply do not persist across a reload.
+
+Verified headless on a phone viewport: medals pop and queue, the shelf renders
+golds and silvers apart, the CV opens through the door with the strip still lit,
+the picker numbers picks 1–3 in tap order and the strip follows, the way back
+lands in the room, the notice bar is its own tap target, the board opens, and no
+page errors. Identity and reading guards pass.
+
+---
+
 ## Going to main — 5 Oct 2026
 
 **No arbitrary units on the student's screen.** "au" is a sports-science unit;

@@ -1453,18 +1453,9 @@
 </div>
 
 <!-- TROPHY ROOM — rank, XP, and every badge -->
-<div class="sheet-backdrop" id="trophy-backdrop" onclick="closeTrophyRoom()"></div>
-<div class="sheet" id="trophySheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <div class="sheet-header-content">
-      <p class="sheet-eyebrow">Your progress</p>
-      <h2 class="sheet-title">Trophy <em>room</em>.</h2>
-    </div>
-    <button class="sheet-close" onclick="closeTrophyRoom()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
-  </div>
-  <div class="sheet-body" id="trophyBody"></div>
-</div>
+<!-- The trophy room used to be a bottom sheet behind the rank chip: a drawer
+     you pulled up, read, and closed. Medals popped on screen and then had
+     nowhere visible to live. It is a TAB now — see #view-trophy. -->
 
 <!-- NOTICEBOARD — the squad, in one place. The Trophy Room is your stuff;
      this is everyone's. Nothing on it can be lost and nobody is ranked. -->
@@ -1629,7 +1620,10 @@
       <button class="tab" data-tab="book" onclick="switchTab('book')">Book</button>
       <button class="tab" data-tab="learn" onclick="switchTab('learn')">Level Up</button>
       <button class="tab" data-tab="age" onclick="switchTab('age')">Training Age</button>
-      <button class="tab" data-tab="cv" onclick="switchTab('cv')">CV</button>
+      <!-- The CV used to be a tab of its own. It is now a door inside the
+           trophy room: the room is everything you have won, the CV is the one
+           page of it you hand to somebody else. -->
+      <button class="tab" data-tab="trophy" onclick="switchTab('trophy')">Trophy Room</button>
     </div>
   </div>
 </div>
@@ -1671,8 +1665,14 @@
 <!-- ===== TRAINING AGE TAB — the card, and the ten attributes behind it ===== -->
 <div class="tab-view" id="view-age"></div>
 
-<!-- ===== CV TAB — the athletic CV (absorbs PBs). Highlights only, by design:
-         the working-out lives on Training Age, the proof lives here. ===== -->
+<!-- ===== TROPHY ROOM TAB — everything won, kept. The medal shelf reads off
+         the Awards sheet, so last term's gold is still on the wall. ===== -->
+<div class="tab-view" id="view-trophy"></div>
+
+<!-- ===== CV VIEW — the athletic CV (absorbs PBs). Highlights only, by design:
+         the working-out lives on Training Age, the proof lives here. No tab of
+         its own: reached from the trophy room, because it is the page you take
+         out of the room rather than another room. ===== -->
 <div class="tab-view" id="view-cv"></div>
 
 </div><!-- /.content -->
@@ -2728,7 +2728,9 @@
   .award-line { font: 400 22px 'Fraunces', serif; color: var(--ink); margin: 0; line-height: 1.3; }
   .award-line b { font-weight: 600; color: var(--burgundy); }
   .award-note { font: 400 13px 'Inter', sans-serif; color: var(--ink-mute); margin: 9px 0 0; }
-  .award-ok { margin-top: 18px; width: 100%; font: 700 14px 'Inter', sans-serif; cursor: pointer;
+  .award-where { font: 700 9.5px 'Inter', sans-serif; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-mute); margin: 16px 0 0; opacity: .75; }
+  .award-ok { margin-top: 12px; width: 100%; font: 700 14px 'Inter', sans-serif; cursor: pointer;
     color: var(--cream); background: var(--burgundy); border: none; border-radius: 999px; padding: 12px; }
   @media (prefers-reduced-motion: reduce) { .award-card { animation: none; } }
 
@@ -2796,6 +2798,14 @@
     background: linear-gradient(180deg, #8d514b, #74403b);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.1), inset 0 -1px 0 rgba(0,0,0,.25); }
   .nbar.is-fresh { background: linear-gradient(180deg, #a8603f, #8c4a2f); }
+
+  /* NOTHING INSIDE THE BAR IS A TAP TARGET — the button is.
+     The ticker text travels under the finger, and on iOS a tap whose target
+     element moves between touchstart and touchend does not fire a click at all.
+     So the board stopped opening on tap the moment the line started moving,
+     on a phone only, which is the only place it matters. The children are
+     decoration; the button takes every tap. */
+  .nbar > * { pointer-events: none; }
 
   .nbar-badge { flex: 0 0 auto; align-self: stretch; display: flex; align-items: center;
     padding: 0 11px; background: rgba(0,0,0,.22); color: var(--gold);
@@ -3057,15 +3067,90 @@
     background: linear-gradient(135deg, #f6d873, #e0bf55); border-radius: 999px; padding: 6px 13px; }
   .cv-block .ti { font-size: 14px; }
   .cv-foot { font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); text-align: center; line-height: 1.5; margin: 4px 8px 0; }
+
+  /* ---- The trophy room ----------------------------------------------------
+     A shelf, not a grid. A trophy sits on something: each one is a card with
+     its own light, laid out so a gold and a silver never read as the same
+     size of thing. */
+  .tr-shelf-card { padding-bottom: 6px; }
+  .tr-count { font: 800 12px 'Inter', sans-serif; color: var(--burgundy);
+    background: var(--cream); border: 1px solid var(--line-soft); border-radius: 999px; padding: 3px 10px; }
+  .tr-shelf-lab { display: flex; align-items: center; gap: 6px; margin: 16px 0 9px;
+    font: 800 10px 'Inter', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-mute); }
+  .tr-shelf-lab .ti { font-size: 14px; color: var(--gold); }
+  .tr-cups { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .tr-cup { position: relative; overflow: hidden; padding: 14px 12px 12px; border-radius: 16px;
+    border: 1px solid var(--line-soft); background: var(--cream); text-align: center; }
+  /* The glow is what makes a shelf look lit rather than listed. */
+  .tr-cup::before { content: ''; position: absolute; top: -34px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 72px; border-radius: 50%; opacity: .5; }
+  .tr-cup.gold { border-color: rgba(201,154,29,.4); background: linear-gradient(180deg, #fffaec, var(--cream)); }
+  .tr-cup.gold::before { background: radial-gradient(circle, rgba(232,196,80,.55), transparent 70%); }
+  .tr-cup-medal { position: relative; width: 42px; height: 42px; margin: 0 auto 9px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 20px; color: #fff; }
+  .tr-cup.gold .tr-cup-medal { background: linear-gradient(145deg, #e8c450, #c99a1d);
+    box-shadow: 0 6px 16px -6px rgba(201,154,29,.85); }
+  .tr-cup.silver .tr-cup-medal { background: linear-gradient(145deg, #b9b2aa, #8d8780);
+    box-shadow: 0 6px 16px -6px rgba(141,135,128,.7); }
+  .tr-cup-line { position: relative; font: 400 15px 'Fraunces', serif; color: var(--ink); margin: 0; line-height: 1.3; }
+  .tr-cup-line b { font-weight: 600; color: var(--burgundy); }
+  .tr-cup-meta { position: relative; font: 500 10.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 5px 0 0; }
+  .tr-empty { font: italic 400 13.5px 'Fraunces', serif; color: var(--ink-mute); margin: 8px 0 2px; line-height: 1.55; }
+  .tr-rank-card .trophy-hero { margin-bottom: 14px; }
+  .trophy-howto { margin-bottom: 0; }
+
+  /* The door to the CV. Deliberately the widest thing in the room. */
+  .tr-door { display: flex; align-items: center; gap: 13px; width: 100%; cursor: pointer;
+    text-align: left; padding: 15px 16px; border-radius: 18px; border: none;
+    background: linear-gradient(135deg, var(--burgundy), #6a3a36);
+    box-shadow: 0 12px 26px -14px rgba(135,75,70,.8); }
+  .tr-door-ico { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+    background: rgba(255,255,255,.15); color: var(--gold); font-size: 21px; }
+  .tr-door-body { min-width: 0; flex: 1; }
+  .tr-door-h { display: block; font: 700 15.5px 'Inter', sans-serif; color: #fff; }
+  .tr-door-s { display: block; font: 400 12px 'Inter', sans-serif; color: rgba(250,243,237,.8); margin-top: 2px; line-height: 1.4; }
+  .tr-door-go { flex: 0 0 auto; color: rgba(250,243,237,.7); font-size: 18px; }
+
+  /* ---- CV: the way back, and the highlights the athlete picks ---- */
+  .cv-back { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; cursor: pointer;
+    background: none; border: none; padding: 2px 0 0; margin-bottom: -4px;
+    font: 700 12.5px 'Inter', sans-serif; color: var(--burgundy); }
+  .cv-hl { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .cv-hl-item { display: flex; align-items: center; gap: 11px; padding: 11px 12px;
+    border-radius: 14px; border: 1px solid var(--line-soft); background: var(--cream); }
+  .cv-hl-item.gold { border-color: rgba(201,154,29,.4); background: linear-gradient(90deg, #fffaec, var(--cream)); }
+  .cv-hl-ico { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 17px; color: #fff; background: linear-gradient(145deg, #b9b2aa, #8d8780); }
+  .cv-hl-item.gold .cv-hl-ico { background: linear-gradient(145deg, #e8c450, #c99a1d); }
+  .cv-hl-line { font: 400 15px 'Fraunces', serif; color: var(--ink); margin: 0; line-height: 1.3; }
+  .cv-hl-line b { font-weight: 600; color: var(--burgundy); }
+  .cv-hl-meta { font: 500 10.5px 'Inter', sans-serif; color: var(--ink-mute); margin: 3px 0 0; }
+  .cv-pick { display: flex; flex-direction: column; }
+  .cv-pick-row { display: flex; align-items: center; gap: 11px; width: 100%; cursor: pointer; text-align: left;
+    background: none; border: none; border-bottom: 1px solid var(--line-soft); padding: 10px 2px; }
+  .cv-pick-row:last-child { border-bottom: none; }
+  .cv-pick-box { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center;
+    border: 1.5px solid var(--line); background: #fff;
+    font: 800 12px 'Inter', sans-serif; color: var(--cream); }
+  .cv-pick-row.on .cv-pick-box { background: var(--burgundy); border-color: var(--burgundy); }
+  .cv-pick-body { min-width: 0; }
+  .cv-pick-line { display: block; font: 600 13.5px 'Inter', sans-serif; color: var(--ink); }
+  .cv-pick-line b { font-weight: 700; color: var(--burgundy); }
+  .cv-pick-meta { display: block; font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); margin-top: 1px; }
   /* Printing: just the CV, nothing else. */
   @media print {
     body.cv-printing .nav, body.cv-printing .tabs, body.cv-printing .block-bar,
     body.cv-printing .tab-view:not(#view-cv), body.cv-printing .cv-print,
     body.cv-printing .cv-add, body.cv-printing .sheet, body.cv-printing .sheet-backdrop,
-    body.cv-printing .toast, body.cv-printing #demoPill { display: none !important; }
+    body.cv-printing .toast, body.cv-printing #demoPill,
+    /* The way back and the picker are controls, not content — a printed CV
+       should not carry "Trophy room" or a list of things that were NOT picked. */
+    body.cv-printing .cv-back, body.cv-printing .cv-pick,
+    body.cv-printing .nbar, body.cv-printing .award-pop { display: none !important; }
     body.cv-printing .card { box-shadow: none; border: 1px solid #e0e0e0; break-inside: avoid; }
     body.cv-printing .cv-head { box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    body.cv-printing .cv-grit-band, body.cv-printing .cv-block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.cv-printing .cv-grit-band, body.cv-printing .cv-block,
+    body.cv-printing .cv-hl-item, body.cv-printing .cv-hl-ico { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 
   /* CV: testing + strength levels, with blurred locks for what's not done */
@@ -4925,6 +5010,10 @@
   // SMALL HELPERS
   // ============================================================
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  // For a value going inside a SINGLE-quoted JS string inside a double-quoted
+  // HTML attribute — onclick="f('…')". esc() leaves ' alone, which is correct
+  // for text but breaks the handler, so anything built that way needs this.
+  function escArg(s){ return esc(s).replace(/'/g, '&#39;').replace(/\\/g, '\\\\'); }
   function val(id){ const el=document.getElementById(id); return el? el.value : ''; }
   // numOrNull used to be parseInt and nothing else, which let several things
   // through that then poisoned everything downstream of them:
@@ -5093,6 +5182,28 @@
     return apiGet(Object.assign({ athleteId: currentAthleteId(), token: sessionToken() }, params)).then(guardReply);
   }
   // Demo short-circuit: keep every interaction local, never touch the network.
+  // Read with no argument, write with one. Seeded with a term of history the
+  // first time, so the shelf in the demo looks like somebody's rather than
+  // like an empty room.
+  const DEMO_AWARD_KEY = 'aaDemoAwards';
+  function demoAwardStore(next){
+    if(next){ try { localStorage.setItem(DEMO_AWARD_KEY, JSON.stringify(next)); } catch(e){} return next; }
+    try {
+      const raw = localStorage.getItem(DEMO_AWARD_KEY);
+      if(raw) return JSON.parse(raw) || [];
+    } catch(e){}
+    const seed = [
+      { id:'pb_50m_freestyle_28.4', kind:'pb', label:'50m freestyle', detail:'sec',
+        value:28.4, previous:29.6, earned:'2026-09-26', seen:true, pinned:1 },
+      { id:'ta_engine_6.2', kind:'training_age', label:'Engine', detail:'engine',
+        value:6.2, previous:5.4, earned:'2026-09-14', seen:true, pinned:2 },
+      { id:'pb_back_squat_72', kind:'pb', label:'Back Squat', detail:'kg',
+        value:72, previous:65, earned:'2026-09-08', seen:true, pinned:0 }
+    ];
+    demoAwardStore(seed);
+    return seed;
+  }
+
   function demoApi(payload){
     const action = (payload && payload.action) || '';
     if(action==='getWeek') return Promise.resolve({ success:true, weekStart: payload.weekStart,
@@ -5114,6 +5225,33 @@
       coachNote: 'Big week for the swimmers. If your block says build and you only got one session in, that is the thing to fix before anything else — two is the floor, not the target. Movement masterclass slots are open: get the hinge stamped.',
       coachNoteDate: '2026-10-05',
       you: { trained: true, sessions: 2, best: false } });
+    // ---- Awards, in demo -----------------------------------------------------
+    // Demo runs the real sync path rather than a stub, so the trophy room, the
+    // pop-up queue and the CV picker are all exercised by ?demo=1. The store
+    // persists on the device so a reload does not replay every celebration.
+    if(action==='getAwards') return Promise.resolve({ success:true, awards: demoAwardStore() });
+    if(action==='saveAwards'){
+      const store = demoAwardStore();
+      const have = {}; store.forEach(a => { have[a.id] = 1; });
+      (payload.awards || []).forEach(a => { if(a && a.id && !have[a.id]){ have[a.id] = 1;
+        store.push(Object.assign({ seen:false, pinned:0 }, a)); } });
+      demoAwardStore(store);
+      return Promise.resolve({ success:true, added:(payload.awards||[]).length });
+    }
+    if(action==='markAwardsSeen'){
+      const store = demoAwardStore();
+      const want = {}; (Array.isArray(payload.ids)?payload.ids:[payload.ids]).forEach(i => { want[i] = 1; });
+      store.forEach(a => { if(want[a.id]) a.seen = true; });
+      demoAwardStore(store);
+      return Promise.resolve({ success:true });
+    }
+    if(action==='setAwardPins'){
+      const store = demoAwardStore();
+      const ids = payload.ids || [];
+      store.forEach(a => { a.pinned = ids.indexOf(a.id) + 1; });
+      demoAwardStore(store);
+      return Promise.resolve({ success:true });
+    }
     if(action==='saveAvailability' || action==='clearAvailability') return Promise.resolve({ success:true });
     if(action==='getAvailability') return Promise.resolve({ success:true, availability: state.availability||[] });
     if(action==='getGrit') return Promise.resolve({ success:true, grit: state.grit });
@@ -5267,11 +5405,16 @@
       // land on Year and get the walkthrough to set their vision first.
       var savedTab = null;
       try { savedTab = sessionStorage.getItem('aa_tab'); } catch(e){}
-      var resume = savedTab && ['week','year','load','book','cv','learn','age'].indexOf(savedTab) >= 0;
+      var resume = savedTab && ['week','year','load','book','cv','learn','age','trophy'].indexOf(savedTab) >= 0;
       switchTab(resume ? savedTab : (hasYear() ? 'week' : 'year'));
       if(!hasYear() && !resume) openWalkthrough();
       setLoading(false);
       prefetchAround(state.week.weekStart);   // so the first week step is instant too
+      // The medal ledger. This was written, deployed and then never called from
+      // anywhere — which is why a term of bests had never reached the Awards
+      // sheet and the trophy room had nothing in it. Fire-and-forget, after
+      // paint, because nothing on screen waits on a medal.
+      syncAwards();
       loadGames();   // fire-and-forget: fill the season fixtures list once we're painted
       if(bookingUnlocked()) loadBooking(); // testers only — booking is still gated
     } catch(e){
@@ -5336,6 +5479,7 @@
     const pill = document.getElementById('demoPill'); if(pill) pill.hidden = false;
     renderNav();
     switchTab('week');
+    syncAwards();   // demo runs the real path against demoApi, shelf included
   }
 
   function buildDemoState(){
@@ -5504,7 +5648,7 @@
   const LAUNCH_MODE = true;
   // My Program (week) is live so students can build their own program, and Book
   // (check-ins) is now live too. Load/PBs stay teased until they're ready.
-  const LIVE_TABS = { year:true, week:true, book:true, cv:true, load:true, age:true };
+  const LIVE_TABS = { year:true, week:true, book:true, cv:true, load:true, age:true, trophy:true };
   // Booking is still in testing — students see the "coming soon" teaser. It's
   // unlocked only for the demo, a ?book=1 override, and named testers. This just
   // reveals the UI; the SERVER enforces the real lock (BOOKING_LIVE / tester
@@ -5540,10 +5684,15 @@
     // (sessionStorage survives a reload but not a fresh open — a new open lands
     // on My Program by design.)
     try { sessionStorage.setItem('aa_tab', tab); } catch(e){}
-    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    // The CV has no tab button of its own — it is a room inside the trophy
+    // room — so the strip keeps Trophy Room lit while you are on it. Without
+    // this, opening the CV leaves no tab highlighted and the student has no
+    // idea where in the app they are.
+    const lit = tab === 'cv' ? 'trophy' : tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === lit));
     // Seven tabs no longer fit a phone, and the strip scrolls. Without this the
     // tab you just tapped can sit half off the right edge.
-    const activeBtn = document.querySelector('.tab[data-tab="'+tab+'"]');
+    const activeBtn = document.querySelector('.tab[data-tab="'+lit+'"]');
     if(activeBtn && activeBtn.scrollIntoView) {
       try { activeBtn.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' }); } catch(e){}
     }
@@ -5558,6 +5707,7 @@
     else if(tab==='book'){ renderBook(); loadBooking(); }
     else if(tab==='learn') renderLearn();
     else if(tab==='age') renderAge();
+    else if(tab==='trophy') renderTrophyRoom();
     else if(tab==='cv') renderCV();
     window.scrollTo(0,0);
   }
@@ -7210,14 +7360,24 @@
   // A noticeboard is the right object for a school: it is the thing outside the
   // gym that you glance at, it changes, and nobody has to post on it.
   function openBoard(){
-    // Opening the board is what "read" means for the coach's note — the dot on
-    // the bar goes out and stays out until the note itself changes.
-    const note = String((state.board && state.board.coachNote) || '').trim();
-    if(note) markNoticeSeen(note);
-    renderBoard();
+    // OPEN FIRST, RENDER SECOND. A throw anywhere in renderBoard used to
+    // swallow the tap silently: the student taps, nothing happens, and there is
+    // no way for them to tell an empty board from a broken one. The sheet
+    // opening is not conditional on the contents being renderable.
     document.getElementById('board-backdrop').classList.add('open');
     document.getElementById('boardSheet').classList.add('open');
     document.body.style.overflow = 'hidden';
+    try {
+      // Opening the board is what "read" means for the coach's note — the dot
+      // on the bar goes out and stays out until the note itself changes.
+      const note = String((state.board && state.board.coachNote) || '').trim();
+      if(note) markNoticeSeen(note);
+      renderBoard();
+    } catch(e){
+      document.getElementById('boardBody').innerHTML =
+        '<div class="bd-surface"><div class="bd-top"><p class="bd-kicker">The squad</p>'+
+        '<p class="bd-note">Could not load the board just now. Pull down to refresh.</p></div></div>';
+    }
     renderNoticeBar();
     loadSquadPulse(state.week.weekStart || fmtISO(mondayOf(new Date())));
   }
@@ -8089,22 +8249,76 @@
     '</button>';
   }
 
-  // Trophy room — full rank header, stat tiles, and every badge by track.
-  function openTrophyRoom(){
-    renderTrophyRoom();
-    document.getElementById('trophy-backdrop').classList.add('open');
-    document.getElementById('trophySheet').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
+  // Kept for the rank chip and the Level Up badge count, which both used to
+  // open a sheet. They walk into the room instead.
+  function openTrophyRoom(){ switchTab('trophy'); }
   window.openTrophyRoom = openTrophyRoom;
-  function closeTrophyRoom(){
-    document.getElementById('trophy-backdrop').classList.remove('open');
-    document.getElementById('trophySheet').classList.remove('open');
-    const stillOpen = document.querySelector('.sheet.open') || document.getElementById('workoutMode').classList.contains('open');
-    document.body.style.overflow = stillOpen ? 'hidden' : '';
+
+  // ---- THE SHELF -------------------------------------------------------------
+  // The medal that pops on screen is the moment. The shelf is the point: a
+  // fourteen-year-old who has set three bests since September should be able to
+  // see all three in one place, in September's order, months later.
+  //
+  // Golds and silvers are separated because mixing them makes the gold cheap —
+  // a personal best sitting in a grid next to "logged four sessions" reads as
+  // the same size of thing, and it isn't.
+  function trophyShelfHTML(){
+    if(awardLedger === null){
+      return '<div class="card"><p class="card-eyebrow">Your shelf</p>'+
+        '<p class="tr-empty">Fetching what you have won…</p></div>';
+    }
+    const shelf = awardShelf();
+    if(!shelf.length){
+      return '<div class="card"><p class="card-eyebrow">Your shelf</p>'+
+        '<p class="tr-empty">Nothing on the shelf yet. The first thing to land here is usually '+
+        'a personal best — set one and it is yours for good.</p></div>';
+    }
+    const gold = shelf.filter(a => a.tier === 'gold');
+    const silver = shelf.filter(a => a.tier === 'silver');
+
+    const tile = a => '<div class="tr-cup '+a.tier+'">'+
+      '<span class="tr-cup-medal"><i class="ti '+a.icon+'" aria-hidden="true"></i></span>'+
+      '<p class="tr-cup-line">'+a.line+'</p>'+
+      '<p class="tr-cup-meta">'+esc(a.title)+(a.earned ? ' · '+esc(fmtNice(a.earned)) : '')+'</p>'+
+    '</div>';
+
+    let html = '<div class="card tr-shelf-card">'+
+      '<div class="cv-sec-head"><p class="card-eyebrow" style="margin:0;">Your shelf</p>'+
+      '<span class="tr-count">'+shelf.length+'</span></div>';
+    if(gold.length){
+      html += '<p class="tr-shelf-lab"><i class="ti ti-trophy" aria-hidden="true"></i> Trophies</p>'+
+        '<div class="tr-cups">'+gold.map(tile).join('')+'</div>';
+    }
+    if(silver.length){
+      html += '<p class="tr-shelf-lab"><i class="ti ti-medal" aria-hidden="true"></i> Medals</p>'+
+        '<div class="tr-cups">'+silver.map(tile).join('')+'</div>';
+    }
+    return html + '</div>';
   }
-  window.closeTrophyRoom = closeTrophyRoom;
+
+  // The door to the CV. Scott's framing, and it is the right one: the room is
+  // for the athlete, the CV is the single page they hand to a coach at another
+  // school. So it is a door out of the room, not a seventh tab.
+  function trophyCVDoorHTML(){
+    const n = cvHighlights().length;
+    return '<button class="tr-door" onclick="switchTab(\'cv\')">'+
+      '<span class="tr-door-ico"><i class="ti ti-id-badge-2" aria-hidden="true"></i></span>'+
+      '<span class="tr-door-body">'+
+        '<span class="tr-door-h">Your athletic CV</span>'+
+        '<span class="tr-door-s">'+(n
+          ? 'One page to send a coach. '+n+' highlight'+(n===1?'':'s')+' chosen by you.'
+          : 'One page to send a coach. Pick which of these go on it.')+'</span>'+
+      '</span>'+
+      '<i class="ti ti-chevron-right tr-door-go" aria-hidden="true"></i>'+
+    '</button>';
+  }
+
   function renderTrophyRoom(){
+    const view = document.getElementById('view-trophy');
+    if(!view) return;
+    // The ledger is fetched once per load; if the tab is opened before it lands,
+    // ask for it and re-render when it does.
+    if(awardLedger === null) syncAwards();
     const g = gameStats();
     const r = g.rank;
     const hero = '<div class="trophy-hero">'+
@@ -8137,9 +8351,16 @@
       groups += '<p class="trophy-group-label"><i class="ti '+t.icon+'" aria-hidden="true"></i> '+t.key+'</p>'+
         '<div class="badge-grid">'+tiles+'</div>';
     });
-    const howto = '<p class="trophy-howto">Your rank is <strong>sessions logged</strong> — nothing else is folded in, and it only ever goes up. Bests and badges have their own shelf.</p>';
-    document.getElementById('trophyBody').innerHTML = hero + stats + groups + howto;
+    const howto = '<p class="trophy-howto">Your rank is <strong>sessions logged</strong>. It only ever goes up.</p>';
+    // Shelf first. The thing a student came in for is what they have won, not
+    // the ladder they are on — the ladder is already on the week screen.
+    view.innerHTML = '<div class="card-stack">'+
+      trophyShelfHTML() + trophyCVDoorHTML() +
+      '<div class="card tr-rank-card">'+ hero + stats + howto +'</div>'+
+      '<div class="card"><p class="card-eyebrow">Badges</p>'+ groups +'</div>'+
+    '</div>';
   }
+  window.renderTrophyRoom = renderTrophyRoom;
 
   // Badge unlock celebration — fires when a brand-new badge is earned.
   function badgeSeenKey(){ return 'aaBadgesSeen:' + ((currentUser && currentUser.email) || 'anon'); }
@@ -8502,6 +8723,107 @@
     return m;
   }
 
+  // ---- How a medal is DISPLAYED, derived from what the sheet stores ---------
+  //
+  // The tier and the wording used to be invented at the moment a medal was
+  // minted and then thrown away — the Awards sheet holds id, kind, label,
+  // detail, value, previous, earned, and nothing about how to show it. Two
+  // things fell out of that. A medal minted on a load whose tab closed before
+  // the celebration ran could never pop again, because the unseen filter tests
+  // `a.tier` and a ledger row has none. And a trophy room could not exist at
+  // all, because last term's gold had no title, no line and no colour.
+  //
+  // So presentation is a pure function of the stored row. Nothing to persist,
+  // nothing to migrate, and the shelf and the pop-up read from one place.
+  function awardView(a){
+    if(!a) return null;
+    const id = String(a.id || '');
+    const kind = String(a.kind || '');
+    const label = String(a.label || '');
+    const val = a.value, prev = a.previous;
+
+    if(kind === 'training_age'){
+      // A baseline is the first number an attribute ever had. It is recorded so
+      // the next move has something to beat — it is not itself a win.
+      if(id.indexOf('ta_base_') === 0) return { tier:null };
+      return { tier:AWARD_GOLD, icon:'ti-chart-arrows-vertical', shelf:'Training Age',
+        title: label + ' is up',
+        line: (prev != null ? (+prev).toFixed(1)+' → ' : '') + '<b>'+(+val).toFixed(1)+'</b>',
+        note: 'An all-time high.' };
+    }
+    if(kind === 'pb'){
+      const u = String(a.detail || '');
+      const unit = u ? (u === 'reps' ? ' reps' : ' '+u) : '';
+      const hadPrev = prev != null && String(prev).trim() !== '' && String(prev).trim() !== '0';
+      return { tier:AWARD_GOLD, icon:'ti-trophy', shelf:'Personal bests',
+        title:'New best',
+        line: esc(label)+' <b>'+esc(String(val))+unit+'</b>',
+        note: hadPrev ? 'Up from '+esc(String(prev))+unit+'.' : 'Your first on this one.' };
+    }
+    if(kind === 'badge'){
+      // The blurb lives in the badge definition, not the sheet — look it back up.
+      let note = '';
+      try { (gameStats().badges || []).forEach(b => { if('badge_'+b.id === id) note = b.blurb || ''; }); } catch(e){}
+      return { tier:AWARD_SILVER, icon:'ti-medal', shelf:'Badges',
+        title:'Badge earned', line:'<b>'+esc(label)+'</b>', note:note };
+    }
+    if(kind === 'rank'){
+      let lvl = 0;
+      RANKS.forEach((r, i) => { if(r.name.toLowerCase() === label.toLowerCase()) lvl = i + 1; });
+      return { tier:AWARD_SILVER, icon:'ti-military-award', shelf:'Ranks',
+        title:'New rank', line:'<b>'+esc(label)+'</b>', note: lvl ? 'Level '+lvl+'.' : '' };
+    }
+    return { tier:null };
+  }
+  // Everything on the shelf, newest first, with its presentation attached.
+  function awardShelf(){
+    return (awardLedger || []).map(a => {
+      const v = awardView(a);
+      return v && v.tier ? Object.assign({}, a, v) : null;
+    }).filter(Boolean)
+      .sort((x, y) => String(y.earned || '').localeCompare(String(x.earned || '')));
+  }
+
+  // ---- CV HIGHLIGHTS ---------------------------------------------------------
+  // The shelf is everything. The CV is the four things the athlete WANTS the
+  // coach at the next school to read first, in the order they want them read —
+  // so it is the athlete who picks, not a ranking function.
+  //
+  // The pick is a position on the award's own row (Awards.Pinned), which means
+  // it survives a new phone and needs no second store. Until anything is
+  // picked, the CV shows the newest golds: a blank highlights strip on a page
+  // you are about to send somebody is worse than a reasonable guess.
+  const CV_MAX_HIGHLIGHTS = 4;
+  function cvHighlights(){
+    const shelf = awardShelf();
+    if(!shelf.length) return [];
+    const picked = shelf.filter(a => a.pinned > 0).sort((x,y) => x.pinned - y.pinned);
+    if(picked.length) return picked.slice(0, CV_MAX_HIGHLIGHTS);
+    return shelf.filter(a => a.tier === 'gold').slice(0, 3);
+  }
+  function cvChosenIds(){
+    return awardShelf().filter(a => a.pinned > 0).sort((x,y) => x.pinned - y.pinned).map(a => a.id);
+  }
+  // Tapping one adds it to the end or takes it out; the order is the order they
+  // were tapped in, which is the only ordering control a phone needs.
+  function cvPinToggle(id){
+    const ids = cvChosenIds();
+    const at = ids.indexOf(id);
+    if(at >= 0) ids.splice(at, 1);
+    else {
+      if(ids.length >= CV_MAX_HIGHLIGHTS){
+        showToast('Four is the limit — take one off first.', '');
+        return;
+      }
+      ids.push(id);
+    }
+    // Write the new order onto the ledger so the page redraws from one source.
+    (awardLedger || []).forEach(a => { a.pinned = ids.indexOf(a.id) + 1; });
+    renderCV();
+    apiData({ action:'setAwardPins', ids: ids }).catch(() => {});
+  }
+  window.cvPinToggle = cvPinToggle;
+
   // Everything the athlete has earned, as it stands. Pure — no side effects, so
   // it can be called freely and tested without a network.
   function detectAwards(){
@@ -8522,35 +8844,34 @@
       // this attribute, whatever award it came in on.
       let best = 0;
       (awardLedger || []).forEach(x => {
-        if(x.kind === 'training_age' && x.detail === a.id && x.value > best) best = x.value;
+        if(x.kind === 'training_age' && x.detail === a.id && Number(x.value) > best) best = Number(x.value);
       });
       if(!best){
         // First time this attribute has a number. That is a baseline, not a
         // gain — the card says so too. Record it silently so the NEXT move has
         // something to be measured against.
         out.push({ id:'ta_base_'+a.id, kind:'training_age', label:a.label, detail:a.id,
-                   value:v, previous:null, earned:today, tier:null, silent:true });
+                   value:v, previous:null, earned:today });
         return;
       }
       if(v > best + 0.05){   // a real move, not a rounding wobble
-        out.push({ id:'ta_'+a.id+'_'+v.toFixed(1), kind:'training_age', label:a.label, detail:a.id,
-                   value:v, previous:best, earned:today, tier:AWARD_GOLD,
-                   title: a.label+' is up', line:best.toFixed(1)+' → <b>'+v.toFixed(1)+'</b>',
-                   note:'An all-time high.' });
+        out.push({ id:'ta_'+a.id+'_'+v.toFixed(1), kind:'training_age', label:a.label,
+                   detail:a.id, value:v, previous:best, earned:today });
       }
     });
 
     // 2. PERSONAL BESTS — gold. The most concrete, most earned thing in the app.
     (state.pbs || []).forEach(b => {
       if(!b || !b.exercise) return;
-      const unit = b.unit ? (String(b.unit)==='reps' ? ' reps' : ' '+b.unit) : '';
-      const id = 'pb_'+String(b.exercise).toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+b.value;
-      const prev = parseFloat(b.previousValue);
+      // The value is kept EXACTLY as the athlete entered it. parseFloat here
+      // turned a 200m freestyle of "2:14.8" into the number 2, and the medal
+      // then read "200m Freestyle 2" — permanently, because the shelf reads
+      // the stored row. A best is a string on a certificate, not a float.
+      const slug = s => String(s).toLowerCase().replace(/[^a-z0-9.]+/g, '_').replace(/^_|_$/g, '');
+      const id = 'pb_'+slug(b.exercise)+'_'+slug(b.value);
+      const prev = (b.previousValue == null || String(b.previousValue).trim() === '') ? null : b.previousValue;
       out.push({ id, kind:'pb', label:b.exercise, detail:String(b.unit||''),
-                 value:parseFloat(b.value)||null, previous:isFinite(prev)?prev:null,
-                 earned:b.date || today, tier:AWARD_GOLD,
-                 title:'New best', line:esc(b.exercise)+' <b>'+esc(String(b.value))+unit+'</b>',
-                 note: isFinite(prev) && prev>0 ? 'Up from '+prev+unit+'.' : 'Your first on this one.' });
+                 value: b.value, previous: prev, earned:b.date || today });
     });
 
     // 3. BADGES and RANK — silver. Already computed; they just had nowhere to be
@@ -8559,14 +8880,12 @@
     (g.badges || []).forEach(bd => {
       if(!bd.earned) return;
       out.push({ id:'badge_'+bd.id, kind:'badge', label:bd.name, detail:bd.track,
-                 value:bd.goal, previous:null, earned:today, tier:AWARD_SILVER,
-                 title:'Badge earned', line:'<b>'+esc(bd.name)+'</b>', note:bd.blurb });
+                 value:bd.goal, previous:null, earned:today });
     });
     const rk = g.rank;
     if(rk && rk.index > 0){
       out.push({ id:'rank_'+rk.name.toLowerCase(), kind:'rank', label:rk.name, detail:'',
-                 value:rk.min, previous:null, earned:today, tier:AWARD_SILVER,
-                 title:'New rank', line:'<b>'+esc(rk.name)+'</b>', note:'Level '+rk.level+'.' });
+                 value:rk.min, previous:null, earned:today });
     }
 
     return out.filter(a => !have[a.id]);
@@ -8579,19 +8898,35 @@
       const r = await apiDataGet({ action:'getAwards' });
       if(!r || !r.success) return;
       awardLedger = r.awards || [];
+      // The ledger starts empty for every athlete who was already using the
+      // portal, and a term of bests and badges all land in that first sync. Nine
+      // overlays in a row on the first open is not a celebration, it is a
+      // dialog to get past — and the medals would be "new" only to the sheet.
+      // So the first sync BASELINES: everything is recorded, put on the shelf,
+      // and marked seen without popping. Same rule the badge celebration
+      // already uses. From the second load on, a new medal is genuinely new.
+      const baselining = !awardLedger.length;
       const fresh = detectAwards();
       if(fresh.length){
         await apiData({ action:'saveAwards', awards: fresh.map(a => ({
           id:a.id, kind:a.kind, label:a.label, detail:a.detail,
           value:a.value, previous:a.previous, earned:a.earned })) });
-        awardLedger = awardLedger.concat(fresh.map(a => Object.assign({ seen:false }, a)));
+        awardLedger = awardLedger.concat(fresh.map(a => Object.assign({ seen: baselining }, a)));
+        if(baselining){
+          apiData({ action:'markAwardsSeen', ids: fresh.map(a => a.id) }).catch(() => {});
+        }
       }
       // Anything earned but never shown — including medals minted on an earlier
-      // load whose celebration never actually ran because the tab closed.
-      const unseen = (awardLedger || []).filter(a => !a.seen && a.tier);
+      // load whose celebration never actually ran because the tab closed. The
+      // tier comes from awardView, not from the row: the sheet does not store
+      // one, so testing `a.tier` here only ever matched medals minted in this
+      // same tab, and an interrupted celebration was lost for good.
+      const unseen = (awardLedger || []).filter(a => !a.seen && (awardView(a) || {}).tier);
       if(unseen.length) showAwards(unseen);
+      if(activeTab === 'trophy') renderTrophyRoom();
     } catch(e){ /* never block the week on a medal */ }
   }
+  window.syncAwards = syncAwards;
 
   // One at a time, biggest first. A queue rather than a stack of overlays,
   // because four medals at once is noise and the student dismisses all of them.
@@ -8601,7 +8936,9 @@
     // falsy, so that expression sent the biggest medal to the back of the queue
     // and opened on a badge.
     const order = { gold:1, silver:2 };
-    awardQueue = list.slice().sort((a,b) => (order[a.tier] || 9) - (order[b.tier] || 9));
+    awardQueue = list.map(a => Object.assign({}, a, awardView(a)))
+      .filter(a => a.tier)
+      .sort((a,b) => (order[a.tier] || 9) - (order[b.tier] || 9));
     awardNext();
   }
   function awardNext(){
@@ -8612,13 +8949,14 @@
     el.className = 'award-pop open ' + (a.tier || 'silver');
     el.innerHTML =
       '<div class="award-card">'+
-        '<div class="award-medal"><i class="ti '+(a.kind==='pb' ? 'ti-trophy'
-          : a.kind==='training_age' ? 'ti-chart-arrows-vertical'
-          : a.kind==='rank' ? 'ti-military-award' : 'ti-medal')+'" aria-hidden="true"></i></div>'+
+        '<div class="award-medal"><i class="ti '+(a.icon || 'ti-medal')+'" aria-hidden="true"></i></div>'+
         '<p class="award-kicker">'+esc(a.title || 'Earned')+'</p>'+
         '<p class="award-line">'+(a.line || esc(a.label))+'</p>'+
         (a.note ? '<p class="award-note">'+esc(a.note)+'</p>' : '')+
-        '<button class="award-ok" onclick="awardSeen(\''+esc(a.id)+'\')">'+
+        // Where it goes afterwards. A medal that pops and then vanishes teaches
+        // a student that none of this is kept.
+        '<p class="award-where">Kept in your trophy room</p>'+
+        '<button class="award-ok" onclick="awardSeen(\''+escArg(a.id)+'\')">'+
           (awardQueue.length ? 'Next' : 'Nice')+'</button>'+
       '</div>';
   }
@@ -8626,6 +8964,9 @@
     (awardLedger || []).forEach(a => { if(a.id === id) a.seen = true; });
     apiData({ action:'markAwardsSeen', ids:[id] }).catch(() => {});
     awardNext();
+    // If the queue just emptied onto the trophy room, the new medal should
+    // already be on the shelf behind the overlay.
+    if(!awardQueue.length && activeTab === 'trophy') renderTrophyRoom();
   }
   window.awardSeen = awardSeen;
 
@@ -14478,6 +14819,52 @@
       .filter(g => g.result && String(g.result).trim())
       .sort((a,b) => (a.date < b.date ? 1 : -1));
   }
+  // The top of the CV: what the athlete chose to lead with, and the picker for
+  // changing it. Nothing here is computed from "best" — a student knows which
+  // of their results means something and an app does not.
+  let cvPickOpen = false;
+  function cvTogglePicker(){ cvPickOpen = !cvPickOpen; renderCV(); }
+  window.cvTogglePicker = cvTogglePicker;
+
+  function cvHighlightsHTML(){
+    const shelf = awardShelf();
+    if(!shelf.length) return '';            // nothing won yet — no empty shelf on a CV
+    const picks = cvHighlights();
+    const chosen = {}; cvChosenIds().forEach((id, i) => { chosen[id] = i + 1; });
+    const anyChosen = Object.keys(chosen).length > 0;
+
+    let html = '<div class="card" id="cvHighlights">'+
+      '<div class="cv-sec-head"><p class="card-eyebrow" style="margin:0;">Highlights</p>'+
+      '<button class="cv-add" onclick="cvTogglePicker()">'+
+        (cvPickOpen ? '<i class="ti ti-check" aria-hidden="true"></i> Done'
+                    : '<i class="ti ti-pencil" aria-hidden="true"></i> Change')+'</button></div>';
+
+    html += '<div class="cv-hl">'+picks.map(a =>
+      '<div class="cv-hl-item '+a.tier+'">'+
+        '<span class="cv-hl-ico"><i class="ti '+a.icon+'" aria-hidden="true"></i></span>'+
+        '<div><p class="cv-hl-line">'+a.line+'</p>'+
+        '<p class="cv-hl-meta">'+esc(a.title)+(a.earned ? ' · '+esc(fmtNice(a.earned)) : '')+'</p></div>'+
+      '</div>').join('')+'</div>';
+
+    if(!anyChosen){
+      html += '<p class="cv-note">Picked for you from your newest results. Tap <strong>Change</strong> to choose your own.</p>';
+    }
+
+    if(cvPickOpen){
+      html += '<p class="cv-group">Pick up to '+CV_MAX_HIGHLIGHTS+'</p><div class="cv-pick">'+
+        shelf.map(a => {
+          const n = chosen[a.id] || 0;
+          return '<button class="cv-pick-row'+(n?' on':'')+'" onclick="cvPinToggle(\''+escArg(a.id)+'\')">'+
+            '<span class="cv-pick-box">'+(n ? n : '')+'</span>'+
+            '<span class="cv-pick-body"><span class="cv-pick-line">'+a.line+'</span>'+
+            '<span class="cv-pick-meta">'+esc(a.title)+(a.earned ? ' · '+esc(fmtNice(a.earned)) : '')+'</span></span>'+
+          '</button>';
+        }).join('')+'</div>'+
+        '<p class="cv-note">The number is the order they appear in. Tap one again to take it off.</p>';
+    }
+    return html + '</div>';
+  }
+
   function renderCV(){
     const view = document.getElementById('view-cv');
     const g = gameStats();
@@ -14493,6 +14880,11 @@
     // behind it live on their own tab: that is the working-out, and the working
     // out is for the athlete, not for the person they hand this to.
     let html = '<div class="card-stack" id="cvSheetWrap">'+
+      // The way back. The CV is a page inside the trophy room, and a page with
+      // no way out of it is a dead end on a phone — there is no tab lit up for
+      // it to go back to.
+      '<button class="cv-back" onclick="switchTab(\'trophy\')">'+
+        '<i class="ti ti-arrow-left" aria-hidden="true"></i> Trophy room</button>'+
       '<div class="cv-head">'+
         '<div class="cv-head-main">'+
           '<p class="cv-eyebrow">Athletic CV</p>'+
@@ -14503,6 +14895,8 @@
         /* Export not offered yet. exportCV() and the print stylesheet are
            already in place, so adding the button back is a one-liner. */
       '</div>';
+
+    html += cvHighlightsHTML();
 
     // --- training record ---
     // Only ever shows what's been earned. The Grit band appears from

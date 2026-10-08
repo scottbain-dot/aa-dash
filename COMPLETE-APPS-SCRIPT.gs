@@ -506,6 +506,9 @@ function doPost(e) {
     if (data.action === 'markAwardsSeen') {
       return apJson(handleMarkAwardsSeen(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.ids));
     }
+    if (data.action === 'setAwardPins') {
+      return apJson(handleSetAwardPins(SpreadsheetApp.getActiveSpreadsheet(), data.athleteId, data.ids));
+    }
     if (data.action === 'savePB') {
       var ssAp4 = SpreadsheetApp.getActiveSpreadsheet();
       return apJson(handleSavePB(ssAp4, data.athleteId, data.pb));
@@ -2870,7 +2873,7 @@ var AA_STUDENT_GET_ROUTES = [
 var AA_STUDENT_POST_ROUTES = [
   'saveYearMap', 'saveBlock', 'saveWeeklyTemplate', 'saveSession', 'deleteSession',
   'bookCheckIn', 'cancelBooking', 'savePB', 'saveAvailability', 'clearAvailability',
-  'saveAwards', 'markAwardsSeen'
+  'saveAwards', 'markAwardsSeen', 'setAwardPins'
 ];
 
 // Created once, on first use, and kept in Script Properties thereafter. The
@@ -4100,11 +4103,14 @@ function apEnsureAwards(ss) {
   var sheet = ss.getSheetByName('Awards');
   if (!sheet) {
     sheet = ss.insertSheet('Awards');
-    sheet.getRange(1, 1, 1, 9).setValues([[
-      'Athlete_ID', 'Award_ID', 'Kind', 'Label', 'Detail', 'Value', 'Previous', 'Earned', 'Seen'
+    sheet.getRange(1, 1, 1, 10).setValues([[
+      'Athlete_ID', 'Award_ID', 'Kind', 'Label', 'Detail', 'Value', 'Previous', 'Earned', 'Seen', 'Pinned'
     ]]);
     sheet.getRange('1:1').setFontWeight('bold');
   }
+  // Pinned arrived after the sheet did, so an existing Awards sheet gets the
+  // column added rather than being left a version behind.
+  apEnsureColumns(sheet, ['Pinned']);
   return sheet;
 }
 
@@ -4121,10 +4127,17 @@ function handleGetAwards(ss, athleteId) {
         kind: String(rows[i].Kind || ''),
         label: String(rows[i].Label || ''),
         detail: String(rows[i].Detail || ''),
-        value: rows[i].Value === '' ? null : Number(rows[i].Value),
-        previous: rows[i].Previous === '' ? null : Number(rows[i].Previous),
+        // Returned AS STORED, not coerced with Number(). A personal best can be
+        // a time — "2:14.8" — and Number() turns that into NaN on the way out,
+        // or 2 on the way in. Training Age values are written as numbers and
+        // come back as numbers; the client converts where it needs to.
+        value: rows[i].Value === '' ? null : rows[i].Value,
+        previous: rows[i].Previous === '' ? null : rows[i].Previous,
         earned: apDateStr(rows[i].Earned) || '',
-        seen: String(rows[i].Seen) === 'true' || rows[i].Seen === true
+        seen: String(rows[i].Seen) === 'true' || rows[i].Seen === true,
+        // The athlete's CV order, 1-based; 0 means not on the CV. A position
+        // rather than a flag, so "these four, in this order" survives a reload.
+        pinned: Number(rows[i].Pinned) || 0
       });
     }
     out.sort(function (a, b) { return a.earned < b.earned ? 1 : -1; });   // newest first
@@ -4197,6 +4210,52 @@ function handleMarkAwardsSeen(ss, athleteId, ids) {
       n++;
     }
     return { success: true, marked: n };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// Which awards the athlete has chosen to put on their CV.
+//
+// The whole set is sent every time and the column is rewritten to match, rather
+// than a pin and an unpin being separate calls. A CV is a short list the athlete
+// arranges — "these four, in this order" — and a diff-based API would need a
+// delete handler, ordering rows, and a way to recover when one of the two calls
+// fails. Order is the order of `ids`, so the client's list IS the stored list.
+function handleSetAwardPins(ss, athleteId, ids) {
+  try {
+    athleteId = String(athleteId || '').trim();
+    if (!athleteId) return { success: false, error: 'athleteId required' };
+    var list = Array.isArray(ids) ? ids : (ids ? String(ids).split('\t') : []);
+    var rank = {};                       // award id -> 1-based position
+    for (var k = 0; k < list.length; k++) {
+      var v = String(list[k] || '').trim();
+      if (v && !rank[v]) rank[v] = k + 1;
+    }
+    var sheet = apEnsureAwards(ss);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idC = headers.indexOf('Athlete_ID'), awC = headers.indexOf('Award_ID'),
+        pinC = headers.indexOf('Pinned');
+    if (idC < 0 || awC < 0 || pinC < 0) return { success: false, error: 'Awards sheet is missing a column' };
+
+    // One write for the whole column rather than a setValue per row: an athlete
+    // with a term of medals is a hundred rows, and a hundred round trips to the
+    // sheet is the difference between instant and a visible wait.
+    var col = [], changed = 0;
+    for (var r = 1; r < data.length; r++) {
+      var want = '';
+      if (String(data[r][idC]).trim() === athleteId) {
+        var pos = rank[String(data[r][awC] || '').trim()];
+        want = pos ? pos : '';
+      } else {
+        want = data[r][pinC];            // somebody else's row — leave it alone
+      }
+      if (String(want) !== String(data[r][pinC])) changed++;
+      col.push([want]);
+    }
+    if (col.length) sheet.getRange(2, pinC + 1, col.length, 1).setValues(col);
+    return { success: true, pinned: list.length, changed: changed };
   } catch (error) {
     return { success: false, error: error.toString() };
   }
