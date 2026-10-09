@@ -28,7 +28,29 @@ In `COMPLETE-APPS-SCRIPT.gs`:
 
 ## Git Workflow
 
-When you finish making changes, always create a branch with the changes and provide the direct GitHub URL for me to create a pull request to main. Never push directly to main.
+Branch, push, open the PR, **and merge it yourself.** Don't park finished work on
+a branch waiting for me to click something — that is how a security fix sat
+unmerged while I pasted the unfixed file into Apps Script twice.
+
+**Never push directly to main.** The branch and the PR still happen; what
+changed is that merging them is your job too, not mine.
+
+Merge when:
+- the guards you can run are green (`check-identity`, `check-icons`,
+  `check-reading`, `check-handler-escaping`, the headless passes), and
+- the change is the thing I asked for.
+
+Hold off and say so when:
+- it's a prototype or an option you want me to look at before it's real,
+- I've said I want to see it first,
+- it's destructive or hard to undo (deleting data, rewriting history,
+  changing visibility, touching the Apps Script deployment), or
+- you're unsure, in which case say what you're unsure about rather than
+  merging and mentioning it.
+
+Always name what you merged and what it needs from me — above all **"this needs
+a paste and a new version in Apps Script"**, because merging changes nothing
+live until that happens.
 
 ---
 

@@ -6,9 +6,14 @@ Newest first.
 before it goes near `main`. Nothing merges until Scott says so.
 
 Finished work on the real files goes to `main` on its own, so students get it.
-**Prototypes stay on the branch and never reach `main`** — `main` publishes to
-GitHub Pages, so a file on `main` is live on the public internet whether or not
-anything links to it. "Unlinked" is not "unreleased".
+**Prototypes can sit on `main` now, because `main` no longer publishes
+everything.** This used to say they must never reach it, and that was right at
+the time: Pages served the repository root, so a file on `main` was on the
+public internet whether anything linked to it or not. The publish allowlist in
+`.github/workflows/pages.yml` ended that — five named pages go out and the build
+fails if anything else reaches `_site/`. A `*-prototype.html` on `main` is not
+reachable by a student. What still holds: "unlinked" is not "unreleased", so
+anything student-facing is a decision, not a side effect.
 
 The two sections below are the two states — what students have, and what is
 waiting on a yes.
