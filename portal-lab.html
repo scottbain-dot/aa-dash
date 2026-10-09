@@ -10932,7 +10932,7 @@
     const wasInProgram = sessionInTemplate(session);
     let tplChanged = false, askProgram = false, programMsg = '';
     if(!repeat){
-      if(wasInProgram){ tplChanged = removeTemplateSession(dowOf(session.date), session.name); programMsg = ' · removed from your program'; }
+      if(wasInProgram){ tplChanged = removeTemplateSession(session.date, session.name); programMsg = ' · removed from your program'; }
     } else if(!wasInProgram){
       upsertTemplateSession(session); tplChanged = true; programMsg = ' · added to your program';
     } else {
@@ -11242,6 +11242,30 @@
   }
 
   // Add/update a session in the program on its day-of-week (keyed by dow+name).
+  // WHICH WEEK OF THE CYCLE A DATE BELONGS TO.
+  //
+  // The calendar week is filled from programSessionsForWeek(ws) — the week of
+  // the rotation that lands on that Monday. Everything that asked "is this
+  // session part of my program?" used templateSessions() instead, which is
+  // p.weeks[p.activeWeek]: the week the PROGRAM EDITOR is showing, and that
+  // resets to week 1 on every load.
+  //
+  // On a one-week program the two are the same array and nothing was wrong. On
+  // a cycle they diverge and both answers were wrong, silently: a target
+  // changed in workout mode was never offered to the program, because the
+  // session could not be found in the week being edited — and on the paths that
+  // did write, the change landed in the editor's week rather than the week the
+  // session came from. Scott changed an interval from 1:30 to 2:00 in week 10
+  // of a 26-week Hyrox build and was never asked whether the program should
+  // learn it.
+  function templateWeekFor(dateISO){
+    const p = activeProgram();
+    const n = (p && p.weeks && p.weeks.length) || 0;
+    if(!p || n <= 1) return templateSessions();
+    const idx = cycleWeekIndexFor(p, fmtISO(mondayOf(parseISO(dateISO))));
+    if(!Array.isArray(p.weeks[idx])) p.weeks[idx] = [];
+    return p.weeks[idx];
+  }
   function upsertTemplateSession(s){
     if(!state.weeklyTemplate) state.weeklyTemplate = emptyTemplate();
     if(!state.weeklyTemplate.sessions) state.weeklyTemplate.sessions = [];
@@ -11249,20 +11273,27 @@
     const entry = { dow: dow, name: s.name, time: s.time||'', type: s.type||'training', sport: s.sport||'', intensity: s.intensity||'',
       plannedDuration: (s.plannedDuration!=null?s.plannedDuration:null), target: s.target||'', note: s.note||'',
       workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)) };
-    const arr = state.weeklyTemplate.sessions;
+    const arr = templateWeekFor(s.date);
     const i = arr.findIndex(x => x.dow===dow && (x.name||'').toLowerCase()===(s.name||'').toLowerCase());
     if(i>=0) arr[i] = entry; else arr.push(entry);
   }
-  function removeTemplateSession(dow, name){
-    if(!state.weeklyTemplate || !state.weeklyTemplate.sessions) return false;
-    const before = state.weeklyTemplate.sessions.length;
-    state.weeklyTemplate.sessions = state.weeklyTemplate.sessions.filter(
-      x => !(x.dow===dow && (x.name||'').toLowerCase()===(name||'').toLowerCase()));
-    return state.weeklyTemplate.sessions.length !== before;
+  // Takes the session's DATE, not a weekday, because on a cycle the weekday
+  // alone cannot say which week to remove it from.
+  function removeTemplateSession(dateISO, name){
+    const arr = templateWeekFor(dateISO);
+    if(!arr) return false;
+    const dow = dowOf(dateISO);
+    const before = arr.length;
+    // Splice in place: on a cycle this array IS p.weeks[idx], and reassigning
+    // would leave the program holding the old one.
+    for(let i = arr.length - 1; i >= 0; i--){
+      if(arr[i].dow===dow && (arr[i].name||'').toLowerCase()===(name||'').toLowerCase()) arr.splice(i, 1);
+    }
+    return arr.length !== before;
   }
   function sessionInTemplate(s){
     const dow = dowOf(s.date);
-    return templateSessions().some(x => x.dow===dow && (x.name||'').toLowerCase()===(s.name||'').toLowerCase());
+    return templateWeekFor(s.date).some(x => x.dow===dow && (x.name||'').toLowerCase()===(s.name||'').toLowerCase());
   }
   // Signature of the *plan* only — the parts that repeat. Deliberately excludes
   // logged actuals (rpe/duration/load/weights), so logging never looks like a
