@@ -88,21 +88,19 @@ async function check(name, qs, opts = {}) {
   console.log('');
 
   // ---- 1. Is the deployed script the one in this repo? --------------------
-  // getAttention only exists in the current script. An old deployment has no
-  // such action and falls through to the legacy email branch, so the shape of
-  // the reply tells us which code is live without needing a teacher token.
-  const att = await get('action=getAttention&token=smoke-probe');
-  let deployCurrent = false;
-  if (!att.ok) {
-    record('DEPLOY · script version', 'FAIL', att.error);
-  } else if (att.body && att.body.authRequired) {
-    deployCurrent = true;
-    record('DEPLOY · script version', 'PASS', 'current (getAttention present and gated)');
-  } else {
-    record('DEPLOY · script version', 'FAIL',
-      'STALE — getAttention missing. The editor still holds older code; paste ' +
-      'COMPLETE-APPS-SCRIPT.gs in, save, then Manage deployments → New version.');
-  }
+  // Deliberately not a named marker.
+  //
+  // It was getAttention, and the script gained three pushes' worth of routes
+  // underneath it while this went on reporting "current". It reported current
+  // on the very run that found twelve supposedly-retired routes still
+  // answering — a check that passes while the thing it checks is broken is
+  // worse than no check, because it is the one you believe.
+  //
+  // The verdict is derived at the end instead, from the closed-route probes
+  // further down: if one route this repo retired is still answering, the
+  // editor is holding older code than the file. Nothing to remember to move.
+  let deployCurrent = true;
+  const markStale = () => { deployCurrent = false; };
 
   // ---- 2. Every endpoint the portals actually call ------------------------
   await check('getYearLoad',        'action=getYearLoad&athleteId=' + ID, {
@@ -183,9 +181,9 @@ async function check(name, qs, opts = {}) {
     const r = await get('action=' + qs);
     if (!r.ok) { record('closed · ' + name, 'FAIL', r.error); continue; }
     if (r.body && r.body.routeDisabled) record('closed · ' + name, 'PASS', 'refused');
-    else record('closed · ' + name, 'FAIL',
+    else { markStale(); record('closed · ' + name, 'FAIL',
       'STILL ANSWERING — this route is off the allowlist in the repo, so the ' +
-      'deployed script is older than COMPLETE-APPS-SCRIPT.gs.');
+      'deployed script is older than COMPLETE-APPS-SCRIPT.gs.'); }
   }
 
   // The path that was never a named action at all: doGet used to fall through
@@ -202,8 +200,8 @@ async function check(name, qs, opts = {}) {
   if (!fall.ok) record('closed · no-action fallthrough', 'FAIL', fall.error);
   else if (fall.body && fall.body.routeDisabled)
     record('closed · no-action fallthrough', 'PASS', 'refused (covers ?email= and ?admin=true)');
-  else record('closed · no-action fallthrough', 'FAIL',
-    'STILL ANSWERING — ?email= and ?admin=true both reach a handler unauthenticated.');
+  else { markStale(); record('closed · no-action fallthrough', 'FAIL',
+    'STILL ANSWERING — ?email= and ?admin=true both reach a handler unauthenticated.'); }
 
   if (EMAIL) {
     await check('getPortalBootstrap', 'action=getPortalBootstrap&email=' + encodeURIComponent(EMAIL), {
@@ -227,7 +225,13 @@ async function check(name, qs, opts = {}) {
   console.log('\n' + (results.length - failed.length) + '/' + results.length + ' passed');
   if (!deployCurrent) {
     console.log('\nThe live deployment is NOT running the script in this repo.');
-    console.log('Nothing merged since the last deploy is doing anything yet.');
+    console.log('Nothing merged since the last deploy is doing anything yet.\n');
+    console.log('Pasting and SAVING the editor does not update the web app.');
+    console.log('  Deploy -> Manage deployments -> pencil on the ACTIVE one');
+    console.log('  -> Version: New version -> Deploy');
+    console.log('Choosing "New deployment" instead creates a second web app on a');
+    console.log('different /exec URL that nothing is calling, which looks exactly');
+    console.log('like a successful redeploy from the editor.');
   }
   if (failed.length) {
     console.log('\nFAILED:\n' + failed.map(f => '  ' + f.name + ' — ' + f.detail).join('\n'));
