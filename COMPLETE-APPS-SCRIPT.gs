@@ -358,6 +358,16 @@ function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
 
+    // Same allowlist as doGet — an unknown or retired action stops here.
+    var gateRouteP = apRouteGate_(data.action); if (gateRouteP) return gateRouteP;
+
+    // One place for the Anthropic spend, rather than a line inside each of six
+    // handlers. The dispatcher is the only spot that has the athlete ID in
+    // scope, which is what makes the cap per-athlete instead of per-school.
+    if (AA_AI_ROUTES.indexOf(data.action) !== -1) {
+      var rlAi = apAiRateLimit_(data.athleteId); if (rlAi) return apJson(rlAi);
+    }
+
     if (data.action === 'saveWorkout') {
       var result = saveWorkout(
         data.email,
@@ -1979,7 +1989,6 @@ function getNextWeights(athleteId) {
 // ========================================
 function handleGetAICoachingInsights(studentData) {
   try {
-    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
@@ -2058,7 +2067,6 @@ function handleGetAICoachingInsights(studentData) {
 // ========================================
 function handleGetHeroInsight(studentData) {
   try {
-    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
@@ -2126,7 +2134,6 @@ function handleGetHeroInsight(studentData) {
 // ========================================
 function handleParseSessions(email, text, todayISO) {
   try {
-    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
@@ -2253,7 +2260,6 @@ function handleParseSessions(email, text, todayISO) {
 // ========================================
 function handleParseProgram(email, text) {
   try {
-    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
@@ -2351,7 +2357,6 @@ function handleParseProgram(email, text) {
 // returns the same {name, days:[...]} shape the client already matches + applies.
 function handleGenerateProgram(spec) {
   try {
-    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
@@ -2820,10 +2825,37 @@ function apVerifyTeacher(idToken) {
 // is fine for a spend cap — it is a wall, not an accountant.
 var AI_CALLS_PER_HOUR = 300;
 
-function apAiRateLimit_() {
+// Two buckets, not one.
+//
+// A single global counter capped the bill and nothing else: one caller running
+// the key flat also took the coaching assistant away from every student for the
+// rest of the hour. That is a denial of service with a 300-request price tag.
+//
+// The per-athlete bucket is the one that does the work — a student cannot
+// plausibly need more than AI_CALLS_PER_ATHLETE in an hour, and an attacker
+// holding one session can only exhaust their own. The global bucket stays as a
+// ceiling on the bill if many accounts are driven at once.
+var AI_CALLS_PER_ATHLETE = 20;
+function apAiRateLimit_(athleteId) {
   try {
     var cache = CacheService.getScriptCache();
-    var key = 'ai:' + Math.floor(Date.now() / 3600000);
+    var hour = Math.floor(Date.now() / 3600000);
+    var who = String(athleteId == null ? '' : athleteId).trim();
+
+    if (who) {
+      var mineKey = 'ai:' + who + ':' + hour;
+      var mine = parseInt(cache.get(mineKey) || '0', 10) + 1;
+      cache.put(mineKey, String(mine), 3900);
+      if (mine > AI_CALLS_PER_ATHLETE) {
+        return {
+          success: false,
+          rateLimited: true,
+          error: 'That is a lot of planning in one hour. Give it a few minutes and try again.'
+        };
+      }
+    }
+
+    var key = 'ai:' + hour;
     var n = parseInt(cache.get(key) || '0', 10) + 1;
     cache.put(key, String(n), 3900);          // outlive the window it counts
     if (n > AI_CALLS_PER_HOUR) {
@@ -2879,8 +2911,73 @@ var AA_STUDENT_GET_ROUTES = [
 var AA_STUDENT_POST_ROUTES = [
   'saveYearMap', 'saveBlock', 'saveWeeklyTemplate', 'saveSession', 'deleteSession',
   'bookCheckIn', 'cancelBooking', 'savePB', 'saveAvailability', 'clearAvailability',
-  'saveAwards', 'markAwardsSeen', 'setAwardPins', 'savePref'
+  'saveAwards', 'markAwardsSeen', 'setAwardPins', 'savePref',
+  // The four that spend the Anthropic key on a student's behalf. They were
+  // open, so anyone with the URL could run the bill up and, because the cap
+  // was one global bucket, switch the coaching assistant off for the school.
+  // The client already sends athleteId and token on all four — they go through
+  // apiData — so gating them needed no change to the portal at all.
+  'parseSessions', 'parseProgram', 'generateProgram', 'gradeLearnAnswers'
 ];
+
+// The handlers that spend the Anthropic key. Rate limited in doPost, once,
+// where the athlete ID is in scope.
+var AA_AI_ROUTES = ['parseSessions', 'parseProgram', 'generateProgram', 'gradeLearnAnswers',
+                    'getAICoachingInsights', 'getHeroInsight'];
+
+// Routes the teacher panel calls, and only those. Each still runs apAdminGate_
+// in its own handler; this list only decides what the deployment answers.
+//
+// Eight other admin-shaped routes are deliberately absent — setConfig,
+// getConfig, getObservations, saveObservation, updatePsychScores,
+// getGritAdminData, getSessionPlanning, getFuelLabQuizStats. admin.html calls
+// none of them (its grit and check-in tools were removed in Sept 2026), and
+// getConfig had no gate at all. They come back by adding a line, the day
+// something needs them.
+var AA_ADMIN_ROUTES = ['getAllStudents', 'updateStudent', 'getAttention'];
+
+// ============================================================================
+// THE ROUTE ALLOWLIST — what this deployment will answer at all
+// ============================================================================
+// Everything above is gated. The problem was everything NOT above: 43 routes
+// answered an anonymous caller, and the eight that a live page still needs are
+// all in the lists here. The rest were doors standing in a wall with no
+// building behind it — last year's Clash, the superseded G9 portals, the old
+// workout endpoints, the public forms that are not published this year.
+//
+// Worst of them was not a named route at all. doGet ended by falling through:
+//
+//     if (e.parameter.admin === 'true') return handleAdminRequest(ss);
+//     return handleStudentRequest(ss, e.parameter.email, …);
+//
+// …so `?admin=true` returned every athlete and `?email=` returned one, both
+// with no sign-in and no token, against addresses of the form
+// firstname_lastname@fis.edu. An unknown action now stops here instead of
+// arriving at those.
+//
+// Nothing is deleted. A page comes back by adding its routes to this list once
+// it has been brought up to the current auth — the same rule the Pages
+// publish allowlist uses, for the same reason: a surface nobody is using is
+// not worth the exposure, and an intention to disable something drifts.
+var AA_LIVE_ROUTES = []
+  .concat(AA_STUDENT_GET_ROUTES, AA_STUDENT_POST_ROUTES, AA_ADMIN_ROUTES)
+  .concat([
+    'getPortalBootstrap',   // the login itself — must answer an anonymous caller
+    'saveLearnProgress'     // gated inline: admin for 'stamps', student otherwise
+  ]);
+
+function apRouteGate_(action) {
+  var a = String(action || '').trim();
+  if (a && AA_LIVE_ROUTES.indexOf(a) !== -1) return null;
+  return apJson({
+    success: false,
+    error: 'That action is not available.',
+    // Named so the smoke test can tell "switched off" apart from "broken",
+    // and so a portal that starts calling a retired route fails loudly.
+    routeDisabled: true,
+    action: a
+  });
+}
 
 // Created once, on first use, and kept in Script Properties thereafter. The
 // lock is because two students signing in at the same moment on a brand new
@@ -5274,7 +5371,6 @@ function handleSaveLearnProgress(ss, athleteId, blockId, progress, meta) {
 // blocks a student on it.
 function handleGradeLearnAnswers(items) {
   try {
-    var rl = apAiRateLimit_(); if (rl) return rl;
     var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return { success: false, error: 'ANTHROPIC_API_KEY not configured in Script Properties' };
