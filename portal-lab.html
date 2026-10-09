@@ -7760,8 +7760,7 @@
     const items = [];
     if(squad) items.push('<span class="bd-tick squad">🏆 <b>'+squad+'</b> best'+(squad===1?'':'s')+' set across the squad this week</span>');
     mine.forEach(b => {
-      const u = b.unit ? (String(b.unit)==='reps' ? ' reps' : ' '+b.unit) : '';
-      items.push('<span class="bd-tick">'+esc(b.exercise)+' <b>'+esc(String(b.value))+u+'</b></span>');
+      items.push('<span class="bd-tick">'+esc(b.exercise)+' <b>'+esc(pbValueText(b.value, b.unit))+'</b></span>');
     });
     const run = items.join('') + items.join('');   // doubled so the scroll loops seamlessly
     return '<div class="bd-block rise-in" style="--i:5"><p class="bd-h">Bests<span>rolling</span></p>'+
@@ -8382,7 +8381,12 @@
     const isBeat = scan.beats.length > 0;
     const lead = isBeat ? scan.beats[0] : scan.marks[0];
     const others = (isBeat ? scan.beats : scan.marks).slice(1);
-    const unitWord = lead.unit === PB_UNIT_REPS ? ' reps' : lead.unit;
+    // A best in seconds reads "2:30", not "150 s", and a sprint that came down
+    // from 6.1 to 5.8 went DOWN by three tenths — calling that "up" would be
+    // the first thing a student noticed was wrong.
+    const dir = pbDirFor(lead.unit, lead.exercise, '');
+    const gap = Math.abs(lead.value - lead.previousValue);
+    const gapWord = dir > 0 ? 'Up ' : 'Down ';
 
     document.getElementById('pbCelKicker').innerHTML = isBeat
       ? '<i class="ti ti-trophy" aria-hidden="true"></i> New best'
@@ -8390,17 +8394,17 @@
     document.getElementById('pbCelIcon').textContent = isBeat ? '🏆' : '📍';
     document.getElementById('pbCelTitle').textContent = lead.exercise;
     document.getElementById('pbCelJump').innerHTML = isBeat
-      ? '<span class="pb-cel-was">'+lead.previousValue+unitWord+'</span>'+
+      ? '<span class="pb-cel-was">'+esc(pbValueText(lead.previousValue, lead.unit))+'</span>'+
         '<i class="ti ti-arrow-right" aria-hidden="true"></i>'+
-        '<span class="pb-cel-now">'+lead.value+unitWord+'</span>'
-      : '<span class="pb-cel-now">'+lead.value+unitWord+'</span>';
+        '<span class="pb-cel-now">'+esc(pbValueText(lead.value, lead.unit))+'</span>'
+      : '<span class="pb-cel-now">'+esc(pbValueText(lead.value, lead.unit))+'</span>';
     document.getElementById('pbCelSub').textContent = isBeat
-      ? 'Up '+(+(lead.value - lead.previousValue).toFixed(1))+unitWord+' on your old best. That is yours — nobody gave it to you.'
+      ? gapWord+pbValueText(+gap.toFixed(1), lead.unit)+' on your old best. That is yours — nobody gave it to you.'
       : 'First time logged, so there is nothing to beat yet. Save it and every time after this one has something to go at.';
     document.getElementById('pbCelMore').innerHTML = others.length
       ? '<p class="pb-cel-more-l">'+(isBeat?'Also beaten':'Also starting')+'</p>'+
-        others.map(o => '<span class="pb-cel-chip">'+esc(o.exercise)+' <b>'+o.value+
-          (o.unit===PB_UNIT_REPS?' reps':o.unit)+'</b></span>').join('')
+        others.map(o => '<span class="pb-cel-chip">'+esc(o.exercise)+' <b>'+
+          esc(pbValueText(o.value, o.unit))+'</b></span>').join('')
       : '';
     document.getElementById('pbCelSave').innerHTML = (others.length ? 'Save all '+(others.length+1) : 'Save it')+
       ' <i class="ti ti-check" aria-hidden="true"></i>';
@@ -9716,14 +9720,14 @@
     if(isNaN(cur) || isNaN(prev)) return '';
     const diff = +(cur - prev).toFixed(1);
     if(diff===0) return '';
-    return (diff>0?'↑ ':'↓ ') + Math.abs(diff) + (p.unit?(' '+esc(p.unit)):'');
+    return (diff>0?'↑ ':'↓ ') + esc(pbValueText(Math.abs(diff), p.unit));
   }
   function pbStripItem(p){
     const trend = pbTrend(p);
     return '<div class="pb-item"><div>'+
         '<p class="pb-item-name">'+esc(p.exercise)+'</p>'+
         '<p class="pb-item-sub">'+esc(p.sport)+(p.date? ' · '+fmtNice(p.date):'')+'</p></div>'+
-      '<div><p class="pb-item-value">'+esc(String(p.value))+(p.unit?'<span style="font-size:11px;"> '+esc(p.unit)+'</span>':'')+'</p>'+
+      '<div><p class="pb-item-value">'+esc(pbValueText(p.value, p.unit))+'</p>'+
         (trend? '<p class="pb-item-value-sub">'+trend+'</p>':'')+'</div></div>';
   }
 
@@ -11272,7 +11276,13 @@
     const dow = dowOf(s.date);
     const entry = { dow: dow, name: s.name, time: s.time||'', type: s.type||'training', sport: s.sport||'', intensity: s.intensity||'',
       plannedDuration: (s.plannedDuration!=null?s.plannedDuration:null), target: s.target||'', note: s.note||'',
-      workout: (s.workout||[]).map(x => typeof x==='string' ? x : Object.assign({}, x)) };
+      // _edited says "the student changed this during that session". It belongs
+      // to the session, not the plan — carrying it into the program would make
+      // every future copy look hand-entered.
+      workout: (s.workout||[]).map(x => {
+        if(typeof x === 'string') return x;
+        const c = Object.assign({}, x); delete c._edited; return c;
+      }) };
     const arr = templateWeekFor(s.date);
     const i = arr.findIndex(x => x.dow===dow && (x.name||'').toLowerCase()===(s.name||'').toLowerCase());
     if(i>=0) arr[i] = entry; else arr.push(entry);
@@ -11418,19 +11428,125 @@
   //    stored 50kg is unambiguous.
   //  - A detail carrying REPS AND NO WEIGHT is compared on reps. Pull-ups
   //    8 → 11 is unambiguous.
-  //  - Anything else — times, distances, "40-50min steady Z2", free text — gets
-  //    NO automatic claim. Lower is sometimes better, the units are ambiguous,
-  //    and a wrong call here is exactly the kind of thing students see through.
   //  - Units must match. A kg best is never compared against a reps best.
   //  - Weight and reps both rising is a weight PB, because the weight is the
   //    harder claim and the one worth naming.
   //  - The FIRST time an exercise is logged is not a personal best. It is a
   //    starting mark, offered as one, with nothing to beat yet.
-  const PB_UNIT_KG = 'kg', PB_UNIT_REPS = 'reps';
+  //
+  // NOT EVERY BEST IS A WEIGHT. For a long time this scanner understood kg and
+  // reps and nothing else, so a conditioning athlete could train all term and
+  // own one personal best. A threshold interval taken from 1:30 to 2:00, a 40m
+  // sprint, a Cooper distance, a bike at more watts — all of them real bests,
+  // all of them invisible. So every unit below is now first class.
+  //
+  // WHICH WAY IS BETTER is the thing a unit cannot always answer. Kilos, reps,
+  // metres, watts and km/h are all more-is-better. TIME is not: two minutes is
+  // a better threshold hold and a worse 400m. So time's direction is decided
+  // per line — a hold or a carry counts up, anything named as a sprint or run
+  // against a distance counts down — and the same rule runs again at comparison
+  // time, so a best never flips meaning between being set and being beaten.
+  //
+  // AND MOST LINES ARE NOT A RESULT AT ALL. The exercise library is mostly
+  // prescriptions: "3 × 20m", "30 sec", "tempo 3-2-2", "4–8 × 2–3". Reading
+  // those as achievements would bury a real best under "Ankle Hops — 30 sec".
+  // Two things keep it honest: anything carrying a RANGE, a tempo code, a
+  // percentage, a work:rest ratio or a per-side count is refused outright, and
+  // a first-ever mark in one of the new units is only offered when the student
+  // EDITED that line during the session — which is them saying what they
+  // actually did, rather than the plan saying what was asked of them. Beating a
+  // best already on the shelf always counts, in every unit.
+  const PB_UNIT_KG = 'kg', PB_UNIT_REPS = 'reps', PB_UNIT_SEC = 's',
+        PB_UNIT_M = 'm', PB_UNIT_KMH = 'km/h', PB_UNIT_W = 'W',
+        PB_UNIT_CAL = 'cal', PB_UNIT_PACE = 's/km';
   // Sanity ceilings. A school gym does not produce a 999999kg squat or a set
   // of 99999 reps, and a typo that does should be refused rather than
   // enshrined as somebody's personal best.
   const PB_MAX_KG = 500, PB_MAX_REPS = 100;
+  const PB_CEIL = {};
+  PB_CEIL[PB_UNIT_KG]=PB_MAX_KG; PB_CEIL[PB_UNIT_REPS]=PB_MAX_REPS;
+  PB_CEIL[PB_UNIT_SEC]=36000;    PB_CEIL[PB_UNIT_M]=100000;
+  PB_CEIL[PB_UNIT_KMH]=60;       PB_CEIL[PB_UNIT_W]=2000;
+  PB_CEIL[PB_UNIT_CAL]=5000;     PB_CEIL[PB_UNIT_PACE]=1800;
+  // The units a first-ever mark is offered for without the student having
+  // touched the line. Weight and reps were always safe because a weight on a
+  // strength line really is what was lifted.
+  const PB_MARK_UNITS = [PB_UNIT_KG, PB_UNIT_REPS];
+
+  // Noise that means a line is a prescription, not a result.
+  const PB_NOISE = /tempo\s*\d|\bint\s*\d|\d\s*%|work\s*:\s*rest|\d\s*:\s*\d\s*(?:work|rest)|max\s*hr|\brpe\b|each\s+(?:side|leg|arm|direction|area|exercise)|\bper\s+(?:side|leg|arm|area|exercise)\b/i;
+  // A range anywhere near a number means we were given a window, not a number.
+  const PB_RANGE = /\d\s*(?:[-–—]|to)\s*\d/;
+  // Rest, recovery and send-off clauses carry times that are not the work. His
+  // own line reads "4 × 4min @ ~4:20-4:40/km, 3min walk" — the three minutes is
+  // the walk, and claiming it would make a longer rest look like progress.
+  function pbStripRest(s){
+    return String(s||'')
+      .replace(/\(([^)]*)\)/g, ' ')                                  // parenthetical asides
+      .replace(/[\d:]+\s*(?:s|sec|secs|min|mins|m)?\s*(?:rest|recovery|walk|jog|easy|off|between)\b/gi, ' ')
+      .replace(/\b(?:rest|recovery|off|between)\b[^,;]*/gi, ' ');
+  }
+  // One clean number for a unit, or nothing. Refuses ranges, refuses a line
+  // that offers two different numbers for the same unit ("10s on/50s off"),
+  // and refuses anything over the ceiling for that unit.
+  function pbOne(text, re, unit, mapFn){
+    const s = String(text||'');
+    let m, vals = [], guard = 0;
+    const rx = new RegExp(re.source, re.flags.indexOf('g')>=0 ? re.flags : re.flags+'g');
+    while((m = rx.exec(s)) && guard++ < 40){
+      const around = s.slice(Math.max(0, m.index-3), m.index + m[0].length + 3);
+      if(PB_RANGE.test(around)) return null;        // "20-30m" is a window
+      const v = mapFn ? mapFn(m) : parseFloat(m[1]);
+      if(!(v > 0) || v > (PB_CEIL[unit] || Infinity)) return null;
+      if(vals.indexOf(v) < 0) vals.push(v);
+    }
+    if(vals.length !== 1) return null;              // none, or ambiguous
+    return { value: Math.round(vals[0]*100)/100, unit: unit };
+  }
+  const pbMinSec = m => (parseInt(m[1],10)*60) + parseInt(m[2],10);
+  // Is there a distance on this line at all? Used to read a time as "the time
+  // it took to cover that", rather than "how long it was held".
+  function pbHasDistance(s){
+    return /(?:^|[^\d.])\d+(?:\.\d+)?\s*(?:m|km|k|mi|miles?)\b(?!\/)/i.test(String(s||'')) ;
+  }
+  const PB_LONGER = /hold|plank|hang|wall\s*sit|carry|bridge|iso\b|l-?sit|balance|plan(?:k|che)|plate\s*hold/i;
+  const PB_FASTER = /sprint|dash|time\s*trial|\bTT\b|for\s*time|fastest|\brace\b|\bshuttle\b|\b\d+\s*m\s*(?:run|swim|row|erg)/i;
+  // +1 means a bigger number is better, -1 means a smaller one is.
+  function pbDirFor(unit, exercise, line){
+    if(unit === PB_UNIT_PACE) return -1;
+    if(unit !== PB_UNIT_SEC) return +1;
+    const t = String(exercise||'') + ' ' + String(line||'');
+    if(PB_LONGER.test(t)) return +1;      // a hold: longer is the whole point
+    if(PB_FASTER.test(t)) return -1;      // named as a sprint or a time trial
+    if(pbHasDistance(line)) return -1;    // a time next to a distance covers it
+    return +1;                            // an interval or work period
+  }
+  // How much better a best is than the one before it, or nothing when it is not
+  // better. Direction-aware, so a sprint coming down from 6.1 to 5.8 reads as a
+  // gain of three tenths rather than as no gain at all.
+  function pbGainOver(p, prev, now){
+    if(!(prev > 0) || !isFinite(now)) return '';
+    const dir = pbDirFor(p && p.unit, p && p.exercise, '');
+    const better = dir > 0 ? now > prev : now < prev;
+    if(!better) return '';
+    return (dir > 0 ? '+' : '−') + pbValueText(+Math.abs(now - prev).toFixed(1), p && p.unit);
+  }
+  // How a value reads back to a human, per unit.
+  function pbValueText(value, unit){
+    const v = parseFloat(value);
+    if(!isFinite(v)) return String(value == null ? '' : value);
+    if(unit === PB_UNIT_SEC || unit === PB_UNIT_PACE){
+      // Under a minute a clock throws away the thing that matters: a 40m sprint
+      // is 5.82s, not 0:06. Over a minute the clock is how anyone reads it.
+      if(unit === PB_UNIT_SEC && v < 60) return (Math.round(v*100)/100)+'s';
+      const s = Math.round(v), txt = Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+      return unit === PB_UNIT_PACE ? txt+'/km' : txt;
+    }
+    if(unit === PB_UNIT_REPS) return v+' reps';
+    if(unit === PB_UNIT_CAL)  return v+' cal';
+    if(!unit) return String(v);
+    return v+' '+unit;
+  }
   // Reads the STRUCTURED fields when workout mode has them, and only falls back
   // to parsing the target string when it does not.
   //
@@ -11444,7 +11560,7 @@
   // A number in the Weight field is a weight. It does not need to say so twice.
   // Only an explicit lb or % still blocks the claim, because those are a real
   // unit mismatch rather than a missing label.
-  function pbCandidateFrom(item, style){
+  function pbCandidateFrom(item, style, preferUnit){
     const it = (item && typeof item === 'object') ? item : { detail: item };
     const structured = !!(it.sx && (it.sx.weight || it.sx.reps || it.sx.time));
     const sx = structured ? it.sx : wktParse(it.detail || '');
@@ -11467,6 +11583,14 @@
       if(!(n > 0) || n > PB_MAX_KG) return null;   // nobody is squatting 999999
       return { value: n, unit: PB_UNIT_KG, reps: parseInt(sx.reps,10) || null };
     }
+    // EVERYTHING THAT IS NOT A WEIGHT. Checked before reps, because a line
+    // carrying watts, a pace, a speed, a distance or a work time is describing
+    // that rather than a rep count — and the old code fell straight through all
+    // of them to "no claim". Order is most specific first; the first thing the
+    // line clearly states is the thing the best is in.
+    const nonWeight = pbPick(pbMeasuresFrom(it, detail), preferUnit);
+    if(nonWeight) return nonWeight;
+
     if(sx.reps && !String(sx.time || '').trim()){
       // "8×100m off 1:40" is a swim set, not eight sets of a hundred reps, and
       // "6×30s" is a sprint interval. When the second number is followed by a
@@ -11485,6 +11609,72 @@
       if(n > 0 && n <= PB_MAX_REPS) return { value: n, unit: PB_UNIT_REPS, reps: n };
     }
     return null;
+  }
+  // Watts, pace, speed, calories, time, distance — every measure the line
+  // states, in order of how specifically it states it. Returns a list rather
+  // than one answer so the caller can keep an exercise on the unit it is
+  // already tracked in: "5 × 2:00 @ 13km/h" states both a duration and a speed,
+  // and which of them is the best depends on which one the athlete has been
+  // chasing, not on which one this function happens to check first.
+  function pbMeasuresFrom(it, rawDetail){
+    const raw = String(rawDetail || '');
+    if(PB_NOISE.test(raw)) return [];            // tempo codes, %, per-side counts
+    const s = pbStripRest(raw);
+    if(!s.trim()) return [];
+    const outs = [];
+
+    const w = pbOne(s, /(?:^|[^\d.])(\d+(?:\.\d+)?)\s*w\b/i, PB_UNIT_W);
+    if(w) outs.push(w);
+    // "4:20/km", "1:45/100m", "1:52/500m" — a pace, where smaller is faster.
+    const pace = pbOne(s, /(\d+):([0-5]\d)\s*\/\s*(?:km|100\s*m|500\s*m|mi)/i, PB_UNIT_PACE, pbMinSec);
+    if(pace) outs.push(pace);
+    const speed = pbOne(s, /(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(?:km\s*\/\s*h|kph|km\/hr|mph)/i, PB_UNIT_KMH);
+    if(speed) outs.push(speed);
+    const cal = pbOne(s, /(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(?:cal|kcal)\b/i, PB_UNIT_CAL);
+    if(cal) outs.push(cal);
+
+    // Time, as m:ss or as a plain duration. Guarded so a pace or a speed that
+    // failed above cannot be re-read here as a bare number — and the pace strip
+    // has to take a RANGE with it, or "~4:20-4:40/km" leaves a stray "4:20"
+    // behind that reads as four minutes twenty of work.
+    const stripped = s
+      .replace(/\d+:[0-5]\d(?:\s*[-–—]\s*\d+:[0-5]\d)?\s*\/\s*(?:km|100\s*m|500\s*m|mi)/gi, ' ')
+      .replace(/\d+(?:\.\d+)?(?:\s*[-–—]\s*\d+(?:\.\d+)?)?\s*(?:km\s*\/\s*h|kph|km\/hr|mph)/gi, ' ');
+    const clock = pbOne(stripped, /(?:^|[^\d:.])(\d{1,3}):([0-5]\d)(?![\d:])/, PB_UNIT_SEC, pbMinSec);
+    const mins  = clock ? null : pbOne(stripped, /(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(?:min|mins|minutes?)\b/i,
+                                       PB_UNIT_SEC, m => parseFloat(m[1])*60);
+    const secs  = (clock || mins) ? null : pbOne(stripped, /(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(?:s|sec|secs|seconds?)\b/i, PB_UNIT_SEC);
+    const time  = clock || mins || secs;
+
+    // Metres and kilometres. "km/h" is already gone, so an `m` here is length.
+    const dist = pbOne(stripped, /(?:^|[^\d.])(\d+(?:\.\d+)?)\s*(km|k|mi|miles?|m)\b(?!\/)/i, PB_UNIT_M,
+      m => { const n = parseFloat(m[1]), u = m[2].toLowerCase();
+             return /^(km|k)$/.test(u) ? n*1000 : (/^mi/.test(u) ? n*1609.34 : n); });
+
+    // BOTH A TIME AND A DISTANCE, which is two different tests depending on
+    // which one was fixed. A short or multiplied distance is the prescription
+    // and the time is the result ("40m sprint, 5.82s"). A long distance with no
+    // multiplier is the result and the clock was fixed (Cooper: 12 min, 2480m).
+    // The loser is kept as a lower-priority option rather than thrown away, so
+    // an exercise already tracked in the other unit stays tracked.
+    if(time && dist){
+      const multiplied = /\d\s*[×xX]\s*\d+(?:\.\d+)?\s*(?:km|k|mi|miles?|m)\b/i.test(stripped);
+      if(multiplied || dist.value <= 400){ outs.push(time); outs.push(dist); }
+      else { outs.push(dist); outs.push(time); }
+    } else if(time) outs.push(time);
+    else if(dist) outs.push(dist);
+    return outs;
+  }
+  // One answer: the unit this exercise is already tracked in if the line states
+  // it, otherwise the most specific thing the line states.
+  function pbPick(measures, preferUnit){
+    if(!measures || !measures.length) return null;
+    const want = String(preferUnit || '').trim().toLowerCase();
+    if(want){
+      const same = measures.find(m => String(m.unit).toLowerCase() === want);
+      if(same) return same;
+    }
+    return measures[0];
   }
   function pbFor(exercise){
     const key = String(exercise||'').trim().toLowerCase();
@@ -11506,18 +11696,34 @@
       if(anyTicked && !ticks[idx]) return;
       const name = String((it && it.name) || '').trim();
       if(!name || seen[name.toLowerCase()]) return;
-      const cand = pbCandidateFrom(it, sessionStyle(session));   // item first, style for the rep rule
+      // The exercise's existing best decides which unit to keep reading, so a
+      // line that states two measures cannot silently switch what is tracked.
+      const tracked = pbFor(String((it && it.name) || '').trim());
+      const cand = pbCandidateFrom(it, sessionStyle(session), tracked && tracked.unit);
       if(!cand) return;
       seen[name.toLowerCase()] = 1;
+      const line = (it && typeof it === 'object') ? String(it.detail||'') : String(it||'');
       const prev = pbFor(name);
       if(!prev){
+        // A FIRST MARK IN A NEW UNIT NEEDS THE STUDENT TO HAVE SAID SO. Weight
+        // and reps are offered off the plan as they always were. Everything
+        // else is only offered when they edited that line during the session,
+        // because the library is full of prescriptions — "3 × 20m", "30 sec" —
+        // and a shelf of those buries the bests that mean something.
+        if(PB_MARK_UNITS.indexOf(cand.unit) < 0 && !(it && it._edited)) return;
         marks.push({ exercise: name, value: cand.value, unit: cand.unit, sport: session.sport || '', date: session.date || isoToday() });
         return;
       }
-      const prevUnit = String(prev.unit || '').trim().toLowerCase();
-      if(prevUnit !== cand.unit) return;                 // never compare across units
+      const prevUnit = String(prev.unit || '').trim();
+      if(prevUnit.toLowerCase() !== String(cand.unit).toLowerCase()) return;  // never compare across units
       const prevVal = parseFloat(prev.value);
-      if(!(prevVal > 0) || !(cand.value > prevVal)) return;
+      if(!(prevVal > 0)) return;
+      // Which way is better is a property of the unit and the movement, not an
+      // assumption that every number should go up. Recomputed here from the
+      // same inputs used when the mark was set, so a best cannot change meaning
+      // between being recorded and being beaten.
+      const dir = pbDirFor(cand.unit, name, line);
+      if(dir > 0 ? !(cand.value > prevVal) : !(cand.value < prevVal)) return;
       beats.push({ exercise: name, value: cand.value, unit: cand.unit, previousValue: prevVal,
                    sport: session.sport || '', date: session.date || isoToday() });
     });
@@ -11715,7 +11921,7 @@
     let head = '';
     if(pbs.length){
       const pb = pbs[0];
-      head = '<div class="exhist-pb"><i class="ti ti-trophy" aria-hidden="true"></i> <span>Personal best · <strong>'+esc(String(pb.value))+(pb.unit?' '+esc(pb.unit):'')+'</strong>'+(pb.date?' · '+fmtNice(pb.date):'')+'</span></div>';
+      head = '<div class="exhist-pb"><i class="ti ti-trophy" aria-hidden="true"></i> <span>Personal best · <strong>'+esc(pbValueText(pb.value, pb.unit))+'</strong>'+(pb.date?' · '+fmtNice(pb.date):'')+'</span></div>';
     }
     if(history === null){ body.innerHTML = head + '<p class="ql-help">Couldn’t load your history right now — try again in a moment.</p>'; return; }
     if(!history.length){ body.innerHTML = head + '<div class="exhist-empty"><div class="empty-state-icon"><i class="ti ti-history" aria-hidden="true"></i></div><p>No history yet. Log this exercise and every time you do it shows here — so you can see your progress.</p></div>'; return; }
@@ -11750,6 +11956,11 @@
       const sx = { sets:g('wktf_sets_'+i), reps:g('wktf_reps_'+i), weight:g('wktf_weight_'+i), time:g('wktf_time_'+i) };
       it.sx = sx; const d = wktCompose(sx); if(d) it.detail = d;
     }
+    // They just told the app what they actually did, rather than accepting what
+    // the plan asked for. That is what lets a time, a distance or a speed be
+    // offered as a first best without the exercise library's prescriptions
+    // being read as achievements too.
+    it._edited = true;
     wktEditing = -1; saveWktProgress(); renderWorkoutMode();
     persistWktSession();   // carry the change to the day session now, not only on Finish
   }
@@ -15223,11 +15434,12 @@
     const list = pbsForAttr(attrId);
     if(!list.length) return '';
     const rows = list.slice(0, 5).map(p => {
-      const unit = p.unit ? (String(p.unit)==='reps' ? ' reps' : ' '+p.unit) : '';
       const prev = parseFloat(p.previousValue), now = parseFloat(p.value);
-      const up = (prev > 0 && now > prev) ? '<span class="up">+'+(+(now-prev).toFixed(1))+'</span>' : '';
+      // Improvement is not always a bigger number — a sprint best goes down.
+      const gain = pbGainOver(p, prev, now);
+      const up = gain ? '<span class="up">'+esc(gain)+'</span>' : '';
       return '<div class="crd-best"><span>'+esc(p.exercise)+'</span>'+
-        '<span><b>'+esc(String(p.value))+unit+'</b> '+up+'</span></div>';
+        '<span><b>'+esc(pbValueText(p.value, p.unit))+'</b> '+up+'</span></div>';
     }).join('');
     return '<div class="crd-bests"><p class="crd-bests-l">Your bests</p>'+rows+'</div>';
   }
@@ -15242,11 +15454,11 @@
         'best on its own — you do not have to remember to record anything.</p></div>';
     }
     const tiles = list.slice(0, 10).map(p => {
-      const unit = p.unit ? (String(p.unit)==='reps' ? '<u> reps</u>' : '<u> '+esc(p.unit)+'</u>') : '';
       const prev = parseFloat(p.previousValue), now = parseFloat(p.value);
-      const up = (prev > 0 && now > prev) ? '<p class="pbest-tile-up">▲ +'+(+(now-prev).toFixed(1))+' on your last</p>' : '';
+      const gain = pbGainOver(p, prev, now);
+      const up = gain ? '<p class="pbest-tile-up">▲ '+esc(gain)+' on your last</p>' : '';
       return '<div class="pbest-tile"><p class="pbest-tile-ex">'+esc(p.exercise)+'</p>'+
-        '<p class="pbest-tile-v">'+esc(String(p.value))+unit+'</p>'+ up +
+        '<p class="pbest-tile-v">'+esc(pbValueText(p.value, p.unit))+'</p>'+ up +
         (p.date ? '<p class="pbest-tile-date">'+esc(fmtNice(p.date))+'</p>' : '')+'</div>';
     }).join('');
     return '<div class="card"><p class="card-eyebrow">Your bests'+
@@ -15630,7 +15842,7 @@
         '<p class="cvd-group">'+esc(sport)+'</p>'+
         cvTable(cols, groups[sport].map(p => [
           esc(p.exercise || ''),
-          '<strong>'+esc(String(p.value))+'</strong>'+(p.unit ? ' <span class="cvd-unit">'+esc(String(p.unit))+'</span>' : ''),
+          '<strong>'+esc(pbValueText(p.value, p.unit))+'</strong>',
           p.date ? esc(cvDate(p.date)) : ''
         ].concat(cvEditOpen
           ? ['<button class="cvd-rowedit" onclick="editPB('+pbKey(p)+')" aria-label="Edit"><i class="ti ti-pencil" aria-hidden="true"></i></button>']
