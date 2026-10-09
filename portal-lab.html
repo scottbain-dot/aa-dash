@@ -5170,9 +5170,17 @@
   // ============================================================
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   // For a value going inside a SINGLE-quoted JS string inside a double-quoted
-  // HTML attribute — onclick="f('…')". esc() leaves ' alone, which is correct
-  // for text but breaks the handler, so anything built that way needs this.
-  function escArg(s){ return esc(s).replace(/'/g, '&#39;').replace(/\\/g, '\\\\'); }
+  // HTML attribute — onclick="f('…')".
+  //
+  // The escaping has to be JS-level, not HTML-level. The first version of this
+  // turned ' into &#39;, which looks right and is useless: the browser decodes
+  // the attribute BEFORE parsing it as JavaScript, so &#39; becomes ' again and
+  // ends the string exactly as the raw character would. It has to be a
+  // backslash, which survives the decode and escapes in JS.
+  //
+  // Backslash first, then the quote, then the HTML escape for the attribute
+  // itself — esc() does not touch backslashes, so the \' reaches the parser.
+  function escArg(s){ return esc(String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")); }
   function val(id){ const el=document.getElementById(id); return el? el.value : ''; }
   // numOrNull used to be parseInt and nothing else, which let several things
   // through that then poisoned everything downstream of them:
@@ -9003,7 +9011,7 @@
     const f = weekFlag(ws);
     if(f){
       const label = f.kind === 'ill' ? 'ill' : 'injured';
-      return '<button class="week-out is-on" onclick="clearOutWeek(\''+esc(f.from)+'\')">'+
+      return '<button class="week-out is-on" onclick="clearOutWeek(\''+escArg(f.from)+'\')">'+
         '<i class="ti ti-heart-broken" aria-hidden="true"></i> Marked <strong>'+label+'</strong> this week — won’t count against you. Tap to undo.</button>';
     }
     return '<button class="week-out" onclick="openOutWeek(\''+ws+'\')">'+
@@ -15485,7 +15493,14 @@
   }
   window.exportCV = exportCV;
 
-  function pbKey(p){ return "'"+esc(p.sessionId||'')+"','"+esc(p.sport||'')+"','"+esc(p.exercise||'')+"'"; }
+  // escArg, not esc. esc() escapes & < > " and deliberately leaves the
+  // apostrophe alone, which is right for text and wrong here: these three
+  // values are dropped inside single quotes in an onclick, and the exercise
+  // name is free text the athlete types. A best called "Farmer's carry" ended
+  // the string early and left the rest of the name sitting in the page as
+  // JavaScript — so the edit button silently stopped working for anyone whose
+  // exercise had an apostrophe in it.
+  function pbKey(p){ return "'"+escArg(p.sessionId||'')+"','"+escArg(p.sport||'')+"','"+escArg(p.exercise||'')+"'"; }
 
   // ----- PB add / edit sheet -----
   let pbCtx = null;
