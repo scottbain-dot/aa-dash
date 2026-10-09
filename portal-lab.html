@@ -1277,6 +1277,12 @@
     font-family: 'Fraunces', serif; font-style: italic;
     font-size: 14px; color: var(--ink-mute); margin: 0 0 22px; line-height: 1.5;
   }
+  /* Why it failed — quiet, under the button, for the student who reports it
+     and the teacher who has to act on it. */
+  .app-error-why {
+    font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.55;
+    color: var(--ink-mute); margin: 18px auto 0; max-width: 300px;
+  }
   .empty-state .btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 12px 22px; border-radius: 10px; border: none;
@@ -1403,6 +1409,12 @@
     <h2 class="empty-state-title">Couldn't <em>load</em> your training.</h2>
     <p class="empty-state-text">Check your connection and try again. Your saved work is safe.</p>
     <button class="btn-primary" onclick="retryLoad()"><i class="ti ti-refresh" aria-hidden="true"></i> Try again</button>
+    <!-- What actually went wrong. This screen used to throw the error away and
+         say "check your connection" whether the server had timed out, thrown,
+         or sent something that was not JSON — so a student could not report it
+         and nobody could diagnose it from outside. Plain sentence, under the
+         button so it is not the first thing a fourteen-year-old reads. -->
+    <p class="app-error-why" id="appErrorWhy" hidden></p>
   </div>
 </div>
 
@@ -5321,6 +5333,16 @@
   // ============================================================
   const REQ_TIMEOUT = 20000; // Apps Script can be slow; never hang forever.
   const AI_TIMEOUT = 90000;  // AI endpoints (parse/generate) run an LLM — give them room.
+  // getPortalBootstrap is the heaviest call in the app by a distance: it reads
+  // the year map, the template, the week, a year of load, PBs, learn progress,
+  // grit, availability, prefs, testing, strength levels, mobility and psych —
+  // thirteen-plus sheet operations in one request. A three-sheet call already
+  // takes about seven seconds from a fast connection, so the generic 20s budget
+  // was being spent on a cold container before the work finished, and all three
+  // retries then failed the same way: sixty seconds of spinner and an error
+  // screen that could not say why.
+  const BOOTSTRAP_TIMEOUT = 45000;
+  const BOOTSTRAP_DEADLINE = 75000;  // total, across retries — never spin forever
   async function apiFetch(url, opts, timeoutMs){
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeoutMs || REQ_TIMEOUT);
@@ -5334,10 +5356,10 @@
       throw e;
     } finally { clearTimeout(timer); }
   }
-  async function apiGet(params){
+  async function apiGet(params, timeoutMs){
     if(DEMO_MODE) return demoApi(params);
     const qs = Object.keys(params).map(k => k+'='+encodeURIComponent(params[k])).join('&');
-    return apiFetch(APPS_SCRIPT_URL + '?' + qs);
+    return apiFetch(APPS_SCRIPT_URL + '?' + qs, null, timeoutMs);
   }
   async function apiPost(body, timeoutMs){
     if(DEMO_MODE) return demoApi(body);
@@ -5548,6 +5570,7 @@
       // Auto-retry with backoff — a whole class hitting the Apps Script at once
       // (cold start / concurrency) can be transiently slow; don't fail on the first try.
       let data = null, lastErr = null;
+      const started = Date.now();
       for(let attempt = 0; attempt < 3; attempt++){
         try {
           // Returning students send the session token they already hold; a
@@ -5555,7 +5578,7 @@
           // an hour, so a week-old visit can only be proved with the former.
           data = await apiGet({ action:'getPortalBootstrap',
                                 credential: currentUser.credential || '',
-                                token: sessionToken() });
+                                token: sessionToken() }, BOOTSTRAP_TIMEOUT);
           if(data && data.success) break;
           // Neither the credential nor the session token convinced the server —
           // expired, or stored before any of this existed. Retrying cannot help
@@ -5563,7 +5586,12 @@
           if(data && data.authRequired){ handleAuthRequired(); return; }
           lastErr = new Error(data && data.error || 'load failed'); data = null;
         } catch(err){ lastErr = err; data = null; }
-        if(attempt < 2){ setLoading(true, 'Reconnecting…'); await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); }
+        // Stop when there is no time left for another full attempt, rather than
+        // starting a fourth-minute one a student will never wait out.
+        if(attempt < 2 && (Date.now() - started) < BOOTSTRAP_DEADLINE - BOOTSTRAP_TIMEOUT){
+          setLoading(true, 'Reconnecting…');
+          await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+        } else break;
       }
       if(!data){ throw lastErr || new Error('load failed'); }
       // The session token every other call is gated on. Google's credential is
@@ -5628,8 +5656,21 @@
       if(bookingUnlocked()) loadBooking(); // testers only — booking is still gated
     } catch(e){
       setLoading(false);
-      document.getElementById('appError').classList.add('active');
+      showAppError(e);
     }
+  }
+  // Turn whatever came back into one plain sentence a student can read out and
+  // a teacher can act on. The three cases are genuinely different problems and
+  // the old screen collapsed all of them into "check your connection".
+  function showAppError(e){
+    const raw = String((e && e.message) || e || '').slice(0, 200);
+    let why = '';
+    if(/took too long/i.test(raw))        why = 'The server did not answer in time. It is usually busy rather than broken — try again in a minute.';
+    else if(/Unexpected response/i.test(raw)) why = 'The server sent something the app could not read. That usually means the script needs redeploying.';
+    else if(raw)                          why = 'The server said: ' + raw;
+    const el = document.getElementById('appErrorWhy');
+    if(el){ el.textContent = why; el.hidden = !why; }
+    document.getElementById('appError').classList.add('active');
   }
   function retryLoad(){ document.getElementById('appError').classList.remove('active'); startPortal(); }
   window.retryLoad = retryLoad;
