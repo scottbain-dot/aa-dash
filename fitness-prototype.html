@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fitness — prototype</title>
+<!--
+  A dynamic fitness number, the Strava idea done for fifteen-year-olds.
+
+  Strava computes Fitness as an exponentially weighted average of training load
+  over about six weeks. Ours can use the same maths: load per session is already
+  duration x effort, the weekly series is already computed and already drawn on
+  the Load tab. Nothing new has to be measured.
+
+  The whole design question is what happens when a student stops.
+
+  Strava's number FALLS, by one or two per cent a day. That is honest and it is
+  physiologically real. It is also the day-streak mistake wearing a new coat:
+  this app already learned that a figure which drains away over an exam fortnight
+  punishes exactly the student least able to take it, and the fix was to move
+  consistency from days to weeks so nothing could be lost.
+
+  So the number here is the same maths with a different front: the headline is
+  where you are against YOUR OWN BEST, which rises as you train and never reads
+  as a telling-off, and the fall is in the curve where it belongs — visible,
+  explained, and shaded out entirely on weeks marked injured or ill.
+
+  Toggle "Show the raw number" to see the Strava version underneath and judge
+  the two together. That toggle is the point of the prototype.
+
+  Not wired to anything. The series below is a realistic season, not real data.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --burgundy:#874B46; --burgundy-dark:#6a3a36; --gold:#D4AF37; --gold-strong:#b8860b;
+    --ink:#1f1a18; --ink-soft:#4a3f39; --ink-mute:#7a6a60;
+    --cream:#fdf6f2; --surface:#fff; --line:#eee3dd; --line-soft:#f1e8e2;
+    --sage:#7d9b76; --bg:#fef8f6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:'Inter',system-ui,sans-serif;color:var(--ink);
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:430px;margin:0 auto;padding:18px 16px 60px}
+  .lede{font:400 12.5px/1.6 'Inter',sans-serif;color:var(--ink-mute);
+    background:var(--cream);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;
+    padding:11px 13px;margin:0 0 16px}
+  .lede b{color:var(--ink-soft)}
+  .card{background:var(--surface);border:1px solid var(--line-soft);border-radius:20px;
+    padding:20px 18px;box-shadow:0 2px 10px rgba(26,20,17,.04);margin-bottom:14px}
+  .eyebrow{font:700 11px 'Inter',sans-serif;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--burgundy);margin:0 0 14px;display:flex;align-items:center;gap:8px}
+  .eyebrow span{margin-left:auto;font-size:10px;letter-spacing:.1em;color:var(--ink-mute)}
+
+  /* ---- the hero: where you are against your own best ---- */
+  .hero{display:flex;align-items:flex-end;gap:14px;margin-bottom:4px}
+  .hero-n{font:600 58px/1 'Fraunces',serif;color:var(--burgundy);letter-spacing:-.02em}
+  .hero-pct{font:600 22px/1 'Fraunces',serif;color:var(--burgundy);opacity:.6;padding-bottom:5px}
+  .hero-side{padding-bottom:7px}
+  .hero-word{display:block;font:800 12px 'Inter',sans-serif;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--gold-strong)}
+  .hero-of{display:block;font:500 12px 'Inter',sans-serif;color:var(--ink-mute);margin-top:2px}
+  .hero-sub{font:400 13.5px/1.55 'Inter',sans-serif;color:var(--ink-soft);margin:10px 0 0}
+  .hero-sub b{font-weight:600;color:var(--ink)}
+
+  /* ---- the curve ---- */
+  .chart{margin:16px -4px 0;position:relative}
+  svg{display:block;width:100%;height:150px;overflow:visible}
+  .ax{font:600 9px 'Inter',sans-serif;fill:var(--ink-mute)}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;
+    font:500 10.5px 'Inter',sans-serif;color:var(--ink-mute)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
+    vertical-align:-1px}
+
+  .next{display:flex;align-items:center;gap:11px;margin-top:16px;padding:12px 13px;
+    border-radius:14px;background:var(--cream);border:1px solid var(--line-soft)}
+  .next-n{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+    background:var(--burgundy);color:#fff;font:700 15px 'Inter',sans-serif}
+  .next-t{font:400 12.5px/1.45 'Inter',sans-serif;color:var(--ink-soft)}
+  .next-t b{font-weight:600;color:var(--ink)}
+
+  /* ---- the toggle that makes the argument ---- */
+  .toggle{display:flex;align-items:center;gap:9px;margin-top:16px;padding-top:14px;
+    border-top:1px solid var(--line-soft);cursor:pointer;background:none;border:none;
+    width:100%;text-align:left;padding-left:0;padding-right:0}
+  .sw{flex:0 0 auto;width:38px;height:22px;border-radius:999px;background:var(--line);
+    position:relative;transition:background .18s}
+  .sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s}
+  .on .sw{background:var(--burgundy)}
+  .on .sw::after{transform:translateX(16px)}
+  .toggle-t{font:600 12.5px 'Inter',sans-serif;color:var(--ink-soft)}
+  .raw{display:none;margin-top:14px;padding:14px;border-radius:14px;
+    background:#2a2220;color:#f3ece7}
+  .on + .raw{display:block}
+  .raw-h{font:700 10px 'Inter',sans-serif;letter-spacing:.12em;text-transform:uppercase;
+    color:#e0a52e;margin:0 0 9px}
+  .raw-row{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+  .raw-n{font:600 34px/1 'Fraunces',serif}
+  .raw-d{font:700 13px 'Inter',sans-serif}
+  .raw-d.down{color:#ef8a7a}
+  .raw-p{font:400 12px/1.55 'Inter',sans-serif;color:rgba(243,236,231,.72);margin:0}
+
+  /* ---- training age, the other number ---- */
+  .ta-row{display:flex;align-items:center;gap:12px}
+  .ta-n{font:600 34px/1 'Fraunces',serif;color:var(--burgundy)}
+  .ta-of{font:600 15px 'Fraunces',serif;color:var(--ink-mute)}
+  .ta-b{flex:1}
+  .ta-t{font:600 13px 'Inter',sans-serif;color:var(--ink)}
+  .ta-s{font:400 11.5px 'Inter',sans-serif;color:var(--ink-mute);margin-top:2px}
+  .steps{display:flex;gap:4px;margin-top:12px}
+  .step{flex:1;height:7px;border-radius:999px;background:var(--line)}
+  .step.on{background:linear-gradient(90deg,#e8c969,var(--gold))}
+  .note{font:italic 400 12px/1.5 'Fraunces',serif;color:var(--ink-mute);margin:12px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="lede"><b>Prototype.</b> Two numbers doing two jobs: a fitness figure that
+  moves every week, and Training Age staying the thing a coach signs off. The
+  toggle near the bottom shows the Strava-style raw number for comparison —
+  that comparison is the decision.</p>
+
+  <!-- ===== THE DYNAMIC ONE ===== -->
+  <div class="card">
+    <p class="eyebrow">Your fitness <span id="wkLabel"></span></p>
+
+    <div class="hero">
+      <span class="hero-n" id="heroN">—</span><span class="hero-pct">%</span>
+      <span class="hero-side">
+        <span class="hero-word" id="heroWord"></span>
+        <span class="hero-of">of your best ever</span>
+      </span>
+    </div>
+    <p class="hero-sub" id="heroSub"></p>
+
+    <div class="chart">
+      <svg id="svg" viewBox="0 0 400 150" preserveAspectRatio="none" aria-hidden="true"></svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--burgundy)"></i>Your fitness</span>
+      <span><i style="background:var(--gold)"></i>Best so far</span>
+      <span><i style="background:#e8dcd4"></i>Injured or ill — not counted</span>
+    </div>
+
+    <div class="next">
+      <span class="next-n" id="nextN">—</span>
+      <span class="next-t" id="nextT"></span>
+    </div>
+
+    <button class="toggle" id="tg" onclick="toggleRaw()">
+      <span class="sw"></span>
+      <span class="toggle-t">Show the raw number (the Strava way)</span>
+    </button>
+    <div class="raw">
+      <p class="raw-h">If we showed it the way Strava does</p>
+      <div class="raw-row">
+        <span class="raw-n" id="rawN">—</span>
+        <span class="raw-d down" id="rawD"></span>
+      </div>
+      <p class="raw-p" id="rawP"></p>
+    </div>
+  </div>
+
+  <!-- ===== THE CREDENTIAL ===== -->
+  <div class="card">
+    <p class="eyebrow">Training age <span>assessed</span></p>
+    <div class="ta-row">
+      <span><span class="ta-n">6.2</span><span class="ta-of">/10</span></span>
+      <span class="ta-b">
+        <span class="ta-t">Moves when something is measured</span>
+        <span class="ta-s">Testing, a coach's stamp, a block passed</span>
+      </span>
+    </div>
+    <div class="steps">
+      <i class="step on"></i><i class="step on"></i><i class="step on"></i>
+      <i class="step on"></i><i class="step on"></i><i class="step on"></i>
+      <i class="step"></i><i class="step"></i><i class="step"></i><i class="step"></i>
+    </div>
+    <p class="note">Fitness is what you did this month. Training Age is what it added
+    up to, the next time somebody measured it. Keeping them apart is what lets you
+    put the second one on a CV — a number that rises because you logged a session
+    is a number a coach has no reason to believe.</p>
+  </div>
+
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// A realistic season: 30 weeks, a build, an exam dip, a fortnight injured, a
+// rebuild. Weekly load in the same arbitrary unit the Load tab already
+// computes (duration x effort), which a student never sees.
+// ---------------------------------------------------------------------------
+const WEEKS = [
+  {w:'8 Sep', load:640}, {w:'15 Sep', load:720}, {w:'22 Sep', load:810},
+  {w:'29 Sep', load:880}, {w:'6 Oct', load:950}, {w:'13 Oct', load:1020},
+  {w:'20 Oct', load:1080}, {w:'27 Oct', load:600, flag:'Half term'},
+  {w:'3 Nov', load:980}, {w:'10 Nov', load:1100}, {w:'17 Nov', load:1180},
+  {w:'24 Nov', load:1240}, {w:'1 Dec', load:1120}, {w:'8 Dec', load:420, flag:'Exams'},
+  {w:'15 Dec', load:260, flag:'Exams'}, {w:'22 Dec', load:300},
+  {w:'29 Dec', load:480}, {w:'5 Jan', load:820}, {w:'12 Jan', load:1060},
+  {w:'19 Jan', load:1210}, {w:'26 Jan', load:1300}, {w:'2 Feb', load:1380},
+  {w:'9 Feb', load:0, flag:'injured'}, {w:'16 Feb', load:0, flag:'injured'},
+  {w:'23 Feb', load:520}, {w:'2 Mar', load:880}, {w:'9 Mar', load:1150},
+  {w:'16 Mar', load:1290}, {w:'23 Mar', load:1360}, {w:'30 Mar', load:1420}
+];
+const TYPICAL_SESSION = 240;   // one session's load, for turning advice into sessions
+
+// Strava's Fitness is an exponentially weighted average of load over ~42 days.
+// On a weekly series that is a 6-week time constant.
+const ALPHA = 1 - Math.exp(-1/6);
+
+// A week flagged injured or ill is HELD, not counted. The student did not choose
+// it, and a model that drops them for it is modelling the wrong thing.
+const series = [];
+let f = WEEKS[0].load * 0.8, peak = 0;
+WEEKS.forEach((wk, i) => {
+  const held = wk.flag === 'injured';
+  if(!held) f = f + (wk.load - f) * ALPHA;
+  if(f > peak) peak = f;
+  series.push({ ...wk, fitness: f, peak: peak, held: held });
+});
+
+const now = series[series.length - 1];
+const prev = series[series.length - 2];
+const pct = Math.round(now.fitness / now.peak * 100);
+const atPeak = now.fitness >= now.peak - 0.5;
+
+// ---- the headline ----------------------------------------------------------
+document.getElementById('heroN').textContent = pct;
+document.getElementById('wkLabel').textContent = 'week of ' + now.w;
+const rising = now.fitness > prev.fitness;
+document.getElementById('heroWord').textContent =
+  atPeak ? 'Best ever' : (rising ? 'Climbing' : (pct >= 90 ? 'Holding' : 'Rebuilding'));
+
+// Never a bare unit, and never a telling-off. Self-referential, the rule the
+// portal already follows everywhere else.
+const gapWeeks = (() => {
+  // How many weeks of last week's load to get back to the peak.
+  let g = 0, x = now.fitness;
+  while(x < now.peak - 0.5 && g < 20){ x = x + (now.load - x) * ALPHA; g++; }
+  return g;
+})();
+document.getElementById('heroSub').innerHTML = atPeak
+  ? 'This is the fittest you have been all season. <b>Hold it.</b>'
+  : 'Your best was <b>week of ' + series.find(s => s.peak === now.peak && s.fitness === now.peak).w +
+    '</b>. Keep this week up and you are back there in <b>' + gapWeeks +
+    ' week' + (gapWeeks === 1 ? '' : 's') + '</b>.';
+
+// ---- what next week takes --------------------------------------------------
+// Fitness rises when the week beats the average. That is a real, honest
+// threshold and it converts straight into sessions.
+const hold = Math.max(1, Math.round(now.fitness / TYPICAL_SESSION));
+document.getElementById('nextN').textContent = hold;
+document.getElementById('nextT').innerHTML =
+  '<b>' + hold + ' session' + (hold === 1 ? '' : 's') + ' next week holds it.</b> ' +
+  (hold + 1) + ' moves it up.';
+
+// ---- the curve -------------------------------------------------------------
+(function draw(){
+  const W = 400, H = 150, pad = 6;
+  const maxY = Math.max(...series.map(s => s.peak)) * 1.12;
+  const x = i => pad + i * (W - pad * 2) / (series.length - 1);
+  const y = v => H - pad - (v / maxY) * (H - pad * 2);
+  let out = '';
+
+  // Weeks the student did not choose, shaded out of the judgement.
+  series.forEach((s, i) => {
+    if(!s.held) return;
+    const x0 = x(i) - (W - pad*2) / (series.length - 1) / 2;
+    out += '<rect x="' + x0.toFixed(1) + '" y="0" width="' +
+      ((W - pad*2) / (series.length - 1)).toFixed(1) + '" height="' + H +
+      '" fill="#e8dcd4" opacity=".55"/>';
+  });
+
+  // The running best — a ceiling that only ever rises.
+  out += '<path fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="3 3" d="' +
+    series.map((s, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(s.peak).toFixed(1)).join(' ') + '"/>';
+
+  // Fitness, filled, because a shape reads faster than a number.
+  const line = series.map((s, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(s.fitness).toFixed(1)).join(' ');
+  out += '<path d="' + line + ' L' + x(series.length-1).toFixed(1) + ' ' + (H-pad) +
+    ' L' + x(0).toFixed(1) + ' ' + (H-pad) + ' Z" fill="url(#g)" opacity=".5"/>';
+  out += '<path fill="none" stroke="var(--burgundy)" stroke-width="2.5" stroke-linejoin="round" d="' + line + '"/>';
+
+  // Where you are.
+  out += '<circle cx="' + x(series.length-1).toFixed(1) + '" cy="' + y(now.fitness).toFixed(1) +
+    '" r="5" fill="var(--burgundy)" stroke="#fff" stroke-width="2.5"/>';
+
+  out += '<text class="ax" x="' + pad + '" y="' + (H + 12) + '">' + series[0].w + '</text>';
+  out += '<text class="ax" x="' + (W - pad) + '" y="' + (H + 12) + '" text-anchor="end">' + now.w + '</text>';
+
+  document.getElementById('svg').innerHTML =
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#874B46" stop-opacity=".45"/>' +
+    '<stop offset="1" stop-color="#874B46" stop-opacity="0"/></linearGradient></defs>' + out;
+})();
+
+// ---- the comparison --------------------------------------------------------
+// The same maths with Strava's front on it, so the two can be judged together.
+document.getElementById('rawN').textContent = Math.round(now.fitness);
+const wkDelta = Math.round(now.fitness - prev.fitness);
+const dEl = document.getElementById('rawD');
+dEl.textContent = (wkDelta >= 0 ? '+' : '') + wkDelta + ' this week';
+dEl.className = 'raw-d' + (wkDelta < 0 ? ' down' : '');
+// The deepest DRAWDOWN, not the lowest week. The lowest week of a season is
+// always the first one, which is not a fall and proves nothing — the case that
+// decides this design is the biggest drop from a high the student had already
+// reached, because that is the one that feels like losing something.
+let worst = series[0], worstDrop = 0;
+series.forEach(s => {
+  const drop = s.peak - s.fitness;
+  if(drop > worstDrop){ worstDrop = drop; worst = s; }
+});
+const worstPct = Math.round(worst.fitness / worst.peak * 100);
+document.getElementById('rawP').innerHTML =
+  'Same number, no reference point. Your steepest fall was the week of <b>' + worst.w +
+  '</b>: from <b>' + Math.round(worst.peak) + '</b> down to <b>' + Math.round(worst.fitness) +
+  '</b>. Strava shows that as a number dropping for weeks. The version above shows it as <b>' +
+  worstPct + '% of your best</b>, on a curve where the dip is visible and the weeks you were ' +
+  'injured are shaded out of it.';
+
+function toggleRaw(){ document.getElementById('tg').classList.toggle('on'); }
+</script>
+</body>
+</html>
