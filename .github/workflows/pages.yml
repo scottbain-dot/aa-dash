@@ -65,13 +65,21 @@ jobs:
           #   athlete-portal.html         the G10-12 portal portal-lab replaced
           #   fuel-lab.html               wanted later in the year
           #   apply.html, nominate.html   wanted later in the year
-          #   *-prototype.html            design references, never student-facing
+          #   *-prototype.html            design references — except the one named below
+          #
+          # training-age-prototype.html is here ON PURPOSE and temporarily. It is
+          # the only way Scott can open it on the phone he will judge it on. It
+          # shows nothing without a Google sign-in and a server-verified
+          # credential, reads through the same gated bootstrap as the portal and
+          # writes nothing — the same exposure as portal-lab itself. Delete the
+          # line the moment the decision is made.
           for page in \
             portal-lab.html \
             g9-portal.html \
             admin.html \
             guide.html \
-            profile-mockup.html
+            profile-mockup.html \
+            training-age-prototype.html
           do
             if [ -f "$page" ]; then cp "$page" _site/; else
               echo "::error::$page is in the publish list but not in the repository."
