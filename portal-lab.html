@@ -9467,14 +9467,28 @@
       .sort((a,b) => (order[a.tier] || 9) - (order[b.tier] || 9));
     awardNext();
   }
-  function awardNext(){
-    const el = document.getElementById('awardPop');
-    if(!el) return;
-    const a = awardQueue.shift();
-    if(!a){ el.classList.remove('open'); el.innerHTML = ''; return; }
-    el.className = 'award-pop open ' + (a.tier || 'silver');
-    el.innerHTML =
-      '<div class="award-card">'+
+  // THIS OVERLAY IS FULL SCREEN AND SITS ABOVE WORKOUT MODE (z 400 over z 300),
+  // so whenever it is open it swallows every tap on the screen underneath. Two
+  // separate ways that turned a medal into a dead portal, and both are closed
+  // here rather than by moving a z-index, because the second one would have
+  // blocked whatever was underneath whatever the stacking order said.
+  //
+  //   IT OPENED BEFORE IT HAD ANYTHING TO SHOW. `.open` went on the element and
+  //   the card was built on the next line, and the whole call sits inside
+  //   syncAwards' catch — the one commented "never block the week on a medal".
+  //   Anything throwing while building that card left the class on, the element
+  //   empty and the error swallowed: a full-screen invisible tap-blocker, over a
+  //   workout screen that is already near-black, so there was nothing to see and
+  //   nothing to dismiss. Tapping Finish did nothing at all, for ever.
+  //
+  //   AND IT COULD OPEN MID-SESSION. A medal is never more urgent than the
+  //   session in front of the student, so it now waits for them to come out.
+  function workoutIsOpen(){
+    const m = document.getElementById('workoutMode');
+    return !!(m && m.classList.contains('open'));
+  }
+  function awardCardHTML(a){
+    return '<div class="award-card">'+
         '<div class="award-medal"><i class="ti '+(a.icon || 'ti-medal')+'" aria-hidden="true"></i></div>'+
         '<p class="award-kicker">'+esc(a.title || 'Earned')+'</p>'+
         '<p class="award-line">'+(a.line || esc(a.label))+'</p>'+
@@ -9485,6 +9499,39 @@
         '<button class="award-ok" onclick="awardSeen(\''+escArg(a.id)+'\')">'+
           (awardQueue.length ? 'Next' : 'Nice')+'</button>'+
       '</div>';
+  }
+  // Every full-screen celebration, shut. They live at z 400-500 over workout
+  // mode's 300, and none of them is more urgent than the session in front of
+  // the student.
+  function closeCelebrations(){
+    awardPopClose();
+    ['streakCelebrate','pbCelebrate','badgeCelebrate'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el){ el.classList.remove('open'); el.hidden = true; }
+    });
+  }
+  function awardPopClose(){
+    const el = document.getElementById('awardPop');
+    if(!el) return;
+    el.classList.remove('open');
+    el.innerHTML = '';
+  }
+  function awardNext(){
+    const el = document.getElementById('awardPop');
+    if(!el) return;
+    if(workoutIsOpen()) return;              // it waits; closeWorkout drains it
+    let guard = 0;
+    while(guard++ < 40){
+      const a = awardQueue.shift();
+      if(!a){ awardPopClose(); return; }
+      let html = '';
+      try { html = awardCardHTML(a); } catch(e){ html = ''; }
+      if(!html) continue;                    // a medal we cannot draw is skipped
+      el.innerHTML = html;                   // content FIRST, then open
+      el.className = 'award-pop open ' + (a.tier || 'silver');
+      return;
+    }
+    awardPopClose();
   }
   function awardSeen(id){
     (awardLedger || []).forEach(a => { if(a.id === id) a.seen = true; });
@@ -11867,6 +11914,12 @@
     wktLoadLastTimes(wktSession);   // fills in behind the first render
     document.getElementById('workoutMode').classList.add('open');
     document.body.style.overflow = 'hidden';
+    // Anything celebrating goes away while they train. Every one of these is a
+    // full-screen overlay stacked ABOVE workout mode, so any of them left open
+    // swallows the taps on the session underneath — which is how the Finish
+    // button came to be dead. Nothing is marked seen, so a medal still comes
+    // back on the next sync.
+    closeCelebrations();
   }
   window.startWorkout = startWorkout;
   function startWorkoutFromSheet(){ if(editing && editing.id){ closeSheet(); startWorkout(editing.id); } }
@@ -11878,6 +11931,7 @@
     document.getElementById('workoutMode').classList.remove('open');
     document.body.style.overflow = document.querySelector('.sheet.open') ? 'hidden' : '';
     if(activeTab==='week'){ renderWeek(); renderBlockBar(); }
+    awardNext();   // anything that waited while they were training
   }
   window.closeWorkout = closeWorkout;
 
