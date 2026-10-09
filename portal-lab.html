@@ -2016,6 +2016,17 @@
       <p class="sheet-section-label">Date</p>
       <input type="date" class="duration-input plan-field" id="pbDate">
     </div>
+    <!-- Where it happened. One shelf, beatable anywhere — a kilometre rep on a
+         treadmill counts the same as one in a race — but a CV reader is
+         entitled to know which of the two they are reading. -->
+    <div class="sheet-section">
+      <p class="sheet-section-label">Where</p>
+      <div class="pb-where" id="pbWhere">
+        <button type="button" data-ctx="training" onclick="pbPickWhere('training')">Training</button>
+        <button type="button" data-ctx="test" onclick="pbPickWhere('test')">Test</button>
+        <button type="button" data-ctx="competition" onclick="pbPickWhere('competition')">Competition</button>
+      </div>
+    </div>
     <div class="sheet-section">
       <p class="sheet-section-label">Note · optional</p>
       <textarea class="note-input" id="pbNote" placeholder="Conditions, how it felt, anything worth remembering."></textarea>
@@ -3876,6 +3887,24 @@
   /* PB sheet sits above everything, including full-screen Workout mode (z 300) */
   #pb-backdrop.open { z-index: 390; }
   #pbSheet.open { z-index: 400; }
+  /* Where a best was set. Three chips, not a dropdown — it is one tap and the
+     default is already right for almost every entry. */
+  .pb-where { display: flex; gap: 8px; }
+  .pb-where button {
+    flex: 1; padding: 10px 6px; border-radius: 11px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface);
+    font: 600 12.5px 'Inter', sans-serif; color: var(--ink-mute);
+  }
+  .pb-where button.on {
+    border-color: var(--burgundy); background: #fbf1ef; color: var(--burgundy);
+  }
+  /* The tag as it reads on the shelf: quiet, and absent for training, which is
+     the default and does not need saying. */
+  .pb-ctx {
+    display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 5px;
+    font: 700 9px 'Inter', sans-serif; letter-spacing: .07em; text-transform: uppercase;
+    background: #f1e8e2; color: var(--burgundy); vertical-align: 1px;
+  }
   /* Exercise history sheet — must sit above workout mode (z ~300) and the PB sheet */
   #exhist-backdrop.open { z-index: 410; }
   #exhistSheet.open { z-index: 420; }
@@ -8438,7 +8467,8 @@
       try {
         await apiData({ action:'savePB', pb: {
           sport: p.sport, exercise: p.exercise, value: String(p.value), unit: p.unit,
-          date: p.date, note: 'Spotted from your session', sessionId: (p.sessionId || '') } });
+          date: p.date, note: 'Spotted from your session', context: (p.context || 'training'),
+          sessionId: (p.sessionId || '') } });
       } catch(e){ console.error('auto PB save', e); }
     }
     try { await refreshPBs(); } catch(e){}
@@ -11531,8 +11561,72 @@
     const t = String(exercise||'') + ' ' + String(line||'');
     if(PB_LONGER.test(t)) return +1;      // a hold: longer is the whole point
     if(PB_FASTER.test(t)) return -1;      // named as a sprint or a time trial
-    if(pbHasDistance(line)) return -1;    // a time next to a distance covers it
+    // The distance has to be looked for in the NAME as well as the line. On the
+    // shelf and the CV there is no line to read — a best is just "1km rep,
+    // 3:48" — and reading that as more-is-better meant the one case this whole
+    // system exists for, taking a kilometre rep from 4:00 to 3:48, displayed as
+    // no improvement at all.
+    if(pbHasDistance(t)) return -1;       // a time next to a distance covers it
     return +1;                            // an interval or work period
+  }
+  // REP BRACKETS: ONE LIFT, FOUR THINGS TO CHASE.
+  //
+  // A 1RM, a 3RM and a 5RM are three different performances, and the shelf held
+  // one number per lift. So a single max-out at 95kg buried every rep-max
+  // improvement that came after it: a genuine 5RM going 80 → 85 claimed
+  // nothing, because 85 is not more than 95. The scanner had the rep count in
+  // its hand the whole time and threw it away.
+  //
+  // Bracketing turns that around. Instead of one unbeatable number per lift
+  // there are up to four live targets, each beatable on its own terms — which
+  // is more celebrations, not fewer, and it is how a lifter already thinks.
+  // The PB form has said "e.g. Back squat 5RM" in its placeholder since the day
+  // it was written; this just makes the scanner agree with it.
+  function pbRepBracket(reps){
+    const n = parseInt(reps, 10);
+    if(!(n > 0)) return '';
+    if(n === 1) return '1RM';
+    if(n <= 3) return '3RM';
+    if(n <= 6) return '5RM';
+    return '8RM';
+  }
+  // What this best is actually called. Only loads bracket — a time, a distance
+  // or a speed is the same test however many times you repeated it.
+  function pbIdentity(name, cand){
+    if(!cand || cand.unit !== PB_UNIT_KG) return name;
+    const br = pbRepBracket(cand.reps);
+    return br ? name + ' ' + br : name;
+  }
+  // The unit an exercise is already tracked in, looking through its brackets
+  // too, so a lift keeps reading kilos rather than flipping to something else.
+  function pbTrackedUnit(name){
+    const key = String(name||'').trim().toLowerCase();
+    if(!key) return '';
+    const hit = (state.pbs || []).find(p => {
+      const e = String(p.exercise||'').trim().toLowerCase();
+      return e === key || (e.indexOf(key + ' ') === 0 && /\d+rm$/.test(e));
+    });
+    return hit ? hit.unit : '';
+  }
+  // WHERE A BEST WAS SET. One best per thing, beatable anywhere — a kilometre
+  // rep on a treadmill counts the same as one in a race, because the point of
+  // the shelf is something to aim at and beat. The tag rides along so a CV can
+  // still tell a reader which of the two they are looking at.
+  function pbContextFor(session){
+    if(!session) return 'training';
+    if(session.type === 'game') return 'competition';
+    const t = String(session.name||'') + ' ' + String(session.sport||'');
+    if(/\btest\b|time\s*trial|\bTT\b|trial|assessment|benchmark/i.test(t)) return 'test';
+    return 'training';
+  }
+  const PB_CONTEXT_WORD = { training:'Training', test:'Test', competition:'Competition' };
+
+  // Training is the default and does not need a badge on every tile; a test or a
+  // race does, because that is the distinction worth seeing at a glance.
+  function pbCtxChip(p){
+    const c = String((p && p.context) || '').trim().toLowerCase();
+    if(!c || c === 'training') return '';
+    return '<span class="pb-ctx">'+esc(PB_CONTEXT_WORD[c] || c)+'</span>';
   }
   // How much better a best is than the one before it, or nothing when it is not
   // better. Direction-aware, so a sprint coming down from 6.1 to 5.8 reads as a
@@ -11711,12 +11805,15 @@
       if(!name || seen[name.toLowerCase()]) return;
       // The exercise's existing best decides which unit to keep reading, so a
       // line that states two measures cannot silently switch what is tracked.
-      const tracked = pbFor(String((it && it.name) || '').trim());
-      const cand = pbCandidateFrom(it, sessionStyle(session), tracked && tracked.unit);
+      const cand = pbCandidateFrom(it, sessionStyle(session), pbTrackedUnit(name));
       if(!cand) return;
       seen[name.toLowerCase()] = 1;
       const line = (it && typeof it === 'object') ? String(it.detail||'') : String(it||'');
-      const prev = pbFor(name);
+      // A lift's best is per rep bracket, so "Back Squat" at 4×5 is tracked as
+      // "Back Squat 5RM" and a max single no longer buries it.
+      const id = pbIdentity(name, cand);
+      const ctx = pbContextFor(session);
+      const prev = pbFor(id);
       if(!prev){
         // A FIRST MARK IN A NEW UNIT NEEDS THE STUDENT TO HAVE SAID SO. Weight
         // and reps are offered off the plan as they always were. Everything
@@ -11724,7 +11821,8 @@
         // because the library is full of prescriptions — "3 × 20m", "30 sec" —
         // and a shelf of those buries the bests that mean something.
         if(PB_MARK_UNITS.indexOf(cand.unit) < 0 && !(it && it._edited)) return;
-        marks.push({ exercise: name, value: cand.value, unit: cand.unit, sport: session.sport || '', date: session.date || isoToday() });
+        marks.push({ exercise: id, value: cand.value, unit: cand.unit, context: ctx,
+                     sport: session.sport || '', date: session.date || isoToday() });
         return;
       }
       const prevUnit = String(prev.unit || '').trim();
@@ -11737,8 +11835,8 @@
       // between being recorded and being beaten.
       const dir = pbDirFor(cand.unit, name, line);
       if(dir > 0 ? !(cand.value > prevVal) : !(cand.value < prevVal)) return;
-      beats.push({ exercise: name, value: cand.value, unit: cand.unit, previousValue: prevVal,
-                   sport: session.sport || '', date: session.date || isoToday() });
+      beats.push({ exercise: id, value: cand.value, unit: cand.unit, previousValue: prevVal,
+                   context: ctx, sport: session.sport || '', date: session.date || isoToday() });
     });
     return { beats: beats, marks: marks };
   }
@@ -15485,14 +15583,14 @@
     const list = (state.pbs || []).slice().sort((a,b) => String(b.date||'').localeCompare(String(a.date||'')));
     if(!list.length){
       return '<div class="card"><p class="card-eyebrow">Your bests</p>'+
-        '<p class="crd-foot-p">Nothing yet. Log a session with a weight or a rep count in it and the app spots your '+
-        'best on its own — you do not have to remember to record anything.</p></div>';
+        '<p class="crd-foot-p">Nothing yet. Log a session with a number in it — a weight, a rep count, a time, a '+
+        'distance, a speed — and the app spots your best on its own. Then you have something to beat.</p></div>';
     }
     const tiles = list.slice(0, 10).map(p => {
       const prev = parseFloat(p.previousValue), now = parseFloat(p.value);
       const gain = pbGainOver(p, prev, now);
       const up = gain ? '<p class="pbest-tile-up">▲ '+esc(gain)+' on your last</p>' : '';
-      return '<div class="pbest-tile"><p class="pbest-tile-ex">'+esc(p.exercise)+'</p>'+
+      return '<div class="pbest-tile"><p class="pbest-tile-ex">'+esc(p.exercise)+pbCtxChip(p)+'</p>'+
         '<p class="pbest-tile-v">'+esc(pbValueText(p.value, p.unit))+'</p>'+ up +
         (p.date ? '<p class="pbest-tile-date">'+esc(fmtNice(p.date))+'</p>' : '')+'</div>';
     }).join('');
@@ -15872,12 +15970,16 @@
     if(pbs.length){
       const groups = {};
       pbs.forEach(p => { const k = p.sport || 'Other'; (groups[k] = groups[k] || []).push(p); });
-      const cols = ['Exercise', 'Best', 'Set'].concat(cvEditOpen ? [''] : []);
+      // WHERE is a column here rather than a chip. On a CV it is the difference
+      // between a time set in a race and one set on a treadmill, and a reader
+      // who cannot tell has to assume the weaker of the two about all of them.
+      const cols = ['Exercise', 'Best', 'Where', 'Set'].concat(cvEditOpen ? [''] : []);
       pbInner = Object.keys(groups).sort().map(sport =>
         '<p class="cvd-group">'+esc(sport)+'</p>'+
         cvTable(cols, groups[sport].map(p => [
           esc(p.exercise || ''),
           '<strong>'+esc(pbValueText(p.value, p.unit))+'</strong>',
+          esc(PB_CONTEXT_WORD[String(p.context||'training').toLowerCase()] || 'Training'),
           p.date ? esc(cvDate(p.date)) : ''
         ].concat(cvEditOpen
           ? ['<button class="cvd-rowedit" onclick="editPB('+pbKey(p)+')" aria-label="Edit"><i class="ti ti-pencil" aria-hidden="true"></i></button>']
@@ -15939,6 +16041,13 @@
 
   // ----- PB add / edit sheet -----
   let pbCtx = null;
+  let pbWhereVal = 'training';
+  function pbPickWhere(v){
+    pbWhereVal = v;
+    document.querySelectorAll('#pbWhere button').forEach(b =>
+      b.classList.toggle('on', b.dataset.ctx === v));
+  }
+  window.pbPickWhere = pbPickWhere;
   function openPBSheet(){ document.getElementById('pb-backdrop').classList.add('open'); document.getElementById('pbSheet').classList.add('open'); document.body.style.overflow='hidden'; }
   function closePB(){ document.getElementById('pb-backdrop').classList.remove('open'); document.getElementById('pbSheet').classList.remove('open'); document.body.style.overflow=''; }
   window.closePB = closePB;
@@ -15953,6 +16062,7 @@
     document.getElementById('pbUnit').value = prefill.unit || '';
     document.getElementById('pbDate').value = prefill.date || isoToday();
     document.getElementById('pbNote').value = prefill.note || '';
+    pbPickWhere(prefill.context || 'training');
     openPBSheet();
   }
   function addPB(){ openPBForm({}); }
@@ -15977,6 +16087,7 @@
       unit: val('pbUnit').trim(),
       date: val('pbDate') || isoToday(),
       note: val('pbNote'),
+      context: pbWhereVal || 'training',
       sessionId: (pbCtx && pbCtx.sessionId) || ''
     };
     const btn = document.getElementById('pbSaveBtn'); btn.disabled=true; btn.textContent='Saving…';

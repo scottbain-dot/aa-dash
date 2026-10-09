@@ -3487,12 +3487,16 @@ function apEnsurePBs(ss) {
   var sheet = ss.getSheetByName('PBs');
   if (!sheet) {
     sheet = ss.insertSheet('PBs');
-    sheet.getRange(1, 1, 1, 10).setValues([[
+    sheet.getRange(1, 1, 1, 11).setValues([[
       'Athlete_ID', 'Sport', 'Exercise', 'Value', 'Unit', 'Date',
-      'Previous_Value', 'Note', 'Session_ID', 'Updated'
+      'Previous_Value', 'Note', 'Session_ID', 'Context', 'Updated'
     ]]);
     sheet.getRange('1:1').setFontWeight('bold');
   }
+  // Where the best was set: training, test or competition. One best per thing,
+  // beatable anywhere — a treadmill kilometre and a race both count — but a CV
+  // reader is entitled to know which of the two they are looking at.
+  apEnsureColumns(sheet, ['Context']);
   return sheet;
 }
 
@@ -3901,7 +3905,8 @@ function apPBObj(r) {
     date: apDateStr(r.Date),
     previousValue: r.Previous_Value === '' ? null : r.Previous_Value,
     note: r.Note || '',
-    sessionId: r.Session_ID || ''
+    sessionId: r.Session_ID || '',
+    context: r.Context || ''
   };
 }
 
@@ -4396,6 +4401,7 @@ function handleSavePB(ss, athleteId, pb) {
       'Previous_Value': (pb.previousValue !== undefined && pb.previousValue !== null) ? pb.previousValue : (prev !== null ? prev : ''),
       'Note': pb.note || '',
       'Session_ID': pb.sessionId || '',
+      'Context': pb.context || '',
       'Updated': new Date()
     };
     if (existingRow > 0) apUpdateRow(sheet, existingRow, fields);
