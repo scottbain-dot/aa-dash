@@ -160,7 +160,45 @@ async function check(name, qs, opts = {}) {
 
   // Admin routes: we only assert that they exist and refuse us.
   await check('getAttention (gated)',   'action=getAttention&token=smoke-probe');
-  await check('getObservations (gated)','action=getObservations&token=smoke-probe');
+
+  // ---- 3. The doors that are supposed to be shut --------------------------
+  // 43 routes used to answer an anonymous caller — last year's Clash, the
+  // superseded G9 endpoints, the email-keyed athlete reads, the open writes.
+  // They are off the allowlist now, and this is what proves it on the live
+  // deployment rather than in the file.
+  //
+  // Every one of these is checked with arguments that cannot match a real
+  // student. The point is the shape of the refusal, not any data behind it.
+  const RETIRED_GET = [
+    'getAthleteData&email=zz-not-real@example.invalid',
+    'getGritChallenge&email=zz-not-real@example.invalid',
+    'getUnassignedAthletes',
+    'getClashLeaderboard', 'getClashTeams', 'getClashResults', 'getTeamRoles', 'getHelpers',
+    'getConfig&key=CurrentSession',
+    'getWorkoutHistory&email=zz-not-real@example.invalid',
+    'getLastSession&email=zz-not-real@example.invalid'
+  ];
+  for (const qs of RETIRED_GET) {
+    const name = qs.split('&')[0];
+    const r = await get('action=' + qs);
+    if (!r.ok) { record('closed · ' + name, 'FAIL', r.error); continue; }
+    if (r.body && r.body.routeDisabled) record('closed · ' + name, 'PASS', 'refused');
+    else record('closed · ' + name, 'FAIL',
+      'STILL ANSWERING — this route is off the allowlist in the repo, so the ' +
+      'deployed script is older than COMPLETE-APPS-SCRIPT.gs.');
+  }
+
+  // The two that were never a named action at all: doGet used to fall through
+  // to the roster on `?admin=true` and to one athlete on `?email=`. Both are
+  // checked for a refusal and nothing is read back either way.
+  for (const [label, qs] of [['?admin=true', 'admin=true'],
+                             ['?email=', 'email=zz-not-real@example.invalid']]) {
+    const r = await get(qs);
+    if (!r.ok) { record('closed · ' + label, 'FAIL', r.error); continue; }
+    if (r.body && r.body.routeDisabled) record('closed · ' + label, 'PASS', 'refused');
+    else record('closed · ' + label, 'FAIL',
+      'STILL ANSWERING — the no-action fallthrough is open on the live script.');
+  }
 
   if (EMAIL) {
     await check('getPortalBootstrap', 'action=getPortalBootstrap&email=' + encodeURIComponent(EMAIL), {

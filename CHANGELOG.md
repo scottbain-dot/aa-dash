@@ -38,6 +38,34 @@ of them — they are standalone pages.
 
 ---
 
+## Going to main — 9 Oct 2026
+
+**43 routes answered an anonymous caller. Now 39 are allowed and the rest are
+refused before they reach a handler.**
+
+An audit of every route in `doGet` and `doPost`, checked against which pages are
+actually published. Three findings were verified against the live deployment
+using identifiers that cannot belong to a real student.
+
+| What | Where |
+|---|---|
+| **`getAthleteData?email=` answered anyone.** No sign-in. With a real address it returns the full athlete record — psychology, strength, performance, mobility, recovery. FIS addresses are `firstname_lastname@fis.edu`, so they are guessable. `getGritChallenge?email=` was the same, returning the psychology journal. | Apps Script |
+| **The fallthrough was worse than any named route.** `doGet` ended with `if (e.parameter.admin === 'true') return handleAdminRequest(ss)` and then `return handleStudentRequest(ss, e.parameter.email)` — so `?admin=true` returned every athlete and `?email=` returned one, both unauthenticated. Not called to confirm: the code has no gate above it, and proving it would have meant pulling 34 children's records. | Apps Script |
+| **35 of the 43 open routes had no live caller at all.** Only five pages are published. Last year's Clash, the superseded G9 endpoints, the old workout routes, the unpublished public forms — doors standing in a wall with no building behind them. | — |
+| **One allowlist decides what the deployment answers.** `AA_LIVE_ROUTES`, built from the student, admin and AI route lists. Nothing is deleted: a page comes back by adding its routes, the same rule the Pages publish allowlist uses. | Apps Script |
+| **The four AI routes moved behind the student session gate.** They were open, so anyone with the URL could spend the Anthropic key. The client already sends `athleteId` and `token` on all four, so gating them needed no portal change. | Apps Script |
+| **The AI cap is per-athlete now, not one global bucket.** A single counter capped the bill and nothing else — one caller running it flat also took the coaching assistant away from every student for the rest of the hour. 20 an hour each, with the global 300 kept as a ceiling. | Apps Script |
+| **`getConfig` had no gate and no caller.** Off the allowlist, along with seven other admin-shaped routes nothing calls since the grit and check-in tools were removed in September. | Apps Script |
+| **The smoke test proves the doors are shut.** Thirteen closed-route checks plus the two fallthrough paths, each called with arguments that cannot match a real student. A route still answering means the deployed script is older than the repo. | `tools/smoke.js` |
+
+**Needs a paste to take effect** — and until it is pasted the new smoke checks
+fail by design, which is the test doing its job.
+
+Verified statically: all 35 routes the live pages call are still allowed, all 37
+previously-open routes are refused, and the no-action fallthrough is closed.
+
+---
+
 ## Going to main — 8 Oct 2026 (fifth push)
 
 **The season card and the year strip were saying the same thing twice.** Scott
