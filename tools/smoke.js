@@ -188,17 +188,22 @@ async function check(name, qs, opts = {}) {
       'deployed script is older than COMPLETE-APPS-SCRIPT.gs.');
   }
 
-  // The two that were never a named action at all: doGet used to fall through
-  // to the roster on `?admin=true` and to one athlete on `?email=`. Both are
-  // checked for a refusal and nothing is read back either way.
-  for (const [label, qs] of [['?admin=true', 'admin=true'],
-                             ['?email=', 'email=zz-not-real@example.invalid']]) {
-    const r = await get(qs);
-    if (!r.ok) { record('closed · ' + label, 'FAIL', r.error); continue; }
-    if (r.body && r.body.routeDisabled) record('closed · ' + label, 'PASS', 'refused');
-    else record('closed · ' + label, 'FAIL',
-      'STILL ANSWERING — the no-action fallthrough is open on the live script.');
-  }
+  // The path that was never a named action at all: doGet used to fall through
+  // to handleStudentRequest on `?email=` and to handleAdminRequest on
+  // `?admin=true`.
+  //
+  // Only the email form is probed, and only with an address that cannot match
+  // anybody. `?admin=true` goes through the same fallthrough and is refused by
+  // the same line, so testing it adds no coverage — and while it is still open,
+  // asking it the question means downloading thirty-four children's records to
+  // a laptop to learn something the next line of the file already says. The
+  // first run of this check did exactly that before the probe was narrowed.
+  const fall = await get('email=zz-not-real@example.invalid');
+  if (!fall.ok) record('closed · no-action fallthrough', 'FAIL', fall.error);
+  else if (fall.body && fall.body.routeDisabled)
+    record('closed · no-action fallthrough', 'PASS', 'refused (covers ?email= and ?admin=true)');
+  else record('closed · no-action fallthrough', 'FAIL',
+    'STILL ANSWERING — ?email= and ?admin=true both reach a handler unauthenticated.');
 
   if (EMAIL) {
     await check('getPortalBootstrap', 'action=getPortalBootstrap&email=' + encodeURIComponent(EMAIL), {
