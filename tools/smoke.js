@@ -128,7 +128,11 @@ async function check(name, qs, opts = {}) {
   await check('getBookingData',     'action=getBookingData&athleteId=' + ID, {
     note: b => (b.slots || []).length + ' slots'
   });
-  await check('getConfig',          'action=getConfig');
+  // getConfig is deliberately absent from the live list: it had no gate and no
+  // caller, so it came off the allowlist. It is checked as a RETIRED route
+  // below instead — and because it returns configuration rather than anything
+  // about a person, it is the one probe that is safe to run while a hole is
+  // still open, which makes it the first thing to try after a deploy.
   await check('getExerciseHistory', 'action=getExerciseHistory&athleteId=' + ID + '&name=Back%20Squat');
 
   // The squad feed behind the notice ticker and the board. An older script has
