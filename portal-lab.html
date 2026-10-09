@@ -5147,14 +5147,16 @@
   .wkt-ex-last u { text-decoration: none; color: rgba(245,239,233,.38); font-size: 11.5px; }
   .wkt-ex-last i { font-size: 13px; opacity: .6; }
   @media (prefers-reduced-motion: reduce) { .wkt-card { transition: none; } .wkt-card.up-next { transform: none; } }
-  /* Everything ticked: the Finish button is the only thing left to do, so it
-     stops being one button among several and asks for the tap. */
+  /* Something ticked: finishing is now a real option, so the button stops being
+     one among several and asks for the tap. This used to wait for ALL of them,
+     which left anyone who did one of three alternatives staring at a sleeping
+     button and a label reading "1 / 3". */
   @keyframes wktReady { 0%,100% { box-shadow: 0 0 0 0 rgba(212,175,55,.5); }
                         50%     { box-shadow: 0 0 0 10px rgba(212,175,55,0); } }
-  .wkt-all-done #wktFinishBtn { animation: wktReady 1.9s ease-out infinite; }
-  .wkt-all-done #wktProgressLabel { color: var(--gold); font-weight: 700; }
+  .wkt-ready #wktFinishBtn { animation: wktReady 1.9s ease-out infinite; }
+  .wkt-ready #wktProgressLabel { color: var(--gold); font-weight: 700; }
   .wkt-all-done .wkt-bar-fill, .wkt-all-done #wktBar { background: var(--gold); }
-  @media (prefers-reduced-motion: reduce) { .wkt-all-done #wktFinishBtn { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .wkt-ready #wktFinishBtn { animation: none; } }
   /* Finish panel (RPE + duration) */
   .wkt-finish-panel { position: absolute; inset: 0; z-index: 2; background: rgba(20,13,11,0.72); backdrop-filter: blur(3px);
     display: none; align-items: flex-end; justify-content: center; }
@@ -9596,6 +9598,17 @@
     '</div>';
   }
 
+  // "2 of 3 done", and only when it was genuinely part of the session. A fully
+  // done session says nothing extra, and neither does one with no exercise list
+  // at all — this is a record of what happened, not a mark out of three.
+  function sessionPartBit(s){
+    const w = (s && s.workout) || [];
+    if(w.length < 2) return '';
+    const marked = w.filter(x => x && typeof x === 'object' && x.done !== undefined);
+    if(marked.length !== w.length) return '';     // nothing recorded either way
+    const done = w.filter(x => x && x.done).length;
+    return (done && done < w.length) ? ' · '+done+' of '+w.length+' done' : '';
+  }
   function planRow(s, first, iso, isToday){
     let statusCls = '';
     if(s.status==='done' || s.status==='modified') statusCls = ' is-done';
@@ -9607,7 +9620,7 @@
     let meta;
     if(s.status==='missed') meta = 'Missed' + (s.note? ' · '+esc(s.note) : '');
     else if(isLogged(s)) meta = esc(s.sport)+' · '+(s.duration||s.plannedDuration||0)+'min'+
-      (effortWord(s.rpe) ? ' · '+effortWord(s.rpe) : '')+resultBit;
+      (effortWord(s.rpe) ? ' · '+effortWord(s.rpe) : '')+sessionPartBit(s)+resultBit;
     else meta = esc(s.sport)+' · '+(s.plannedDuration||0)+'min planned'+resultBit;
     const pb = s.isPB ? ' <span class="pb-flag"><i class="ti ti-trophy" aria-hidden="true"></i> PB</span>' : '';
     // LAB: read-only "Last week: …" reference on a session carried forward via Copy last week.
@@ -11276,12 +11289,12 @@
     const dow = dowOf(s.date);
     const entry = { dow: dow, name: s.name, time: s.time||'', type: s.type||'training', sport: s.sport||'', intensity: s.intensity||'',
       plannedDuration: (s.plannedDuration!=null?s.plannedDuration:null), target: s.target||'', note: s.note||'',
-      // _edited says "the student changed this during that session". It belongs
-      // to the session, not the plan — carrying it into the program would make
-      // every future copy look hand-entered.
+      // _edited and done are both facts about THAT session — what the student
+      // changed and what they actually got through. Carrying either into the
+      // plan would make every future copy look hand-entered and pre-ticked.
       workout: (s.workout||[]).map(x => {
         if(typeof x === 'string') return x;
-        const c = Object.assign({}, x); delete c._edited; return c;
+        const c = Object.assign({}, x); delete c._edited; delete c.done; return c;
       }) };
     const arr = templateWeekFor(s.date);
     const i = arr.findIndex(x => x.dow===dow && (x.name||'').toLowerCase()===(s.name||'').toLowerCase());
@@ -11735,8 +11748,12 @@
     if(!s){ return; }
     wktSession = s;
     wktSession.workout = (wktSession.workout||[]).map(w => typeof w==='string' ? { name:w, detail:'', exId:null } : Object.assign({}, w));
+    // Ticks come back from the session itself when there is no live progress on
+    // this device, so reopening a part-done session shows what was done rather
+    // than an empty list the student has to tick all over again.
     if(!wktSession._checked || wktSession._checked.length !== wktSession.workout.length)
-      wktSession._checked = wktSession.workout.map((_,i) => (wktSession._checked && wktSession._checked[i]) || false);
+      wktSession._checked = wktSession.workout.map((it,i) =>
+        (wktSession._checked && wktSession._checked[i]) || !!(it && it.done));
     // Restore tick progress only, and only when it still lines up with the current
     // workout — never re-derive targets from the store (the session already holds them).
     const prog = loadWktProgress(id);
@@ -11785,13 +11802,21 @@
     const all = !!w.length && done === w.length;
     const pct = w.length ? Math.round(done/w.length*100) : 0;
     document.getElementById('wktBar').style.width = pct+'%';
+    // A PART-DONE SESSION IS A DONE SESSION. Three of these are often three
+    // ways to do the same thing, and plenty of real sessions get cut short by a
+    // busy rack or a sore knee. Reading "1 / 3" at the top with a Finish button
+    // that stays asleep tells a student who did exactly the right thing that
+    // they failed, and the way out of that is to tick things they did not do.
+    // Honesty has to be the cheaper option, so: the button wakes on the FIRST
+    // tick, and the label stops counting down to three.
     document.getElementById('wktProgressLabel').textContent =
-      all ? 'All done — finish it off' : (done+' / '+w.length);
-    // Ticking the last exercise used to change a small grey label and nothing
-    // else. The one thing a student must still do is the one thing nothing
-    // pointed at, so the Finish button now lights up and asks for the tap.
+      all ? 'All done — finish it off'
+          : (done ? done+' of '+w.length+' · finish whenever' : '0 of '+w.length);
     const mode = document.getElementById('workoutMode');
-    if(mode) mode.classList.toggle('wkt-all-done', all);
+    if(mode){
+      mode.classList.toggle('wkt-ready', done > 0);
+      mode.classList.toggle('wkt-all-done', all);
+    }
   }
   function wktField(label,id,val,ph){ return '<div class="wkt-field"><label for="'+id+'">'+label+'</label><input id="'+id+'" value="'+esc(val||'')+'" placeholder="'+(ph||'')+'" autocomplete="off"></div>'; }
   function wktCardHTML(it, i){
@@ -12038,6 +12063,16 @@
       || (((wktSession._checked||[]).some(Boolean)) ? 45 : null);
     const logged = rpe!=null && duration!=null;
     if(logged){ wktSession.rpe = rpe; wktSession.duration = duration; wktSession.load = rpe*duration; wktSession.status = 'done'; }
+    // WHICH EXERCISES WERE ACTUALLY DONE, KEPT. The ticks lived in localStorage
+    // and were wiped on finish, so a part-done session came back from the server
+    // looking like nothing in it had been touched — and the honest answer to
+    // "I did one of the three" was thrown away the moment it was given. Written
+    // onto the workout items themselves, which already ride to the sheet inside
+    // Planned_JSON, so no new column and no redeploy.
+    const ticks = wktSession._checked || [];
+    (wktSession.workout || []).forEach((it, i) => {
+      if(it && typeof it === 'object') it.done = !!ticks[i];
+    });
     const changed = structuralSig(wktSession) !== _wktOpenSig;   // did any target change?
     const inProgram = sessionInTemplate(wktSession);
     const isNew = !wktSession.id || String(wktSession.id).startsWith('tmp_');
