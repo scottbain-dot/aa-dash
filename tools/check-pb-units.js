@@ -147,6 +147,86 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright');
   check('kilos, reps and metres read plainly',
         out.text.kg==='80 kg' && out.text.reps==='8 reps' && out.text.m==='2480 m',
         [out.text.kg,out.text.reps,out.text.m].join(' · '));
+  // ---- rep brackets: one lift, several things to chase --------------------
+  const rm = await p.evaluate(() => {
+    const out = {};
+    out.brackets = [1,2,3,4,5,6,7,12].map(n => pbRepBracket(n));
+    out.id5 = pbIdentity('Back Squat', { value:80, unit:'kg', reps:5 });
+    out.id1 = pbIdentity('Back Squat', { value:95, unit:'kg', reps:1 });
+    out.idTime = pbIdentity('Curve Reps', { value:120, unit:'s' });   // never bracketed
+
+    // The bug this fixes: a shelf holding a 95kg single used to bury every
+    // rep-max improvement that followed it.
+    state.pbs = [{ exercise:'Back Squat 1RM', sport:'Strength', value:'95', unit:'kg' },
+                 { exercise:'Back Squat 5RM', sport:'Strength', value:'80', unit:'kg' }];
+    const fiveUp = pbScan({ sport:'Strength', date: isoToday(), _checked:[true],
+      workout:[{ name:'Back Squat', detail:'4 × 5 @ 85kg', exId:'sq' }] });
+    out.fiveUp = fiveUp.beats.map(x => x.exercise+' '+x.value);
+    const oneFlat = pbScan({ sport:'Strength', date: isoToday(), _checked:[true],
+      workout:[{ name:'Back Squat', detail:'1 × 1 @ 90kg', exId:'sq' }] });
+    out.oneFlat = oneFlat.beats.length;
+
+    // ---- where it happened ------------------------------------------------
+    out.ctxTraining = pbContextFor({ name:'Threshold', sport:'Conditioning', type:'training' });
+    out.ctxGame     = pbContextFor({ name:'League match', sport:'Football', type:'game' });
+    out.ctxTest     = pbContextFor({ name:'2k Time Trial', sport:'Rowing', type:'training' });
+    state.pbs = [];
+    const tagged = pbScan({ sport:'Football', date: isoToday(), type:'game', _checked:[true],
+      workout:[{ name:'Back Squat', detail:'3 × 3 @ 90kg', exId:'sq' }] });
+    out.taggedCtx = (tagged.marks[0]||{}).context;
+    out.taggedName = (tagged.marks[0]||{}).exercise;
+    return out;
+  });
+
+  console.log('');
+  check('reps fall into 1RM / 3RM / 5RM / 8RM brackets',
+        JSON.stringify(rm.brackets) === JSON.stringify(['1RM','3RM','3RM','5RM','5RM','5RM','8RM','8RM']),
+        rm.brackets.join(' '));
+  check('a lift is tracked per bracket', rm.id5==='Back Squat 5RM' && rm.id1==='Back Squat 1RM',
+        rm.id5+' · '+rm.id1);
+  check('…and a time is not bracketed by how many reps of it there were',
+        rm.idTime === 'Curve Reps', rm.idTime);
+  check('a better 5RM now counts even with a heavier single on the shelf',
+        rm.fiveUp.length===1 && /5RM 85/.test(rm.fiveUp[0]), rm.fiveUp.join()||'nothing claimed');
+  check('…and a single under the 1RM still claims nothing', rm.oneFlat === 0, rm.oneFlat+' claimed');
+
+  check('a normal session is tagged training', rm.ctxTraining==='training', rm.ctxTraining);
+  check('a game is tagged competition', rm.ctxGame==='competition', rm.ctxGame);
+  check('a time trial is tagged test', rm.ctxTest==='test', rm.ctxTest);
+  check('the tag rides on the best itself',
+        rm.taggedCtx==='competition' && rm.taggedName==='Back Squat 3RM',
+        rm.taggedName+' · '+rm.taggedCtx);
+
+  // ---- the shelf, where there is no target line to read -------------------
+  // Scott's own example: knowing your best kilometre rep is 3:48 so there is
+  // something to aim at. If the name is not consulted, a faster rep shows no
+  // improvement at all, which is the one thing this system exists to show.
+  const shelf = await p.evaluate(() => {
+    state.pbs = [
+      { exercise:'1km rep',      sport:'Conditioning', value:'228',  unit:'s', previousValue:'240',  date:'2026-10-05', context:'training' },
+      { exercise:'50m Freestyle',sport:'Swimming',     value:'28.4', unit:'s', previousValue:'29.6', date:'2026-09-26', context:'competition' },
+      { exercise:'Plank',        sport:'Strength',     value:'150',  unit:'s', previousValue:'120',  date:'2026-09-20', context:'training' },
+      { exercise:'Back Squat 5RM',sport:'Strength',    value:'85',   unit:'kg',previousValue:'80',   date:'2026-10-02', context:'training' }];
+    const html = pbStripHTML();
+    const txt = html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+    return { txt,
+      dirKm: pbDirFor('s','1km rep',''), dirSwim: pbDirFor('s','50m Freestyle',''),
+      dirPlank: pbDirFor('s','Plank',''),
+      chips: (html.match(/pb-ctx/g)||[]).length };
+  });
+  // A gap under a minute reads as "12s faster", not "0:12" — the best itself is
+  // a clock, the difference between two of them is better in plain seconds.
+  check('a faster kilometre rep shows as an improvement',
+        /1km rep 3:48 ▲ −12s/.test(shelf.txt), (shelf.txt.match(/1km rep.{0,24}/)||[''])[0].trim());
+  check('…and so does a faster swim', /50m Freestyle[^0-9]*28\.4s ▲ −1\.2s/.test(shelf.txt),
+        (shelf.txt.match(/50m Freestyle.{0,40}/)||[''])[0]);
+  check('…while a longer plank still counts up', /Plank 2:30 ▲ \+30s/.test(shelf.txt),
+        (shelf.txt.match(/Plank.{0,24}/)||[''])[0]);
+  check('direction is read off the name when there is no line',
+        shelf.dirKm===-1 && shelf.dirSwim===-1 && shelf.dirPlank===1,
+        '1km '+shelf.dirKm+' · swim '+shelf.dirSwim+' · plank '+shelf.dirPlank);
+  check('only the non-training bests carry a tag', shelf.chips === 1, shelf.chips+' chips');
+
   check('no page errors', errs.length===0, errs.join('; ')||'none');
 
   await b.close();
