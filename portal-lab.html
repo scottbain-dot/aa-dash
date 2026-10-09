@@ -4603,23 +4603,52 @@
     color: var(--ink-mute); font-weight: 400; margin-left: 8px; letter-spacing: 0;
   }
   .plan-list { margin-top: 12px; }
+  /* ---- A day is a group with a band over it ----------------------------
+     The date used to live in a 46px gutter on the first row of each day, which
+     left seven days reading as one undifferentiated list. */
+  .day-group { padding-bottom: 2px; }
+  .day-band { display: flex; align-items: center; gap: 9px; padding: 15px 6px 7px; }
+  .day-group:first-child .day-band { padding-top: 4px; }
+  .db-num { font: 600 20px/1 'Fraunces', serif; color: var(--ink); }
+  .db-dow { font: 700 10.5px 'Inter', sans-serif; letter-spacing: .15em;
+    text-transform: uppercase; color: var(--ink-mute); }
+  .db-rule { flex: 1; height: 1px; background: var(--line-soft); }
+  .db-note { flex: 0 0 auto; font: 600 10.5px 'Inter', sans-serif; color: var(--ink-mute); }
+  .db-today { flex: 0 0 auto; font: 800 9px 'Inter', sans-serif; letter-spacing: .12em;
+    text-transform: uppercase; background: var(--burgundy); color: var(--cream);
+    border-radius: 999px; padding: 3px 9px; }
+  .db-add { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+    display: grid; place-items: center; background: none; border: 1px solid var(--line);
+    color: var(--ink-mute); font-size: 14px; }
+  .db-add:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  /* The day's sessions, visibly held together under their band.
+     Rounded on the first and last row rather than with overflow:hidden on the
+     group. A rounded clip over these rows paints its own edge as a faint curve
+     down the right of every session — visible, and nothing to do with the
+     content. Rounding the ends gets the same shape and draws nothing extra. */
+  .day-rows { border-radius: 14px; background: var(--surface); }
+  .day-rows > :first-child, .day-rows > :first-child .plan-row {
+    border-top-left-radius: 14px; border-top-right-radius: 14px; }
+  .day-rows > :last-child, .day-rows > :last-child .plan-row {
+    border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; }
+  .day-group.is-today .db-num, .day-group.is-today .db-dow { color: var(--burgundy); }
+  .day-group.is-today .day-rows { background: var(--cream); box-shadow: inset 0 0 0 1px rgba(135,75,70,.16); }
+  /* A day that has been and gone sits back; a rest day is quieter still. */
+  .day-group.is-past .day-band { opacity: .62; }
+  .day-group.is-rest .day-rows { background: transparent; }
+
   .plan-row {
-    display: grid; grid-template-columns: 46px 14px 1fr 30px 22px; align-items: center; gap: 14px;
-    padding: 14px 8px; border-bottom: 1px solid var(--line-soft); cursor: pointer;
-    border-radius: 10px; transition: background 0.15s;
+    display: grid; grid-template-columns: 14px 1fr 22px; align-items: center; gap: 13px;
+    padding: 13px 12px; border-bottom: 1px solid var(--line-soft); cursor: pointer;
+    transition: background 0.15s;
   }
-  .plan-list .plan-row:last-child { border-bottom: none; }
-  .plan-row:hover { background: var(--cream); }
-  .plan-day { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
-  .plan-dow {
-    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.12em;
-    text-transform: uppercase; font-weight: 700; color: var(--ink-mute);
-  }
-  .plan-date { font-family: 'Fraunces', serif; font-size: 15px; color: var(--ink); }
-  .plan-row.is-today .plan-dow, .plan-row.is-today .plan-date { color: var(--burgundy); }
-  /* Today's row gets a soft tint band (approved mock) */
-  .plan-row.is-today, .swipe-wrap .plan-row.is-today { background: var(--cream); }
-  .plan-today-tag { font-family: 'Fraunces', serif; font-style: italic; font-size: 9px; color: var(--burgundy); }
+  .day-rows .plan-row:last-child, .day-rows .swipe-wrap:last-child .plan-row { border-bottom: none; }
+  .plan-row:hover { background: rgba(0,0,0,.015); }
+  /* A rest day is the absence of a session. It should read as space under the
+     band, not as another card with a border round it. */
+  .plan-rest { padding: 9px 12px 11px; background: transparent; }
+  .day-group.is-rest .day-rows { background: transparent; box-shadow: none; }
+  .day-group.is-rest .plan-name { font: italic 400 14px 'Fraunces', serif; }
   .plan-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); justify-self: center; }
   /* Intensity = a single burgundy effort-ramp (light→dark), kept separate from the phase palette */
   .plan-dot.easy { background: var(--int-easy); }
@@ -4781,9 +4810,14 @@
   }
   .plan-row:hover .plan-add { opacity: 0.55; }
   .plan-add:hover { background: var(--surface); color: var(--burgundy); opacity: 1; }
-  .plan-rest .plan-add { opacity: 0.4; }
   /* Drag-to-move day: grip handle + ghost + drop target */
-  .plan-grip { display: flex; align-items: center; justify-content: center; color: var(--ink-mute); cursor: grab; touch-action: none; opacity: 0; transition: opacity 0.15s; font-size: 16px; }
+  /* The handle is sized here, not by whatever the icon font happens to render.
+     With the glyph unloaded the flex box collapsed to 20x0 and the session
+     could not be picked up at all — and even with it, a 20x16 target is small
+     for a thumb that has to then drag the row across the screen. */
+  .plan-grip { display: flex; align-items: center; justify-content: center; width: 22px; min-height: 34px;
+    margin: -8px -4px; padding: 0 4px; color: var(--ink-mute); cursor: grab; touch-action: none;
+    opacity: 0; transition: opacity 0.15s; font-size: 16px; }
   .plan-row:hover .plan-grip { opacity: 0.55; }
   .plan-grip:active { cursor: grabbing; }
   @media (max-width: 560px) { .plan-grip { opacity: 0.5; } }
@@ -4800,7 +4834,7 @@
   .week-out.is-on strong { color: var(--ink); }
   @media (max-width: 560px) {
     .plan-card { padding: 18px 18px; }
-    .plan-row { padding: 13px 4px; gap: 10px; grid-template-columns: 42px 12px 1fr 28px 20px; }
+    .plan-row { padding: 12px 10px; gap: 11px; grid-template-columns: 12px 1fr 20px; }
     .plan-add { opacity: 0.45; }
   }
   /* Plan-card header row + Change-plan button + plan label */
@@ -4820,9 +4854,14 @@
   .swipe-wrap { position: relative; overflow: hidden; border-radius: 10px; }
   .swipe-wrap .plan-row {
     position: relative; z-index: 1; background: var(--surface);
-    transition: transform 0.22s cubic-bezier(.2,.8,.2,1); will-change: transform; touch-action: pan-y;
+    transition: transform 0.22s cubic-bezier(.2,.8,.2,1); touch-action: pan-y;
   }
-  .swipe-wrap.swiping .plan-row { transition: none; }
+  /* will-change only while a swipe is actually in progress. On permanently it
+     promotes every row in the week to its own compositing layer for a transform
+     that happens on one row at a time, which is the thing the property is
+     documented not to be used for. */
+  .swipe-wrap.swiping .plan-row { transition: none; will-change: transform; }
+  .swipe-wrap.open .plan-row, .swipe-wrap.dragging .plan-row { will-change: transform; }
   .swipe-wrap.open .plan-row { transform: translateX(-92px); }
   .swipe-wrap .plan-row:hover { background: var(--surface); }   /* stay opaque while sliding */
   .swipe-delete {
@@ -4834,9 +4873,10 @@
   }
   .swipe-delete .ti { font-size: 18px; }
   .swipe-delete:active { background: var(--burgundy-dark); }
-  /* Only the genuinely-last row in the list drops its divider. */
-  .plan-list > .swipe-wrap:last-child .plan-row { border-bottom: none; }
-  .plan-list > .swipe-wrap .plan-row { border-radius: 0; }
+  /* The day group owns the rounding now. Left on the wrap, its 10px corners
+     clipped the row and let the burgundy delete button behind it show through
+     as an arc on the right of every session. */
+  .day-rows > .swipe-wrap:last-child .plan-row { border-bottom: none; }
   /* Desktop hint: hovering a row shows the delete affordance is available */
   @media (min-width: 820px) {
     .swipe-wrap.open .plan-row { transform: translateX(-92px); }
@@ -8953,17 +8993,23 @@
         '<button class="week-blank-btn" onclick="newSession(\''+addDay+'\')"><i class="ti ti-plus" aria-hidden="true"></i> Add a session</button>'+
       '</div>';
     } else {
+      // Each day is a GROUP with a band over it, not a column squeezed into the
+      // left of its first row. Seven days read as one long list otherwise —
+      // nothing told you where Friday ended and Saturday began except a small
+      // date in a 46px gutter.
       for(let i=0;i<7;i++){
         const iso = addDays(ws, i);
         const isToday = iso===today;
         const ds = byDay[iso] || [];
-        const dayLabel = '<span class="plan-dow">'+dowShort(iso)+'</span><span class="plan-date">'+dayNum(iso)+'</span>'+
-          (isToday? '<span class="plan-today-tag">today</span>' : '');
-        if(ds.length){
-          ds.forEach((s, idx) => { rows += planRow(s, idx===0 ? dayLabel : '', iso, isToday); });
-        } else {
-          rows += planRestRow(dayLabel, iso, isToday, iso<today);
-        }
+        const isPast = iso < today;
+        let inner = '';
+        if(ds.length) ds.forEach((x, idx) => { inner += planRow(x, idx===0, iso, isToday); });
+        else inner = planRestRow(iso, isToday, isPast);
+        rows += '<div class="day-group'+(isToday?' is-today':'')+(isPast?' is-past':'')+
+            (ds.length?'':' is-rest')+'" data-day="'+esc(iso)+'">'+
+          dayBandHTML(iso, isToday, ds.length) +
+          '<div class="day-rows">'+inner+'</div>'+
+        '</div>';
       }
     }
     // Empty week + a set-up program → offer a one-tap fill.
@@ -9489,7 +9535,23 @@
   const DONE_WORDS = ['Done','Nailed it','Crushed it','Banked','Smashed it','Logged'];
   function doneWord(s){ let h=0; const id=String((s&&s.id)||(s&&s.name)||''); for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return DONE_WORDS[h % DONE_WORDS.length]; }
 
-  function planRow(s, dayLabelHTML, iso, isToday){
+  // The band over a day's sessions. Carries the date in the display serif, a
+  // "Today" marker that is a marker rather than a whisper, and the thing the
+  // old gutter had no room for — how much is actually on that day.
+  function dayBandHTML(iso, isToday, count){
+    const note = count > 1 ? (count + ' sessions') : '';
+    return '<div class="day-band">'+
+      '<span class="db-num">'+dayNum(iso)+'</span>'+
+      '<span class="db-dow">'+dowShort(iso)+'</span>'+
+      (isToday ? '<span class="db-today">Today</span>' : '')+
+      '<span class="db-rule"></span>'+
+      (note ? '<span class="db-note">'+note+'</span>' : '')+
+      '<button class="db-add" aria-label="Add a session on this day" onclick="event.stopPropagation(); newSession(\''+iso+'\')">'+
+        '<i class="ti ti-plus" aria-hidden="true"></i></button>'+
+    '</div>';
+  }
+
+  function planRow(s, first, iso, isToday){
     let statusCls = '';
     if(s.status==='done' || s.status==='modified') statusCls = ' is-done';
     else if(s.status==='missed') statusCls = ' is-missed';
@@ -9509,26 +9571,22 @@
     // LAB: wrapped so a left-swipe reveals a Delete action (see swipe handlers).
     return '<div class="swipe-wrap" data-id="'+esc(s.id)+'" data-day="'+esc(iso)+'">'+
       '<div class="plan-row'+statusCls+(isToday?' is-today':'')+'" onclick="openSession(\''+s.id+'\')">'+
-        '<span class="plan-day">'+dayLabelHTML+'</span>'+
         '<span class="plan-dot'+dotCls+(isLogged(s)?' done':'')+'" aria-hidden="true">'+(isLogged(s)?'<i class="ti ti-check"></i>':'')+'</span>'+
         '<div class="plan-info"><div class="plan-name">'+esc(s.name)+timeChip+typeTag(s)+pb+doneFlag+(isLogged(s)?'':sportLevelChip(s.sport))+'</div><div class="plan-detail">'+meta+'</div>'+
           // Past and present days get the one-tap log inline; a future session
           // has nothing to report yet.
           ((!isLogged(s) && s.status!=='missed' && iso <= isoToday()) ? quickLogRowHTML(s, true) : '')+
-          (dayLabelHTML?preGameChip(iso):'')+refLine+'</div>'+
-        '<button class="plan-add" title="Add another session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
+          (first?preGameChip(iso):'')+refLine+'</div>'+
         '<span class="plan-grip" aria-label="Drag to move to another day" onclick="event.stopPropagation()"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>'+
       '</div>'+
       '<button class="swipe-delete" aria-label="Remove session" onclick="deleteSessionSwipe(event,\''+s.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i> Delete</button>'+
     '</div>';
   }
-  function planRestRow(dayLabelHTML, iso, isToday, isPast){
+  function planRestRow(iso, isToday, isPast){
     return '<div class="plan-row plan-rest'+(isToday?' is-today':'')+'" data-day="'+esc(iso)+'" onclick="newSession(\''+iso+'\')">'+
-      '<span class="plan-day">'+dayLabelHTML+'</span>'+
       '<span class="plan-dot is-empty" aria-hidden="true"></span>'+
       '<div class="plan-info"><div class="plan-name muted">'+(isPast?'Nothing logged':'Rest day')+'</div>'+
         '<div class="plan-detail">'+(isPast?'No session this day':'Nothing planned — tap to add')+'</div>'+preGameChip(iso)+'</div>'+
-      '<button class="plan-add" title="Add a session" onclick="event.stopPropagation(); newSession(\''+iso+'\')"><i class="ti ti-plus" aria-hidden="true"></i></button>'+
     '</div>';
   }
 
@@ -10660,6 +10718,44 @@
   }
   // Grip-drag a session row onto another day (touch + mouse). Bound each render;
   // #weekGrid is rebuilt so the listeners live on the fresh element.
+  // ---- Dragging past the fold -------------------------------------------------
+  // A grip drag takes pointer capture and calls preventDefault on every move, so
+  // native scrolling is suppressed for as long as you hold on. Without something
+  // to replace it, the only days you can drop onto are the ones that happened to
+  // be on screen when you picked the session up — three or four of seven on a
+  // phone. That is why a session could be dragged down a little and then no
+  // further: Saturday and Sunday were below the fold and there was no way to
+  // reach them without letting go.
+  //
+  // So the page follows the finger near the edges. The ghost is position:fixed
+  // and tracks the pointer in viewport coordinates, so it stays under the thumb
+  // while the list moves behind it, and the drop target is recomputed on every
+  // scrolled frame rather than only when the finger moves.
+  function dragEdgeScroll(drag, refresh, bounds){
+    const EDGE = 96, MAX = 18, KEEP = 40;
+    (function step(){
+      if(!drag.live) return;
+      const h = window.innerHeight;
+      let v = 0;
+      if(drag.y < EDGE) v = -Math.round((EDGE - drag.y) / EDGE * MAX);
+      else if(drag.y > h - EDGE) v = Math.round((drag.y - (h - EDGE)) / EDGE * MAX);
+      // Stop at the ends of the thing you can actually drop into. Without this
+      // the page keeps going while the finger sits at the edge and the list
+      // flies off the top, leaving nothing under the pointer to drop onto.
+      if(v && bounds){
+        const r = bounds.getBoundingClientRect();
+        if(v > 0 && r.bottom <= h - KEEP) v = 0;
+        if(v < 0 && r.top >= KEEP) v = 0;
+      }
+      if(v){
+        const before = window.scrollY;
+        window.scrollBy(0, v);
+        if(window.scrollY !== before) refresh();
+      }
+      requestAnimationFrame(step);
+    })();
+  }
+
   function initWeekDrag(){
     const grid = document.getElementById('weekGrid');
     if(!grid || grid._dragBound) return;
@@ -10678,14 +10774,18 @@
       ghost.style.width = rect.width+'px'; ghost.style.left = rect.left+'px'; ghost.style.top = rect.top+'px';
       document.body.appendChild(ghost);
       wrap.classList.add('dragging');
-      drag = { id: wrap.getAttribute('data-id'), from: wrap.getAttribute('data-day'), ghost: ghost, offY: e.clientY-rect.top, target: null, targetEl: null };
+      drag = { id: wrap.getAttribute('data-id'), from: wrap.getAttribute('data-day'), ghost: ghost,
+               offY: e.clientY-rect.top, target: null, targetEl: null,
+               live: true, x: e.clientX, y: e.clientY };
       try { grid.setPointerCapture(e.pointerId); } catch(_){}
+      dragEdgeScroll(drag, aimWeek, grid);
     });
-    grid.addEventListener('pointermove', function(e){
+    // Where the finger is pointing right now. Called on every move AND on every
+    // frame the page auto-scrolls under a finger that is holding still.
+    function aimWeek(){
       if(!drag) return;
-      e.preventDefault();
-      drag.ghost.style.top = (e.clientY - drag.offY)+'px';
-      const el = document.elementFromPoint(e.clientX, e.clientY);
+      drag.ghost.style.top = (drag.y - drag.offY)+'px';
+      const el = document.elementFromPoint(drag.x, drag.y);
       const t = el && el.closest('[data-day]');
       if(t !== drag.targetEl){
         grid.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
@@ -10693,10 +10793,17 @@
         drag.target = t ? t.getAttribute('data-day') : null;
         if(t && drag.target !== drag.from) t.classList.add('drop-target');
       }
+    }
+    grid.addEventListener('pointermove', function(e){
+      if(!drag) return;
+      e.preventDefault();
+      drag.x = e.clientX; drag.y = e.clientY;
+      aimWeek();
     });
     function endDrag(){
       if(!drag) return;
       const id = drag.id, target = drag.target, from = drag.from;
+      drag.live = false;                       // stops the auto-scroll loop
       if(drag.ghost) drag.ghost.remove();
       grid.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
       const w = grid.querySelector('.swipe-wrap.dragging'); if(w) w.classList.remove('dragging');
@@ -12386,14 +12493,16 @@
       document.body.appendChild(ghost);
       item.classList.add('dragging');
       const fromDay = item.closest('[data-dow]');
-      drag = { idx: parseInt(item.getAttribute('data-idx'),10), from: fromDay ? fromDay.getAttribute('data-dow') : null, item: item, ghost: ghost, offY: e.clientY-rect.top, target: null, targetEl: null };
+      drag = { idx: parseInt(item.getAttribute('data-idx'),10), from: fromDay ? fromDay.getAttribute('data-dow') : null,
+               item: item, ghost: ghost, offY: e.clientY-rect.top, target: null, targetEl: null,
+               live: true, x: e.clientX, y: e.clientY };
       try { list.setPointerCapture(e.pointerId); } catch(_){}
+      dragEdgeScroll(drag, aimProgram, list);     // same reason as the week grid
     });
-    list.addEventListener('pointermove', function(e){
+    function aimProgram(){
       if(!drag) return;
-      e.preventDefault();
-      drag.ghost.style.top = (e.clientY - drag.offY)+'px';
-      const el = document.elementFromPoint(e.clientX, e.clientY);
+      drag.ghost.style.top = (drag.y - drag.offY)+'px';
+      const el = document.elementFromPoint(drag.x, drag.y);
       const t = el && el.closest('[data-dow]');
       if(t !== drag.targetEl){
         list.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
@@ -12401,10 +12510,17 @@
         drag.target = t ? t.getAttribute('data-dow') : null;
         if(t && drag.target !== drag.from) t.classList.add('drop-target');
       }
+    }
+    list.addEventListener('pointermove', function(e){
+      if(!drag) return;
+      e.preventDefault();
+      drag.x = e.clientX; drag.y = e.clientY;
+      aimProgram();
     });
     function endDrag(){
       if(!drag) return;
       const idx = drag.idx, target = drag.target, from = drag.from;
+      drag.live = false;                       // stops the auto-scroll loop
       if(drag.ghost) drag.ghost.remove();
       list.querySelectorAll('.drop-target').forEach(function(x){ x.classList.remove('drop-target'); });
       if(drag.item) drag.item.classList.remove('dragging');
