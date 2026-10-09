@@ -112,6 +112,12 @@ function doGet(e) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const action = e.parameter.action;
 
+    // Nothing reaches a handler unless it is a route this deployment still
+    // serves. See AA_LIVE_ROUTES. This also closes the no-action fallthrough at
+    // the bottom of this function, which answered `?admin=true` with the whole
+    // roster and `?email=` with one athlete, neither of them signed in.
+    var gateRoute = apRouteGate_(action); if (gateRoute) return gateRoute;
+
     // ===== ADMIN PANEL ACTIONS =====
     // Not gated outright, because clash.html calls this from its student path
     // (bootstrapStudent) and from the public display screen (loadDisplayStatic),

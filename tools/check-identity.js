@@ -91,6 +91,46 @@ if (fs.existsSync('COMPLETE-APPS-SCRIPT.gs')) {
   if (!fail) ok('COMPLETE-APPS-SCRIPT.gs: portal data handlers keyed by athleteId only');
 }
 
+// ---------------------------------------------------------------------------
+// The route allowlist is wired into BOTH entry points
+// ---------------------------------------------------------------------------
+// AA_LIVE_ROUTES decides what the deployment answers at all. It is useless if
+// something does not call it, and that is exactly how it shipped: the patch
+// added the gate to doPost, the edit that added it to doGet was lost when a
+// later step in the same script failed before the file was written, and every
+// GET route stayed open — getAthleteData by email, ?admin=true for the whole
+// roster — through a merge, a deploy and two rounds of "why is it still open".
+//
+// Nothing caught it because the checking was aimed at the LIST. Whether the
+// allowlist held the right names was verified three ways; whether doGet
+// consulted it was never asked. So this asks it.
+{
+  const gs = fs.readFileSync('COMPLETE-APPS-SCRIPT.gs', 'utf8');
+  if (gs) {
+    const body = fn => {
+      const i = gs.indexOf('function ' + fn + '(e) {');
+      if (i === -1) return '';
+      const j = gs.indexOf('\nfunction ', i + 1);
+      return gs.slice(i, j === -1 ? gs.length : j);
+    };
+    ['doGet', 'doPost'].forEach(entry => {
+      const b = body(entry);
+      if (!b) { err(`${entry}() not found in COMPLETE-APPS-SCRIPT.gs`); return; }
+      if (!/apRouteGate_\s*\(/.test(b)) {
+        err(`${entry}() never calls apRouteGate_ — every route it dispatches is open to anyone`);
+        return;
+      }
+      // And it has to run before anything dispatches, or the routes above it
+      // are reachable regardless.
+      const gateAt = b.search(/apRouteGate_\s*\(/);
+      const firstDispatch = b.search(/if \(\s*(?:data\.)?action ===/);
+      if (firstDispatch !== -1 && gateAt > firstDispatch)
+        err(`${entry}() dispatches a route before apRouteGate_ runs`);
+    });
+    if (!fail) ok('COMPLETE-APPS-SCRIPT.gs: the route allowlist gates doGet and doPost');
+  }
+}
+
 console.log(fail
   ? `\nIDENTITY CHECK FAILED (${fail} issue${fail === 1 ? '' : 's'}). Data ops must use Athlete_ID, never email.\n`
   : '\nIDENTITY CHECK PASSED — portal data ops are Athlete_ID only.\n');
