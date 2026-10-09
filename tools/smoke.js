@@ -167,12 +167,22 @@ async function check(name, qs, opts = {}) {
   //
   // Every one of these is checked with arguments that cannot match a real
   // student. The point is the shape of the refusal, not any data behind it.
+  // EVERY PROBE HERE MUST BE HARMLESS WHILE THE HOLE IS STILL OPEN.
+  //
+  // The first version of this list included getUnassignedAthletes and the
+  // Clash routes. Those take no identifying argument, so they hand back
+  // whatever is in the sheet — and running the security test therefore pulled
+  // a list of Grade 9 names and school email addresses onto the machine
+  // running it, every time, to learn something a single harmless route
+  // already answers.
+  //
+  // So: config, which is not personal, and routes that need an identifier,
+  // given one that cannot match anybody. All of them are refused by the same
+  // line of the allowlist, so one is proof enough and eleven was never more.
   const RETIRED_GET = [
+    'getConfig&key=CurrentSession',
     'getAthleteData&email=zz-not-real@example.invalid',
     'getGritChallenge&email=zz-not-real@example.invalid',
-    'getUnassignedAthletes',
-    'getClashLeaderboard', 'getClashTeams', 'getClashResults', 'getTeamRoles', 'getHelpers',
-    'getConfig&key=CurrentSession',
     'getWorkoutHistory&email=zz-not-real@example.invalid',
     'getLastSession&email=zz-not-real@example.invalid'
   ];
