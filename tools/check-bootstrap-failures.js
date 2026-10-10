@@ -93,6 +93,41 @@ const DIR='/tmp/claude-0/-home-user-aa-dash/37334712-512d-5ca7-ae81-1cbd21ae49b3
   check('…and the retries are still bounded',
         budgets.deadline >= budgets.boot && budgets.deadline <= 120000, budgets.deadline+'ms total');
 
+  // ---- which build is this phone running ---------------------------------
+  // Three rounds of "it still does not work" were spent not knowing whether the
+  // phone had the fix on it yet. Safari keeps a page it already has, so a fix
+  // can be live for hours and never be seen.
+  const vp = await b.newPage({ viewport:{width:390,height:664} });
+  await vp.goto('http://127.0.0.1:8899/portal-lab.html?demo=1',{waitUntil:'load'});
+  await new Promise(r=>setTimeout(r,2400));
+  const ver = await vp.evaluate(async () => {
+    switchTab('week');
+    await new Promise(r=>setTimeout(r,400));
+    const stamp = document.querySelector('.build-stamp');
+    const bar = document.getElementById('updateBar');
+    const real = window.fetch;
+    // same build on the server: no bar
+    window.fetch = async () => ({ headers:{ get: () => document.lastModified } });
+    await checkForUpdate();
+    const quiet = bar.hidden;
+    // a newer one: bar
+    window.fetch = async () => ({ headers:{ get: () => new Date(Date.now()+600000).toUTCString() } });
+    await checkForUpdate();
+    const shown = !bar.hidden;
+    // a server that says nothing: no bar, no noise
+    bar.hidden = true;
+    window.fetch = async () => ({ headers:{ get: () => null } });
+    await checkForUpdate();
+    const silent = bar.hidden;
+    window.fetch = real;
+    return { stamp: stamp ? stamp.textContent.trim() : null, quiet, shown, silent };
+  });
+  await vp.close();
+  check('the week says which build it is running', /App version \d/.test(ver.stamp||''), ver.stamp);
+  check('…and says nothing when it is the current one', ver.quiet);
+  check('…offers an update when the server has a newer one', ver.shown);
+  check('…and stays quiet when the server will not say', ver.silent);
+
   await b.close();
   console.log('\n'+(fails?fails+' FAILED':'all passed'));
   process.exit(fails?1:0);

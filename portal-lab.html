@@ -1418,6 +1418,14 @@
   </div>
 </div>
 
+<!-- A NEWER BUILD IS ON THE SERVER. Safari keeps a page it already has, so a
+     fix can be live for hours and the phone never sees it. This is the one tap
+     that gets past that. -->
+<div class="update-bar" id="updateBar" hidden onclick="forceReload()">
+  <i class="ti ti-refresh" aria-hidden="true"></i>
+  <span>There&rsquo;s a newer version — tap to update</span>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -2827,6 +2835,18 @@
   .build-cta-card.has-prog .build-cta-label { font-weight: 700; }
 
   /* ---- Medals ---- */
+  /* The update bar and the build stamp. Both exist so that "which version is
+     this phone on?" is answerable in a second instead of a round trip. */
+  .update-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 78px;
+    z-index: 600; display: flex; align-items: center; gap: 8px; cursor: pointer;
+    background: var(--burgundy); color: var(--cream); border-radius: 999px;
+    padding: 11px 18px; box-shadow: 0 10px 28px -10px rgba(26,20,19,.6);
+    font: 600 13px 'Inter', sans-serif; max-width: calc(100vw - 32px); }
+  .update-bar[hidden] { display: none; }
+  .build-stamp { text-align: center; margin: 18px 0 0;
+    font: 400 11px 'Inter', sans-serif; color: var(--ink-mute); }
+  .build-stamp button { background: none; border: none; padding: 0; cursor: pointer;
+    font: 600 11px 'Inter', sans-serif; color: var(--burgundy); text-decoration: underline; }
   .award-pop { position: fixed; inset: 0; z-index: 400; display: none;
     align-items: center; justify-content: center; padding: 24px;
     background: rgba(26,20,19,.62); backdrop-filter: blur(3px); }
@@ -5635,6 +5655,7 @@
       // is how long a student stays signed in.
       setSessionToken(data.sessionToken || '');
       setTimeout(syncAwards, 1200);   // after the week paints; never blocks it
+      setTimeout(checkForUpdate, 2500);   // and quietly ask whether this is the current build
       athlete = data.athlete;
       if(!athlete){ setLoading(false); renderNoAthlete(); return; }
       // Resolve the Athlete_ID once, here — every later call is keyed by it, not
@@ -7438,6 +7459,50 @@
     maybeCelebrateBadges();   // passing the block earns the graduate badge
   }
 
+  // WHICH BUILD IS THIS PHONE ACTUALLY RUNNING.
+  //
+  // Three separate rounds of "it still does not work" were spent not knowing
+  // whether the phone had the fix on it yet. Every path checked out on the code
+  // in the repository, and there was no way for either of us to tell what Safari
+  // was serving out of its cache. document.lastModified is the answer and it was
+  // there the whole time: it is the Last-Modified of the response this document
+  // was built from, cached or not.
+  function buildTime(){
+    const d = new Date(document.lastModified);
+    return isFinite(d) ? d : null;
+  }
+  function buildStampHTML(){
+    const d = buildTime();
+    if(!d) return '';
+    const txt = d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)+' '+
+      String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    return '<p class="build-stamp">App version '+esc(txt)+
+      ' · <button onclick="forceReload()">check for an update</button></p>';
+  }
+  // A hard reload, past whatever the browser is holding.
+  function forceReload(){
+    try { location.replace(location.pathname + '?r=' + Date.now() + location.hash); }
+    catch(e){ location.reload(); }
+  }
+  window.forceReload = forceReload;
+  // Is the server holding something newer than what we are running? One HEAD
+  // request, a few hundred bytes, no new file to publish and nothing to keep in
+  // step at deploy time.
+  async function checkForUpdate(){
+    try {
+      const mine = buildTime();
+      if(!mine) return;
+      const r = await fetch(location.pathname + '?v=' + Date.now(), { method:'HEAD', cache:'no-store' });
+      const lm = r.headers.get('last-modified');
+      if(!lm) return;
+      const theirs = new Date(lm);
+      if(!isFinite(theirs)) return;
+      if(theirs.getTime() - mine.getTime() < 30000) return;   // same build
+      const bar = document.getElementById('updateBar');
+      if(bar){ bar.hidden = false; }
+    } catch(e){ /* offline, or a server with no Last-Modified: say nothing */ }
+  }
+
   function renderWeek(){
     awardPopSanity();   // never paint a week nobody can tap
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
@@ -7479,7 +7544,8 @@
           squadCard() +
           // No point telling someone with nothing logged that their load read
           // needs three weeks of data.
-          (loggedDaySet().length ? weekLoadCard() + weekMixCard() : '') );
+          (loggedDaySet().length ? weekLoadCard() + weekMixCard() : '') +
+          buildStampHTML() );
     loadSquadPulse(ws);   // fills the card in the background; never blocks the week
 
     initSwipe();   // LAB: bind swipe-to-delete (delegated on #weekGrid)
