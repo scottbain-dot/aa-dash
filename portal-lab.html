@@ -1752,7 +1752,11 @@
           <label class="field-label" for="planTime">Time <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-mute);">· optional</span></label>
           <input type="time" class="duration-input plan-field" id="planTime">
         </div>
-        <div style="flex:1; min-width:0;">
+        <!-- The PLANNED length. Hidden once the session is being logged, because
+             "Actual duration" is sitting further down the same sheet asking the
+             same question, and two boxes both labelled how long — one of which
+             quietly wins on the week row — is a guess, not a form. -->
+        <div style="flex:1; min-width:0;" id="planDurationWrap">
           <label class="field-label" for="planDuration">How long?</label>
           <div class="duration-row">
             <input type="text" inputmode="numeric" class="duration-input plan-field" id="planDuration" placeholder="e.g. 45">
@@ -8890,7 +8894,7 @@
       '<span class="qtap-lead">Did it —</span>'+
       QUICK_EFFORT.map(e =>
         '<button class="qtap-btn qtap-'+e.key+'" aria-label="Log as '+e.label.toLowerCase()+'"'+
-          ' onclick="event.stopPropagation(); quickLogDone(\''+s.id+'\','+e.rpe+')">'+
+          ' onclick="event.stopPropagation(); quickLogDone(\''+escArg(s.id)+'\','+e.rpe+')">'+
           (compact ? e.short : e.label)+'</button>'
       ).join('')+
     '</div>';
@@ -8907,9 +8911,13 @@
     // thing this is trying to fix.
     const duration = s.duration || s.plannedDuration || 45;
     const before = { rpe:s.rpe, duration:s.duration, load:s.load, status:s.status };
-    s.rpe = rpe; s.duration = duration; s.load = rpe * duration; s.status = 'done';
-    renderWeek(); renderBlockBar();
+    // EVERYTHING FROM HERE IS INSIDE THE TRY. The flag was raised and then two
+    // renders ran before it — so anything throwing in a render left the flag up
+    // for the life of the page and every later tap on a Did it chip was dropped
+    // in silence. One session logs, the next one cannot, and nothing says why.
     try {
+      s.rpe = rpe; s.duration = duration; s.load = rpe * duration; s.status = 'done';
+      renderWeek(); renderBlockBar();
       const res = await apiData({ action:'saveSession', session: s });
       if(!res || !res.success) throw new Error((res && res.error) || 'save failed');
       if(res.id) s.id = res.id;
@@ -10091,6 +10099,13 @@
       const el = document.getElementById(id);
       if(el) el.style.display = hide;
     });
+    // Exactly one duration box on screen: the PLANNED one while building the
+    // week, the ACTUAL one once it is being logged. They were both visible at
+    // once on every past session, asking the same question twice.
+    const pdw = document.getElementById('planDurationWrap');
+    if(pdw) pdw.style.visibility = planning ? '' : 'hidden';
+    const dl = document.querySelector('#durationSection .sheet-section-label');
+    if(dl) dl.textContent = 'How long did it take?';
     // "Log it now" only makes sense for a plan on today or a past day.
     const ln = document.getElementById('logNowBtn');
     if(ln) ln.style.display = (sheetMode === 'plan' && !isFutureSheetDate()) ? '' : 'none';
@@ -11095,7 +11110,16 @@
       load: logged ? rpe * duration : null,
       status: logged ? 'done' : 'planned',
       isPB: !!(editing && editing.isPB),   // PBs are logged explicitly now, not toggled per-session
-      workout: editing.workout || [],
+      // What was ticked, written onto the items themselves so it survives the
+      // round trip — the same thing Finish does in workout mode. Without it a
+      // session logged from the sheet came back with no record of which steps
+      // were done, and the week row could not say "1 of 3 done".
+      workout: (editing.workout || []).map((it, i) => {
+        if(!it || typeof it !== 'object') return it;
+        const c = Object.assign({}, it);
+        c.done = !!((editing._checked || [])[i]);
+        return c;
+      }),
       _checked: editing._checked || [],
       note: val('sheetNote'),
       noticed: val('sheetNoticed'),
