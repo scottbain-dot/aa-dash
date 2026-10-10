@@ -138,6 +138,78 @@ const DIR='/tmp/claude-0/-home-user-aa-dash/37334712-512d-5ca7-ae81-1cbd21ae49b3
   } catch(e){ reopenErr = e.message.split('\n')[0]; }
   check('the portal is not left dead behind a stuck overlay', !reopenErr, reopenErr||'still usable');
 
+  // ---- THE WEEK SCREEN IS BLOCKED TOO -------------------------------------
+  // The first fix only got a medal out of the way when a SESSION started. But
+  // this overlay is fixed, inset 0 and above everything, so while it is open it
+  // swallows every tap on the week as well — including the "Did it" chips,
+  // which is the only way to log a session that has slipped into yesterday.
+  const week = await p.evaluate(async () => {
+    closeWorkout();              // out of the session from the previous case
+    awardQueue = []; awardPopClose();
+    const y = addDays(isoToday(), -1);
+    state.week.sessions = (state.week.sessions||[]).filter(s => s.date !== y).concat([{
+      id:'sess_y', date: y, time:'', type:'training', result:'', sport:'Conditioning',
+      name:'Yesterday Threshold', intensity:'hard', plannedDuration:40, rpe:null,
+      duration:null, load:null, status:'planned', isPB:false,
+      workout:[{ name:'Curve Reps', detail:'5 × 2:00 @ 13km/h', exId:null }],
+      _checked:[], note:'', noticed:'', blocker:'', target:'', readiness:null }]);
+    switchTab('week');
+    await new Promise(r=>setTimeout(r,300));
+    return { chips: document.querySelectorAll('[onclick*="quickLogDone(\'sess_y\'"]').length };
+  });
+  check('a session that slipped to yesterday still offers the Did it chips',
+        week.chips === 3, week.chips+' chips');
+
+  // An empty overlay, which is what the old failure left behind.
+  await p.evaluate(() => {
+    const el = document.getElementById('awardPop');
+    el.innerHTML = ''; el.className = 'award-pop open gold';
+  });
+  const stuck = await p.evaluate(() => document.getElementById('awardPop').classList.contains('open'));
+  check('an empty overlay can be forced open for the test', stuck);
+
+  await p.evaluate(() => renderWeek());
+  const healed = await p.evaluate(() => document.getElementById('awardPop').classList.contains('open'));
+  check('…and a render heals it rather than painting a week nobody can tap', !healed);
+
+  // A REAL medal, open over the week. It is a modal, so blocking is correct —
+  // what was not correct is that there was no way out of it except a button
+  // inside a card that might not exist.
+  const tapChip = async () => {
+    try {
+      const chips = await p.$$('[onclick*="quickLogDone(\'sess_y\'"]');
+      if(!chips.length) return 'no chips';
+      await chips[1].click({ timeout: 4000 });
+      return '';
+    } catch(e){ return /intercepts pointer events/.test(e.message) ? 'blocked' : e.message.split('\n')[0]; }
+  };
+  await p.evaluate(() => {
+    awardQueue = [{ id:'z', tier:'gold', icon:'ti-medal', title:'T', label:'L', line:'L' }];
+    awardNext();
+  });
+  const openedOverWeek = await p.evaluate(() => document.getElementById('awardPop').classList.contains('open'));
+  check('a medal opens over the week', openedOverWeek);
+  check('…and while it is up the week is not tappable', (await tapChip()) === 'blocked');
+
+  // The way out. This is the whole fix: one tap anywhere on the backdrop.
+  const escape = await p.evaluate(async () => {
+    const el = document.getElementById('awardPop');
+    el.click();
+    await new Promise(r=>setTimeout(r,200));
+    return { now: el.classList.contains('open') };
+  });
+  check('tapping the backdrop closes it', !escape.now);
+
+  // And now the chip works, on a session that slipped into yesterday.
+  const chipErr = await tapChip();
+  await new Promise(r=>setTimeout(r,900));
+  const logged = await p.evaluate(() => {
+    const s = (state.week.sessions||[]).find(x => x.name==='Yesterday Threshold');
+    return { status: s && s.status, logged: s ? isLogged(s) : false, load: s && s.load };
+  });
+  check('tapping Did it on yesterday logs it', !chipErr && logged.logged,
+        chipErr || (logged.status+' · load '+logged.load));
+
   check('no page errors', errs.length===0, errs.join('; ')||'none');
   await b.close();
   console.log('\n'+(fails?fails+' FAILED':'all passed'));

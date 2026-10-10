@@ -2092,7 +2092,12 @@
 
 <!-- MY PROGRAM — the student's owned, repeating week -->
 <!-- Medals land here. One at a time, biggest first — see showAwards(). -->
-<div class="award-pop" id="awardPop"></div>
+<!-- Tap the backdrop to get out. The streak, PB and badge cards have all had
+     this since they were written; this one never did, so the ONLY way past it
+     was the button inside the card — and when the card failed to render there
+     was no button, no card, and a full-screen invisible overlay over the whole
+     app with no way out of it at all. -->
+<div class="award-pop" id="awardPop" onclick="if(event.target===this) awardPopDismiss()"></div>
 <div class="sheet-backdrop" id="myprog-backdrop" onclick="closeMyProgram()"></div>
 <div class="sheet" id="myProgramSheet">
   <div class="sheet-handle"></div>
@@ -7434,6 +7439,7 @@
   }
 
   function renderWeek(){
+    awardPopSanity();   // never paint a week nobody can tap
     const ws = state.week.weekStart || fmtISO(mondayOf(new Date()));
     // Keep the cache pointed at the live array, so an edit can never leave a
     // stale copy behind for the next time this week is stepped back to.
@@ -9496,7 +9502,7 @@
         // Where it goes afterwards. A medal that pops and then vanishes teaches
         // a student that none of this is kept.
         '<p class="award-where">Kept in your trophy room</p>'+
-        '<button class="award-ok" onclick="awardSeen(\''+escArg(a.id)+'\')">'+
+        '<button class="award-ok" onclick="event.stopPropagation(); awardSeen(\''+escArg(a.id)+'\')">'+
           (awardQueue.length ? 'Next' : 'Nice')+'</button>'+
       '</div>';
   }
@@ -9509,6 +9515,21 @@
       const el = document.getElementById(id);
       if(el){ el.classList.remove('open'); el.hidden = true; }
     });
+  }
+  // Out of the way, next one up if there is one.
+  function awardPopDismiss(){
+    awardPopClose();
+    awardNext();
+  }
+  window.awardPopDismiss = awardPopDismiss;
+  // AN OPEN OVERLAY WITH NOTHING IN IT IS A DEAD APP. It is fixed, inset 0 and
+  // above everything, so it swallows every tap on the screen behind it — the
+  // week, the chips, the nav, all of it. Nothing should be able to leave it in
+  // that state any more, but this costs one DOM check on a render and it is the
+  // difference between a stuck medal and a portal nobody can use.
+  function awardPopSanity(){
+    const el = document.getElementById('awardPop');
+    if(el && el.classList.contains('open') && !el.querySelector('.award-card')) awardPopClose();
   }
   function awardPopClose(){
     const el = document.getElementById('awardPop');
