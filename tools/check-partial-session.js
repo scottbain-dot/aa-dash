@@ -144,6 +144,95 @@ const DIR='/tmp/claude-0/-home-user-aa-dash/37334712-512d-5ca7-ae81-1cbd21ae49b3
         out.pbSources.length === 1 && out.pbSources[0] === 'Curve Reps', out.pbSources.join()||'none');
   check('none of that session state leaks into the program', out.tplCarries === 0,
         out.tplCarries+' items carried it');
+  // ---- ONE duration box on screen at a time -------------------------------
+  // The sheet asked "How long?" at the top and "Actual duration" further down,
+  // both visible on every past session, and only one of them showed on the week
+  // row. Two boxes for one question is a guess, not a form.
+  const dur = await p.evaluate(async () => {
+    const today = isoToday(), fut = addDays(today, 3);
+    state.week.sessions = (state.week.sessions||[]).filter(s => s.id!=='d_past' && s.id!=='d_fut').concat([
+      { id:'d_past', date: today, type:'training', sport:'Conditioning', name:'Past One',
+        intensity:'hard', plannedDuration:40, rpe:null, duration:null, load:null,
+        status:'planned', isPB:false, workout:[], _checked:[], note:'', noticed:'',
+        blocker:'', target:'', readiness:null, result:'', time:'' },
+      { id:'d_fut', date: fut, type:'training', sport:'Strength', name:'Future One',
+        intensity:'moderate', plannedDuration:50, rpe:null, duration:null, load:null,
+        status:'planned', isPB:false, workout:[], _checked:[], note:'', noticed:'',
+        blocker:'', target:'', readiness:null, result:'', time:'' }]);
+    switchTab('week'); await new Promise(r=>setTimeout(r,250));
+    const look = () => ({
+      planned: getComputedStyle(document.getElementById('planDurationWrap')).visibility,
+      actual: document.getElementById('durationSection').style.display !== 'none',
+      label: document.querySelector('#durationSection .sheet-section-label').textContent });
+    openSession('d_past'); await new Promise(r=>setTimeout(r,350));
+    const logging = look(); closeSheet(); await new Promise(r=>setTimeout(r,200));
+    openSession('d_fut'); await new Promise(r=>setTimeout(r,350));
+    const planning = look(); closeSheet(); await new Promise(r=>setTimeout(r,200));
+    return { logging, planning };
+  });
+  check('logging a session shows one duration box, the actual one',
+        dur.logging.planned === 'hidden' && dur.logging.actual,
+        'planned '+dur.logging.planned+' · actual '+dur.logging.actual);
+  check('…and it asks the question in those words', /how long did it take/i.test(dur.logging.label), dur.logging.label);
+  check('planning one shows the planned box and not the actual',
+        dur.planning.planned === 'visible' && !dur.planning.actual,
+        'planned '+dur.planning.planned+' · actual '+dur.planning.actual);
+
+  // ---- a sheet save records what was ticked, as Finish does ---------------
+  const sheetTicks = await p.evaluate(async () => {
+    const today = isoToday();
+    state.week.sessions = (state.week.sessions||[]).filter(s => s.id!=='sh1').concat([{
+      id:'sh1', date: today, type:'training', sport:'Conditioning', name:'Sheet Logged',
+      intensity:'hard', plannedDuration:40, rpe:null, duration:null, load:null,
+      status:'planned', isPB:false,
+      workout:[{name:'A',detail:'5 x 2:00',exId:null},{name:'B',detail:'4 x 4min',exId:null},
+               {name:'C',detail:'4 x 5min',exId:null}],
+      _checked:[true,false,false], note:'', noticed:'', blocker:'', target:'',
+      readiness:null, result:'', time:'' }]);
+    switchTab('week'); await new Promise(r=>setTimeout(r,250));
+    openSession('sh1'); await new Promise(r=>setTimeout(r,350));
+    document.getElementById('duration-input').value = '30';
+    document.querySelector('#rpe-row .rpe-pip[data-val="8"]').click();
+    await saveCurrentSession(); await new Promise(r=>setTimeout(r,600));
+    const s = (state.week.sessions||[]).find(x => x.name==='Sheet Logged');
+    return { flags: (s.workout||[]).map(x => x.done), duration: s.duration, load: s.load,
+             part: sessionPartBit(s) };
+  });
+  check('a sheet save keeps which steps were done',
+        JSON.stringify(sheetTicks.flags) === JSON.stringify([true,false,false]),
+        JSON.stringify(sheetTicks.flags));
+  check('…so the week row can say so', sheetTicks.part === ' · 1 of 3 done', JSON.stringify(sheetTicks.part));
+  check('…and the duration it was given is the one it keeps',
+        sheetTicks.duration === 30 && sheetTicks.load === 240,
+        sheetTicks.duration+'min · load '+sheetTicks.load);
+
+  // ---- one bad render must not kill every later tap -----------------------
+  // quickLogBusy was raised and two renders ran before the try, so anything
+  // throwing in a render left the flag up for the life of the page and every
+  // later Did it tap was dropped in silence.
+  const busy = await p.evaluate(async () => {
+    const today = isoToday();
+    state.week.sessions = (state.week.sessions||[]).filter(s => s.id!=='q1' && s.id!=='q2').concat([
+      { id:'q1', date: today, type:'training', sport:'Strength', name:'First', intensity:'hard',
+        plannedDuration:50, rpe:null, duration:null, load:null, status:'planned', isPB:false,
+        workout:[], _checked:[], note:'', noticed:'', blocker:'', target:'', readiness:null, result:'', time:'' },
+      { id:'q2', date: today, type:'training', sport:'Strength', name:'Second', intensity:'hard',
+        plannedDuration:50, rpe:null, duration:null, load:null, status:'planned', isPB:false,
+        workout:[], _checked:[], note:'', noticed:'', blocker:'', target:'', readiness:null, result:'', time:'' }]);
+    switchTab('week'); await new Promise(r=>setTimeout(r,250));
+    const realRender = window.renderBlockBar;
+    window.renderBlockBar = () => { throw new Error('a render blew up'); };
+    try { await quickLogDone('q1', 6); } catch(e){}
+    window.renderBlockBar = realRender;
+    await new Promise(r=>setTimeout(r,400));
+    await quickLogDone('q2', 6);
+    await new Promise(r=>setTimeout(r,500));
+    const b = (state.week.sessions||[]).find(x => x.name==='Second');
+    return { stuck: quickLogBusy, second: b ? isLogged(b) : null };
+  });
+  check('a render that throws does not leave the quick log jammed', !busy.stuck, 'busy='+busy.stuck);
+  check('…and the next session can still be logged', busy.second === true, 'logged='+busy.second);
+
   check('no page errors', errs.length===0, errs.join('; ')||'none');
 
   await p.screenshot({ path: DIR+'partial.png', fullPage:true });
