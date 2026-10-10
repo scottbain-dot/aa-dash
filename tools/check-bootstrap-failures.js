@@ -119,14 +119,34 @@ const DIR='/tmp/claude-0/-home-user-aa-dash/37334712-512d-5ca7-ae81-1cbd21ae49b3
     window.fetch = async () => ({ headers:{ get: () => null } });
     await checkForUpdate();
     const silent = bar.hidden;
+    // Tapping the link must ANSWER, not reload blind. Asking a student to
+    // compare a timestamp shown in their timezone against one read in GMT is a
+    // sum nobody should be doing.
+    bar.hidden = true;
+    window.fetch = async () => ({ headers:{ get: () => document.lastModified } });
+    await checkNow();
+    await new Promise(r=>setTimeout(r,250));
+    const saidCurrent = document.getElementById('toast').textContent;
+    // And coming back to the tab re-checks, which is the moment that matters:
+    // a fix that ships ten minutes after the page opened was never seen.
+    _lastUpdateCheck = 0;
+    window.fetch = async () => ({ headers:{ get: () => new Date(Date.now()+900000).toUTCString() } });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await new Promise(r=>setTimeout(r,300));
+    const onReturn = !bar.hidden;
     window.fetch = real;
-    return { stamp: stamp ? stamp.textContent.trim() : null, quiet, shown, silent };
+    return { stamp: stamp ? stamp.textContent.trim() : null, quiet, shown, silent,
+             saidCurrent, onReturn };
   });
   await vp.close();
   check('the week says which build it is running', /App version \d/.test(ver.stamp||''), ver.stamp);
   check('…and says nothing when it is the current one', ver.quiet);
   check('…offers an update when the server has a newer one', ver.shown);
   check('…and stays quiet when the server will not say', ver.silent);
+  check('tapping the link says so when there is nothing to get',
+        /latest version/i.test(ver.saidCurrent||''), ver.saidCurrent);
+  check('coming back to the tab checks again',
+        ver.onReturn, 'bar shown on return: '+ver.onReturn);
 
   await b.close();
   console.log('\n'+(fails?fails+' FAILED':'all passed'));

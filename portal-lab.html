@@ -7481,7 +7481,7 @@
     const txt = d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)+' '+
       String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
     return '<p class="build-stamp">App version '+esc(txt)+
-      ' · <button onclick="forceReload()">check for an update</button></p>';
+      ' · <button onclick="checkNow()">check for an update</button></p>';
   }
   // A hard reload, past whatever the browser is holding.
   function forceReload(){
@@ -7492,20 +7492,47 @@
   // Is the server holding something newer than what we are running? One HEAD
   // request, a few hundred bytes, no new file to publish and nothing to keep in
   // step at deploy time.
+  // Returns 'newer' | 'current' | 'unknown', and raises the bar when newer.
+  let _lastUpdateCheck = 0;
   async function checkForUpdate(){
+    _lastUpdateCheck = Date.now();
     try {
       const mine = buildTime();
-      if(!mine) return;
+      if(!mine) return 'unknown';
       const r = await fetch(location.pathname + '?v=' + Date.now(), { method:'HEAD', cache:'no-store' });
       const lm = r.headers.get('last-modified');
-      if(!lm) return;
+      if(!lm) return 'unknown';
       const theirs = new Date(lm);
-      if(!isFinite(theirs)) return;
-      if(theirs.getTime() - mine.getTime() < 30000) return;   // same build
+      if(!isFinite(theirs)) return 'unknown';
+      if(theirs.getTime() - mine.getTime() < 30000) return 'current';
       const bar = document.getElementById('updateBar');
       if(bar){ bar.hidden = false; }
-    } catch(e){ /* offline, or a server with no Last-Modified: say nothing */ }
+      return 'newer';
+    } catch(e){ return 'unknown'; }   // offline, or no Last-Modified: say nothing
   }
+  // The link under the week. It used to reload blind, which told a student
+  // nothing about whether there had been anything to get — and left me asking
+  // Scott to compare a timestamp shown in HIS timezone against one I read in
+  // GMT, which is a sum neither of us should ever have been doing. It answers
+  // the question itself now.
+  async function checkNow(){
+    showToast('Checking…', '');
+    const r = await checkForUpdate();
+    if(r === 'newer'){ forceReload(); return; }
+    showToast(r === 'current' ? 'You’re on the latest version.'
+                              : 'Could not check — reloading anyway.', r === 'current' ? 'success' : '');
+    if(r === 'unknown') setTimeout(forceReload, 900);
+  }
+  window.checkNow = checkNow;
+  // COMING BACK TO THE TAB IS THE MOMENT THAT MATTERS. The check ran once, a
+  // couple of seconds after opening, and a fix shipped ten minutes later was
+  // never seen — which is exactly what happened: the build was checked before
+  // the one that fixed his bug existed, and the page then sat open for an hour.
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState !== 'visible') return;
+    if(Date.now() - _lastUpdateCheck < 60000) return;
+    checkForUpdate();
+  });
 
   function renderWeek(){
     awardPopSanity();   // never paint a week nobody can tap
